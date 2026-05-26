@@ -84,6 +84,16 @@ Current modules:
 
 - `finance_engine.summary`: monthly aggregation and text formatting
 
+## Platform & Hosting
+
+- The app is a browser-first web application intended for static deployment on GitHub Pages.
+- Initial hosting is GitHub Pages static hosting only: HTML/CSS/JS assets served from the repo with no backend runtime, no server-side database, and no backend processes.
+- Data persistence for v1 is local browser storage only; treat it as a cache, not guaranteed durable storage.
+- Provide an export/import JSON mechanism early to mitigate browser storage loss.
+- Compute should be split between the UI/controller layer and a calculation engine layer.
+- Start with JavaScript/TypeScript for calculations and keep the engine isolated so hot paths can later migrate to WebAssembly.
+- External public data fetches use browser APIs such as `fetch` and must respect browser security and CORS constraints; a JS adapter layer should normalize data for the calculation engine.
+
 ## Data Storage
 
 - **Location:** Private finance data lives in `data/` (local machine only).

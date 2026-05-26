@@ -59,6 +59,15 @@ The first implemented feature provides:
 - Update `DESIGN.md`, `ROADMAP.md`, and tests with every feature.
 - Favor small, incremental additions over broad rewrites.
 
+## Data Storage & Privacy
+
+- **Location:** User data is stored locally in a `data/` directory (not committed to Git).
+- **Format:** JSON files, unencrypted, for simplicity and fast iteration.
+- **Important:** Private finance data should never be committed to version control. The `.gitignore` file enforces this.
+- **Backup:** Users are responsible for local backups and filesystem permissions.
+- **Future:** Cloud sync with encryption and multi-device support is planned as a long-term roadmap item (see `ROADMAP.md`).
+- **Reference:** See ADR `docs/adr/0002-local-json-storage-no-encryption.md` for design rationale.
+
 ## Documentation & Decision Workflow
 
 - **What:** This repository uses a small "docs-as-code" workflow to keep design, specification, and architectural decisions close to code. Key artifacts live in `docs/` and `docs/adr/`:

@@ -18,6 +18,12 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ## Near Term
 
+### Data Input & Persistence
+- [x] Define data storage strategy: local unencrypted JSON + strict gitignore rules (ADR 0002)
+- [ ] Implement local JSON data loader and saver for simulation state
+- [ ] Add gitignore guards and data/ directory template
+
+### Feature Development
 - [ ] Introduce instrument-specific models: salary, subscription, loan, investment.
 - [ ] Add business-day conventions and holiday-aware date rolling.
 - [ ] Add daily, weekly, and monthly liquidity projections.
@@ -33,6 +39,12 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ## Later
 
+### Long-term Data & Sync
+- [ ] Cloud sync integration (provider TBD) with encrypted data format
+- [ ] Migration path from local JSON to cloud-backed storage
+- [ ] Multi-device sync and conflict resolution
+
+### Analytics & Rules
 - [ ] Add inflation-linked and bond-rate-linked interest rules.
 - [ ] Support grace periods and end-term interest capitalization.
 - [ ] Add scenario analysis for income and expense changes.

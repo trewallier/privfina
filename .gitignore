@@ -1,0 +1,47 @@
+# Private data files (never commit)
+data/*.json
+data/*.db
+data/*.sqlite
+
+# Allow documentation and templates in data/ to be committed
+!data/README.md
+!data/*.template.json
+!data/example*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.env

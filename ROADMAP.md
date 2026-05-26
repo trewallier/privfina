@@ -23,6 +23,14 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [ ] Add daily, weekly, and monthly liquidity projections.
 - [ ] Add discount-rate configuration and NPV analytics.
 
+### Documentation Workflow (near term)
+
+- [x] Add docs scaffolding (`docs/vision.md`, `docs/spec.md`, `docs/adr/`)
+- [x] Add ADR template and first ADR (`docs/adr/template.md`, `docs/adr/0001-record-architecture-decisions.md`)
+- [x] Add Copilot repo customizations (`.github/copilot-instructions.md`)
+- [x] Add prompts for creating ADRs and updating spec (`.github/prompts/`)
+
+
 ## Later
 
 - [ ] Add inflation-linked and bond-rate-linked interest rules.

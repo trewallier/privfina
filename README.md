@@ -59,6 +59,16 @@ The first implemented feature provides:
 - Update `DESIGN.md`, `ROADMAP.md`, and tests with every feature.
 - Favor small, incremental additions over broad rewrites.
 
+## Documentation & Decision Workflow
+
+- **What:** This repository uses a small "docs-as-code" workflow to keep design, specification, and architectural decisions close to code. Key artifacts live in `docs/` and `docs/adr/`:
+    - `docs/vision.md` — project vision, goals, constraints (high level)
+    - `docs/spec.md` — living specification, glossary, scenarios, acceptance criteria
+    - `docs/adr/` — immutable Architecture Decision Records (one decision per file)
+- **When to update:** Update the Vision/Spec/ADR when scope, acceptance criteria, or architecture change. Update `docs/spec.md` during spec→plan→implement→verify iterations. Create a new ADR when an accepted architectural decision changes.
+- **Where they connect:** Each implementation PR should link to the relevant `docs/spec.md` section and any related `ROADMAP.md` item; if the change contains an architectural decision, link a new or existing ADR from `docs/adr/`.
+- **Why this helps:** Traceability from roadmap → spec → PR → tests keeps reviews focused and makes future audits simpler.
+
 ## Next Steps
 
 The planned next increments are tracked in `ROADMAP.md`. The architecture and extension rules live in `DESIGN.md` so later prompts can stay short and rely on repository state.

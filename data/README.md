@@ -1,41 +1,12 @@
 # Data Directory
 
-This directory holds private finance data for simulation and persistence. **Data files are never committed to Git and must remain local.**
+This directory is a legacy artifact from the earlier Python-based prototype. The current v1 architecture uses browser-local storage and manual export/import JSON for persistence.
 
-## Expected Structure
+## Notes
 
-```json
-{
-  "metadata": {
-    "version": "1.0",
-    "created": "2026-05-26",
-    "updated": "2026-05-26"
-  },
-  "cash_flows": [
-    {
-      "date": "2026-06-01",
-      "amount": 1000.0,
-      "direction": "inflow",
-      "category": "salary",
-      "description": "Monthly salary"
-    },
-    {
-      "date": "2026-06-05",
-      "amount": 50.0,
-      "direction": "outflow",
-      "category": "subscription",
-      "description": "Streaming subscription"
-    }
-  ]
-}
-```
-
-## Important
-
-- Keep backups of this directory on a secure device or service.
-- Do not share this data over unencrypted channels.
-- Cloud sync support is planned; see `ROADMAP.md` for timeline.
+- Data files in this directory are not part of the browser runtime for v1.
+- Future work may define a file-based backup or offline format, but the initial deployment relies on browser storage and JSON export/import.
 
 ## Reference
 
-- See `docs/adr/0002-local-json-storage-no-encryption.md` for the storage strategy and rationale.
+- See `docs/adr/0004-use-unsynced-browser-storage-for-v1-with-export-import.md` for the v1 storage decision.

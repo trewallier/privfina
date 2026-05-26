@@ -27,3 +27,6 @@ Consequences
 
 Supersedes
 - None (first data storage decision)
+
+Superseded by
+- 0004

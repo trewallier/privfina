@@ -94,14 +94,14 @@ Current modules:
 - Start with JavaScript/TypeScript for calculations and keep the engine isolated so hot paths can later migrate to WebAssembly.
 - External public data fetches use browser APIs such as `fetch` and must respect browser security and CORS constraints; a JS adapter layer should normalize data for the calculation engine.
 
-## Data Storage
+## Persistence
 
-- **Location:** Private finance data lives in `data/` (local machine only).
-- **Format:** JSON files, unencrypted, for transparency and iteration speed.
-- **Persistence guarantee:** Data files are never committed to Git; see `.gitignore` rules.
-- **User responsibility:** Local backups, filesystem permissions, and secure storage of the machine.
-- **Future:** Encrypted cloud sync planned in long-term roadmap (see `docs/adr/0002-local-json-storage-no-encryption.md` and `ROADMAP.md`).
-- **Why JSON:** Simplicity, debuggability, and easy version-control-friendly inspection. Revisit if data volumes or performance require SQLite or equivalent.
+- **Location:** User data is stored in browser-local storage for v1.
+- **Format:** Export/import JSON is the portability mechanism; browser storage is treated as a cache.
+- **Persistence guarantee:** Browser storage is not guaranteed durable; users should export data to files to mitigate loss.
+- **User responsibility:** Browser backup, export/import practice, and careful handling of cached state.
+- **Future:** Cloud sync is a long-term roadmap item (see `docs/adr/0004-use-unsynced-browser-storage-for-v1-with-export-import.md` and `ROADMAP.md`).
+- **Why this approach:** It enables GitHub Pages static hosting without backend persistence while giving users a manual backup path.
 
 ## Extensibility Principles
 
@@ -123,7 +123,7 @@ Rules and reports depend heavily on dates and classifications. Keep them typed a
 
 ## Initial Decisions
 
-- Use the Python standard library first; add third-party dependencies only when they unlock meaningful capability.
+- Use browser-native APIs and JavaScript/TypeScript first; add dependencies only when they unlock meaningful capability.
 - Start with monthly aggregation before daily forecasting or valuation.
 - Support simple month-based recurrence before business-day or holiday rules.
 - Keep the repository documentation as the durable source of project context.

@@ -27,6 +27,13 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [ ] v2: replace hottest compute paths with WASM
 - [ ] v3: optional cloud sync/backing store (future; not now)
 
+### Tooling & CI
+- [ ] Define Node package management and update strategy (ADR required)
+- [ ] Choose build tooling and bundler (ADR required)
+- [ ] Add GitHub Actions CI/CD workflows for build, test, and deploy
+- [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
+- [ ] Document update strategy and release process (patch/minor/major cadence)
+
 ### Data Input & Persistence
 - [x] Define browser storage strategy: local browser storage + export/import JSON (ADR 0004)
 - [ ] Implement browser persistence layer and export/import flow

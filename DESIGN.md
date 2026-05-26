@@ -108,3 +108,14 @@ Rules and reports depend heavily on dates and classifications. Keep them typed a
 - Start with monthly aggregation before daily forecasting or valuation.
 - Support simple month-based recurrence before business-day or holiday rules.
 - Keep the repository documentation as the durable source of project context.
+
+## Decision Logging & Iterative Workflow
+
+- **Architecture Decision Records (ADRs):** Important architecture and scope decisions are recorded as immutable ADRs in `docs/adr/`. Each ADR captures one decision; when a decision changes, a new ADR is added that supersedes the previous one.
+- **Spec → Plan → Implement → Verify:**
+	- Update `docs/spec.md` with scenarios, assumptions, and acceptance criteria for a planned change.
+	- Create a small roadmap item in `ROADMAP.md` and a focused PR that links to the spec section.
+	- Implement with tests that map to the spec's acceptance criteria.
+	- After verification, mark the roadmap item completed and update the spec with any learned adjustments.
+
+Keeping decisions and acceptance criteria close to code reduces review friction and preserves institutional knowledge.

@@ -4,14 +4,14 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ## Now
 
-- [x] Create initial project structure and package layout.
+- [ ] Create initial project structure and package layout.
 - [x] Add baseline documentation: `README.md`, `DESIGN.md`, `ROADMAP.md`.
-- [x] Implement a simple cash-flow model and monthly aggregation.
-- [x] Add tests for the initial aggregation behavior.
+- [ ] Implement a simple cash-flow model and monthly aggregation.
+- [ ] Add tests for the initial aggregation behavior.
 
 ## Next
 
-- [x] Add a recurring cash-flow helper for salaries and subscriptions.
+- [ ] Add a recurring cash-flow helper for salaries and subscriptions.
 - [ ] Add category and date filtering helpers for analytics.
 - [ ] Add a simple CLI entry point to load sample data and print summaries.
 - [ ] Add recurrence support for weekly and annual schedules.
@@ -26,6 +26,13 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [ ] v2: WASM spike: compile a small compute kernel and call it from JS
 - [ ] v2: replace hottest compute paths with WASM
 - [ ] v3: optional cloud sync/backing store (future; not now)
+
+### Tooling & CI
+- [ ] Define Node package management and update strategy (ADR required)
+- [ ] Choose build tooling and bundler (ADR required)
+- [ ] Add GitHub Actions CI/CD workflows for build, test, and deploy
+- [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
+- [ ] Document update strategy and release process (patch/minor/major cadence)
 
 ### Data Input & Persistence
 - [x] Define browser storage strategy: local browser storage + export/import JSON (ADR 0004)

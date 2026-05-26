@@ -42,6 +42,10 @@ env/
 *.swo
 *~
 
+# Build / dependencies
+node_modules/
+dist/
+
 # OS
 .DS_Store
 .env

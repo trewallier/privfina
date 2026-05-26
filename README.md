@@ -32,6 +32,18 @@ This repository is evolving toward a browser-hosted personal finance planning ap
 - Local browser storage is treated as a cache, with export/import JSON as the durability mechanism.
 - The repository is currently in transition from an earlier Python prototype to a browser-first web app.
 
+## Development
+
+Install dependencies and run the minimal TypeScript package layout:
+
+```bash
+npm install
+npm test
+npm run build
+```
+
+The initial source lives under `src/` and the package exposes a browser-friendly finance engine API surface.
+
 ## Documentation & Decision Workflow
 
 - **What:** This repository uses a docs-as-code workflow to keep design, specification, and architectural decisions close to code. Key artifacts live in `docs/` and `docs/adr/`:

@@ -4,14 +4,14 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ## Now
 
-- [x] Create initial project structure and package layout.
+- [ ] Create initial project structure and package layout.
 - [x] Add baseline documentation: `README.md`, `DESIGN.md`, `ROADMAP.md`.
-- [x] Implement a simple cash-flow model and monthly aggregation.
-- [x] Add tests for the initial aggregation behavior.
+- [ ] Implement a simple cash-flow model and monthly aggregation.
+- [ ] Add tests for the initial aggregation behavior.
 
 ## Next
 
-- [x] Add a recurring cash-flow helper for salaries and subscriptions.
+- [ ] Add a recurring cash-flow helper for salaries and subscriptions.
 - [ ] Add category and date filtering helpers for analytics.
 - [ ] Add a simple CLI entry point to load sample data and print summaries.
 - [ ] Add recurrence support for weekly and annual schedules.

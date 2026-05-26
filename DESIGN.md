@@ -84,6 +84,15 @@ Current modules:
 
 - `finance_engine.summary`: monthly aggregation and text formatting
 
+## Data Storage
+
+- **Location:** Private finance data lives in `data/` (local machine only).
+- **Format:** JSON files, unencrypted, for transparency and iteration speed.
+- **Persistence guarantee:** Data files are never committed to Git; see `.gitignore` rules.
+- **User responsibility:** Local backups, filesystem permissions, and secure storage of the machine.
+- **Future:** Encrypted cloud sync planned in long-term roadmap (see `docs/adr/0002-local-json-storage-no-encryption.md` and `ROADMAP.md`).
+- **Why JSON:** Simplicity, debuggability, and easy version-control-friendly inspection. Revisit if data volumes or performance require SQLite or equivalent.
+
 ## Extensibility Principles
 
 ### Add new instruments by generating cash flows

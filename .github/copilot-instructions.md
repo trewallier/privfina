@@ -14,4 +14,6 @@ These instructions aim to make repository assistance consistent and traceable.
   - Update `ROADMAP.md` to reflect the storage approach
   - Update `.gitignore` to protect private data from accidental commits
   - Include a `data/README.md` or template explaining expected data structure
+- Any change to hosting, persistence, or compute strategy requires an ADR update plus matching DESIGN and ROADMAP updates.
+- Do not introduce backend assumptions incompatible with GitHub Pages unless a roadmap item explicitly changes hosting.
 

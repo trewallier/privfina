@@ -18,6 +18,15 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ## Near Term
 
+### Platform & Hosting
+- [ ] v1: GitHub Pages deployment setup (static build + publish)
+- [ ] v1: browser storage persistence + export/import
+- [ ] v1: define calculation-engine interface + baseline JS implementation
+- [ ] v1: external data fetch adapter (mock first; real endpoints later)
+- [ ] v2: WASM spike: compile a small compute kernel and call it from JS
+- [ ] v2: replace hottest compute paths with WASM
+- [ ] v3: optional cloud sync/backing store (future; not now)
+
 ### Data Input & Persistence
 - [x] Define data storage strategy: local unencrypted JSON + strict gitignore rules (ADR 0002)
 - [ ] Implement local JSON data loader and saver for simulation state

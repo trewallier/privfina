@@ -28,9 +28,9 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [ ] v3: optional cloud sync/backing store (future; not now)
 
 ### Data Input & Persistence
-- [x] Define data storage strategy: local unencrypted JSON + strict gitignore rules (ADR 0002)
-- [ ] Implement local JSON data loader and saver for simulation state
-- [ ] Add gitignore guards and data/ directory template
+- [x] Define browser storage strategy: local browser storage + export/import JSON (ADR 0004)
+- [ ] Implement browser persistence layer and export/import flow
+- [ ] Add documentation for browser storage expectations and export/import format
 
 ### Feature Development
 - [ ] Introduce instrument-specific models: salary, subscription, loan, investment.
@@ -50,7 +50,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ### Long-term Data & Sync
 - [ ] Cloud sync integration (provider TBD) with encrypted data format
-- [ ] Migration path from local JSON to cloud-backed storage
+- [ ] Migration path from browser storage/export-import to cloud-backed storage
 - [ ] Multi-device sync and conflict resolution
 
 ### Analytics & Rules

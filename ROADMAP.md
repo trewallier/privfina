@@ -19,7 +19,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 ## Near Term
 
 ### Platform & Hosting
-- [ ] v1: GitHub Pages deployment setup (static build + publish)
+- [x] v1: GitHub Pages deployment setup (static build + publish)
 - [ ] v1: browser storage persistence + export/import
 - [ ] v1: define calculation-engine interface + baseline JS implementation
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)

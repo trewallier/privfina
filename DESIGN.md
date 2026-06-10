@@ -125,10 +125,12 @@ There is no hard limit on the number of cash flows a user can create, other than
 - Recurring form fields: direction, amount, schedule (cron-like period), start date, end date or occurrence count, category, optional description.
 - Validation: required fields must be present, amount must be numeric, and date-related constraints must be checked (for example, end date after start date).
 
+Current implementation includes one-time and recurring add forms on the main webpage.
+
 ### List behavior
 
 - Default sort should be by next effective date, then creation order.
-- Current implementation exposes delete action per row; edit is planned next.
+- Current implementation exposes delete action per row for one-time and recurring definitions; edit is planned next.
 - Changes should update persisted browser state immediately.
 
 ## Visualization: Cumulative Cash-Flow Diagram

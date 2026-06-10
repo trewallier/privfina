@@ -31,7 +31,8 @@ Assumptions
 Acceptance criteria
 - [ ] Static app deployment is feasible on GitHub Pages, with all runtime behavior in client-side assets.
 - [ ] Users can create any number of cash flows through the page controls.
-- [ ] Users can view and delete existing cash flows, and changes are reflected immediately in the UI state.
+- [x] Users can create one-time and recurring cash-flow definitions through the page controls.
+- [x] Users can view and delete existing one-time and recurring cash-flow definitions, and changes are reflected immediately in the UI state.
 - [ ] Users can edit existing cash flows, and changes are reflected immediately in the UI state.
 - [x] One-time cash flow supports configurable amount and date (plus inflow/outflow direction).
 - [x] Recurring cash flow supports configurable period (monthly cron-like structure), start date, end date or number of occurrences, and amount (plus inflow/outflow direction).

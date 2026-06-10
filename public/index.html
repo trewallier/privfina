@@ -134,7 +134,7 @@
   <body>
     <main>
       <h1>Privfina</h1>
-      <p class="lead">One-time cash flows: create, review, delete, and visualize cumulative totals.</p>
+      <p class="lead">Create one-time and recurring cash flows, review them, delete them, and visualize cumulative totals.</p>
 
       <section class="card">
         <h2>Add One-Time Cash Flow</h2>
@@ -165,18 +165,61 @@
       </section>
 
       <section class="card">
-        <h2>Cash Flows</h2>
+        <h2>Add Recurring Cash Flow</h2>
+        <form id="recurring-form">
+          <div class="row">
+            <label>
+              Cron-like period
+              <input id="period" name="period" type="text" placeholder="0 0 15 * *" required />
+            </label>
+            <label>
+              Start date
+              <input id="start-date" name="startDate" type="date" required />
+            </label>
+            <label>
+              End date
+              <input id="end-date" name="endDate" type="date" />
+            </label>
+            <label>
+              Occurrences
+              <input id="occurrences" name="occurrences" type="number" min="1" step="1" />
+            </label>
+            <label>
+              Amount
+              <input id="recurring-amount" name="amount" type="number" min="0" step="0.01" required />
+            </label>
+            <label>
+              Direction
+              <select id="recurring-direction" name="direction" required>
+                <option value="inflow">Inflow</option>
+                <option value="outflow">Outflow</option>
+              </select>
+            </label>
+            <label>
+              Category
+              <input id="recurring-category" name="category" type="text" placeholder="general" />
+            </label>
+          </div>
+          <button type="submit">Add Recurring Cash Flow</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Configured Cash Flows</h2>
         <table>
           <thead>
             <tr>
-              <th>Date</th>
+              <th>Type</th>
+              <th>Date / Start</th>
+              <th>End / Count</th>
+              <th>Period</th>
               <th>Direction</th>
               <th>Amount</th>
               <th>Category</th>
               <th>Action</th>
             </tr>
           </thead>
-          <tbody id="cash-flow-rows"></tbody>
+          <tbody id="configured-flow-rows"></tbody>
         </table>
       </section>
 

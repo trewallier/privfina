@@ -8,6 +8,12 @@ These instructions aim to make repository assistance consistent and traceable.
 - Encourage using the `.github/prompts/` helpers to scaffold ADRs and spec updates.
 - Note: this repository uses `master` as the default branch.
 
+## Commit Format Preference
+
+- Use concise imperative commit subjects.
+- Include this trailer in commit messages (agent-dependent, not hardcoded):
+  - `Assisted-by: AGENT_NAME:MODEL_VERSION [TOOL1] [TOOL2]`
+
 ## Data & Persistence Guardrails
 
 - Any change that touches data persistence or storage strategy must:

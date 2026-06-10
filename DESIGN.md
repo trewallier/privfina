@@ -18,6 +18,28 @@ A cash flow is the smallest accounting unit in the system. It carries:
 
 This object is intentionally small because it is the shared language between instruments, rule evaluation, and analytics.
 
+### Initial Cash-Flow Primitives
+
+The first implementation should support two foundational cash-flow definitions. These are intentionally minimal building blocks and are expected to be composed into more complex instruments later.
+
+#### Recurring income or payout
+
+Recurring cash flows represent repeated inflows or outflows generated from a schedule.
+
+- configurable period using a cron-like schedule structure
+- configurable start date
+- configurable end date or number of occurrences
+- configurable amount
+
+#### One-time income or payout
+
+One-time cash flows represent a single inflow or outflow event.
+
+- configurable amount
+- configurable date
+
+These two primitives are the baseline set only. More complex cash-flow patterns should be built on top of them rather than replacing them.
+
 ### Instruments
 
 An instrument is a source of one or more cash flows.
@@ -83,6 +105,54 @@ Responsibilities:
 Current modules:
 
 - `finance_engine.summary`: monthly aggregation and text formatting
+
+## Interaction Model (v1)
+
+The first UI should provide simple controls to manage an arbitrary number of cash-flow definitions.
+
+### Cash-flow management controls
+
+- Add cash flow: users can create one-time or recurring cash flows from the main page.
+- View cash flows: users can see all configured cash flows in a list or table.
+- Edit cash flow: users can update any existing cash-flow definition.
+- Delete cash flow: users can remove any existing cash-flow definition.
+
+There is no hard limit on the number of cash flows a user can create, other than practical browser performance and storage limits.
+
+### Form behavior
+
+- One-time form fields: direction, amount, date, category, optional description.
+- Recurring form fields: direction, amount, schedule (cron-like period), start date, end date or occurrence count, category, optional description.
+- Validation: required fields must be present, amount must be numeric, and date-related constraints must be checked (for example, end date after start date).
+
+### List behavior
+
+- Default sort should be by next effective date, then creation order.
+- Each row should expose direct edit and delete actions.
+- Changes should update persisted browser state immediately.
+
+## Visualization: Cumulative Cash-Flow Diagram
+
+The page should include a cumulative cash-flow diagram built from generated dated cash flows.
+
+### Chart definition
+
+- X axis: configurable date range controlled by start-date and end-date pickers.
+- Y axis: cumulative sum of cash flows in chronological order within the selected date range.
+- Inflows contribute positive values; outflows contribute negative values.
+
+### Data preparation rules
+
+- Expand recurring definitions into dated cash-flow instances before charting.
+- Merge expanded recurring instances with one-time flows.
+- Sort all included flows by date ascending before cumulative calculation.
+- Compute running total as: previous total + signed flow amount.
+
+### Interaction behavior
+
+- Updating either date picker should re-render the chart immediately.
+- Editing, adding, or deleting a cash flow should refresh the chart using current filters.
+- If no flows exist in range, render an empty-state chart with zero baseline.
 
 ## Platform & Hosting
 

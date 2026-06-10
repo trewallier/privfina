@@ -4,17 +4,19 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ## Now
 
-- [ ] Create initial project structure and package layout.
+- [x] Create initial project structure and package layout.
 - [x] Add baseline documentation: `README.md`, `DESIGN.md`, `ROADMAP.md`.
-- [ ] Implement a simple cash-flow model and monthly aggregation.
-- [ ] Add tests for the initial aggregation behavior.
+- [ ] Implement one-time cash-flow definition and generation.
+- [ ] Implement recurring cash-flow definition and generation (cron-like period, start date, end date or occurrence count, amount).
+- [ ] Build basic cash-flow management controls (add, view, edit, delete) supporting any number of flows.
+- [ ] Add cumulative cash-flow diagram with configurable start/end date pickers.
+- [ ] Add tests for cash-flow CRUD behavior and cumulative aggregation logic.
 
 ## Next
 
-- [ ] Add a recurring cash-flow helper for salaries and subscriptions.
 - [ ] Add category and date filtering helpers for analytics.
-- [ ] Add a simple CLI entry point to load sample data and print summaries.
 - [ ] Add recurrence support for weekly and annual schedules.
+- [ ] Add chart UX polish: axis formatting, empty-state messaging, and large-range performance.
 
 ## Near Term
 
@@ -40,7 +42,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [ ] Add documentation for browser storage expectations and export/import format
 
 ### Feature Development
-- [ ] Introduce instrument-specific models: salary, subscription, loan, investment.
+- [ ] Introduce instrument-specific models (salary, subscription, loan, investment) built on top of one-time and recurring cash-flow primitives.
 - [ ] Add business-day conventions and holiday-aware date rolling.
 - [ ] Add daily, weekly, and monthly liquidity projections.
 - [ ] Add discount-rate configuration and NPV analytics.

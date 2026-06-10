@@ -1,36 +1,125 @@
-const STORAGE_KEY = 'privfina.one_time_cash_flows.v1'
+const ONE_TIME_STORAGE_KEY = 'privfina.one_time_cash_flows.v1'
+const RECURRING_STORAGE_KEY = 'privfina.recurring_cash_flows.v1'
 
 function toSignedAmount(flow) {
   return flow.direction === 'inflow' ? flow.amount : -flow.amount
 }
 
-function loadCashFlows() {
+function loadList(key) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(key)
     if (!raw) {
       return []
     }
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-    return parsed
+    return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
   }
 }
 
-function saveCashFlows(flows) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(flows))
+function saveList(key, value) {
+  localStorage.setItem(key, JSON.stringify(value))
 }
 
-function calculateCumulativeSeries(flows, startDate, endDate) {
-  const sorted = [...flows]
-    .filter((flow) => flow.date >= startDate && flow.date <= endDate)
-    .sort((a, b) => a.date.localeCompare(b.date))
+function parseIsoDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) {
+    throw new Error(`Invalid date: ${value}`)
+  }
 
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const utc = new Date(Date.UTC(year, month - 1, day))
+  if (
+    utc.getUTCFullYear() !== year ||
+    utc.getUTCMonth() !== month - 1 ||
+    utc.getUTCDate() !== day
+  ) {
+    throw new Error(`Invalid date: ${value}`)
+  }
+  return utc
+}
+
+function formatIsoDate(date) {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function daysInMonthUtc(year, monthZeroBased) {
+  return new Date(Date.UTC(year, monthZeroBased + 1, 0)).getUTCDate()
+}
+
+function parseMonthlyCronDay(period) {
+  const cronMatch = /^([*]|[0-5]?\d)\s+([*]|[01]?\d|2[0-3])\s+([1-9]|[12]\d|3[01])\s+\*\s+\*$/.exec(
+    String(period || '').trim()
+  )
+  if (!cronMatch) {
+    throw new Error('Use monthly cron-like format: "m h day * *".')
+  }
+  return Number(cronMatch[3])
+}
+
+function expandRecurringFlows(definition, rangeStart, rangeEnd) {
+  const dayOfMonth = parseMonthlyCronDay(definition.period)
+  const startDate = parseIsoDate(definition.startDate)
+  const endDate = definition.endDate ? parseIsoDate(definition.endDate) : null
+  const maxOccurrences =
+    Number.isInteger(definition.occurrences) && definition.occurrences > 0
+      ? definition.occurrences
+      : Number.MAX_SAFE_INTEGER
+
+  let year = startDate.getUTCFullYear()
+  let month = startDate.getUTCMonth()
+  const generated = []
+
+  while (generated.length < maxOccurrences) {
+    const monthDays = daysInMonthUtc(year, month)
+    if (dayOfMonth <= monthDays) {
+      const candidate = new Date(Date.UTC(year, month, dayOfMonth))
+      const inWindow = candidate.getTime() >= startDate.getTime()
+      const beforeEnd = !endDate || candidate.getTime() <= endDate.getTime()
+      if (inWindow && beforeEnd) {
+        const iso = formatIsoDate(candidate)
+        if (iso >= rangeStart && iso <= rangeEnd) {
+          generated.push({
+            date: iso,
+            amount: definition.amount,
+            direction: definition.direction,
+            category: definition.category || 'general'
+          })
+        }
+      }
+
+      if (endDate && candidate.getTime() > endDate.getTime()) {
+        break
+      }
+    }
+
+    month += 1
+    if (month > 11) {
+      month = 0
+      year += 1
+    }
+  }
+
+  return generated
+}
+
+function buildEffectiveFlows(oneTime, recurring, rangeStart, rangeEnd) {
+  const oneTimeInRange = oneTime.filter((flow) => flow.date >= rangeStart && flow.date <= rangeEnd)
+  const recurringExpanded = recurring.flatMap((definition) =>
+    expandRecurringFlows(definition, rangeStart, rangeEnd)
+  )
+  return [...oneTimeInRange, ...recurringExpanded].sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function calculateCumulativeSeries(flows) {
   let runningTotal = 0
-  return sorted.map((flow) => {
+  return flows.map((flow) => {
     runningTotal += toSignedAmount(flow)
     return {
       date: flow.date,
@@ -39,29 +128,69 @@ function calculateCumulativeSeries(flows, startDate, endDate) {
   })
 }
 
-function renderTable(flows, tbody, onDelete) {
+function renderConfiguredTable(oneTimeFlows, recurringFlows, tbody, onDeleteOneTime, onDeleteRecurring) {
   tbody.innerHTML = ''
+  const rows = []
 
-  if (!flows.length) {
+  for (const flow of oneTimeFlows) {
+    rows.push({
+      id: flow.id,
+      type: 'one-time',
+      startOrDate: flow.date,
+      endOrCount: '-',
+      period: '-',
+      direction: flow.direction,
+      amount: flow.amount,
+      category: flow.category || 'general'
+    })
+  }
+
+  for (const flow of recurringFlows) {
+    rows.push({
+      id: flow.id,
+      type: 'recurring',
+      startOrDate: flow.startDate,
+      endOrCount: flow.endDate || (flow.occurrences ? `count: ${flow.occurrences}` : '-'),
+      period: flow.period,
+      direction: flow.direction,
+      amount: flow.amount,
+      category: flow.category || 'general'
+    })
+  }
+
+  rows.sort((a, b) => a.startOrDate.localeCompare(b.startOrDate))
+
+  if (!rows.length) {
     const row = document.createElement('tr')
     const cell = document.createElement('td')
-    cell.colSpan = 5
-    cell.textContent = 'No cash flows yet.'
+    cell.colSpan = 8
+    cell.textContent = 'No cash flows configured yet.'
     row.appendChild(cell)
     tbody.appendChild(row)
     return
   }
 
-  for (const flow of flows) {
+  for (const rowData of rows) {
     const row = document.createElement('tr')
     row.innerHTML = `
-      <td>${flow.date}</td>
-      <td>${flow.direction}</td>
-      <td>${flow.amount.toFixed(2)}</td>
-      <td>${flow.category}</td>
-      <td><button class="secondary" data-id="${flow.id}" type="button">Delete</button></td>
+      <td>${rowData.type}</td>
+      <td>${rowData.startOrDate}</td>
+      <td>${rowData.endOrCount}</td>
+      <td>${rowData.period}</td>
+      <td>${rowData.direction}</td>
+      <td>${rowData.amount.toFixed(2)}</td>
+      <td>${rowData.category}</td>
+      <td><button class="secondary" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Delete</button></td>
     `
-    row.querySelector('button')?.addEventListener('click', () => onDelete(flow.id))
+
+    row.querySelector('button')?.addEventListener('click', () => {
+      if (rowData.type === 'one-time') {
+        onDeleteOneTime(rowData.id)
+      } else {
+        onDeleteRecurring(rowData.id)
+      }
+    })
+
     tbody.appendChild(row)
   }
 }
@@ -128,33 +257,63 @@ function suggestRange(flows) {
   }
 }
 
+function extendRange(currentStart, currentEnd, candidateStart, candidateEnd) {
+  const starts = [currentStart, candidateStart].filter(Boolean)
+  const ends = [currentEnd, candidateEnd].filter(Boolean)
+  return {
+    startDate: starts.sort((a, b) => a.localeCompare(b))[0],
+    endDate: ends.sort((a, b) => a.localeCompare(b))[ends.length - 1]
+  }
+}
+
 function init() {
-  const form = document.getElementById('cash-flow-form')
-  const rows = document.getElementById('cash-flow-rows')
+  const oneTimeForm = document.getElementById('cash-flow-form')
+  const recurringForm = document.getElementById('recurring-form')
+  const rows = document.getElementById('configured-flow-rows')
   const chart = document.getElementById('chart')
   const startInput = document.getElementById('range-start')
   const endInput = document.getElementById('range-end')
 
-  let cashFlows = loadCashFlows()
+  let oneTimeFlows = loadList(ONE_TIME_STORAGE_KEY)
+  let recurringFlows = loadList(RECURRING_STORAGE_KEY)
 
-  const defaultRange = suggestRange(cashFlows)
+  const defaultRange = suggestRange([...oneTimeFlows.map((entry) => ({ date: entry.date }))])
   startInput.value = defaultRange.startDate
   endInput.value = defaultRange.endDate
 
   function rerender() {
-    const sorted = [...cashFlows].sort((a, b) => a.date.localeCompare(b.date))
-    renderTable(sorted, rows, (id) => {
-      cashFlows = cashFlows.filter((flow) => flow.id !== id)
-      saveCashFlows(cashFlows)
+    const sortedOneTime = [...oneTimeFlows].sort((a, b) => a.date.localeCompare(b.date))
+    const sortedRecurring = [...recurringFlows].sort((a, b) => a.startDate.localeCompare(b.startDate))
 
-      if (!cashFlows.length) {
-        const fallbackDate = new Date().toISOString().slice(0, 10)
-        startInput.value = fallbackDate
-        endInput.value = fallbackDate
+    renderConfiguredTable(
+      sortedOneTime,
+      sortedRecurring,
+      rows,
+      (id) => {
+        oneTimeFlows = oneTimeFlows.filter((flow) => flow.id !== id)
+        saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
+
+        if (!oneTimeFlows.length && !recurringFlows.length) {
+          const fallbackDate = new Date().toISOString().slice(0, 10)
+          startInput.value = fallbackDate
+          endInput.value = fallbackDate
+        }
+
+        rerender()
+      },
+      (id) => {
+        recurringFlows = recurringFlows.filter((flow) => flow.id !== id)
+        saveList(RECURRING_STORAGE_KEY, recurringFlows)
+
+        if (!oneTimeFlows.length && !recurringFlows.length) {
+          const fallbackDate = new Date().toISOString().slice(0, 10)
+          startInput.value = fallbackDate
+          endInput.value = fallbackDate
+        }
+
+        rerender()
       }
-
-      rerender()
-    })
+    )
 
     const startDate = startInput.value
     const endDate = endInput.value
@@ -163,14 +322,22 @@ function init() {
       return
     }
 
-    const series = calculateCumulativeSeries(cashFlows, startDate, endDate)
+    let effectiveFlows
+    try {
+      effectiveFlows = buildEffectiveFlows(oneTimeFlows, recurringFlows, startDate, endDate)
+    } catch (error) {
+      chart.innerHTML = `<div class="empty">${error.message}</div>`
+      return
+    }
+
+    const series = calculateCumulativeSeries(effectiveFlows)
     renderChart(series, chart)
   }
 
-  form.addEventListener('submit', (event) => {
+  oneTimeForm.addEventListener('submit', (event) => {
     event.preventDefault()
 
-    const formData = new FormData(form)
+    const formData = new FormData(oneTimeForm)
     const amount = Number(formData.get('amount'))
     const date = String(formData.get('date') || '')
     const direction = String(formData.get('direction') || 'inflow')
@@ -180,23 +347,89 @@ function init() {
       return
     }
 
-    const nextFlow = {
-      id: crypto.randomUUID(),
-      date,
-      amount,
-      direction,
-      category
-    }
+    oneTimeFlows = [
+      ...oneTimeFlows,
+      {
+        id: crypto.randomUUID(),
+        date,
+        amount,
+        direction,
+        category
+      }
+    ]
+    saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
 
-    cashFlows = [...cashFlows, nextFlow]
-    saveCashFlows(cashFlows)
-
-    const range = suggestRange(cashFlows)
+    const range = suggestRange([...oneTimeFlows.map((entry) => ({ date: entry.date }))])
     startInput.value = range.startDate
     endInput.value = range.endDate
 
-    form.reset()
-    form.querySelector('#direction').value = 'inflow'
+    oneTimeForm.reset()
+    oneTimeForm.querySelector('#direction').value = 'inflow'
+
+    rerender()
+  })
+
+  recurringForm.addEventListener('submit', (event) => {
+    event.preventDefault()
+
+    const formData = new FormData(recurringForm)
+    const period = String(formData.get('period') || '').trim()
+    const startDate = String(formData.get('startDate') || '')
+    const endDate = String(formData.get('endDate') || '').trim()
+    const occurrencesRaw = String(formData.get('occurrences') || '').trim()
+    const amount = Number(formData.get('amount'))
+    const direction = String(formData.get('direction') || 'inflow')
+    const category = String(formData.get('category') || '').trim() || 'general'
+
+    const hasEndDate = endDate.length > 0
+    const hasOccurrences = occurrencesRaw.length > 0
+    if (!hasEndDate && !hasOccurrences) {
+      return
+    }
+
+    const occurrences = hasOccurrences ? Number(occurrencesRaw) : undefined
+    if (hasOccurrences && (!Number.isInteger(occurrences) || occurrences <= 0)) {
+      return
+    }
+
+    if (!startDate || !period || !Number.isFinite(amount) || amount < 0) {
+      return
+    }
+
+    try {
+      parseMonthlyCronDay(period)
+      const parsedStart = parseIsoDate(startDate)
+      if (hasEndDate) {
+        const parsedEnd = parseIsoDate(endDate)
+        if (parsedEnd.getTime() < parsedStart.getTime()) {
+          return
+        }
+      }
+    } catch {
+      return
+    }
+
+    recurringFlows = [
+      ...recurringFlows,
+      {
+        id: crypto.randomUUID(),
+        period,
+        startDate,
+        endDate: hasEndDate ? endDate : undefined,
+        occurrences,
+        amount,
+        direction,
+        category
+      }
+    ]
+    saveList(RECURRING_STORAGE_KEY, recurringFlows)
+
+    const updatedRange = extendRange(startInput.value, endInput.value, startDate, endDate || startDate)
+    startInput.value = updatedRange.startDate
+    endInput.value = updatedRange.endDate
+
+    recurringForm.reset()
+    recurringForm.querySelector('#recurring-direction').value = 'inflow'
 
     rerender()
   })

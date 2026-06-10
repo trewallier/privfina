@@ -7,7 +7,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [x] Create initial project structure and package layout.
 - [x] Add baseline documentation: `README.md`, `DESIGN.md`, `ROADMAP.md`.
 - [x] Implement one-time cash-flow definition and generation.
-- [ ] Implement recurring cash-flow definition and generation (cron-like period, start date, end date or occurrence count, amount).
+- [x] Implement recurring cash-flow definition and generation (cron-like period, start date, end date or occurrence count, amount).
 - [ ] Build basic cash-flow management controls (add, view, edit, delete) supporting any number of flows.
 - [x] Add cumulative cash-flow diagram with configurable start/end date pickers.
 - [ ] Add tests for cash-flow CRUD behavior and cumulative aggregation logic.

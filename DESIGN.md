@@ -50,7 +50,7 @@ An instrument is a source of one or more cash flows.
 - `Investment`: contributions, distributions, and valuation-related flows
 
 The current implementation only includes the common `CashFlow` model. Instrument-specific types will be layered on top as small additions.
-The current implementation includes one-time cash-flow creation and cumulative-series helpers without introducing a full instrument hierarchy yet.
+The current implementation includes one-time cash-flow creation, recurring monthly generation, and cumulative-series helpers without introducing a full instrument hierarchy yet.
 
 ## Architecture
 
@@ -88,11 +88,11 @@ Responsibilities:
 
 Status:
 
-- partially implemented for one-time flow generation; recurring expansion is pending
+- partially implemented for one-time and recurring monthly flow generation
 
 Current modules:
 
-- `finance_engine.engine`: one-time cash-flow creation and cumulative-series calculation helpers
+- `finance_engine.engine`: one-time cash-flow creation, recurring monthly generation, and cumulative-series calculation helpers
 
 ### 4. Analytics
 

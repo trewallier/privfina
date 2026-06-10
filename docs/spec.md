@@ -14,7 +14,7 @@ Glossary
 Scenarios / Use-cases
 - Cash-flow management page: users can add, view, edit, and delete any number of cash flows.
 - One-time cash flow: users can configure a single income or payout with amount and date.
-- Recurring cash flow: users can configure income or payout with cron-like period, start date, end date or occurrence count, and amount.
+- Recurring cash flow: users can configure income or payout with a monthly cron-like period, start date, end date or occurrence count, and amount.
 - Cumulative cash-flow diagram: users can select a start/end date range and view cumulative totals over time.
 - Local persistence: save state in browser storage and allow export/import of JSON data.
 - Static deployment: run the app as a static site on GitHub Pages with no backend runtime.
@@ -31,11 +31,12 @@ Assumptions
 Acceptance criteria
 - [ ] Static app deployment is feasible on GitHub Pages, with all runtime behavior in client-side assets.
 - [ ] Users can create any number of cash flows through the page controls.
-- [ ] Users can view, edit, and delete existing cash flows, and changes are reflected immediately in the UI state.
-- [ ] One-time cash flow supports configurable amount and date (plus inflow/outflow direction).
-- [ ] Recurring cash flow supports configurable period (cron-like structure), start date, end date or number of occurrences, and amount (plus inflow/outflow direction).
-- [ ] Cumulative cash-flow diagram uses configurable start and end date pickers for the X axis.
-- [ ] Diagram Y axis represents cumulative signed cash-flow totals (inflow positive, outflow negative) across the selected date range.
+- [ ] Users can view and delete existing cash flows, and changes are reflected immediately in the UI state.
+- [ ] Users can edit existing cash flows, and changes are reflected immediately in the UI state.
+- [x] One-time cash flow supports configurable amount and date (plus inflow/outflow direction).
+- [x] Recurring cash flow supports configurable period (monthly cron-like structure), start date, end date or number of occurrences, and amount (plus inflow/outflow direction).
+- [x] Cumulative cash-flow diagram uses configurable start and end date pickers for the X axis.
+- [x] Diagram Y axis represents cumulative signed cash-flow totals (inflow positive, outflow negative) across the selected date range.
 - [ ] Add/edit/delete operations and date-range changes trigger diagram recalculation using current data.
 - [ ] User data persists between browser sessions using browser storage, and export/import JSON can back up and restore state.
 - [ ] The calculation engine exposes a clean interface to UI/controller code.

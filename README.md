@@ -7,6 +7,7 @@ This repository is evolving toward a browser-hosted personal finance planning ap
 - Static web app architecture for GitHub Pages.
 - Browser storage persistence with export/import JSON for user data portability.
 - Isolated calculation engine interface to separate UI from compute.
+- Implemented v1 slice: one-time cash-flow create/view/delete and cumulative cash-flow chart with date-range controls.
 - Optional external macro data fetched in-browser through a CORS-aware adapter.
 - Documentation-driven workflow with architecture decisions captured in `docs/adr/`.
 
@@ -57,3 +58,4 @@ The initial source lives under `src/` and the package exposes a browser-friendly
 ## Next Steps
 
 The planned next increments are tracked in `ROADMAP.md`. The architecture and extension rules live in `DESIGN.md` so later work can stay aligned with repository direction.
+Immediate next increments are recurring cash-flow support and full edit capabilities for existing cash flows.

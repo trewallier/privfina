@@ -50,7 +50,7 @@ An instrument is a source of one or more cash flows.
 - `Investment`: contributions, distributions, and valuation-related flows
 
 The current implementation only includes the common `CashFlow` model. Instrument-specific types will be layered on top as small additions.
-The current recurring helper adds salary and subscription schedule generation without introducing a full instrument hierarchy yet.
+The current implementation includes one-time cash-flow creation, recurring monthly generation, and cumulative-series helpers without introducing a full instrument hierarchy yet.
 
 ## Architecture
 
@@ -88,11 +88,11 @@ Responsibilities:
 
 Status:
 
-- partially implemented for simple monthly salary and subscription schedules
+- partially implemented for one-time and recurring monthly flow generation
 
 Current modules:
 
-- `finance_engine.recurring`: recurring monthly cash-flow generation helpers
+- `finance_engine.engine`: one-time cash-flow creation, recurring monthly generation, and cumulative-series calculation helpers
 
 ### 4. Analytics
 
@@ -104,7 +104,7 @@ Responsibilities:
 
 Current modules:
 
-- `finance_engine.summary`: monthly aggregation and text formatting
+- `finance_engine.engine`: cumulative-series helper for date-range chart data
 
 ## Interaction Model (v1)
 
@@ -128,7 +128,7 @@ There is no hard limit on the number of cash flows a user can create, other than
 ### List behavior
 
 - Default sort should be by next effective date, then creation order.
-- Each row should expose direct edit and delete actions.
+- Current implementation exposes delete action per row; edit is planned next.
 - Changes should update persisted browser state immediately.
 
 ## Visualization: Cumulative Cash-Flow Diagram

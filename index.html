@@ -4,11 +4,197 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Privfina</title>
+    <style>
+      :root {
+        --bg: #f3f2ee;
+        --card: #fffdf7;
+        --text: #24211c;
+        --muted: #6f6558;
+        --accent: #0f766e;
+        --accent-soft: #dff5f1;
+        --border: #d9d0c4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+        background: linear-gradient(160deg, #f3f2ee 0%, #ece6dc 55%, #f8f8f6 100%);
+        color: var(--text);
+      }
+
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px 16px 40px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+
+      p.lead {
+        margin-top: 8px;
+        color: var(--muted);
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-top: 16px;
+      }
+
+      form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+      }
+
+      label {
+        font-size: 0.9rem;
+        display: grid;
+        gap: 6px;
+      }
+
+      input,
+      select,
+      button {
+        font: inherit;
+        border-radius: 8px;
+      }
+
+      input,
+      select {
+        border: 1px solid var(--border);
+        padding: 8px 10px;
+        background: #fff;
+      }
+
+      button {
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: #fff;
+        padding: 9px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        border-color: #a94442;
+        background: #fff;
+        color: #a94442;
+        padding: 6px 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      #chart {
+        width: 100%;
+        min-height: 240px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      #chart svg {
+        display: block;
+        width: 100%;
+        height: 260px;
+      }
+
+      .empty {
+        padding: 24px;
+        color: var(--muted);
+        background: var(--accent-soft);
+      }
+    </style>
   </head>
   <body>
     <main>
       <h1>Privfina</h1>
-      <p>Hello World — GitHub Pages deployment is configured.</p>
+      <p class="lead">One-time cash flows: create, review, delete, and visualize cumulative totals.</p>
+
+      <section class="card">
+        <h2>Add One-Time Cash Flow</h2>
+        <form id="cash-flow-form">
+          <div class="row">
+            <label>
+              Date
+              <input id="date" name="date" type="date" required />
+            </label>
+            <label>
+              Amount
+              <input id="amount" name="amount" type="number" min="0" step="0.01" required />
+            </label>
+            <label>
+              Direction
+              <select id="direction" name="direction" required>
+                <option value="inflow">Inflow</option>
+                <option value="outflow">Outflow</option>
+              </select>
+            </label>
+            <label>
+              Category
+              <input id="category" name="category" type="text" placeholder="general" />
+            </label>
+          </div>
+          <button type="submit">Add Cash Flow</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Cash Flows</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Direction</th>
+              <th>Amount</th>
+              <th>Category</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="cash-flow-rows"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Cumulative Cash-Flow Diagram</h2>
+        <div class="row">
+          <label>
+            Start date
+            <input id="range-start" type="date" />
+          </label>
+          <label>
+            End date
+            <input id="range-end" type="date" />
+          </label>
+        </div>
+        <div id="chart"></div>
+      </section>
     </main>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>

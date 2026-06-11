@@ -185,6 +185,99 @@ export function evaluateRecurring(
   mode: 'expand' | 'aggregate' | 'npv',
   opts?: { discountRate?: number; baseDate?: string }
 ): number | CashFlow[] {
+  // For aggregate/npv modes prefer closed-form when possible for monthly fixed schedules
+  if (mode === 'npv' || mode === 'aggregate') {
+    // Attempt closed-form for monthly fixed-amount recurrences where day <= 28
+    try {
+      const dayOfMonth = parseMonthlyCronDay(input.period)
+      if (dayOfMonth <= 28) {
+        const anchorStart = parseIsoDate(input.startDate)
+        const windowStart = parseIsoDate(range.startDate)
+        const windowEnd = parseIsoDate(range.endDate)
+
+        // compute first possible occurrence on or after max(input.startDate, range.startDate)
+        const candidateStart = windowStart.getTime() > anchorStart.getTime() ? windowStart : anchorStart
+        let year = candidateStart.getUTCFullYear()
+        let month = candidateStart.getUTCMonth()
+
+        function makeCandidate(y: number, m: number): Date {
+          return new Date(Date.UTC(y, m, dayOfMonth))
+        }
+
+        let first = makeCandidate(year, month)
+        if (first.getTime() < candidateStart.getTime()) {
+          month += 1
+          if (month > 11) {
+            month = 0
+            year += 1
+          }
+          first = makeCandidate(year, month)
+        }
+
+        // Determine last occurrence limited by input.endDate, input.occurrences, and range.endDate
+        const inputEnd = input.endDate ? parseIsoDate(input.endDate) : undefined
+        let lastLimit = windowEnd
+        if (inputEnd && inputEnd.getTime() < lastLimit.getTime()) lastLimit = inputEnd
+
+        // If occurrences is set, compute last occurrence by adding occurrences-1 months to start date
+        let maxByOcc: Date | undefined = undefined
+        if (typeof input.occurrences === 'number') {
+          const occCount = input.occurrences
+          const start = parseIsoDate(input.startDate)
+          const startYear = start.getUTCFullYear()
+          const startMonth = start.getUTCMonth()
+          const occIndex = occCount - 1
+          const occYear = startYear + Math.floor((startMonth + occIndex) / 12)
+          const occMonth = (startMonth + occIndex) % 12
+          maxByOcc = makeCandidate(occYear, occMonth)
+        }
+
+        if (maxByOcc && maxByOcc.getTime() < lastLimit.getTime()) lastLimit = maxByOcc
+
+        if (first.getTime() > lastLimit.getTime()) {
+          // no occurrences in window
+          if (mode === 'expand') return []
+          return 0
+        }
+
+        // compute number of monthly steps between first and lastLimit (inclusive)
+        const lastYear = lastLimit.getUTCFullYear()
+        const lastMonth = lastLimit.getUTCMonth()
+        const months = (lastYear - first.getUTCFullYear()) * 12 + (lastMonth - first.getUTCMonth())
+        const n = months + 1
+
+        if (mode === 'aggregate') {
+          const amtSigned = input.direction === CashFlowDirection.Inflow ? input.amount : -input.amount
+          return amtSigned * n
+        }
+
+        if (mode === 'npv') {
+          const rate = opts?.discountRate ?? 0
+          const baseDateIso = opts?.baseDate ?? range.startDate
+          const base = parseIsoDate(baseDateIso)
+
+          // compute months from base to first
+          const m = (first.getUTCFullYear() - base.getUTCFullYear()) * 12 + (first.getUTCMonth() - base.getUTCMonth()) + (first.getUTCDate() < base.getUTCDate() ? -1 : 0)
+
+          // monthly effective rate from annual rate
+          const monthlyR = Math.pow(1 + rate, 1 / 12) - 1
+          const A = input.direction === CashFlowDirection.Inflow ? input.amount : -input.amount
+
+          if (monthlyR === 0) {
+            return A * Math.pow(1, -m) * n
+          }
+
+          // geometric sum: A * (1+r)^-m * (1 - (1+r)^-n) / (1 - (1+r)^-1)
+          const dfm = Math.pow(1 + monthlyR, -m)
+          const factor = (1 - Math.pow(1 + monthlyR, -n)) / (1 - Math.pow(1 + monthlyR, -1))
+          return A * dfm * factor
+        }
+      }
+    } catch (e) {
+      // fall back to expansion-based evaluation
+    }
+  }
+
   // Reuse generator which is already range-aware by startDate/endDate/occurrences
   const expanded = generateRecurringCashFlows({ ...input, startDate: input.startDate, endDate: input.endDate, occurrences: input.occurrences })
   const inWindow = expanded.filter((cf) => inRange(cf.date, range))

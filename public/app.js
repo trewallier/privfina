@@ -132,11 +132,12 @@ function parseMonthlyCronDay(period) {
 function expandRecurringFlows(definition, rangeStart, rangeEnd) {
   const dayOfMonth = parseMonthlyCronDay(definition.period)
   const startDate = parseIsoDate(definition.startDate)
+  const rangeEndDate = parseIsoDate(rangeEnd)
   const endDate = definition.endDate ? parseIsoDate(definition.endDate) : null
-  const hasValidOccurrences =
-    Number.isInteger(definition.occurrences) && definition.occurrences > 0
+  const occurrences = parseOccurrences(definition.occurrences)
+  const hasValidOccurrences = typeof occurrences === 'number'
   const maxOccurrences = hasValidOccurrences
-    ? definition.occurrences
+    ? occurrences
     : Number.MAX_SAFE_INTEGER
 
   if (!hasValidOccurrences && !endDate) {
@@ -146,8 +147,11 @@ function expandRecurringFlows(definition, rangeStart, rangeEnd) {
   let year = startDate.getUTCFullYear()
   let month = startDate.getUTCMonth()
   const generated = []
+  let iterationCount = 0
+  const MAX_ITERATIONS = 10000
 
-  while (generated.length < maxOccurrences) {
+  while (generated.length < maxOccurrences && iterationCount < MAX_ITERATIONS) {
+    iterationCount += 1
     const monthDays = daysInMonthUtc(year, month)
     if (dayOfMonth <= monthDays) {
       const candidate = new Date(Date.UTC(year, month, dayOfMonth))
@@ -174,6 +178,11 @@ function expandRecurringFlows(definition, rangeStart, rangeEnd) {
     if (month > 11) {
       month = 0
       year += 1
+    }
+
+    const nextCandidate = new Date(Date.UTC(year, month, dayOfMonth))
+    if (nextCandidate.getTime() > rangeEndDate.getTime()) {
+      break
     }
   }
 

@@ -65,4 +65,51 @@ describe('browser recurrence validation helpers', () => {
 
     expect(expandRecurringFlows(definition, '2024-01-01', '2024-12-31')).toEqual([])
   })
+
+  it('parses string occurrences directly in expandRecurringFlows', () => {
+    const definition = {
+      period: '0 0 15 * *',
+      startDate: '2024-01-01',
+      occurrences: '12',
+      amount: 100,
+      direction: 'inflow',
+      category: 'general'
+    }
+
+    expect(expandRecurringFlows(definition, '2024-01-01', '2024-12-31')).toHaveLength(12)
+  })
+
+  it('stops expanding recurring flows once the selected range ends', () => {
+    const definition = {
+      period: '0 0 15 * *',
+      startDate: '2024-01-01',
+      occurrences: 120,
+      amount: 100,
+      direction: 'inflow',
+      category: 'general'
+    }
+
+    expect(expandRecurringFlows(definition, '2024-01-01', '2024-01-31')).toHaveLength(1)
+  })
+
+  it('stops expanding flows for a range earlier than a distant endDate', () => {
+    const definition = {
+      period: '0 0 15 * *',
+      startDate: '2024-01-01',
+      endDate: '2050-12-31',
+      occurrences: 'invalid',
+      amount: 100,
+      direction: 'inflow',
+      category: 'general'
+    }
+
+    expect(expandRecurringFlows(definition, '2024-01-01', '2024-01-31')).toEqual([
+      {
+        date: '2024-01-15',
+        amount: 100,
+        direction: 'inflow',
+        category: 'general'
+      }
+    ])
+  })
 })

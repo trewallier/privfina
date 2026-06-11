@@ -83,8 +83,15 @@ Status:
 
 Responsibilities:
 
-- expand instruments plus rules into dated `CashFlow` objects
+- expand instruments plus rules into dated `CashFlow` objects within a provided query `range`
+- provide both expansion and non-expanding evaluation paths (see `CashFlowDefinition` interface)
 - keep generation deterministic and testable
+
+Evaluation strategies:
+
+- Closed-form (O(1)): use for fixed, regular schedules with constant amounts when possible (e.g., fixed monthly salary). Closed-form sums and annuity formulas enable O(1) aggregate and NPV computation for in-range queries.
+- Lazy iteration (O(k) within range): generate or enumerate only occurrences overlapping the requested `range`; complexity scales with the number of in-range occurrences.
+- Full simulation (O(n) where n = events in-range): required for stateful instruments (loans, balance-dependent rules) that require chronological processing to maintain internal state.
 
 Status:
 
@@ -102,9 +109,13 @@ Responsibilities:
 - provide liquidity views at daily, weekly, and monthly levels
 - compute metrics such as net totals and NPV
 
+Notes:
+
+- Analytics should consume either expanded `CashFlow` lists or the results of `evaluate(range, mode)` calls. For performance-sensitive analytics (aggregate totals, NPV), prefer `evaluate(..., "aggregate")` or `evaluate(..., "npv")` when available.
+
 Current modules:
 
-- `finance_engine.engine`: cumulative-series helper for date-range chart data
+- `finance_engine.engine`: cumulative-series helper for date-range chart data and evaluation utilities
 
 ## Interaction Model (v1)
 
@@ -145,9 +156,9 @@ The page should include a cumulative cash-flow diagram built from generated date
 
 ### Data preparation rules
 
-- Expand recurring definitions into dated cash-flow instances before charting.
-- Merge expanded recurring instances with one-time flows.
-- Sort all included flows by date ascending before cumulative calculation.
+- Use range-limited expansion for charting: call `expand(range)` or `evaluate(range, "expand")` to obtain explicit `CashFlow` instances overlapping the chart range.
+- For aggregate charts or large ranges, prefer `evaluate(range, "aggregate")` or `evaluate(range, "npv")` to avoid unnecessary expansion.
+- Merge expanded or enumerated recurring instances with one-time flows, then sort by date ascending before cumulative calculation.
 - Compute running total as: previous total + signed flow amount.
 
 ### Interaction behavior
@@ -155,6 +166,8 @@ The page should include a cumulative cash-flow diagram built from generated date
 - Updating either date picker should re-render the chart immediately.
 - Editing, adding, or deleting a cash flow should refresh the chart using current filters.
 - If no flows exist in range, render an empty-state chart with zero baseline.
+
+Performance note: charting over long ranges should prefer aggregate or lazy evaluation strategies where possible; the engine must avoid generating flows outside the requested range.
 
 ## Platform & Hosting
 

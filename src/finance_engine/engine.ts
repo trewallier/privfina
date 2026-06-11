@@ -1,6 +1,16 @@
 import type { CashFlow } from './models'
 import { CashFlowDirection } from './models'
 
+export interface DateRange {
+  startDate: string
+  endDate: string
+}
+
+export interface CashFlowDefinition {
+  expand(range: DateRange): CashFlow[]
+  evaluate(range: DateRange, mode: 'expand' | 'aggregate' | 'npv', opts?: { discountRate?: number; baseDate?: string }): number | CashFlow[]
+}
+
 export interface CalculationEngine {
   summarizeCashFlows(cashFlows: ReadonlyArray<CashFlow>): Array<{ period: string; total: number }>
 }
@@ -163,6 +173,47 @@ export function generateRecurringCashFlows(input: RecurringCashFlowInput): CashF
   }
 
   return generated
+}
+
+function inRange(dateIso: string, range: DateRange): boolean {
+  return dateIso >= range.startDate && dateIso <= range.endDate
+}
+
+export function evaluateRecurring(
+  input: RecurringCashFlowInput,
+  range: DateRange,
+  mode: 'expand' | 'aggregate' | 'npv',
+  opts?: { discountRate?: number; baseDate?: string }
+): number | CashFlow[] {
+  // Reuse generator which is already range-aware by startDate/endDate/occurrences
+  const expanded = generateRecurringCashFlows({ ...input, startDate: input.startDate, endDate: input.endDate, occurrences: input.occurrences })
+  const inWindow = expanded.filter((cf) => inRange(cf.date, range))
+
+  if (mode === 'expand') {
+    return inWindow
+  }
+
+  if (mode === 'aggregate') {
+    return inWindow.reduce((s, cf) => s + (cf.direction === CashFlowDirection.Inflow ? cf.amount : -cf.amount), 0)
+  }
+
+  if (mode === 'npv') {
+    const rate = opts?.discountRate ?? 0
+    const baseDateIso = opts?.baseDate ?? range.startDate
+    const base = parseIsoDate(baseDateIso)
+    let pv = 0
+    for (const cf of inWindow) {
+      const cashDate = parseIsoDate(cf.date)
+      const days = Math.round((cashDate.getTime() - base.getTime()) / (1000 * 60 * 60 * 24))
+      const years = days / 365.0
+      const df = Math.pow(1 + rate, years)
+      const amt = cf.direction === CashFlowDirection.Inflow ? cf.amount : -cf.amount
+      pv += amt / df
+    }
+    return pv
+  }
+
+  throw new Error('Unsupported evaluation mode')
 }
 
 export function calculateCumulativeSeries(

@@ -87,6 +87,30 @@ function parseMonthlyCronDay(period: string): number {
   return Number(cronMatch[3])
 }
 
+function recognizeSchedule(period: string): { type: 'monthly' | 'weekly' | 'annual' | 'unsupported'; day?: number; month?: number; weekday?: number } {
+  const toks = period.trim().split(/\s+/)
+  if (toks.length !== 5) return { type: 'unsupported' }
+
+  const [m, h, day, month, dow] = toks
+
+  // monthly: m h day * *
+  if (/^([1-9]|[12]\d|3[01])$/.test(day) && month === '*' && dow === '*') {
+    return { type: 'monthly', day: Number(day) }
+  }
+
+  // weekly: m h * * weekday (0-6)
+  if (day === '*' && month === '*' && /^([0-6])$/.test(dow)) {
+    return { type: 'weekly', weekday: Number(dow) }
+  }
+
+  // annual: m h day month *  (month 1-12)
+  if (/^([1-9]|[12]\d|3[01])$/.test(day) && /^([1-9]|1[0-2])$/.test(month) && dow === '*') {
+    return { type: 'annual', day: Number(day), month: Number(month) }
+  }
+
+  return { type: 'unsupported' }
+}
+
 export function createOneTimeCashFlow(input: OneTimeCashFlowInput): CashFlow {
   const amount = Number(input.amount)
   if (!Number.isFinite(amount) || amount < 0) {
@@ -187,15 +211,15 @@ export function evaluateRecurring(
 ): number | CashFlow[] {
   // For aggregate/npv modes prefer closed-form when possible for monthly fixed schedules
   if (mode === 'npv' || mode === 'aggregate') {
-    // Attempt closed-form for monthly fixed-amount recurrences where day <= 28
     try {
-      const dayOfMonth = parseMonthlyCronDay(input.period)
-      if (dayOfMonth <= 28) {
+      const schedule = recognizeSchedule(input.period)
+      // Monthly closed-form (day <= 28)
+      if (schedule.type === 'monthly' && (schedule.day ?? 0) <= 28) {
+        const dayOfMonth = schedule.day as number
         const anchorStart = parseIsoDate(input.startDate)
         const windowStart = parseIsoDate(range.startDate)
         const windowEnd = parseIsoDate(range.endDate)
 
-        // compute first possible occurrence on or after max(input.startDate, range.startDate)
         const candidateStart = windowStart.getTime() > anchorStart.getTime() ? windowStart : anchorStart
         let year = candidateStart.getUTCFullYear()
         let month = candidateStart.getUTCMonth()
@@ -214,12 +238,10 @@ export function evaluateRecurring(
           first = makeCandidate(year, month)
         }
 
-        // Determine last occurrence limited by input.endDate, input.occurrences, and range.endDate
         const inputEnd = input.endDate ? parseIsoDate(input.endDate) : undefined
         let lastLimit = windowEnd
         if (inputEnd && inputEnd.getTime() < lastLimit.getTime()) lastLimit = inputEnd
 
-        // If occurrences is set, compute last occurrence by adding occurrences-1 months to start date
         let maxByOcc: Date | undefined = undefined
         if (typeof input.occurrences === 'number') {
           const occCount = input.occurrences
@@ -235,12 +257,10 @@ export function evaluateRecurring(
         if (maxByOcc && maxByOcc.getTime() < lastLimit.getTime()) lastLimit = maxByOcc
 
         if (first.getTime() > lastLimit.getTime()) {
-          // no occurrences in window
           if (mode === 'expand') return []
           return 0
         }
 
-        // compute number of monthly steps between first and lastLimit (inclusive)
         const lastYear = lastLimit.getUTCFullYear()
         const lastMonth = lastLimit.getUTCMonth()
         const months = (lastYear - first.getUTCFullYear()) * 12 + (lastMonth - first.getUTCMonth())
@@ -256,10 +276,8 @@ export function evaluateRecurring(
           const baseDateIso = opts?.baseDate ?? range.startDate
           const base = parseIsoDate(baseDateIso)
 
-          // compute months from base to first
           const m = (first.getUTCFullYear() - base.getUTCFullYear()) * 12 + (first.getUTCMonth() - base.getUTCMonth()) + (first.getUTCDate() < base.getUTCDate() ? -1 : 0)
 
-          // monthly effective rate from annual rate
           const monthlyR = Math.pow(1 + rate, 1 / 12) - 1
           const A = input.direction === CashFlowDirection.Inflow ? input.amount : -input.amount
 
@@ -267,14 +285,124 @@ export function evaluateRecurring(
             return A * Math.pow(1, -m) * n
           }
 
-          // geometric sum: A * (1+r)^-m * (1 - (1+r)^-n) / (1 - (1+r)^-1)
           const dfm = Math.pow(1 + monthlyR, -m)
           const factor = (1 - Math.pow(1 + monthlyR, -n)) / (1 - Math.pow(1 + monthlyR, -1))
           return A * dfm * factor
         }
       }
+
+      // Weekly closed-form (fixed weekday)
+      if (schedule.type === 'weekly' && typeof schedule.weekday === 'number') {
+        const weekday = schedule.weekday
+        const anchorStart = parseIsoDate(input.startDate)
+        const windowStart = parseIsoDate(range.startDate)
+        const windowEnd = parseIsoDate(range.endDate)
+
+        const candidateStart = windowStart.getTime() > anchorStart.getTime() ? windowStart : anchorStart
+
+        // find first weekday on or after candidateStart
+        let first = new Date(Date.UTC(candidateStart.getUTCFullYear(), candidateStart.getUTCMonth(), candidateStart.getUTCDate()))
+        const diff = (weekday - first.getUTCDay() + 7) % 7
+        if (diff !== 0) first = new Date(first.getTime() + diff * 24 * 60 * 60 * 1000)
+
+        const inputEnd = input.endDate ? parseIsoDate(input.endDate) : undefined
+        let lastLimit = windowEnd
+        if (inputEnd && inputEnd.getTime() < lastLimit.getTime()) lastLimit = inputEnd
+
+        let maxByOcc: Date | undefined = undefined
+        if (typeof input.occurrences === 'number') {
+          const start = parseIsoDate(input.startDate)
+          const occIndex = input.occurrences - 1
+          maxByOcc = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + occIndex * 7))
+        }
+        if (maxByOcc && maxByOcc.getTime() < lastLimit.getTime()) lastLimit = maxByOcc
+
+        if (first.getTime() > lastLimit.getTime()) {
+          if (mode === 'expand') return []
+          return 0
+        }
+
+        const daysDiff = Math.floor((lastLimit.getTime() - first.getTime()) / (24 * 60 * 60 * 1000))
+        const weeks = Math.floor(daysDiff / 7)
+        const n = weeks + 1
+
+        if (mode === 'aggregate') {
+          const amtSigned = input.direction === CashFlowDirection.Inflow ? input.amount : -input.amount
+          return amtSigned * n
+        }
+
+        if (mode === 'npv') {
+          const rate = opts?.discountRate ?? 0
+          const baseDateIso = opts?.baseDate ?? range.startDate
+          const base = parseIsoDate(baseDateIso)
+
+          const weeklyR = Math.pow(1 + (opts?.discountRate ?? 0), 1 / 52) - 1
+          const A = input.direction === CashFlowDirection.Inflow ? input.amount : -input.amount
+
+          // months from base approximated as weeks difference
+          const weeksToFirst = Math.floor((first.getTime() - base.getTime()) / (7 * 24 * 60 * 60 * 1000))
+          if (weeklyR === 0) return A * n
+          const dfm = Math.pow(1 + weeklyR, -weeksToFirst)
+          const factor = (1 - Math.pow(1 + weeklyR, -n)) / (1 - Math.pow(1 + weeklyR, -1))
+          return A * dfm * factor
+        }
+      }
+
+      // Annual closed-form
+      if (schedule.type === 'annual' && typeof schedule.day === 'number' && typeof schedule.month === 'number') {
+        const dayOfMonth = schedule.day
+        const monthOfYear = schedule.month - 1
+        const anchorStart = parseIsoDate(input.startDate)
+        const windowStart = parseIsoDate(range.startDate)
+        const windowEnd = parseIsoDate(range.endDate)
+
+        const candidateStart = windowStart.getTime() > anchorStart.getTime() ? windowStart : anchorStart
+        let year = candidateStart.getUTCFullYear()
+        let first = new Date(Date.UTC(year, monthOfYear, dayOfMonth))
+        if (first.getTime() < candidateStart.getTime()) {
+          first = new Date(Date.UTC(year + 1, monthOfYear, dayOfMonth))
+        }
+
+        const inputEnd = input.endDate ? parseIsoDate(input.endDate) : undefined
+        let lastLimit = windowEnd
+        if (inputEnd && inputEnd.getTime() < lastLimit.getTime()) lastLimit = inputEnd
+
+        let maxByOcc: Date | undefined = undefined
+        if (typeof input.occurrences === 'number') {
+          const start = parseIsoDate(input.startDate)
+          const occIndex = input.occurrences - 1
+          maxByOcc = new Date(Date.UTC(start.getUTCFullYear() + occIndex, monthOfYear, dayOfMonth))
+        }
+        if (maxByOcc && maxByOcc.getTime() < lastLimit.getTime()) lastLimit = maxByOcc
+
+        if (first.getTime() > lastLimit.getTime()) {
+          if (mode === 'expand') return []
+          return 0
+        }
+
+        const n = lastLimit.getUTCFullYear() - first.getUTCFullYear() + 1
+
+        if (mode === 'aggregate') {
+          const amtSigned = input.direction === CashFlowDirection.Inflow ? input.amount : -input.amount
+          return amtSigned * n
+        }
+
+        if (mode === 'npv') {
+          const rate = opts?.discountRate ?? 0
+          const baseDateIso = opts?.baseDate ?? range.startDate
+          const base = parseIsoDate(baseDateIso)
+
+          const A = input.direction === CashFlowDirection.Inflow ? input.amount : -input.amount
+          const yearsToFirst = first.getUTCFullYear() - base.getUTCFullYear() - (first.getUTCMonth() < base.getUTCMonth() || (first.getUTCMonth() === base.getUTCMonth() && first.getUTCDate() < base.getUTCDate()) ? 1 : 0)
+
+          if (rate === 0) return A * n
+          const dfm = Math.pow(1 + rate, -yearsToFirst)
+          const factor = (1 - Math.pow(1 + rate, -n)) / (1 - Math.pow(1 + rate, -1))
+          return A * dfm * factor
+        }
+      }
     } catch (e) {
-      // fall back to expansion-based evaluation
+      // fall back
     }
   }
 

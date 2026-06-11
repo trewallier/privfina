@@ -46,3 +46,34 @@ Acceptance criteria
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.
 - Link each spec item to the relevant `ROADMAP.md` entry and PR.
+
+Design alignment
+- For engine implementation guidance and evaluation strategy rationale, see `DESIGN.md`. Use `docs/adr/` for recorded architecture decisions that affect evaluation strategy and scope.
+
+Efficient Range Evaluation
+--------------------------
+
+The calculation engine must support efficient evaluation of cash-flow definitions over arbitrary date ranges without requiring full expansion of all future occurrences. This enables working with very long-lived recurring definitions (years or decades) without generating large in-memory timelines.
+
+API surface
+- Cash-flow definitions MUST implement the `CashFlowDefinition` interface:
+
+	interface CashFlowDefinition {
+		expand(range): CashFlow[]
+		evaluate(range, mode: "expand" | "aggregate" | "npv"): number | CashFlow[]
+	}
+
+Modes
+- `expand`: returns the explicit list of `CashFlow` instances overlapping the provided `range` (same semantics as current expansion).
+- `aggregate`: computes the numerical sum of flows in the `range` without returning individual `CashFlow` items.
+- `npv`: computes the net-present-value over the `range` using a provided discount-rate (see engine APIs).
+
+Acceptance criteria for range evaluation
+- No full expansion required for long-running recurring definitions when using `evaluate()` modes other than `expand`.
+- `evaluate(range, "aggregate")` and `evaluate(range, "npv")` must produce results equivalent to running `expand(range)` and post-processing the list.
+- `evaluate(range, "npv")` must work efficiently on partial ranges and may use closed-form formulas for constant recurring flows where applicable (annuity formulas), but must fall back to per-occurrence discounting when closed-form is not possible.
+- The engine must only consider flows that overlap the requested `range` and must not generate flows outside that range.
+
+Notes
+- Stateless instruments (e.g., salary, subscription) should be eligible for closed-form or lazy aggregate evaluation without historical simulation.
+- Stateful instruments (e.g., loan amortization, balance-dependent rules) must be simulated chronologically and may require full or partial expansion within the range for correctness.

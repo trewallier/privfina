@@ -22,6 +22,72 @@ function saveList(key, value) {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
+function parseOccurrences(value) {
+  if (Number.isInteger(value) && value > 0) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim())
+    if (Number.isInteger(parsed) && parsed > 0) {
+      return parsed
+    }
+  }
+
+  return undefined
+}
+
+function normalizeRecurringDefinition(definition) {
+  if (!definition || typeof definition !== 'object') {
+    return null
+  }
+
+  const period = String(definition.period || '').trim()
+  const startDate = String(definition.startDate || '').trim()
+  const amount = Number(definition.amount)
+  const direction = definition.direction === 'outflow' ? 'outflow' : 'inflow'
+  const category = String(definition.category || '').trim() || 'general'
+  const endDate = definition.endDate ? String(definition.endDate).trim() : undefined
+  const occurrences = parseOccurrences(definition.occurrences)
+
+  if (!period || !startDate || !Number.isFinite(amount) || amount < 0) {
+    return null
+  }
+
+  const normalized = {
+    ...definition,
+    period,
+    startDate,
+    amount,
+    direction,
+    category
+  }
+
+  if (endDate) {
+    normalized.endDate = endDate
+  } else {
+    delete normalized.endDate
+  }
+
+  if (occurrences !== undefined) {
+    normalized.occurrences = occurrences
+  } else {
+    delete normalized.occurrences
+  }
+
+  return normalized
+}
+
+function normalizeRecurringDefinitions(definitions) {
+  if (!Array.isArray(definitions)) {
+    return []
+  }
+
+  return definitions
+    .map(normalizeRecurringDefinition)
+    .filter((definition) => definition !== null)
+}
+
 function parseIsoDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!match) {
@@ -67,10 +133,15 @@ function expandRecurringFlows(definition, rangeStart, rangeEnd) {
   const dayOfMonth = parseMonthlyCronDay(definition.period)
   const startDate = parseIsoDate(definition.startDate)
   const endDate = definition.endDate ? parseIsoDate(definition.endDate) : null
-  const maxOccurrences =
+  const hasValidOccurrences =
     Number.isInteger(definition.occurrences) && definition.occurrences > 0
-      ? definition.occurrences
-      : Number.MAX_SAFE_INTEGER
+  const maxOccurrences = hasValidOccurrences
+    ? definition.occurrences
+    : Number.MAX_SAFE_INTEGER
+
+  if (!hasValidOccurrences && !endDate) {
+    return []
+  }
 
   let year = startDate.getUTCFullYear()
   let month = startDate.getUTCMonth()
@@ -111,9 +182,13 @@ function expandRecurringFlows(definition, rangeStart, rangeEnd) {
 
 function buildEffectiveFlows(oneTime, recurring, rangeStart, rangeEnd) {
   const oneTimeInRange = oneTime.filter((flow) => flow.date >= rangeStart && flow.date <= rangeEnd)
-  const recurringExpanded = recurring.flatMap((definition) =>
-    expandRecurringFlows(definition, rangeStart, rangeEnd)
-  )
+  const recurringExpanded = recurring.flatMap((definition) => {
+    try {
+      return expandRecurringFlows(definition, rangeStart, rangeEnd)
+    } catch {
+      return []
+    }
+  })
   return [...oneTimeInRange, ...recurringExpanded].sort((a, b) => a.date.localeCompare(b.date))
 }
 
@@ -275,9 +350,17 @@ function init() {
   const endInput = document.getElementById('range-end')
 
   let oneTimeFlows = loadList(ONE_TIME_STORAGE_KEY)
-  let recurringFlows = loadList(RECURRING_STORAGE_KEY)
+  const rawRecurringFlows = loadList(RECURRING_STORAGE_KEY)
+  let recurringFlows = normalizeRecurringDefinitions(rawRecurringFlows)
 
-  const defaultRange = suggestRange([...oneTimeFlows.map((entry) => ({ date: entry.date }))])
+  if (JSON.stringify(recurringFlows) !== JSON.stringify(rawRecurringFlows)) {
+    saveList(RECURRING_STORAGE_KEY, recurringFlows)
+  }
+
+  const defaultRange = suggestRange([
+    ...oneTimeFlows.map((entry) => ({ date: entry.date })),
+    ...recurringFlows.map((entry) => ({ date: entry.startDate }))
+  ])
   startInput.value = defaultRange.startDate
   endInput.value = defaultRange.endDate
 
@@ -440,4 +523,25 @@ function init() {
   rerender()
 }
 
-init()
+export {
+  parseOccurrences,
+  normalizeRecurringDefinition,
+  normalizeRecurringDefinitions,
+  expandRecurringFlows,
+  buildEffectiveFlows
+}
+
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'
+if (isBrowser) {
+  const runInit = () => {
+    if (document.getElementById('cash-flow-form') && document.getElementById('recurring-form')) {
+      init()
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', runInit)
+  } else {
+    runInit()
+  }
+}

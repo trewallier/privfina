@@ -24,7 +24,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 ### Platform & Hosting
 - [x] v1: GitHub Pages deployment setup (static build + publish)
 - [ ] v1: browser storage persistence + export/import
-- [ ] v1: define calculation-engine interface + baseline JS implementation
+- [x] v1: define calculation-engine interface + baseline JS implementation
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] v2: WASM spike: compile a small compute kernel and call it from JS
 - [ ] v2: replace hottest compute paths with WASM
@@ -47,7 +47,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [ ] Add business-day conventions and holiday-aware date rolling.
 - [ ] Add daily, weekly, and monthly liquidity projections.
 - [ ] Add discount-rate configuration and NPV analytics.
-- [ ] Implement `evaluate()` API for `CashFlowDefinition` to support `expand`/`aggregate`/`npv` modes.
+- [x] Implement `evaluate()` API for `CashFlowDefinition` to support `expand`/`aggregate`/`npv` modes.
 - [ ] Add recurrence counting utilities and closed-form recognizers for common schedules.
 - [ ] Add NPV engine capable of closed-form annuity optimizations and lazy per-occurrence discounting.
 - [ ] Introduce stateful instrument simulation subsystem (loan amortization, balance-dependent rules).

@@ -48,8 +48,8 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 - [ ] Add daily, weekly, and monthly liquidity projections.
 - [ ] Add discount-rate configuration and NPV analytics.
 - [x] Implement `evaluate()` API for `CashFlowDefinition` to support `expand`/`aggregate`/`npv` modes.
-- [ ] Add recurrence counting utilities and closed-form recognizers for common schedules.
-- [ ] Add NPV engine capable of closed-form annuity optimizations and lazy per-occurrence discounting.
+ - [x] Add recurrence counting utilities and closed-form recognizers for common schedules.
+ - [x] Add NPV engine capable of closed-form annuity optimizations and lazy per-occurrence discounting.
 - [ ] Introduce stateful instrument simulation subsystem (loan amortization, balance-dependent rules).
 - [ ] Add caching layer for evaluation results with clear invalidation semantics.
 

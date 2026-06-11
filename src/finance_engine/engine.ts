@@ -291,7 +291,6 @@ export function evaluateRecurring(
         if (maxByOcc && maxByOcc.getTime() < lastLimit.getTime()) lastLimit = maxByOcc
 
         if (first.getTime() > lastLimit.getTime()) {
-          if (mode === 'expand') return []
           return 0
         }
 
@@ -352,7 +351,6 @@ export function evaluateRecurring(
         if (maxByOcc && maxByOcc.getTime() < lastLimit.getTime()) lastLimit = maxByOcc
 
         if (first.getTime() > lastLimit.getTime()) {
-          if (mode === 'expand') return []
           return 0
         }
 
@@ -410,7 +408,6 @@ export function evaluateRecurring(
         if (maxByOcc && maxByOcc.getTime() < lastLimit.getTime()) lastLimit = maxByOcc
 
         if (first.getTime() > lastLimit.getTime()) {
-          if (mode === 'expand') return []
           return 0
         }
 

@@ -35,14 +35,14 @@ describe('evaluateRecurring', () => {
 
     const expanded = generateRecurringCashFlows(input as any).filter((cf) => cf.date >= range.startDate && cf.date <= range.endDate)
 
-    // per-occurrence discounting
+    // per-occurrence discounting using monthly effective rate to match closed-form assumptions
     const base = new Date('2026-01-01')
+    const monthlyR = Math.pow(1 + discountRate, 1 / 12) - 1
     let pv = 0
     for (const cf of expanded) {
       const cashDate = new Date(cf.date)
-      const days = Math.round((cashDate.getTime() - base.getTime()) / (1000 * 60 * 60 * 24))
-      const years = days / 365.0
-      pv += (cf.direction === CashFlowDirection.Inflow ? cf.amount : -cf.amount) / Math.pow(1 + discountRate, years)
+      const months = (cashDate.getUTCFullYear() - base.getUTCFullYear()) * 12 + (cashDate.getUTCMonth() - base.getUTCMonth()) + (cashDate.getUTCDate() < base.getUTCDate() ? -1 : 0)
+      pv += (cf.direction === CashFlowDirection.Inflow ? cf.amount : -cf.amount) / Math.pow(1 + monthlyR, months)
     }
 
     const closed = evaluateRecurring(input as any, range as any, 'npv', { discountRate })

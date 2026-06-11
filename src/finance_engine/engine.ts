@@ -144,7 +144,7 @@ export function generateRecurringCashFlows(input: RecurringCashFlowInput): CashF
     }
   }
 
-  const dayOfMonth = parseMonthlyCronDay(input.period)
+  const schedule = recognizeSchedule(input.period)
   const startDate = parseIsoDate(input.startDate)
   const endDate = hasEndDate ? parseIsoDate(input.endDate as string) : undefined
 
@@ -157,43 +157,77 @@ export function generateRecurringCashFlows(input: RecurringCashFlowInput): CashF
   const description = input.description
   const maxOccurrences = hasOccurrences ? (input.occurrences as number) : Number.MAX_SAFE_INTEGER
 
-  let year = startDate.getUTCFullYear()
-  let month = startDate.getUTCMonth()
+  if (schedule.type === 'monthly') {
+    const dayOfMonth = schedule.day as number
+    let year = startDate.getUTCFullYear()
+    let month = startDate.getUTCMonth()
 
-  while (generated.length < maxOccurrences) {
-    const monthDays = daysInMonthUtc(year, month)
-    if (dayOfMonth <= monthDays) {
-      const candidate = new Date(Date.UTC(year, month, dayOfMonth))
-      const inWindow = candidate.getTime() >= startDate.getTime()
-      const beforeEnd = !endDate || candidate.getTime() <= endDate.getTime()
+    while (generated.length < maxOccurrences) {
+      const monthDays = daysInMonthUtc(year, month)
+      if (dayOfMonth <= monthDays) {
+        const candidate = new Date(Date.UTC(year, month, dayOfMonth))
+        const inWindow = candidate.getTime() >= startDate.getTime()
+        const beforeEnd = !endDate || candidate.getTime() <= endDate.getTime()
 
-      if (inWindow && beforeEnd) {
-        generated.push({
-          date: formatIsoDate(candidate),
-          amount,
-          direction: input.direction,
-          category,
-          description
-        })
+        if (inWindow && beforeEnd) {
+          generated.push({
+            date: formatIsoDate(candidate),
+            amount,
+            direction: input.direction,
+            category,
+            description
+          })
+        }
+
+        if (endDate && candidate.getTime() > endDate.getTime()) {
+          break
+        }
       }
 
-      if (endDate && candidate.getTime() > endDate.getTime()) {
-        break
+      month += 1
+      if (month > 11) {
+        month = 0
+        year += 1
+      }
+
+      if (endDate) {
+        const firstOfNext = new Date(Date.UTC(year, month, 1))
+        if (firstOfNext.getTime() > endDate.getTime()) {
+          break
+        }
       }
     }
+  } else if (schedule.type === 'weekly') {
+    const weekday = schedule.weekday as number
+    // start from startDate, find first matching weekday on or after startDate
+    let candidate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()))
+    const diff = (weekday - candidate.getUTCDay() + 7) % 7
+    if (diff !== 0) candidate = new Date(candidate.getTime() + diff * 24 * 60 * 60 * 1000)
 
-    month += 1
-    if (month > 11) {
-      month = 0
-      year += 1
-    }
-
-    if (endDate) {
-      const firstOfNext = new Date(Date.UTC(year, month, 1))
-      if (firstOfNext.getTime() > endDate.getTime()) {
-        break
+    while (generated.length < maxOccurrences) {
+      if (endDate && candidate.getTime() > endDate.getTime()) break
+      if (candidate.getTime() >= startDate.getTime()) {
+        generated.push({ date: formatIsoDate(candidate), amount, direction: input.direction, category, description })
       }
+      candidate = new Date(candidate.getTime() + 7 * 24 * 60 * 60 * 1000)
     }
+  } else if (schedule.type === 'annual') {
+    const dayOfMonth = schedule.day as number
+    const monthOfYear = (schedule.month as number) - 1
+    let year = startDate.getUTCFullYear()
+    let candidate = new Date(Date.UTC(year, monthOfYear, dayOfMonth))
+    if (candidate.getTime() < startDate.getTime()) candidate = new Date(Date.UTC(year + 1, monthOfYear, dayOfMonth))
+
+    while (generated.length < maxOccurrences) {
+      if (endDate && candidate.getTime() > endDate.getTime()) break
+      if (candidate.getTime() >= startDate.getTime()) {
+        generated.push({ date: formatIsoDate(candidate), amount, direction: input.direction, category, description })
+      }
+      year = candidate.getUTCFullYear() + 1
+      candidate = new Date(Date.UTC(year, monthOfYear, dayOfMonth))
+    }
+  } else {
+    throw new Error('Unsupported recurring period. Use cron-like period strings for monthly, weekly or annual schedules.')
   }
 
   return generated

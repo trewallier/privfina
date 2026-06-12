@@ -26,6 +26,8 @@ Scenarios / Use-cases
 Assumptions
 - The app runs entirely in-browser for v1.
 - The primary v1 interaction model is a single page with basic form controls, a list/table of cash flows, and a cumulative chart.
+- The smallest time step handled by the model is one calendar day.
+- The cumulative chart's maximum resolution is daily (no sub-day granularity).
 - Browser storage is treated as a cache; export/import is the durability mechanism.
 - No server-side backend or hosted database is assumed for the initial release.
 - The calculation engine is isolated from UI/controller code and may be replaced or optimized later with WASM.

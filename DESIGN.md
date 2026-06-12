@@ -16,6 +16,8 @@ A cash flow is the smallest accounting unit in the system. It carries:
 - a category for reporting and rule selection
 - free-form description or notes
 
+Time precision for v1 is day-level only: one calendar day is the minimum model step and chart resolution limit.
+
 This object is intentionally small because it is the shared language between instruments, rule evaluation, and analytics.
 
 ### Initial Cash-Flow Primitives

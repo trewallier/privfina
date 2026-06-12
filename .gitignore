@@ -2,6 +2,7 @@
 data/*.json
 data/*.db
 data/*.sqlite
+*privfina-export*.json
 
 # Allow documentation and templates in data/ to be committed
 !data/README.md

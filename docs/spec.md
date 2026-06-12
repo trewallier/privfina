@@ -39,8 +39,9 @@ Acceptance criteria
 - [x] Cumulative cash-flow diagram uses configurable start and end date pickers for the X axis.
 - [x] Diagram Y axis represents cumulative signed cash-flow totals (inflow positive, outflow negative) across the selected date range.
 - [x] Add/edit/delete operations and date-range changes trigger diagram recalculation using current data.
-- [ ] User data persists between browser sessions using browser storage, and export/import JSON can back up and restore state.
-- [ ] The calculation engine exposes a clean interface to UI/controller code.
+- [x] User data persists between browser sessions using browser storage, and export/import JSON can back up and restore state.
+- [x] Export/import JSON includes explicit schema versioning; schema changes trigger warnings and preserve a migration path for backward compatibility.
+- [x] The calculation engine exposes a clean interface to UI/controller code.
 - [ ] External macro data can be fetched using browser `fetch` and normalized through an adapter layer under CORS constraints.
 
 How to use this file

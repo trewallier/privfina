@@ -5,11 +5,11 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 ## Active Workstreams (implementation order)
 
 ### 1) Engine Foundation For Instruments
-- [ ] Introduce instrument-specific models (salary, subscription, loan, investment) built on top of one-time and recurring cash-flow primitives.
-- [ ] Add salary instrument schedule modes: default custom monthly working-day rule and optional cron-like mode.
-- [ ] Add subscription instrument as recurring outflow instrument wrapper with shared schedule primitives.
-- [ ] Add business-day conventions and holiday-aware date rolling.
-- [ ] Introduce stateful instrument simulation subsystem (loan amortization, balance-dependent rules).
+- [x] Introduce instrument-specific models (salary, subscription, loan, investment) built on top of one-time and recurring cash-flow primitives.
+- [x] Add salary instrument schedule modes: default custom monthly working-day rule and optional cron-like mode.
+- [x] Add subscription instrument as recurring outflow instrument wrapper with shared schedule primitives.
+- [x] Add business-day conventions and holiday-aware date rolling.
+- [x] Introduce stateful instrument simulation subsystem (loan amortization, balance-dependent rules).
 
 ### 2) Loan And Investment Instrument Generators
 - [ ] Add loan instrument v1 (fixed-rate monthly compounding annuity, disbursement accounting toggle, term in months/years).

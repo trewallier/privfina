@@ -1,5 +1,6 @@
 const ONE_TIME_STORAGE_KEY = 'privfina.one_time_cash_flows.v1'
 const RECURRING_STORAGE_KEY = 'privfina.recurring_cash_flows.v1'
+const INSTRUMENT_BUNDLES_STORAGE_KEY = 'privfina.instrument_bundles.v1'
 const STORAGE_SCHEMA_VERSION_KEY = 'privfina.storage_schema_version'
 
 function loadList(key) {
@@ -23,6 +24,7 @@ function saveList(key, value) {
 export {
   ONE_TIME_STORAGE_KEY,
   RECURRING_STORAGE_KEY,
+  INSTRUMENT_BUNDLES_STORAGE_KEY,
   STORAGE_SCHEMA_VERSION_KEY,
   loadList,
   saveList

@@ -25,7 +25,7 @@ function removeFlowById(flows, id) {
   return flows.filter((flow) => flow.id !== id)
 }
 
-function buildEffectiveFlows(oneTime, recurring, rangeStart, rangeEnd) {
+function buildEffectiveFlows(oneTime, recurring, rangeStart, rangeEnd, instrumentBundles = []) {
   const oneTimeInRange = oneTime.filter((flow) => flow.date >= rangeStart && flow.date <= rangeEnd)
   const recurringExpanded = recurring.flatMap((definition) => {
     try {
@@ -34,7 +34,15 @@ function buildEffectiveFlows(oneTime, recurring, rangeStart, rangeEnd) {
       return []
     }
   })
-  return [...oneTimeInRange, ...recurringExpanded].sort((a, b) => a.date.localeCompare(b.date))
+
+  const instrumentFlows = instrumentBundles.flatMap((bundle) => {
+    const generatedFlows = Array.isArray(bundle.generatedFlows) ? bundle.generatedFlows : []
+    return generatedFlows.filter((flow) => flow.date >= rangeStart && flow.date <= rangeEnd)
+  })
+
+  return [...oneTimeInRange, ...recurringExpanded, ...instrumentFlows].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  )
 }
 
 function calculateCumulativeSeries(flows) {

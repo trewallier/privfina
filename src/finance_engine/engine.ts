@@ -1,6 +1,13 @@
 import type { CashFlow } from './models'
 import { CashFlowDirection } from './models'
 import type { CalculationEngine, CumulativePoint, OneTimeCashFlowInput } from './interfaces'
+import {
+  generateSalaryInstrumentCashFlows,
+  generateSubscriptionInstrumentCashFlows,
+  runStatefulSimulation,
+  calculateLoanMonthlyInstallment,
+  simulateLoanAmortization
+} from './instruments'
 
 export type {
   DateRange,
@@ -8,9 +15,26 @@ export type {
   CalculationEngine,
   OneTimeCashFlowInput,
   RecurringCashFlowInput,
-  CumulativePoint
+  CumulativePoint,
+  BusinessDayConvention,
+  SalaryCustomMonthlyRule,
+  SalaryInstrumentInput,
+  SubscriptionInstrumentInput,
+  LoanInstrumentInput,
+  InvestmentSubtype,
+  InvestmentInstrumentInput,
+  SimulationEvent,
+  SimulationStep,
+  StatefulSimulationSpec
 } from './interfaces'
 export { generateRecurringCashFlows, evaluateRecurring } from './recurring'
+export {
+  generateSalaryInstrumentCashFlows,
+  generateSubscriptionInstrumentCashFlows,
+  runStatefulSimulation,
+  calculateLoanMonthlyInstallment,
+  simulateLoanAmortization
+} from './instruments'
 
 function signedAmount(cashFlow: CashFlow): number {
   return cashFlow.direction === CashFlowDirection.Inflow ? cashFlow.amount : -cashFlow.amount

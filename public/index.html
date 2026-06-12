@@ -391,7 +391,7 @@
   <body>
     <main>
       <h1 class="page-title">Privfina</h1>
-      <p class="lead">Create, edit, and delete one-time and recurring cash flows while visualizing cumulative totals.</p>
+      <p class="lead">Create, edit, and delete cash flows and instrument bundles while visualizing cumulative totals.</p>
       <div id="schema-warning" class="warning-banner" hidden></div>
 
       <div class="workspace-grid">
@@ -407,6 +407,8 @@
           <div class="composer-toolbar">
             <button id="open-one-time-box" class="primary" type="button">+ One-Time Flow</button>
             <button id="open-recurring-box" class="primary" type="button">+ Recurring Flow</button>
+            <button id="open-salary-box" class="primary" type="button">+ Salary Instrument</button>
+            <button id="open-subscription-box" class="primary" type="button">+ Subscription Instrument</button>
           </div>
 
           <section id="flow-composer" class="flow-composer" aria-label="Flow composer panels">
@@ -493,6 +495,144 @@
                   <div class="actions">
                     <button id="recurring-submit" class="primary" type="submit">Add Recurring Cash Flow</button>
                     <button id="recurring-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="salary-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Salary Instrument</span>
+                </span>
+                <span class="summary-hint">Monthly working-day rule or cron-like mode</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="salary-form">
+                  <div class="row">
+                    <label>
+                      Label
+                      <input id="salary-label" name="label" type="text" placeholder="Salary" />
+                    </label>
+                    <label>
+                      Schedule mode
+                      <select id="salary-schedule-mode" name="scheduleMode" required>
+                        <option value="custom-monthly-working-day">Custom monthly working-day rule</option>
+                        <option value="cron-like">Cron-like mode</option>
+                      </select>
+                    </label>
+                    <label>
+                      Start date
+                      <input id="salary-start-date" name="startDate" type="date" required />
+                    </label>
+                    <label>
+                      End date
+                      <input id="salary-end-date" name="endDate" type="date" />
+                    </label>
+                    <label>
+                      Occurrences
+                      <input id="salary-occurrences" name="occurrences" type="number" min="1" step="1" />
+                    </label>
+                    <label>
+                      Amount
+                      <input id="salary-amount" name="amount" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label>
+                      Category
+                      <input id="salary-category" name="category" type="text" placeholder="salary" />
+                    </label>
+                  </div>
+
+                  <div id="salary-cron-wrap" class="row" hidden>
+                    <label>
+                      Cron-like period
+                      <input id="salary-cron-period" name="cronPeriod" type="text" placeholder="0 0 10 * *" />
+                    </label>
+                  </div>
+
+                  <div id="salary-custom-wrap" class="row">
+                    <label>
+                      Target day of month
+                      <input id="salary-target-day" name="targetDayOfMonth" type="number" min="1" max="31" step="1" value="10" />
+                    </label>
+                    <label>
+                      Business-day convention
+                      <select id="salary-business-day-convention" name="businessDayConvention">
+                        <option value="preceding">Preceding</option>
+                        <option value="following">Following</option>
+                        <option value="modified-following">Modified Following</option>
+                        <option value="modified-preceding">Modified Preceding</option>
+                        <option value="unadjusted">Unadjusted</option>
+                      </select>
+                    </label>
+                    <label>
+                      Holidays (comma-separated ISO dates)
+                      <input id="salary-holidays" name="holidays" type="text" placeholder="2026-12-25, 2026-12-31" />
+                    </label>
+                  </div>
+
+                  <div class="row">
+                    <label>
+                      Description
+                      <input id="salary-description" name="description" type="text" placeholder="Optional notes" />
+                    </label>
+                  </div>
+
+                  <div class="actions">
+                    <button id="salary-submit" class="primary" type="submit">Add Salary Instrument</button>
+                    <button id="salary-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="subscription-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Subscription Instrument</span>
+                </span>
+                <span class="summary-hint">Recurring outflow wrapper</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="subscription-form">
+                  <div class="row">
+                    <label>
+                      Label
+                      <input id="subscription-label" name="label" type="text" placeholder="Subscription" />
+                    </label>
+                    <label>
+                      Cron-like period
+                      <input id="subscription-period" name="period" type="text" placeholder="0 0 15 * *" required />
+                    </label>
+                    <label>
+                      Start date
+                      <input id="subscription-start-date" name="startDate" type="date" required />
+                    </label>
+                    <label>
+                      End date
+                      <input id="subscription-end-date" name="endDate" type="date" />
+                    </label>
+                    <label>
+                      Occurrences
+                      <input id="subscription-occurrences" name="occurrences" type="number" min="1" step="1" />
+                    </label>
+                    <label>
+                      Amount
+                      <input id="subscription-amount" name="amount" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label>
+                      Category
+                      <input id="subscription-category" name="category" type="text" placeholder="subscription" />
+                    </label>
+                    <label>
+                      Description
+                      <input id="subscription-description" name="description" type="text" placeholder="Optional notes" />
+                    </label>
+                  </div>
+
+                  <div class="actions">
+                    <button id="subscription-submit" class="primary" type="submit">Add Subscription Instrument</button>
+                    <button id="subscription-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
                   </div>
                 </form>
               </div>

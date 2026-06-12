@@ -68,10 +68,10 @@ Acceptance criteria
 - [x] Export/import JSON includes explicit schema versioning; schema changes trigger warnings and preserve a migration path for backward compatibility.
 - [x] The calculation engine exposes a clean interface to UI/controller code.
 - [ ] External macro data can be fetched using browser `fetch` and normalized through an adapter layer under CORS constraints.
-- [ ] Salary instrument supports two schedule modes: predefined custom rule (default) and cron-like rule.
-- [ ] Salary custom rule generates monthly inflow on the last working day on or before a configured target day (default 10).
-- [ ] Salary instrument explicitly omits tax handling in v1 and documents tax rules as future enhancement.
-- [ ] Subscription instrument generates recurring outflows with equivalent schedule options to recurring inflow.
+- [x] Salary instrument supports two schedule modes: predefined custom rule (default) and cron-like rule.
+- [x] Salary custom rule generates monthly inflow on the last working day on or before a configured target day (default 10).
+- [x] Salary instrument explicitly omits tax handling in v1 and documents tax rules as future enhancement.
+- [x] Subscription instrument generates recurring outflows with equivalent schedule options to recurring inflow.
 - [ ] Loan instrument supports disbursement accounting toggle and persists the choice.
 - [ ] Loan instrument computes and displays read-only monthly repayment preview as inputs change.
 - [ ] Loan instrument generates optional one-time disbursement inflow and fixed monthly repayment outflows using monthly compounding and fixed-rate annuity assumptions.
@@ -82,7 +82,7 @@ Acceptance criteria
 - [ ] Custom bond instrument supports recurring interest payouts on configured schedule and one-time principal repayment at maturity.
 - [ ] Custom bond instrument design supports periodic rate-reset schedules, with fixed-rate fallback allowed for v1 implementation.
 - [ ] Inflation-linked investment accepts manual yearly inflation inputs for v1.
-- [ ] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
+- [x] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
 - [ ] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data.
 
 How to use this file

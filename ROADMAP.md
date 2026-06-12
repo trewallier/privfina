@@ -15,6 +15,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ## Next
 
+- [x] Split UI into dedicated management and visualization workspaces with collapsible flow composer panels.
 - [ ] Add category and date filtering helpers for analytics.
 - [ ] Add recurrence support for weekly and annual schedules.
 - [x] Add chart UX polish: axis formatting, empty-state messaging, and large-range performance.

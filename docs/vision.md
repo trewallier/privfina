@@ -14,8 +14,10 @@ Constraints
 - Deploy as a static web application on GitHub Pages.
 - Use browser-local persistence and manual export/import for durability.
 - Favor browser-native APIs and maintain a clear separation between UI and calculation engine.
+- Keep management workflows and visualization workflows visually separated to reduce cognitive load during planning.
 
 Definition of Success
 - The repository contains clear, linkable artifacts for vision, spec, and decisions.
 - Every non-trivial change is traceable from a `ROADMAP.md` item → `docs/spec.md` section → PR → tests.
 - The product direction is documented as a static, browser-executed application with future WASM optimization and optional public macro-data fetching.
+- The UI supports focused use: creation controls can be collapsed or hidden while configured flows and analytics remain prominent.

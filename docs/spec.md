@@ -13,6 +13,8 @@ Glossary
 
 Scenarios / Use-cases
 - Cash-flow management page: users can add, view, edit, and delete any number of cash flows.
+- Split workspace UX: users can work in a dedicated cash-flow management panel and a separate visualization panel.
+- Collapsible flow composer UX: users can open one flow-creation panel at a time (Swagger-like), then hide composer boxes to focus on the configured flow list and chart.
 - One-time cash flow: users can configure a single income or payout with amount and date.
 - Recurring cash flow: users can configure income or payout with a monthly cron-like period, start date, end date or occurrence count, and amount.
 - Cumulative cash-flow diagram: users can select a start/end date range and view cumulative totals over time.
@@ -31,6 +33,8 @@ Assumptions
 Acceptance criteria
 - [ ] Static app deployment is feasible on GitHub Pages, with all runtime behavior in client-side assets.
 - [x] Users can create any number of cash flows through the page controls.
+- [x] The main UI separates cash-flow management and visualization into distinct workspace sections.
+- [x] Flow creation boxes are collapsible and can be hidden when not in use to focus on configured flows and chart output.
 - [x] Users can create one-time and recurring cash-flow definitions through the page controls.
 - [x] Users can view and delete existing one-time and recurring cash-flow definitions, and changes are reflected immediately in the UI state.
 - [x] Users can edit existing cash flows, and changes are reflected immediately in the UI state.

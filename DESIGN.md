@@ -121,6 +121,13 @@ Current modules:
 
 The first UI should provide simple controls to manage an arbitrary number of cash-flow definitions.
 
+### Workspace layout
+
+- The page should separate interaction into two primary workspaces:
+	- a management workspace for creating, editing, importing/exporting, and listing cash-flow definitions
+	- a visualization workspace focused on range controls and cumulative chart output
+- The split should remain responsive: side-by-side on wider screens and stacked on smaller screens.
+
 ### Cash-flow management controls
 
 - Add cash flow: users can create one-time or recurring cash flows from the main page.
@@ -135,6 +142,8 @@ There is no hard limit on the number of cash flows a user can create, other than
 - One-time form fields: direction, amount, date, category, optional description.
 - Recurring form fields: direction, amount, schedule (cron-like period), start date, end date or occurrence count, category, optional description.
 - Validation: required fields must be present, amount must be numeric, and date-related constraints must be checked (for example, end date after start date).
+- Form presentation should be collapsible in a Swagger-like composer style so only currently relevant form boxes are expanded.
+- Users should be able to hide the full composer area when not actively adding or editing, keeping focus on configured flows and chart analysis.
 
 Current implementation includes one-time and recurring add forms on the main webpage.
 

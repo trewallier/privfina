@@ -50,7 +50,7 @@ An instrument is a source of one or more cash flows.
 - `Investment`: contributions, distributions, and valuation-related flows
 
 The current implementation only includes the common `CashFlow` model. Instrument-specific types will be layered on top as small additions.
-The current implementation includes one-time cash-flow creation, recurring monthly generation, and cumulative-series helpers without introducing a full instrument hierarchy yet.
+The current implementation includes one-time cash-flow creation, recurring monthly/weekly/annual generation, and cumulative-series helpers without introducing a full instrument hierarchy yet.
 
 ## Architecture
 
@@ -95,11 +95,11 @@ Evaluation strategies:
 
 Status:
 
-- partially implemented for one-time and recurring monthly flow generation
+- partially implemented for one-time and recurring flow generation (monthly, weekly, annual)
 
 Current modules:
 
-- `finance_engine.engine`: one-time cash-flow creation, recurring monthly generation, and cumulative-series calculation helpers
+- `finance_engine.engine`: one-time cash-flow creation, recurring schedule generation, and cumulative-series calculation helpers
 
 ### 4. Analytics
 
@@ -142,6 +142,7 @@ There is no hard limit on the number of cash flows a user can create, other than
 - One-time form fields: direction, amount, date, category, optional description.
 - Recurring form fields: direction, amount, schedule (cron-like period), start date, end date or occurrence count, category, optional description.
 - Validation: required fields must be present, amount must be numeric, and date-related constraints must be checked (for example, end date after start date).
+- Supported recurring schedules are monthly (`m h day * *`), weekly (`m h * * weekday`), and annual (`m h day month *`).
 - Form presentation should be collapsible in a Swagger-like composer style so only currently relevant form boxes are expanded.
 - Users should be able to hide the full composer area when not actively adding or editing, keeping focus on configured flows and chart analysis.
 
@@ -150,7 +151,7 @@ Current implementation includes one-time and recurring add forms on the main web
 ### List behavior
 
 - Default sort should be by next effective date, then creation order.
-- Current implementation exposes delete action per row for one-time and recurring definitions; edit is planned next.
+- Current implementation exposes include/exclude toggles, edit actions, and delete actions per row for one-time and recurring definitions.
 - Changes should update persisted browser state immediately.
 
 ## Visualization: Cumulative Cash-Flow Diagram
@@ -174,6 +175,7 @@ The page should include a cumulative cash-flow diagram built from generated date
 
 - Updating either date picker should re-render the chart immediately.
 - Editing, adding, or deleting a cash flow should refresh the chart using current filters.
+- Toggling flow inclusion in the configured-flow list should re-render the chart immediately using only included definitions.
 - If no flows exist in range, render an empty-state chart with zero baseline.
 
 Performance note: charting over long ranges should prefer aggregate or lazy evaluation strategies where possible; the engine must avoid generating flows outside the requested range.

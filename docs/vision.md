@@ -21,3 +21,4 @@ Definition of Success
 - Every non-trivial change is traceable from a `ROADMAP.md` item → `docs/spec.md` section → PR → tests.
 - The product direction is documented as a static, browser-executed application with future WASM optimization and optional public macro-data fetching.
 - The UI supports focused use: creation controls can be collapsed or hidden while configured flows and analytics remain prominent.
+- Users can quickly run what-if cumulative views by including or excluding specific configured cash flows without deleting definitions.

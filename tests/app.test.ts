@@ -14,6 +14,7 @@ import {
   removeFlowById,
   buildEffectiveFlows
 } from '../public/app.js'
+import { parseRecurringSchedule } from '../public/recurrence.js'
 import { downsampleSeriesForChart, formatAxisAmount, renderChart } from '../public/render.js'
 
 describe('browser recurrence validation helpers', () => {
@@ -240,6 +241,46 @@ describe('browser recurrence validation helpers', () => {
         direction: 'inflow',
         category: 'general'
       }
+    ])
+  })
+
+  it('parses weekly and annual recurring schedules', () => {
+    expect(parseRecurringSchedule('0 0 * * 1')).toEqual({ type: 'weekly', weekday: 1 })
+    expect(parseRecurringSchedule('0 0 15 6 *')).toEqual({ type: 'annual', day: 15, month: 6 })
+  })
+
+  it('expands weekly recurring flows inside the selected range', () => {
+    const definition = {
+      period: '0 0 * * 1',
+      startDate: '2026-01-05',
+      occurrences: 4,
+      amount: 100,
+      direction: 'inflow',
+      category: 'salary'
+    }
+
+    expect(expandRecurringFlows(definition, '2026-01-01', '2026-01-31')).toEqual([
+      { date: '2026-01-05', amount: 100, direction: 'inflow', category: 'salary' },
+      { date: '2026-01-12', amount: 100, direction: 'inflow', category: 'salary' },
+      { date: '2026-01-19', amount: 100, direction: 'inflow', category: 'salary' },
+      { date: '2026-01-26', amount: 100, direction: 'inflow', category: 'salary' }
+    ])
+  })
+
+  it('expands annual recurring flows inside the selected range', () => {
+    const definition = {
+      period: '0 0 15 6 *',
+      startDate: '2024-06-15',
+      occurrences: 5,
+      amount: 200,
+      direction: 'inflow',
+      category: 'bonus'
+    }
+
+    expect(expandRecurringFlows(definition, '2025-01-01', '2027-12-31')).toEqual([
+      { date: '2025-06-15', amount: 200, direction: 'inflow', category: 'bonus' },
+      { date: '2026-06-15', amount: 200, direction: 'inflow', category: 'bonus' },
+      { date: '2027-06-15', amount: 200, direction: 'inflow', category: 'bonus' }
     ])
   })
 

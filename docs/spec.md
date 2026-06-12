@@ -22,6 +22,13 @@ Scenarios / Use-cases
 - Local persistence: save state in browser storage and allow export/import of JSON data.
 - Static deployment: run the app as a static site on GitHub Pages with no backend runtime.
 - External macro data: optionally fetch public data in-browser via CORS-aware APIs and normalize it for calculations.
+- Salary instrument setup: users can configure salary as a recurring inflow with either cron-like schedule mode or a predefined custom monthly rule.
+- Subscription instrument setup: users can configure subscription as a recurring outflow using the same schedule capabilities as recurring inflow.
+- Loan instrument setup: users can configure principal, fixed interest, term, repayment day, and whether disbursement inflow should be accounted.
+- Loan repayment preview: users can see a read-only monthly repayment value update immediately when loan inputs change.
+- Investment instrument setup: users can configure regular bond, discount bond, and inflation-linked bond variants with finite maturity outputs.
+- Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
+- Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -32,6 +39,12 @@ Assumptions
 - No server-side backend or hosted database is assumed for the initial release.
 - The calculation engine is isolated from UI/controller code and may be replaced or optimized later with WASM.
 - One-time and recurring cash-flow definitions are the initial primitives; more complex instruments should be built on top of them.
+- Instrument v1 scope excludes tax modeling and early-sale/penalty execution rules; these are future iterations.
+- Instrument workflows in this scope do not introduce new NPV behavior; focus remains on generation and cumulative chart compatibility.
+- Working-day handling in salary custom rule is weekday-only (Monday-Friday) for v1; holiday calendars are deferred.
+- Instrument bundle generation must be finite at save time; salary/subscription instrument mode therefore requires an end condition.
+- v1 cumulative summary assumes a single account context where all included inflows and outflows are netted into one running balance.
+- Multi-account support is explicitly out of scope for the current implementation and treated as future enhancement.
 
 Acceptance criteria
 - [ ] Static app deployment is feasible on GitHub Pages, with all runtime behavior in client-side assets.
@@ -45,6 +58,7 @@ Acceptance criteria
 - [x] Recurring cash flow supports configurable period (monthly, weekly, and annual cron-like structure), start date, end date or number of occurrences, and amount (plus inflow/outflow direction).
 - [x] Cumulative cash-flow diagram uses configurable start and end date pickers for the X axis.
 - [x] Diagram Y axis represents cumulative signed cash-flow totals (inflow positive, outflow negative) across the selected date range.
+- [x] Current cumulative summary represents a single-account net balance across all included inflows and outflows.
 - [x] Users can toggle individual cash flows in the configured list to include or exclude them from cumulative summary calculations.
 - [x] Cumulative chart axes are human-readable: Y-axis values are amount-formatted and chart guide lines improve readability.
 - [x] Cumulative chart renders clear empty-state messaging when no flows overlap the selected range.
@@ -54,6 +68,22 @@ Acceptance criteria
 - [x] Export/import JSON includes explicit schema versioning; schema changes trigger warnings and preserve a migration path for backward compatibility.
 - [x] The calculation engine exposes a clean interface to UI/controller code.
 - [ ] External macro data can be fetched using browser `fetch` and normalized through an adapter layer under CORS constraints.
+- [ ] Salary instrument supports two schedule modes: predefined custom rule (default) and cron-like rule.
+- [ ] Salary custom rule generates monthly inflow on the last working day on or before a configured target day (default 10).
+- [ ] Salary instrument explicitly omits tax handling in v1 and documents tax rules as future enhancement.
+- [ ] Subscription instrument generates recurring outflows with equivalent schedule options to recurring inflow.
+- [ ] Loan instrument supports disbursement accounting toggle and persists the choice.
+- [ ] Loan instrument computes and displays read-only monthly repayment preview as inputs change.
+- [ ] Loan instrument generates optional one-time disbursement inflow and fixed monthly repayment outflows using monthly compounding and fixed-rate annuity assumptions.
+- [ ] Investment instrument supports regular bond, discount bond, and inflation-linked variants with finite maturity-driven flow generation.
+- [ ] Regular bond instrument generates one-time maturity inflow paying principal plus monthly-compounded interest.
+- [ ] Discount bond instrument generates one-time maturity inflow equal to configured face value.
+- [ ] Inflation-linked bond instrument generates one-time maturity inflow paying principal plus interest based on manual yearly inflation inputs and spread rules.
+- [ ] Custom bond instrument supports recurring interest payouts on configured schedule and one-time principal repayment at maturity.
+- [ ] Custom bond instrument design supports periodic rate-reset schedules, with fixed-rate fallback allowed for v1 implementation.
+- [ ] Inflation-linked investment accepts manual yearly inflation inputs for v1.
+- [ ] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
+- [ ] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data.
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

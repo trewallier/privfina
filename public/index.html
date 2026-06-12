@@ -265,7 +265,7 @@
         z-index: 2;
         background: #fff;
         border-left: 1px solid var(--border);
-        min-width: 156px;
+        min-width: 138px;
       }
 
       th.action-col {
@@ -278,8 +278,38 @@
         align-items: center;
       }
 
-      .row-actions button {
-        white-space: nowrap;
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--muted);
+      }
+
+      .icon-button svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+      }
+
+      .icon-button:hover {
+        background: #f6f1e8;
+        color: var(--text);
+      }
+
+      .icon-button.is-active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+      }
+
+      .icon-button.danger {
+        color: #a94442;
       }
 
       .import-group {
@@ -490,7 +520,6 @@
                     <th>Direction</th>
                     <th>Amount</th>
                     <th>Category</th>
-                    <th>Include</th>
                     <th class="action-col">Action</th>
                   </tr>
                 </thead>

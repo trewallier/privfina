@@ -54,6 +54,84 @@ An instrument is a source of one or more cash flows.
 The current implementation only includes the common `CashFlow` model. Instrument-specific types will be layered on top as small additions.
 The current implementation includes one-time cash-flow creation, recurring monthly/weekly/annual generation, and cumulative-series helpers without introducing a full instrument hierarchy yet.
 
+### Instrument Design (planned v1 expansion)
+
+This section defines the next iteration of instrument behavior so implementation can proceed in small, testable increments.
+
+#### Salary (stateless, recurring inflow)
+
+- Direction: inflow only.
+- Default period mode: custom predefined rule.
+- Supported period modes:
+	- Custom predefined rule (default): monthly payout on the last working day on or before a configured target day of month (default target day: 10).
+	- Cron-like rule (existing): monthly/weekly/annual expression as currently supported.
+- Working-day rule for v1: Monday-Friday only (holiday calendars are out of scope in this iteration).
+- Tax handling: explicitly postponed to a future iteration (for example, rule-based tax changes over time).
+
+#### Subscription (stateless, recurring outflow)
+
+- Direction: outflow only.
+- Behavior: equivalent scheduling capabilities to recurring inflow, but signed as outflow.
+- v1 scope: no inflation indexation or tiered billing yet.
+
+#### Loan (stateful, amortization-first)
+
+- Optional disbursement accounting toggle:
+	- If enabled, add an initial one-time inflow (loan principal disbursement).
+	- If disabled, skip inflow disbursement accounting (for example, mortgage-like modeling where principal is not treated as spendable cash).
+- v1 loan parameters:
+	- principal amount
+	- fixed annual interest rate
+	- term duration (months or years)
+	- repayment day of month (fixed)
+- Interest and repayment model for v1:
+	- regular banking annuity-style repayment
+	- monthly compounding
+	- monthly installment recalculated on every parameter change and shown in a read-only preview field
+- Generated flows:
+	- optional one-time disbursement inflow at start
+	- fixed monthly repayment outflows over the amortization term
+- Future extensions (not in this iteration): one-time and recurring fee flows, early full repayment rules, and associated penalties.
+
+#### Investment (stateful by product rules, finite maturity first)
+
+- Base modeling pattern for v1:
+	- one-time outflow on purchase date
+	- maturity-driven inflow structure based on product subtype settings
+- Subtypes in scope for design:
+	- Regular bond (compounding): one-time maturity inflow that pays principal plus interest computed with monthly compounding.
+	- Discount bond: configurable purchase price (one-time outflow) and full face value as a one-time maturity inflow.
+	- Inflation-linked bond: one-time maturity inflow that pays principal plus interest, where yearly inflation inputs are provided manually per year and combined with configurable spread rules.
+	- Custom bond (configurable): supports alternate maturity/coupon schemes, including recurring interest payouts (for example quarterly on configured day-of-month) while principal is paid back as one-time maturity inflow.
+- Rate-change and data assumptions for custom bond v1:
+	- the model supports scheduled interest-rate resets (for example quarterly) as a design target
+	- external-data-driven resets are future-ready in design, but v1 implementation may hold configured rates fixed across the instrument lifecycle
+- Early sale assumptions:
+	- all bond subtypes may later support early-sale rules and fees
+	- v1 focuses on full-lifecycle generation to planned maturity without early-sale execution logic
+- Future extensions (not in this iteration): early sale eligibility/penalty rules, market-data auto-refresh for inflation history/current values, and future inflation projections.
+
+### Instrument Generation Policy (v1)
+
+- Instrument composers must calculate full dated cash-flow outputs before the instrument is added to the configured list.
+- For finite instruments (loan term, bond maturity), generate all lifecycle flows at creation/edit time.
+- For recurring salary/subscription instruments in instrument mode, require a bounded horizon (end date or occurrence count) so pre-generation remains finite.
+- Persist generated outputs as linked flow bundles so the chart can consume explicit dated flows directly.
+- Keep NPV calculations out of this instrument iteration; focus is generation and cumulative visualization.
+- Respect ADR 0009/0010/0011 constraints:
+	- causal/stateful instruments remain chronologically simulated for correctness
+	- generation remains range-aware where applicable and avoids out-of-range work
+	- no additional NPV implementation changes are introduced by this scope
+
+### Instrument Bundle Model (proposed)
+
+- Add an `InstrumentBundle` concept that stores:
+	- instrument metadata and input parameters
+	- generation assumptions (schedule mode, compounding conventions)
+	- generated dated flow list (one-time and recurring occurrences materialized for the bounded horizon)
+	- lineage identifiers linking generated flows back to source instrument
+- UI list behavior should allow include/exclude and edit/delete at instrument level while preserving generated flow traceability.
+
 ## Architecture
 
 The codebase is organized around four layers.
@@ -114,10 +192,76 @@ Responsibilities:
 Notes:
 
 - Analytics should consume either expanded `CashFlow` lists or the results of `evaluate(range, mode)` calls. For performance-sensitive analytics (aggregate totals, NPV), prefer `evaluate(..., "aggregate")` or `evaluate(..., "npv")` when available.
+- Current cumulative analytics assume a single netted account context: all included inflows and outflows are aggregated into one running balance.
+- Multi-account separation is a future extension and is not part of the current architecture scope.
 
 Current modules:
 
 - `finance_engine.engine`: cumulative-series helper for date-range chart data and evaluation utilities
+
+## Implementation Blueprint By Repository Structure
+
+Planned changes are organized by existing repository paths so implementation can be staged safely.
+
+### Engine and Domain (`src/finance_engine/`)
+
+- `interfaces.ts`
+	- add instrument-facing interfaces (for example `InstrumentDefinition`, `InstrumentBundle`, generation context)
+	- define typed preview outputs for loan repayment and investment maturity calculations
+- `models.ts`
+	- add discriminated unions for salary/subscription/loan/investment input models
+	- add persisted bundle metadata types (instrument id, generated flow lineage)
+- `date_utils.ts`
+	- add helper for "last working day on or before target day" computation
+	- keep weekday-only convention in v1 (holiday calendars deferred)
+- `schedule.ts` / `recurring.ts`
+	- add adapter utilities from custom salary rule to concrete dated occurrences
+	- preserve cron-like schedule support as alternate mode
+- `engine.ts`
+	- add bundle generators per instrument type
+	- add loan installment preview calculator (monthly annuity, fixed-rate)
+	- add investment maturity calculators (regular, discount, inflation-linked baseline)
+	- expose deterministic APIs used by UI for pre-save generation and preview
+
+### Browser App (`public/`)
+
+- `index.html`
+	- add instrument composer sections with mode-specific fields
+	- include read-only preview fields (for example loan monthly installment)
+- `app-controller.js`
+	- orchestrate instrument form state, preview recomputation on input change, and save/edit lifecycle
+	- persist and update instrument bundles plus generated flows
+- `render.js`
+	- render instrument-level rows and details while preserving include/exclude actions
+	- show derived summaries (for example remaining term, next payment date)
+- `flows.js`
+	- normalize generated instrument flows into chart-consumable cash-flow entries
+- `storage.js` and `import-export.js`
+	- extend schema versioning for instrument bundle payloads and migration hooks
+	- preserve backward compatibility with existing one-time/recurring-only exports
+
+### Tests (`tests/`)
+
+- `engine.test.ts`
+	- salary custom-rule schedule generation
+	- loan installment formula and amortization schedule correctness
+	- investment subtype payout generation correctness
+- `app.test.ts`
+	- instrument form preview updates
+	- disbursement toggle behavior
+	- pre-generated flow bundle persistence and chart refresh behavior
+- `index.test.ts`
+	- backward compatibility for existing flows
+	- schema migration behavior for import/export with instrument bundles
+
+### Documentation (`docs/`, root docs)
+
+- `docs/spec.md`
+	- add acceptance criteria for each instrument and bundle-generation workflow
+- `ROADMAP.md`
+	- split instrument epic into small, testable tasks by subtype
+- `docs/adr/`
+	- record the instrument pre-generation/bundle decision and its constraints
 
 ## Interaction Model (v1)
 

@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { generateRecurringCashFlows, evaluateRecurring } from '../src/finance_engine/engine'
+import {
+  generateRecurringCashFlows,
+  evaluateRecurring,
+  generateSalaryInstrumentCashFlows,
+  generateSubscriptionInstrumentCashFlows,
+  runStatefulSimulation,
+  calculateLoanMonthlyInstallment,
+  simulateLoanAmortization
+} from '../src/finance_engine/engine'
 import { CashFlowDirection } from '../src/finance_engine/models'
 
 describe('evaluateRecurring', () => {
@@ -103,5 +111,91 @@ describe('evaluateRecurring', () => {
     const closed = evaluateRecurring(input as any, range as any, 'npv', { discountRate })
     expect(typeof closed).toBe('number')
     expect(closed).toBeCloseTo(pv, 6)
+  })
+})
+
+describe('instrument foundations', () => {
+  it('generates salary flows with default custom monthly working-day rule', () => {
+    const result = generateSalaryInstrumentCashFlows({
+      startDate: '2026-01-01',
+      occurrences: 3,
+      amount: 2000,
+      customMonthlyRule: {
+        targetDayOfMonth: 10
+      }
+    })
+
+    expect(result.map((entry) => entry.date)).toEqual(['2026-01-09', '2026-02-10', '2026-03-10'])
+    expect(result.every((entry) => entry.direction === CashFlowDirection.Inflow)).toBe(true)
+  })
+
+  it('generates salary flows in cron-like mode', () => {
+    const result = generateSalaryInstrumentCashFlows({
+      startDate: '2026-01-01',
+      occurrences: 2,
+      amount: 1500,
+      scheduleMode: 'cron-like',
+      cronPeriod: '0 0 15 * *'
+    })
+
+    expect(result.map((entry) => entry.date)).toEqual(['2026-01-15', '2026-02-15'])
+  })
+
+  it('applies holiday-aware rolling for salary custom rule', () => {
+    const result = generateSalaryInstrumentCashFlows({
+      startDate: '2026-06-01',
+      occurrences: 1,
+      amount: 1000,
+      customMonthlyRule: {
+        targetDayOfMonth: 10,
+        holidays: ['2026-06-10']
+      }
+    })
+
+    expect(result[0].date).toBe('2026-06-09')
+  })
+
+  it('wraps subscription instrument as recurring outflow', () => {
+    const result = generateSubscriptionInstrumentCashFlows({
+      period: '0 0 5 * *',
+      startDate: '2026-01-01',
+      occurrences: 2,
+      amount: 30
+    })
+
+    expect(result.map((entry) => entry.direction)).toEqual([
+      CashFlowDirection.Outflow,
+      CashFlowDirection.Outflow
+    ])
+    expect(result.map((entry) => entry.date)).toEqual(['2026-01-05', '2026-02-05'])
+  })
+
+  it('simulates stateful events chronologically', () => {
+    const simulation = runStatefulSimulation({
+      initialState: { balance: 1000 },
+      events: [
+        { date: '2026-01-15', type: 'payment', payload: { amount: -200 } },
+        { date: '2026-01-05', type: 'income', payload: { amount: 500 } }
+      ],
+      transition: (state, event) => {
+        const amount = (event.payload as { amount: number }).amount
+        return {
+          balance: state.balance + amount
+        }
+      }
+    })
+
+    expect(simulation.steps.map((step) => step.event.type)).toEqual(['income', 'payment'])
+    expect(simulation.finalState.balance).toBe(1300)
+  })
+
+  it('computes loan installment preview and amortization schedule', () => {
+    const installment = calculateLoanMonthlyInstallment(12000, 0.06, 12)
+    const schedule = simulateLoanAmortization(12000, 0.06, 12)
+
+    expect(installment).toBeGreaterThan(0)
+    expect(schedule).toHaveLength(12)
+    expect(schedule[0].remainingPrincipal).toBeLessThan(12000)
+    expect(schedule[11].remainingPrincipal).toBeCloseTo(0, 2)
   })
 })

@@ -217,7 +217,10 @@ function initController() {
     try {
       const effectiveFlows = buildEffectiveFlows(oneTimeFlows, recurringFlows, startDate, endDate)
       const series = calculateCumulativeSeries(effectiveFlows)
-      renderChart(series, chart)
+      renderChart(series, chart, {
+        startDate,
+        endDate
+      })
     } catch (error) {
       chart.innerHTML = `<div class="empty">${error.message}</div>`
     }

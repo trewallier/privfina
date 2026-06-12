@@ -38,6 +38,9 @@ Acceptance criteria
 - [x] Recurring cash flow supports configurable period (monthly cron-like structure), start date, end date or number of occurrences, and amount (plus inflow/outflow direction).
 - [x] Cumulative cash-flow diagram uses configurable start and end date pickers for the X axis.
 - [x] Diagram Y axis represents cumulative signed cash-flow totals (inflow positive, outflow negative) across the selected date range.
+- [x] Cumulative chart axes are human-readable: Y-axis values are amount-formatted and chart guide lines improve readability.
+- [x] Cumulative chart renders clear empty-state messaging when no flows overlap the selected range.
+- [x] Cumulative chart rendering remains responsive on large ranges by reducing plotted point density without changing boundary values.
 - [x] Add/edit/delete operations and date-range changes trigger diagram recalculation using current data.
 - [x] User data persists between browser sessions using browser storage, and export/import JSON can back up and restore state.
 - [x] Export/import JSON includes explicit schema versioning; schema changes trigger warnings and preserve a migration path for backward compatibility.

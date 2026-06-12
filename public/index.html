@@ -233,12 +233,13 @@
 
       .table-shell {
         width: 100%;
+        position: relative;
         overflow-x: auto;
+        overflow-y: hidden;
         margin-top: 8px;
         background: #fff;
         border: 1px solid var(--border);
         border-radius: 10px;
-        overflow: hidden;
       }
 
       table {
@@ -254,6 +255,72 @@
         text-align: left;
         padding: 8px;
         border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+
+      th.action-col,
+      td.action-col {
+        position: sticky;
+        right: 0;
+        z-index: 2;
+        background: #fff;
+        border-left: 1px solid var(--border);
+        min-width: 138px;
+      }
+
+      th.action-col {
+        z-index: 3;
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--muted);
+      }
+
+      .icon-button svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+      }
+
+      .icon-button:hover {
+        background: #f6f1e8;
+        color: var(--text);
+      }
+
+      .icon-button.is-active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+      }
+
+      .icon-button.danger {
+        color: #a94442;
+      }
+
+      .import-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 6px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fffaf0;
       }
 
       #chart {
@@ -436,8 +503,10 @@
             <h3>Configured Cash Flows</h3>
             <div class="toolbar">
               <button id="export-json-button" class="primary" type="button">Export JSON Backup</button>
-              <input id="import-json-input" type="file" accept="application/json,.json" />
-              <button id="import-json-button" type="button">Import JSON Backup</button>
+              <div class="import-group" role="group" aria-label="Import JSON backup controls">
+                <input id="import-json-input" type="file" accept="application/json,.json" />
+                <button id="import-json-button" type="button">Import JSON Backup</button>
+              </div>
             </div>
             <div id="storage-status" aria-live="polite"></div>
             <div class="table-shell">
@@ -451,8 +520,7 @@
                     <th>Direction</th>
                     <th>Amount</th>
                     <th>Category</th>
-                    <th>Include</th>
-                    <th>Action</th>
+                    <th class="action-col">Action</th>
                   </tr>
                 </thead>
                 <tbody id="configured-flow-rows"></tbody>

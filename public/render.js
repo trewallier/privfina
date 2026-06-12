@@ -45,7 +45,7 @@ function renderConfiguredTable(
   if (!rows.length) {
     const row = document.createElement('tr')
     const cell = document.createElement('td')
-    cell.colSpan = 9
+    cell.colSpan = 8
     cell.textContent = 'No cash flows configured yet.'
     row.appendChild(cell)
     tbody.appendChild(row)
@@ -62,23 +62,38 @@ function renderConfiguredTable(
       <td>${rowData.direction}</td>
       <td>${rowData.amount.toFixed(2)}</td>
       <td>${rowData.category}</td>
-      <td>
-        <label>
-          <input class="action-include" data-id="${rowData.id}" type="checkbox" ${rowData.included ? 'checked' : ''} />
-          include
-        </label>
-      </td>
-      <td>
-        <button class="primary action-edit" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Edit</button>
-        <button class="secondary action-delete" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Delete</button>
+      <td class="action-col">
+        <div class="row-actions">
+        <button
+          class="icon-button action-toggle-include ${rowData.included ? 'is-active' : ''}"
+          data-id="${rowData.id}"
+          data-type="${rowData.type}"
+          type="button"
+          aria-label="${rowData.included ? 'Exclude from cumulative summary' : 'Include in cumulative summary'}"
+          title="${rowData.included ? 'Exclude from cumulative summary' : 'Include in cumulative summary'}"
+        >${renderActionIcon('include', rowData.included)}</button>
+        <button
+          class="icon-button action-edit"
+          data-id="${rowData.id}"
+          data-type="${rowData.type}"
+          type="button"
+          aria-label="Edit cash flow"
+          title="Edit cash flow"
+        >${renderActionIcon('edit')}</button>
+        <button
+          class="icon-button danger action-delete"
+          data-id="${rowData.id}"
+          data-type="${rowData.type}"
+          type="button"
+          aria-label="Delete cash flow"
+          title="Delete cash flow"
+        >${renderActionIcon('delete')}</button>
+        </div>
       </td>
     `
 
-    row.querySelector('.action-include')?.addEventListener('change', (event) => {
-      const target = event.currentTarget
-      if (target instanceof HTMLInputElement) {
-        onToggleInclude(rowData.id, target.checked)
-      }
+    row.querySelector('.action-toggle-include')?.addEventListener('click', () => {
+      onToggleInclude(rowData.id, !rowData.included)
     })
 
     row.querySelector('.action-edit')?.addEventListener('click', () => {
@@ -99,6 +114,22 @@ function renderConfiguredTable(
 
     tbody.appendChild(row)
   }
+}
+
+function renderActionIcon(type, included = false) {
+  if (type === 'edit') {
+    return '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 11.5 3.4 9.1 10.9 1.6a1.5 1.5 0 0 1 2.1 0l1.4 1.4a1.5 1.5 0 0 1 0 2.1L6.9 12.6 4.5 13z" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.8 2.7 13.3 6.2" stroke-width="1.4" stroke-linecap="round"/></svg>'
+  }
+
+  if (type === 'delete') {
+    return '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 4h11" stroke-width="1.4" stroke-linecap="round"/><path d="M6 1.8h4" stroke-width="1.4" stroke-linecap="round"/><path d="M4 4l.7 9.2a1 1 0 0 0 1 .8h4.6a1 1 0 0 0 1-.8L12 4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 6.4v5" stroke-width="1.4" stroke-linecap="round"/><path d="M9.5 6.4v5" stroke-width="1.4" stroke-linecap="round"/></svg>'
+  }
+
+  if (included) {
+    return '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.4 8s2.4-4.4 6.6-4.4S14.6 8 14.6 8s-2.4 4.4-6.6 4.4S1.4 8 1.4 8Z" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke-width="1.4"/></svg>'
+  }
+
+  return '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.4 8s2.4-4.4 6.6-4.4S14.6 8 14.6 8s-2.4 4.4-6.6 4.4S1.4 8 1.4 8Z" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke-width="1.4"/><path d="M2.2 13.8 13.8 2.2" stroke-width="1.4" stroke-linecap="round"/></svg>'
 }
 
 function formatAxisAmount(value) {

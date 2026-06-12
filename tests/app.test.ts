@@ -399,6 +399,39 @@ describe('browser recurrence validation helpers', () => {
     expect(container.innerHTML).toContain('Cumulative total amount')
     expect(container.innerHTML).toContain('class="grid-line"')
     expect(container.innerHTML).toContain('class="y-tick-label"')
+    expect(container.innerHTML).toContain('class="series-line"')
+    expect(container.innerHTML).toContain(' H ')
+    expect(container.innerHTML).toContain(' V ')
+  })
+
+  it('colors zero axis red when cumulative totals cross zero', () => {
+    const container = { innerHTML: '' }
+
+    renderChart(
+      [
+        { date: '2024-01-01', cumulativeTotal: -40 },
+        { date: '2024-02-01', cumulativeTotal: 10 }
+      ],
+      container
+    )
+
+    expect(container.innerHTML).toContain('class="zero-axis"')
+    expect(container.innerHTML).toContain('stroke="#c0392b"')
+  })
+
+  it('keeps zero axis neutral when cumulative totals do not cross zero', () => {
+    const container = { innerHTML: '' }
+
+    renderChart(
+      [
+        { date: '2024-01-01', cumulativeTotal: 20 },
+        { date: '2024-02-01', cumulativeTotal: 50 }
+      ],
+      container
+    )
+
+    expect(container.innerHTML).toContain('class="zero-axis"')
+    expect(container.innerHTML).toContain('stroke="#bcb1a3"')
   })
 
   it('renders an informative empty state for range without flows', () => {

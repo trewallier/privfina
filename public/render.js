@@ -139,6 +139,27 @@ function downsampleSeriesForChart(series, maxPoints = 900) {
   return sampled
 }
 
+function buildHoldPath(series, xScale, yScale) {
+  if (!series.length) {
+    return ''
+  }
+
+  const first = series[0]
+  let path = `M ${xScale(new Date(first.date).getTime())} ${yScale(first.cumulativeTotal)}`
+
+  for (let index = 1; index < series.length; index += 1) {
+    const previous = series[index - 1]
+    const current = series[index]
+    const currentX = xScale(new Date(current.date).getTime())
+    const previousY = yScale(previous.cumulativeTotal)
+    const currentY = yScale(current.cumulativeTotal)
+
+    path += ` H ${currentX} V ${currentY}`
+  }
+
+  return path
+}
+
 function renderChart(series, container, options = {}) {
   const startDate = options.startDate
   const endDate = options.endDate
@@ -180,9 +201,7 @@ function renderChart(series, container, options = {}) {
     return topPad + ((maxTotal - value) / (maxTotal - minTotal)) * (height - topPad - bottomPad)
   }
 
-  const points = sampledSeries
-    .map((point) => `${xScale(new Date(point.date).getTime())},${yScale(point.cumulativeTotal)}`)
-    .join(' ')
+  const holdPath = buildHoldPath(sampledSeries, xScale, yScale)
 
   const yTicks = Array.from({ length: yTickCount }, (_, index) => {
     const ratio = yTickCount === 1 ? 0 : index / (yTickCount - 1)
@@ -203,6 +222,8 @@ function renderChart(series, container, options = {}) {
     .join('')
 
   const zeroY = yScale(0)
+  const hasZeroCrossing = minTotal < 0 && maxTotal > 0
+  const zeroAxisColor = hasZeroCrossing ? '#c0392b' : '#bcb1a3'
   const startLabel = formatDateLabel(sampledSeries[0].date)
   const endLabel = formatDateLabel(sampledSeries[sampledSeries.length - 1].date)
   const samplingNote =
@@ -215,8 +236,8 @@ function renderChart(series, container, options = {}) {
       ${yTickMarkup}
       <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${height - bottomPad}" stroke="#c9bfae" stroke-width="1" />
       <line x1="${leftPad}" y1="${height - bottomPad}" x2="${width - rightPad}" y2="${height - bottomPad}" stroke="#c9bfae" stroke-width="1" />
-      <line x1="${leftPad}" y1="${zeroY}" x2="${width - rightPad}" y2="${zeroY}" stroke="#bcb1a3" stroke-width="1.5" />
-      <polyline fill="none" stroke="#0f766e" stroke-width="3" points="${points}" />
+      <line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${width - rightPad}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />
+      <path class="series-line" d="${holdPath}" fill="none" stroke="#0f766e" stroke-width="3" />
       <text x="${leftPad}" y="18" fill="#6f6558" font-size="12">Cumulative total amount</text>
       ${samplingNote}
       <text x="${leftPad}" y="${height - 10}" fill="#6f6558" font-size="12">${startLabel}</text>

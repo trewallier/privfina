@@ -55,7 +55,7 @@
         margin-top: 14px;
         display: grid;
         gap: 16px;
-        grid-template-columns: minmax(420px, 1.15fr) minmax(360px, 0.85fr);
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
         align-items: start;
       }
 
@@ -65,6 +65,7 @@
         border-radius: 14px;
         padding: 16px;
         box-shadow: var(--shadow);
+        min-width: 0;
       }
 
       .card h2,
@@ -77,11 +78,16 @@
         gap: 14px;
       }
 
+      .stack > * {
+        min-width: 0;
+      }
+
       .pane-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 10px;
+        flex-wrap: wrap;
       }
 
       .pane-title {
@@ -225,13 +231,22 @@
         align-items: center;
       }
 
-      table {
+      .table-shell {
         width: 100%;
-        border-collapse: collapse;
+        overflow-x: auto;
         margin-top: 8px;
         background: #fff;
+        border: 1px solid var(--border);
         border-radius: 10px;
         overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        min-width: 920px;
+        border-collapse: collapse;
+        margin-top: 0;
+        background: #fff;
       }
 
       th,
@@ -425,22 +440,24 @@
               <button id="import-json-button" type="button">Import JSON Backup</button>
             </div>
             <div id="storage-status" aria-live="polite"></div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Date / Start</th>
-                  <th>End / Count</th>
-                  <th>Period</th>
-                  <th>Direction</th>
-                  <th>Amount</th>
-                  <th>Category</th>
-                  <th>Include</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="configured-flow-rows"></tbody>
-            </table>
+            <div class="table-shell">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Date / Start</th>
+                    <th>End / Count</th>
+                    <th>Period</th>
+                    <th>Direction</th>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Include</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="configured-flow-rows"></tbody>
+              </table>
+            </div>
           </section>
         </section>
 

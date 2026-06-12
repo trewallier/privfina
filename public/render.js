@@ -1,13 +1,16 @@
 function renderConfiguredTable(
   oneTimeFlows,
   recurringFlows,
+  instrumentBundles,
   tbody,
   isFlowIncluded,
   onToggleInclude,
   onEditOneTime,
   onDeleteOneTime,
   onEditRecurring,
-  onDeleteRecurring
+  onDeleteRecurring,
+  onEditInstrument,
+  onDeleteInstrument
 ) {
   tbody.innerHTML = ''
   const rows = []
@@ -37,6 +40,31 @@ function renderConfiguredTable(
       amount: flow.amount,
       category: flow.category || 'general',
       included: isFlowIncluded(flow.id)
+    })
+  }
+
+  for (const bundle of instrumentBundles) {
+    const generatedFlows = Array.isArray(bundle.generatedFlows) ? bundle.generatedFlows : []
+    const firstDate = generatedFlows.length > 0 ? generatedFlows[0].date : '-'
+    const lastDate = generatedFlows.length > 0 ? generatedFlows[generatedFlows.length - 1].date : '-'
+    const totalAmount = generatedFlows.reduce((sum, flow) => {
+      const signed = flow.direction === 'inflow' ? flow.amount : -flow.amount
+      return sum + signed
+    }, 0)
+
+    rows.push({
+      id: bundle.id,
+      type: `instrument:${bundle.instrumentType}`,
+      startOrDate: firstDate,
+      endOrCount: `${lastDate} (${generatedFlows.length} flows)`,
+      period:
+        bundle.instrumentType === 'salary'
+          ? bundle.config?.scheduleMode || 'custom-monthly-working-day'
+          : bundle.config?.period || '-',
+      direction: generatedFlows[0]?.direction || '-',
+      amount: totalAmount,
+      category: generatedFlows[0]?.category || bundle.instrumentType,
+      included: isFlowIncluded(bundle.id)
     })
   }
 
@@ -99,16 +127,20 @@ function renderConfiguredTable(
     row.querySelector('.action-edit')?.addEventListener('click', () => {
       if (rowData.type === 'one-time') {
         onEditOneTime(rowData.id)
-      } else {
+      } else if (rowData.type === 'recurring') {
         onEditRecurring(rowData.id)
+      } else {
+        onEditInstrument(rowData.id)
       }
     })
 
     row.querySelector('.action-delete')?.addEventListener('click', () => {
       if (rowData.type === 'one-time') {
         onDeleteOneTime(rowData.id)
-      } else {
+      } else if (rowData.type === 'recurring') {
         onDeleteRecurring(rowData.id)
+      } else {
+        onDeleteInstrument(rowData.id)
       }
     })
 

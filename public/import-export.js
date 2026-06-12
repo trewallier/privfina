@@ -4,9 +4,12 @@ import {
 import {
   normalizeRecurringDefinitions
 } from './recurrence.js'
+import {
+  normalizeInstrumentBundles
+} from './instruments.js'
 
 const EXPORT_KIND = 'privfina.export'
-const CURRENT_EXPORT_SCHEMA_VERSION = 2
+const CURRENT_EXPORT_SCHEMA_VERSION = 3
 const MIN_SUPPORTED_IMPORT_SCHEMA_VERSION = 1
 
 function normalizeOneTimeFlow(flow) {
@@ -66,14 +69,20 @@ function ensureFlowIds(flows, prefix) {
   })
 }
 
-function buildExportDocument(oneTimeFlows, recurringFlows, nowIso) {
+function buildExportDocument(oneTimeFlows, recurringFlows, instrumentBundlesOrNowIso, maybeNowIso) {
+  const instrumentBundles = Array.isArray(instrumentBundlesOrNowIso)
+    ? normalizeInstrumentBundles(instrumentBundlesOrNowIso)
+    : []
+  const nowIso = typeof instrumentBundlesOrNowIso === 'string' ? instrumentBundlesOrNowIso : maybeNowIso
+
   return {
     kind: EXPORT_KIND,
     schemaVersion: CURRENT_EXPORT_SCHEMA_VERSION,
     exportedAt: nowIso || new Date().toISOString(),
     data: {
       oneTimeCashFlows: normalizeOneTimeFlows(oneTimeFlows),
-      recurringCashFlows: normalizeRecurringDefinitions(recurringFlows)
+      recurringCashFlows: normalizeRecurringDefinitions(recurringFlows),
+      instrumentBundles
     }
   }
 }
@@ -116,7 +125,8 @@ function extractImportData(payload) {
     schemaVersion,
     data: {
       oneTimeCashFlows: source.oneTimeCashFlows || [],
-      recurringCashFlows: source.recurringCashFlows || []
+      recurringCashFlows: source.recurringCashFlows || [],
+      instrumentBundles: source.instrumentBundles || []
     }
   }
 }
@@ -132,7 +142,19 @@ function migrateImportDataToCurrent(schemaVersion, data) {
       currentVersion = 2
       currentData = {
         oneTimeCashFlows: currentData.oneTimeCashFlows || [],
-        recurringCashFlows: currentData.recurringCashFlows || []
+        recurringCashFlows: currentData.recurringCashFlows || [],
+        instrumentBundles: currentData.instrumentBundles || []
+      }
+      continue
+    }
+
+    if (currentVersion === 2) {
+      warnings.push('Imported schema v2 without instrument bundles. Missing bundles were initialized empty.')
+      currentVersion = 3
+      currentData = {
+        oneTimeCashFlows: currentData.oneTimeCashFlows || [],
+        recurringCashFlows: currentData.recurringCashFlows || [],
+        instrumentBundles: currentData.instrumentBundles || []
       }
       continue
     }
@@ -156,10 +178,15 @@ function parseImportDocument(payload) {
     normalizeRecurringDefinitions(migrated.data.recurringCashFlows),
     'recurring'
   )
+  const instrumentBundles = ensureFlowIds(
+    normalizeInstrumentBundles(migrated.data.instrumentBundles),
+    'instrument'
+  )
 
   return {
     oneTimeFlows,
     recurringFlows,
+    instrumentBundles,
     schemaVersion: migrated.schemaVersion,
     warnings: migrated.warnings
   }

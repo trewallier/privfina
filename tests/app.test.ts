@@ -9,6 +9,10 @@ import {
   normalizeOneTimeFlows,
   normalizeRecurringDefinition,
   normalizeRecurringDefinitions,
+  rollBusinessDay,
+  generateSalaryInstrumentBundle,
+  generateSubscriptionInstrumentBundle,
+  normalizeInstrumentBundles,
   expandRecurringFlows,
   upsertFlowById,
   removeFlowById,
@@ -74,6 +78,7 @@ describe('browser recurrence validation helpers', () => {
     })
     expect(doc.data.oneTimeCashFlows).toHaveLength(1)
     expect(doc.data.recurringCashFlows).toHaveLength(1)
+    expect(doc.data.instrumentBundles).toHaveLength(0)
   })
 
   it('imports current schema export documents', () => {
@@ -101,6 +106,7 @@ describe('browser recurrence validation helpers', () => {
 
     expect(imported.oneTimeFlows).toHaveLength(1)
     expect(imported.recurringFlows).toHaveLength(1)
+    expect(imported.instrumentBundles).toHaveLength(0)
     expect(imported.schemaVersion).toBe(CURRENT_EXPORT_SCHEMA_VERSION)
     expect(imported.warnings).toEqual([])
   })
@@ -364,6 +370,66 @@ describe('browser recurrence validation helpers', () => {
       { date: '2024-01-15', cumulativeTotal: 90 },
       { date: '2024-01-20', cumulativeTotal: 50 }
     ])
+  })
+
+  it('rolls business dates with weekend and holiday awareness', () => {
+    expect(rollBusinessDay('2026-05-10', 'preceding')).toBe('2026-05-08')
+    expect(rollBusinessDay('2026-06-10', 'preceding', ['2026-06-10'])).toBe('2026-06-09')
+    expect(rollBusinessDay('2026-01-31', 'modified-following')).toBe('2026-01-30')
+  })
+
+  it('builds salary instrument bundle with custom monthly rule', () => {
+    const bundle = generateSalaryInstrumentBundle({
+      label: 'Main salary',
+      startDate: '2026-01-01',
+      occurrences: 3,
+      amount: 2000,
+      scheduleMode: 'custom-monthly-working-day',
+      targetDayOfMonth: 10,
+      businessDayConvention: 'preceding',
+      holidaysRaw: ''
+    })
+
+    expect(bundle.instrumentType).toBe('salary')
+    expect(bundle.generatedFlows.map((flow) => flow.date)).toEqual([
+      '2026-01-09',
+      '2026-02-10',
+      '2026-03-10'
+    ])
+  })
+
+  it('builds subscription instrument bundle as recurring outflow', () => {
+    const bundle = generateSubscriptionInstrumentBundle({
+      label: 'Streaming',
+      period: '0 0 5 * *',
+      startDate: '2026-01-01',
+      occurrences: 2,
+      amount: 15,
+      category: 'subscription'
+    })
+
+    expect(bundle.instrumentType).toBe('subscription')
+    expect(bundle.generatedFlows.map((flow) => flow.direction)).toEqual(['outflow', 'outflow'])
+  })
+
+  it('normalizes instrument bundle collections and drops unsupported types', () => {
+    const normalized = normalizeInstrumentBundles([
+      {
+        id: 's1',
+        instrumentType: 'salary',
+        label: 'Salary',
+        config: {},
+        generatedFlows: [{ date: '2026-01-10', amount: 1000, direction: 'inflow', category: 'salary' }]
+      },
+      {
+        id: 'x1',
+        instrumentType: 'unsupported',
+        generatedFlows: []
+      }
+    ])
+
+    expect(normalized).toHaveLength(1)
+    expect(normalized[0].id).toBe('s1')
   })
 
   it('formats axis amounts with separators', () => {

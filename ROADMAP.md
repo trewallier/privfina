@@ -23,7 +23,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ### Platform & Hosting
 - [x] v1: GitHub Pages deployment setup (static build + publish)
-- [ ] v1: browser storage persistence + export/import
+- [x] v1: browser storage persistence + export/import
 - [x] v1: define calculation-engine interface + baseline JS implementation
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] v2: WASM spike: compile a small compute kernel and call it from JS
@@ -39,8 +39,8 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 ### Data Input & Persistence
 - [x] Define browser storage strategy: local browser storage + export/import JSON (ADR 0004)
-- [ ] Implement browser persistence layer and export/import flow
-- [ ] Add documentation for browser storage expectations and export/import format
+- [x] Implement browser persistence layer and export/import flow
+- [x] Add documentation for browser storage expectations and export/import format
 
 ### Feature Development
 - [ ] Introduce instrument-specific models (salary, subscription, loan, investment) built on top of one-time and recurring cash-flow primitives.

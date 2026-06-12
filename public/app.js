@@ -1,5 +1,9 @@
 const ONE_TIME_STORAGE_KEY = 'privfina.one_time_cash_flows.v1'
 const RECURRING_STORAGE_KEY = 'privfina.recurring_cash_flows.v1'
+const STORAGE_SCHEMA_VERSION_KEY = 'privfina.storage_schema_version'
+const EXPORT_KIND = 'privfina.export'
+const CURRENT_EXPORT_SCHEMA_VERSION = 2
+const MIN_SUPPORTED_IMPORT_SCHEMA_VERSION = 1
 
 function toSignedAmount(flow) {
   return flow.direction === 'inflow' ? flow.amount : -flow.amount
@@ -20,6 +24,189 @@ function loadList(key) {
 
 function saveList(key, value) {
   localStorage.setItem(key, JSON.stringify(value))
+}
+
+function normalizeOneTimeFlow(flow) {
+  if (!flow || typeof flow !== 'object') {
+    return null
+  }
+
+  const date = String(flow.date || '').trim()
+  const amount = Number(flow.amount)
+  const direction = flow.direction === 'outflow' ? 'outflow' : 'inflow'
+  const category = String(flow.category || '').trim() || 'general'
+  const id = typeof flow.id === 'string' && flow.id.trim() ? flow.id.trim() : undefined
+  const description = typeof flow.description === 'string' ? flow.description : undefined
+
+  if (!date || !Number.isFinite(amount) || amount < 0) {
+    return null
+  }
+
+  return {
+    ...flow,
+    id,
+    date,
+    amount,
+    direction,
+    category,
+    description
+  }
+}
+
+function normalizeOneTimeFlows(flows) {
+  if (!Array.isArray(flows)) {
+    return []
+  }
+
+  return flows
+    .map(normalizeOneTimeFlow)
+    .filter((flow) => flow !== null)
+}
+
+function ensureFlowIds(flows, prefix) {
+  return flows.map((flow, index) => {
+    if (typeof flow.id === 'string' && flow.id.trim().length > 0) {
+      return flow
+    }
+
+    let generatedId
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      generatedId = crypto.randomUUID()
+    } else {
+      generatedId = `${prefix}-${Date.now()}-${index}`
+    }
+
+    return {
+      ...flow,
+      id: generatedId
+    }
+  })
+}
+
+function buildExportDocument(oneTimeFlows, recurringFlows, nowIso) {
+  return {
+    kind: EXPORT_KIND,
+    schemaVersion: CURRENT_EXPORT_SCHEMA_VERSION,
+    exportedAt: nowIso || new Date().toISOString(),
+    data: {
+      oneTimeCashFlows: normalizeOneTimeFlows(oneTimeFlows),
+      recurringCashFlows: normalizeRecurringDefinitions(recurringFlows)
+    }
+  }
+}
+
+function extractImportV1Data(payload) {
+  return {
+    oneTimeCashFlows: payload.oneTimeCashFlows || payload.oneTimeFlows || payload.oneTime || [],
+    recurringCashFlows: payload.recurringCashFlows || payload.recurringFlows || payload.recurring || []
+  }
+}
+
+function extractImportData(payload) {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Import payload must be a JSON object.')
+  }
+
+  const schemaVersion = Number.isInteger(payload.schemaVersion)
+    ? payload.schemaVersion
+    : MIN_SUPPORTED_IMPORT_SCHEMA_VERSION
+
+  if (schemaVersion < MIN_SUPPORTED_IMPORT_SCHEMA_VERSION) {
+    throw new Error(`Import schema v${schemaVersion} is too old to be supported.`)
+  }
+
+  if (schemaVersion > CURRENT_EXPORT_SCHEMA_VERSION) {
+    throw new Error(
+      `Import schema v${schemaVersion} is newer than this app (v${CURRENT_EXPORT_SCHEMA_VERSION}).`
+    )
+  }
+
+  if (schemaVersion === 1) {
+    return {
+      schemaVersion,
+      data: extractImportV1Data(payload)
+    }
+  }
+
+  const source = payload.data && typeof payload.data === 'object' ? payload.data : payload
+  return {
+    schemaVersion,
+    data: {
+      oneTimeCashFlows: source.oneTimeCashFlows || [],
+      recurringCashFlows: source.recurringCashFlows || []
+    }
+  }
+}
+
+function migrateImportDataToCurrent(schemaVersion, data) {
+  let currentVersion = schemaVersion
+  let currentData = data
+  const warnings = []
+
+  while (currentVersion < CURRENT_EXPORT_SCHEMA_VERSION) {
+    if (currentVersion === 1) {
+      warnings.push('Imported legacy schema v1. Data was migrated to the current export schema.')
+      currentVersion = 2
+      currentData = {
+        oneTimeCashFlows: currentData.oneTimeCashFlows || [],
+        recurringCashFlows: currentData.recurringCashFlows || []
+      }
+      continue
+    }
+
+    throw new Error(`No migration path is available from schema v${currentVersion}.`)
+  }
+
+  return {
+    schemaVersion: currentVersion,
+    data: currentData,
+    warnings
+  }
+}
+
+function parseImportDocument(payload) {
+  const extracted = extractImportData(payload)
+  const migrated = migrateImportDataToCurrent(extracted.schemaVersion, extracted.data)
+
+  const oneTimeFlows = ensureFlowIds(normalizeOneTimeFlows(migrated.data.oneTimeCashFlows), 'one')
+  const recurringFlows = ensureFlowIds(
+    normalizeRecurringDefinitions(migrated.data.recurringCashFlows),
+    'recurring'
+  )
+
+  return {
+    oneTimeFlows,
+    recurringFlows,
+    schemaVersion: migrated.schemaVersion,
+    warnings: migrated.warnings
+  }
+}
+
+function checkStorageSchemaVersion() {
+  const raw = localStorage.getItem(STORAGE_SCHEMA_VERSION_KEY)
+  const stored = raw ? Number(raw) : undefined
+  const validStored = Number.isInteger(stored) ? stored : undefined
+  const warnings = []
+
+  if (validStored !== undefined && validStored !== CURRENT_EXPORT_SCHEMA_VERSION) {
+    if (validStored > CURRENT_EXPORT_SCHEMA_VERSION) {
+      warnings.push(
+        `Detected newer local schema v${validStored}. This app uses v${CURRENT_EXPORT_SCHEMA_VERSION}; compatibility is limited.`
+      )
+    } else {
+      warnings.push(
+        `Local schema changed from v${validStored} to v${CURRENT_EXPORT_SCHEMA_VERSION}. Export a fresh backup JSON.`
+      )
+    }
+  }
+
+  localStorage.setItem(STORAGE_SCHEMA_VERSION_KEY, String(CURRENT_EXPORT_SCHEMA_VERSION))
+
+  return {
+    storedSchemaVersion: validStored,
+    currentSchemaVersion: CURRENT_EXPORT_SCHEMA_VERSION,
+    warnings
+  }
 }
 
 function upsertFlowById(flows, nextFlow) {
@@ -397,14 +584,41 @@ function init() {
   const recurringSubmitButton = document.getElementById('recurring-submit')
   const oneTimeCancelButton = document.getElementById('one-time-cancel-edit')
   const recurringCancelButton = document.getElementById('recurring-cancel-edit')
+  const schemaWarning = document.getElementById('schema-warning')
+  const storageStatus = document.getElementById('storage-status')
+  const exportButton = document.getElementById('export-json-button')
+  const importInput = document.getElementById('import-json-input')
+  const importButton = document.getElementById('import-json-button')
   const rows = document.getElementById('configured-flow-rows')
   const chart = document.getElementById('chart')
   const startInput = document.getElementById('range-start')
   const endInput = document.getElementById('range-end')
 
-  let oneTimeFlows = loadList(ONE_TIME_STORAGE_KEY)
+  const schemaCheck = checkStorageSchemaVersion()
+  if (schemaWarning) {
+    if (schemaCheck.warnings.length > 0) {
+      schemaWarning.hidden = false
+      schemaWarning.textContent = schemaCheck.warnings.join(' ')
+      console.warn(schemaWarning.textContent)
+    } else {
+      schemaWarning.hidden = true
+      schemaWarning.textContent = ''
+    }
+  }
+
+  function setStorageStatus(message, level) {
+    if (!storageStatus) {
+      return
+    }
+
+    storageStatus.textContent = message
+    storageStatus.dataset.level = level || 'info'
+  }
+
+  let oneTimeFlows = normalizeOneTimeFlows(loadList(ONE_TIME_STORAGE_KEY))
+  oneTimeFlows = ensureFlowIds(oneTimeFlows, 'one')
   const rawRecurringFlows = loadList(RECURRING_STORAGE_KEY)
-  let recurringFlows = normalizeRecurringDefinitions(rawRecurringFlows)
+  let recurringFlows = ensureFlowIds(normalizeRecurringDefinitions(rawRecurringFlows), 'recurring')
   let editingOneTimeId = null
   let editingRecurringId = null
 
@@ -456,6 +670,10 @@ function init() {
     recurringForm.querySelector('#recurring-category').value = target.category || 'general'
     recurringSubmitButton.textContent = 'Save Recurring Cash Flow'
     recurringCancelButton.hidden = false
+  }
+
+  if (JSON.stringify(oneTimeFlows) !== JSON.stringify(loadList(ONE_TIME_STORAGE_KEY))) {
+    saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
   }
 
   if (JSON.stringify(recurringFlows) !== JSON.stringify(rawRecurringFlows)) {
@@ -643,13 +861,75 @@ function init() {
   startInput.addEventListener('change', rerender)
   endInput.addEventListener('change', rerender)
 
+  if (exportButton) {
+    exportButton.addEventListener('click', () => {
+      const exportDoc = buildExportDocument(oneTimeFlows, recurringFlows)
+      const blob = new Blob([JSON.stringify(exportDoc, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const stamp = exportDoc.exportedAt.slice(0, 10)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `privfina-export-v${exportDoc.schemaVersion}-${stamp}.json`
+      anchor.click()
+      URL.revokeObjectURL(url)
+      setStorageStatus(`Exported JSON backup with schema v${exportDoc.schemaVersion}.`, 'success')
+    })
+  }
+
+  if (importButton && importInput) {
+    importButton.addEventListener('click', async () => {
+      const file = importInput.files && importInput.files[0]
+      if (!file) {
+        setStorageStatus('Select a JSON file to import.', 'warning')
+        return
+      }
+
+      try {
+        const raw = await file.text()
+        const parsed = JSON.parse(raw)
+        const imported = parseImportDocument(parsed)
+
+        oneTimeFlows = imported.oneTimeFlows
+        recurringFlows = imported.recurringFlows
+        saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
+        saveList(RECURRING_STORAGE_KEY, recurringFlows)
+        localStorage.setItem(STORAGE_SCHEMA_VERSION_KEY, String(imported.schemaVersion))
+
+        const defaultRange = suggestRange([
+          ...oneTimeFlows.map((entry) => ({ date: entry.date })),
+          ...recurringFlows.map((entry) => ({ date: entry.startDate }))
+        ])
+        startInput.value = defaultRange.startDate
+        endInput.value = defaultRange.endDate
+
+        const extra = imported.warnings.length > 0 ? ` ${imported.warnings.join(' ')}` : ''
+        setStorageStatus(
+          `Imported ${oneTimeFlows.length} one-time and ${recurringFlows.length} recurring flows (schema v${imported.schemaVersion}).${extra}`,
+          imported.warnings.length > 0 ? 'warning' : 'success'
+        )
+        rerender()
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to import JSON data.'
+        setStorageStatus(message, 'error')
+      }
+    })
+  }
+
   rerender()
 }
 
 export {
+  CURRENT_EXPORT_SCHEMA_VERSION,
+  MIN_SUPPORTED_IMPORT_SCHEMA_VERSION,
   parseOccurrences,
+  normalizeOneTimeFlow,
+  normalizeOneTimeFlows,
   normalizeRecurringDefinition,
   normalizeRecurringDefinitions,
+  buildExportDocument,
+  parseImportDocument,
+  migrateImportDataToCurrent,
+  checkStorageSchemaVersion,
   expandRecurringFlows,
   buildEffectiveFlows,
   calculateCumulativeSeries,

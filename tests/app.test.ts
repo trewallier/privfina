@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CURRENT_EXPORT_SCHEMA_VERSION,
   calculateCumulativeSeries,
+  buildExportDocument,
+  parseImportDocument,
   parseOccurrences,
+  normalizeOneTimeFlow,
+  normalizeOneTimeFlows,
   normalizeRecurringDefinition,
   normalizeRecurringDefinitions,
   expandRecurringFlows,
@@ -11,6 +16,126 @@ import {
 } from '../public/app.js'
 
 describe('browser recurrence validation helpers', () => {
+  it('normalizes valid one-time flows and rejects invalid entries', () => {
+    expect(
+      normalizeOneTimeFlow({
+        id: 'a',
+        date: '2024-01-10',
+        amount: '100',
+        direction: 'outflow',
+        category: ''
+      })
+    ).toEqual({
+      id: 'a',
+      date: '2024-01-10',
+      amount: 100,
+      direction: 'outflow',
+      category: 'general',
+      description: undefined
+    })
+
+    expect(normalizeOneTimeFlow({ date: '', amount: 10 })).toBeNull()
+    expect(normalizeOneTimeFlow({ date: '2024-01-10', amount: -1 })).toBeNull()
+  })
+
+  it('normalizes one-time flow lists', () => {
+    const normalized = normalizeOneTimeFlows([
+      { id: 'x', date: '2024-01-01', amount: 10, direction: 'inflow', category: 'salary' },
+      { id: 'bad', date: '', amount: 20, direction: 'inflow', category: 'salary' }
+    ])
+
+    expect(normalized).toHaveLength(1)
+    expect(normalized[0].id).toBe('x')
+  })
+
+  it('builds schema-versioned export documents', () => {
+    const doc = buildExportDocument(
+      [{ id: 'a', date: '2024-01-01', amount: 100, direction: 'inflow', category: 'salary' }],
+      [
+        {
+          id: 'r1',
+          period: '0 0 15 * *',
+          startDate: '2024-01-01',
+          occurrences: 12,
+          amount: 100,
+          direction: 'inflow',
+          category: 'salary'
+        }
+      ],
+      '2026-06-12T00:00:00.000Z'
+    )
+
+    expect(doc).toMatchObject({
+      kind: 'privfina.export',
+      schemaVersion: CURRENT_EXPORT_SCHEMA_VERSION,
+      exportedAt: '2026-06-12T00:00:00.000Z'
+    })
+    expect(doc.data.oneTimeCashFlows).toHaveLength(1)
+    expect(doc.data.recurringCashFlows).toHaveLength(1)
+  })
+
+  it('imports current schema export documents', () => {
+    const imported = parseImportDocument({
+      kind: 'privfina.export',
+      schemaVersion: CURRENT_EXPORT_SCHEMA_VERSION,
+      exportedAt: '2026-06-12T00:00:00.000Z',
+      data: {
+        oneTimeCashFlows: [
+          { id: 'a', date: '2024-01-01', amount: 100, direction: 'inflow', category: 'salary' }
+        ],
+        recurringCashFlows: [
+          {
+            id: 'r1',
+            period: '0 0 15 * *',
+            startDate: '2024-01-01',
+            occurrences: 12,
+            amount: 100,
+            direction: 'inflow',
+            category: 'salary'
+          }
+        ]
+      }
+    })
+
+    expect(imported.oneTimeFlows).toHaveLength(1)
+    expect(imported.recurringFlows).toHaveLength(1)
+    expect(imported.schemaVersion).toBe(CURRENT_EXPORT_SCHEMA_VERSION)
+    expect(imported.warnings).toEqual([])
+  })
+
+  it('imports and migrates legacy schema v1 payloads', () => {
+    const imported = parseImportDocument({
+      oneTimeFlows: [{ date: '2024-01-01', amount: 100, direction: 'inflow' }],
+      recurringFlows: [
+        {
+          period: '0 0 15 * *',
+          startDate: '2024-01-01',
+          occurrences: 1,
+          amount: 10,
+          direction: 'outflow'
+        }
+      ]
+    })
+
+    expect(imported.schemaVersion).toBe(CURRENT_EXPORT_SCHEMA_VERSION)
+    expect(imported.oneTimeFlows[0].id).toBeTruthy()
+    expect(imported.recurringFlows[0].id).toBeTruthy()
+    expect(imported.warnings.some((entry) => entry.includes('legacy schema v1'))).toBe(true)
+  })
+
+  it('rejects unsupported future import schemas', () => {
+    expect(() =>
+      parseImportDocument({
+        kind: 'privfina.export',
+        schemaVersion: CURRENT_EXPORT_SCHEMA_VERSION + 1,
+        data: {
+          oneTimeCashFlows: [],
+          recurringCashFlows: []
+        }
+      })
+    ).toThrow(/newer than this app/)
+  })
+
   it('parses valid numeric occurrences and string occurrences', () => {
     expect(parseOccurrences(5)).toBe(5)
     expect(parseOccurrences('120')).toBe(120)

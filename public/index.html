@@ -141,12 +141,46 @@
         color: var(--muted);
         background: var(--accent-soft);
       }
+
+      .warning-banner {
+        margin-top: 14px;
+        border: 1px solid #c28a3d;
+        background: #fff3dc;
+        color: #6d4b10;
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      #storage-status {
+        margin-top: 10px;
+        color: var(--muted);
+      }
+
+      #storage-status[data-level='success'] {
+        color: #116530;
+      }
+
+      #storage-status[data-level='warning'] {
+        color: #6d4b10;
+      }
+
+      #storage-status[data-level='error'] {
+        color: #a94442;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Privfina</h1>
       <p class="lead">Create, edit, and delete one-time and recurring cash flows while visualizing cumulative totals.</p>
+      <div id="schema-warning" class="warning-banner" hidden></div>
 
       <section class="card">
         <h2>Add One-Time Cash Flow</h2>
@@ -224,6 +258,12 @@
 
       <section class="card">
         <h2>Configured Cash Flows</h2>
+        <div class="toolbar">
+          <button id="export-json-button" class="primary" type="button">Export JSON Backup</button>
+          <input id="import-json-input" type="file" accept="application/json,.json" />
+          <button id="import-json-button" type="button">Import JSON Backup</button>
+        </div>
+        <div id="storage-status" aria-live="polite"></div>
         <table>
           <thead>
             <tr>

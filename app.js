@@ -16,6 +16,13 @@ import {
   expandRecurringFlows
 } from './recurrence.js'
 import {
+  rollBusinessDay,
+  generateSalaryInstrumentBundle,
+  generateSubscriptionInstrumentBundle,
+  normalizeInstrumentBundle,
+  normalizeInstrumentBundles
+} from './instruments.js'
+import {
   upsertFlowById,
   removeFlowById,
   buildEffectiveFlows,
@@ -32,6 +39,11 @@ export {
   ensureFlowIds,
   normalizeRecurringDefinition,
   normalizeRecurringDefinitions,
+  rollBusinessDay,
+  generateSalaryInstrumentBundle,
+  generateSubscriptionInstrumentBundle,
+  normalizeInstrumentBundle,
+  normalizeInstrumentBundles,
   buildExportDocument,
   parseImportDocument,
   migrateImportDataToCurrent,

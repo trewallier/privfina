@@ -22,6 +22,27 @@ function saveList(key, value) {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
+function upsertFlowById(flows, nextFlow) {
+  let replaced = false
+  const updated = flows.map((flow) => {
+    if (flow.id === nextFlow.id) {
+      replaced = true
+      return nextFlow
+    }
+    return flow
+  })
+
+  if (!replaced) {
+    updated.push(nextFlow)
+  }
+
+  return updated
+}
+
+function removeFlowById(flows, id) {
+  return flows.filter((flow) => flow.id !== id)
+}
+
 function parseOccurrences(value) {
   if (Number.isInteger(value) && value > 0) {
     return value
@@ -212,7 +233,15 @@ function calculateCumulativeSeries(flows) {
   })
 }
 
-function renderConfiguredTable(oneTimeFlows, recurringFlows, tbody, onDeleteOneTime, onDeleteRecurring) {
+function renderConfiguredTable(
+  oneTimeFlows,
+  recurringFlows,
+  tbody,
+  onEditOneTime,
+  onDeleteOneTime,
+  onEditRecurring,
+  onDeleteRecurring
+) {
   tbody.innerHTML = ''
   const rows = []
 
@@ -264,10 +293,21 @@ function renderConfiguredTable(oneTimeFlows, recurringFlows, tbody, onDeleteOneT
       <td>${rowData.direction}</td>
       <td>${rowData.amount.toFixed(2)}</td>
       <td>${rowData.category}</td>
-      <td><button class="secondary" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Delete</button></td>
+      <td>
+        <button class="primary action-edit" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Edit</button>
+        <button class="secondary action-delete" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Delete</button>
+      </td>
     `
 
-    row.querySelector('button')?.addEventListener('click', () => {
+    row.querySelector('.action-edit')?.addEventListener('click', () => {
+      if (rowData.type === 'one-time') {
+        onEditOneTime(rowData.id)
+      } else {
+        onEditRecurring(rowData.id)
+      }
+    })
+
+    row.querySelector('.action-delete')?.addEventListener('click', () => {
       if (rowData.type === 'one-time') {
         onDeleteOneTime(rowData.id)
       } else {
@@ -353,6 +393,10 @@ function extendRange(currentStart, currentEnd, candidateStart, candidateEnd) {
 function init() {
   const oneTimeForm = document.getElementById('cash-flow-form')
   const recurringForm = document.getElementById('recurring-form')
+  const oneTimeSubmitButton = document.getElementById('one-time-submit')
+  const recurringSubmitButton = document.getElementById('recurring-submit')
+  const oneTimeCancelButton = document.getElementById('one-time-cancel-edit')
+  const recurringCancelButton = document.getElementById('recurring-cancel-edit')
   const rows = document.getElementById('configured-flow-rows')
   const chart = document.getElementById('chart')
   const startInput = document.getElementById('range-start')
@@ -361,6 +405,58 @@ function init() {
   let oneTimeFlows = loadList(ONE_TIME_STORAGE_KEY)
   const rawRecurringFlows = loadList(RECURRING_STORAGE_KEY)
   let recurringFlows = normalizeRecurringDefinitions(rawRecurringFlows)
+  let editingOneTimeId = null
+  let editingRecurringId = null
+
+  function resetOneTimeForm() {
+    editingOneTimeId = null
+    oneTimeForm.reset()
+    oneTimeForm.querySelector('#direction').value = 'inflow'
+    oneTimeSubmitButton.textContent = 'Add Cash Flow'
+    oneTimeCancelButton.hidden = true
+  }
+
+  function resetRecurringForm() {
+    editingRecurringId = null
+    recurringForm.reset()
+    recurringForm.querySelector('#recurring-direction').value = 'inflow'
+    recurringSubmitButton.textContent = 'Add Recurring Cash Flow'
+    recurringCancelButton.hidden = true
+  }
+
+  function startOneTimeEdit(id) {
+    const target = oneTimeFlows.find((flow) => flow.id === id)
+    if (!target) {
+      return
+    }
+
+    editingOneTimeId = id
+    oneTimeForm.querySelector('#date').value = target.date
+    oneTimeForm.querySelector('#amount').value = String(target.amount)
+    oneTimeForm.querySelector('#direction').value = target.direction
+    oneTimeForm.querySelector('#category').value = target.category || 'general'
+    oneTimeSubmitButton.textContent = 'Save Cash Flow'
+    oneTimeCancelButton.hidden = false
+  }
+
+  function startRecurringEdit(id) {
+    const target = recurringFlows.find((flow) => flow.id === id)
+    if (!target) {
+      return
+    }
+
+    editingRecurringId = id
+    recurringForm.querySelector('#period').value = target.period
+    recurringForm.querySelector('#start-date').value = target.startDate
+    recurringForm.querySelector('#end-date').value = target.endDate || ''
+    recurringForm.querySelector('#occurrences').value =
+      target.occurrences !== undefined ? String(target.occurrences) : ''
+    recurringForm.querySelector('#recurring-amount').value = String(target.amount)
+    recurringForm.querySelector('#recurring-direction').value = target.direction
+    recurringForm.querySelector('#recurring-category').value = target.category || 'general'
+    recurringSubmitButton.textContent = 'Save Recurring Cash Flow'
+    recurringCancelButton.hidden = false
+  }
 
   if (JSON.stringify(recurringFlows) !== JSON.stringify(rawRecurringFlows)) {
     saveList(RECURRING_STORAGE_KEY, recurringFlows)
@@ -382,8 +478,15 @@ function init() {
       sortedRecurring,
       rows,
       (id) => {
-        oneTimeFlows = oneTimeFlows.filter((flow) => flow.id !== id)
+        startOneTimeEdit(id)
+      },
+      (id) => {
+        oneTimeFlows = removeFlowById(oneTimeFlows, id)
         saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
+
+        if (editingOneTimeId === id) {
+          resetOneTimeForm()
+        }
 
         if (!oneTimeFlows.length && !recurringFlows.length) {
           const fallbackDate = new Date().toISOString().slice(0, 10)
@@ -394,8 +497,15 @@ function init() {
         rerender()
       },
       (id) => {
-        recurringFlows = recurringFlows.filter((flow) => flow.id !== id)
+        startRecurringEdit(id)
+      },
+      (id) => {
+        recurringFlows = removeFlowById(recurringFlows, id)
         saveList(RECURRING_STORAGE_KEY, recurringFlows)
+
+        if (editingRecurringId === id) {
+          resetRecurringForm()
+        }
 
         if (!oneTimeFlows.length && !recurringFlows.length) {
           const fallbackDate = new Date().toISOString().slice(0, 10)
@@ -439,24 +549,22 @@ function init() {
       return
     }
 
-    oneTimeFlows = [
-      ...oneTimeFlows,
-      {
-        id: crypto.randomUUID(),
-        date,
-        amount,
-        direction,
-        category
-      }
-    ]
+    const oneTimeFlow = {
+      id: editingOneTimeId || crypto.randomUUID(),
+      date,
+      amount,
+      direction,
+      category
+    }
+
+    oneTimeFlows = upsertFlowById(oneTimeFlows, oneTimeFlow)
     saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
 
-    const range = suggestRange([...oneTimeFlows.map((entry) => ({ date: entry.date }))])
-    startInput.value = range.startDate
-    endInput.value = range.endDate
+    const updatedRange = extendRange(startInput.value, endInput.value, date, date)
+    startInput.value = updatedRange.startDate
+    endInput.value = updatedRange.endDate
 
-    oneTimeForm.reset()
-    oneTimeForm.querySelector('#direction').value = 'inflow'
+    resetOneTimeForm()
 
     rerender()
   })
@@ -501,29 +609,35 @@ function init() {
       return
     }
 
-    recurringFlows = [
-      ...recurringFlows,
-      {
-        id: crypto.randomUUID(),
-        period,
-        startDate,
-        endDate: hasEndDate ? endDate : undefined,
-        occurrences,
-        amount,
-        direction,
-        category
-      }
-    ]
+    const recurringFlow = {
+      id: editingRecurringId || crypto.randomUUID(),
+      period,
+      startDate,
+      endDate: hasEndDate ? endDate : undefined,
+      occurrences,
+      amount,
+      direction,
+      category
+    }
+
+    recurringFlows = upsertFlowById(recurringFlows, recurringFlow)
     saveList(RECURRING_STORAGE_KEY, recurringFlows)
 
     const updatedRange = extendRange(startInput.value, endInput.value, startDate, endDate || startDate)
     startInput.value = updatedRange.startDate
     endInput.value = updatedRange.endDate
 
-    recurringForm.reset()
-    recurringForm.querySelector('#recurring-direction').value = 'inflow'
+    resetRecurringForm()
 
     rerender()
+  })
+
+  oneTimeCancelButton.addEventListener('click', () => {
+    resetOneTimeForm()
+  })
+
+  recurringCancelButton.addEventListener('click', () => {
+    resetRecurringForm()
   })
 
   startInput.addEventListener('change', rerender)
@@ -537,7 +651,10 @@ export {
   normalizeRecurringDefinition,
   normalizeRecurringDefinitions,
   expandRecurringFlows,
-  buildEffectiveFlows
+  buildEffectiveFlows,
+  calculateCumulativeSeries,
+  upsertFlowById,
+  removeFlowById
 }
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'

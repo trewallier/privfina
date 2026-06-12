@@ -105,9 +105,36 @@ function parseMonthlyCronDay(period) {
   return Number(cronMatch[3])
 }
 
+function parseRecurringSchedule(period) {
+  const tokens = String(period || '')
+    .trim()
+    .split(/\s+/)
+
+  if (tokens.length !== 5) {
+    throw new Error('Use cron-like format: "m h day month weekday".')
+  }
+
+  const [, , day, month, weekday] = tokens
+
+  if (/^([1-9]|[12]\d|3[01])$/.test(day) && month === '*' && weekday === '*') {
+    return { type: 'monthly', day: Number(day) }
+  }
+
+  if (day === '*' && month === '*' && /^([0-6])$/.test(weekday)) {
+    return { type: 'weekly', weekday: Number(weekday) }
+  }
+
+  if (/^([1-9]|[12]\d|3[01])$/.test(day) && /^([1-9]|1[0-2])$/.test(month) && weekday === '*') {
+    return { type: 'annual', day: Number(day), month: Number(month) }
+  }
+
+  throw new Error('Unsupported recurring period. Use monthly, weekly, or annual cron-like schedules.')
+}
+
 function expandRecurringFlows(definition, rangeStart, rangeEnd) {
-  const dayOfMonth = parseMonthlyCronDay(definition.period)
+  const schedule = parseRecurringSchedule(definition.period)
   const startDate = parseIsoDate(definition.startDate)
+  const rangeStartDate = parseIsoDate(rangeStart)
   const rangeEndDate = parseIsoDate(rangeEnd)
   const endDate = definition.endDate ? parseIsoDate(definition.endDate) : null
   const occurrences = parseOccurrences(definition.occurrences)
@@ -120,8 +147,83 @@ function expandRecurringFlows(definition, rangeStart, rangeEnd) {
     return []
   }
 
+  const effectiveEnd = endDate && endDate.getTime() < rangeEndDate.getTime() ? endDate : rangeEndDate
+
+  if (effectiveEnd.getTime() < startDate.getTime()) {
+    return []
+  }
+
+  if (schedule.type === 'weekly') {
+    let current = new Date(startDate)
+    const firstOffset = (schedule.weekday - current.getUTCDay() + 7) % 7
+    current = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + firstOffset))
+
+    const generated = []
+    let occurrenceCount = 0
+    while (occurrenceCount < maxOccurrences && current.getTime() <= effectiveEnd.getTime()) {
+      occurrenceCount += 1
+
+      const iso = formatIsoDate(current)
+      if (current.getTime() >= rangeStartDate.getTime()) {
+        generated.push({
+          date: iso,
+          amount: definition.amount,
+          direction: definition.direction,
+          category: definition.category || 'general'
+        })
+      }
+
+      current = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + 7))
+    }
+
+    return generated
+  }
+
+  if (schedule.type === 'annual') {
+    let year = startDate.getUTCFullYear()
+    const generated = []
+    let occurrenceCount = 0
+    let iterationCount = 0
+    const MAX_ITERATIONS = 10000
+
+    while (
+      occurrenceCount < maxOccurrences &&
+      iterationCount < MAX_ITERATIONS &&
+      year <= effectiveEnd.getUTCFullYear() + 1
+    ) {
+      iterationCount += 1
+      const monthIndex = schedule.month - 1
+      const maxDay = daysInMonthUtc(year, monthIndex)
+
+      if (schedule.day <= maxDay) {
+        const candidate = new Date(Date.UTC(year, monthIndex, schedule.day))
+
+        if (candidate.getTime() >= startDate.getTime()) {
+          if (candidate.getTime() > effectiveEnd.getTime()) {
+            break
+          }
+
+          occurrenceCount += 1
+          if (candidate.getTime() >= rangeStartDate.getTime()) {
+            generated.push({
+              date: formatIsoDate(candidate),
+              amount: definition.amount,
+              direction: definition.direction,
+              category: definition.category || 'general'
+            })
+          }
+        }
+      }
+
+      year += 1
+    }
+
+    return generated
+  }
+
   let year = startDate.getUTCFullYear()
   let month = startDate.getUTCMonth()
+  const dayOfMonth = schedule.day
   const generated = []
   let iterationCount = 0
   const MAX_ITERATIONS = 10000
@@ -173,5 +275,6 @@ export {
   formatIsoDate,
   daysInMonthUtc,
   parseMonthlyCronDay,
+  parseRecurringSchedule,
   expandRecurringFlows
 }

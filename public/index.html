@@ -89,11 +89,23 @@
         cursor: pointer;
       }
 
+      button.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+
       button.secondary {
         border-color: #a94442;
         background: #fff;
         color: #a94442;
         padding: 6px 10px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
       }
 
       table {
@@ -134,7 +146,7 @@
   <body>
     <main>
       <h1>Privfina</h1>
-      <p class="lead">Create one-time and recurring cash flows, review them, delete them, and visualize cumulative totals.</p>
+      <p class="lead">Create, edit, and delete one-time and recurring cash flows while visualizing cumulative totals.</p>
 
       <section class="card">
         <h2>Add One-Time Cash Flow</h2>
@@ -160,7 +172,10 @@
               <input id="category" name="category" type="text" placeholder="general" />
             </label>
           </div>
-          <button type="submit">Add Cash Flow</button>
+          <div class="actions">
+            <button id="one-time-submit" class="primary" type="submit">Add Cash Flow</button>
+            <button id="one-time-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+          </div>
         </form>
       </section>
 
@@ -200,7 +215,10 @@
               <input id="recurring-category" name="category" type="text" placeholder="general" />
             </label>
           </div>
-          <button type="submit">Add Recurring Cash Flow</button>
+          <div class="actions">
+            <button id="recurring-submit" class="primary" type="submit">Add Recurring Cash Flow</button>
+            <button id="recurring-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+          </div>
         </form>
       </section>
 

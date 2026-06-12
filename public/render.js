@@ -84,18 +84,65 @@ function renderConfiguredTable(
   }
 }
 
-function renderChart(series, container) {
+function formatAxisAmount(value) {
+  const formatter = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })
+  return formatter.format(value)
+}
+
+function formatDateLabel(isoDate) {
+  const [year, month, day] = isoDate.split('-').map((value) => Number(value))
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    timeZone: 'UTC'
+  }).format(parsed)
+}
+
+function downsampleSeriesForChart(series, maxPoints = 900) {
+  if (series.length <= maxPoints || maxPoints < 2) {
+    return series
+  }
+
+  const sampled = []
+  const step = Math.ceil((series.length - 1) / (maxPoints - 1))
+  for (let index = 0; index < series.length; index += step) {
+    sampled.push(series[index])
+  }
+
+  const last = series[series.length - 1]
+  if (sampled[sampled.length - 1] !== last) {
+    sampled.push(last)
+  }
+
+  return sampled
+}
+
+function renderChart(series, container, options = {}) {
+  const startDate = options.startDate
+  const endDate = options.endDate
+
   if (!series.length) {
-    container.innerHTML = '<div class="empty">No cash flows in selected range. Baseline total: 0.</div>'
+    const rangeMessage = startDate && endDate ? `${startDate} to ${endDate}` : 'the selected date range'
+    container.innerHTML = `<div class="empty">No cash flows in ${rangeMessage}. Cumulative total remains ${formatAxisAmount(0)}.</div>`
     return
   }
 
+  const sampledSeries = downsampleSeriesForChart(series)
   const width = 880
-  const height = 260
-  const pad = 28
+  const height = 300
+  const leftPad = 82
+  const rightPad = 24
+  const topPad = 24
+  const bottomPad = 36
+  const yTickCount = 5
 
-  const timestamps = series.map((point) => new Date(point.date).getTime())
-  const totals = series.map((point) => point.cumulativeTotal)
+  const timestamps = sampledSeries.map((point) => new Date(point.date).getTime())
+  const totals = sampledSeries.map((point) => point.cumulativeTotal)
 
   const minTime = Math.min(...timestamps)
   const maxTime = Math.max(...timestamps)
@@ -104,36 +151,66 @@ function renderChart(series, container) {
 
   const xScale = (value) => {
     if (maxTime === minTime) {
-      return width / 2
+      return (leftPad + (width - rightPad)) / 2
     }
-    return pad + ((value - minTime) / (maxTime - minTime)) * (width - pad * 2)
+    return leftPad + ((value - minTime) / (maxTime - minTime)) * (width - leftPad - rightPad)
   }
 
   const yScale = (value) => {
     if (maxTotal === minTotal) {
-      return height / 2
+      return (topPad + (height - bottomPad)) / 2
     }
-    return pad + ((maxTotal - value) / (maxTotal - minTotal)) * (height - pad * 2)
+    return topPad + ((maxTotal - value) / (maxTotal - minTotal)) * (height - topPad - bottomPad)
   }
 
-  const points = series
+  const points = sampledSeries
     .map((point) => `${xScale(new Date(point.date).getTime())},${yScale(point.cumulativeTotal)}`)
     .join(' ')
 
+  const yTicks = Array.from({ length: yTickCount }, (_, index) => {
+    const ratio = yTickCount === 1 ? 0 : index / (yTickCount - 1)
+    const value = maxTotal - (maxTotal - minTotal) * ratio
+    return {
+      y: yScale(value),
+      value
+    }
+  })
+
+  const yTickMarkup = yTicks
+    .map(
+      (tick) => `
+      <line class="grid-line" x1="${leftPad}" y1="${tick.y}" x2="${width - rightPad}" y2="${tick.y}" stroke="#e6e0d6" stroke-width="1" />
+      <text class="y-tick-label" x="${leftPad - 10}" y="${tick.y + 4}" text-anchor="end" fill="#6f6558" font-size="11">${formatAxisAmount(tick.value)}</text>
+    `
+    )
+    .join('')
+
   const zeroY = yScale(0)
+  const startLabel = formatDateLabel(sampledSeries[0].date)
+  const endLabel = formatDateLabel(sampledSeries[sampledSeries.length - 1].date)
+  const samplingNote =
+    sampledSeries.length < series.length
+      ? `<text x="${width - rightPad}" y="18" text-anchor="end" fill="#6f6558" font-size="11">Showing ${sampledSeries.length.toLocaleString()} of ${series.length.toLocaleString()} points</text>`
+      : ''
 
   container.innerHTML = `
     <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Cumulative cash-flow chart">
-      <line x1="${pad}" y1="${zeroY}" x2="${width - pad}" y2="${zeroY}" stroke="#bcb1a3" stroke-width="1" />
+      ${yTickMarkup}
+      <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${height - bottomPad}" stroke="#c9bfae" stroke-width="1" />
+      <line x1="${leftPad}" y1="${height - bottomPad}" x2="${width - rightPad}" y2="${height - bottomPad}" stroke="#c9bfae" stroke-width="1" />
+      <line x1="${leftPad}" y1="${zeroY}" x2="${width - rightPad}" y2="${zeroY}" stroke="#bcb1a3" stroke-width="1.5" />
       <polyline fill="none" stroke="#0f766e" stroke-width="3" points="${points}" />
-      <text x="${pad}" y="18" fill="#6f6558" font-size="12">Cumulative total</text>
-      <text x="${pad}" y="${height - 8}" fill="#6f6558" font-size="12">${series[0].date}</text>
-      <text x="${width - pad - 80}" y="${height - 8}" fill="#6f6558" font-size="12">${series[series.length - 1].date}</text>
+      <text x="${leftPad}" y="18" fill="#6f6558" font-size="12">Cumulative total amount</text>
+      ${samplingNote}
+      <text x="${leftPad}" y="${height - 10}" fill="#6f6558" font-size="12">${startLabel}</text>
+      <text x="${width - rightPad}" y="${height - 10}" text-anchor="end" fill="#6f6558" font-size="12">${endLabel}</text>
     </svg>
   `
 }
 
 export {
   renderConfiguredTable,
-  renderChart
+  renderChart,
+  downsampleSeriesForChart,
+  formatAxisAmount
 }

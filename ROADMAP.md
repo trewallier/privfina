@@ -17,7 +17,7 @@ This roadmap is intentionally incremental. Each item should be small enough to i
 
 - [ ] Add category and date filtering helpers for analytics.
 - [ ] Add recurrence support for weekly and annual schedules.
-- [ ] Add chart UX polish: axis formatting, empty-state messaging, and large-range performance.
+- [x] Add chart UX polish: axis formatting, empty-state messaging, and large-range performance.
 
 ## Near Term
 

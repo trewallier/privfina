@@ -14,6 +14,7 @@ import {
   removeFlowById,
   buildEffectiveFlows
 } from '../public/app.js'
+import { downsampleSeriesForChart, formatAxisAmount, renderChart } from '../public/render.js'
 
 describe('browser recurrence validation helpers', () => {
   it('normalizes valid one-time flows and rejects invalid entries', () => {
@@ -322,5 +323,52 @@ describe('browser recurrence validation helpers', () => {
       { date: '2024-01-15', cumulativeTotal: 90 },
       { date: '2024-01-20', cumulativeTotal: 50 }
     ])
+  })
+
+  it('formats axis amounts with separators', () => {
+    expect(formatAxisAmount(12345.678)).toBe('12,345.68')
+    expect(formatAxisAmount(-2000)).toBe('-2,000')
+  })
+
+  it('downsamples large chart series while preserving boundaries', () => {
+    const series = Array.from({ length: 2500 }, (_, index) => ({
+      date: `2024-01-${String((index % 28) + 1).padStart(2, '0')}`,
+      cumulativeTotal: index
+    }))
+
+    const sampled = downsampleSeriesForChart(series, 400)
+
+    expect(sampled.length).toBeLessThanOrEqual(401)
+    expect(sampled[0]).toEqual(series[0])
+    expect(sampled[sampled.length - 1]).toEqual(series[series.length - 1])
+  })
+
+  it('renders chart with y-axis labels and guide lines', () => {
+    const container = { innerHTML: '' }
+
+    renderChart(
+      [
+        { date: '2024-01-01', cumulativeTotal: 100 },
+        { date: '2024-02-01', cumulativeTotal: 50 },
+        { date: '2024-03-01', cumulativeTotal: 250 }
+      ],
+      container
+    )
+
+    expect(container.innerHTML).toContain('Cumulative total amount')
+    expect(container.innerHTML).toContain('class="grid-line"')
+    expect(container.innerHTML).toContain('class="y-tick-label"')
+  })
+
+  it('renders an informative empty state for range without flows', () => {
+    const container = { innerHTML: '' }
+
+    renderChart([], container, {
+      startDate: '2024-01-01',
+      endDate: '2024-12-31'
+    })
+
+    expect(container.innerHTML).toContain('No cash flows in 2024-01-01 to 2024-12-31')
+    expect(container.innerHTML).toContain('Cumulative total remains 0')
   })
 })

@@ -68,9 +68,11 @@ function renderConfiguredTable(
           include
         </label>
       </td>
-      <td>
+      <td class="action-col">
+        <div class="row-actions">
         <button class="primary action-edit" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Edit</button>
         <button class="secondary action-delete" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Delete</button>
+        </div>
       </td>
     `
 

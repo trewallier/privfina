@@ -6,13 +6,18 @@
     <title>Privfina</title>
     <style>
       :root {
-        --bg: #f3f2ee;
+        --bg: #f2efe8;
+        --bg-mesh-1: #f7e6d0;
+        --bg-mesh-2: #d7eee7;
         --card: #fffdf7;
+        --card-soft: #fff7eb;
         --text: #24211c;
         --muted: #6f6558;
         --accent: #0f766e;
+        --accent-strong: #0d5f59;
         --accent-soft: #dff5f1;
         --border: #d9d0c4;
+        --shadow: 0 20px 40px -30px rgba(36, 33, 28, 0.48);
       }
 
       * {
@@ -22,24 +27,36 @@
       body {
         margin: 0;
         font-family: "Avenir Next", "Segoe UI", sans-serif;
-        background: linear-gradient(160deg, #f3f2ee 0%, #ece6dc 55%, #f8f8f6 100%);
+        background:
+          radial-gradient(circle at 0% 0%, var(--bg-mesh-1) 0%, rgba(247, 230, 208, 0) 45%),
+          radial-gradient(circle at 100% 0%, var(--bg-mesh-2) 0%, rgba(215, 238, 231, 0) 40%),
+          linear-gradient(160deg, #f3f2ee 0%, #ece6dc 55%, #f8f8f6 100%);
         color: var(--text);
       }
 
       main {
-        max-width: 960px;
+        max-width: 1240px;
         margin: 0 auto;
         padding: 24px 16px 40px;
       }
 
-      h1 {
+      .page-title {
         margin: 0;
-        font-size: 2rem;
+        font-size: 2.2rem;
+        letter-spacing: 0.01em;
       }
 
-      p.lead {
+      .lead {
         margin-top: 8px;
         color: var(--muted);
+      }
+
+      .workspace-grid {
+        margin-top: 14px;
+        display: grid;
+        gap: 16px;
+        grid-template-columns: minmax(420px, 1.15fr) minmax(360px, 0.85fr);
+        align-items: start;
       }
 
       .card {
@@ -47,7 +64,91 @@
         border: 1px solid var(--border);
         border-radius: 14px;
         padding: 16px;
-        margin-top: 16px;
+        box-shadow: var(--shadow);
+      }
+
+      .card h2,
+      .card h3 {
+        margin-top: 0;
+      }
+
+      .stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .pane-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .pane-title {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+
+      .pane-copy {
+        margin: 2px 0 0;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .composer-toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .flow-composer {
+        display: grid;
+        gap: 10px;
+      }
+
+      .flow-box {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #fffdf8 0%, var(--card-soft) 100%);
+      }
+
+      .flow-box > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        list-style: none;
+        padding: 12px 14px;
+        cursor: pointer;
+      }
+
+      .flow-box > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .flow-box[open] > summary {
+        border-bottom: 1px solid var(--border);
+        background: rgba(15, 118, 110, 0.06);
+      }
+
+      .summary-main {
+        display: flex;
+        align-items: center;
+        gap: 0;
+      }
+
+      .summary-title {
+        font-weight: 600;
+      }
+
+      .summary-hint {
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .flow-form-wrap {
+        padding: 12px 14px 14px;
       }
 
       form {
@@ -87,6 +188,7 @@
         color: #fff;
         padding: 9px 12px;
         cursor: pointer;
+        transition: background-color 0.2s ease;
       }
 
       button.primary {
@@ -102,6 +204,21 @@
         padding: 6px 10px;
       }
 
+      button.ghost {
+        border-color: var(--border);
+        background: #fff;
+        color: var(--text);
+      }
+
+      button:hover {
+        background: var(--accent-strong);
+      }
+
+      button.secondary:hover,
+      button.ghost:hover {
+        background: #f6f1e8;
+      }
+
       .actions {
         display: flex;
         gap: 8px;
@@ -112,6 +229,9 @@
         width: 100%;
         border-collapse: collapse;
         margin-top: 8px;
+        background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
       }
 
       th,
@@ -158,6 +278,10 @@
         flex-wrap: wrap;
       }
 
+      .viz-range {
+        margin-bottom: 10px;
+      }
+
       #storage-status {
         margin-top: 10px;
         color: var(--muted);
@@ -174,127 +298,169 @@
       #storage-status[data-level='error'] {
         color: #a94442;
       }
+
+      @media (max-width: 1020px) {
+        .workspace-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
     <main>
-      <h1>Privfina</h1>
+      <h1 class="page-title">Privfina</h1>
       <p class="lead">Create, edit, and delete one-time and recurring cash flows while visualizing cumulative totals.</p>
       <div id="schema-warning" class="warning-banner" hidden></div>
 
-      <section class="card">
-        <h2>Add One-Time Cash Flow</h2>
-        <form id="cash-flow-form">
-          <div class="row">
-            <label>
-              Date
-              <input id="date" name="date" type="date" required />
-            </label>
-            <label>
-              Amount
-              <input id="amount" name="amount" type="number" min="0" step="0.01" required />
-            </label>
-            <label>
-              Direction
-              <select id="direction" name="direction" required>
-                <option value="inflow">Inflow</option>
-                <option value="outflow">Outflow</option>
-              </select>
-            </label>
-            <label>
-              Category
-              <input id="category" name="category" type="text" placeholder="general" />
-            </label>
+      <div class="workspace-grid">
+        <section class="card stack" aria-labelledby="manage-pane-title">
+          <div class="pane-header">
+            <div>
+              <h2 id="manage-pane-title" class="pane-title">Cash-Flow Workspace</h2>
+              <p class="pane-copy">Create, edit, and manage one-time and recurring flow definitions.</p>
+            </div>
+            <button id="toggle-composer" class="ghost" type="button" aria-expanded="true">Hide Add Flow Boxes</button>
           </div>
-          <div class="actions">
-            <button id="one-time-submit" class="primary" type="submit">Add Cash Flow</button>
-            <button id="one-time-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
-          </div>
-        </form>
-      </section>
 
-      <section class="card">
-        <h2>Add Recurring Cash Flow</h2>
-        <form id="recurring-form">
-          <div class="row">
-            <label>
-              Cron-like period
-              <input id="period" name="period" type="text" placeholder="0 0 15 * *" required />
-            </label>
+          <div class="composer-toolbar">
+            <button id="open-one-time-box" class="primary" type="button">+ One-Time Flow</button>
+            <button id="open-recurring-box" class="primary" type="button">+ Recurring Flow</button>
+          </div>
+
+          <section id="flow-composer" class="flow-composer" aria-label="Flow composer panels">
+            <details id="one-time-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">One-Time Cash Flow</span>
+                </span>
+                <span class="summary-hint">Click to expand</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="cash-flow-form">
+                  <div class="row">
+                    <label>
+                      Date
+                      <input id="date" name="date" type="date" required />
+                    </label>
+                    <label>
+                      Amount
+                      <input id="amount" name="amount" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label>
+                      Direction
+                      <select id="direction" name="direction" required>
+                        <option value="inflow">Inflow</option>
+                        <option value="outflow">Outflow</option>
+                      </select>
+                    </label>
+                    <label>
+                      Category
+                      <input id="category" name="category" type="text" placeholder="general" />
+                    </label>
+                  </div>
+                  <div class="actions">
+                    <button id="one-time-submit" class="primary" type="submit">Add Cash Flow</button>
+                    <button id="one-time-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="recurring-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Recurring Cash Flow</span>
+                </span>
+                <span class="summary-hint">Click to expand</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="recurring-form">
+                  <div class="row">
+                    <label>
+                      Cron-like period
+                      <input id="period" name="period" type="text" placeholder="0 0 15 * *" required />
+                    </label>
+                    <label>
+                      Start date
+                      <input id="start-date" name="startDate" type="date" required />
+                    </label>
+                    <label>
+                      End date
+                      <input id="end-date" name="endDate" type="date" />
+                    </label>
+                    <label>
+                      Occurrences
+                      <input id="occurrences" name="occurrences" type="number" min="1" step="1" />
+                    </label>
+                    <label>
+                      Amount
+                      <input id="recurring-amount" name="amount" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label>
+                      Direction
+                      <select id="recurring-direction" name="direction" required>
+                        <option value="inflow">Inflow</option>
+                        <option value="outflow">Outflow</option>
+                      </select>
+                    </label>
+                    <label>
+                      Category
+                      <input id="recurring-category" name="category" type="text" placeholder="general" />
+                    </label>
+                  </div>
+                  <div class="actions">
+                    <button id="recurring-submit" class="primary" type="submit">Add Recurring Cash Flow</button>
+                    <button id="recurring-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+          </section>
+
+          <section>
+            <h3>Configured Cash Flows</h3>
+            <div class="toolbar">
+              <button id="export-json-button" class="primary" type="button">Export JSON Backup</button>
+              <input id="import-json-input" type="file" accept="application/json,.json" />
+              <button id="import-json-button" type="button">Import JSON Backup</button>
+            </div>
+            <div id="storage-status" aria-live="polite"></div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Date / Start</th>
+                  <th>End / Count</th>
+                  <th>Period</th>
+                  <th>Direction</th>
+                  <th>Amount</th>
+                  <th>Category</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="configured-flow-rows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="card stack" aria-labelledby="viz-pane-title">
+          <div>
+            <h2 id="viz-pane-title" class="pane-title">Visualization Workspace</h2>
+            <p class="pane-copy">Review cumulative cash-flow behavior across the selected date range.</p>
+          </div>
+          <div class="row viz-range">
             <label>
               Start date
-              <input id="start-date" name="startDate" type="date" required />
+              <input id="range-start" type="date" />
             </label>
             <label>
               End date
-              <input id="end-date" name="endDate" type="date" />
-            </label>
-            <label>
-              Occurrences
-              <input id="occurrences" name="occurrences" type="number" min="1" step="1" />
-            </label>
-            <label>
-              Amount
-              <input id="recurring-amount" name="amount" type="number" min="0" step="0.01" required />
-            </label>
-            <label>
-              Direction
-              <select id="recurring-direction" name="direction" required>
-                <option value="inflow">Inflow</option>
-                <option value="outflow">Outflow</option>
-              </select>
-            </label>
-            <label>
-              Category
-              <input id="recurring-category" name="category" type="text" placeholder="general" />
+              <input id="range-end" type="date" />
             </label>
           </div>
-          <div class="actions">
-            <button id="recurring-submit" class="primary" type="submit">Add Recurring Cash Flow</button>
-            <button id="recurring-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
-          </div>
-        </form>
-      </section>
-
-      <section class="card">
-        <h2>Configured Cash Flows</h2>
-        <div class="toolbar">
-          <button id="export-json-button" class="primary" type="button">Export JSON Backup</button>
-          <input id="import-json-input" type="file" accept="application/json,.json" />
-          <button id="import-json-button" type="button">Import JSON Backup</button>
-        </div>
-        <div id="storage-status" aria-live="polite"></div>
-        <table>
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Date / Start</th>
-              <th>End / Count</th>
-              <th>Period</th>
-              <th>Direction</th>
-              <th>Amount</th>
-              <th>Category</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="configured-flow-rows"></tbody>
-        </table>
-      </section>
-
-      <section class="card">
-        <h2>Cumulative Cash-Flow Diagram</h2>
-        <div class="row">
-          <label>
-            Start date
-            <input id="range-start" type="date" />
-          </label>
-          <label>
-            End date
-            <input id="range-end" type="date" />
-          </label>
-        </div>
-        <div id="chart"></div>
-      </section>
+          <div id="chart"></div>
+        </section>
+      </div>
     </main>
     <script type="module" src="./app.js"></script>
   </body>

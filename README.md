@@ -8,6 +8,8 @@ This repository is evolving toward a browser-hosted personal finance planning ap
 - Browser storage persistence with export/import JSON for user data portability.
 - Isolated calculation engine interface to separate UI from compute.
 - Implemented v1 slice: one-time and recurring cash-flow create/view/delete plus cumulative cash-flow chart with date-range controls.
+- Split workspace UX: dedicated cash-flow management area and separate visualization area.
+- Swagger-like collapsible flow composer panels with hide/show behavior for focus-oriented workflow.
 - Optional external macro data fetched in-browser through a CORS-aware adapter.
 - Documentation-driven workflow with architecture decisions captured in `docs/adr/`.
 

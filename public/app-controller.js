@@ -51,6 +51,12 @@ function initController() {
   const chart = document.getElementById('chart')
   const startInput = document.getElementById('range-start')
   const endInput = document.getElementById('range-end')
+  const flowComposer = document.getElementById('flow-composer')
+  const toggleComposerButton = document.getElementById('toggle-composer')
+  const openOneTimeBoxButton = document.getElementById('open-one-time-box')
+  const openRecurringBoxButton = document.getElementById('open-recurring-box')
+  const oneTimeBox = document.getElementById('one-time-box')
+  const recurringBox = document.getElementById('recurring-box')
 
   if (
     !oneTimeForm ||
@@ -94,6 +100,47 @@ function initController() {
   let editingOneTimeId = null
   let editingRecurringId = null
 
+  function setComposerVisibility(isVisible) {
+    if (!flowComposer || !toggleComposerButton) {
+      return
+    }
+
+    flowComposer.hidden = !isVisible
+    toggleComposerButton.setAttribute('aria-expanded', String(isVisible))
+    toggleComposerButton.textContent = isVisible ? 'Hide Add Flow Boxes' : 'Show Add Flow Boxes'
+  }
+
+  function collapseComposerBoxes() {
+    if (oneTimeBox) {
+      oneTimeBox.open = false
+    }
+
+    if (recurringBox) {
+      recurringBox.open = false
+    }
+  }
+
+  function openComposerBox(type) {
+    setComposerVisibility(true)
+
+    if (type === 'one-time') {
+      if (recurringBox) {
+        recurringBox.open = false
+      }
+      if (oneTimeBox) {
+        oneTimeBox.open = true
+      }
+      return
+    }
+
+    if (oneTimeBox) {
+      oneTimeBox.open = false
+    }
+    if (recurringBox) {
+      recurringBox.open = true
+    }
+  }
+
   function resetOneTimeForm() {
     editingOneTimeId = null
     oneTimeForm.reset()
@@ -133,6 +180,7 @@ function initController() {
     oneTimeForm.querySelector('#category').value = target.category || 'general'
     oneTimeSubmitButton.textContent = 'Save Cash Flow'
     oneTimeCancelButton.hidden = false
+    openComposerBox('one-time')
   }
 
   function startRecurringEdit(id) {
@@ -152,6 +200,7 @@ function initController() {
     recurringForm.querySelector('#recurring-category').value = target.category || 'general'
     recurringSubmitButton.textContent = 'Save Recurring Cash Flow'
     recurringCancelButton.hidden = false
+    openComposerBox('recurring')
   }
 
   if (JSON.stringify(oneTimeFlows) !== JSON.stringify(loadList(ONE_TIME_STORAGE_KEY))) {
@@ -160,6 +209,44 @@ function initController() {
 
   if (JSON.stringify(recurringFlows) !== JSON.stringify(rawRecurringFlows)) {
     saveList(RECURRING_STORAGE_KEY, recurringFlows)
+  }
+
+  if (oneTimeBox) {
+    oneTimeBox.addEventListener('toggle', () => {
+      if (oneTimeBox.open && recurringBox) {
+        recurringBox.open = false
+      }
+    })
+  }
+
+  if (recurringBox) {
+    recurringBox.addEventListener('toggle', () => {
+      if (recurringBox.open && oneTimeBox) {
+        oneTimeBox.open = false
+      }
+    })
+  }
+
+  if (toggleComposerButton) {
+    toggleComposerButton.addEventListener('click', () => {
+      const shouldShow = !flowComposer || flowComposer.hidden
+      setComposerVisibility(shouldShow)
+      if (!shouldShow) {
+        collapseComposerBoxes()
+      }
+    })
+  }
+
+  if (openOneTimeBoxButton) {
+    openOneTimeBoxButton.addEventListener('click', () => {
+      openComposerBox('one-time')
+    })
+  }
+
+  if (openRecurringBoxButton) {
+    openRecurringBoxButton.addEventListener('click', () => {
+      openComposerBox('recurring')
+    })
   }
 
   const defaultRange = suggestRange([
@@ -255,6 +342,7 @@ function initController() {
     endInput.value = updatedRange.endDate
 
     resetOneTimeForm()
+    collapseComposerBoxes()
     rerender()
   })
 
@@ -317,15 +405,18 @@ function initController() {
     endInput.value = updatedRange.endDate
 
     resetRecurringForm()
+    collapseComposerBoxes()
     rerender()
   })
 
   oneTimeCancelButton.addEventListener('click', () => {
     resetOneTimeForm()
+    collapseComposerBoxes()
   })
 
   recurringCancelButton.addEventListener('click', () => {
     resetRecurringForm()
+    collapseComposerBoxes()
   })
 
   startInput.addEventListener('change', rerender)

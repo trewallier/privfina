@@ -2,6 +2,8 @@ function renderConfiguredTable(
   oneTimeFlows,
   recurringFlows,
   tbody,
+  isFlowIncluded,
+  onToggleInclude,
   onEditOneTime,
   onDeleteOneTime,
   onEditRecurring,
@@ -19,7 +21,8 @@ function renderConfiguredTable(
       period: '-',
       direction: flow.direction,
       amount: flow.amount,
-      category: flow.category || 'general'
+      category: flow.category || 'general',
+      included: isFlowIncluded(flow.id)
     })
   }
 
@@ -32,7 +35,8 @@ function renderConfiguredTable(
       period: flow.period,
       direction: flow.direction,
       amount: flow.amount,
-      category: flow.category || 'general'
+      category: flow.category || 'general',
+      included: isFlowIncluded(flow.id)
     })
   }
 
@@ -41,7 +45,7 @@ function renderConfiguredTable(
   if (!rows.length) {
     const row = document.createElement('tr')
     const cell = document.createElement('td')
-    cell.colSpan = 8
+    cell.colSpan = 9
     cell.textContent = 'No cash flows configured yet.'
     row.appendChild(cell)
     tbody.appendChild(row)
@@ -59,10 +63,23 @@ function renderConfiguredTable(
       <td>${rowData.amount.toFixed(2)}</td>
       <td>${rowData.category}</td>
       <td>
+        <label>
+          <input class="action-include" data-id="${rowData.id}" type="checkbox" ${rowData.included ? 'checked' : ''} />
+          include
+        </label>
+      </td>
+      <td>
         <button class="primary action-edit" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Edit</button>
         <button class="secondary action-delete" data-id="${rowData.id}" data-type="${rowData.type}" type="button">Delete</button>
       </td>
     `
+
+    row.querySelector('.action-include')?.addEventListener('change', (event) => {
+      const target = event.currentTarget
+      if (target instanceof HTMLInputElement) {
+        onToggleInclude(rowData.id, target.checked)
+      }
+    })
 
     row.querySelector('.action-edit')?.addEventListener('click', () => {
       if (rowData.type === 'one-time') {

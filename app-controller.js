@@ -15,7 +15,7 @@ import {
 import {
   normalizeRecurringDefinitions,
   parseIsoDate,
-  parseMonthlyCronDay
+  parseRecurringSchedule
 } from './recurrence.js'
 import {
   upsertFlowById,
@@ -99,6 +99,20 @@ function initController() {
   let recurringFlows = ensureFlowIds(normalizeRecurringDefinitions(rawRecurringFlows), 'recurring')
   let editingOneTimeId = null
   let editingRecurringId = null
+  const excludedFlowIds = new Set()
+
+  function isFlowIncluded(id) {
+    return !excludedFlowIds.has(id)
+  }
+
+  function setFlowIncluded(id, included) {
+    if (included) {
+      excludedFlowIds.delete(id)
+      return
+    }
+
+    excludedFlowIds.add(id)
+  }
 
   function setComposerVisibility(isVisible) {
     if (!flowComposer || !toggleComposerButton) {
@@ -264,11 +278,17 @@ function initController() {
       sortedOneTime,
       sortedRecurring,
       rows,
+      isFlowIncluded,
+      (id, included) => {
+        setFlowIncluded(id, included)
+        rerender()
+      },
       (id) => {
         startOneTimeEdit(id)
       },
       (id) => {
         oneTimeFlows = removeFlowById(oneTimeFlows, id)
+        excludedFlowIds.delete(id)
         saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
 
         if (editingOneTimeId === id) {
@@ -283,6 +303,7 @@ function initController() {
       },
       (id) => {
         recurringFlows = removeFlowById(recurringFlows, id)
+        excludedFlowIds.delete(id)
         saveList(RECURRING_STORAGE_KEY, recurringFlows)
 
         if (editingRecurringId === id) {
@@ -302,7 +323,9 @@ function initController() {
     }
 
     try {
-      const effectiveFlows = buildEffectiveFlows(oneTimeFlows, recurringFlows, startDate, endDate)
+      const includedOneTime = oneTimeFlows.filter((flow) => isFlowIncluded(flow.id))
+      const includedRecurring = recurringFlows.filter((flow) => isFlowIncluded(flow.id))
+      const effectiveFlows = buildEffectiveFlows(includedOneTime, includedRecurring, startDate, endDate)
       const series = calculateCumulativeSeries(effectiveFlows)
       renderChart(series, chart, {
         startDate,
@@ -374,7 +397,7 @@ function initController() {
     }
 
     try {
-      parseMonthlyCronDay(period)
+      parseRecurringSchedule(period)
       const parsedStart = parseIsoDate(startDate)
       if (hasEndDate) {
         const parsedEnd = parseIsoDate(endDate)
@@ -452,6 +475,7 @@ function initController() {
 
         oneTimeFlows = imported.oneTimeFlows
         recurringFlows = imported.recurringFlows
+        excludedFlowIds.clear()
         saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
         saveList(RECURRING_STORAGE_KEY, recurringFlows)
         localStorage.setItem(STORAGE_SCHEMA_VERSION_KEY, String(imported.schemaVersion))

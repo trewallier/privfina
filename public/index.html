@@ -174,6 +174,16 @@
         gap: 6px;
       }
 
+      .inline-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .inline-field input {
+        width: auto;
+      }
+
       input,
       select,
       button {
@@ -409,6 +419,8 @@
             <button id="open-recurring-box" class="primary" type="button">+ Recurring Flow</button>
             <button id="open-salary-box" class="primary" type="button">+ Salary Instrument</button>
             <button id="open-subscription-box" class="primary" type="button">+ Subscription Instrument</button>
+            <button id="open-loan-box" class="primary" type="button">+ Loan Instrument</button>
+            <button id="open-investment-box" class="primary" type="button">+ Investment Instrument</button>
           </div>
 
           <section id="flow-composer" class="flow-composer" aria-label="Flow composer panels">
@@ -633,6 +645,172 @@
                   <div class="actions">
                     <button id="subscription-submit" class="primary" type="submit">Add Subscription Instrument</button>
                     <button id="subscription-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="loan-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Loan Instrument</span>
+                </span>
+                <span class="summary-hint">Annuity preview updates live</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="loan-form">
+                  <div class="row">
+                    <label>
+                      Label
+                      <input id="loan-label" name="label" type="text" placeholder="Loan" />
+                    </label>
+                    <label>
+                      Start date
+                      <input id="loan-start-date" name="startDate" type="date" required />
+                    </label>
+                    <label>
+                      Principal
+                      <input id="loan-principal" name="principal" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label>
+                      Annual interest rate
+                      <input id="loan-annual-rate" name="annualRate" type="number" min="0" step="0.0001" required />
+                    </label>
+                    <label>
+                      Term
+                      <input id="loan-term-value" name="termValue" type="number" min="1" step="1" required />
+                    </label>
+                    <label>
+                      Term unit
+                      <select id="loan-term-unit" name="termUnit">
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                      </select>
+                    </label>
+                    <label>
+                      Repayment day of month
+                      <input id="loan-repayment-day" name="repaymentDayOfMonth" type="number" min="1" max="31" step="1" value="1" />
+                    </label>
+                    <label>
+                      Category
+                      <input id="loan-category" name="category" type="text" placeholder="loan" />
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>
+                      Description
+                      <input id="loan-description" name="description" type="text" placeholder="Optional notes" />
+                    </label>
+                    <label class="inline-field">
+                      <input id="loan-include-disbursement" name="includeDisbursement" type="checkbox" checked />
+                      Account loan disbursement inflow
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>
+                      Monthly repayment preview
+                      <input id="loan-monthly-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      Total repayment preview
+                      <input id="loan-total-repayment-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      Total interest preview
+                      <input id="loan-total-interest-preview" type="text" readonly />
+                    </label>
+                  </div>
+                  <div class="actions">
+                    <button id="loan-submit" class="primary" type="submit">Add Loan Instrument</button>
+                    <button id="loan-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="investment-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Investment Instrument</span>
+                </span>
+                <span class="summary-hint">Regular, discount, inflation-linked, or custom bond</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="investment-form">
+                  <div class="row">
+                    <label>
+                      Label
+                      <input id="investment-label" name="label" type="text" placeholder="Investment" />
+                    </label>
+                    <label>
+                      Subtype
+                      <select id="investment-subtype" name="subtype" required>
+                        <option value="regular-bond">Regular bond</option>
+                        <option value="discount-bond">Discount bond</option>
+                        <option value="inflation-linked-bond">Inflation-linked bond</option>
+                        <option value="custom-bond">Custom bond</option>
+                      </select>
+                    </label>
+                    <label>
+                      Purchase date
+                      <input id="investment-purchase-date" name="purchaseDate" type="date" required />
+                    </label>
+                    <label>
+                      Maturity date
+                      <input id="investment-maturity-date" name="maturityDate" type="date" required />
+                    </label>
+                    <label>
+                      Principal / face value
+                      <input id="investment-principal" name="principal" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label>
+                      Purchase price
+                      <input id="investment-purchase-price" name="purchasePrice" type="number" min="0" step="0.01" />
+                    </label>
+                    <label>
+                      Annual rate
+                      <input id="investment-annual-rate" name="annualRate" type="number" min="0" step="0.0001" />
+                    </label>
+                    <label>
+                      Spread rate
+                      <input id="investment-spread-rate" name="spreadRate" type="number" step="0.0001" />
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>
+                      Yearly inflation inputs
+                      <input id="investment-yearly-inflation" name="yearlyInflationRaw" type="text" placeholder="2026:0.03, 2027:0.02" />
+                    </label>
+                    <label>
+                      Coupon period for custom bond
+                      <input id="investment-coupon-period" name="couponPeriod" type="text" placeholder="0 0 1 * *" />
+                    </label>
+                    <label>
+                      Category
+                      <input id="investment-category" name="category" type="text" placeholder="investment" />
+                    </label>
+                    <label>
+                      Description
+                      <input id="investment-description" name="description" type="text" placeholder="Optional notes" />
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>
+                      Maturity preview
+                      <input id="investment-maturity-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      Purchase amount preview
+                      <input id="investment-purchase-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      Gain preview
+                      <input id="investment-gain-preview" type="text" readonly />
+                    </label>
+                  </div>
+                  <div class="actions">
+                    <button id="investment-submit" class="primary" type="submit">Add Investment Instrument</button>
+                    <button id="investment-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
                   </div>
                 </form>
               </div>

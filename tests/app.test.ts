@@ -12,6 +12,11 @@ import {
   rollBusinessDay,
   generateSalaryInstrumentBundle,
   generateSubscriptionInstrumentBundle,
+  calculateLoanMonthlyInstallment,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentBundle,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentBundle,
   normalizeInstrumentBundles,
   expandRecurringFlows,
   upsertFlowById,
@@ -410,6 +415,96 @@ describe('browser recurrence validation helpers', () => {
 
     expect(bundle.instrumentType).toBe('subscription')
     expect(bundle.generatedFlows.map((flow) => flow.direction)).toEqual(['outflow', 'outflow'])
+  })
+
+  it('builds loan instrument bundle with live repayment preview', () => {
+    const bundle = generateLoanInstrumentBundle({
+      label: 'Car loan',
+      principal: 10000,
+      annualRate: 0.06,
+      termValue: 12,
+      termUnit: 'months',
+      startDate: '2026-01-10',
+      repaymentDayOfMonth: 15,
+      includeDisbursement: true,
+      category: 'loan'
+    })
+
+    const preview = createLoanRepaymentPreview({
+      principal: 10000,
+      annualRate: 0.06,
+      termMonths: 12,
+      startDate: '2026-01-10',
+      repaymentDayOfMonth: 15
+    })
+
+    expect(bundle.instrumentType).toBe('loan')
+    expect(bundle.generatedFlows[0].direction).toBe('inflow')
+    expect(bundle.preview.monthlyInstallment).toBeCloseTo(preview.monthlyInstallment, 6)
+    expect(bundle.generatedFlows.some((flow) => flow.direction === 'outflow')).toBe(true)
+  })
+
+  it('builds investment instrument bundles for regular and custom bonds', () => {
+    const regular = generateInvestmentInstrumentBundle({
+      label: 'Regular bond',
+      subtype: 'regular-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-07-01',
+      principal: 1000,
+      annualRate: 0.05,
+      purchasePrice: 950,
+      category: 'investment'
+    })
+
+    const custom = generateInvestmentInstrumentBundle({
+      label: 'Custom bond',
+      subtype: 'custom-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-04-01',
+      principal: 1000,
+      annualRate: 0.12,
+      couponPeriod: '0 0 1 * *',
+      category: 'investment'
+    })
+
+    const preview = createInvestmentMaturityPreview({
+      subtype: 'regular-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-07-01',
+      principal: 1000,
+      annualRate: 0.05,
+      purchasePrice: 950
+    })
+
+    expect(regular.instrumentType).toBe('investment')
+    expect(regular.preview.maturityAmount).toBeCloseTo(preview.maturityAmount, 6)
+    expect(regular.generatedFlows.some((flow) => flow.direction === 'outflow')).toBe(true)
+    expect(custom.generatedFlows.filter((flow) => flow.direction === 'inflow').length).toBeGreaterThan(1)
+  })
+
+  it('normalizes mixed instrument bundle collections', () => {
+    const normalized = normalizeInstrumentBundles([
+      {
+        id: 'loan-1',
+        instrumentType: 'loan',
+        label: 'Loan',
+        config: { principal: 1000 },
+        preview: { monthlyInstallment: 100, totalRepayment: 1200, totalInterest: 200, termMonths: 12 },
+        generatedFlows: [{ date: '2026-01-01', amount: 1000, direction: 'inflow', category: 'loan' }]
+      },
+      {
+        id: 'inv-1',
+        instrumentType: 'investment',
+        label: 'Bond',
+        config: { subtype: 'regular-bond' },
+        preview: { purchaseAmount: 900, maturityAmount: 1000, gainAmount: 100, subtype: 'regular-bond' },
+        generatedFlows: [{ date: '2026-01-01', amount: 900, direction: 'outflow', category: 'investment' }]
+      }
+    ])
+
+    expect(normalized).toHaveLength(2)
+    expect(normalized[0].instrumentType).toBe('loan')
+    expect(normalized[1].instrumentType).toBe('investment')
   })
 
   it('normalizes instrument bundle collections and drops unsupported types', () => {

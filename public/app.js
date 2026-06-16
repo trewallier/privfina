@@ -19,6 +19,11 @@ import {
   rollBusinessDay,
   generateSalaryInstrumentBundle,
   generateSubscriptionInstrumentBundle,
+  calculateLoanMonthlyInstallment,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentBundle,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentBundle,
   normalizeInstrumentBundle,
   normalizeInstrumentBundles
 } from './instruments.js'
@@ -42,6 +47,11 @@ export {
   rollBusinessDay,
   generateSalaryInstrumentBundle,
   generateSubscriptionInstrumentBundle,
+  calculateLoanMonthlyInstallment,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentBundle,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentBundle,
   normalizeInstrumentBundle,
   normalizeInstrumentBundles,
   buildExportDocument,

@@ -108,6 +108,20 @@ export interface InvestmentInstrumentInput {
   description?: string
 }
 
+export interface LoanRepaymentPreview {
+  monthlyInstallment: number
+  totalRepayment: number
+  totalInterest: number
+  termMonths: number
+}
+
+export interface InvestmentMaturityPreview {
+  purchaseAmount: number
+  maturityAmount: number
+  gainAmount: number
+  subtype: InvestmentSubtype
+}
+
 export interface SimulationEvent {
   date: string
   type: string

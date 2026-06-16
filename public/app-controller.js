@@ -104,8 +104,6 @@ function initController() {
   const loanTotalRepaymentPreviewInput = document.getElementById('loan-total-repayment-preview')
   const loanTotalInterestPreviewInput = document.getElementById('loan-total-interest-preview')
   const investmentSubtypeInput = document.getElementById('investment-subtype')
-  const investmentPurchaseDateInput = document.getElementById('investment-purchase-date')
-  const investmentMaturityDateInput = document.getElementById('investment-maturity-date')
   const investmentIssueDateInput = document.getElementById('investment-issue-date')
   const investmentTransactionDateInput = document.getElementById('investment-transaction-date')
   const investmentDueDateInput = document.getElementById('investment-due-date')
@@ -126,8 +124,6 @@ function initController() {
   const investmentIssueDateWrap = document.getElementById('investment-issue-date-wrap')
   const investmentTransactionDateWrap = document.getElementById('investment-transaction-date-wrap')
   const investmentDueDateWrap = document.getElementById('investment-due-date-wrap')
-  const investmentPurchaseDateWrap = document.getElementById('investment-purchase-date-wrap')
-  const investmentMaturityDateWrap = document.getElementById('investment-maturity-date-wrap')
   const investmentSpreadRateWrap = document.getElementById('investment-spread-rate-wrap')
   const investmentYearlyInflationWrap = document.getElementById('investment-yearly-inflation-wrap')
   const investmentCouponPeriodWrap = document.getElementById('investment-coupon-period-wrap')
@@ -145,11 +141,9 @@ function initController() {
   const investmentSubtypeUiConfig = {
     'regular-bond': {
       visible: {
-        purchaseDate: true,
-        maturityDate: true,
         issueDate: false,
-        transactionDate: false,
-        dueDate: false,
+        transactionDate: true,
+        dueDate: true,
         spreadRate: false,
         yearlyInflation: false,
         couponPeriod: false,
@@ -160,11 +154,9 @@ function initController() {
         inflationSchedulePreview: false
       },
       required: {
-        purchaseDate: true,
-        maturityDate: true,
         issueDate: false,
-        transactionDate: false,
-        dueDate: false,
+        transactionDate: true,
+        dueDate: true,
         purchasePrice: false,
         spreadRate: false,
         yearlyInflation: false,
@@ -182,8 +174,6 @@ function initController() {
     },
     'discount-bond': {
       visible: {
-        purchaseDate: false,
-        maturityDate: false,
         issueDate: true,
         transactionDate: true,
         dueDate: true,
@@ -197,8 +187,6 @@ function initController() {
         inflationSchedulePreview: false
       },
       required: {
-        purchaseDate: false,
-        maturityDate: false,
         issueDate: true,
         transactionDate: true,
         dueDate: true,
@@ -219,8 +207,6 @@ function initController() {
     },
     'inflation-linked-bond': {
       visible: {
-        purchaseDate: false,
-        maturityDate: false,
         issueDate: true,
         transactionDate: true,
         dueDate: true,
@@ -234,8 +220,6 @@ function initController() {
         inflationSchedulePreview: true
       },
       required: {
-        purchaseDate: false,
-        maturityDate: false,
         issueDate: true,
         transactionDate: true,
         dueDate: true,
@@ -256,11 +240,9 @@ function initController() {
     },
     'custom-bond': {
       visible: {
-        purchaseDate: true,
-        maturityDate: true,
         issueDate: false,
-        transactionDate: false,
-        dueDate: false,
+        transactionDate: true,
+        dueDate: true,
         spreadRate: true,
         yearlyInflation: true,
         couponPeriod: true,
@@ -271,11 +253,9 @@ function initController() {
         inflationSchedulePreview: false
       },
       required: {
-        purchaseDate: true,
-        maturityDate: true,
         issueDate: false,
-        transactionDate: false,
-        dueDate: false,
+        transactionDate: true,
+        dueDate: true,
         purchasePrice: false,
         spreadRate: false,
         yearlyInflation: false,
@@ -456,8 +436,6 @@ function initController() {
     const ui =
       investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
 
-    setElementVisible(investmentPurchaseDateWrap, ui.visible.purchaseDate)
-    setElementVisible(investmentMaturityDateWrap, ui.visible.maturityDate)
     setElementVisible(investmentIssueDateWrap, ui.visible.issueDate)
     setElementVisible(investmentTransactionDateWrap, ui.visible.transactionDate)
     setElementVisible(investmentDueDateWrap, ui.visible.dueDate)
@@ -479,12 +457,6 @@ function initController() {
     setElementText(investmentAnnualRateLabel, ui.text.annualRateLabel)
     setElementText(investmentAnnualRateNote, ui.text.annualRateNote)
 
-    if (investmentPurchaseDateInput) {
-      investmentPurchaseDateInput.required = ui.required.purchaseDate
-    }
-    if (investmentMaturityDateInput) {
-      investmentMaturityDateInput.required = ui.required.maturityDate
-    }
     if (investmentIssueDateInput) {
       investmentIssueDateInput.required = ui.required.issueDate
     }
@@ -631,10 +603,6 @@ function initController() {
     editingInvestmentId = id
     investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
     investmentForm.querySelector('#investment-subtype').value = config.subtype || 'regular-bond'
-    investmentForm.querySelector('#investment-purchase-date').value =
-      config.purchaseDate || config.transactionDate || ''
-    investmentForm.querySelector('#investment-maturity-date').value =
-      config.maturityDate || config.dueDate || ''
     investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
     investmentForm.querySelector('#investment-transaction-date').value =
       config.transactionDate || config.purchaseDate || ''
@@ -1219,18 +1187,10 @@ function initController() {
     try {
       const formData = new FormData(investmentForm)
       const subtype = String(formData.get('subtype') || 'regular-bond')
-      const rawPurchaseDate = String(formData.get('purchaseDate') || '').trim()
-      const rawMaturityDate = String(formData.get('maturityDate') || '').trim()
       const rawTransactionDate = String(formData.get('transactionDate') || '').trim()
       const rawDueDate = String(formData.get('dueDate') || '').trim()
-      const usesContractDates =
-        subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
-      const normalizedPurchaseDate = usesContractDates
-        ? rawTransactionDate || rawPurchaseDate
-        : rawPurchaseDate
-      const normalizedMaturityDate = usesContractDates
-        ? rawDueDate || rawMaturityDate
-        : rawMaturityDate
+      const normalizedPurchaseDate = rawTransactionDate
+      const normalizedMaturityDate = rawDueDate
 
       const bundle = generateInvestmentInstrumentBundle({
         id: editingInvestmentId || undefined,
@@ -1239,8 +1199,8 @@ function initController() {
         purchaseDate: normalizedPurchaseDate,
         maturityDate: normalizedMaturityDate,
         issueDate: String(formData.get('issueDate') || '').trim(),
-        transactionDate: usesContractDates ? rawTransactionDate : String(formData.get('transactionDate') || '').trim(),
-        dueDate: usesContractDates ? rawDueDate : String(formData.get('dueDate') || '').trim(),
+        transactionDate: rawTransactionDate,
+        dueDate: rawDueDate,
         principal: Number(formData.get('principal')),
         purchasePrice: Number(formData.get('purchasePrice')),
         annualRate: Number(formData.get('annualRate')),

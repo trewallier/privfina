@@ -839,22 +839,6 @@
                         <p>Friendly name for this instrument row in the configured list.</p>
                       </div>
                     </label>
-                    <label id="investment-purchase-date-wrap">
-                      <span class="label-title">Purchase date <button type="button" class="info-chip" data-help-button="investment-purchase-date-help" aria-label="Purchase date help">i</button></span>
-                      <input id="investment-purchase-date" name="purchaseDate" type="date" required />
-                      <div id="investment-purchase-date-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-purchase-date-help" aria-label="Close">x</button>
-                        <p>Date when the initial outflow is booked for this investment.</p>
-                      </div>
-                    </label>
-                    <label id="investment-maturity-date-wrap">
-                      <span class="label-title">Maturity date <button type="button" class="info-chip" data-help-button="investment-maturity-date-help" aria-label="Maturity date help">i</button></span>
-                      <input id="investment-maturity-date" name="maturityDate" type="date" required />
-                      <div id="investment-maturity-date-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-maturity-date-help" aria-label="Close">x</button>
-                        <p>Planned maturity end date used for final inflow generation.</p>
-                      </div>
-                    </label>
                     <label id="investment-issue-date-wrap">
                       <span class="label-title">Issue date <button type="button" class="info-chip" data-help-button="investment-issue-date-help" aria-label="Issue date help">i</button></span>
                       <input id="investment-issue-date" name="issueDate" type="date" />
@@ -868,7 +852,7 @@
                       <input id="investment-transaction-date" name="transactionDate" type="date" />
                       <div id="investment-transaction-date-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="investment-transaction-date-help" aria-label="Close">x</button>
-                        <p>Settlement date used for discount and inflation-linked accrual calculations.</p>
+                        <p>Effective purchase/settlement date used for instrument cash-flow timing.</p>
                       </div>
                     </label>
                     <label id="investment-due-date-wrap">
@@ -876,7 +860,7 @@
                       <input id="investment-due-date" name="dueDate" type="date" />
                       <div id="investment-due-date-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="investment-due-date-help" aria-label="Close">x</button>
-                        <p>Contractual due date used as maturity for discount and inflation-linked bonds.</p>
+                        <p>Final due/maturity date used for principal repayment and final accrual settlement.</p>
                       </div>
                     </label>
                     <label id="investment-principal-wrap">

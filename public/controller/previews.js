@@ -58,9 +58,6 @@ function createInvestmentPreviewSync({
   inflationSchedulePreviewInput,
   createInvestmentMaturityPreview
 }) {
-  const purchaseDateInput = form ? form.querySelector('#investment-purchase-date') : null
-  const maturityDateInput = form ? form.querySelector('#investment-maturity-date') : null
-
   const syncInvestmentPreview = () => {
     if (!purchasePreviewInput || !maturityPreviewInput || !gainPreviewInput) {
       return
@@ -68,18 +65,10 @@ function createInvestmentPreviewSync({
 
     try {
       const subtype = String(subtypeInput?.value || 'regular-bond')
-      const purchaseDateValue = String(purchaseDateInput?.value || '')
-      const maturityDateValue = String(maturityDateInput?.value || '')
       const transactionDateValue = String(transactionDateInput?.value || '')
       const dueDateValue = String(dueDateInput?.value || '')
-      const effectivePurchaseDate =
-        subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
-          ? transactionDateValue
-          : purchaseDateValue
-      const effectiveMaturityDate =
-        subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
-          ? dueDateValue
-          : maturityDateValue
+      const effectivePurchaseDate = transactionDateValue
+      const effectiveMaturityDate = dueDateValue
 
       const preview = createInvestmentMaturityPreview({
         subtype,
@@ -147,8 +136,6 @@ function createInvestmentPreviewSync({
       saleDateInput?.addEventListener(eventName, syncInvestmentPreview)
       saleValueInput?.addEventListener(eventName, syncInvestmentPreview)
       couponPeriodInput?.addEventListener(eventName, syncInvestmentPreview)
-      purchaseDateInput?.addEventListener(eventName, syncInvestmentPreview)
-      maturityDateInput?.addEventListener(eventName, syncInvestmentPreview)
     })
   }
 

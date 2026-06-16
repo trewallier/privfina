@@ -152,7 +152,11 @@ function normalizeInstrumentBundle(bundle) {
       ? 'subscription'
       : bundle.instrumentType === 'salary'
         ? 'salary'
-        : null
+        : bundle.instrumentType === 'loan'
+          ? 'loan'
+          : bundle.instrumentType === 'investment'
+            ? 'investment'
+            : null
 
   if (!instrumentType) {
     return null
@@ -164,7 +168,14 @@ function normalizeInstrumentBundle(bundle) {
       ? bundle.label.trim()
       : `${instrumentType} instrument`
   const config = bundle.config && typeof bundle.config === 'object' ? bundle.config : {}
-  const fallbackCategory = instrumentType === 'salary' ? 'salary' : 'subscription'
+  const fallbackCategory =
+    instrumentType === 'salary'
+      ? 'salary'
+      : instrumentType === 'loan'
+        ? 'loan'
+        : instrumentType === 'investment'
+          ? 'investment'
+          : 'subscription'
   const generatedFlows = Array.isArray(bundle.generatedFlows)
     ? bundle.generatedFlows
         .map((entry) => normalizeGeneratedFlow(entry, fallbackCategory))
@@ -176,6 +187,7 @@ function normalizeInstrumentBundle(bundle) {
     instrumentType,
     label,
     config,
+    preview: bundle.preview && typeof bundle.preview === 'object' ? bundle.preview : undefined,
     generatedFlows,
     createdAt: typeof bundle.createdAt === 'string' ? bundle.createdAt : new Date().toISOString(),
     updatedAt: typeof bundle.updatedAt === 'string' ? bundle.updatedAt : new Date().toISOString()
@@ -376,6 +388,330 @@ function generateSubscriptionInstrumentBundle(input) {
   })
 }
 
+function calculateLoanMonthlyInstallment(principal, annualRate, termMonths) {
+  const normalizedPrincipal = Number(principal)
+  const normalizedAnnualRate = Number(annualRate)
+  const normalizedTermMonths = Number(termMonths)
+
+  if (!Number.isFinite(normalizedPrincipal) || normalizedPrincipal <= 0) {
+    throw new Error('Loan principal must be positive.')
+  }
+
+  if (!Number.isFinite(normalizedAnnualRate) || normalizedAnnualRate < 0) {
+    throw new Error('Loan annual rate must be non-negative.')
+  }
+
+  if (!Number.isInteger(normalizedTermMonths) || normalizedTermMonths <= 0) {
+    throw new Error('Loan term must be a positive integer number of months.')
+  }
+
+  const monthlyRate = normalizedAnnualRate / 12
+  if (monthlyRate === 0) {
+    return normalizedPrincipal / normalizedTermMonths
+  }
+
+  const factor = Math.pow(1 + monthlyRate, normalizedTermMonths)
+  return (normalizedPrincipal * monthlyRate * factor) / (factor - 1)
+}
+
+function createLoanRepaymentPreview(input) {
+  const principal = Number(input.principal)
+  const annualRate = Number(input.annualRate)
+  const termMonths = Number(input.termMonths)
+  const monthlyInstallment = calculateLoanMonthlyInstallment(principal, annualRate, termMonths)
+  return {
+    monthlyInstallment,
+    totalRepayment: monthlyInstallment * termMonths,
+    totalInterest: monthlyInstallment * termMonths - principal,
+    termMonths
+  }
+}
+
+function normalizeLoanTermMonths(termValue, termUnit) {
+  const parsed = Number(termValue)
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error('Loan term must be a positive integer.')
+  }
+
+  return termUnit === 'years' ? parsed * 12 : parsed
+}
+
+function generateLoanInstrumentFlows(input) {
+  const principal = normalizeAmount(input.principal)
+  const annualRate = Number(input.annualRate)
+  const termMonths = normalizeLoanTermMonths(input.termValue, input.termUnit)
+  const repaymentDayOfMonth = Number(input.repaymentDayOfMonth)
+  const monthlyInstallment = calculateLoanMonthlyInstallment(principal, annualRate, termMonths)
+  const monthlyRate = annualRate / 12
+  const startDate = parseIsoDate(String(input.startDate || '').trim())
+  const category = input.category || 'loan'
+  const description = input.description
+  const flows = []
+
+  if (input.includeDisbursement !== false) {
+    flows.push({
+      date: formatIsoDate(startDate),
+      amount: principal,
+      direction: 'inflow',
+      category,
+      description
+    })
+  }
+
+  let remainingPrincipal = principal
+  let year = startDate.getUTCFullYear()
+  let month = startDate.getUTCMonth()
+  if (repaymentDayOfMonth < startDate.getUTCDate()) {
+    month += 1
+    if (month > 11) {
+      month = 0
+      year += 1
+    }
+  }
+
+  for (let index = 0; index < termMonths; index += 1) {
+    const monthDays = daysInMonthUtc(year, month)
+    const day = Math.min(repaymentDayOfMonth, monthDays)
+    const paymentDate = new Date(Date.UTC(year, month, day))
+    const interestPortion = remainingPrincipal * monthlyRate
+    const principalPortion = Math.min(monthlyInstallment - interestPortion, remainingPrincipal)
+    remainingPrincipal = Math.max(0, remainingPrincipal - principalPortion)
+
+    flows.push({
+      date: formatIsoDate(paymentDate),
+      amount: monthlyInstallment,
+      direction: 'outflow',
+      category,
+      description
+    })
+
+    month += 1
+    if (month > 11) {
+      month = 0
+      year += 1
+    }
+  }
+
+  return flows.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function generateLoanInstrumentBundle(input) {
+  const termMonths = normalizeLoanTermMonths(input.termValue, input.termUnit)
+  const preview = createLoanRepaymentPreview({
+    principal: input.principal,
+    annualRate: input.annualRate,
+    termMonths
+  })
+  const generatedFlows = generateLoanInstrumentFlows({ ...input, termValue: termMonths, termUnit: 'months' })
+
+  return normalizeInstrumentBundle({
+    id: input.id || createId('loan'),
+    instrumentType: 'loan',
+    label: input.label || 'Loan',
+    config: {
+      principal: Number(input.principal),
+      annualRate: Number(input.annualRate),
+      termMonths,
+      termValue: Number(input.termValue),
+      termUnit: input.termUnit || 'months',
+      startDate: input.startDate,
+      repaymentDayOfMonth: Number(input.repaymentDayOfMonth),
+      includeDisbursement: input.includeDisbursement !== false,
+      category: input.category || 'loan',
+      description: input.description
+    },
+    preview,
+    generatedFlows,
+    createdAt: input.createdAt,
+    updatedAt: new Date().toISOString()
+  })
+}
+
+function parseYearlyInflation(raw) {
+  if (!raw || typeof raw !== 'string') {
+    return []
+  }
+
+  return raw
+    .split(',')
+    .map((entry) => entry.trim())
+    .map((entry) => {
+      const match = /^(\d{4})\s*:\s*([+-]?(?:\d+\.?\d*|\d*\.\d+))$/.exec(entry)
+      if (!match) {
+        return null
+      }
+
+      return {
+        year: Number(match[1]),
+        rate: Number(match[2])
+      }
+    })
+    .filter((entry) => entry !== null)
+}
+
+function monthsBetween(startDateIso, endDateIso) {
+  const startDate = parseIsoDate(startDateIso)
+  const endDate = parseIsoDate(endDateIso)
+  if (endDate.getTime() <= startDate.getTime()) {
+    throw new Error('Maturity date must be after purchase date.')
+  }
+  const years = endDate.getUTCFullYear() - startDate.getUTCFullYear()
+  const months = endDate.getUTCMonth() - startDate.getUTCMonth()
+  const dayAdjust = endDate.getUTCDate() < startDate.getUTCDate() ? -1 : 0
+  return Math.max(0, years * 12 + months + dayAdjust)
+}
+
+function createInvestmentMaturityPreview(input) {
+  const principal = normalizeAmount(input.principal)
+  const purchasePrice = Number(input.purchasePrice)
+  const purchaseAmount = Number.isFinite(purchasePrice) && purchasePrice > 0 ? purchasePrice : principal
+  const annualRate = Number(input.annualRate || 0)
+  const spreadRate = Number(input.spreadRate || 0)
+  const months = monthsBetween(input.purchaseDate, input.maturityDate)
+  let maturityAmount = principal
+  const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
+
+  if (input.subtype === 'regular-bond') {
+    maturityAmount = principal * Math.pow(1 + annualRate / 12, months)
+  } else if (input.subtype === 'discount-bond') {
+    maturityAmount = principal
+  } else if (input.subtype === 'inflation-linked-bond') {
+    const startYear = parseIsoDate(input.purchaseDate).getUTCFullYear()
+    const maturityYear = parseIsoDate(input.maturityDate).getUTCFullYear()
+    let factor = 1
+    for (let year = startYear; year <= maturityYear; year += 1) {
+      const inflationEntry = yearlyInflation.find((entry) => entry.year === year)
+      const inflationRate = inflationEntry ? inflationEntry.rate : 0
+      factor *= 1 + inflationRate + spreadRate
+    }
+    maturityAmount = principal * factor
+  } else {
+    maturityAmount = principal
+  }
+
+  return {
+    purchaseAmount,
+    maturityAmount,
+    gainAmount: maturityAmount - purchaseAmount,
+    subtype: input.subtype
+  }
+}
+
+function generateInvestmentInstrumentFlows(input) {
+  const principal = normalizeAmount(input.principal)
+  const purchaseAmount = Number(input.purchasePrice)
+  const purchasePrice = Number.isFinite(purchaseAmount) && purchaseAmount > 0 ? purchaseAmount : principal
+  const purchaseDate = parseIsoDate(input.purchaseDate)
+  const maturityDate = parseIsoDate(input.maturityDate)
+  const annualRate = Number(input.annualRate || 0)
+  const spreadRate = Number(input.spreadRate || 0)
+  const months = monthsBetween(input.purchaseDate, input.maturityDate)
+  const category = input.category || 'investment'
+  const description = input.description
+  const flows = []
+  const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
+
+  flows.push({
+    date: formatIsoDate(purchaseDate),
+    amount: purchasePrice,
+    direction: 'outflow',
+    category,
+    description
+  })
+
+  if (input.subtype === 'regular-bond') {
+    flows.push({
+      date: formatIsoDate(maturityDate),
+      amount: principal * Math.pow(1 + annualRate / 12, months),
+      direction: 'inflow',
+      category,
+      description
+    })
+  } else if (input.subtype === 'discount-bond') {
+    flows.push({
+      date: formatIsoDate(maturityDate),
+      amount: principal,
+      direction: 'inflow',
+      category,
+      description
+    })
+  } else if (input.subtype === 'inflation-linked-bond') {
+    const startYear = purchaseDate.getUTCFullYear()
+    const maturityYear = maturityDate.getUTCFullYear()
+    let factor = 1
+    for (let year = startYear; year <= maturityYear; year += 1) {
+      const inflationEntry = yearlyInflation.find((entry) => entry.year === year)
+      const inflationRate = inflationEntry ? inflationEntry.rate : 0
+      factor *= 1 + inflationRate + spreadRate
+    }
+
+    flows.push({
+      date: formatIsoDate(maturityDate),
+      amount: principal * factor,
+      direction: 'inflow',
+      category,
+      description
+    })
+  } else {
+    const couponPeriod = input.couponPeriod || '0 0 1 * *'
+    const schedule = parseRecurringSchedule(couponPeriod)
+    const periodsPerYear = schedule.type === 'weekly' ? 52 : schedule.type === 'annual' ? 1 : 12
+    const couponAmount = principal * (annualRate / periodsPerYear)
+    const couponFlows = expandRecurringFlows(
+      {
+        period: couponPeriod,
+        startDate: input.purchaseDate,
+        endDate: input.maturityDate,
+        amount: couponAmount,
+        direction: 'inflow',
+        category,
+        description
+      },
+      input.purchaseDate,
+      input.maturityDate
+    )
+
+    flows.push(...couponFlows)
+    flows.push({
+      date: formatIsoDate(maturityDate),
+      amount: principal,
+      direction: 'inflow',
+      category,
+      description
+    })
+  }
+
+  return flows.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function generateInvestmentInstrumentBundle(input) {
+  const preview = createInvestmentMaturityPreview(input)
+  const generatedFlows = generateInvestmentInstrumentFlows(input)
+
+  return normalizeInstrumentBundle({
+    id: input.id || createId('investment'),
+    instrumentType: 'investment',
+    label: input.label || 'Investment',
+    config: {
+      subtype: input.subtype,
+      purchaseDate: input.purchaseDate,
+      maturityDate: input.maturityDate,
+      principal: Number(input.principal),
+      purchasePrice: input.purchasePrice,
+      annualRate: input.annualRate,
+      spreadRate: input.spreadRate,
+      yearlyInflationRaw: input.yearlyInflationRaw,
+      couponPeriod: input.couponPeriod,
+      category: input.category || 'investment',
+      description: input.description
+    },
+    preview,
+    generatedFlows,
+    createdAt: input.createdAt,
+    updatedAt: new Date().toISOString()
+  })
+}
+
 function flattenInstrumentFlows(instrumentBundles) {
   return instrumentBundles.flatMap((bundle) => {
     return (bundle.generatedFlows || []).map((flow) => ({
@@ -393,5 +729,10 @@ export {
   rollBusinessDay,
   generateSalaryInstrumentBundle,
   generateSubscriptionInstrumentBundle,
+  calculateLoanMonthlyInstallment,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentBundle,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentBundle,
   flattenInstrumentFlows
 }

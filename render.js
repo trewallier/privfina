@@ -54,7 +54,7 @@ function renderConfiguredTable(
 
     rows.push({
       id: bundle.id,
-      type: `instrument:${bundle.instrumentType}`,
+      type: bundle.instrumentType,
       startOrDate: firstDate,
       endOrCount: `${lastDate} (${generatedFlows.length} flows)`,
       period:

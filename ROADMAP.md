@@ -12,10 +12,10 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [x] Introduce stateful instrument simulation subsystem (loan amortization, balance-dependent rules).
 
 ### 2) Loan And Investment Instrument Generators
-- [ ] Add loan instrument v1 (fixed-rate monthly compounding annuity, disbursement accounting toggle, term in months/years).
-- [ ] Add read-only loan repayment preview that updates as form parameters change.
-- [ ] Add investment instrument v1 subtypes: regular bond, discount bond, inflation-linked bond with manual yearly inflation inputs.
-- [ ] Add custom bond subtype: recurring interest payout schedule plus one-time principal maturity repayment.
+- [x] Add loan instrument v1 (fixed-rate monthly compounding annuity, disbursement accounting toggle, term in months/years).
+- [x] Add read-only loan repayment preview that updates as form parameters change.
+- [x] Add investment instrument v1 subtypes: regular bond, discount bond, inflation-linked bond with manual yearly inflation inputs.
+- [x] Add custom bond subtype: recurring interest payout schedule plus one-time principal maturity repayment.
 
 ### 3) Bundle Persistence And Compatibility
 - [ ] Implement pre-save bounded flow-bundle generation for instrument workflows and persist bundle lineage metadata.

@@ -631,11 +631,14 @@ function initController() {
     editingInvestmentId = id
     investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
     investmentForm.querySelector('#investment-subtype').value = config.subtype || 'regular-bond'
-    investmentForm.querySelector('#investment-purchase-date').value = config.purchaseDate || ''
-    investmentForm.querySelector('#investment-maturity-date').value = config.maturityDate || ''
+    investmentForm.querySelector('#investment-purchase-date').value =
+      config.purchaseDate || config.transactionDate || ''
+    investmentForm.querySelector('#investment-maturity-date').value =
+      config.maturityDate || config.dueDate || ''
     investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
-    investmentForm.querySelector('#investment-transaction-date').value = config.transactionDate || ''
-    investmentForm.querySelector('#investment-due-date').value = config.dueDate || ''
+    investmentForm.querySelector('#investment-transaction-date').value =
+      config.transactionDate || config.purchaseDate || ''
+    investmentForm.querySelector('#investment-due-date').value = config.dueDate || config.maturityDate || ''
     investmentForm.querySelector('#investment-principal').value = config.principal !== undefined ? String(config.principal) : ''
     investmentForm.querySelector('#investment-purchase-price').value = config.purchasePrice !== undefined ? String(config.purchasePrice) : ''
     investmentForm.querySelector('#investment-annual-rate').value = config.annualRate !== undefined ? String(config.annualRate) : ''
@@ -1215,15 +1218,29 @@ function initController() {
 
     try {
       const formData = new FormData(investmentForm)
+      const subtype = String(formData.get('subtype') || 'regular-bond')
+      const rawPurchaseDate = String(formData.get('purchaseDate') || '').trim()
+      const rawMaturityDate = String(formData.get('maturityDate') || '').trim()
+      const rawTransactionDate = String(formData.get('transactionDate') || '').trim()
+      const rawDueDate = String(formData.get('dueDate') || '').trim()
+      const usesContractDates =
+        subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
+      const normalizedPurchaseDate = usesContractDates
+        ? rawTransactionDate || rawPurchaseDate
+        : rawPurchaseDate
+      const normalizedMaturityDate = usesContractDates
+        ? rawDueDate || rawMaturityDate
+        : rawMaturityDate
+
       const bundle = generateInvestmentInstrumentBundle({
         id: editingInvestmentId || undefined,
         label: String(formData.get('label') || '').trim() || 'Investment',
-        subtype: String(formData.get('subtype') || 'regular-bond'),
-        purchaseDate: String(formData.get('purchaseDate') || '').trim(),
-        maturityDate: String(formData.get('maturityDate') || '').trim(),
+        subtype,
+        purchaseDate: normalizedPurchaseDate,
+        maturityDate: normalizedMaturityDate,
         issueDate: String(formData.get('issueDate') || '').trim(),
-        transactionDate: String(formData.get('transactionDate') || '').trim(),
-        dueDate: String(formData.get('dueDate') || '').trim(),
+        transactionDate: usesContractDates ? rawTransactionDate : String(formData.get('transactionDate') || '').trim(),
+        dueDate: usesContractDates ? rawDueDate : String(formData.get('dueDate') || '').trim(),
         principal: Number(formData.get('principal')),
         purchasePrice: Number(formData.get('purchasePrice')),
         annualRate: Number(formData.get('annualRate')),

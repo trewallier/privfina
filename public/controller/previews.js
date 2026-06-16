@@ -74,11 +74,11 @@ function createInvestmentPreviewSync({
       const dueDateValue = String(dueDateInput?.value || '')
       const effectivePurchaseDate =
         subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
-          ? purchaseDateValue || transactionDateValue
+          ? transactionDateValue
           : purchaseDateValue
       const effectiveMaturityDate =
         subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
-          ? maturityDateValue || dueDateValue
+          ? dueDateValue
           : maturityDateValue
 
       const preview = createInvestmentMaturityPreview({

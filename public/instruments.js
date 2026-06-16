@@ -550,9 +550,9 @@ function parseYearlyInflation(raw) {
 }
 
 function resolveInvestmentDates(input) {
-  const issueDateRaw = String(input.issueDate || input.purchaseDate || '').trim()
-  const transactionDateRaw = String(input.transactionDate || input.purchaseDate || '').trim()
-  const dueDateRaw = String(input.dueDate || input.maturityDate || '').trim()
+  const issueDateRaw = String(input.issueDate || '').trim()
+  const transactionDateRaw = String(input.transactionDate || '').trim()
+  const dueDateRaw = String(input.dueDate || '').trim()
 
   const issueDate = parseIsoDate(issueDateRaw)
   const transactionDate = parseIsoDate(transactionDateRaw)
@@ -720,10 +720,10 @@ function resolveLifecycleDates(input) {
   const useContractDates =
     input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond'
   const purchaseDateIso = useContractDates
-    ? String(input.transactionDate || input.purchaseDate || '').trim()
+    ? String(input.transactionDate || '').trim()
     : String(input.purchaseDate || '').trim()
   const maturityDateIso = useContractDates
-    ? String(input.dueDate || input.maturityDate || '').trim()
+    ? String(input.dueDate || '').trim()
     : String(input.maturityDate || '').trim()
 
   parseIsoDate(purchaseDateIso)

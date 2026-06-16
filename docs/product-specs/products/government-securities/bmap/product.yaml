@@ -9,10 +9,15 @@ description: Hungarian retail government bond with variable coupon linked to 3-m
 category: retail-government-bond
 denominationCurrency: HUF
 denominationUnit: 1
-issuanceModel: retail-distribution
+issuanceModel: phased-public-offering
 yieldModel: coupon-plus-redemption
 couponModel: quarterly-variable
 referenceIndex: weighted-3m-dkj-auction-average
+offeringPriceModel: par-plus-accrued-interest
+earlyRedemptionByIssuer: false
+rateSettingRule: weighted-average-last-four-successful-3m-dkj-auctions
+investorEligibility: natural-persons-primary-market
+transferRestrictions: collateral-purpose-transfer-restricted
 
 inputs:
   - name: principal
@@ -51,13 +56,49 @@ inputs:
     unit: date
     description: Investment start date in ISO format.
 
-outputs:
-  - name: quarterlyCouponRatePct
+  - name: purchaseDate
+    type: string
+    label: Purchase Date
+    required: false
+    unit: date
+    description: Purchase or valuation date in ISO format, used for accrued-interest-related calculations.
+
+  - name: issueDate
+    type: string
+    label: Issue Date
+    required: false
+    unit: date
+    description: Issue date of the BMÁP series in ISO format.
+
+  - name: firstCouponDate
+    type: string
+    label: First Coupon Date
+    required: false
+    unit: date
+    description: First coupon payment date in ISO format if known.
+
+derivedVariables:
+  - name: effectiveDkjBaseYieldPct
     type: number
-    label: Quarterly Coupon Rate
+    label: Effective DKJ Base Yield
+    required: false
+    unit: percent
+    description: DKJ-based coupon base after applying the 0% floor if the raw base is zero or negative.
+
+  - name: annualCouponRatePctDerived
+    type: number
+    label: Derived Annual Coupon Rate
+    required: false
+    unit: percent
+    description: Effective annual coupon rate equal to effective DKJ base plus premium.
+
+outputs:
+  - name: annualCouponRatePct
+    type: number
+    label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Annualized coupon rate applicable for the current quarterly period.
+    description: Annual coupon rate for the current period, equal to effective DKJ base plus premium.
 
   - name: couponPaymentFrequency
     type: string
@@ -66,14 +107,55 @@ outputs:
     unit: text
     description: Frequency of coupon payments.
 
+  - name: effectiveDkjBaseYieldPct
+    type: number
+    label: Effective DKJ Base Yield
+    required: true
+    unit: percent
+    description: DKJ coupon base after applying the 0% floor.
+
+  - name: periodCouponRatePct
+    type: number
+    label: Period Coupon Rate
+    required: false
+    unit: percent
+    description: Coupon amount or rate applicable to the current coupon period using the 360-day convention.
+
+  - name: accruedInterestAmount
+    type: number
+    label: Accrued Interest
+    required: false
+    unit: currency
+    description: Interest accrued from issue or previous coupon date to purchase or valuation date.
+
+  - name: purchaseAmount
+    type: number
+    label: Purchase Amount
+    required: false
+    unit: currency
+    description: Purchase amount based on principal plus accrued interest, where applicable.
+
+  - name: redemptionValue
+    type: number
+    label: Redemption Value
+    required: true
+    unit: currency
+    description: Principal repaid at maturity.
+
 assumptions:
-  - BMÁP is modeled as a quarterly-pay variable-rate retail bond.
+  - BMÁP is modeled as a quarterly-pay variable-rate retail government bond.
   - Product-term intent in this pilot is 6 years.
-  - Coupon rate is DKJ base yield plus a fixed premium.
-  - BMÁP pays interest quarterly.
+  - Annual coupon rate is effective DKJ base yield plus fixed premium.
+  - Effective DKJ base yield is max(raw DKJ-based rate, 0).
+  - The DKJ-based rate is conceptually tied to the last four successful 3-month DKJ auctions used for rate-setting.
+  - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - BMÁP denomination unit is 1 HUF.
-  - This first spec does not model every live BMÁP series or every historical premium schedule.
-  - DKJ market data integration is future work; examples use explicit base yield input values.
+  - BMÁP uses a 360-day convention for accrued-interest and period coupon calculations.
+  - The issuer does not redeem BMÁP before maturity.
+  - Primary-market acquisition is limited to natural persons.
+  - Collateral-purpose transfer is out of scope and restricted by the official product rules.
+  - This spec remains a product-type model and does not attempt to encode every live BMÁP series edge case.
+  - Live DKJ market data integration is future work; examples use explicit base-yield input values.
 
 ui:
   formTitle: Bónusz Magyar Állampapír
@@ -85,6 +167,9 @@ ui:
         - dkjBaseYieldPct
         - interestPremiumPct
         - startDate
+        - purchaseDate
+        - issueDate
+        - firstCouponDate
 
 exampleRefs:
   - ./examples/nominal-case.yaml

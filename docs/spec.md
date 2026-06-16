@@ -27,6 +27,8 @@ Scenarios / Use-cases
 - Loan instrument setup: users can configure principal, fixed interest, term, repayment day, and whether disbursement inflow should be accounted.
 - Loan repayment preview: users can see a read-only monthly repayment value update immediately when loan inputs change.
 - Investment instrument setup: users can configure regular bond, discount bond, and inflation-linked bond variants with finite maturity outputs.
+- Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
+- Inflation-linked bond setup: users must provide issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period; payment schedule and accrual rates are derived fields.
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 
@@ -77,9 +79,13 @@ Acceptance criteria
 - [x] Loan instrument generates optional one-time disbursement inflow and fixed monthly repayment outflows using monthly compounding and fixed-rate annuity assumptions.
 - [x] Investment instrument supports regular bond, discount bond, and inflation-linked variants with finite maturity-driven flow generation.
 - [x] Regular bond instrument generates one-time maturity inflow paying principal plus monthly-compounded interest.
-- [x] Discount bond instrument generates one-time maturity inflow equal to configured face value.
-- [x] Inflation-linked bond instrument generates one-time maturity inflow paying principal plus interest based on manual yearly inflation inputs and spread rules.
+- [x] Discount bond instrument requires issue date, due date, transaction date, purchase price, and face value; it generates one-time maturity inflow equal to configured face value.
+- [x] Discount bond instrument calculates derived (non-input) fields from mandatory inputs using the canonical formulas defined in `DESIGN.md`.
+- [ ] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.
+- [ ] Inflation-linked bond instrument derives annual maturity payment dates, effective annual rate, and accrual date markers using the canonical definitions in `DESIGN.md`.
+- [ ] Inflation-linked bond instrument calculates first and subsequent period accrual factors using the canonical formulas in `DESIGN.md`.
 - [x] Custom bond instrument supports recurring interest payouts on configured schedule and one-time principal repayment at maturity.
+- [ ] Discount bond design reserves optional early-sale fields (sale date and sale value) for future iterations without changing v1 mandatory input set.
 - [ ] Custom bond instrument design supports periodic rate-reset schedules, with fixed-rate fallback allowed for v1 implementation.
 - [ ] Inflation-linked investment accepts manual yearly inflation inputs for v1.
 - [x] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
@@ -91,6 +97,12 @@ How to use this file
 
 Design alignment
 - For engine implementation guidance and evaluation strategy rationale, see `DESIGN.md`. Use `docs/adr/` for recorded architecture decisions that affect evaluation strategy and scope.
+
+Investment Formula Canonical Source
+-----------------------------------
+
+- Canonical mathematical definitions, symbol notation, and formulas for discount bond and inflation-linked bond calculations are maintained in `DESIGN.md` under the Investment subsection.
+- `docs/spec.md` remains requirement-focused and references `DESIGN.md` for computational detail to avoid duplication drift.
 
 Efficient Range Evaluation
 --------------------------

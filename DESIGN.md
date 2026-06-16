@@ -95,13 +95,35 @@ This section defines the next iteration of instrument behavior so implementation
 
 #### Investment (stateful by product rules, finite maturity first)
 
+Canonical note
+- This section is the canonical source for investment subtype mathematical definitions, symbol notation, and accrual formulas.
+- Other docs should reference this section instead of duplicating formulas.
+
 - Base modeling pattern for v1:
 	- one-time outflow on purchase date
 	- maturity-driven inflow structure based on product subtype settings
 - Subtypes in scope for design:
 	- Regular bond (compounding): one-time maturity inflow that pays principal plus interest computed with monthly compounding.
-	- Discount bond: configurable purchase price (one-time outflow) and full face value as a one-time maturity inflow.
-	- Inflation-linked bond: one-time maturity inflow that pays principal plus interest, where yearly inflation inputs are provided manually per year and combined with configurable spread rules.
+	- Discount bond:
+		- mandatory inputs: issue date, due date, transaction date, purchase price, face value
+		- generated flows: one-time purchase-date outflow (price) and one-time due-date inflow (face value)
+		- derived read-only fields (not user inputs) using 360-day convention and days_remaining (due date - transaction date):
+			- current_value(%) = 100 / (1 + (yield / 100) * days_remaining / 360)
+			- yield(%) = ((100 - current_value) / current_value) * 360 / days_remaining * 100
+		- future-ready extension: optional early-sale date and sale value before maturity
+	- Inflation-linked bond:
+		- mandatory inputs: issue date ($d_0$), due date, transaction date, additional annual interest spread, inflation assumption for each accrual period
+		- generated flows: one-time purchase-date outflow and one-time due-date inflow for principal plus inflation-linked return
+		- derived read-only fields (not user inputs):
+			- annual maturity payment dates after issue date, aligned to the calendar month/day of final maturity
+			- effective annual interest rate ($g_a$) = inflation rate for the accrual period + additional annual interest spread
+			- $i$-th maturity date ($d_i$)
+			- interest calculation business day ($d_s$)
+			- first maturity date ($d_1$)
+			- first technical accrual start date ($d_{t1}$)
+		- accrual-factor formulas:
+			- first period: $g_a \times (d_s - d_0) / (d_1 - d_{t1})$
+			- later periods: $g_a \times (d_s - d_{i-1}) / (d_i - d_{i-1})$
 	- Custom bond (configurable): supports alternate maturity/coupon schemes, including recurring interest payouts (for example quarterly on configured day-of-month) while principal is paid back as one-time maturity inflow.
 - Rate-change and data assumptions for custom bond v1:
 	- the model supports scheduled interest-rate resets (for example quarterly) as a design target

@@ -9,9 +9,13 @@ inputs:
   dkjBaseYieldPct: 6.13
   interestPremiumPct: 0.75
   startDate: 2026-04-24
+  purchaseDate: 2026-04-24
 
 expected:
-  quarterlyCouponRatePct: 6.88
+  effectiveDkjBaseYieldPct: 6.13
+  annualCouponRatePct: 6.88
+  couponPaymentFrequency: quarterly
+  redemptionValue: 1000000
 
 notes:
-  - Coupon rate is represented as DKJ base yield plus fixed premium for this acceptance scenario.
+  - Coupon rate is represented as effective DKJ base yield plus fixed premium for this acceptance scenario.

@@ -158,6 +158,10 @@
     "offeringPriceModel": {
       "type": "string",
       "minLength": 1
+    },
+    "rateSettingRule": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "allOf": [

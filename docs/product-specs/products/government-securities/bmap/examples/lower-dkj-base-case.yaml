@@ -2,16 +2,19 @@ specVersion: v1alpha1
 productId: government-security.bmap.standard
 exampleId: lower-dkj-base-case
 title: Lower DKJ base-yield BMÁP example
-description: Scenario showing BMÁP coupon behavior under a lower DKJ base yield input.
+description: Scenario showing BMÁP coupon behavior when the raw DKJ base yield is negative and floored at 0%.
 
 inputs:
   principal: 1000000
-  dkjBaseYieldPct: 4.50
+  dkjBaseYieldPct: -0.25
   interestPremiumPct: 0.75
   startDate: 2026-08-01
 
 expected:
-  quarterlyCouponRatePct: 5.25
+  effectiveDkjBaseYieldPct: 0
+  annualCouponRatePct: 0.75
+  couponPaymentFrequency: quarterly
+  redemptionValue: 1000000
 
 notes:
-  - This example demonstrates explicit base-yield-driven coupon behavior without external data lookup.
+  - This example demonstrates the 0% floor on the DKJ-based coupon base without external data lookup.

@@ -6,13 +6,18 @@ import {
   DEFAULT_COUPON_PERIOD,
   InvestmentBundleInput,
   MONTHS_PER_YEAR,
+  assertRefinedDiscountBondContract,
+  assertRefinedInflationLinkedContract,
   calculateInflationLinkedMaturityAmount,
   calculateMonthlyCompoundedAmount,
   createCashFlow,
+  deriveDiscountBondMetrics,
+  deriveInflationLinkedAccrualSchedule,
   ensurePositiveAmount,
   getInvestmentPurchaseAmount,
   maturityDateFromInput,
   parseYearlyInflation,
+  resolveInvestmentFinancialDates,
   sortCashFlowsByDate,
   toIsoDate
 } from './common'
@@ -27,27 +32,35 @@ export function createInvestmentMaturityPreview(input: InvestmentBundleInput): I
   const yearlyInflation = parseYearlyInflation(input.yearlyInflation)
 
   let maturityAmount = principal
+  let discountMetrics: InvestmentMaturityPreview['discountMetrics']
+  let inflationMetrics: InvestmentMaturityPreview['inflationMetrics']
 
   if (subtype === 'regular-bond') {
     const rate = Number.isFinite(annualRate) ? annualRate : 0
     maturityAmount = calculateMonthlyCompoundedAmount(principal, rate, months)
   } else if (subtype === 'discount-bond') {
+    assertRefinedDiscountBondContract(input)
+    discountMetrics = deriveDiscountBondMetrics(input)
     maturityAmount = principal
   } else if (subtype === 'inflation-linked-bond') {
+    assertRefinedInflationLinkedContract(input)
+    const schedule = deriveInflationLinkedAccrualSchedule(input)
     maturityAmount = calculateInflationLinkedMaturityAmount(
       principal,
-      purchase,
-      months,
+      schedule,
       yearlyInflation,
       spreadRate
     )
+    inflationMetrics = schedule
   }
 
   return {
     purchaseAmount,
     maturityAmount,
     gainAmount: maturityAmount - purchaseAmount,
-    subtype
+    subtype,
+    discountMetrics,
+    inflationMetrics
   }
 }
 
@@ -61,8 +74,14 @@ export function generateInvestmentInstrumentCashFlows(input: InvestmentBundleInp
   const category = input.category ?? 'investment'
   const description = input.description
   const flows: CashFlow[] = []
-  const purchaseIso = toIsoDate(purchase)
-  const maturityIso = toIsoDate(maturity)
+  let purchaseIso = toIsoDate(purchase)
+  let maturityIso = toIsoDate(maturity)
+
+  if (input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond') {
+    const financialDates = resolveInvestmentFinancialDates(input)
+    purchaseIso = toIsoDate(financialDates.transaction)
+    maturityIso = toIsoDate(financialDates.due)
+  }
 
   flows.push(createCashFlow(purchaseIso, purchaseAmount, CashFlowDirection.Outflow, category, description))
 
@@ -77,12 +96,15 @@ export function generateInvestmentInstrumentCashFlows(input: InvestmentBundleInp
       )
     )
   } else if (input.subtype === 'discount-bond') {
+    assertRefinedDiscountBondContract(input)
     flows.push(createCashFlow(maturityIso, principal, CashFlowDirection.Inflow, category, description))
   } else if (input.subtype === 'inflation-linked-bond') {
+    assertRefinedInflationLinkedContract(input)
+    const schedule = deriveInflationLinkedAccrualSchedule(input)
     flows.push(
       createCashFlow(
         maturityIso,
-        calculateInflationLinkedMaturityAmount(principal, purchase, months, yearlyInflation, spreadRate),
+        calculateInflationLinkedMaturityAmount(principal, schedule, yearlyInflation, spreadRate),
         CashFlowDirection.Inflow,
         category,
         description
@@ -120,11 +142,16 @@ export function createInvestmentInstrumentBundle(input: InvestmentBundleInput) {
       subtype: input.subtype,
       purchaseDate: input.purchaseDate,
       maturityDate: input.maturityDate,
+      issueDate: input.issueDate,
+      transactionDate: input.transactionDate,
+      dueDate: input.dueDate,
       principal: input.principal,
       purchasePrice: input.purchasePrice,
       annualRate: input.annualRate,
       spreadRate: input.spreadRate,
       yearlyInflation: input.yearlyInflation || [],
+      saleDate: input.saleDate,
+      saleValue: input.saleValue,
       couponPeriod: input.couponPeriod,
       category: input.category ?? 'investment',
       description: input.description

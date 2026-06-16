@@ -760,6 +760,18 @@
                       <input id="investment-maturity-date" name="maturityDate" type="date" required />
                     </label>
                     <label>
+                      Issue date
+                      <input id="investment-issue-date" name="issueDate" type="date" />
+                    </label>
+                    <label>
+                      Transaction date
+                      <input id="investment-transaction-date" name="transactionDate" type="date" />
+                    </label>
+                    <label>
+                      Due date
+                      <input id="investment-due-date" name="dueDate" type="date" />
+                    </label>
+                    <label>
                       Principal / face value
                       <input id="investment-principal" name="principal" type="number" min="0" step="0.01" required />
                     </label>
@@ -786,6 +798,14 @@
                       <input id="investment-coupon-period" name="couponPeriod" type="text" placeholder="0 0 1 * *" />
                     </label>
                     <label>
+                      Reserved sale date (future scope)
+                      <input id="investment-sale-date" name="saleDate" type="date" />
+                    </label>
+                    <label>
+                      Reserved sale value (future scope)
+                      <input id="investment-sale-value" name="saleValue" type="number" min="0" step="0.01" />
+                    </label>
+                    <label>
                       Category
                       <input id="investment-category" name="category" type="text" placeholder="investment" />
                     </label>
@@ -806,6 +826,18 @@
                     <label>
                       Gain preview
                       <input id="investment-gain-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      Discount yield (derived)
+                      <input id="investment-discount-yield-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      Discount current value % (derived)
+                      <input id="investment-discount-current-value-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      Inflation schedule (derived)
+                      <input id="investment-inflation-schedule-preview" type="text" readonly />
                     </label>
                   </div>
                   <div class="actions">

@@ -549,6 +549,161 @@ function parseYearlyInflation(raw) {
     .filter((entry) => entry !== null)
 }
 
+function resolveInvestmentDates(input) {
+  const issueDateRaw = String(input.issueDate || input.purchaseDate || '').trim()
+  const transactionDateRaw = String(input.transactionDate || input.purchaseDate || '').trim()
+  const dueDateRaw = String(input.dueDate || input.maturityDate || '').trim()
+
+  const issueDate = parseIsoDate(issueDateRaw)
+  const transactionDate = parseIsoDate(transactionDateRaw)
+  const dueDate = parseIsoDate(dueDateRaw)
+
+  if (transactionDate.getTime() > dueDate.getTime()) {
+    throw new Error('Transaction date must be on or before due date.')
+  }
+
+  if (issueDate.getTime() > dueDate.getTime()) {
+    throw new Error('Issue date must be on or before due date.')
+  }
+
+  return {
+    issueDate,
+    transactionDate,
+    dueDate
+  }
+}
+
+function daysBetween(startDate, endDate) {
+  const millisPerDay = 24 * 60 * 60 * 1000
+  return Math.round((endDate.getTime() - startDate.getTime()) / millisPerDay)
+}
+
+function assertDiscountBondContract(input) {
+  if (input.subtype !== 'discount-bond') {
+    return
+  }
+
+  if (!input.issueDate || !input.transactionDate || !input.dueDate) {
+    throw new Error('Discount bond requires issue date, transaction date, and due date.')
+  }
+
+  const principal = normalizeAmount(input.principal)
+  const purchaseAmount = Number(input.purchasePrice)
+  if (!Number.isFinite(purchaseAmount) || purchaseAmount <= 0 || purchaseAmount >= principal) {
+    throw new Error('Discount bond purchase price must be positive and below face value.')
+  }
+
+  const { transactionDate, dueDate } = resolveInvestmentDates(input)
+  if (daysBetween(transactionDate, dueDate) <= 0) {
+    throw new Error('Discount bond due date must be after transaction date.')
+  }
+}
+
+function deriveDiscountBondMetrics(input) {
+  assertDiscountBondContract(input)
+
+  const principal = normalizeAmount(input.principal)
+  const purchaseAmount = Number(input.purchasePrice)
+  const { transactionDate, dueDate } = resolveInvestmentDates(input)
+  const daysRemaining = daysBetween(transactionDate, dueDate)
+  const currentValuePercent = (purchaseAmount / principal) * 100
+  const yieldPercent = ((100 - currentValuePercent) / currentValuePercent) * (360 / daysRemaining) * 100
+
+  return {
+    daysRemaining,
+    currentValuePercent,
+    yieldPercent
+  }
+}
+
+function createAnnualMaturityDates(issueDate, dueDate) {
+  const results = []
+  const dueMonth = dueDate.getUTCMonth()
+  const dueDay = dueDate.getUTCDate()
+
+  for (let year = issueDate.getUTCFullYear() + 1; year <= dueDate.getUTCFullYear(); year += 1) {
+    const candidate = new Date(Date.UTC(year, dueMonth, dueDay))
+    if (candidate.getTime() > issueDate.getTime() && candidate.getTime() <= dueDate.getTime()) {
+      results.push(candidate)
+    }
+  }
+
+  if (results.length === 0 || results[results.length - 1].getTime() !== dueDate.getTime()) {
+    results.push(dueDate)
+  }
+
+  return results
+}
+
+function assertInflationLinkedContract(input) {
+  if (input.subtype !== 'inflation-linked-bond') {
+    return
+  }
+
+  if (!input.issueDate || !input.transactionDate || !input.dueDate) {
+    throw new Error('Inflation-linked bond requires issue date, transaction date, and due date.')
+  }
+
+  const spreadRate = Number(input.spreadRate)
+  if (!Number.isFinite(spreadRate)) {
+    throw new Error('Inflation-linked bond spread rate is required.')
+  }
+
+  const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
+  if (yearlyInflation.length === 0) {
+    throw new Error('Inflation-linked bond requires yearly inflation inputs.')
+  }
+}
+
+function deriveInflationLinkedMetrics(input) {
+  assertInflationLinkedContract(input)
+
+  const { issueDate, transactionDate, dueDate } = resolveInvestmentDates(input)
+  const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
+  const yearlyInflationMap = new Map(yearlyInflation.map((entry) => [entry.year, entry.rate]))
+  const spreadRate = Number(input.spreadRate || 0)
+  const maturityDates = createAnnualMaturityDates(issueDate, dueDate)
+  const firstMaturityDate = maturityDates[0]
+  const firstTechnicalAccrualStartDate = new Date(
+    Date.UTC(firstMaturityDate.getUTCFullYear() - 1, firstMaturityDate.getUTCMonth(), firstMaturityDate.getUTCDate())
+  )
+
+  const accrualPeriods = maturityDates.map((maturityDate, index) => {
+    const effectiveAnnualRate = (yearlyInflationMap.get(maturityDate.getUTCFullYear()) || 0) + spreadRate
+
+    if (index === 0) {
+      const numerator = Math.max(daysBetween(issueDate, transactionDate), 0)
+      const denominator = Math.max(daysBetween(firstTechnicalAccrualStartDate, firstMaturityDate), 1)
+      return {
+        maturityDate: formatIsoDate(maturityDate),
+        effectiveAnnualRate,
+        accrualFactor: effectiveAnnualRate * (numerator / denominator)
+      }
+    }
+
+    const previousMaturityDate = maturityDates[index - 1]
+    const numerator = Math.max(daysBetween(previousMaturityDate, maturityDate), 0)
+    const denominator = Math.max(daysBetween(previousMaturityDate, maturityDate), 1)
+    return {
+      maturityDate: formatIsoDate(maturityDate),
+      effectiveAnnualRate,
+      accrualFactor: effectiveAnnualRate * (numerator / denominator)
+    }
+  })
+
+  return {
+    dateMarkers: {
+      issueDate: formatIsoDate(issueDate),
+      transactionDate: formatIsoDate(transactionDate),
+      dueDate: formatIsoDate(dueDate),
+      firstMaturityDate: formatIsoDate(firstMaturityDate),
+      firstTechnicalAccrualStartDate: formatIsoDate(firstTechnicalAccrualStartDate)
+    },
+    annualMaturityDates: maturityDates.map((date) => formatIsoDate(date)),
+    accrualPeriods
+  }
+}
+
 function monthsBetween(startDateIso, endDateIso) {
   const startDate = parseIsoDate(startDateIso)
   const endDate = parseIsoDate(endDateIso)
@@ -570,21 +725,20 @@ function createInvestmentMaturityPreview(input) {
   const months = monthsBetween(input.purchaseDate, input.maturityDate)
   let maturityAmount = principal
   const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
+  let discountMetrics
+  let inflationMetrics
 
   if (input.subtype === 'regular-bond') {
     maturityAmount = principal * Math.pow(1 + annualRate / 12, months)
   } else if (input.subtype === 'discount-bond') {
+    discountMetrics = deriveDiscountBondMetrics(input)
     maturityAmount = principal
   } else if (input.subtype === 'inflation-linked-bond') {
-    const startYear = parseIsoDate(input.purchaseDate).getUTCFullYear()
-    const maturityYear = parseIsoDate(input.maturityDate).getUTCFullYear()
-    let factor = 1
-    for (let year = startYear; year <= maturityYear; year += 1) {
-      const inflationEntry = yearlyInflation.find((entry) => entry.year === year)
-      const inflationRate = inflationEntry ? inflationEntry.rate : 0
-      factor *= 1 + inflationRate + spreadRate
-    }
-    maturityAmount = principal * factor
+    inflationMetrics = deriveInflationLinkedMetrics(input)
+    maturityAmount = inflationMetrics.accrualPeriods.reduce(
+      (value, period) => value * (1 + period.accrualFactor),
+      principal
+    )
   } else {
     maturityAmount = principal
   }
@@ -593,7 +747,9 @@ function createInvestmentMaturityPreview(input) {
     purchaseAmount,
     maturityAmount,
     gainAmount: maturityAmount - purchaseAmount,
-    subtype: input.subtype
+    subtype: input.subtype,
+    discountMetrics,
+    inflationMetrics
   }
 }
 
@@ -611,8 +767,17 @@ function generateInvestmentInstrumentFlows(input) {
   const flows = []
   const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
 
+  let purchaseFlowDate = formatIsoDate(purchaseDate)
+  let maturityFlowDate = formatIsoDate(maturityDate)
+
+  if (input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond') {
+    const resolvedDates = resolveInvestmentDates(input)
+    purchaseFlowDate = formatIsoDate(resolvedDates.transactionDate)
+    maturityFlowDate = formatIsoDate(resolvedDates.dueDate)
+  }
+
   flows.push({
-    date: formatIsoDate(purchaseDate),
+    date: purchaseFlowDate,
     amount: purchasePrice,
     direction: 'outflow',
     category,
@@ -628,26 +793,24 @@ function generateInvestmentInstrumentFlows(input) {
       description
     })
   } else if (input.subtype === 'discount-bond') {
+    assertDiscountBondContract(input)
     flows.push({
-      date: formatIsoDate(maturityDate),
+      date: maturityFlowDate,
       amount: principal,
       direction: 'inflow',
       category,
       description
     })
   } else if (input.subtype === 'inflation-linked-bond') {
-    const startYear = purchaseDate.getUTCFullYear()
-    const maturityYear = maturityDate.getUTCFullYear()
-    let factor = 1
-    for (let year = startYear; year <= maturityYear; year += 1) {
-      const inflationEntry = yearlyInflation.find((entry) => entry.year === year)
-      const inflationRate = inflationEntry ? inflationEntry.rate : 0
-      factor *= 1 + inflationRate + spreadRate
-    }
+    const inflationMetrics = deriveInflationLinkedMetrics(input)
+    const maturityAmount = inflationMetrics.accrualPeriods.reduce(
+      (value, period) => value * (1 + period.accrualFactor),
+      principal
+    )
 
     flows.push({
-      date: formatIsoDate(maturityDate),
-      amount: principal * factor,
+      date: maturityFlowDate,
+      amount: maturityAmount,
       direction: 'inflow',
       category,
       description
@@ -696,11 +859,16 @@ function generateInvestmentInstrumentBundle(input) {
       subtype: input.subtype,
       purchaseDate: input.purchaseDate,
       maturityDate: input.maturityDate,
+      issueDate: input.issueDate,
+      transactionDate: input.transactionDate,
+      dueDate: input.dueDate,
       principal: Number(input.principal),
       purchasePrice: input.purchasePrice,
       annualRate: input.annualRate,
       spreadRate: input.spreadRate,
       yearlyInflationRaw: input.yearlyInflationRaw,
+      saleDate: input.saleDate,
+      saleValue: input.saleValue,
       couponPeriod: input.couponPeriod,
       category: input.category || 'investment',
       description: input.description

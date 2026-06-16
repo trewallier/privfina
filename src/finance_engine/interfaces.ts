@@ -99,13 +99,38 @@ export interface InvestmentInstrumentInput {
   subtype: InvestmentSubtype
   purchaseDate: string
   maturityDate: string
+  issueDate?: string
+  transactionDate?: string
+  dueDate?: string
   principal: number
   purchasePrice?: number
   annualRate?: number
   spreadRate?: number
   yearlyInflation?: Array<{ year: number; rate: number }>
+  saleDate?: string
+  saleValue?: number
   category?: string
   description?: string
+}
+
+export interface DiscountBondDerivedMetrics {
+  daysRemaining: number
+  currentValuePercent: number
+  yieldPercent: number
+}
+
+export interface InflationLinkedDateMarkers {
+  issueDate: string
+  transactionDate: string
+  dueDate: string
+  firstMaturityDate: string
+  firstTechnicalAccrualStartDate: string
+}
+
+export interface InflationLinkedAccrualPeriod {
+  maturityDate: string
+  effectiveAnnualRate: number
+  accrualFactor: number
 }
 
 export interface LoanRepaymentPreview {
@@ -120,6 +145,12 @@ export interface InvestmentMaturityPreview {
   maturityAmount: number
   gainAmount: number
   subtype: InvestmentSubtype
+  discountMetrics?: DiscountBondDerivedMetrics
+  inflationMetrics?: {
+    dateMarkers: InflationLinkedDateMarkers
+    annualMaturityDates: string[]
+    accrualPeriods: InflationLinkedAccrualPeriod[]
+  }
 }
 
 export interface SimulationEvent {

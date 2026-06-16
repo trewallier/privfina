@@ -235,9 +235,29 @@ describe('instrument foundations', () => {
       subtype: 'discount-bond',
       purchaseDate: '2026-01-01',
       maturityDate: '2026-07-01',
+      issueDate: '2025-12-01',
+      transactionDate: '2026-01-15',
+      dueDate: '2026-07-01',
       principal: 1000,
       purchasePrice: 900,
       category: 'investment'
+    })
+
+    const inflationPreview = createInvestmentMaturityPreview({
+      subtype: 'inflation-linked-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2028-07-01',
+      issueDate: '2025-07-01',
+      transactionDate: '2026-01-01',
+      dueDate: '2028-07-01',
+      principal: 1000,
+      purchasePrice: 950,
+      spreadRate: 0.01,
+      yearlyInflation: [
+        { year: 2026, rate: 0.03 },
+        { year: 2027, rate: 0.02 },
+        { year: 2028, rate: 0.025 }
+      ]
     })
 
     const customFlows = generateInvestmentInstrumentCashFlows({
@@ -253,6 +273,9 @@ describe('instrument foundations', () => {
     expect(regularPreview.maturityAmount).toBeGreaterThan(1000)
     expect(discountFlows[0].direction).toBe(CashFlowDirection.Outflow)
     expect(discountFlows.some((entry) => entry.direction === CashFlowDirection.Inflow)).toBe(true)
+    expect(discountFlows[0].date).toBe('2026-01-15')
+    expect(discountFlows[discountFlows.length - 1].date).toBe('2026-07-01')
+    expect(inflationPreview.inflationMetrics?.annualMaturityDates.length).toBeGreaterThan(0)
     expect(customFlows.filter((entry) => entry.direction === CashFlowDirection.Inflow).length).toBeGreaterThan(1)
   })
 })

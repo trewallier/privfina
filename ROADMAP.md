@@ -16,6 +16,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [x] Add read-only loan repayment preview that updates as form parameters change.
 - [x] Add investment instrument v1 subtypes: regular bond, discount bond, inflation-linked bond with manual yearly inflation inputs.
 - [x] Add custom bond subtype: recurring interest payout schedule plus one-time principal maturity repayment.
+- [x] Improve investment composer UX with prominent subtype selector, subtype-driven field behavior, and inline info bubbles.
 - [x] Refine discount bond contract: mandatory issue/due/transaction dates plus price and face value; keep yield/current_value as derived fields and reserve optional pre-maturity sale date/value for future scope.
 - [x] Refine inflation-linked bond contract: mandatory issue/due/transaction dates, annual spread, and period inflation inputs; derive annual maturity schedule and accrual factors from financial date markers.
 

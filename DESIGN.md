@@ -102,6 +102,11 @@ Canonical note
 - Base modeling pattern for v1:
 	- one-time outflow on purchase date
 	- maturity-driven inflow structure based on product subtype settings
+- Form interaction guidance for v1:
+	- the subtype selector should be visually emphasized so product mode is explicit before users fill fields
+	- form labels and required/editable controls should update when subtype changes (for example, discount bond annual rate is derived and read-only)
+	- subtype-specific fields should be hidden when irrelevant (for example, yearly inflation inputs only for inflation-linked bonds)
+	- each investment input title should expose an inline info icon that opens a closable definition bubble
 - Subtypes in scope for design:
 	- Regular bond (compounding): one-time maturity inflow that pays principal plus interest computed with monthly compounding.
 	- Discount bond:

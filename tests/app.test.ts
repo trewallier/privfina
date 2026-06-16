@@ -482,6 +482,56 @@ describe('browser recurrence validation helpers', () => {
     expect(custom.generatedFlows.filter((flow) => flow.direction === 'inflow').length).toBeGreaterThan(1)
   })
 
+  it('enforces refined discount bond contract and exposes derived fields', () => {
+    const discount = generateInvestmentInstrumentBundle({
+      label: 'Discount bond',
+      subtype: 'discount-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-12-01',
+      issueDate: '2025-12-01',
+      transactionDate: '2026-02-01',
+      dueDate: '2026-12-01',
+      principal: 1000,
+      purchasePrice: 930,
+      category: 'investment'
+    })
+
+    const preview = createInvestmentMaturityPreview({
+      subtype: 'discount-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-12-01',
+      issueDate: '2025-12-01',
+      transactionDate: '2026-02-01',
+      dueDate: '2026-12-01',
+      principal: 1000,
+      purchasePrice: 930
+    })
+
+    expect(discount.generatedFlows[0].date).toBe('2026-02-01')
+    expect(discount.generatedFlows[discount.generatedFlows.length - 1].date).toBe('2026-12-01')
+    expect(preview.discountMetrics?.yieldPercent).toBeGreaterThan(0)
+    expect(preview.discountMetrics?.currentValuePercent).toBeCloseTo(93, 6)
+  })
+
+  it('derives inflation-linked annual accrual schedule from financial dates', () => {
+    const preview = createInvestmentMaturityPreview({
+      subtype: 'inflation-linked-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2028-07-01',
+      issueDate: '2025-07-01',
+      transactionDate: '2026-01-01',
+      dueDate: '2028-07-01',
+      principal: 1000,
+      purchasePrice: 980,
+      spreadRate: 0.01,
+      yearlyInflationRaw: '2026:0.03, 2027:0.02, 2028:0.025'
+    })
+
+    expect(preview.inflationMetrics?.annualMaturityDates).toContain('2028-07-01')
+    expect(preview.inflationMetrics?.accrualPeriods.length).toBeGreaterThan(0)
+    expect(preview.maturityAmount).toBeGreaterThan(1000)
+  })
+
   it('normalizes mixed instrument bundle collections', () => {
     const normalized = normalizeInstrumentBundles([
       {

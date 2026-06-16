@@ -1,0 +1,18 @@
+specVersion: v1alpha1
+productId: loan.fixed-rate.mortgage
+exampleId: long-term-case
+title: Long-term fixed-rate mortgage example
+description: Longer mortgage term example used to broaden coverage without changing engine logic.
+
+inputs:
+  principal: 350000
+  annualInterestRatePct: 5.0
+  termMonths: 360
+  startDate: 2026-06-01
+
+expected:
+  paymentCount: 360
+
+notes:
+  - This second example exists to prove that multiple worked examples can live beside the same product spec.
+  - Additional numeric assertions can be added later after engine verification.

@@ -1,0 +1,91 @@
+specVersion: v1alpha1
+kind: financial-product
+id: government-security.bmap.standard
+family: government-security
+variant: bmap
+displayName: Bónusz Magyar Állampapír
+description: Hungarian retail government bond with variable coupon linked to 3-month DKJ auction yields and quarterly interest payment.
+
+category: retail-government-bond
+denominationCurrency: HUF
+denominationUnit: 1
+issuanceModel: retail-distribution
+yieldModel: coupon-plus-redemption
+couponModel: quarterly-variable
+referenceIndex: weighted-3m-dkj-auction-average
+
+inputs:
+  - name: principal
+    type: number
+    label: Principal
+    required: true
+    unit: currency
+    description: Invested nominal amount.
+    constraints:
+      minimum: 1
+
+  - name: dkjBaseYieldPct
+    type: number
+    label: DKJ Base Yield
+    required: true
+    unit: percent
+    description: Base yield derived from 3-month DKJ auction averages.
+    constraints:
+      minimum: -100
+      maximum: 100
+
+  - name: interestPremiumPct
+    type: number
+    label: Interest Premium
+    required: true
+    unit: percent
+    description: Fixed premium added on top of the DKJ-based yield.
+    constraints:
+      minimum: 0
+      maximum: 100
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Investment start date in ISO format.
+
+outputs:
+  - name: quarterlyCouponRatePct
+    type: number
+    label: Quarterly Coupon Rate
+    required: true
+    unit: percent
+    description: Annualized coupon rate applicable for the current quarterly period.
+
+  - name: couponPaymentFrequency
+    type: string
+    label: Coupon Payment Frequency
+    required: true
+    unit: text
+    description: Frequency of coupon payments.
+
+assumptions:
+  - BMÁP is modeled as a quarterly-pay variable-rate retail bond.
+  - Product-term intent in this pilot is 6 years.
+  - Coupon rate is DKJ base yield plus a fixed premium.
+  - BMÁP pays interest quarterly.
+  - BMÁP denomination unit is 1 HUF.
+  - This first spec does not model every live BMÁP series or every historical premium schedule.
+  - DKJ market data integration is future work; examples use explicit base yield input values.
+
+ui:
+  formTitle: Bónusz Magyar Állampapír
+  sections:
+    - id: bmap-core
+      title: BMÁP Inputs
+      fieldNames:
+        - principal
+        - dkjBaseYieldPct
+        - interestPremiumPct
+        - startDate
+
+exampleRefs:
+  - ./examples/nominal-case.yaml
+  - ./examples/lower-dkj-base-case.yaml

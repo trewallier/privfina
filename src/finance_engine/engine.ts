@@ -14,6 +14,13 @@ import {
   generateInvestmentInstrumentCashFlows,
   createInvestmentInstrumentBundle
 } from './instruments'
+import {
+  parseFixedRateLoanProductSpecYaml,
+  validateFixedRateLoanProductSpec,
+  loadFixedRateLoanProductSpec,
+  mapFixedRateLoanSpecInputsToLoanInstrumentInput,
+  generateLoanInstrumentCashFlowsFromFixedRateProductSpec
+} from './product_specs/fixed_rate_loan'
 
 export type {
   DateRange,
@@ -49,6 +56,13 @@ export {
   generateInvestmentInstrumentCashFlows,
   createInvestmentInstrumentBundle
 } from './instruments'
+export {
+  parseFixedRateLoanProductSpecYaml,
+  validateFixedRateLoanProductSpec,
+  loadFixedRateLoanProductSpec,
+  mapFixedRateLoanSpecInputsToLoanInstrumentInput,
+  generateLoanInstrumentCashFlowsFromFixedRateProductSpec
+} from './product_specs/fixed_rate_loan'
 
 function signedAmount(cashFlow: CashFlow): number {
   return cashFlow.direction === CashFlowDirection.Inflow ? cashFlow.amount : -cashFlow.amount

@@ -1,0 +1,18 @@
+specVersion: v1alpha1
+productId: loan.fixed-rate.standard
+exampleId: nominal-case
+title: Nominal fixed-rate loan example
+description: Basic example used as the first executable acceptance scenario for the fixed-rate loan spec.
+
+inputs:
+  principal: 100000
+  annualInterestRatePct: 5.0
+  termMonths: 360
+  startDate: 2026-01-01
+
+expected:
+  paymentCount: 360
+
+notes:
+  - Keep expected outputs intentionally minimal in the first iteration.
+  - Monthly payment and total interest assertions can be tightened after the first validation loop against the existing engine.

@@ -1,0 +1,17 @@
+specVersion: v1alpha1
+productId: government-security.dkj.standard
+exampleId: shorter-maturity-case
+title: Shorter maturity DKJ example
+description: Discount treasury-bill case using the 3-month maturity bucket.
+
+inputs:
+  faceValue: 100000
+  purchasePricePct: 98
+  termMonths: 3
+  settlementDate: 2026-02-01
+
+expected:
+  redemptionValue: 100000
+
+notes:
+  - This example validates the shorter maturity bucket while keeping the same face-value redemption behavior.

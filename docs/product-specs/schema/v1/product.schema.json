@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://privfina.local/schema/v1/product.schema.json",
+  "title": "Privfina Product Specification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["specVersion", "kind", "id", "family", "variant", "displayName", "inputs", "outputs", "ui"],
+  "properties": {
+    "specVersion": {
+      "type": "string",
+      "const": "v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "const": "financial-product"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": ["loan", "government-security"]
+    },
+    "variant": {
+      "type": "string",
+      "enum": ["fixed-rate", "dkj", "pmap", "bmap"]
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "retail-government-bond",
+        "treasury-bill"
+      ]
+    },
+    "denominationCurrency": {
+      "type": "string",
+      "enum": ["HUF"]
+    },
+    "denominationUnit": {
+      "type": ["string", "number"],
+      "anyOf": [
+        {
+          "const": "face-value"
+        },
+        {
+          "type": "number",
+          "minimum": 1
+        }
+      ]
+    },
+    "issuanceModel": {
+      "type": "string",
+      "enum": ["discount", "par", "auction", "retail-distribution"]
+    },
+    "yieldModel": {
+      "type": "string",
+      "enum": ["fixed", "index-linked", "auction-implied", "discount-to-par", "coupon-plus-redemption"]
+    },
+    "couponModel": {
+      "type": "string",
+      "enum": ["zero-coupon", "fixed-coupon", "floating-coupon", "none", "annual-variable", "quarterly-variable"]
+    },
+    "referenceIndex": {
+      "type": "string",
+      "enum": ["cpi", "bubor", "absent", "prior-calendar-year-average-inflation", "weighted-3m-dkj-auction-average"]
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instrumentType"],
+      "properties": {
+        "instrumentType": {
+          "type": "string",
+          "enum": ["loan", "government-security"]
+        },
+        "rateType": {
+          "type": "string",
+          "enum": ["fixed"]
+        },
+        "amortizationType": {
+          "type": "string",
+          "enum": ["level-payment"]
+        },
+        "paymentFrequency": {
+          "type": "string",
+          "enum": ["monthly"]
+        }
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fieldDefinition"
+      }
+    },
+    "derivedVariables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fieldDefinition"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fieldDefinition"
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formTitle", "sections"],
+      "properties": {
+        "formTitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/uiSection"
+          }
+        }
+      }
+    },
+    "exampleRefs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "loan"
+          }
+        }
+      },
+      "then": {
+        "required": ["engine"],
+        "properties": {
+          "engine": {
+            "required": ["instrumentType", "rateType", "amortizationType", "paymentFrequency"],
+            "properties": {
+              "instrumentType": {
+                "const": "loan"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "government-security"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "category",
+          "denominationCurrency",
+          "denominationUnit",
+          "issuanceModel",
+          "yieldModel",
+          "couponModel",
+          "referenceIndex"
+        ],
+        "properties": {
+          "engine": {
+            "properties": {
+              "instrumentType": {
+                "const": "government-security"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "fieldDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "label", "required"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": ["number", "integer", "string", "boolean"]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "minimum": {
+              "type": "number"
+            },
+            "maximum": {
+              "type": "number"
+            },
+            "enum": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": ["string", "number", "integer", "boolean"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "uiSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "fieldNames"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fieldNames": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

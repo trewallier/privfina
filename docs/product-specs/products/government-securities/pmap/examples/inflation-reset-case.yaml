@@ -1,0 +1,17 @@
+specVersion: v1alpha1
+productId: government-security.pmap.standard
+exampleId: inflation-reset-case
+title: Inflation reset PMÁP example
+description: Scenario demonstrating a higher inflation input feeding the annual coupon rate.
+
+inputs:
+  principal: 1000000
+  interestPremiumPct: 0.5
+  previousYearAverageInflationPct: 8.0
+  startDate: 2027-01-01
+
+expected:
+  annualCouponRatePct: 8.5
+
+notes:
+  - This example demonstrates coupon reset behavior driven by explicit inflation input.

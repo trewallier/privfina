@@ -435,12 +435,15 @@ function initController() {
   function applyInvestmentSubtypeUi(subtype) {
     const ui =
       investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
+    const showInflationControls =
+      subtype === 'inflation-linked-bond' || subtype === 'custom-bond'
 
     setElementVisible(investmentIssueDateWrap, ui.visible.issueDate)
     setElementVisible(investmentTransactionDateWrap, ui.visible.transactionDate)
     setElementVisible(investmentDueDateWrap, ui.visible.dueDate)
-    setElementVisible(investmentSpreadRateWrap, ui.visible.spreadRate)
-    setElementVisible(investmentYearlyInflationWrap, ui.visible.yearlyInflation)
+    // Explicitly lock these controls to inflation-linked and custom bonds only.
+    setElementVisible(investmentSpreadRateWrap, showInflationControls)
+    setElementVisible(investmentYearlyInflationWrap, showInflationControls)
     setElementVisible(investmentCouponPeriodWrap, ui.visible.couponPeriod)
     setElementVisible(investmentSaleDateWrap, ui.visible.saleDate)
     setElementVisible(investmentSaleValueWrap, ui.visible.saleValue)

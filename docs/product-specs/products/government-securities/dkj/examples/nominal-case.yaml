@@ -2,16 +2,23 @@ specVersion: v1alpha1
 productId: government-security.dkj.standard
 exampleId: nominal-case
 title: Nominal DKJ example
-description: Baseline discount treasury-bill case with 12-month maturity.
+description: Baseline discount treasury-bill case with day-based maturity and 360-day annualization.
 
 inputs:
   faceValue: 100000
   purchasePricePct: 95
   termMonths: 12
   settlementDate: 2026-01-07
+  maturityDate: 2027-01-07
+  remainingDays: 360
 
 expected:
+  purchaseAmount: 95000
   redemptionValue: 100000
+  grossGain: 5000
+  simpleReturnPct: 5.2631578947
+  annualizedYieldPct: 5.2631578947
 
 notes:
-  - This example focuses on product-type behavior with discount purchase and par redemption.
+  - purchaseAmount = faceValue * purchasePricePct / 100.
+  - annualizedYieldPct = ((redemptionValue - purchaseAmount) / purchaseAmount) * (360 / remainingDays) * 100.

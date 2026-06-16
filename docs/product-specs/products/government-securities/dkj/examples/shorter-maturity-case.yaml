@@ -2,16 +2,22 @@ specVersion: v1alpha1
 productId: government-security.dkj.standard
 exampleId: shorter-maturity-case
 title: Shorter maturity DKJ example
-description: Discount treasury-bill case using the 3-month maturity bucket.
+description: Discount treasury-bill case using the 3-month maturity bucket with day-based annualization.
 
 inputs:
   faceValue: 100000
   purchasePricePct: 98
   termMonths: 3
   settlementDate: 2026-02-01
+  maturityDate: 2026-05-02
+  remainingDays: 90
 
 expected:
+  purchaseAmount: 98000
   redemptionValue: 100000
+  grossGain: 2000
+  simpleReturnPct: 2.0408163265
+  annualizedYieldPct: 8.1632653061
 
 notes:
-  - This example validates the shorter maturity bucket while keeping the same face-value redemption behavior.
+  - This example validates day-based annualized yield behavior with the 360-day convention.

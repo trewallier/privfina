@@ -104,15 +104,23 @@ function initController() {
   const loanTotalRepaymentPreviewInput = document.getElementById('loan-total-repayment-preview')
   const loanTotalInterestPreviewInput = document.getElementById('loan-total-interest-preview')
   const investmentSubtypeInput = document.getElementById('investment-subtype')
+  const investmentIssueDateInput = document.getElementById('investment-issue-date')
+  const investmentTransactionDateInput = document.getElementById('investment-transaction-date')
+  const investmentDueDateInput = document.getElementById('investment-due-date')
   const investmentPrincipalInput = document.getElementById('investment-principal')
   const investmentPurchasePriceInput = document.getElementById('investment-purchase-price')
   const investmentAnnualRateInput = document.getElementById('investment-annual-rate')
   const investmentSpreadRateInput = document.getElementById('investment-spread-rate')
   const investmentYearlyInflationInput = document.getElementById('investment-yearly-inflation')
+  const investmentSaleDateInput = document.getElementById('investment-sale-date')
+  const investmentSaleValueInput = document.getElementById('investment-sale-value')
   const investmentCouponPeriodInput = document.getElementById('investment-coupon-period')
   const investmentPurchasePreviewInput = document.getElementById('investment-purchase-preview')
   const investmentMaturityPreviewInput = document.getElementById('investment-maturity-preview')
   const investmentGainPreviewInput = document.getElementById('investment-gain-preview')
+  const investmentDiscountYieldPreviewInput = document.getElementById('investment-discount-yield-preview')
+  const investmentDiscountCurrentValuePreviewInput = document.getElementById('investment-discount-current-value-preview')
+  const investmentInflationSchedulePreviewInput = document.getElementById('investment-inflation-schedule-preview')
 
   if (
     !oneTimeForm ||
@@ -284,15 +292,23 @@ function initController() {
   const investmentPreviewController = createInvestmentPreviewSync({
     form: investmentForm,
     subtypeInput: investmentSubtypeInput,
+    issueDateInput: investmentIssueDateInput,
+    transactionDateInput: investmentTransactionDateInput,
+    dueDateInput: investmentDueDateInput,
     principalInput: investmentPrincipalInput,
     purchasePriceInput: investmentPurchasePriceInput,
     annualRateInput: investmentAnnualRateInput,
     spreadRateInput: investmentSpreadRateInput,
     yearlyInflationInput: investmentYearlyInflationInput,
+    saleDateInput: investmentSaleDateInput,
+    saleValueInput: investmentSaleValueInput,
     couponPeriodInput: investmentCouponPeriodInput,
     purchasePreviewInput: investmentPurchasePreviewInput,
     maturityPreviewInput: investmentMaturityPreviewInput,
     gainPreviewInput: investmentGainPreviewInput,
+    discountYieldPreviewInput: investmentDiscountYieldPreviewInput,
+    discountCurrentValuePreviewInput: investmentDiscountCurrentValuePreviewInput,
+    inflationSchedulePreviewInput: investmentInflationSchedulePreviewInput,
     createInvestmentMaturityPreview
   })
   const { syncInvestmentPreview } = investmentPreviewController
@@ -341,6 +357,9 @@ function initController() {
     investmentForm.querySelector('#investment-subtype').value = config.subtype || 'regular-bond'
     investmentForm.querySelector('#investment-purchase-date').value = config.purchaseDate || ''
     investmentForm.querySelector('#investment-maturity-date').value = config.maturityDate || ''
+    investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
+    investmentForm.querySelector('#investment-transaction-date').value = config.transactionDate || ''
+    investmentForm.querySelector('#investment-due-date').value = config.dueDate || ''
     investmentForm.querySelector('#investment-principal').value = config.principal !== undefined ? String(config.principal) : ''
     investmentForm.querySelector('#investment-purchase-price').value = config.purchasePrice !== undefined ? String(config.purchasePrice) : ''
     investmentForm.querySelector('#investment-annual-rate').value = config.annualRate !== undefined ? String(config.annualRate) : ''
@@ -350,6 +369,8 @@ function initController() {
         ? config.yearlyInflation.map((entry) => `${entry.year}:${entry.rate}`).join(', ')
         : '')
     investmentForm.querySelector('#investment-coupon-period').value = config.couponPeriod || ''
+    investmentForm.querySelector('#investment-sale-date').value = config.saleDate || ''
+    investmentForm.querySelector('#investment-sale-value').value = config.saleValue !== undefined ? String(config.saleValue) : ''
     investmentForm.querySelector('#investment-category').value = config.category || 'investment'
     investmentForm.querySelector('#investment-description').value = config.description || ''
 
@@ -896,11 +917,16 @@ function initController() {
         subtype: String(formData.get('subtype') || 'regular-bond'),
         purchaseDate: String(formData.get('purchaseDate') || '').trim(),
         maturityDate: String(formData.get('maturityDate') || '').trim(),
+        issueDate: String(formData.get('issueDate') || '').trim(),
+        transactionDate: String(formData.get('transactionDate') || '').trim(),
+        dueDate: String(formData.get('dueDate') || '').trim(),
         principal: Number(formData.get('principal')),
         purchasePrice: Number(formData.get('purchasePrice')),
         annualRate: Number(formData.get('annualRate')),
         spreadRate: Number(formData.get('spreadRate')),
         yearlyInflationRaw: String(formData.get('yearlyInflationRaw') || '').trim(),
+        saleDate: String(formData.get('saleDate') || '').trim(),
+        saleValue: Number(formData.get('saleValue')),
         couponPeriod: String(formData.get('couponPeriod') || '').trim(),
         category: String(formData.get('category') || '').trim() || 'investment',
         description: String(formData.get('description') || '').trim() || undefined,

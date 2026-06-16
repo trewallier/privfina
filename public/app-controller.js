@@ -133,10 +133,12 @@ function initController() {
   const investmentDiscountCurrentValueWrap = document.getElementById('investment-discount-current-value-wrap')
   const investmentInflationScheduleWrap = document.getElementById('investment-inflation-schedule-wrap')
   const investmentPrincipalLabel = document.getElementById('investment-principal-label')
-  const investmentPrincipalNote = document.getElementById('investment-principal-note')
   const investmentPurchasePriceLabel = document.getElementById('investment-purchase-price-label')
   const investmentAnnualRateLabel = document.getElementById('investment-annual-rate-label')
-  const investmentAnnualRateNote = document.getElementById('investment-annual-rate-note')
+  const investmentInfoPopup = document.getElementById('investment-info-popup')
+  const investmentInfoPopupTitle = document.getElementById('investment-info-popup-title')
+  const investmentInfoPopupText = document.getElementById('investment-info-popup-text')
+  const investmentInfoPopupClose = document.getElementById('investment-info-popup-close')
 
   const investmentSubtypeUiConfig = {
     'regular-bond': {
@@ -332,6 +334,7 @@ function initController() {
   let editingSubscriptionId = null
   let editingLoanId = null
   let editingInvestmentId = null
+  let activeInfoTrigger = null
   const excludedFlowIds = new Set()
 
   function isFlowIncluded(id) {
@@ -407,29 +410,94 @@ function initController() {
     }
   }
 
-  function closeInvestmentHelpBubbles() {
-    if (!investmentForm) {
+  function closeInvestmentInfoPopup() {
+    if (!investmentInfoPopup) {
       return
     }
 
-    investmentForm.querySelectorAll('.field-help').forEach((bubble) => {
-      bubble.hidden = true
-    })
+    investmentInfoPopup.hidden = true
+    activeInfoTrigger = null
   }
 
-  function toggleInvestmentHelpBubble(targetId) {
-    if (!investmentForm || !targetId) {
+  function getActiveInvestmentSubtype() {
+    return investmentSubtypeInput ? investmentSubtypeInput.value : 'regular-bond'
+  }
+
+  function getHelpTextById(helpId) {
+    if (!investmentForm || !helpId) {
+      return ''
+    }
+
+    const helpParagraph = investmentForm.querySelector(`#${helpId} p`)
+    return helpParagraph ? helpParagraph.textContent.trim() : ''
+  }
+
+  function buildHelpText(helpId) {
+    const subtype = getActiveInvestmentSubtype()
+    const ui = investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
+    const staticText = getHelpTextById(helpId)
+
+    if (helpId === 'investment-principal-help') {
+      return `${staticText} ${ui.text.principalNote}`.trim()
+    }
+
+    if (helpId === 'investment-annual-rate-help') {
+      return `${staticText} ${ui.text.annualRateNote}`.trim()
+    }
+
+    return staticText
+  }
+
+  function getHelpTitle(button) {
+    const aria = String(button.getAttribute('aria-label') || '').trim()
+    if (aria) {
+      return aria.replace(/\s+help$/i, '')
+    }
+
+    return 'Field info'
+  }
+
+  function positionInvestmentInfoPopup(triggerButton) {
+    if (!investmentInfoPopup || !triggerButton) {
       return
     }
 
-    const target = investmentForm.querySelector(`#${targetId}`)
-    if (!target) {
+    const rect = triggerButton.getBoundingClientRect()
+    const popupRect = investmentInfoPopup.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const margin = 10
+
+    let left = rect.left + rect.width / 2 - popupRect.width / 2
+    left = Math.max(margin, Math.min(left, viewportWidth - popupRect.width - margin))
+
+    let top = rect.bottom + 8
+    if (top + popupRect.height > viewportHeight - margin) {
+      top = rect.top - popupRect.height - 8
+    }
+    top = Math.max(margin, top)
+
+    investmentInfoPopup.style.left = `${left}px`
+    investmentInfoPopup.style.top = `${top}px`
+  }
+
+  function toggleInvestmentInfoPopup(button) {
+    if (!investmentInfoPopup || !investmentInfoPopupTitle || !investmentInfoPopupText || !button) {
       return
     }
 
-    const shouldOpen = target.hidden
-    closeInvestmentHelpBubbles()
-    target.hidden = !shouldOpen
+    if (activeInfoTrigger === button && !investmentInfoPopup.hidden) {
+      closeInvestmentInfoPopup()
+      return
+    }
+
+    const helpId = button.getAttribute('data-help-button')
+    const helpText = buildHelpText(helpId)
+    investmentInfoPopupTitle.textContent = getHelpTitle(button)
+    investmentInfoPopupText.textContent = helpText || 'No additional details available.'
+    investmentInfoPopup.hidden = false
+    activeInfoTrigger = button
+    positionInvestmentInfoPopup(button)
   }
 
   function applyInvestmentSubtypeUi(subtype) {
@@ -455,10 +523,8 @@ function initController() {
     setElementVisible(investmentInflationScheduleWrap, ui.visible.inflationSchedulePreview)
 
     setElementText(investmentPrincipalLabel, ui.text.principalLabel)
-    setElementText(investmentPrincipalNote, ui.text.principalNote)
     setElementText(investmentPurchasePriceLabel, ui.text.purchasePriceLabel)
     setElementText(investmentAnnualRateLabel, ui.text.annualRateLabel)
-    setElementText(investmentAnnualRateNote, ui.text.annualRateNote)
 
     if (investmentIssueDateInput) {
       investmentIssueDateInput.required = ui.required.issueDate
@@ -523,7 +589,7 @@ function initController() {
       investmentSubtypeInput.value = 'regular-bond'
       applyInvestmentSubtypeUi('regular-bond')
     }
-    closeInvestmentHelpBubbles()
+    closeInvestmentInfoPopup()
     investmentSubmitButton.textContent = 'Add Investment Instrument'
     investmentCancelButton.hidden = true
     syncInvestmentPreview()
@@ -762,21 +828,45 @@ function initController() {
   if (investmentForm) {
     investmentForm.querySelectorAll('[data-help-button]').forEach((button) => {
       button.addEventListener('click', () => {
-        const targetId = button.getAttribute('data-help-button')
-        toggleInvestmentHelpBubble(targetId)
-      })
-    })
-
-    investmentForm.querySelectorAll('[data-help-close]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const targetId = button.getAttribute('data-help-close')
-        const target = targetId ? investmentForm.querySelector(`#${targetId}`) : null
-        if (target) {
-          target.hidden = true
-        }
+        toggleInvestmentInfoPopup(button)
       })
     })
   }
+
+  investmentInfoPopupClose?.addEventListener('click', closeInvestmentInfoPopup)
+  window.addEventListener('resize', () => {
+    if (activeInfoTrigger && !investmentInfoPopup?.hidden) {
+      positionInvestmentInfoPopup(activeInfoTrigger)
+    }
+  })
+  window.addEventListener('scroll', () => {
+    if (activeInfoTrigger && !investmentInfoPopup?.hidden) {
+      positionInvestmentInfoPopup(activeInfoTrigger)
+    }
+  }, true)
+  document.addEventListener('click', (event) => {
+    if (!investmentInfoPopup || investmentInfoPopup.hidden) {
+      return
+    }
+
+    const target = event.target
+    if (!(target instanceof Node)) {
+      return
+    }
+
+    const clickedInfoButton =
+      target instanceof Element && target.closest('[data-help-button]')
+    if (investmentInfoPopup.contains(target) || clickedInfoButton) {
+      return
+    }
+
+    closeInvestmentInfoPopup()
+  })
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeInvestmentInfoPopup()
+    }
+  })
 
   if (investmentSubtypeInput) {
     investmentSubtypeInput.addEventListener('change', () => {

@@ -81,13 +81,13 @@ Acceptance criteria
 - [x] Regular bond instrument generates one-time maturity inflow paying principal plus monthly-compounded interest.
 - [x] Discount bond instrument requires issue date, due date, transaction date, purchase price, and face value; it generates one-time maturity inflow equal to configured face value.
 - [x] Discount bond instrument calculates derived (non-input) fields from mandatory inputs using the canonical formulas defined in `DESIGN.md`.
-- [ ] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.
-- [ ] Inflation-linked bond instrument derives annual maturity payment dates, effective annual rate, and accrual date markers using the canonical definitions in `DESIGN.md`.
-- [ ] Inflation-linked bond instrument calculates first and subsequent period accrual factors using the canonical formulas in `DESIGN.md`.
+- [x] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.
+- [x] Inflation-linked bond instrument derives annual maturity payment dates, effective annual rate, and accrual date markers using the canonical definitions in `DESIGN.md`.
+- [x] Inflation-linked bond instrument calculates first and subsequent period accrual factors using the canonical formulas in `DESIGN.md`.
 - [x] Custom bond instrument supports recurring interest payouts on configured schedule and one-time principal repayment at maturity.
-- [ ] Discount bond design reserves optional early-sale fields (sale date and sale value) for future iterations without changing v1 mandatory input set.
+- [x] Discount bond design reserves optional early-sale fields (sale date and sale value) for future iterations without changing v1 mandatory input set.
 - [ ] Custom bond instrument design supports periodic rate-reset schedules, with fixed-rate fallback allowed for v1 implementation.
-- [ ] Inflation-linked investment accepts manual yearly inflation inputs for v1.
+- [x] Inflation-linked investment accepts manual yearly inflation inputs for v1.
 - [x] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
 - [ ] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data.
 

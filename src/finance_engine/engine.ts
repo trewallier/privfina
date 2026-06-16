@@ -6,7 +6,13 @@ import {
   generateSubscriptionInstrumentCashFlows,
   runStatefulSimulation,
   calculateLoanMonthlyInstallment,
-  simulateLoanAmortization
+  simulateLoanAmortization,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentCashFlows,
+  createLoanInstrumentBundle,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentCashFlows,
+  createInvestmentInstrumentBundle
 } from './instruments'
 
 export type {
@@ -21,8 +27,10 @@ export type {
   SalaryInstrumentInput,
   SubscriptionInstrumentInput,
   LoanInstrumentInput,
+  LoanRepaymentPreview,
   InvestmentSubtype,
   InvestmentInstrumentInput,
+  InvestmentMaturityPreview,
   SimulationEvent,
   SimulationStep,
   StatefulSimulationSpec
@@ -33,7 +41,13 @@ export {
   generateSubscriptionInstrumentCashFlows,
   runStatefulSimulation,
   calculateLoanMonthlyInstallment,
-  simulateLoanAmortization
+  simulateLoanAmortization,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentCashFlows,
+  createLoanInstrumentBundle,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentCashFlows,
+  createInvestmentInstrumentBundle
 } from './instruments'
 
 function signedAmount(cashFlow: CashFlow): number {

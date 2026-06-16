@@ -6,7 +6,11 @@ import {
   generateSubscriptionInstrumentCashFlows,
   runStatefulSimulation,
   calculateLoanMonthlyInstallment,
-  simulateLoanAmortization
+  simulateLoanAmortization,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentCashFlows,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentCashFlows
 } from '../src/finance_engine/engine'
 import { CashFlowDirection } from '../src/finance_engine/models'
 
@@ -192,10 +196,63 @@ describe('instrument foundations', () => {
   it('computes loan installment preview and amortization schedule', () => {
     const installment = calculateLoanMonthlyInstallment(12000, 0.06, 12)
     const schedule = simulateLoanAmortization(12000, 0.06, 12)
+    const preview = createLoanRepaymentPreview({
+      principal: 12000,
+      annualRate: 0.06,
+      termMonths: 12,
+      startDate: '2026-01-01',
+      repaymentDayOfMonth: 1
+    })
+    const loanFlows = generateLoanInstrumentCashFlows({
+      principal: 12000,
+      annualRate: 0.06,
+      termMonths: 12,
+      startDate: '2026-01-01',
+      repaymentDayOfMonth: 1,
+      includeDisbursement: true,
+      category: 'loan'
+    })
 
     expect(installment).toBeGreaterThan(0)
     expect(schedule).toHaveLength(12)
     expect(schedule[0].remainingPrincipal).toBeLessThan(12000)
     expect(schedule[11].remainingPrincipal).toBeCloseTo(0, 2)
+    expect(preview.monthlyInstallment).toBeCloseTo(installment, 6)
+    expect(loanFlows[0].direction).toBe(CashFlowDirection.Inflow)
+    expect(loanFlows.some((entry) => entry.direction === CashFlowDirection.Outflow)).toBe(true)
+  })
+
+  it('generates investment flows and maturity previews for multiple subtypes', () => {
+    const regularPreview = createInvestmentMaturityPreview({
+      subtype: 'regular-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-07-01',
+      principal: 1000,
+      annualRate: 0.06
+    })
+
+    const discountFlows = generateInvestmentInstrumentCashFlows({
+      subtype: 'discount-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-07-01',
+      principal: 1000,
+      purchasePrice: 900,
+      category: 'investment'
+    })
+
+    const customFlows = generateInvestmentInstrumentCashFlows({
+      subtype: 'custom-bond',
+      purchaseDate: '2026-01-01',
+      maturityDate: '2026-04-01',
+      principal: 1000,
+      annualRate: 0.12,
+      couponPeriod: '0 0 1 * *',
+      category: 'investment'
+    })
+
+    expect(regularPreview.maturityAmount).toBeGreaterThan(1000)
+    expect(discountFlows[0].direction).toBe(CashFlowDirection.Outflow)
+    expect(discountFlows.some((entry) => entry.direction === CashFlowDirection.Inflow)).toBe(true)
+    expect(customFlows.filter((entry) => entry.direction === CashFlowDirection.Inflow).length).toBeGreaterThan(1)
   })
 })

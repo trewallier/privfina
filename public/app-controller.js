@@ -16,7 +16,11 @@ import {
 import {
   normalizeInstrumentBundles,
   generateSalaryInstrumentBundle,
-  generateSubscriptionInstrumentBundle
+  generateSubscriptionInstrumentBundle,
+  createLoanRepaymentPreview,
+  generateLoanInstrumentBundle,
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentBundle
 } from './instruments.js'
 import {
   normalizeRecurringDefinitions,
@@ -46,14 +50,20 @@ function initController() {
   const recurringForm = document.getElementById('recurring-form')
   const salaryForm = document.getElementById('salary-form')
   const subscriptionForm = document.getElementById('subscription-form')
+  const loanForm = document.getElementById('loan-form')
+  const investmentForm = document.getElementById('investment-form')
   const oneTimeSubmitButton = document.getElementById('one-time-submit')
   const recurringSubmitButton = document.getElementById('recurring-submit')
   const salarySubmitButton = document.getElementById('salary-submit')
   const subscriptionSubmitButton = document.getElementById('subscription-submit')
+  const loanSubmitButton = document.getElementById('loan-submit')
+  const investmentSubmitButton = document.getElementById('investment-submit')
   const oneTimeCancelButton = document.getElementById('one-time-cancel-edit')
   const recurringCancelButton = document.getElementById('recurring-cancel-edit')
   const salaryCancelButton = document.getElementById('salary-cancel-edit')
   const subscriptionCancelButton = document.getElementById('subscription-cancel-edit')
+  const loanCancelButton = document.getElementById('loan-cancel-edit')
+  const investmentCancelButton = document.getElementById('investment-cancel-edit')
   const schemaWarning = document.getElementById('schema-warning')
   const storageStatus = document.getElementById('storage-status')
   const exportButton = document.getElementById('export-json-button')
@@ -69,27 +79,54 @@ function initController() {
   const openRecurringBoxButton = document.getElementById('open-recurring-box')
   const openSalaryBoxButton = document.getElementById('open-salary-box')
   const openSubscriptionBoxButton = document.getElementById('open-subscription-box')
+  const openLoanBoxButton = document.getElementById('open-loan-box')
+  const openInvestmentBoxButton = document.getElementById('open-investment-box')
   const oneTimeBox = document.getElementById('one-time-box')
   const recurringBox = document.getElementById('recurring-box')
   const salaryBox = document.getElementById('salary-box')
   const subscriptionBox = document.getElementById('subscription-box')
+  const loanBox = document.getElementById('loan-box')
+  const investmentBox = document.getElementById('investment-box')
   const salaryScheduleModeInput = document.getElementById('salary-schedule-mode')
   const salaryCronWrap = document.getElementById('salary-cron-wrap')
   const salaryCustomWrap = document.getElementById('salary-custom-wrap')
+  const loanPrincipalInput = document.getElementById('loan-principal')
+  const loanAnnualRateInput = document.getElementById('loan-annual-rate')
+  const loanTermValueInput = document.getElementById('loan-term-value')
+  const loanTermUnitInput = document.getElementById('loan-term-unit')
+  const loanMonthlyPreviewInput = document.getElementById('loan-monthly-preview')
+  const loanTotalRepaymentPreviewInput = document.getElementById('loan-total-repayment-preview')
+  const loanTotalInterestPreviewInput = document.getElementById('loan-total-interest-preview')
+  const investmentSubtypeInput = document.getElementById('investment-subtype')
+  const investmentPrincipalInput = document.getElementById('investment-principal')
+  const investmentPurchasePriceInput = document.getElementById('investment-purchase-price')
+  const investmentAnnualRateInput = document.getElementById('investment-annual-rate')
+  const investmentSpreadRateInput = document.getElementById('investment-spread-rate')
+  const investmentYearlyInflationInput = document.getElementById('investment-yearly-inflation')
+  const investmentCouponPeriodInput = document.getElementById('investment-coupon-period')
+  const investmentPurchasePreviewInput = document.getElementById('investment-purchase-preview')
+  const investmentMaturityPreviewInput = document.getElementById('investment-maturity-preview')
+  const investmentGainPreviewInput = document.getElementById('investment-gain-preview')
 
   if (
     !oneTimeForm ||
     !recurringForm ||
     !salaryForm ||
     !subscriptionForm ||
+    !loanForm ||
+    !investmentForm ||
     !oneTimeSubmitButton ||
     !recurringSubmitButton ||
     !salarySubmitButton ||
     !subscriptionSubmitButton ||
+    !loanSubmitButton ||
+    !investmentSubmitButton ||
     !oneTimeCancelButton ||
     !recurringCancelButton ||
     !salaryCancelButton ||
     !subscriptionCancelButton ||
+    !loanCancelButton ||
+    !investmentCancelButton ||
     !rows ||
     !chart ||
     !startInput ||
@@ -128,6 +165,8 @@ function initController() {
   let editingRecurringId = null
   let editingSalaryId = null
   let editingSubscriptionId = null
+  let editingLoanId = null
+  let editingInvestmentId = null
   const excludedFlowIds = new Set()
 
   function isFlowIncluded(id) {
@@ -169,6 +208,14 @@ function initController() {
     if (subscriptionBox) {
       subscriptionBox.open = false
     }
+
+    if (loanBox) {
+      loanBox.open = false
+    }
+
+    if (investmentBox) {
+      investmentBox.open = false
+    }
   }
 
   function openComposerBox(type) {
@@ -177,6 +224,18 @@ function initController() {
     if (type === 'one-time') {
       if (recurringBox) {
         recurringBox.open = false
+      }
+      if (salaryBox) {
+        salaryBox.open = false
+      }
+      if (subscriptionBox) {
+        subscriptionBox.open = false
+      }
+      if (loanBox) {
+        loanBox.open = false
+      }
+      if (investmentBox) {
+        investmentBox.open = false
       }
       if (oneTimeBox) {
         oneTimeBox.open = true
@@ -232,6 +291,50 @@ function initController() {
       return
     }
 
+    if (type === 'loan') {
+      if (oneTimeBox) {
+        oneTimeBox.open = false
+      }
+      if (recurringBox) {
+        recurringBox.open = false
+      }
+      if (salaryBox) {
+        salaryBox.open = false
+      }
+      if (subscriptionBox) {
+        subscriptionBox.open = false
+      }
+      if (investmentBox) {
+        investmentBox.open = false
+      }
+      if (loanBox) {
+        loanBox.open = true
+      }
+      return
+    }
+
+    if (type === 'investment') {
+      if (oneTimeBox) {
+        oneTimeBox.open = false
+      }
+      if (recurringBox) {
+        recurringBox.open = false
+      }
+      if (salaryBox) {
+        salaryBox.open = false
+      }
+      if (subscriptionBox) {
+        subscriptionBox.open = false
+      }
+      if (loanBox) {
+        loanBox.open = false
+      }
+      if (investmentBox) {
+        investmentBox.open = true
+      }
+      return
+    }
+
     if (oneTimeBox) {
       oneTimeBox.open = false
     }
@@ -282,6 +385,138 @@ function initController() {
     subscriptionForm.reset()
     subscriptionSubmitButton.textContent = 'Add Subscription Instrument'
     subscriptionCancelButton.hidden = true
+  }
+
+  function resetLoanForm() {
+    editingLoanId = null
+    loanForm.reset()
+    loanSubmitButton.textContent = 'Add Loan Instrument'
+    loanCancelButton.hidden = true
+    syncLoanPreview()
+  }
+
+  function resetInvestmentForm() {
+    editingInvestmentId = null
+    investmentForm.reset()
+    investmentSubmitButton.textContent = 'Add Investment Instrument'
+    investmentCancelButton.hidden = true
+    syncInvestmentPreview()
+  }
+
+  function syncLoanPreview() {
+    if (!loanMonthlyPreviewInput || !loanTotalRepaymentPreviewInput || !loanTotalInterestPreviewInput) {
+      return
+    }
+
+    try {
+      const principal = Number(loanPrincipalInput?.value)
+      const annualRate = Number(loanAnnualRateInput?.value)
+      const termValue = Number(loanTermValueInput?.value)
+      const termUnit = loanTermUnitInput?.value || 'months'
+      const termMonths = termUnit === 'years' ? termValue * 12 : termValue
+      const preview = createLoanRepaymentPreview({
+        principal,
+        annualRate,
+        termMonths
+      })
+
+      loanMonthlyPreviewInput.value = preview.monthlyInstallment.toFixed(2)
+      loanTotalRepaymentPreviewInput.value = preview.totalRepayment.toFixed(2)
+      loanTotalInterestPreviewInput.value = preview.totalInterest.toFixed(2)
+    } catch {
+      loanMonthlyPreviewInput.value = '—'
+      loanTotalRepaymentPreviewInput.value = '—'
+      loanTotalInterestPreviewInput.value = '—'
+    }
+  }
+
+  function syncInvestmentPreview() {
+    if (!investmentPurchasePreviewInput || !investmentMaturityPreviewInput || !investmentGainPreviewInput) {
+      return
+    }
+
+    try {
+      const preview = createInvestmentMaturityPreview({
+        subtype: String(investmentSubtypeInput?.value || 'regular-bond'),
+        purchaseDate: String(investmentForm.querySelector('#investment-purchase-date')?.value || ''),
+        maturityDate: String(investmentForm.querySelector('#investment-maturity-date')?.value || ''),
+        principal: Number(investmentPrincipalInput?.value),
+        purchasePrice: Number(investmentPurchasePriceInput?.value),
+        annualRate: Number(investmentAnnualRateInput?.value),
+        spreadRate: Number(investmentSpreadRateInput?.value),
+        yearlyInflationRaw: String(investmentYearlyInflationInput?.value || '')
+      })
+
+      investmentPurchasePreviewInput.value = preview.purchaseAmount.toFixed(2)
+      investmentMaturityPreviewInput.value = preview.maturityAmount.toFixed(2)
+      investmentGainPreviewInput.value = preview.gainAmount.toFixed(2)
+    } catch {
+      investmentPurchasePreviewInput.value = '—'
+      investmentMaturityPreviewInput.value = '—'
+      investmentGainPreviewInput.value = '—'
+    }
+  }
+
+  function startLoanEdit(id) {
+    const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'loan')
+    if (!bundle) {
+      return
+    }
+
+    const config = bundle.config || {}
+    editingLoanId = id
+    loanForm.querySelector('#loan-label').value = bundle.label || 'Loan'
+    loanForm.querySelector('#loan-start-date').value = config.startDate || ''
+    loanForm.querySelector('#loan-principal').value = config.principal !== undefined ? String(config.principal) : ''
+    loanForm.querySelector('#loan-annual-rate').value = config.annualRate !== undefined ? String(config.annualRate) : ''
+    loanForm.querySelector('#loan-term-value').value =
+      config.termValue !== undefined
+        ? String(config.termValue)
+        : config.termMonths !== undefined && config.termMonths % 12 === 0
+          ? String(config.termMonths / 12)
+          : config.termMonths !== undefined
+            ? String(config.termMonths)
+            : ''
+    loanForm.querySelector('#loan-term-unit').value = config.termUnit || (config.termMonths && config.termMonths % 12 === 0 ? 'years' : 'months')
+    loanForm.querySelector('#loan-repayment-day').value = config.repaymentDayOfMonth !== undefined ? String(config.repaymentDayOfMonth) : '1'
+    loanForm.querySelector('#loan-category').value = config.category || 'loan'
+    loanForm.querySelector('#loan-description').value = config.description || ''
+    loanForm.querySelector('#loan-include-disbursement').checked = config.includeDisbursement !== false
+
+    loanSubmitButton.textContent = 'Save Loan Instrument'
+    loanCancelButton.hidden = false
+    syncLoanPreview()
+    openComposerBox('loan')
+  }
+
+  function startInvestmentEdit(id) {
+    const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'investment')
+    if (!bundle) {
+      return
+    }
+
+    const config = bundle.config || {}
+    editingInvestmentId = id
+    investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
+    investmentForm.querySelector('#investment-subtype').value = config.subtype || 'regular-bond'
+    investmentForm.querySelector('#investment-purchase-date').value = config.purchaseDate || ''
+    investmentForm.querySelector('#investment-maturity-date').value = config.maturityDate || ''
+    investmentForm.querySelector('#investment-principal').value = config.principal !== undefined ? String(config.principal) : ''
+    investmentForm.querySelector('#investment-purchase-price').value = config.purchasePrice !== undefined ? String(config.purchasePrice) : ''
+    investmentForm.querySelector('#investment-annual-rate').value = config.annualRate !== undefined ? String(config.annualRate) : ''
+    investmentForm.querySelector('#investment-spread-rate').value = config.spreadRate !== undefined ? String(config.spreadRate) : ''
+    investmentForm.querySelector('#investment-yearly-inflation').value = config.yearlyInflationRaw
+      || (Array.isArray(config.yearlyInflation)
+        ? config.yearlyInflation.map((entry) => `${entry.year}:${entry.rate}`).join(', ')
+        : '')
+    investmentForm.querySelector('#investment-coupon-period').value = config.couponPeriod || ''
+    investmentForm.querySelector('#investment-category').value = config.category || 'investment'
+    investmentForm.querySelector('#investment-description').value = config.description || ''
+
+    investmentSubmitButton.textContent = 'Save Investment Instrument'
+    investmentCancelButton.hidden = false
+    syncInvestmentPreview()
+    openComposerBox('investment')
   }
 
   function resetRangeIfEmpty() {
@@ -416,6 +651,12 @@ function initController() {
         if (subscriptionBox) {
           subscriptionBox.open = false
         }
+        if (loanBox) {
+          loanBox.open = false
+        }
+        if (investmentBox) {
+          investmentBox.open = false
+        }
       }
     })
   }
@@ -431,6 +672,12 @@ function initController() {
         }
         if (subscriptionBox) {
           subscriptionBox.open = false
+        }
+        if (loanBox) {
+          loanBox.open = false
+        }
+        if (investmentBox) {
+          investmentBox.open = false
         }
       }
     })
@@ -448,6 +695,12 @@ function initController() {
         if (subscriptionBox) {
           subscriptionBox.open = false
         }
+        if (loanBox) {
+          loanBox.open = false
+        }
+        if (investmentBox) {
+          investmentBox.open = false
+        }
       }
     })
   }
@@ -463,6 +716,56 @@ function initController() {
         }
         if (salaryBox) {
           salaryBox.open = false
+        }
+        if (loanBox) {
+          loanBox.open = false
+        }
+        if (investmentBox) {
+          investmentBox.open = false
+        }
+      }
+    })
+  }
+
+  if (loanBox) {
+    loanBox.addEventListener('toggle', () => {
+      if (loanBox.open) {
+        if (oneTimeBox) {
+          oneTimeBox.open = false
+        }
+        if (recurringBox) {
+          recurringBox.open = false
+        }
+        if (salaryBox) {
+          salaryBox.open = false
+        }
+        if (subscriptionBox) {
+          subscriptionBox.open = false
+        }
+        if (investmentBox) {
+          investmentBox.open = false
+        }
+      }
+    })
+  }
+
+  if (investmentBox) {
+    investmentBox.addEventListener('toggle', () => {
+      if (investmentBox.open) {
+        if (oneTimeBox) {
+          oneTimeBox.open = false
+        }
+        if (recurringBox) {
+          recurringBox.open = false
+        }
+        if (salaryBox) {
+          salaryBox.open = false
+        }
+        if (subscriptionBox) {
+          subscriptionBox.open = false
+        }
+        if (loanBox) {
+          loanBox.open = false
         }
       }
     })
@@ -502,15 +805,52 @@ function initController() {
     })
   }
 
+  if (openLoanBoxButton) {
+    openLoanBoxButton.addEventListener('click', () => {
+      openComposerBox('loan')
+    })
+  }
+
+  if (openInvestmentBoxButton) {
+    openInvestmentBoxButton.addEventListener('click', () => {
+      openComposerBox('investment')
+    })
+  }
+
   if (salaryScheduleModeInput) {
     salaryScheduleModeInput.addEventListener('change', () => {
       applySalaryModeVisibility(salaryScheduleModeInput.value)
     })
   }
 
+  if (loanPrincipalInput) {
+    ;['input', 'change'].forEach((eventName) => {
+      loanPrincipalInput.addEventListener(eventName, syncLoanPreview)
+      loanAnnualRateInput?.addEventListener(eventName, syncLoanPreview)
+      loanTermValueInput?.addEventListener(eventName, syncLoanPreview)
+      loanTermUnitInput?.addEventListener(eventName, syncLoanPreview)
+    })
+  }
+
+  if (investmentSubtypeInput) {
+    ;['input', 'change'].forEach((eventName) => {
+      investmentSubtypeInput.addEventListener(eventName, syncInvestmentPreview)
+      investmentPrincipalInput?.addEventListener(eventName, syncInvestmentPreview)
+      investmentPurchasePriceInput?.addEventListener(eventName, syncInvestmentPreview)
+      investmentAnnualRateInput?.addEventListener(eventName, syncInvestmentPreview)
+      investmentSpreadRateInput?.addEventListener(eventName, syncInvestmentPreview)
+      investmentYearlyInflationInput?.addEventListener(eventName, syncInvestmentPreview)
+      investmentCouponPeriodInput?.addEventListener(eventName, syncInvestmentPreview)
+      investmentForm.querySelector('#investment-purchase-date')?.addEventListener(eventName, syncInvestmentPreview)
+      investmentForm.querySelector('#investment-maturity-date')?.addEventListener(eventName, syncInvestmentPreview)
+    })
+  }
+
   applySalaryModeVisibility(
     salaryScheduleModeInput ? salaryScheduleModeInput.value : 'custom-monthly-working-day'
   )
+  syncLoanPreview()
+  syncInvestmentPreview()
 
   const defaultRange = suggestRange([
     ...oneTimeFlows.map((entry) => ({ date: entry.date })),
@@ -576,8 +916,12 @@ function initController() {
 
         if (target.instrumentType === 'salary') {
           startSalaryEdit(id)
-        } else {
+        } else if (target.instrumentType === 'subscription') {
           startSubscriptionEdit(id)
+        } else if (target.instrumentType === 'loan') {
+          startLoanEdit(id)
+        } else if (target.instrumentType === 'investment') {
+          startInvestmentEdit(id)
         }
       },
       (id) => {
@@ -591,6 +935,14 @@ function initController() {
 
         if (editingSubscriptionId === id) {
           resetSubscriptionForm()
+        }
+
+        if (editingLoanId === id) {
+          resetLoanForm()
+        }
+
+        if (editingInvestmentId === id) {
+          resetInvestmentForm()
         }
 
         resetRangeIfEmpty()
@@ -829,6 +1181,104 @@ function initController() {
   subscriptionCancelButton.addEventListener('click', () => {
     resetSubscriptionForm()
     collapseComposerBoxes()
+  })
+
+  loanCancelButton.addEventListener('click', () => {
+    resetLoanForm()
+    collapseComposerBoxes()
+  })
+
+  investmentCancelButton.addEventListener('click', () => {
+    resetInvestmentForm()
+    collapseComposerBoxes()
+  })
+
+  loanForm.addEventListener('submit', (event) => {
+    event.preventDefault()
+
+    try {
+      const formData = new FormData(loanForm)
+      const bundle = generateLoanInstrumentBundle({
+        id: editingLoanId || undefined,
+        label: String(formData.get('label') || '').trim() || 'Loan',
+        principal: Number(formData.get('principal')),
+        annualRate: Number(formData.get('annualRate')),
+        termValue: Number(formData.get('termValue')),
+        termUnit: String(formData.get('termUnit') || 'months'),
+        startDate: String(formData.get('startDate') || '').trim(),
+        repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
+        includeDisbursement: formData.get('includeDisbursement') === 'on',
+        category: String(formData.get('category') || '').trim() || 'loan',
+        description: String(formData.get('description') || '').trim() || undefined,
+        createdAt: editingLoanId ? instrumentBundles.find((entry) => entry.id === editingLoanId)?.createdAt : undefined
+      })
+
+      if (!bundle || !bundle.generatedFlows.length) {
+        return
+      }
+
+      instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+      saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+
+      const firstDate = bundle.generatedFlows[0].date
+      const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
+      const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+      startInput.value = updatedRange.startDate
+      endInput.value = updatedRange.endDate
+
+      resetLoanForm()
+      collapseComposerBoxes()
+      rerender()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save loan instrument.'
+      setStorageStatus(message, 'error')
+    }
+  })
+
+  investmentForm.addEventListener('submit', (event) => {
+    event.preventDefault()
+
+    try {
+      const formData = new FormData(investmentForm)
+      const bundle = generateInvestmentInstrumentBundle({
+        id: editingInvestmentId || undefined,
+        label: String(formData.get('label') || '').trim() || 'Investment',
+        subtype: String(formData.get('subtype') || 'regular-bond'),
+        purchaseDate: String(formData.get('purchaseDate') || '').trim(),
+        maturityDate: String(formData.get('maturityDate') || '').trim(),
+        principal: Number(formData.get('principal')),
+        purchasePrice: Number(formData.get('purchasePrice')),
+        annualRate: Number(formData.get('annualRate')),
+        spreadRate: Number(formData.get('spreadRate')),
+        yearlyInflationRaw: String(formData.get('yearlyInflationRaw') || '').trim(),
+        couponPeriod: String(formData.get('couponPeriod') || '').trim(),
+        category: String(formData.get('category') || '').trim() || 'investment',
+        description: String(formData.get('description') || '').trim() || undefined,
+        createdAt: editingInvestmentId
+          ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
+          : undefined
+      })
+
+      if (!bundle || !bundle.generatedFlows.length) {
+        return
+      }
+
+      instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+      saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+
+      const firstDate = bundle.generatedFlows[0].date
+      const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
+      const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+      startInput.value = updatedRange.startDate
+      endInput.value = updatedRange.endDate
+
+      resetInvestmentForm()
+      collapseComposerBoxes()
+      rerender()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save investment instrument.'
+      setStorageStatus(message, 'error')
+    }
   })
 
   startInput.addEventListener('change', rerender)

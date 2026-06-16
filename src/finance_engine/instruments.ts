@@ -14,6 +14,74 @@ import type { CashFlow } from './models'
 import { CashFlowDirection } from './models'
 import { generateRecurringCashFlows } from './recurring'
 
+const MONTHS_PER_YEAR = 12
+const FIRST_MONTH_INDEX = 0
+const LAST_MONTH_INDEX = MONTHS_PER_YEAR - 1
+const MIN_DAY_OF_MONTH = 1
+const MAX_DAY_OF_MONTH = 31
+const DEFAULT_SALARY_TARGET_DAY = 10
+const DEFAULT_COUPON_PERIOD = '0 0 1 * *'
+
+function incrementYearMonth(year: number, month: number): { year: number; month: number } {
+  const nextMonth = month + 1
+  if (nextMonth > LAST_MONTH_INDEX) {
+    return { year: year + 1, month: FIRST_MONTH_INDEX }
+  }
+
+  return { year, month: nextMonth }
+}
+
+function validateDayOfMonth(value: number, label: string): void {
+  if (!Number.isInteger(value) || value < MIN_DAY_OF_MONTH || value > MAX_DAY_OF_MONTH) {
+    throw new Error(`${label} must be an integer between 1 and 31.`)
+  }
+}
+
+function createCashFlow(
+  date: string,
+  amount: number,
+  direction: CashFlowDirection,
+  category: string,
+  description?: string
+): CashFlow {
+  return {
+    date,
+    amount,
+    direction,
+    category,
+    description
+  }
+}
+
+function sortCashFlowsByDate(flows: CashFlow[]): CashFlow[] {
+  return flows.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function calculateMonthlyCompoundedAmount(principal: number, annualRate: number, months: number): number {
+  return principal * Math.pow(1 + annualRate / MONTHS_PER_YEAR, months)
+}
+
+function calculateInflationLinkedMaturityAmount(
+  principal: number,
+  purchaseDate: Date,
+  months: number,
+  yearlyInflation: Map<number, number>,
+  spreadRate: number
+): number {
+  let maturityAmount = principal
+  let cursor = new Date(Date.UTC(purchaseDate.getUTCFullYear(), purchaseDate.getUTCMonth(), purchaseDate.getUTCDate()))
+  const periodCount = Math.max(months, 0)
+
+  for (let index = 0; index < periodCount; index += MONTHS_PER_YEAR) {
+    const year = cursor.getUTCFullYear()
+    const inflationRate = yearlyInflation.get(year) ?? 0
+    maturityAmount *= 1 + inflationRate + spreadRate
+    cursor = new Date(Date.UTC(year + 1, cursor.getUTCMonth(), cursor.getUTCDate()))
+  }
+
+  return maturityAmount
+}
+
 function ensurePositiveAmount(amount: number): number {
   const normalized = Number(amount)
   if (!Number.isFinite(normalized) || normalized < 0) {
@@ -63,10 +131,8 @@ export function generateSalaryInstrumentCashFlows(input: SalaryInstrumentInput):
     throw new Error('endDate must be on or after startDate.')
   }
 
-  const targetDayOfMonth = input.customMonthlyRule?.targetDayOfMonth ?? 10
-  if (!Number.isInteger(targetDayOfMonth) || targetDayOfMonth < 1 || targetDayOfMonth > 31) {
-    throw new Error('Salary targetDayOfMonth must be an integer between 1 and 31.')
-  }
+  const targetDayOfMonth = input.customMonthlyRule?.targetDayOfMonth ?? DEFAULT_SALARY_TARGET_DAY
+  validateDayOfMonth(targetDayOfMonth, 'Salary targetDayOfMonth')
 
   const businessDayConvention = input.customMonthlyRule?.businessDayConvention ?? 'preceding'
   const holidays = input.customMonthlyRule?.holidays ?? []
@@ -88,19 +154,19 @@ export function generateSalaryInstrumentCashFlows(input: SalaryInstrumentInput):
       }
 
       generated.push({
-        date: payoutIso,
-        amount,
-        direction: CashFlowDirection.Inflow,
-        category: input.category ?? 'salary',
-        description: input.description
+        ...createCashFlow(
+          payoutIso,
+          amount,
+          CashFlowDirection.Inflow,
+          input.category ?? 'salary',
+          input.description
+        )
       })
     }
 
-    month += 1
-    if (month > 11) {
-      month = 0
-      year += 1
-    }
+    const next = incrementYearMonth(year, month)
+    year = next.year
+    month = next.month
 
     if (endDate) {
       const firstOfNextMonth = new Date(Date.UTC(year, month, 1))
@@ -180,7 +246,7 @@ export function calculateLoanMonthlyInstallment(
     throw new Error('Annual rate must be a non-negative finite number.')
   }
 
-  const monthlyRate = annualRate / 12
+  const monthlyRate = annualRate / MONTHS_PER_YEAR
   if (monthlyRate === 0) {
     return principal / termMonths
   }
@@ -250,7 +316,7 @@ function monthsBetween(startDate: Date, endDate: Date): number {
   const years = endDate.getUTCFullYear() - startDate.getUTCFullYear()
   const months = endDate.getUTCMonth() - startDate.getUTCMonth()
   const dayAdjust = endDate.getUTCDate() < startDate.getUTCDate() ? -1 : 0
-  return years * 12 + months + dayAdjust
+  return years * MONTHS_PER_YEAR + months + dayAdjust
 }
 
 function maturityDateFromInput(purchaseDate: string, maturityDate: string): { purchase: Date; maturity: Date; months: number } {
@@ -282,23 +348,17 @@ export function generateLoanInstrumentCashFlows(input: LoanInstrumentInput): Cas
     throw new Error('Term months must be a positive integer.')
   }
 
-  if (!Number.isInteger(repaymentDayOfMonth) || repaymentDayOfMonth < 1 || repaymentDayOfMonth > 31) {
-    throw new Error('Repayment day must be an integer between 1 and 31.')
-  }
+  validateDayOfMonth(repaymentDayOfMonth, 'Repayment day')
 
   const startDate = parseIsoDate(input.startDate)
   const monthlyInstallment = calculateLoanMonthlyInstallment(principal, annualRate, termMonths)
-  const monthlyRate = annualRate / 12
+  const monthlyRate = annualRate / MONTHS_PER_YEAR
   const flows: CashFlow[] = []
+  const category = input.category ?? 'loan'
+  const description = input.description
 
   if (input.includeDisbursement !== false) {
-    flows.push({
-      date: formatIsoDate(startDate),
-      amount: principal,
-      direction: CashFlowDirection.Inflow,
-      category: input.category ?? 'loan',
-      description: input.description
-    })
+    flows.push(createCashFlow(formatIsoDate(startDate), principal, CashFlowDirection.Inflow, category, description))
   }
 
   let remainingPrincipal = principal
@@ -306,11 +366,9 @@ export function generateLoanInstrumentCashFlows(input: LoanInstrumentInput): Cas
   let month = startDate.getUTCMonth()
   const startDay = startDate.getUTCDate()
   if (repaymentDayOfMonth < startDay) {
-    month += 1
-    if (month > 11) {
-      month = 0
-      year += 1
-    }
+    const next = incrementYearMonth(year, month)
+    year = next.year
+    month = next.month
   }
 
   for (let index = 0; index < termMonths; index += 1) {
@@ -321,22 +379,22 @@ export function generateLoanInstrumentCashFlows(input: LoanInstrumentInput): Cas
     const principalPortion = Math.min(monthlyInstallment - interestPortion, remainingPrincipal)
     remainingPrincipal = Math.max(0, remainingPrincipal - principalPortion)
 
-    flows.push({
-      date: formatIsoDate(paymentDate),
-      amount: monthlyInstallment,
-      direction: CashFlowDirection.Outflow,
-      category: input.category ?? 'loan',
-      description: input.description
-    })
+    flows.push(
+      createCashFlow(
+        formatIsoDate(paymentDate),
+        monthlyInstallment,
+        CashFlowDirection.Outflow,
+        category,
+        description
+      )
+    )
 
-    month += 1
-    if (month > 11) {
-      month = 0
-      year += 1
-    }
+    const next = incrementYearMonth(year, month)
+    year = next.year
+    month = next.month
   }
 
-  return flows.sort((a, b) => a.date.localeCompare(b.date))
+  return sortCashFlowsByDate(flows)
 }
 
 export function createLoanInstrumentBundle(input: LoanInstrumentInput & { label?: string; id?: string; createdAt?: string }) {
@@ -386,7 +444,7 @@ function getInvestmentPurchaseAmount(input: InvestmentInstrumentInput): number {
 }
 
 export function createInvestmentMaturityPreview(input: InvestmentInstrumentInput): InvestmentMaturityPreview {
-  const { purchase, maturity, months } = maturityDateFromInput(input.purchaseDate, input.maturityDate)
+  const { purchase, months } = maturityDateFromInput(input.purchaseDate, input.maturityDate)
   const subtype = input.subtype
   const principal = ensurePositiveAmount(input.principal)
   const purchaseAmount = getInvestmentPurchaseAmount(input)
@@ -398,18 +456,17 @@ export function createInvestmentMaturityPreview(input: InvestmentInstrumentInput
 
   if (subtype === 'regular-bond') {
     const rate = Number.isFinite(annualRate) ? annualRate : 0
-    maturityAmount = principal * Math.pow(1 + rate / 12, months)
+    maturityAmount = calculateMonthlyCompoundedAmount(principal, rate, months)
   } else if (subtype === 'discount-bond') {
     maturityAmount = principal
   } else if (subtype === 'inflation-linked-bond') {
-    let cursor = new Date(Date.UTC(purchase.getUTCFullYear(), purchase.getUTCMonth(), purchase.getUTCDate()))
-    const periodCount = Math.max(months, 0)
-    for (let index = 0; index < periodCount; index += 12) {
-      const year = cursor.getUTCFullYear()
-      const inflationRate = yearlyInflation.get(year) ?? 0
-      maturityAmount *= 1 + inflationRate + spreadRate
-      cursor = new Date(Date.UTC(year + 1, cursor.getUTCMonth(), cursor.getUTCDate()))
-    }
+    maturityAmount = calculateInflationLinkedMaturityAmount(
+      principal,
+      purchase,
+      months,
+      yearlyInflation,
+      spreadRate
+    )
   } else {
     maturityAmount = principal
   }
@@ -434,56 +491,40 @@ export function generateInvestmentInstrumentCashFlows(
   const category = input.category ?? 'investment'
   const description = input.description
   const flows: CashFlow[] = []
+  const purchaseIso = formatIsoDate(purchase)
+  const maturityIso = formatIsoDate(maturity)
 
-  flows.push({
-    date: formatIsoDate(purchase),
-    amount: purchaseAmount,
-    direction: CashFlowDirection.Outflow,
-    category,
-    description
-  })
+  flows.push(createCashFlow(purchaseIso, purchaseAmount, CashFlowDirection.Outflow, category, description))
 
   if (input.subtype === 'regular-bond') {
-    flows.push({
-      date: formatIsoDate(maturity),
-      amount: principal * Math.pow(1 + annualRate / 12, months),
-      direction: CashFlowDirection.Inflow,
-      category,
-      description
-    })
+    flows.push(
+      createCashFlow(
+        maturityIso,
+        calculateMonthlyCompoundedAmount(principal, annualRate, months),
+        CashFlowDirection.Inflow,
+        category,
+        description
+      )
+    )
   } else if (input.subtype === 'discount-bond') {
-    flows.push({
-      date: formatIsoDate(maturity),
-      amount: principal,
-      direction: CashFlowDirection.Inflow,
-      category,
-      description
-    })
+    flows.push(createCashFlow(maturityIso, principal, CashFlowDirection.Inflow, category, description))
   } else if (input.subtype === 'inflation-linked-bond') {
-    let maturityAmount = principal
-    let cursor = new Date(Date.UTC(purchase.getUTCFullYear(), purchase.getUTCMonth(), purchase.getUTCDate()))
-    const yearsToSimulate = Math.max(Math.floor(months / 12), 1)
-    for (let index = 0; index < yearsToSimulate; index += 1) {
-      const year = cursor.getUTCFullYear()
-      const inflationRate = yearlyInflation.get(year) ?? 0
-      maturityAmount *= 1 + inflationRate + spreadRate
-      cursor = new Date(Date.UTC(year + 1, cursor.getUTCMonth(), cursor.getUTCDate()))
-    }
-
-    flows.push({
-      date: formatIsoDate(maturity),
-      amount: maturityAmount,
-      direction: CashFlowDirection.Inflow,
-      category,
-      description
-    })
+    flows.push(
+      createCashFlow(
+        maturityIso,
+        calculateInflationLinkedMaturityAmount(principal, purchase, months, yearlyInflation, spreadRate),
+        CashFlowDirection.Inflow,
+        category,
+        description
+      )
+    )
   } else {
-    const couponPeriod = input.couponPeriod || '0 0 1 * *'
-    const periodicCoupon = principal * (annualRate / 12)
+    const couponPeriod = input.couponPeriod || DEFAULT_COUPON_PERIOD
+    const periodicCoupon = principal * (annualRate / MONTHS_PER_YEAR)
     const couponFlows = generateRecurringCashFlows({
       period: couponPeriod,
-      startDate: formatIsoDate(purchase),
-      endDate: formatIsoDate(maturity),
+      startDate: purchaseIso,
+      endDate: maturityIso,
       amount: periodicCoupon,
       direction: CashFlowDirection.Inflow,
       category,
@@ -491,16 +532,10 @@ export function generateInvestmentInstrumentCashFlows(
     })
 
     flows.push(...couponFlows)
-    flows.push({
-      date: formatIsoDate(maturity),
-      amount: principal,
-      direction: CashFlowDirection.Inflow,
-      category,
-      description
-    })
+    flows.push(createCashFlow(maturityIso, principal, CashFlowDirection.Inflow, category, description))
   }
 
-  return flows.sort((a, b) => a.date.localeCompare(b.date))
+  return sortCashFlowsByDate(flows)
 }
 
 export function createInvestmentInstrumentBundle(

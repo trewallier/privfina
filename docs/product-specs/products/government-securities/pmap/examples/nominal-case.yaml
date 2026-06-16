@@ -1,0 +1,17 @@
+specVersion: v1alpha1
+productId: government-security.pmap.standard
+exampleId: nominal-case
+title: Nominal PMÁP example
+description: Baseline inflation-linked PMÁP scenario with explicit prior-year inflation input.
+
+inputs:
+  principal: 1000000
+  interestPremiumPct: 0.5
+  previousYearAverageInflationPct: 4.4
+  startDate: 2026-05-23
+
+expected:
+  annualCouponRatePct: 4.9
+
+notes:
+  - Coupon rate is shown as inflation plus premium for this acceptance scenario.

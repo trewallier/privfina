@@ -1,0 +1,109 @@
+specVersion: v1alpha1
+kind: financial-product
+id: loan.fixed-rate.mortgage
+family: loan
+variant: fixed-rate
+displayName: Fixed Rate Mortgage
+description: Standard fixed-rate mortgage with equal monthly payments over the full loan term.
+
+engine:
+  instrumentType: loan
+  rateType: fixed
+  amortizationType: level-payment
+  paymentFrequency: monthly
+
+inputs:
+  - name: principal
+    type: number
+    label: Home Loan Principal
+    required: true
+    unit: currency
+    description: Amount borrowed to finance the property purchase.
+    constraints:
+      minimum: 1000
+
+  - name: annualInterestRatePct
+    type: number
+    label: Fixed Annual Interest Rate
+    required: true
+    unit: percent
+    description: Fixed nominal annual mortgage interest rate in percent.
+    constraints:
+      minimum: 0
+      maximum: 100
+
+  - name: termMonths
+    type: integer
+    label: Mortgage Term in Months
+    required: true
+    unit: months
+    description: Total number of monthly payments over the mortgage term.
+    constraints:
+      minimum: 12
+      maximum: 480
+
+  - name: startDate
+    type: string
+    label: Mortgage Start Date
+    required: true
+    unit: date
+    description: Mortgage start date in ISO format.
+
+derivedVariables:
+  - name: monthlyInterestRate
+    type: number
+    label: Monthly Interest Rate
+    required: false
+    unit: rate
+    description: Annual mortgage rate divided by 12 and converted from percent to decimal.
+
+outputs:
+  - name: monthlyPayment
+    type: number
+    label: Monthly Mortgage Payment
+    required: true
+    unit: currency
+    description: Constant monthly mortgage payment amount.
+
+  - name: paymentCount
+    type: integer
+    label: Payment Count
+    required: true
+    unit: count
+    description: Number of scheduled monthly mortgage payments.
+
+  - name: totalInterest
+    type: number
+    label: Total Interest
+    required: true
+    unit: currency
+    description: Total interest paid over the full mortgage term.
+
+  - name: totalPaid
+    type: number
+    label: Total Paid
+    required: true
+    unit: currency
+    description: Sum of all mortgage payments across the full term.
+
+assumptions:
+  - This pilot mortgage product is modeled as a plain fixed-rate amortizing loan.
+  - Payments are monthly and occur on a regular monthly cadence.
+  - Interest rate is fixed for the whole term.
+  - Property taxes, insurance, escrow, legal fees, and origination fees are excluded in this iteration.
+  - Prepayments and refinancing are out of scope for this variant.
+
+ui:
+  formTitle: Fixed Rate Mortgage
+  sections:
+    - id: mortgage-core
+      title: Mortgage Inputs
+      fieldNames:
+        - principal
+        - annualInterestRatePct
+        - termMonths
+        - startDate
+
+exampleRefs:
+  - ./examples/nominal-case.yaml
+  - ./examples/long-term-case.yaml

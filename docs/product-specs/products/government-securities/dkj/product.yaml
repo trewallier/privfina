@@ -1,0 +1,90 @@
+specVersion: v1alpha1
+kind: financial-product
+id: government-security.dkj.standard
+family: government-security
+variant: dkj
+displayName: Diszkont Kincstárjegy
+description: Short-term Hungarian treasury bill sold at discount and redeemed at par at maturity.
+
+category: treasury-bill
+denominationCurrency: HUF
+denominationUnit: 10000
+issuanceModel: auction
+yieldModel: discount-to-par
+couponModel: none
+referenceIndex: absent
+
+inputs:
+  - name: faceValue
+    type: number
+    label: Face Value
+    required: true
+    unit: currency
+    description: Redemption amount received at maturity.
+    constraints:
+      minimum: 10000
+
+  - name: purchasePricePct
+    type: number
+    label: Purchase Price Percent
+    required: true
+    unit: percent
+    description: Purchase price as percentage of face value.
+    constraints:
+      minimum: 0
+      maximum: 100
+
+  - name: termMonths
+    type: integer
+    label: Term in Months
+    required: true
+    unit: months
+    description: Nominal maturity bucket of the treasury bill.
+    constraints:
+      enum: [3, 6, 12]
+
+  - name: settlementDate
+    type: string
+    label: Settlement Date
+    required: true
+    unit: date
+    description: Settlement date in ISO format.
+
+outputs:
+  - name: redemptionValue
+    type: number
+    label: Redemption Value
+    required: true
+    unit: currency
+    description: Face value repaid at maturity.
+
+  - name: grossGain
+    type: number
+    label: Gross Gain
+    required: true
+    unit: currency
+    description: Difference between redemption value and purchase price.
+
+assumptions:
+  - DKJ is modeled as a non-coupon treasury bill.
+  - The investor buys below par and receives face value at maturity.
+  - DKJ maturity buckets are represented as 3, 6, and 12 months for this product type.
+  - Denomination unit is 10,000 HUF.
+  - Issuance is modeled as auction-based.
+  - Principal is repaid at maturity in one amount.
+  - Secondary-market pricing and series-level auction data are out of scope for this first product-type spec.
+
+ui:
+  formTitle: Diszkont Kincstárjegy
+  sections:
+    - id: dkj-core
+      title: DKJ Inputs
+      fieldNames:
+        - faceValue
+        - purchasePricePct
+        - termMonths
+        - settlementDate
+
+exampleRefs:
+  - ./examples/nominal-case.yaml
+  - ./examples/shorter-maturity-case.yaml

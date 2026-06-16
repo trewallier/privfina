@@ -1,0 +1,17 @@
+specVersion: v1alpha1
+productId: government-security.dkj.standard
+exampleId: nominal-case
+title: Nominal DKJ example
+description: Baseline discount treasury-bill case with 12-month maturity.
+
+inputs:
+  faceValue: 100000
+  purchasePricePct: 95
+  termMonths: 12
+  settlementDate: 2026-01-07
+
+expected:
+  redemptionValue: 100000
+
+notes:
+  - This example focuses on product-type behavior with discount purchase and par redemption.

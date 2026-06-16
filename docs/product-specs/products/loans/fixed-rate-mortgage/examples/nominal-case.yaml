@@ -1,0 +1,18 @@
+specVersion: v1alpha1
+productId: loan.fixed-rate.mortgage
+exampleId: nominal-case
+title: Nominal fixed-rate mortgage example
+description: Baseline mortgage example used as executable documentation for the first mortgage variant.
+
+inputs:
+  principal: 200000
+  annualInterestRatePct: 4.5
+  termMonths: 240
+  startDate: 2026-01-01
+
+expected:
+  paymentCount: 240
+
+notes:
+  - This example intentionally keeps expected outputs minimal in the first iteration.
+  - Monthly payment, total interest, and total paid assertions can be tightened after validating against the existing calculation engine.

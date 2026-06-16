@@ -1,0 +1,17 @@
+specVersion: v1alpha1
+productId: government-security.bmap.standard
+exampleId: nominal-case
+title: Nominal BMÁP example
+description: Baseline BMÁP scenario with explicit DKJ base-yield input.
+
+inputs:
+  principal: 1000000
+  dkjBaseYieldPct: 6.13
+  interestPremiumPct: 0.75
+  startDate: 2026-04-24
+
+expected:
+  quarterlyCouponRatePct: 6.88
+
+notes:
+  - Coupon rate is represented as DKJ base yield plus fixed premium for this acceptance scenario.

@@ -1,0 +1,90 @@
+specVersion: v1alpha1
+kind: financial-product
+id: government-security.pmap.standard
+family: government-security
+variant: pmap
+displayName: Prémium Magyar Állampapír
+description: Hungarian retail government bond with inflation-linked variable coupon and annual interest payment.
+
+category: retail-government-bond
+denominationCurrency: HUF
+denominationUnit: 1
+issuanceModel: retail-distribution
+yieldModel: coupon-plus-redemption
+couponModel: annual-variable
+referenceIndex: prior-calendar-year-average-inflation
+
+inputs:
+  - name: principal
+    type: number
+    label: Principal
+    required: true
+    unit: currency
+    description: Invested nominal amount.
+    constraints:
+      minimum: 1
+
+  - name: interestPremiumPct
+    type: number
+    label: Interest Premium
+    required: true
+    unit: percent
+    description: Fixed premium added on top of the inflation base.
+    constraints:
+      minimum: 0
+      maximum: 100
+
+  - name: previousYearAverageInflationPct
+    type: number
+    label: Previous Year Average Inflation
+    required: true
+    unit: percent
+    description: Official annual average inflation for the previous calendar year.
+    constraints:
+      minimum: -100
+      maximum: 100
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Investment start date in ISO format.
+
+outputs:
+  - name: annualCouponRatePct
+    type: number
+    label: Annual Coupon Rate
+    required: true
+    unit: percent
+    description: Coupon rate for the current annual interest period.
+
+  - name: couponPaymentFrequency
+    type: string
+    label: Coupon Payment Frequency
+    required: true
+    unit: text
+    description: Frequency of coupon payments.
+
+assumptions:
+  - PMÁP is modeled as an annual-pay inflation-linked retail bond.
+  - Product-term intent in this pilot is 10 years.
+  - Coupon rate is previous-year average inflation plus a fixed premium.
+  - PMÁP denomination unit is 1 HUF.
+  - This first spec does not model every live PMÁP series or every historical edge case.
+  - Inflation data sourcing is future work; examples use explicit input values.
+
+ui:
+  formTitle: Prémium Magyar Állampapír
+  sections:
+    - id: pmap-core
+      title: PMÁP Inputs
+      fieldNames:
+        - principal
+        - interestPremiumPct
+        - previousYearAverageInflationPct
+        - startDate
+
+exampleRefs:
+  - ./examples/nominal-case.yaml
+  - ./examples/inflation-reset-case.yaml

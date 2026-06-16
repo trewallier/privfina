@@ -104,6 +104,8 @@ function initController() {
   const loanTotalRepaymentPreviewInput = document.getElementById('loan-total-repayment-preview')
   const loanTotalInterestPreviewInput = document.getElementById('loan-total-interest-preview')
   const investmentSubtypeInput = document.getElementById('investment-subtype')
+  const investmentPurchaseDateInput = document.getElementById('investment-purchase-date')
+  const investmentMaturityDateInput = document.getElementById('investment-maturity-date')
   const investmentIssueDateInput = document.getElementById('investment-issue-date')
   const investmentTransactionDateInput = document.getElementById('investment-transaction-date')
   const investmentDueDateInput = document.getElementById('investment-due-date')
@@ -124,6 +126,8 @@ function initController() {
   const investmentIssueDateWrap = document.getElementById('investment-issue-date-wrap')
   const investmentTransactionDateWrap = document.getElementById('investment-transaction-date-wrap')
   const investmentDueDateWrap = document.getElementById('investment-due-date-wrap')
+  const investmentPurchaseDateWrap = document.getElementById('investment-purchase-date-wrap')
+  const investmentMaturityDateWrap = document.getElementById('investment-maturity-date-wrap')
   const investmentSpreadRateWrap = document.getElementById('investment-spread-rate-wrap')
   const investmentYearlyInflationWrap = document.getElementById('investment-yearly-inflation-wrap')
   const investmentCouponPeriodWrap = document.getElementById('investment-coupon-period-wrap')
@@ -297,14 +301,20 @@ function initController() {
     const isCustom = subtype === 'custom-bond'
     const isRegular = subtype === 'regular-bond'
 
+    const usesLifecycleDates = isRegular || isCustom
+    const usesContractDates = isDiscount || isInflation
+
+    setElementVisible(investmentPurchaseDateWrap, usesLifecycleDates)
+    setElementVisible(investmentMaturityDateWrap, usesLifecycleDates)
     setElementVisible(investmentIssueDateWrap, isDiscount || isInflation)
     setElementVisible(investmentTransactionDateWrap, isDiscount || isInflation)
     setElementVisible(investmentDueDateWrap, isDiscount || isInflation)
     setElementVisible(investmentSpreadRateWrap, isInflation)
     setElementVisible(investmentYearlyInflationWrap, isInflation)
     setElementVisible(investmentCouponPeriodWrap, isCustom)
-    setElementVisible(investmentSaleDateWrap, isDiscount)
-    setElementVisible(investmentSaleValueWrap, isDiscount)
+    // Reserved early-sale fields are out of current interactive scope.
+    setElementVisible(investmentSaleDateWrap, false)
+    setElementVisible(investmentSaleValueWrap, false)
 
     setElementVisible(investmentDiscountYieldWrap, isDiscount)
     setElementVisible(investmentDiscountCurrentValueWrap, isDiscount)
@@ -346,14 +356,20 @@ function initController() {
           : 'Provide annual nominal rate as a decimal (example: 0.05 for 5%).'
     }
 
+    if (investmentPurchaseDateInput) {
+      investmentPurchaseDateInput.required = usesLifecycleDates
+    }
+    if (investmentMaturityDateInput) {
+      investmentMaturityDateInput.required = usesLifecycleDates
+    }
     if (investmentIssueDateInput) {
-      investmentIssueDateInput.required = isDiscount || isInflation
+      investmentIssueDateInput.required = usesContractDates
     }
     if (investmentTransactionDateInput) {
-      investmentTransactionDateInput.required = isDiscount || isInflation
+      investmentTransactionDateInput.required = usesContractDates
     }
     if (investmentDueDateInput) {
-      investmentDueDateInput.required = isDiscount || isInflation
+      investmentDueDateInput.required = usesContractDates
     }
     if (investmentPurchasePriceInput) {
       investmentPurchasePriceInput.required = isDiscount

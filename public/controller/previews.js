@@ -67,13 +67,27 @@ function createInvestmentPreviewSync({
     }
 
     try {
+      const subtype = String(subtypeInput?.value || 'regular-bond')
+      const purchaseDateValue = String(purchaseDateInput?.value || '')
+      const maturityDateValue = String(maturityDateInput?.value || '')
+      const transactionDateValue = String(transactionDateInput?.value || '')
+      const dueDateValue = String(dueDateInput?.value || '')
+      const effectivePurchaseDate =
+        subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
+          ? purchaseDateValue || transactionDateValue
+          : purchaseDateValue
+      const effectiveMaturityDate =
+        subtype === 'discount-bond' || subtype === 'inflation-linked-bond'
+          ? maturityDateValue || dueDateValue
+          : maturityDateValue
+
       const preview = createInvestmentMaturityPreview({
-        subtype: String(subtypeInput?.value || 'regular-bond'),
-        purchaseDate: String(purchaseDateInput?.value || ''),
-        maturityDate: String(maturityDateInput?.value || ''),
+        subtype,
+        purchaseDate: effectivePurchaseDate,
+        maturityDate: effectiveMaturityDate,
         issueDate: String(issueDateInput?.value || ''),
-        transactionDate: String(transactionDateInput?.value || ''),
-        dueDate: String(dueDateInput?.value || ''),
+        transactionDate: transactionDateValue,
+        dueDate: dueDateValue,
         principal: Number(principalInput?.value),
         purchasePrice: Number(purchasePriceInput?.value),
         annualRate: Number(annualRateInput?.value),

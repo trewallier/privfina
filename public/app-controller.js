@@ -121,6 +121,22 @@ function initController() {
   const investmentDiscountYieldPreviewInput = document.getElementById('investment-discount-yield-preview')
   const investmentDiscountCurrentValuePreviewInput = document.getElementById('investment-discount-current-value-preview')
   const investmentInflationSchedulePreviewInput = document.getElementById('investment-inflation-schedule-preview')
+  const investmentIssueDateWrap = document.getElementById('investment-issue-date-wrap')
+  const investmentTransactionDateWrap = document.getElementById('investment-transaction-date-wrap')
+  const investmentDueDateWrap = document.getElementById('investment-due-date-wrap')
+  const investmentSpreadRateWrap = document.getElementById('investment-spread-rate-wrap')
+  const investmentYearlyInflationWrap = document.getElementById('investment-yearly-inflation-wrap')
+  const investmentCouponPeriodWrap = document.getElementById('investment-coupon-period-wrap')
+  const investmentSaleDateWrap = document.getElementById('investment-sale-date-wrap')
+  const investmentSaleValueWrap = document.getElementById('investment-sale-value-wrap')
+  const investmentDiscountYieldWrap = document.getElementById('investment-discount-yield-wrap')
+  const investmentDiscountCurrentValueWrap = document.getElementById('investment-discount-current-value-wrap')
+  const investmentInflationScheduleWrap = document.getElementById('investment-inflation-schedule-wrap')
+  const investmentPrincipalLabel = document.getElementById('investment-principal-label')
+  const investmentPrincipalNote = document.getElementById('investment-principal-note')
+  const investmentPurchasePriceLabel = document.getElementById('investment-purchase-price-label')
+  const investmentAnnualRateLabel = document.getElementById('investment-annual-rate-label')
+  const investmentAnnualRateNote = document.getElementById('investment-annual-rate-note')
 
   if (
     !oneTimeForm ||
@@ -244,6 +260,115 @@ function initController() {
     }
   }
 
+  function setElementVisible(element, visible) {
+    if (element) {
+      element.hidden = !visible
+    }
+  }
+
+  function closeInvestmentHelpBubbles() {
+    if (!investmentForm) {
+      return
+    }
+
+    investmentForm.querySelectorAll('.field-help').forEach((bubble) => {
+      bubble.hidden = true
+    })
+  }
+
+  function toggleInvestmentHelpBubble(targetId) {
+    if (!investmentForm || !targetId) {
+      return
+    }
+
+    const target = investmentForm.querySelector(`#${targetId}`)
+    if (!target) {
+      return
+    }
+
+    const shouldOpen = target.hidden
+    closeInvestmentHelpBubbles()
+    target.hidden = !shouldOpen
+  }
+
+  function applyInvestmentSubtypeUi(subtype) {
+    const isDiscount = subtype === 'discount-bond'
+    const isInflation = subtype === 'inflation-linked-bond'
+    const isCustom = subtype === 'custom-bond'
+    const isRegular = subtype === 'regular-bond'
+
+    setElementVisible(investmentIssueDateWrap, isDiscount || isInflation)
+    setElementVisible(investmentTransactionDateWrap, isDiscount || isInflation)
+    setElementVisible(investmentDueDateWrap, isDiscount || isInflation)
+    setElementVisible(investmentSpreadRateWrap, isInflation)
+    setElementVisible(investmentYearlyInflationWrap, isInflation)
+    setElementVisible(investmentCouponPeriodWrap, isCustom)
+    setElementVisible(investmentSaleDateWrap, isDiscount)
+    setElementVisible(investmentSaleValueWrap, isDiscount)
+
+    setElementVisible(investmentDiscountYieldWrap, isDiscount)
+    setElementVisible(investmentDiscountCurrentValueWrap, isDiscount)
+    setElementVisible(investmentInflationScheduleWrap, isInflation)
+
+    if (investmentPrincipalLabel) {
+      investmentPrincipalLabel.textContent = isDiscount ? 'Face value' : 'Principal'
+    }
+
+    if (investmentPrincipalNote) {
+      investmentPrincipalNote.textContent = isDiscount
+        ? 'Face value paid at due date.'
+        : isInflation
+          ? 'Principal used with inflation and spread accrual factors.'
+          : 'Principal amount used for maturity payout calculations.'
+    }
+
+    if (investmentPurchasePriceLabel) {
+      investmentPurchasePriceLabel.textContent = isDiscount ? 'Purchase price (required)' : 'Purchase price'
+    }
+
+    if (investmentAnnualRateLabel) {
+      investmentAnnualRateLabel.textContent = isDiscount ? 'Annual rate (derived from discount)' : 'Annual rate'
+    }
+
+    if (investmentAnnualRateInput) {
+      investmentAnnualRateInput.readOnly = isDiscount
+      investmentAnnualRateInput.required = isRegular || isCustom
+      if (isDiscount) {
+        investmentAnnualRateInput.value = ''
+      }
+    }
+
+    if (investmentAnnualRateNote) {
+      investmentAnnualRateNote.textContent = isDiscount
+        ? 'This value is derived from face value, purchase price, and days remaining.'
+        : isInflation
+          ? 'Not used for inflation-linked accrual in v1. Leave empty.'
+          : 'Provide annual nominal rate as a decimal (example: 0.05 for 5%).'
+    }
+
+    if (investmentIssueDateInput) {
+      investmentIssueDateInput.required = isDiscount || isInflation
+    }
+    if (investmentTransactionDateInput) {
+      investmentTransactionDateInput.required = isDiscount || isInflation
+    }
+    if (investmentDueDateInput) {
+      investmentDueDateInput.required = isDiscount || isInflation
+    }
+    if (investmentPurchasePriceInput) {
+      investmentPurchasePriceInput.required = isDiscount
+    }
+    if (investmentSpreadRateInput) {
+      investmentSpreadRateInput.required = isInflation
+    }
+    if (investmentYearlyInflationInput) {
+      investmentYearlyInflationInput.required = isInflation
+    }
+    if (investmentCouponPeriodInput) {
+      investmentCouponPeriodInput.required = isCustom
+    }
+  }
+
   function resetSalaryForm() {
     editingSalaryId = null
     salaryForm.reset()
@@ -273,6 +398,11 @@ function initController() {
   function resetInvestmentForm() {
     editingInvestmentId = null
     investmentForm.reset()
+    if (investmentSubtypeInput) {
+      investmentSubtypeInput.value = 'regular-bond'
+      applyInvestmentSubtypeUi('regular-bond')
+    }
+    closeInvestmentHelpBubbles()
     investmentSubmitButton.textContent = 'Add Investment Instrument'
     investmentCancelButton.hidden = true
     syncInvestmentPreview()
@@ -376,6 +506,7 @@ function initController() {
 
     investmentSubmitButton.textContent = 'Save Investment Instrument'
     investmentCancelButton.hidden = false
+    applyInvestmentSubtypeUi(config.subtype || 'regular-bond')
     syncInvestmentPreview()
     openComposerBox('investment')
   }
@@ -508,6 +639,32 @@ function initController() {
     })
   }
 
+  if (investmentForm) {
+    investmentForm.querySelectorAll('[data-help-button]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-help-button')
+        toggleInvestmentHelpBubble(targetId)
+      })
+    })
+
+    investmentForm.querySelectorAll('[data-help-close]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-help-close')
+        const target = targetId ? investmentForm.querySelector(`#${targetId}`) : null
+        if (target) {
+          target.hidden = true
+        }
+      })
+    })
+  }
+
+  if (investmentSubtypeInput) {
+    investmentSubtypeInput.addEventListener('change', () => {
+      applyInvestmentSubtypeUi(investmentSubtypeInput.value)
+      syncInvestmentPreview()
+    })
+  }
+
   bindLoanPreviewEvents({
     principalInput: loanPrincipalInput,
     annualRateInput: loanAnnualRateInput,
@@ -520,6 +677,7 @@ function initController() {
   applySalaryModeVisibility(
     salaryScheduleModeInput ? salaryScheduleModeInput.value : 'custom-monthly-working-day'
   )
+  applyInvestmentSubtypeUi(investmentSubtypeInput ? investmentSubtypeInput.value : 'regular-bond')
   syncLoanPreview()
   syncInvestmentPreview()
 

@@ -24,6 +24,10 @@
         box-sizing: border-box;
       }
 
+      [hidden] {
+        display: none !important;
+      }
+
       body {
         margin: 0;
         font-family: "Avenir Next", "Segoe UI", sans-serif;
@@ -172,6 +176,123 @@
         font-size: 0.9rem;
         display: grid;
         gap: 6px;
+      }
+
+      .label-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+      }
+
+      .info-chip {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid var(--accent);
+        background: #fff;
+        color: var(--accent-strong);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .info-chip:hover {
+        background: var(--accent-soft);
+      }
+
+      .field-help {
+        position: relative;
+        margin-top: 4px;
+        padding: 9px 10px;
+        border-radius: 10px;
+        border: 1px solid #b7ddd7;
+        background: #effaf7;
+        color: #1f4a45;
+      }
+
+      .field-help p {
+        margin: 0;
+        font-size: 0.82rem;
+        line-height: 1.35;
+      }
+
+      .field-help-close {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        border: 0;
+        background: transparent;
+        color: #1f4a45;
+        font-size: 0.95rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .investment-info-popup {
+        position: fixed;
+        z-index: 1400;
+        width: min(320px, calc(100vw - 24px));
+        border: 1px solid #b7ddd7;
+        border-radius: 12px;
+        background: #f7fffc;
+        box-shadow: 0 14px 28px -20px rgba(20, 57, 50, 0.85);
+        padding: 10px 12px;
+      }
+
+      .investment-info-popup-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .investment-info-popup-title {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.3;
+      }
+
+      .investment-info-popup-close {
+        border: 0;
+        background: transparent;
+        color: #1f4a45;
+        font-size: 1rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .investment-info-popup-text {
+        margin: 8px 0 0;
+        color: #1f4a45;
+        font-size: 0.82rem;
+        line-height: 1.38;
+      }
+
+      .investment-subtype-hero {
+        border: 1px solid #9bc9c2;
+        background: linear-gradient(140deg, #f0fbf8 0%, #e6f5ff 100%);
+        border-radius: 12px;
+        padding: 10px;
+      }
+
+      .investment-subtype-hero label {
+        gap: 8px;
+      }
+
+      .investment-subtype-hero select {
+        border-width: 2px;
+        border-color: var(--accent);
+        font-size: 1rem;
+        font-weight: 700;
+        background: #fff;
       }
 
       .inline-field {
@@ -737,13 +858,9 @@
               </summary>
               <div class="flow-form-wrap">
                 <form id="investment-form">
-                  <div class="row">
+                  <div class="investment-subtype-hero">
                     <label>
-                      Label
-                      <input id="investment-label" name="label" type="text" placeholder="Investment" />
-                    </label>
-                    <label>
-                      Subtype
+                      <span class="label-title">Bond subtype</span>
                       <select id="investment-subtype" name="subtype" required>
                         <option value="regular-bond">Regular bond</option>
                         <option value="discount-bond">Discount bond</option>
@@ -751,66 +868,113 @@
                         <option value="custom-bond">Custom bond</option>
                       </select>
                     </label>
+                  </div>
+
+                  <div class="row">
                     <label>
-                      Purchase date
-                      <input id="investment-purchase-date" name="purchaseDate" type="date" required />
+                      <span class="label-title">Label <button type="button" class="info-chip" data-help-button="investment-label-help" aria-label="Label help">i</button></span>
+                      <input id="investment-label" name="label" type="text" value="Investment" />
+                      <div id="investment-label-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-label-help" aria-label="Close">x</button>
+                        <p>Friendly name for this instrument row in the configured list.</p>
+                      </div>
                     </label>
-                    <label>
-                      Maturity date
-                      <input id="investment-maturity-date" name="maturityDate" type="date" required />
-                    </label>
-                    <label>
-                      Issue date
+                    <label id="investment-issue-date-wrap">
+                      <span class="label-title">Issue date <button type="button" class="info-chip" data-help-button="investment-issue-date-help" aria-label="Issue date help">i</button></span>
                       <input id="investment-issue-date" name="issueDate" type="date" />
+                      <div id="investment-issue-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-issue-date-help" aria-label="Close">x</button>
+                        <p>Bond issuance date used by discount and inflation-linked formulas.</p>
+                      </div>
                     </label>
-                    <label>
-                      Transaction date
+                    <label id="investment-transaction-date-wrap">
+                      <span class="label-title">Transaction date <button type="button" class="info-chip" data-help-button="investment-transaction-date-help" aria-label="Transaction date help">i</button></span>
                       <input id="investment-transaction-date" name="transactionDate" type="date" />
+                      <div id="investment-transaction-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-transaction-date-help" aria-label="Close">x</button>
+                        <p>Effective purchase/settlement date used for instrument cash-flow timing.</p>
+                      </div>
                     </label>
-                    <label>
-                      Due date
+                    <label id="investment-due-date-wrap">
+                      <span class="label-title">Due date <button type="button" class="info-chip" data-help-button="investment-due-date-help" aria-label="Due date help">i</button></span>
                       <input id="investment-due-date" name="dueDate" type="date" />
+                      <div id="investment-due-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-due-date-help" aria-label="Close">x</button>
+                        <p>Final due/maturity date used for principal repayment and final accrual settlement.</p>
+                      </div>
                     </label>
-                    <label>
-                      Principal / face value
+                    <label id="investment-principal-wrap">
+                      <span class="label-title"><span id="investment-principal-label">Principal / face value</span> <button type="button" class="info-chip" data-help-button="investment-principal-help" aria-label="Principal help">i</button></span>
                       <input id="investment-principal" name="principal" type="number" min="0" step="0.01" required />
+                      <div id="investment-principal-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-principal-help" aria-label="Close">x</button>
+                        <p>Base notional amount for principal redemption and yield calculations.</p>
+                      </div>
                     </label>
-                    <label>
-                      Purchase price
+                    <label id="investment-purchase-price-wrap">
+                      <span class="label-title"><span id="investment-purchase-price-label">Purchase price</span> <button type="button" class="info-chip" data-help-button="investment-purchase-price-help" aria-label="Purchase price help">i</button></span>
                       <input id="investment-purchase-price" name="purchasePrice" type="number" min="0" step="0.01" />
+                      <div id="investment-purchase-price-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-purchase-price-help" aria-label="Close">x</button>
+                        <p>Upfront amount paid. For discount bonds this is mandatory and must be below face value.</p>
+                      </div>
                     </label>
-                    <label>
-                      Annual rate
+                    <label id="investment-annual-rate-wrap">
+                      <span class="label-title"><span id="investment-annual-rate-label">Annual rate</span> <button type="button" class="info-chip" data-help-button="investment-annual-rate-help" aria-label="Annual rate help">i</button></span>
                       <input id="investment-annual-rate" name="annualRate" type="number" min="0" step="0.0001" />
+                      <div id="investment-annual-rate-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-annual-rate-help" aria-label="Close">x</button>
+                        <p>Editable for regular/custom bonds. Read-only for discount bonds where it is derived.</p>
+                      </div>
                     </label>
-                    <label>
-                      Spread rate
+                    <label id="investment-spread-rate-wrap">
+                      <span class="label-title">Spread rate <button type="button" class="info-chip" data-help-button="investment-spread-rate-help" aria-label="Spread rate help">i</button></span>
                       <input id="investment-spread-rate" name="spreadRate" type="number" step="0.0001" />
+                      <div id="investment-spread-rate-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-spread-rate-help" aria-label="Close">x</button>
+                        <p>Additional annual spread added to inflation assumptions for inflation-linked bonds.</p>
+                      </div>
                     </label>
                   </div>
                   <div class="row">
-                    <label>
-                      Yearly inflation inputs
-                      <input id="investment-yearly-inflation" name="yearlyInflationRaw" type="text" placeholder="2026:0.03, 2027:0.02" />
+                    <label id="investment-yearly-inflation-wrap">
+                      <span class="label-title">Yearly inflation inputs <button type="button" class="info-chip" data-help-button="investment-yearly-inflation-help" aria-label="Yearly inflation help">i</button></span>
+                      <input id="investment-yearly-inflation" name="yearlyInflationRaw" type="text" value="2026:0.03, 2027:0.02" />
+                      <div id="investment-yearly-inflation-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-yearly-inflation-help" aria-label="Close">x</button>
+                        <p>Comma-separated year:rate list used to derive inflation-linked accrual factors.</p>
+                      </div>
                     </label>
-                    <label>
-                      Coupon period for custom bond
-                      <input id="investment-coupon-period" name="couponPeriod" type="text" placeholder="0 0 1 * *" />
+                    <label id="investment-coupon-period-wrap">
+                      <span class="label-title">Coupon period for custom bond <button type="button" class="info-chip" data-help-button="investment-coupon-period-help" aria-label="Coupon period help">i</button></span>
+                      <input id="investment-coupon-period" name="couponPeriod" type="text" value="0 0 1 * *" />
+                      <div id="investment-coupon-period-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-coupon-period-help" aria-label="Close">x</button>
+                        <p>Cron-like schedule for coupon payouts in custom bond mode.</p>
+                      </div>
                     </label>
-                    <label>
-                      Reserved sale date (future scope)
+                    <label id="investment-sale-date-wrap">
+                      <span class="label-title">Reserved sale date (future scope) <button type="button" class="info-chip" data-help-button="investment-sale-date-help" aria-label="Sale date help">i</button></span>
                       <input id="investment-sale-date" name="saleDate" type="date" />
+                      <div id="investment-sale-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-sale-date-help" aria-label="Close">x</button>
+                        <p>Reserved for future pre-maturity sale modeling. Not used in v1 flow generation.</p>
+                      </div>
                     </label>
-                    <label>
-                      Reserved sale value (future scope)
+                    <label id="investment-sale-value-wrap">
+                      <span class="label-title">Reserved sale value (future scope) <button type="button" class="info-chip" data-help-button="investment-sale-value-help" aria-label="Sale value help">i</button></span>
                       <input id="investment-sale-value" name="saleValue" type="number" min="0" step="0.01" />
+                      <div id="investment-sale-value-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-sale-value-help" aria-label="Close">x</button>
+                        <p>Reserved companion value for optional future sale-date workflows.</p>
+                      </div>
                     </label>
                     <label>
-                      Category
-                      <input id="investment-category" name="category" type="text" placeholder="investment" />
+                      <span class="label-title">Category</span>
+                      <input id="investment-category" name="category" type="text" value="investment" />
                     </label>
                     <label>
-                      Description
+                      <span class="label-title">Description</span>
                       <input id="investment-description" name="description" type="text" placeholder="Optional notes" />
                     </label>
                   </div>
@@ -827,15 +991,15 @@
                       Gain preview
                       <input id="investment-gain-preview" type="text" readonly />
                     </label>
-                    <label>
+                    <label id="investment-discount-yield-wrap">
                       Discount yield (derived)
                       <input id="investment-discount-yield-preview" type="text" readonly />
                     </label>
-                    <label>
+                    <label id="investment-discount-current-value-wrap">
                       Discount current value % (derived)
                       <input id="investment-discount-current-value-preview" type="text" readonly />
                     </label>
-                    <label>
+                    <label id="investment-inflation-schedule-wrap">
                       Inflation schedule (derived)
                       <input id="investment-inflation-schedule-preview" type="text" readonly />
                     </label>
@@ -898,6 +1062,13 @@
         </section>
       </div>
     </main>
+    <div id="investment-info-popup" class="investment-info-popup" hidden>
+      <div class="investment-info-popup-head">
+        <h4 id="investment-info-popup-title" class="investment-info-popup-title"></h4>
+        <button id="investment-info-popup-close" class="investment-info-popup-close" type="button" aria-label="Close info popup">x</button>
+      </div>
+      <p id="investment-info-popup-text" class="investment-info-popup-text"></p>
+    </div>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

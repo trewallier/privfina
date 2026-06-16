@@ -550,9 +550,9 @@ function parseYearlyInflation(raw) {
 }
 
 function resolveInvestmentDates(input) {
-  const issueDateRaw = String(input.issueDate || input.purchaseDate || '').trim()
-  const transactionDateRaw = String(input.transactionDate || input.purchaseDate || '').trim()
-  const dueDateRaw = String(input.dueDate || input.maturityDate || '').trim()
+  const issueDateRaw = String(input.issueDate || '').trim()
+  const transactionDateRaw = String(input.transactionDate || '').trim()
+  const dueDateRaw = String(input.dueDate || '').trim()
 
   const issueDate = parseIsoDate(issueDateRaw)
   const transactionDate = parseIsoDate(transactionDateRaw)
@@ -716,19 +716,37 @@ function monthsBetween(startDateIso, endDateIso) {
   return Math.max(0, years * 12 + months + dayAdjust)
 }
 
+function resolveLifecycleDates(input) {
+  const useContractDates =
+    input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond'
+  const purchaseDateIso = useContractDates
+    ? String(input.transactionDate || '').trim()
+    : String(input.purchaseDate || '').trim()
+  const maturityDateIso = useContractDates
+    ? String(input.dueDate || '').trim()
+    : String(input.maturityDate || '').trim()
+
+  parseIsoDate(purchaseDateIso)
+  parseIsoDate(maturityDateIso)
+
+  return {
+    purchaseDateIso,
+    maturityDateIso
+  }
+}
+
 function createInvestmentMaturityPreview(input) {
   const principal = normalizeAmount(input.principal)
   const purchasePrice = Number(input.purchasePrice)
   const purchaseAmount = Number.isFinite(purchasePrice) && purchasePrice > 0 ? purchasePrice : principal
   const annualRate = Number(input.annualRate || 0)
-  const spreadRate = Number(input.spreadRate || 0)
-  const months = monthsBetween(input.purchaseDate, input.maturityDate)
+  const { purchaseDateIso, maturityDateIso } = resolveLifecycleDates(input)
   let maturityAmount = principal
-  const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
   let discountMetrics
   let inflationMetrics
 
   if (input.subtype === 'regular-bond') {
+    const months = monthsBetween(purchaseDateIso, maturityDateIso)
     maturityAmount = principal * Math.pow(1 + annualRate / 12, months)
   } else if (input.subtype === 'discount-bond') {
     discountMetrics = deriveDiscountBondMetrics(input)
@@ -757,15 +775,13 @@ function generateInvestmentInstrumentFlows(input) {
   const principal = normalizeAmount(input.principal)
   const purchaseAmount = Number(input.purchasePrice)
   const purchasePrice = Number.isFinite(purchaseAmount) && purchaseAmount > 0 ? purchaseAmount : principal
-  const purchaseDate = parseIsoDate(input.purchaseDate)
-  const maturityDate = parseIsoDate(input.maturityDate)
   const annualRate = Number(input.annualRate || 0)
-  const spreadRate = Number(input.spreadRate || 0)
-  const months = monthsBetween(input.purchaseDate, input.maturityDate)
+  const { purchaseDateIso, maturityDateIso } = resolveLifecycleDates(input)
   const category = input.category || 'investment'
   const description = input.description
   const flows = []
-  const yearlyInflation = parseYearlyInflation(input.yearlyInflationRaw)
+  const purchaseDate = parseIsoDate(purchaseDateIso)
+  const maturityDate = parseIsoDate(maturityDateIso)
 
   let purchaseFlowDate = formatIsoDate(purchaseDate)
   let maturityFlowDate = formatIsoDate(maturityDate)
@@ -785,8 +801,9 @@ function generateInvestmentInstrumentFlows(input) {
   })
 
   if (input.subtype === 'regular-bond') {
+    const months = monthsBetween(purchaseDateIso, maturityDateIso)
     flows.push({
-      date: formatIsoDate(maturityDate),
+      date: maturityFlowDate,
       amount: principal * Math.pow(1 + annualRate / 12, months),
       direction: 'inflow',
       category,
@@ -823,20 +840,20 @@ function generateInvestmentInstrumentFlows(input) {
     const couponFlows = expandRecurringFlows(
       {
         period: couponPeriod,
-        startDate: input.purchaseDate,
-        endDate: input.maturityDate,
+        startDate: purchaseDateIso,
+        endDate: maturityDateIso,
         amount: couponAmount,
         direction: 'inflow',
         category,
         description
       },
-      input.purchaseDate,
-      input.maturityDate
+      purchaseDateIso,
+      maturityDateIso
     )
 
     flows.push(...couponFlows)
     flows.push({
-      date: formatIsoDate(maturityDate),
+      date: maturityFlowDate,
       amount: principal,
       direction: 'inflow',
       category,

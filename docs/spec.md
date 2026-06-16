@@ -27,8 +27,10 @@ Scenarios / Use-cases
 - Loan instrument setup: users can configure principal, fixed interest, term, repayment day, and whether disbursement inflow should be accounted.
 - Loan repayment preview: users can see a read-only monthly repayment value update immediately when loan inputs change.
 - Investment instrument setup: users can configure regular bond, discount bond, and inflation-linked bond variants with finite maturity outputs.
+- Investment subtype UX: users can clearly see and switch a prominent investment subtype selector, and the form adapts visible and editable fields to the selected subtype.
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
 - Inflation-linked bond setup: users must provide issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period; payment schedule and accrual rates are derived fields.
+- Investment field guidance UX: users can open and close inline definition bubbles from input-title info icons.
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 
@@ -81,6 +83,9 @@ Acceptance criteria
 - [x] Regular bond instrument generates one-time maturity inflow paying principal plus monthly-compounded interest.
 - [x] Discount bond instrument requires issue date, due date, transaction date, purchase price, and face value; it generates one-time maturity inflow equal to configured face value.
 - [x] Discount bond instrument calculates derived (non-input) fields from mandatory inputs using the canonical formulas defined in `DESIGN.md`.
+- [x] Investment subtype selector is visually prominent and subtype changes dynamically update relevant field labels.
+- [x] Investment form dynamically toggles subtype-specific field visibility and required/editable state (for example inflation fields only for inflation-linked bonds, annual rate read-only for discount bonds).
+- [x] Investment input labels provide clickable info icons that open and close inline definition help bubbles.
 - [x] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.
 - [x] Inflation-linked bond instrument derives annual maturity payment dates, effective annual rate, and accrual date markers using the canonical definitions in `DESIGN.md`.
 - [x] Inflation-linked bond instrument calculates first and subsequent period accrual factors using the canonical formulas in `DESIGN.md`.

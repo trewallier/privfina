@@ -58,7 +58,7 @@
     },
     "issuanceModel": {
       "type": "string",
-      "enum": ["discount", "par", "auction", "retail-distribution"]
+      "enum": ["discount", "par", "auction", "retail-distribution", "phased-public-offering"]
     },
     "yieldModel": {
       "type": "string",
@@ -143,6 +143,21 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "investorEligibility": {
+      "type": "string",
+      "minLength": 1
+    },
+    "transferRestrictions": {
+      "type": "string",
+      "minLength": 1
+    },
+    "earlyRedemptionByIssuer": {
+      "type": "boolean"
+    },
+    "offeringPriceModel": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "allOf": [

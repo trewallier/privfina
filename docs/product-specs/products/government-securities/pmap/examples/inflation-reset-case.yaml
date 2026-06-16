@@ -2,16 +2,19 @@ specVersion: v1alpha1
 productId: government-security.pmap.standard
 exampleId: inflation-reset-case
 title: Inflation reset PMÁP example
-description: Scenario demonstrating a higher inflation input feeding the annual coupon rate.
+description: Scenario demonstrating inflation-floor behavior when prior-year average inflation is negative.
 
 inputs:
   principal: 1000000
   interestPremiumPct: 0.5
-  previousYearAverageInflationPct: 8.0
+  previousYearAverageInflationPct: -2.0
   startDate: 2027-01-01
 
 expected:
-  annualCouponRatePct: 8.5
+  effectiveInflationBasePct: 0
+  annualCouponRatePct: 0.5
+  couponPaymentFrequency: annual
+  redemptionValue: 1000000
 
 notes:
-  - This example demonstrates coupon reset behavior driven by explicit inflation input.
+  - The inflation base is floored at 0%, so the annual coupon rate equals the fixed premium.

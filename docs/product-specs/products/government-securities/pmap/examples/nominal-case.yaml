@@ -9,9 +9,13 @@ inputs:
   interestPremiumPct: 0.5
   previousYearAverageInflationPct: 4.4
   startDate: 2026-05-23
+  purchaseDate: 2026-05-23
 
 expected:
+  effectiveInflationBasePct: 4.4
   annualCouponRatePct: 4.9
+  couponPaymentFrequency: annual
+  redemptionValue: 1000000
 
 notes:
-  - Coupon rate is shown as inflation plus premium for this acceptance scenario.
+  - Effective inflation base equals prior-year average inflation when inflation is positive.

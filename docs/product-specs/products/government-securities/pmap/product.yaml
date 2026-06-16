@@ -9,10 +9,14 @@ description: Hungarian retail government bond with inflation-linked variable cou
 category: retail-government-bond
 denominationCurrency: HUF
 denominationUnit: 1
-issuanceModel: retail-distribution
+issuanceModel: phased-public-offering
 yieldModel: coupon-plus-redemption
 couponModel: annual-variable
 referenceIndex: prior-calendar-year-average-inflation
+offeringPriceModel: par-plus-accrued-interest
+earlyRedemptionByIssuer: false
+investorEligibility: Primary-market acquisition is limited to natural persons.
+transferRestrictions: Collateral-purpose transfer is out of scope and restricted by official PMAP product rules.
 
 inputs:
   - name: principal
@@ -51,6 +55,42 @@ inputs:
     unit: date
     description: Investment start date in ISO format.
 
+  - name: purchaseDate
+    type: string
+    label: Purchase Date
+    required: false
+    unit: date
+    description: Purchase or valuation date in ISO format, used for accrued-interest-related calculations.
+
+  - name: issueDate
+    type: string
+    label: Issue Date
+    required: false
+    unit: date
+    description: Issue date of the PMAP series in ISO format.
+
+  - name: firstCouponDate
+    type: string
+    label: First Coupon Date
+    required: false
+    unit: date
+    description: First coupon payment date in ISO format if known.
+
+derivedVariables:
+  - name: effectiveInflationBasePct
+    type: number
+    label: Effective Inflation Base
+    required: true
+    unit: percent
+    description: Previous-year average inflation floored at 0%.
+
+  - name: annualCouponRatePctDerived
+    type: number
+    label: Derived Annual Coupon Rate
+    required: true
+    unit: percent
+    description: Effective annual coupon rate equal to effective inflation base plus premium.
+
 outputs:
   - name: annualCouponRatePct
     type: number
@@ -66,12 +106,53 @@ outputs:
     unit: text
     description: Frequency of coupon payments.
 
+  - name: effectiveInflationBasePct
+    type: number
+    label: Effective Inflation Base
+    required: true
+    unit: percent
+    description: Inflation base after applying the 0% floor for zero or negative inflation.
+
+  - name: periodCouponRatePct
+    type: number
+    label: Period Coupon Rate
+    required: false
+    unit: percent
+    description: Coupon rate applicable to the current coupon period or first irregular period.
+
+  - name: accruedInterestAmount
+    type: number
+    label: Accrued Interest
+    required: false
+    unit: currency
+    description: Interest accrued from issue or previous coupon date to purchase/valuation date.
+
+  - name: purchaseAmount
+    type: number
+    label: Purchase Amount
+    required: false
+    unit: currency
+    description: Purchase amount based on principal plus accrued interest, where applicable.
+
+  - name: redemptionValue
+    type: number
+    label: Redemption Value
+    required: true
+    unit: currency
+    description: Principal repaid at maturity.
+
 assumptions:
   - PMÁP is modeled as an annual-pay inflation-linked retail bond.
   - Product-term intent in this pilot is 10 years.
-  - Coupon rate is previous-year average inflation plus a fixed premium.
+  - Annual coupon rate is effective inflation base plus fixed premium.
+  - Effective inflation base is max(previous-year-average-inflation, 0).
+  - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - PMÁP denomination unit is 1 HUF.
-  - This first spec does not model every live PMÁP series or every historical edge case.
+  - The first coupon period may differ from a regular annual period.
+  - The issuer does not redeem PMÁP before maturity.
+  - Primary-market acquisition is limited to natural persons.
+  - Collateral-purpose transfer is out of scope and restricted by the official product rules.
+  - This spec remains a product-type model and does not attempt to encode every live series edge case.
   - Inflation data sourcing is future work; examples use explicit input values.
 
 ui:
@@ -84,6 +165,9 @@ ui:
         - interestPremiumPct
         - previousYearAverageInflationPct
         - startDate
+        - purchaseDate
+        - issueDate
+        - firstCouponDate
 
 exampleRefs:
   - ./examples/nominal-case.yaml

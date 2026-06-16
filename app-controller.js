@@ -36,6 +36,12 @@ import {
   extendRange
 } from './flows.js'
 import { renderConfiguredTable, renderChart } from './render.js'
+import { createComposerManager } from './controller/composer.js'
+import {
+  createLoanPreviewSync,
+  createInvestmentPreviewSync,
+  bindLoanPreviewEvents
+} from './controller/previews.js'
 
 function createFlowId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -182,166 +188,27 @@ function initController() {
     excludedFlowIds.add(id)
   }
 
-  function setComposerVisibility(isVisible) {
-    if (!flowComposer || !toggleComposerButton) {
-      return
+  const composerManager = createComposerManager({
+    flowComposer,
+    toggleComposerButton,
+    boxes: {
+      'one-time': oneTimeBox,
+      recurring: recurringBox,
+      salary: salaryBox,
+      subscription: subscriptionBox,
+      loan: loanBox,
+      investment: investmentBox
+    },
+    openButtons: {
+      'one-time': openOneTimeBoxButton,
+      recurring: openRecurringBoxButton,
+      salary: openSalaryBoxButton,
+      subscription: openSubscriptionBoxButton,
+      loan: openLoanBoxButton,
+      investment: openInvestmentBoxButton
     }
-
-    flowComposer.hidden = !isVisible
-    toggleComposerButton.setAttribute('aria-expanded', String(isVisible))
-    toggleComposerButton.textContent = isVisible ? 'Hide Add Flow Boxes' : 'Show Add Flow Boxes'
-  }
-
-  function collapseComposerBoxes() {
-    if (oneTimeBox) {
-      oneTimeBox.open = false
-    }
-
-    if (recurringBox) {
-      recurringBox.open = false
-    }
-
-    if (salaryBox) {
-      salaryBox.open = false
-    }
-
-    if (subscriptionBox) {
-      subscriptionBox.open = false
-    }
-
-    if (loanBox) {
-      loanBox.open = false
-    }
-
-    if (investmentBox) {
-      investmentBox.open = false
-    }
-  }
-
-  function openComposerBox(type) {
-    setComposerVisibility(true)
-
-    if (type === 'one-time') {
-      if (recurringBox) {
-        recurringBox.open = false
-      }
-      if (salaryBox) {
-        salaryBox.open = false
-      }
-      if (subscriptionBox) {
-        subscriptionBox.open = false
-      }
-      if (loanBox) {
-        loanBox.open = false
-      }
-      if (investmentBox) {
-        investmentBox.open = false
-      }
-      if (oneTimeBox) {
-        oneTimeBox.open = true
-      }
-      return
-    }
-
-    if (type === 'recurring') {
-      if (oneTimeBox) {
-        oneTimeBox.open = false
-      }
-      if (salaryBox) {
-        salaryBox.open = false
-      }
-      if (subscriptionBox) {
-        subscriptionBox.open = false
-      }
-      if (recurringBox) {
-        recurringBox.open = true
-      }
-      return
-    }
-
-    if (type === 'salary') {
-      if (oneTimeBox) {
-        oneTimeBox.open = false
-      }
-      if (recurringBox) {
-        recurringBox.open = false
-      }
-      if (subscriptionBox) {
-        subscriptionBox.open = false
-      }
-      if (salaryBox) {
-        salaryBox.open = true
-      }
-      return
-    }
-
-    if (type === 'subscription') {
-      if (oneTimeBox) {
-        oneTimeBox.open = false
-      }
-      if (recurringBox) {
-        recurringBox.open = false
-      }
-      if (salaryBox) {
-        salaryBox.open = false
-      }
-      if (subscriptionBox) {
-        subscriptionBox.open = true
-      }
-      return
-    }
-
-    if (type === 'loan') {
-      if (oneTimeBox) {
-        oneTimeBox.open = false
-      }
-      if (recurringBox) {
-        recurringBox.open = false
-      }
-      if (salaryBox) {
-        salaryBox.open = false
-      }
-      if (subscriptionBox) {
-        subscriptionBox.open = false
-      }
-      if (investmentBox) {
-        investmentBox.open = false
-      }
-      if (loanBox) {
-        loanBox.open = true
-      }
-      return
-    }
-
-    if (type === 'investment') {
-      if (oneTimeBox) {
-        oneTimeBox.open = false
-      }
-      if (recurringBox) {
-        recurringBox.open = false
-      }
-      if (salaryBox) {
-        salaryBox.open = false
-      }
-      if (subscriptionBox) {
-        subscriptionBox.open = false
-      }
-      if (loanBox) {
-        loanBox.open = false
-      }
-      if (investmentBox) {
-        investmentBox.open = true
-      }
-      return
-    }
-
-    if (oneTimeBox) {
-      oneTimeBox.open = false
-    }
-    if (recurringBox) {
-      recurringBox.open = false
-    }
-  }
+  })
+  const { collapseComposerBoxes, openComposerBox } = composerManager
 
   function resetOneTimeForm() {
     editingOneTimeId = null
@@ -403,59 +270,32 @@ function initController() {
     syncInvestmentPreview()
   }
 
-  function syncLoanPreview() {
-    if (!loanMonthlyPreviewInput || !loanTotalRepaymentPreviewInput || !loanTotalInterestPreviewInput) {
-      return
-    }
+  const syncLoanPreview = createLoanPreviewSync({
+    principalInput: loanPrincipalInput,
+    annualRateInput: loanAnnualRateInput,
+    termValueInput: loanTermValueInput,
+    termUnitInput: loanTermUnitInput,
+    monthlyPreviewInput: loanMonthlyPreviewInput,
+    totalRepaymentPreviewInput: loanTotalRepaymentPreviewInput,
+    totalInterestPreviewInput: loanTotalInterestPreviewInput,
+    createLoanRepaymentPreview
+  })
 
-    try {
-      const principal = Number(loanPrincipalInput?.value)
-      const annualRate = Number(loanAnnualRateInput?.value)
-      const termValue = Number(loanTermValueInput?.value)
-      const termUnit = loanTermUnitInput?.value || 'months'
-      const termMonths = termUnit === 'years' ? termValue * 12 : termValue
-      const preview = createLoanRepaymentPreview({
-        principal,
-        annualRate,
-        termMonths
-      })
-
-      loanMonthlyPreviewInput.value = preview.monthlyInstallment.toFixed(2)
-      loanTotalRepaymentPreviewInput.value = preview.totalRepayment.toFixed(2)
-      loanTotalInterestPreviewInput.value = preview.totalInterest.toFixed(2)
-    } catch {
-      loanMonthlyPreviewInput.value = '—'
-      loanTotalRepaymentPreviewInput.value = '—'
-      loanTotalInterestPreviewInput.value = '—'
-    }
-  }
-
-  function syncInvestmentPreview() {
-    if (!investmentPurchasePreviewInput || !investmentMaturityPreviewInput || !investmentGainPreviewInput) {
-      return
-    }
-
-    try {
-      const preview = createInvestmentMaturityPreview({
-        subtype: String(investmentSubtypeInput?.value || 'regular-bond'),
-        purchaseDate: String(investmentForm.querySelector('#investment-purchase-date')?.value || ''),
-        maturityDate: String(investmentForm.querySelector('#investment-maturity-date')?.value || ''),
-        principal: Number(investmentPrincipalInput?.value),
-        purchasePrice: Number(investmentPurchasePriceInput?.value),
-        annualRate: Number(investmentAnnualRateInput?.value),
-        spreadRate: Number(investmentSpreadRateInput?.value),
-        yearlyInflationRaw: String(investmentYearlyInflationInput?.value || '')
-      })
-
-      investmentPurchasePreviewInput.value = preview.purchaseAmount.toFixed(2)
-      investmentMaturityPreviewInput.value = preview.maturityAmount.toFixed(2)
-      investmentGainPreviewInput.value = preview.gainAmount.toFixed(2)
-    } catch {
-      investmentPurchasePreviewInput.value = '—'
-      investmentMaturityPreviewInput.value = '—'
-      investmentGainPreviewInput.value = '—'
-    }
-  }
+  const investmentPreviewController = createInvestmentPreviewSync({
+    form: investmentForm,
+    subtypeInput: investmentSubtypeInput,
+    principalInput: investmentPrincipalInput,
+    purchasePriceInput: investmentPurchasePriceInput,
+    annualRateInput: investmentAnnualRateInput,
+    spreadRateInput: investmentSpreadRateInput,
+    yearlyInflationInput: investmentYearlyInflationInput,
+    couponPeriodInput: investmentCouponPeriodInput,
+    purchasePreviewInput: investmentPurchasePreviewInput,
+    maturityPreviewInput: investmentMaturityPreviewInput,
+    gainPreviewInput: investmentGainPreviewInput,
+    createInvestmentMaturityPreview
+  })
+  const { syncInvestmentPreview } = investmentPreviewController
 
   function startLoanEdit(id) {
     const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'loan')
@@ -639,183 +479,7 @@ function initController() {
     saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
   }
 
-  if (oneTimeBox) {
-    oneTimeBox.addEventListener('toggle', () => {
-      if (oneTimeBox.open) {
-        if (recurringBox) {
-          recurringBox.open = false
-        }
-        if (salaryBox) {
-          salaryBox.open = false
-        }
-        if (subscriptionBox) {
-          subscriptionBox.open = false
-        }
-        if (loanBox) {
-          loanBox.open = false
-        }
-        if (investmentBox) {
-          investmentBox.open = false
-        }
-      }
-    })
-  }
-
-  if (recurringBox) {
-    recurringBox.addEventListener('toggle', () => {
-      if (recurringBox.open) {
-        if (oneTimeBox) {
-          oneTimeBox.open = false
-        }
-        if (salaryBox) {
-          salaryBox.open = false
-        }
-        if (subscriptionBox) {
-          subscriptionBox.open = false
-        }
-        if (loanBox) {
-          loanBox.open = false
-        }
-        if (investmentBox) {
-          investmentBox.open = false
-        }
-      }
-    })
-  }
-
-  if (salaryBox) {
-    salaryBox.addEventListener('toggle', () => {
-      if (salaryBox.open) {
-        if (oneTimeBox) {
-          oneTimeBox.open = false
-        }
-        if (recurringBox) {
-          recurringBox.open = false
-        }
-        if (subscriptionBox) {
-          subscriptionBox.open = false
-        }
-        if (loanBox) {
-          loanBox.open = false
-        }
-        if (investmentBox) {
-          investmentBox.open = false
-        }
-      }
-    })
-  }
-
-  if (subscriptionBox) {
-    subscriptionBox.addEventListener('toggle', () => {
-      if (subscriptionBox.open) {
-        if (oneTimeBox) {
-          oneTimeBox.open = false
-        }
-        if (recurringBox) {
-          recurringBox.open = false
-        }
-        if (salaryBox) {
-          salaryBox.open = false
-        }
-        if (loanBox) {
-          loanBox.open = false
-        }
-        if (investmentBox) {
-          investmentBox.open = false
-        }
-      }
-    })
-  }
-
-  if (loanBox) {
-    loanBox.addEventListener('toggle', () => {
-      if (loanBox.open) {
-        if (oneTimeBox) {
-          oneTimeBox.open = false
-        }
-        if (recurringBox) {
-          recurringBox.open = false
-        }
-        if (salaryBox) {
-          salaryBox.open = false
-        }
-        if (subscriptionBox) {
-          subscriptionBox.open = false
-        }
-        if (investmentBox) {
-          investmentBox.open = false
-        }
-      }
-    })
-  }
-
-  if (investmentBox) {
-    investmentBox.addEventListener('toggle', () => {
-      if (investmentBox.open) {
-        if (oneTimeBox) {
-          oneTimeBox.open = false
-        }
-        if (recurringBox) {
-          recurringBox.open = false
-        }
-        if (salaryBox) {
-          salaryBox.open = false
-        }
-        if (subscriptionBox) {
-          subscriptionBox.open = false
-        }
-        if (loanBox) {
-          loanBox.open = false
-        }
-      }
-    })
-  }
-
-  if (toggleComposerButton) {
-    toggleComposerButton.addEventListener('click', () => {
-      const shouldShow = !flowComposer || flowComposer.hidden
-      setComposerVisibility(shouldShow)
-      if (!shouldShow) {
-        collapseComposerBoxes()
-      }
-    })
-  }
-
-  if (openOneTimeBoxButton) {
-    openOneTimeBoxButton.addEventListener('click', () => {
-      openComposerBox('one-time')
-    })
-  }
-
-  if (openRecurringBoxButton) {
-    openRecurringBoxButton.addEventListener('click', () => {
-      openComposerBox('recurring')
-    })
-  }
-
-  if (openSalaryBoxButton) {
-    openSalaryBoxButton.addEventListener('click', () => {
-      openComposerBox('salary')
-    })
-  }
-
-  if (openSubscriptionBoxButton) {
-    openSubscriptionBoxButton.addEventListener('click', () => {
-      openComposerBox('subscription')
-    })
-  }
-
-  if (openLoanBoxButton) {
-    openLoanBoxButton.addEventListener('click', () => {
-      openComposerBox('loan')
-    })
-  }
-
-  if (openInvestmentBoxButton) {
-    openInvestmentBoxButton.addEventListener('click', () => {
-      openComposerBox('investment')
-    })
-  }
+  composerManager.bindEvents()
 
   if (salaryScheduleModeInput) {
     salaryScheduleModeInput.addEventListener('change', () => {
@@ -823,28 +487,14 @@ function initController() {
     })
   }
 
-  if (loanPrincipalInput) {
-    ;['input', 'change'].forEach((eventName) => {
-      loanPrincipalInput.addEventListener(eventName, syncLoanPreview)
-      loanAnnualRateInput?.addEventListener(eventName, syncLoanPreview)
-      loanTermValueInput?.addEventListener(eventName, syncLoanPreview)
-      loanTermUnitInput?.addEventListener(eventName, syncLoanPreview)
-    })
-  }
-
-  if (investmentSubtypeInput) {
-    ;['input', 'change'].forEach((eventName) => {
-      investmentSubtypeInput.addEventListener(eventName, syncInvestmentPreview)
-      investmentPrincipalInput?.addEventListener(eventName, syncInvestmentPreview)
-      investmentPurchasePriceInput?.addEventListener(eventName, syncInvestmentPreview)
-      investmentAnnualRateInput?.addEventListener(eventName, syncInvestmentPreview)
-      investmentSpreadRateInput?.addEventListener(eventName, syncInvestmentPreview)
-      investmentYearlyInflationInput?.addEventListener(eventName, syncInvestmentPreview)
-      investmentCouponPeriodInput?.addEventListener(eventName, syncInvestmentPreview)
-      investmentForm.querySelector('#investment-purchase-date')?.addEventListener(eventName, syncInvestmentPreview)
-      investmentForm.querySelector('#investment-maturity-date')?.addEventListener(eventName, syncInvestmentPreview)
-    })
-  }
+  bindLoanPreviewEvents({
+    principalInput: loanPrincipalInput,
+    annualRateInput: loanAnnualRateInput,
+    termValueInput: loanTermValueInput,
+    termUnitInput: loanTermUnitInput,
+    syncLoanPreview
+  })
+  investmentPreviewController.bindEvents()
 
   applySalaryModeVisibility(
     salaryScheduleModeInput ? salaryScheduleModeInput.value : 'custom-monthly-working-day'

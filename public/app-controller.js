@@ -43,6 +43,10 @@ import {
   bindLoanPreviewEvents
 } from './controller/previews.js'
 import { applyFixedRateLoanSpecToForm } from './controller/fixed-rate-loan-form.js'
+import {
+  calculateFixedRateLoanFromSpecInputs,
+  mapFixedRateLoanSpecInputsToLegacyLoanBundleInput
+} from './controller/fixed-rate-loan-calculation-adapter.js'
 
 function createFlowId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -606,7 +610,8 @@ function initController() {
     monthlyPreviewInput: loanMonthlyPreviewInput,
     totalRepaymentPreviewInput: loanTotalRepaymentPreviewInput,
     totalInterestPreviewInput: loanTotalInterestPreviewInput,
-    createLoanRepaymentPreview
+    createLoanRepaymentPreview,
+    calculateFixedRateLoanFromSpecInputs
   })
 
   const investmentPreviewController = createInvestmentPreviewSync({
@@ -1240,20 +1245,33 @@ function initController() {
 
     try {
       const formData = new FormData(loanForm)
-      const bundle = generateLoanInstrumentBundle({
-        id: editingLoanId || undefined,
-        label: String(formData.get('label') || '').trim() || 'Loan',
-        principal: Number(formData.get('principal')),
-        annualRate: Number(formData.get('annualRate')),
-        termValue: Number(formData.get('termValue')),
-        termUnit: String(formData.get('termUnit') || 'months'),
-        startDate: String(formData.get('startDate') || '').trim(),
-        repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
-        includeDisbursement: formData.get('includeDisbursement') === 'on',
-        category: String(formData.get('category') || '').trim() || 'loan',
-        description: String(formData.get('description') || '').trim() || undefined,
-        createdAt: editingLoanId ? instrumentBundles.find((entry) => entry.id === editingLoanId)?.createdAt : undefined
-      })
+      const submittedTermUnit = String(formData.get('termUnit') || 'months')
+      const submittedTermValue = Number(formData.get('termValue'))
+      const submittedTermMonths = submittedTermUnit === 'years'
+        ? submittedTermValue * 12
+        : submittedTermValue
+
+      const bundle = generateLoanInstrumentBundle(
+        mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(
+          {
+            principal: Number(formData.get('principal')),
+            annualInterestRatePct: Number(formData.get('annualRate')),
+            termMonths: submittedTermMonths,
+            startDate: String(formData.get('startDate') || '').trim()
+          },
+          {
+            id: editingLoanId || undefined,
+            label: String(formData.get('label') || '').trim() || 'Loan',
+            repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
+            includeDisbursement: formData.get('includeDisbursement') === 'on',
+            category: String(formData.get('category') || '').trim() || 'loan',
+            description: String(formData.get('description') || '').trim() || undefined,
+            createdAt: editingLoanId
+              ? instrumentBundles.find((entry) => entry.id === editingLoanId)?.createdAt
+              : undefined
+          }
+        )
+      )
 
       if (!bundle || !bundle.generatedFlows.length) {
         return

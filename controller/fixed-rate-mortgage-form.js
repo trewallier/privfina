@@ -1,19 +1,19 @@
-const FIXED_RATE_LOAN_PRODUCT_SPEC = {
+const FIXED_RATE_MORTGAGE_PRODUCT_SPEC = {
   inputs: [
     {
       name: 'principal',
       type: 'number',
-      label: 'Principal',
+      label: 'Home Loan Principal',
       required: true,
       unit: 'currency',
       constraints: {
-        minimum: 1
+        minimum: 1000
       }
     },
     {
       name: 'annualInterestRatePct',
       type: 'number',
-      label: 'Annual Interest Rate',
+      label: 'Fixed Annual Interest Rate',
       required: true,
       unit: 'percent',
       constraints: {
@@ -24,48 +24,49 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
     {
       name: 'termMonths',
       type: 'integer',
-      label: 'Term in Months',
+      label: 'Mortgage Term in Months',
       required: true,
       unit: 'months',
       constraints: {
-        minimum: 1
+        minimum: 12,
+        maximum: 480
       }
     },
     {
       name: 'startDate',
       type: 'string',
-      label: 'Start Date',
+      label: 'Mortgage Start Date',
       required: true,
       unit: 'date'
     }
   ],
   ui: {
-    formTitle: 'Fixed Rate Loan',
+    formTitle: 'Fixed Rate Mortgage',
     sections: [
       {
-        id: 'loan-core',
-        title: 'Loan Inputs',
+        id: 'mortgage-core',
+        title: 'Mortgage Inputs',
         fieldNames: ['principal', 'annualInterestRatePct', 'termMonths', 'startDate']
       }
     ]
   }
 }
 
-const FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER = {
+const FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER = {
   principal: {
-    inputId: 'loan-principal',
+    inputId: 'mortgage-principal',
     formName: 'principal'
   },
   annualInterestRatePct: {
-    inputId: 'loan-annual-rate',
+    inputId: 'mortgage-annual-rate',
     formName: 'annualRate'
   },
   termMonths: {
-    inputId: 'loan-term-value',
+    inputId: 'mortgage-term-value',
     formName: 'termValue'
   },
   startDate: {
-    inputId: 'loan-start-date',
+    inputId: 'mortgage-start-date',
     formName: 'startDate'
   }
 }
@@ -73,10 +74,10 @@ const FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER = {
 import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
 
 function ensureLabelTitleElement(label) {
-  let titleElement = label.querySelector('.loan-field-label')
+  let titleElement = label.querySelector('.mortgage-field-label')
   if (!titleElement) {
     titleElement = document.createElement('span')
-    titleElement.className = 'loan-field-label'
+    titleElement.className = 'mortgage-field-label'
     label.insertBefore(titleElement, label.firstChild)
     label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
   }
@@ -85,24 +86,24 @@ function ensureLabelTitleElement(label) {
 
 // `orderedSpecFields` is imported from `spec-form-utils.js`
 
-function reorderLoanRowBySpec(loanForm, fields) {
-  const firstRow = loanForm.querySelector('.row')
+function reorderMortgageRowBySpec(mortgageForm, fields) {
+  const firstRow = mortgageForm.querySelector('.row')
   if (!firstRow) {
     return
   }
 
   const mappedInputIds = fields
-    .map((field) => FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER[field.name])
+    .map((field) => FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER[field.name])
     .filter(Boolean)
     .map((entry) => entry.inputId)
 
   const mappedLabelsInOrder = fields
     .map((field) => {
-      const adapter = FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER[field.name]
+      const adapter = FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER[field.name]
       if (!adapter) {
         return null
       }
-      const input = loanForm.querySelector(`#${adapter.inputId}`)
+      const input = mortgageForm.querySelector(`#${adapter.inputId}`)
       return input ? input.closest('label') : null
     })
     .filter(Boolean)
@@ -117,19 +118,19 @@ function reorderLoanRowBySpec(loanForm, fields) {
   })
 }
 
-function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
-  if (!loanForm) {
+function applyFixedRateMortgageSpecToForm({ mortgageForm, mortgageBox }) {
+  if (!mortgageForm) {
     return
   }
 
-  const fields = orderedSpecFields(FIXED_RATE_LOAN_PRODUCT_SPEC)
+  const fields = orderedSpecFields(FIXED_RATE_MORTGAGE_PRODUCT_SPEC)
   fields.forEach((field) => {
-    const adapter = FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER[field.name]
+    const adapter = FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER[field.name]
     if (!adapter) {
       return
     }
 
-    const input = loanForm.querySelector(`#${adapter.inputId}`)
+    const input = mortgageForm.querySelector(`#${adapter.inputId}`)
     if (!input) {
       return
     }
@@ -151,19 +152,19 @@ function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
     }
   })
 
-  if (loanBox) {
-    const summaryTitle = loanBox.querySelector('.summary-title')
+  if (mortgageBox) {
+    const summaryTitle = mortgageBox.querySelector('.summary-title')
     if (summaryTitle) {
-      summaryTitle.textContent = FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle
+      summaryTitle.textContent = FIXED_RATE_MORTGAGE_PRODUCT_SPEC.ui.formTitle
     }
   }
 
-  reorderLoanRowBySpec(loanForm, fields)
+  reorderMortgageRowBySpec(mortgageForm, fields)
 }
 
 export {
-  FIXED_RATE_LOAN_PRODUCT_SPEC,
-  FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER,
-  applyFixedRateLoanSpecToForm,
+  FIXED_RATE_MORTGAGE_PRODUCT_SPEC,
+  FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER,
+  applyFixedRateMortgageSpecToForm,
   orderedSpecFields
 }

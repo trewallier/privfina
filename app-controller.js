@@ -47,6 +47,8 @@ import {
   calculateFixedRateLoanFromSpecInputs,
   mapFixedRateLoanSpecInputsToLegacyLoanBundleInput
 } from './controller/fixed-rate-loan-calculation-adapter.js'
+import { applyBmapSpecToForm } from './controller/bmap-form.js'
+import { generateBmapInstrumentBundleFromSpecInputs } from './controller/bmap-calculation-adapter.js'
 
 function createFlowId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -98,6 +100,17 @@ function initController() {
   const subscriptionBox = document.getElementById('subscription-box')
   const loanBox = document.getElementById('loan-box')
   const investmentBox = document.getElementById('investment-box')
+  const investmentGenericCoreRow = document.getElementById('investment-generic-core-row')
+  const investmentGenericSecondaryRow = document.getElementById('investment-generic-secondary-row')
+  const investmentPreviewRow = document.getElementById('investment-preview-row')
+  const investmentBmapWrap = document.getElementById('investment-bmap-wrap')
+  const bmapPrincipalInput = document.getElementById('bmap-principal')
+  const bmapDkjBaseYieldPctInput = document.getElementById('bmap-dkj-base-yield-pct')
+  const bmapInterestPremiumPctInput = document.getElementById('bmap-interest-premium-pct')
+  const bmapStartDateInput = document.getElementById('bmap-start-date')
+  const bmapPurchaseDateInput = document.getElementById('bmap-purchase-date')
+  const bmapIssueDateInput = document.getElementById('bmap-issue-date')
+  const bmapFirstCouponDateInput = document.getElementById('bmap-first-coupon-date')
   const salaryScheduleModeInput = document.getElementById('salary-schedule-mode')
   const salaryCronWrap = document.getElementById('salary-cron-wrap')
   const salaryCustomWrap = document.getElementById('salary-custom-wrap')
@@ -277,6 +290,39 @@ function initController() {
         annualRateNote: 'Used to compute coupon amounts for the selected coupon schedule.'
       },
       annualRateReadOnly: false
+    },
+    bmap: {
+      visible: {
+        issueDate: false,
+        transactionDate: false,
+        dueDate: false,
+        spreadRate: false,
+        yearlyInflation: false,
+        couponPeriod: false,
+        saleDate: false,
+        saleValue: false,
+        discountYieldPreview: false,
+        discountCurrentValuePreview: false,
+        inflationSchedulePreview: false
+      },
+      required: {
+        issueDate: false,
+        transactionDate: false,
+        dueDate: false,
+        purchasePrice: false,
+        spreadRate: false,
+        yearlyInflation: false,
+        couponPeriod: false,
+        annualRate: false
+      },
+      text: {
+        principalLabel: 'Principal',
+        principalNote: 'Principal amount used for BMÁP coupon and redemption calculations.',
+        purchasePriceLabel: 'Purchase price',
+        annualRateLabel: 'Annual rate',
+        annualRateNote: 'BMÁP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
+      },
+      annualRateReadOnly: false
     }
   }
 
@@ -378,6 +424,7 @@ function initController() {
   const { collapseComposerBoxes, openComposerBox } = composerManager
 
   applyFixedRateLoanSpecToForm({ loanForm, loanBox })
+  applyBmapSpecToForm({ bmapForm: investmentForm, bmapBox: investmentBox })
 
   function resetOneTimeForm() {
     editingOneTimeId = null
@@ -508,6 +555,54 @@ function initController() {
   }
 
   function applyInvestmentSubtypeUi(subtype) {
+    if (subtype === 'bmap') {
+      setElementVisible(investmentGenericCoreRow, false)
+      setElementVisible(investmentGenericSecondaryRow, false)
+      setElementVisible(investmentPreviewRow, false)
+      setElementVisible(investmentBmapWrap, true)
+
+      ;[
+        investmentIssueDateInput,
+        investmentTransactionDateInput,
+        investmentDueDateInput,
+        investmentPurchasePriceInput,
+        investmentAnnualRateInput,
+        investmentSpreadRateInput,
+        investmentYearlyInflationInput,
+        investmentCouponPeriodInput,
+        investmentSaleDateInput,
+        investmentSaleValueInput
+      ].forEach((input) => {
+        if (input) {
+          input.disabled = true
+          input.required = false
+        }
+      })
+
+      ;[
+        bmapPrincipalInput,
+        bmapDkjBaseYieldPctInput,
+        bmapInterestPremiumPctInput,
+        bmapStartDateInput,
+        bmapPurchaseDateInput,
+        bmapIssueDateInput,
+        bmapFirstCouponDateInput
+      ].forEach((input) => {
+        if (input) {
+          input.disabled = false
+        }
+      })
+
+      if (investmentBox) {
+        const summaryTitle = investmentBox.querySelector('.summary-title')
+        if (summaryTitle) {
+          summaryTitle.textContent = 'Bónusz Magyar Állampapír'
+        }
+      }
+
+      return
+    }
+
     const ui =
       investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
     const showInflationControls =
@@ -528,6 +623,41 @@ function initController() {
       ui.visible.discountCurrentValuePreview
     )
     setElementVisible(investmentInflationScheduleWrap, ui.visible.inflationSchedulePreview)
+    setElementVisible(investmentGenericCoreRow, true)
+    setElementVisible(investmentGenericSecondaryRow, true)
+    setElementVisible(investmentPreviewRow, true)
+    setElementVisible(investmentBmapWrap, false)
+
+    ;[
+      investmentIssueDateInput,
+      investmentTransactionDateInput,
+      investmentDueDateInput,
+      investmentPurchasePriceInput,
+      investmentAnnualRateInput,
+      investmentSpreadRateInput,
+      investmentYearlyInflationInput,
+      investmentCouponPeriodInput,
+      investmentSaleDateInput,
+      investmentSaleValueInput
+    ].forEach((input) => {
+      if (input) {
+        input.disabled = false
+      }
+    })
+
+    ;[
+      bmapPrincipalInput,
+      bmapDkjBaseYieldPctInput,
+      bmapInterestPremiumPctInput,
+      bmapStartDateInput,
+      bmapPurchaseDateInput,
+      bmapIssueDateInput,
+      bmapFirstCouponDateInput
+    ].forEach((input) => {
+      if (input) {
+        input.disabled = true
+      }
+    })
 
     setElementText(investmentPrincipalLabel, ui.text.principalLabel)
     setElementText(investmentPurchasePriceLabel, ui.text.purchasePriceLabel)
@@ -680,6 +810,15 @@ function initController() {
     editingInvestmentId = id
     investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
     investmentForm.querySelector('#investment-subtype').value = config.subtype || 'regular-bond'
+    if ((config.subtype || 'regular-bond') === 'bmap') {
+      investmentForm.querySelector('#bmap-principal').value = config.principal !== undefined ? String(config.principal) : ''
+      investmentForm.querySelector('#bmap-dkj-base-yield-pct').value = config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
+      investmentForm.querySelector('#bmap-interest-premium-pct').value = config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
+      investmentForm.querySelector('#bmap-start-date').value = config.startDate || ''
+      investmentForm.querySelector('#bmap-purchase-date').value = config.purchaseDate || ''
+      investmentForm.querySelector('#bmap-issue-date').value = config.issueDate || ''
+      investmentForm.querySelector('#bmap-first-coupon-date').value = config.firstCouponDate || ''
+    }
     investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
     investmentForm.querySelector('#investment-transaction-date').value =
       config.transactionDate || config.purchaseDate || ''
@@ -1301,6 +1440,49 @@ function initController() {
     try {
       const formData = new FormData(investmentForm)
       const subtype = String(formData.get('subtype') || 'regular-bond')
+
+      if (subtype === 'bmap') {
+        const bundle = generateBmapInstrumentBundleFromSpecInputs(
+          {
+            principal: Number(formData.get('principal')),
+            dkjBaseYieldPct: Number(formData.get('dkjBaseYieldPct')),
+            interestPremiumPct: Number(formData.get('interestPremiumPct')),
+            startDate: String(formData.get('startDate') || '').trim(),
+            purchaseDate: String(formData.get('purchaseDate') || '').trim() || undefined,
+            issueDate: String(formData.get('issueDate') || '').trim() || undefined,
+            firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined
+          },
+          {
+            id: editingInvestmentId || undefined,
+            label: String(formData.get('label') || '').trim() || 'Bónusz Magyar Állampapír',
+            category: String(formData.get('category') || '').trim() || 'investment',
+            description: String(formData.get('description') || '').trim() || undefined,
+            createdAt: editingInvestmentId
+              ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
+              : undefined
+          },
+          { createInvestmentMaturityPreview }
+        )
+
+        if (!bundle || !bundle.generatedFlows.length) {
+          return
+        }
+
+        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+
+        const firstDate = bundle.generatedFlows[0].date
+        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
+        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+        startInput.value = updatedRange.startDate
+        endInput.value = updatedRange.endDate
+
+        resetInvestmentForm()
+        collapseComposerBoxes()
+        rerender()
+        return
+      }
+
       const rawTransactionDate = String(formData.get('transactionDate') || '').trim()
       const rawDueDate = String(formData.get('dueDate') || '').trim()
       const normalizedPurchaseDate = rawTransactionDate

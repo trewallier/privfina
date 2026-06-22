@@ -1,6 +1,6 @@
 import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-input-validators.js'
 
-function mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs) {
+function mapFixedRateMortgageSpecInputsToLegacyCalculationInput(specInputs) {
   const principal = toNonNegativeNumber(specInputs.principal, 'principal')
   const annualInterestRatePct = toNonNegativeNumber(
     specInputs.annualInterestRatePct,
@@ -24,19 +24,19 @@ function mapLegacyLoanPreviewToSpecOutputs(legacyPreview) {
   }
 }
 
-function calculateFixedRateLoanFromSpecInputs(specInputs, options) {
+function calculateFixedRateMortgageFromSpecInputs(specInputs, options) {
   const createLoanRepaymentPreview = options?.createLoanRepaymentPreview
   if (typeof createLoanRepaymentPreview !== 'function') {
     throw new Error('createLoanRepaymentPreview function is required.')
   }
 
-  const legacyInput = mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs)
+  const legacyInput = mapFixedRateMortgageSpecInputsToLegacyCalculationInput(specInputs)
   const legacyPreview = createLoanRepaymentPreview(legacyInput)
   return mapLegacyLoanPreviewToSpecOutputs(legacyPreview)
 }
 
-function mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras = {}) {
-  const legacyInput = mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs)
+function mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput(specInputs, extras = {}) {
+  const legacyInput = mapFixedRateMortgageSpecInputsToLegacyCalculationInput(specInputs)
   const startDate = String(specInputs.startDate || '').trim()
 
   return {
@@ -50,8 +50,8 @@ function mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras = 
 }
 
 export {
-  mapFixedRateLoanSpecInputsToLegacyCalculationInput,
+  mapFixedRateMortgageSpecInputsToLegacyCalculationInput,
   mapLegacyLoanPreviewToSpecOutputs,
-  calculateFixedRateLoanFromSpecInputs,
-  mapFixedRateLoanSpecInputsToLegacyLoanBundleInput
+  calculateFixedRateMortgageFromSpecInputs,
+  mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput
 }

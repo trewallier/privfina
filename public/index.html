@@ -866,11 +866,12 @@
                         <option value="discount-bond">Discount bond</option>
                         <option value="inflation-linked-bond">Inflation-linked bond</option>
                         <option value="custom-bond">Custom bond</option>
+                        <option value="bmap">Bónusz Magyar Állampapír</option>
                       </select>
                     </label>
                   </div>
 
-                  <div class="row">
+                  <div id="investment-generic-core-row" class="row">
                     <label>
                       <span class="label-title">Label <button type="button" class="info-chip" data-help-button="investment-label-help" aria-label="Label help">i</button></span>
                       <input id="investment-label" name="label" type="text" value="Investment" />
@@ -936,7 +937,7 @@
                       </div>
                     </label>
                   </div>
-                  <div class="row">
+                  <div id="investment-generic-secondary-row" class="row">
                     <label id="investment-yearly-inflation-wrap">
                       <span class="label-title">Yearly inflation inputs <button type="button" class="info-chip" data-help-button="investment-yearly-inflation-help" aria-label="Yearly inflation help">i</button></span>
                       <input id="investment-yearly-inflation" name="yearlyInflationRaw" type="text" value="2026:0.03, 2027:0.02" />
@@ -978,7 +979,7 @@
                       <input id="investment-description" name="description" type="text" placeholder="Optional notes" />
                     </label>
                   </div>
-                  <div class="row">
+                  <div id="investment-preview-row" class="row">
                     <label>
                       Maturity preview
                       <input id="investment-maturity-preview" type="text" readonly />
@@ -1003,6 +1004,40 @@
                       Inflation schedule (derived)
                       <input id="investment-inflation-schedule-preview" type="text" readonly />
                     </label>
+                  </div>
+                  <div id="investment-bmap-wrap" hidden>
+                    <div class="row">
+                      <label id="bmap-principal-wrap">
+                        <span class="label-title"><span id="bmap-principal-label">Principal</span></span>
+                        <input id="bmap-principal" name="principal" type="number" min="1" step="0.01" required />
+                      </label>
+                      <label id="bmap-dkj-base-yield-pct-wrap">
+                        <span class="label-title"><span id="bmap-dkj-base-yield-pct-label">DKJ Base Yield</span></span>
+                        <input id="bmap-dkj-base-yield-pct" name="dkjBaseYieldPct" type="number" min="-100" max="100" step="0.01" required />
+                      </label>
+                      <label id="bmap-interest-premium-pct-wrap">
+                        <span class="label-title"><span id="bmap-interest-premium-pct-label">Interest Premium</span></span>
+                        <input id="bmap-interest-premium-pct" name="interestPremiumPct" type="number" min="0" max="100" step="0.01" required />
+                      </label>
+                      <label id="bmap-start-date-wrap">
+                        <span class="label-title"><span id="bmap-start-date-label">Start Date</span></span>
+                        <input id="bmap-start-date" name="startDate" type="date" required />
+                      </label>
+                      <label id="bmap-purchase-date-wrap">
+                        <span class="label-title"><span id="bmap-purchase-date-label">Purchase Date</span></span>
+                        <input id="bmap-purchase-date" name="purchaseDate" type="date" />
+                      </label>
+                    </div>
+                    <div class="row">
+                      <label id="bmap-issue-date-wrap">
+                        <span class="label-title"><span id="bmap-issue-date-label">Issue Date</span></span>
+                        <input id="bmap-issue-date" name="issueDate" type="date" />
+                      </label>
+                      <label id="bmap-first-coupon-date-wrap">
+                        <span class="label-title"><span id="bmap-first-coupon-date-label">First Coupon Date</span></span>
+                        <input id="bmap-first-coupon-date" name="firstCouponDate" type="date" />
+                      </label>
+                    </div>
                   </div>
                   <div class="actions">
                     <button id="investment-submit" class="primary" type="submit">Add Investment Instrument</button>

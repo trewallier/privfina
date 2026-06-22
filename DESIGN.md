@@ -85,9 +85,11 @@ This section defines the next iteration of instrument behavior so implementation
 	- term duration (months or years)
 	- repayment day of month (fixed)
 - Interest and repayment model for v1:
-	- regular banking annuity-style repayment
-	- monthly compounding
-	- monthly installment recalculated on every parameter change and shown in a read-only preview field
+	- Concept: annuity-style amortization producing a fixed monthly payment that covers interest and principal. This is a conceptual design note only; exact formulas, rounding, and edge-case rules are maintained in the product specification and engine implementation.
+	- Source of truth / implementation references:
+		- Product spec: [docs/product-specs/products/loans/fixed-rate-loan/product.yaml](docs/product-specs/products/loans/fixed-rate-loan/product.yaml)
+		- Engine implementation: [src/finance_engine/instruments/loan.ts](src/finance_engine/instruments/loan.ts)
+		- Worked example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml)
 - Generated flows:
 	- optional one-time disbursement inflow at start
 	- fixed monthly repayment outflows over the amortization term

@@ -77,21 +77,6 @@ inputs:
     unit: date
     description: First coupon payment date in ISO format if known.
 
-derivedVariables:
-  - name: effectiveDkjBaseYieldPct
-    type: number
-    label: Effective DKJ Base Yield
-    required: false
-    unit: percent
-    description: DKJ-based coupon base after applying the 0% floor if the raw base is zero or negative.
-
-  - name: annualCouponRatePctDerived
-    type: number
-    label: Derived Annual Coupon Rate
-    required: false
-    unit: percent
-    description: Effective annual coupon rate equal to effective DKJ base plus premium.
-
 outputs:
   - name: annualCouponRatePct
     type: number

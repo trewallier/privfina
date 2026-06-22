@@ -76,21 +76,6 @@ inputs:
     unit: date
     description: First coupon payment date in ISO format if known.
 
-derivedVariables:
-  - name: effectiveInflationBasePct
-    type: number
-    label: Effective Inflation Base
-    required: true
-    unit: percent
-    description: Previous-year average inflation floored at 0%.
-
-  - name: annualCouponRatePctDerived
-    type: number
-    label: Derived Annual Coupon Rate
-    required: true
-    unit: percent
-    description: Effective annual coupon rate equal to effective inflation base plus premium.
-
 outputs:
   - name: annualCouponRatePct
     type: number

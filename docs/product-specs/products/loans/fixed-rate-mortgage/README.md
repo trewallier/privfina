@@ -1,11 +1,20 @@
-# Fixed Rate Mortgage Product Spec
+# Fixed Rate Mortgage
 
-This is the second pilot product specification in the product-spec layer.
+A standard fixed-rate home mortgage with equal monthly payments over a fixed term.
 
-It intentionally reuses the same engine shape as the first fixed-rate loan product and exists to prove that product differences can be expressed mainly through specification data and metadata.
+## Scope
 
-The variant models a standard home mortgage (housing loan) with equal monthly payments over a fixed term.
+This specification models a plain fixed-rate mortgage with level monthly payments and fixed interest rate over the full term. It demonstrates that product variants can be expressed through specification data and metadata without modifying engine logic.
 
-Worked examples under `examples/` are treated as executable acceptance criteria for this product.
+## Out of Scope
 
-Out of scope for this iteration: mortgage-specific complexity such as fees, insurance, escrow, variable-rate behavior, balloon structures, and prepayment/refinancing policy.
+This iteration excludes:
+- Variable-rate structures
+- Mortgage-specific fees, insurance, or escrow
+- Balloon payments or irregular schedules
+- Prepayment or refinancing
+- Property taxes or tax implications
+
+## Worked Examples
+
+The examples in this folder are executable acceptance criteria for the specification. If an example does not produce the expected outputs, the spec is not ready for implementation.

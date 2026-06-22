@@ -96,18 +96,21 @@
       }
     },
     "inputs": {
+      "description": "User-configurable parameters for the product.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/fieldDefinition"
       }
     },
     "derivedVariables": {
+      "description": "Intermediate calculated values derived from inputs. These are internal calculations and typically should not be duplicated in outputs.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/fieldDefinition"
       }
     },
     "outputs": {
+      "description": "Final results and analytics produced by the product calculation. Outputs are the primary contract with users and other components.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/fieldDefinition"

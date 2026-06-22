@@ -1,13 +1,19 @@
 # Diszkont Kincstárjegy (DKJ)
 
-This folder contains the first government-security pilot product in the product-specification layer.
+Hungarian short-term treasury bill with no coupon, purchased at a discount to face value and redeemed at par at maturity.
 
-DKJ differs fundamentally from loan products in this repository: there is no coupon schedule and no amortizing repayment stream.
+## Scope
 
-The value mechanism is discount-to-par:
-- Investor purchases below face value.
-- Issuer repays face value at maturity in one amount.
+This specification models the DKJ product type (not individual series). The value mechanism is discount-to-par: investors purchase below face value and receive full face value at maturity in a single payment. The spec includes annualized yield calculation using the 360-day convention.
 
-This specification intentionally models the DKJ product type first (family and variant behavior), not the full historical universe of live DKJ series.
+## Out of Scope
 
-Series-level auction history, secondary-market microstructure, and issuance-by-series details are out of scope in this first iteration.
+This iteration excludes:
+- Secondary-market microstructure or pricing
+- Series-level auction history or real-time data integration
+- Individual series metadata
+- Complex settlement or transfer scenarios
+
+## Worked Examples
+
+The examples in this folder are executable acceptance criteria for the specification. If an example does not produce the expected outputs, the spec is not ready for implementation.

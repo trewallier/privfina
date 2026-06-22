@@ -42,6 +42,7 @@ import {
   createInvestmentPreviewSync,
   bindLoanPreviewEvents
 } from './controller/previews.js'
+import { applyFixedRateLoanSpecToForm } from './controller/fixed-rate-loan-form.js'
 
 function createFlowId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -371,6 +372,8 @@ function initController() {
     }
   })
   const { collapseComposerBoxes, openComposerBox } = composerManager
+
+  applyFixedRateLoanSpecToForm({ loanForm, loanBox })
 
   function resetOneTimeForm() {
     editingOneTimeId = null

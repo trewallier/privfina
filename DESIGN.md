@@ -87,9 +87,13 @@ This section defines the next iteration of instrument behavior so implementation
 - Interest and repayment model for v1:
 	- Concept: annuity-style amortization producing a fixed monthly payment that covers interest and principal. This is a conceptual design note only; exact formulas, rounding, and edge-case rules are maintained in the product specification and engine implementation.
 	- Source of truth / implementation references:
-		- Product spec: [docs/product-specs/products/loans/fixed-rate-loan/product.yaml](docs/product-specs/products/loans/fixed-rate-loan/product.yaml)
-		- Engine implementation: [src/finance_engine/instruments/loan.ts](src/finance_engine/instruments/loan.ts)
-		- Worked example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml)
+		- Product specs:
+			- Fixed-rate loan: [docs/product-specs/products/loans/fixed-rate-loan/product.yaml](docs/product-specs/products/loans/fixed-rate-loan/product.yaml)
+			- Fixed-rate mortgage: [docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml)
+		- Engine implementation (loan primitives): [src/finance_engine/instruments/loan.ts](src/finance_engine/instruments/loan.ts)
+		- Worked examples / living documentation and tests:
+			- Fixed-rate loan example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml) and [tests/fixed-rate-loan-example.test.ts](tests/fixed-rate-loan-example.test.ts)
+			- Fixed-rate mortgage example: [docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml) and [tests/fixed-rate-mortgage-calculation-adapter.test.ts](tests/fixed-rate-mortgage-calculation-adapter.test.ts)
 - Generated flows:
 	- optional one-time disbursement inflow at start
 	- fixed monthly repayment outflows over the amortization term

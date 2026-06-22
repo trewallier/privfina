@@ -21,6 +21,11 @@ import {
   mapFixedRateLoanSpecInputsToLoanInstrumentInput,
   generateLoanInstrumentCashFlowsFromFixedRateProductSpec
 } from './product_specs/fixed_rate_loan'
+import {
+  DEFAULT_FIXED_RATE_LOAN_PRODUCT_SPEC_PATH,
+  DEFAULT_PRODUCT_SCHEMA_PATH,
+  loadFixedRateLoanProductSpecFromFiles
+} from './product_specs/loader'
 
 export type {
   DateRange,
@@ -63,6 +68,11 @@ export {
   mapFixedRateLoanSpecInputsToLoanInstrumentInput,
   generateLoanInstrumentCashFlowsFromFixedRateProductSpec
 } from './product_specs/fixed_rate_loan'
+export {
+  DEFAULT_FIXED_RATE_LOAN_PRODUCT_SPEC_PATH,
+  DEFAULT_PRODUCT_SCHEMA_PATH,
+  loadFixedRateLoanProductSpecFromFiles
+} from './product_specs/loader'
 
 function signedAmount(cashFlow: CashFlow): number {
   return cashFlow.direction === CashFlowDirection.Inflow ? cashFlow.amount : -cashFlow.amount

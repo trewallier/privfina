@@ -63,16 +63,7 @@ const BMAP_FRONTEND_FIELD_ADAPTER = {
   firstCouponDate: { inputId: 'bmap-first-coupon-date' }
 }
 
-function toInputType(field) {
-  if (field.type === 'number' || field.type === 'integer') return 'number'
-  if (field.type === 'string' && field.unit === 'date') return 'date'
-  return 'text'
-}
-
-function applyNumericConstraints(input, constraints = {}) {
-  if (typeof constraints.minimum === 'number') input.min = String(constraints.minimum)
-  if (typeof constraints.maximum === 'number') input.max = String(constraints.maximum)
-}
+import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
 
 function ensureLabelTitleElement(label) {
   let titleElement = label.querySelector('.bmap-field-label')
@@ -85,11 +76,7 @@ function ensureLabelTitleElement(label) {
   return titleElement
 }
 
-function orderedSpecFields(productSpec) {
-  const fieldByName = new Map(productSpec.inputs.map((field) => [field.name, field]))
-  const sectionOrder = productSpec.ui.sections.flatMap((section) => section.fieldNames)
-  return sectionOrder.map((name) => fieldByName.get(name)).filter(Boolean)
-}
+// `orderedSpecFields` is imported from `spec-form-utils.js`
 
 function applyBmapSpecToForm({ bmapForm, bmapBox }) {
   if (!bmapForm) return

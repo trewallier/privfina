@@ -1,21 +1,8 @@
 import { createInvestmentMaturityPreview } from '../instruments.js'
 import { parseIsoDate, formatIsoDate } from '../recurrence.js'
+import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
 
-function toFiniteNumber(value, label) {
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) {
-    throw new Error(`${label} must be a finite number.`)
-  }
-  return parsed
-}
-
-function toNonNegativeNumber(value, label) {
-  const parsed = toFiniteNumber(value, label)
-  if (parsed < 0) {
-    throw new Error(`${label} must be non-negative.`)
-  }
-  return parsed
-}
+// numeric validators are imported from spec-input-validators.js
 
 function addMonthsUtc(date, months) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, date.getUTCDate()))

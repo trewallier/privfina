@@ -47,16 +47,7 @@ const PMAP_FRONTEND_FIELD_ADAPTER = {
   firstCouponDate: { inputId: 'investment-coupon-period', formName: 'firstCouponDate' }
 }
 
-function toInputType(field) {
-  if (field.type === 'integer' || field.type === 'number') return 'number'
-  if (field.type === 'string' && field.unit === 'date') return 'date'
-  return 'text'
-}
-
-function applyNumericConstraints(input, constraints = {}) {
-  if (typeof constraints.minimum === 'number') input.min = String(constraints.minimum)
-  if (typeof constraints.maximum === 'number') input.max = String(constraints.maximum)
-}
+import { toInputType, applyNumericConstraints } from './spec-form-utils.js'
 
 function applyPmapSpecToForm({ investmentForm, investmentBox }) {
   if (!investmentForm) return

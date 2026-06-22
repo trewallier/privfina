@@ -1,18 +1,4 @@
-function toFiniteNumber(value, label) {
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) {
-    throw new Error(`${label} must be a finite number.`)
-  }
-  return parsed
-}
-
-function toNonNegativeNumber(value, label) {
-  const parsed = toFiniteNumber(value, label)
-  if (parsed < 0) {
-    throw new Error(`${label} must be non-negative.`)
-  }
-  return parsed
-}
+import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
 
 function mapPmapSpecInputsToLegacyInvestmentInput(specInputs) {
   const principal = toNonNegativeNumber(specInputs.principal, 'principal')

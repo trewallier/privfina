@@ -6,7 +6,8 @@ function createLoanPreviewSync({
   monthlyPreviewInput,
   totalRepaymentPreviewInput,
   totalInterestPreviewInput,
-  createLoanRepaymentPreview
+  createLoanRepaymentPreview,
+  calculateFixedRateLoanFromSpecInputs
 }) {
   return function syncLoanPreview() {
     if (!monthlyPreviewInput || !totalRepaymentPreviewInput || !totalInterestPreviewInput) {
@@ -15,13 +16,30 @@ function createLoanPreviewSync({
 
     try {
       const principal = Number(principalInput?.value)
-      const annualRate = Number(annualRateInput?.value)
+      const annualRateInputValue = Number(annualRateInput?.value)
       const termValue = Number(termValueInput?.value)
       const termUnit = termUnitInput?.value || 'months'
       const termMonths = termUnit === 'years' ? termValue * 12 : termValue
+
+      if (typeof calculateFixedRateLoanFromSpecInputs === 'function') {
+        const specOutputs = calculateFixedRateLoanFromSpecInputs(
+          {
+            principal,
+            annualInterestRatePct: annualRateInputValue,
+            termMonths
+          },
+          { createLoanRepaymentPreview }
+        )
+
+        monthlyPreviewInput.value = specOutputs.monthlyPayment.toFixed(2)
+        totalRepaymentPreviewInput.value = specOutputs.totalPaid.toFixed(2)
+        totalInterestPreviewInput.value = specOutputs.totalInterest.toFixed(2)
+        return
+      }
+
       const preview = createLoanRepaymentPreview({
         principal,
-        annualRate,
+        annualRate: annualRateInputValue,
         termMonths
       })
 

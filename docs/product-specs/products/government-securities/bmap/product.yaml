@@ -3,7 +3,7 @@ kind: financial-product
 id: government-security.bmap.standard
 family: government-security
 variant: bmap
-displayName: Bónusz Magyar Állampapír
+displayName: Bonus Hungarian Government Security
 description: Hungarian retail government bond with variable coupon linked to 3-month DKJ auction yields and quarterly interest payment.
 
 category: retail-government-bond
@@ -68,7 +68,7 @@ inputs:
     label: Issue Date
     required: false
     unit: date
-    description: Issue date of the BMÁP series in ISO format.
+    description: Issue date of the BMAP series in ISO format.
 
   - name: firstCouponDate
     type: string
@@ -128,25 +128,25 @@ outputs:
     description: Principal repaid at maturity.
 
 assumptions:
-  - BMÁP is modeled as a quarterly-pay variable-rate retail government bond.
+  - BMAP is modeled as a quarterly-pay variable-rate retail government bond.
   - Product-term intent in this pilot is 6 years.
   - Annual coupon rate is effective DKJ base yield plus fixed premium.
   - Effective DKJ base yield is max(raw DKJ-based rate, 0).
   - The DKJ-based rate is conceptually tied to the last four successful 3-month DKJ auctions used for rate-setting.
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
-  - BMÁP denomination unit is 1 HUF.
-  - BMÁP uses a 360-day convention for accrued-interest and period coupon calculations.
-  - The issuer does not redeem BMÁP before maturity.
+  - BMAP denomination unit is 1 HUF.
+  - BMAP uses a 360-day convention for accrued-interest and period coupon calculations.
+  - The issuer does not redeem BMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
   - Collateral-purpose transfer is out of scope and restricted by the official product rules.
-  - This spec remains a product-type model and does not attempt to encode every live BMÁP series edge case.
+  - This spec remains a product-type model and does not attempt to encode every live BMAP series edge case.
   - Live DKJ market data integration is future work; examples use explicit base-yield input values.
 
 ui:
-  formTitle: Bónusz Magyar Állampapír
+  formTitle: Bonus Hungarian Government Security
   sections:
     - id: bmap-core
-      title: BMÁP Inputs
+      title: BMAP Inputs
       fieldNames:
         - principal
         - dkjBaseYieldPct

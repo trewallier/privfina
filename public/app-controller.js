@@ -47,7 +47,7 @@ import {
   calculateFixedRateLoanFromSpecInputs,
   mapFixedRateLoanSpecInputsToLegacyLoanBundleInput
 } from './controller/fixed-rate-loan-calculation-adapter.js'
-import { BMAP_PRODUCT_SPEC, applyBmapSpecToForm } from './controller/bmap-form.js'
+import { BMAP_PRODUCT_SPEC, applyBmapSpecToForm, mapFormDataToBmapSpecInputs } from './controller/bmap-form.js'
 import { generateBmapInstrumentBundleFromSpecInputs } from './controller/bmap-calculation-adapter.js'
 import {
   DKJ_PRODUCT_SPEC,
@@ -81,13 +81,7 @@ const GENERIC_BOND_SUBTYPE_OPTIONS = [
 const SPEC_BACKED_BOND_SUBTYPE_OPTIONS = buildSpecBackedInvestmentSubtypeOptions()
 
 const PRODUCT_BOND_SUBTYPE_OPTIONS = [
-  ...SPEC_BACKED_BOND_SUBTYPE_OPTIONS,
-  {
-    value: 'bmap',
-    label: BMAP_PRODUCT_SPEC.ui.formTitle,
-    migrationStatus: 'calc-aligned',
-    available: true
-  }
+  ...SPEC_BACKED_BOND_SUBTYPE_OPTIONS
 ]
 
 function createFlowId(prefix) {
@@ -332,39 +326,6 @@ function initController() {
         purchasePriceLabel: 'Purchase price',
         annualRateLabel: 'Annual rate',
         annualRateNote: 'Used to compute coupon amounts for the selected coupon schedule.'
-      },
-      annualRateReadOnly: false
-    },
-    bmap: {
-      visible: {
-        issueDate: false,
-        transactionDate: false,
-        dueDate: false,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        saleDate: false,
-        saleValue: false,
-        discountYieldPreview: false,
-        discountCurrentValuePreview: false,
-        inflationSchedulePreview: false
-      },
-      required: {
-        issueDate: false,
-        transactionDate: false,
-        dueDate: false,
-        purchasePrice: false,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        annualRate: false
-      },
-      text: {
-        principalLabel: 'Principal',
-        principalNote: 'Principal amount used for BMÁP coupon and redemption calculations.',
-        purchasePriceLabel: 'Purchase price',
-        annualRateLabel: 'Annual rate',
-        annualRateNote: 'BMÁP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
       },
       annualRateReadOnly: false
     },
@@ -1559,19 +1520,12 @@ function initController() {
       const subtype = String(formData.get('subtype') || 'regular-bond')
 
       if (subtype === 'bmap') {
+        const specInputs = mapFormDataToBmapSpecInputs(formData)
         const bundle = generateBmapInstrumentBundleFromSpecInputs(
-          {
-            principal: Number(formData.get('principal')),
-            dkjBaseYieldPct: Number(formData.get('dkjBaseYieldPct')),
-            interestPremiumPct: Number(formData.get('interestPremiumPct')),
-            startDate: String(formData.get('startDate') || '').trim(),
-            purchaseDate: String(formData.get('purchaseDate') || '').trim() || undefined,
-            issueDate: String(formData.get('issueDate') || '').trim() || undefined,
-            firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined
-          },
+          specInputs,
           {
             id: editingInvestmentId || undefined,
-            label: String(formData.get('label') || '').trim() || 'Bónusz Magyar Állampapír',
+            label: String(formData.get('label') || '').trim() || BMAP_PRODUCT_SPEC.ui.formTitle,
             category: String(formData.get('category') || '').trim() || 'investment',
             description: String(formData.get('description') || '').trim() || undefined,
             createdAt: editingInvestmentId

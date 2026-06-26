@@ -29,24 +29,24 @@ Inventory (by product)
   - In code: implemented in `src/finance_engine/instruments/common.ts` as `deriveDiscountBondMetrics` (computes `currentValuePercent` and `yieldPercent`).
   - Duplication status: formula present in DESIGN.md and implemented in code; spec references the concept but does not embed the algebra (design+code duplication; spec needs explicit mapping to code primitive).
 
-- PMÁP (inflation‑linked retail bond)
+- PMAP (inflation‑linked retail bond)
   - In specs: `docs/product-specs/products/government-securities/pmap/product.yaml` (states `effectiveInflationBasePct = max(previousYearAverageInflation, 0)` and `annualCouponRate = effectiveInflationBase + interestPremium`).
   - In DESIGN.md: inflation-linked bond accrual and effective-rate guidance (Investment section).
   - In code: accrual schedule and maturity calculation implemented in `src/finance_engine/instruments/common.ts` (`deriveInflationLinkedAccrualSchedule`, `calculateInflationLinkedMaturityAmount`) and used in `src/finance_engine/instruments/investment.ts`.
   - Duplication/status: code provides primitives but does not explicitly enforce the spec-stated 0% floor; spec ↔ code mismatch (action required).
 
-- BMÁP (DKJ‑linked variable coupon)
+- BMAP (DKJ‑linked variable coupon)
   - In specs: `docs/product-specs/products/government-securities/bmap/product.yaml` (defines `annualCouponRate = effectiveDkjBaseYield + interestPremium` and `effectiveDkjBaseYield = max(rawDKJBase, 0)`; DKJ base derived from weighted recent auctions is a product rule).
   - In DESIGN.md: rate‑setting intent for DKJ-linked bonds is described under investments and product assumptions.
-  - In code: no BMÁP-specific rate-setter implemented; engine accepts `dkjBaseYieldPct` as an input in the spec but does not compute auction-weighted base-yield (`src/finance_engine/instruments/` contains no auction aggregator).
+  - In code: no BMAP-specific rate-setter implemented; engine accepts `dkjBaseYieldPct` as an input in the spec but does not compute auction-weighted base-yield (`src/finance_engine/instruments/` contains no auction aggregator).
   - Duplication/status: spec documents the product rule; code currently requires the base-yield as an input (spec-only for derivation logic). Clear gap.
 
 Current cleanup priority (one small next step)
 --------------------------------------------
-- Add small spec→engine loader(s) and unit tests for PMÁP and BMÁP that:
+- Add small spec→engine loader(s) and unit tests for PMAP and BMAP that:
   - map product YAML inputs to existing `InvestmentInstrumentInput` fields,
-  - assert PMÁP applies the `max(previousYearAverageInflation, 0)` floor in computed outputs,
-  - accept `dkjBaseYieldPct` for BMÁP and mark auction-weighted derivation as TODO.
+  - assert PMAP applies the `max(previousYearAverageInflation, 0)` floor in computed outputs,
+  - accept `dkjBaseYieldPct` for BMAP and mark auction-weighted derivation as TODO.
 
 Notes
 -----

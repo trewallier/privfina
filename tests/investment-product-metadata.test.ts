@@ -3,6 +3,7 @@ import {
   buildSpecBackedInvestmentSubtypeOptions,
   buildSpecBackedInvestmentSubtypeUiConfig
 } from '../public/controller/investment-product-metadata.js'
+import { BMAP_PRODUCT_SPEC } from '../public/controller/bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from '../public/controller/dkj-form.js'
 import { PMAP_PRODUCT_SPEC } from '../public/controller/pmap-form.js'
 
@@ -11,14 +12,29 @@ function inputByName(spec: any, inputName: string) {
 }
 
 describe('spec-backed investment metadata helper', () => {
-  it('builds DKJ and PMAP subtype option labels from spec metadata', () => {
+  it('builds BMAP, DKJ, and PMAP subtype option labels from spec metadata', () => {
     const options = buildSpecBackedInvestmentSubtypeOptions()
     const optionByValue = new Map(options.map((entry) => [entry.value, entry]))
 
+    expect(optionByValue.get('bmap')?.label).toBe(BMAP_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('dkj')?.label).toBe(DKJ_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('pmap')?.label).toBe(PMAP_PRODUCT_SPEC.ui.formTitle)
+    expect(optionByValue.get('bmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('dkj')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
+  })
+
+  it('derives BMAP required and label metadata from mapped spec fields', () => {
+    const config = buildSpecBackedInvestmentSubtypeUiConfig().bmap
+
+    expect(config.text.principalLabel).toBe(inputByName(BMAP_PRODUCT_SPEC, 'principal')?.label)
+    expect(config.required.transactionDate).toBe(
+      inputByName(BMAP_PRODUCT_SPEC, 'purchaseDate')?.required
+    )
+    expect(config.required.issueDate).toBe(inputByName(BMAP_PRODUCT_SPEC, 'issueDate')?.required)
+    expect(config.required.couponPeriod).toBe(
+      inputByName(BMAP_PRODUCT_SPEC, 'firstCouponDate')?.required
+    )
   })
 
   it('derives DKJ required and label metadata from mapped spec fields', () => {

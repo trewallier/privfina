@@ -1,7 +1,7 @@
 specVersion: v1alpha1
 productId: government-security.pmap.standard
 exampleId: inflation-reset-case
-title: Inflation reset PMÁP example
+title: Inflation reset PMAP example
 description: Scenario demonstrating inflation-floor behavior when prior-year average inflation is negative.
 
 inputs:

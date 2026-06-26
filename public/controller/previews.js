@@ -76,7 +76,9 @@ function createInvestmentPreviewSync({
   inflationSchedulePreviewInput,
   createInvestmentMaturityPreview,
   calculateDkjFromSpecInputs,
-  mapFormDataToDkjSpecInputs
+  mapFormDataToDkjSpecInputs,
+  calculatePmapFromSpecInputs,
+  mapFormDataToPmapSpecInputs
 }) {
   const syncInvestmentPreview = () => {
     if (!purchasePreviewInput || !maturityPreviewInput || !gainPreviewInput) {
@@ -101,6 +103,25 @@ function createInvestmentPreviewSync({
         }
         if (inflationSchedulePreviewInput) {
           inflationSchedulePreviewInput.value = '—'
+        }
+        return
+      }
+
+      if (subtype === 'inflation-linked-bond' && typeof calculatePmapFromSpecInputs === 'function' && typeof mapFormDataToPmapSpecInputs === 'function' && form) {
+        const specInputs = mapFormDataToPmapSpecInputs(new FormData(form))
+        const preview = calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+
+        purchasePreviewInput.value = '—'
+        maturityPreviewInput.value = preview.redemptionValue.toFixed(2)
+        gainPreviewInput.value = '—'
+        if (discountYieldPreviewInput) {
+          discountYieldPreviewInput.value = '—'
+        }
+        if (discountCurrentValuePreviewInput) {
+          discountCurrentValuePreviewInput.value = '—'
+        }
+        if (inflationSchedulePreviewInput) {
+          inflationSchedulePreviewInput.value = `${preview.couponPaymentFrequency} coupon, ${preview.annualCouponRatePct.toFixed(4)}%`
         }
         return
       }

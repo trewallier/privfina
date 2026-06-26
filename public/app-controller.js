@@ -57,6 +57,13 @@ import {
   mapDkjSpecInputsToInvestmentBundleInput
 } from './controller/dkj-form.js'
 import { calculateDkjFromSpecInputs } from './controller/dkj-calculation-adapter.js'
+import {
+  PMAP_PRODUCT_SPEC,
+  applyPmapSpecToForm,
+  mapFormDataToPmapSpecInputs,
+  mapPmapSpecInputsToInvestmentBundleInput
+} from './controller/pmap-form.js'
+import { calculatePmapFromSpecInputs } from './controller/pmap-calculation-adapter.js'
 
 function createFlowId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -281,7 +288,7 @@ function initController() {
         dueDate: true,
         spreadRate: true,
         yearlyInflation: true,
-        couponPeriod: false,
+        couponPeriod: true,
         saleDate: false,
         saleValue: false,
         discountYieldPreview: false,
@@ -290,8 +297,8 @@ function initController() {
       },
       required: {
         issueDate: true,
-        transactionDate: true,
-        dueDate: true,
+        transactionDate: false,
+        dueDate: false,
         purchasePrice: false,
         spreadRate: true,
         yearlyInflation: true,
@@ -475,6 +482,7 @@ function initController() {
   applyFixedRateLoanSpecToForm({ loanForm, loanBox })
   applyBmapSpecToForm({ bmapForm: investmentForm, bmapBox: investmentBox })
   applyDkjSpecToForm({ investmentForm, investmentBox })
+  applyPmapSpecToForm({ investmentForm, investmentBox })
 
   function resetOneTimeForm() {
     editingOneTimeId = null
@@ -660,6 +668,9 @@ function initController() {
       const dkjFieldNames = DKJ_PRODUCT_SPEC.ui.sections.flatMap((section) => section.fieldNames)
       setDkjFieldVisibility(investmentForm, dkjFieldNames)
       applyDkjSpecToForm({ investmentForm, investmentBox })
+    } else if (subtype === 'inflation-linked-bond') {
+      setDkjFieldVisibility(investmentForm, [])
+      applyPmapSpecToForm({ investmentForm, investmentBox })
     } else {
       setDkjFieldVisibility(investmentForm, [])
     }
@@ -837,7 +848,9 @@ function initController() {
     inflationSchedulePreviewInput: investmentInflationSchedulePreviewInput,
     createInvestmentMaturityPreview,
     calculateDkjFromSpecInputs,
-    mapFormDataToDkjSpecInputs
+    mapFormDataToDkjSpecInputs,
+    calculatePmapFromSpecInputs,
+    mapFormDataToPmapSpecInputs
   })
   const { syncInvestmentPreview } = investmentPreviewController
 
@@ -1574,6 +1587,41 @@ function initController() {
           mapDkjSpecInputsToInvestmentBundleInput(specInputs, {
             id: editingInvestmentId || undefined,
             label: String(formData.get('label') || '').trim() || DKJ_PRODUCT_SPEC.ui.formTitle,
+            category: String(formData.get('category') || '').trim() || 'investment',
+            description: String(formData.get('description') || '').trim() || undefined,
+            createdAt: editingInvestmentId
+              ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
+              : undefined
+          })
+        )
+
+        if (!bundle || !bundle.generatedFlows.length) {
+          return
+        }
+
+        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+
+        const firstDate = bundle.generatedFlows[0].date
+        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
+        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+        startInput.value = updatedRange.startDate
+        endInput.value = updatedRange.endDate
+
+        resetInvestmentForm()
+        collapseComposerBoxes()
+        rerender()
+        return
+      }
+
+      if (subtype === 'inflation-linked-bond') {
+        const specInputs = mapFormDataToPmapSpecInputs(formData)
+        calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+
+        const bundle = generateInvestmentInstrumentBundle(
+          mapPmapSpecInputsToInvestmentBundleInput(specInputs, {
+            id: editingInvestmentId || undefined,
+            label: String(formData.get('label') || '').trim() || PMAP_PRODUCT_SPEC.ui.formTitle,
             category: String(formData.get('category') || '').trim() || 'investment',
             description: String(formData.get('description') || '').trim() || undefined,
             createdAt: editingInvestmentId

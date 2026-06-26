@@ -43,15 +43,17 @@ function mapPmapSpecInputsToLegacyInvestmentInput(specInputs) {
 }
 
 function mapLegacyPmapPreviewToSpecOutputs(legacyPreview, specInputs) {
+  void legacyPreview
   const effectiveInflationBasePct = Math.max(Number(specInputs.previousYearAverageInflationPct), 0)
   const interestPremiumPct = Number(specInputs.interestPremiumPct)
   const annualCouponRatePct = effectiveInflationBasePct + interestPremiumPct
+  const principal = toNonNegativeNumber(specInputs.principal, 'principal')
 
   return {
     effectiveInflationBasePct,
     annualCouponRatePct,
     couponPaymentFrequency: 'annual',
-    redemptionValue: toFiniteNumber(legacyPreview.maturityAmount ?? legacyPreview.maturityAmount, 'maturityAmount')
+    redemptionValue: principal
   }
 }
 

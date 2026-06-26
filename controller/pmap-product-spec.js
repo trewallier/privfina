@@ -91,11 +91,11 @@ const PMAP_PRODUCT_SPEC = {
     }
   ],
   ui: {
-    formTitle: 'Prémium Magyar Állampapír',
+    formTitle: 'Premium Hungarian Government Security',
     sections: [
       {
         id: 'pmap-core',
-        title: 'PMÁP Inputs',
+        title: 'PMAP Inputs',
         fieldNames: [
           'principal',
           'interestPremiumPct',

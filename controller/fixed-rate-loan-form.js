@@ -1,56 +1,3 @@
-const FIXED_RATE_LOAN_PRODUCT_SPEC = {
-  inputs: [
-    {
-      name: 'principal',
-      type: 'number',
-      label: 'Principal',
-      required: true,
-      unit: 'currency',
-      constraints: {
-        minimum: 1
-      }
-    },
-    {
-      name: 'annualInterestRatePct',
-      type: 'number',
-      label: 'Annual Interest Rate',
-      required: true,
-      unit: 'percent',
-      constraints: {
-        minimum: 0,
-        maximum: 100
-      }
-    },
-    {
-      name: 'termMonths',
-      type: 'integer',
-      label: 'Term in Months',
-      required: true,
-      unit: 'months',
-      constraints: {
-        minimum: 1
-      }
-    },
-    {
-      name: 'startDate',
-      type: 'string',
-      label: 'Start Date',
-      required: true,
-      unit: 'date'
-    }
-  ],
-  ui: {
-    formTitle: 'Fixed Rate Loan',
-    sections: [
-      {
-        id: 'loan-core',
-        title: 'Loan Inputs',
-        fieldNames: ['principal', 'annualInterestRatePct', 'termMonths', 'startDate']
-      }
-    ]
-  }
-}
-
 const FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER = {
   principal: {
     inputId: 'loan-principal',
@@ -70,7 +17,14 @@ const FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER = {
   }
 }
 
+import { FIXED_RATE_LOAN_PRODUCT_SPEC } from './fixed-rate-loan-product-spec.js'
 import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
+
+function mapLoanTermValueToMonths(termValue, termUnit) {
+  const numericTermValue = Number(termValue)
+  const normalizedTermUnit = String(termUnit || 'months').trim().toLowerCase() === 'years' ? 'years' : 'months'
+  return normalizedTermUnit === 'years' ? numericTermValue * 12 : numericTermValue
+}
 
 function ensureLabelTitleElement(label) {
   let titleElement = label.querySelector('.loan-field-label')
@@ -161,9 +115,22 @@ function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
   reorderLoanRowBySpec(loanForm, fields)
 }
 
+function mapFormDataToFixedRateLoanSpecInputs(formData) {
+  const termUnit = String(formData.get('termUnit') || 'months').trim().toLowerCase()
+  const termValue = Number(formData.get('termValue'))
+
+  return {
+    principal: Number(formData.get('principal')),
+    annualInterestRatePct: Number(formData.get('annualRate')),
+    termMonths: mapLoanTermValueToMonths(termValue, termUnit),
+    startDate: String(formData.get('startDate') || '').trim()
+  }
+}
+
 export {
   FIXED_RATE_LOAN_PRODUCT_SPEC,
   FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER,
   applyFixedRateLoanSpecToForm,
+  mapFormDataToFixedRateLoanSpecInputs,
   orderedSpecFields
 }

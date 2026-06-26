@@ -47,7 +47,7 @@ import {
   calculateFixedRateLoanFromSpecInputs,
   mapFixedRateLoanSpecInputsToLegacyLoanBundleInput
 } from './controller/fixed-rate-loan-calculation-adapter.js'
-import { applyBmapSpecToForm } from './controller/bmap-form.js'
+import { BMAP_PRODUCT_SPEC, applyBmapSpecToForm } from './controller/bmap-form.js'
 import { generateBmapInstrumentBundleFromSpecInputs } from './controller/bmap-calculation-adapter.js'
 import {
   DKJ_PRODUCT_SPEC,
@@ -57,6 +57,43 @@ import {
   mapDkjSpecInputsToInvestmentBundleInput
 } from './controller/dkj-form.js'
 import { calculateDkjFromSpecInputs } from './controller/dkj-calculation-adapter.js'
+import {
+  PMAP_PRODUCT_SPEC,
+  applyPmapSpecToForm,
+  mapFormDataToPmapSpecInputs,
+  mapPmapSpecInputsToInvestmentBundleInput
+} from './controller/pmap-form.js'
+import { calculatePmapFromSpecInputs } from './controller/pmap-calculation-adapter.js'
+
+const INVESTMENT_FAMILY_TITLE = 'Government Security Bonds'
+
+const GENERIC_BOND_SUBTYPE_OPTIONS = [
+  { value: 'regular-bond', label: 'Regular bond' },
+  { value: 'discount-bond', label: 'Discount bond' },
+  { value: 'inflation-linked-bond', label: 'Inflation-linked bond' },
+  { value: 'custom-bond', label: 'Custom bond' }
+]
+
+const PRODUCT_BOND_SUBTYPE_OPTIONS = [
+  {
+    value: 'dkj',
+    label: DKJ_PRODUCT_SPEC.ui.formTitle,
+    migrationStatus: 'fully-spec-backed',
+    available: true
+  },
+  {
+    value: 'pmap',
+    label: PMAP_PRODUCT_SPEC.displayName,
+    migrationStatus: 'fully-spec-backed',
+    available: true
+  },
+  {
+    value: 'bmap',
+    label: BMAP_PRODUCT_SPEC.displayName,
+    migrationStatus: 'calc-aligned',
+    available: true
+  }
+]
 
 function createFlowId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -307,6 +344,39 @@ function initController() {
       },
       annualRateReadOnly: false
     },
+    pmap: {
+      visible: {
+        issueDate: true,
+        transactionDate: true,
+        dueDate: true,
+        spreadRate: true,
+        yearlyInflation: true,
+        couponPeriod: true,
+        saleDate: false,
+        saleValue: false,
+        discountYieldPreview: false,
+        discountCurrentValuePreview: false,
+        inflationSchedulePreview: true
+      },
+      required: {
+        issueDate: true,
+        transactionDate: false,
+        dueDate: false,
+        purchasePrice: false,
+        spreadRate: true,
+        yearlyInflation: true,
+        couponPeriod: false,
+        annualRate: false
+      },
+      text: {
+        principalLabel: 'Principal',
+        principalNote: 'Principal used with inflation and PMAP premium accrual assumptions.',
+        purchasePriceLabel: 'Purchase price',
+        annualRateLabel: 'Annual rate',
+        annualRateNote: 'PMAP coupon is derived from inflation base and premium inputs.'
+      },
+      annualRateReadOnly: false
+    },
     'custom-bond': {
       visible: {
         issueDate: false,
@@ -475,6 +545,41 @@ function initController() {
   applyFixedRateLoanSpecToForm({ loanForm, loanBox })
   applyBmapSpecToForm({ bmapForm: investmentForm, bmapBox: investmentBox })
   applyDkjSpecToForm({ investmentForm, investmentBox })
+  applyPmapSpecToForm({ investmentForm, investmentBox })
+
+  function setInvestmentFamilyTitle() {
+    if (!investmentBox) return
+    const summaryTitle = investmentBox.querySelector('.summary-title')
+    if (summaryTitle) {
+      summaryTitle.textContent = INVESTMENT_FAMILY_TITLE
+    }
+  }
+
+  function rebuildInvestmentSubtypeOptions() {
+    if (!investmentSubtypeInput) return
+
+    const previousValue = investmentSubtypeInput.value || 'regular-bond'
+    const options = [
+      ...GENERIC_BOND_SUBTYPE_OPTIONS,
+      ...PRODUCT_BOND_SUBTYPE_OPTIONS.filter((entry) => entry.available)
+    ]
+
+    investmentSubtypeInput.innerHTML = ''
+    options.forEach((entry) => {
+      const option = document.createElement('option')
+      option.value = entry.value
+      option.textContent = entry.label
+      investmentSubtypeInput.appendChild(option)
+    })
+
+    const availableValues = new Set(options.map((entry) => entry.value))
+    investmentSubtypeInput.value = availableValues.has(previousValue)
+      ? previousValue
+      : 'regular-bond'
+  }
+
+  setInvestmentFamilyTitle()
+  rebuildInvestmentSubtypeOptions()
 
   function resetOneTimeForm() {
     editingOneTimeId = null
@@ -605,6 +710,8 @@ function initController() {
   }
 
   function applyInvestmentSubtypeUi(subtype) {
+    setInvestmentFamilyTitle()
+
     if (subtype === 'bmap') {
       setDkjFieldVisibility(investmentForm, [])
       setElementVisible(investmentGenericCoreRow, false)
@@ -646,13 +753,6 @@ function initController() {
         }
       })
 
-      if (investmentBox) {
-        const summaryTitle = investmentBox.querySelector('.summary-title')
-        if (summaryTitle) {
-          summaryTitle.textContent = 'Bónusz Magyar Állampapír'
-        }
-      }
-
       return
     }
 
@@ -660,6 +760,9 @@ function initController() {
       const dkjFieldNames = DKJ_PRODUCT_SPEC.ui.sections.flatMap((section) => section.fieldNames)
       setDkjFieldVisibility(investmentForm, dkjFieldNames)
       applyDkjSpecToForm({ investmentForm, investmentBox })
+    } else if (subtype === 'pmap') {
+      setDkjFieldVisibility(investmentForm, [])
+      applyPmapSpecToForm({ investmentForm, investmentBox })
     } else {
       setDkjFieldVisibility(investmentForm, [])
     }
@@ -667,7 +770,7 @@ function initController() {
     const ui =
       investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
     const showInflationControls =
-      subtype === 'inflation-linked-bond' || subtype === 'custom-bond'
+      subtype === 'inflation-linked-bond' || subtype === 'custom-bond' || subtype === 'pmap'
 
     setElementVisible(investmentIssueDateWrap, ui.visible.issueDate)
     setElementVisible(investmentTransactionDateWrap, ui.visible.transactionDate)
@@ -837,7 +940,9 @@ function initController() {
     inflationSchedulePreviewInput: investmentInflationSchedulePreviewInput,
     createInvestmentMaturityPreview,
     calculateDkjFromSpecInputs,
-    mapFormDataToDkjSpecInputs
+    mapFormDataToDkjSpecInputs,
+    calculatePmapFromSpecInputs,
+    mapFormDataToPmapSpecInputs
   })
   const { syncInvestmentPreview } = investmentPreviewController
 
@@ -880,10 +985,13 @@ function initController() {
     }
 
     const config = bundle.config || {}
+    const subtypeFromConfig = config.productId === PMAP_PRODUCT_SPEC.id
+      ? 'pmap'
+      : (config.subtype || 'regular-bond')
     editingInvestmentId = id
     investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
-    investmentForm.querySelector('#investment-subtype').value = config.subtype || 'regular-bond'
-    if ((config.subtype || 'regular-bond') === 'bmap') {
+    investmentForm.querySelector('#investment-subtype').value = subtypeFromConfig
+    if (subtypeFromConfig === 'bmap') {
       investmentForm.querySelector('#bmap-principal').value = config.principal !== undefined ? String(config.principal) : ''
       investmentForm.querySelector('#bmap-dkj-base-yield-pct').value = config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
       investmentForm.querySelector('#bmap-interest-premium-pct').value = config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
@@ -892,7 +1000,7 @@ function initController() {
       investmentForm.querySelector('#bmap-issue-date').value = config.issueDate || ''
       investmentForm.querySelector('#bmap-first-coupon-date').value = config.firstCouponDate || ''
     }
-    if ((config.subtype || 'regular-bond') === 'dkj') {
+    if (subtypeFromConfig === 'dkj') {
       investmentForm.querySelector('#investment-term-months').value = config.termMonths !== undefined ? String(config.termMonths) : '12'
       investmentForm.querySelector('#investment-remaining-days').value = config.remainingDays !== undefined ? String(config.remainingDays) : ''
       investmentForm.querySelector('#investment-purchase-price').value =
@@ -922,7 +1030,7 @@ function initController() {
 
     investmentSubmitButton.textContent = 'Save Investment Instrument'
     investmentCancelButton.hidden = false
-    applyInvestmentSubtypeUi(config.subtype || 'regular-bond')
+    applyInvestmentSubtypeUi(subtypeFromConfig)
     syncInvestmentPreview()
     openComposerBox('investment')
   }
@@ -1574,6 +1682,41 @@ function initController() {
           mapDkjSpecInputsToInvestmentBundleInput(specInputs, {
             id: editingInvestmentId || undefined,
             label: String(formData.get('label') || '').trim() || DKJ_PRODUCT_SPEC.ui.formTitle,
+            category: String(formData.get('category') || '').trim() || 'investment',
+            description: String(formData.get('description') || '').trim() || undefined,
+            createdAt: editingInvestmentId
+              ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
+              : undefined
+          })
+        )
+
+        if (!bundle || !bundle.generatedFlows.length) {
+          return
+        }
+
+        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+
+        const firstDate = bundle.generatedFlows[0].date
+        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
+        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+        startInput.value = updatedRange.startDate
+        endInput.value = updatedRange.endDate
+
+        resetInvestmentForm()
+        collapseComposerBoxes()
+        rerender()
+        return
+      }
+
+      if (subtype === 'pmap') {
+        const specInputs = mapFormDataToPmapSpecInputs(formData)
+        calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+
+        const bundle = generateInvestmentInstrumentBundle(
+          mapPmapSpecInputsToInvestmentBundleInput(specInputs, {
+            id: editingInvestmentId || undefined,
+            label: String(formData.get('label') || '').trim() || PMAP_PRODUCT_SPEC.ui.formTitle,
             category: String(formData.get('category') || '').trim() || 'investment',
             description: String(formData.get('description') || '').trim() || undefined,
             createdAt: editingInvestmentId

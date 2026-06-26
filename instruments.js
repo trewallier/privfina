@@ -876,6 +876,7 @@ function generateInvestmentInstrumentBundle(input) {
     instrumentType: 'investment',
     label: input.label || 'Investment',
     config: {
+      productId: input.productId,
       subtype: input.subtype,
       purchaseDate: input.purchaseDate,
       maturityDate: input.maturityDate,

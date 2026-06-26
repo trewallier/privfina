@@ -1,4 +1,4 @@
-# Prémium Magyar Állampapír (PMÁP)
+# Premium Hungarian Government Security / Prémium Magyar Állampapír (PMÁP)
 
 Hungarian retail government bond with inflation-linked variable coupon and annual interest payments.
 

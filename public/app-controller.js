@@ -64,6 +64,10 @@ import {
   mapPmapSpecInputsToInvestmentBundleInput
 } from './controller/pmap-form.js'
 import { calculatePmapFromSpecInputs } from './controller/pmap-calculation-adapter.js'
+import {
+  buildSpecBackedInvestmentSubtypeOptions,
+  buildSpecBackedInvestmentSubtypeUiConfig
+} from './controller/investment-product-metadata.js'
 
 const INVESTMENT_FAMILY_TITLE = 'Government Security Bonds'
 
@@ -74,22 +78,13 @@ const GENERIC_BOND_SUBTYPE_OPTIONS = [
   { value: 'custom-bond', label: 'Custom bond' }
 ]
 
+const SPEC_BACKED_BOND_SUBTYPE_OPTIONS = buildSpecBackedInvestmentSubtypeOptions()
+
 const PRODUCT_BOND_SUBTYPE_OPTIONS = [
-  {
-    value: 'dkj',
-    label: DKJ_PRODUCT_SPEC.ui.formTitle,
-    migrationStatus: 'fully-spec-backed',
-    available: true
-  },
-  {
-    value: 'pmap',
-    label: PMAP_PRODUCT_SPEC.displayName,
-    migrationStatus: 'fully-spec-backed',
-    available: true
-  },
+  ...SPEC_BACKED_BOND_SUBTYPE_OPTIONS,
   {
     value: 'bmap',
-    label: BMAP_PRODUCT_SPEC.displayName,
+    label: BMAP_PRODUCT_SPEC.ui.formTitle,
     migrationStatus: 'calc-aligned',
     available: true
   }
@@ -274,43 +269,6 @@ function initController() {
       },
       annualRateReadOnly: true
     },
-    dkj: {
-      visible: {
-        issueDate: false,
-        transactionDate: true,
-        dueDate: true,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        saleDate: false,
-        saleValue: false,
-        discountYieldPreview: true,
-        discountCurrentValuePreview: true,
-        inflationSchedulePreview: false,
-        termMonths: true,
-        remainingDays: true
-      },
-      required: {
-        issueDate: false,
-        transactionDate: true,
-        dueDate: false,
-        purchasePrice: true,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        annualRate: false,
-        termMonths: true,
-        remainingDays: false
-      },
-      text: {
-        principalLabel: 'Face Value',
-        principalNote: 'Nominal value repaid at maturity.',
-        purchasePriceLabel: 'Purchase Price Percent',
-        annualRateLabel: 'Annual rate (derived)',
-        annualRateNote: 'Derived from DKJ purchase amount and redemption profile.'
-      },
-      annualRateReadOnly: true
-    },
     'inflation-linked-bond': {
       visible: {
         issueDate: true,
@@ -341,39 +299,6 @@ function initController() {
         purchasePriceLabel: 'Purchase price',
         annualRateLabel: 'Annual rate',
         annualRateNote: 'Not used for inflation-linked accrual in v1. Leave empty.'
-      },
-      annualRateReadOnly: false
-    },
-    pmap: {
-      visible: {
-        issueDate: true,
-        transactionDate: true,
-        dueDate: true,
-        spreadRate: true,
-        yearlyInflation: true,
-        couponPeriod: true,
-        saleDate: false,
-        saleValue: false,
-        discountYieldPreview: false,
-        discountCurrentValuePreview: false,
-        inflationSchedulePreview: true
-      },
-      required: {
-        issueDate: true,
-        transactionDate: false,
-        dueDate: false,
-        purchasePrice: false,
-        spreadRate: true,
-        yearlyInflation: true,
-        couponPeriod: false,
-        annualRate: false
-      },
-      text: {
-        principalLabel: 'Principal',
-        principalNote: 'Principal used with inflation and PMAP premium accrual assumptions.',
-        purchasePriceLabel: 'Purchase price',
-        annualRateLabel: 'Annual rate',
-        annualRateNote: 'PMAP coupon is derived from inflation base and premium inputs.'
       },
       annualRateReadOnly: false
     },
@@ -442,7 +367,8 @@ function initController() {
         annualRateNote: 'BMÁP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
       },
       annualRateReadOnly: false
-    }
+    },
+    ...buildSpecBackedInvestmentSubtypeUiConfig()
   }
 
   if (

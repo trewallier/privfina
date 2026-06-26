@@ -141,7 +141,7 @@ assumptions:
   - Inflation data sourcing is future work; examples use explicit input values.
 
 ui:
-  formTitle: Prémium Magyar Állampapír
+  formTitle: Premium Hungarian Government Security
   sections:
     - id: pmap-core
       title: PMÁP Inputs

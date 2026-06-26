@@ -74,7 +74,9 @@ function createInvestmentPreviewSync({
   discountYieldPreviewInput,
   discountCurrentValuePreviewInput,
   inflationSchedulePreviewInput,
-  createInvestmentMaturityPreview
+  createInvestmentMaturityPreview,
+  calculateDkjFromSpecInputs,
+  mapFormDataToDkjSpecInputs
 }) {
   const syncInvestmentPreview = () => {
     if (!purchasePreviewInput || !maturityPreviewInput || !gainPreviewInput) {
@@ -83,6 +85,26 @@ function createInvestmentPreviewSync({
 
     try {
       const subtype = String(subtypeInput?.value || 'regular-bond')
+
+      if (subtype === 'dkj' && typeof calculateDkjFromSpecInputs === 'function' && typeof mapFormDataToDkjSpecInputs === 'function' && form) {
+        const specInputs = mapFormDataToDkjSpecInputs(new FormData(form))
+        const preview = calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+
+        purchasePreviewInput.value = preview.purchaseAmount.toFixed(2)
+        maturityPreviewInput.value = preview.redemptionValue.toFixed(2)
+        gainPreviewInput.value = preview.grossGain.toFixed(2)
+        if (discountYieldPreviewInput) {
+          discountYieldPreviewInput.value = `${preview.annualizedYieldPct.toFixed(4)}%`
+        }
+        if (discountCurrentValuePreviewInput) {
+          discountCurrentValuePreviewInput.value = `${preview.simpleReturnPct.toFixed(4)}%`
+        }
+        if (inflationSchedulePreviewInput) {
+          inflationSchedulePreviewInput.value = '—'
+        }
+        return
+      }
+
       const transactionDateValue = String(transactionDateInput?.value || '')
       const dueDateValue = String(dueDateInput?.value || '')
       const effectivePurchaseDate = transactionDateValue

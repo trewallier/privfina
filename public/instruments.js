@@ -579,7 +579,7 @@ function daysBetween(startDate, endDate) {
 }
 
 function assertDiscountBondContract(input) {
-  if (input.subtype !== 'discount-bond') {
+  if (input.subtype !== 'discount-bond' && input.subtype !== 'dkj') {
     return
   }
 
@@ -589,8 +589,11 @@ function assertDiscountBondContract(input) {
 
   const principal = normalizeAmount(input.principal)
   const purchaseAmount = Number(input.purchasePrice)
-  if (!Number.isFinite(purchaseAmount) || purchaseAmount <= 0 || purchaseAmount >= principal) {
-    throw new Error('Discount bond purchase price must be positive and below face value.')
+  if (!Number.isFinite(purchaseAmount) || purchaseAmount <= 0) {
+    throw new Error('Discount bond purchase price must be positive.')
+  }
+  if (input.subtype === 'discount-bond' && purchaseAmount >= principal) {
+    throw new Error('Discount bond purchase price must be below face value.')
   }
 
   const { transactionDate, dueDate } = resolveInvestmentDates(input)
@@ -718,7 +721,7 @@ function monthsBetween(startDateIso, endDateIso) {
 
 function resolveLifecycleDates(input) {
   const useContractDates =
-    input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond'
+    input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond' || input.subtype === 'dkj'
   const purchaseDateIso = useContractDates
     ? String(input.transactionDate || '').trim()
     : String(input.purchaseDate || '').trim()
@@ -748,7 +751,7 @@ function createInvestmentMaturityPreview(input) {
   if (input.subtype === 'regular-bond') {
     const months = monthsBetween(purchaseDateIso, maturityDateIso)
     maturityAmount = principal * Math.pow(1 + annualRate / 12, months)
-  } else if (input.subtype === 'discount-bond') {
+  } else if (input.subtype === 'discount-bond' || input.subtype === 'dkj') {
     discountMetrics = deriveDiscountBondMetrics(input)
     maturityAmount = principal
   } else if (input.subtype === 'inflation-linked-bond') {
@@ -786,7 +789,7 @@ function generateInvestmentInstrumentFlows(input) {
   let purchaseFlowDate = formatIsoDate(purchaseDate)
   let maturityFlowDate = formatIsoDate(maturityDate)
 
-  if (input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond') {
+  if (input.subtype === 'discount-bond' || input.subtype === 'inflation-linked-bond' || input.subtype === 'dkj') {
     const resolvedDates = resolveInvestmentDates(input)
     purchaseFlowDate = formatIsoDate(resolvedDates.transactionDate)
     maturityFlowDate = formatIsoDate(resolvedDates.dueDate)
@@ -809,7 +812,7 @@ function generateInvestmentInstrumentFlows(input) {
       category,
       description
     })
-  } else if (input.subtype === 'discount-bond') {
+  } else if (input.subtype === 'discount-bond' || input.subtype === 'dkj') {
     assertDiscountBondContract(input)
     flows.push({
       date: maturityFlowDate,
@@ -887,6 +890,9 @@ function generateInvestmentInstrumentBundle(input) {
       saleDate: input.saleDate,
       saleValue: input.saleValue,
       couponPeriod: input.couponPeriod,
+      termMonths: input.termMonths,
+      remainingDays: input.remainingDays,
+      purchasePricePct: input.purchasePricePct,
       category: input.category || 'investment',
       description: input.description
     },

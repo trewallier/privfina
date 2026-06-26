@@ -45,7 +45,14 @@ describe('dkj calculation adapter seam', () => {
     const expectedSpecOutputs = mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview)
 
     expect(delegationCount).toBe(1)
-    expect(adapterOutputs).toEqual(expectedSpecOutputs)
+    expect(adapterOutputs.purchaseAmount).toBe(expectedSpecOutputs.purchaseAmount)
+    expect(adapterOutputs.redemptionValue).toBe(expectedSpecOutputs.redemptionValue)
+    expect(adapterOutputs.grossGain).toBe(expectedSpecOutputs.grossGain)
+    expect(adapterOutputs.simpleReturnPct).toBeCloseTo(expectedSpecOutputs.simpleReturnPct, 10)
+    expect(adapterOutputs.annualizedYieldPct).toBeCloseTo(
+      expectedSpecOutputs.simpleReturnPct * (360 / specInputs.remainingDays),
+      10
+    )
     expect(adapterOutputs).toMatchObject({
       purchaseAmount: expect.any(Number),
       redemptionValue: expect.any(Number),
@@ -59,5 +66,23 @@ describe('dkj calculation adapter seam', () => {
       'simpleReturnPct',
       'annualizedYieldPct'
     ].sort())
+  })
+
+  it('uses remainingDays from DKJ spec input to annualize yield when provided', () => {
+    const specInputs = {
+      faceValue: 100000,
+      purchasePricePct: 95,
+      termMonths: 12,
+      settlementDate: '2026-01-07',
+      maturityDate: '2027-01-07',
+      remainingDays: 180
+    }
+
+    const adapterOutputs = calculateDkjFromSpecInputs(specInputs, {
+      createInvestmentMaturityPreview
+    })
+
+    expect(adapterOutputs.simpleReturnPct).toBeCloseTo(5.2631578947, 8)
+    expect(adapterOutputs.annualizedYieldPct).toBeCloseTo(10.5263157894, 8)
   })
 })

@@ -74,20 +74,23 @@ describe('fixed-rate-loan calculation adapter seam', () => {
         startDate: '2026-01-01'
       },
       {
-        label: 'Loan',
+        label: 'Fixed Rate Loan Scenario',
         repaymentDayOfMonth: 1,
         includeDisbursement: true,
-        category: 'loan'
+        category: 'loan',
+        termValue: 30,
+        termUnit: 'years'
       }
     )
 
     expect(mapped).toMatchObject({
+      productId: 'loan.fixed-rate.standard',
       principal: 100000,
       annualRate: 0.05,
-      termValue: 360,
-      termUnit: 'months',
+      termValue: 30,
+      termUnit: 'years',
       startDate: '2026-01-01',
-      label: 'Loan',
+      label: 'Fixed Rate Loan Scenario',
       repaymentDayOfMonth: 1,
       includeDisbursement: true,
       category: 'loan'

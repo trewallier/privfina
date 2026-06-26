@@ -60,4 +60,22 @@ describe('dkj calculation adapter seam', () => {
       'annualizedYieldPct'
     ].sort())
   })
+
+  it('uses remainingDays from DKJ spec input to annualize yield when provided', () => {
+    const specInputs = {
+      faceValue: 100000,
+      purchasePricePct: 95,
+      termMonths: 12,
+      settlementDate: '2026-01-07',
+      maturityDate: '2027-01-07',
+      remainingDays: 180
+    }
+
+    const adapterOutputs = calculateDkjFromSpecInputs(specInputs, {
+      createInvestmentMaturityPreview
+    })
+
+    expect(adapterOutputs.simpleReturnPct).toBeCloseTo(5.2631578947, 8)
+    expect(adapterOutputs.annualizedYieldPct).toBeCloseTo(10.5263157894, 8)
+  })
 })

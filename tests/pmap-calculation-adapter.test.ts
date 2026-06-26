@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
+import YAML from 'yaml'
 import {
   calculatePmapFromSpecInputs,
   mapPmapSpecInputsToLegacyInvestmentInput,
@@ -15,6 +16,7 @@ function readRepoFile(relativePath: string): string {
 describe('pmap calculation adapter seam', () => {
   it('bridges PMAP example inputs through existing investment calculation path and returns spec-shaped outputs', () => {
     const exampleYaml = readRepoFile('docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml')
+    const parsed = YAML.parse(exampleYaml) as any
 
     expect(exampleYaml).toContain('principal: 1000000')
     expect(exampleYaml).toContain('interestPremiumPct: 0.5')
@@ -45,6 +47,7 @@ describe('pmap calculation adapter seam', () => {
 
     expect(delegationCount).toBe(1)
     expect(adapterOutputs).toEqual(expectedSpecOutputs)
+    expect(adapterOutputs).toEqual(parsed.expected)
     expect(adapterOutputs).toMatchObject({
       effectiveInflationBasePct: expect.any(Number),
       annualCouponRatePct: expect.any(Number),

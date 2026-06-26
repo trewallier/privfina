@@ -119,6 +119,7 @@ function reorderInvestmentRowBySpec(investmentForm, fields) {
 }
 
 function applyDkjSpecToForm({ investmentForm, investmentBox }) {
+  void investmentBox
   if (!investmentForm) return
 
   const fields = orderedSpecFields(DKJ_PRODUCT_SPEC)
@@ -153,11 +154,6 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
       titleElement.textContent = field.label
     }
   })
-
-  if (investmentBox) {
-    const summaryTitle = investmentBox.querySelector('.summary-title')
-    if (summaryTitle) summaryTitle.textContent = DKJ_PRODUCT_SPEC.ui.formTitle
-  }
 
   reorderInvestmentRowBySpec(investmentForm, fields)
 }

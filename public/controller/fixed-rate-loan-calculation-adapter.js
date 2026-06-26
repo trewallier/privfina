@@ -1,4 +1,5 @@
 import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-input-validators.js'
+import { FIXED_RATE_LOAN_PRODUCT_SPEC } from './fixed-rate-loan-product-spec.js'
 
 function mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs) {
   const principal = toNonNegativeNumber(specInputs.principal, 'principal')
@@ -38,13 +39,18 @@ function calculateFixedRateLoanFromSpecInputs(specInputs, options) {
 function mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras = {}) {
   const legacyInput = mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs)
   const startDate = String(specInputs.startDate || '').trim()
+  const termUnit = String(extras.termUnit || 'months').trim().toLowerCase() === 'years' ? 'years' : 'months'
+  const numericTermValue = Number(extras.termValue)
+  const termValue = Number.isFinite(numericTermValue) && numericTermValue > 0 ? numericTermValue : legacyInput.termMonths
 
   return {
     ...extras,
+    productId: FIXED_RATE_LOAN_PRODUCT_SPEC.id,
+    label: String(extras.label || '').trim() || FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle,
     principal: legacyInput.principal,
     annualRate: legacyInput.annualRate,
-    termValue: legacyInput.termMonths,
-    termUnit: 'months',
+    termValue,
+    termUnit,
     startDate
   }
 }

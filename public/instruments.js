@@ -509,6 +509,7 @@ function generateLoanInstrumentBundle(input) {
     instrumentType: 'loan',
     label: input.label || 'Loan',
     config: {
+      productId: input.productId,
       principal: Number(input.principal),
       annualRate: Number(input.annualRate),
       termMonths,

@@ -42,7 +42,11 @@ import {
   createInvestmentPreviewSync,
   bindLoanPreviewEvents
 } from './controller/previews.js'
-import { applyFixedRateLoanSpecToForm } from './controller/fixed-rate-loan-form.js'
+import {
+  FIXED_RATE_LOAN_PRODUCT_SPEC,
+  applyFixedRateLoanSpecToForm,
+  mapFormDataToFixedRateLoanSpecInputs
+} from './controller/fixed-rate-loan-form.js'
 import {
   calculateFixedRateLoanFromSpecInputs,
   mapFixedRateLoanSpecInputsToLegacyLoanBundleInput
@@ -841,10 +845,11 @@ function initController() {
 
     const config = bundle.config || {}
     editingLoanId = id
-    loanForm.querySelector('#loan-label').value = bundle.label || 'Loan'
+    loanForm.querySelector('#loan-label').value = bundle.label || FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle
     loanForm.querySelector('#loan-start-date').value = config.startDate || ''
     loanForm.querySelector('#loan-principal').value = config.principal !== undefined ? String(config.principal) : ''
-    loanForm.querySelector('#loan-annual-rate').value = config.annualRate !== undefined ? String(config.annualRate) : ''
+    loanForm.querySelector('#loan-annual-rate').value =
+      config.annualRate !== undefined ? String(Number(config.annualRate) * 100) : ''
     loanForm.querySelector('#loan-term-value').value =
       config.termValue !== undefined
         ? String(config.termValue)
@@ -1462,27 +1467,25 @@ function initController() {
 
     try {
       const formData = new FormData(loanForm)
-      const submittedTermUnit = String(formData.get('termUnit') || 'months')
+      const submittedTermUnit =
+        String(formData.get('termUnit') || 'months').trim().toLowerCase() === 'years'
+          ? 'years'
+          : 'months'
       const submittedTermValue = Number(formData.get('termValue'))
-      const submittedTermMonths = submittedTermUnit === 'years'
-        ? submittedTermValue * 12
-        : submittedTermValue
+      const specInputs = mapFormDataToFixedRateLoanSpecInputs(formData)
 
       const bundle = generateLoanInstrumentBundle(
         mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(
-          {
-            principal: Number(formData.get('principal')),
-            annualInterestRatePct: Number(formData.get('annualRate')),
-            termMonths: submittedTermMonths,
-            startDate: String(formData.get('startDate') || '').trim()
-          },
+          specInputs,
           {
             id: editingLoanId || undefined,
-            label: String(formData.get('label') || '').trim() || 'Loan',
+            label: String(formData.get('label') || '').trim() || FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle,
             repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
             includeDisbursement: formData.get('includeDisbursement') === 'on',
             category: String(formData.get('category') || '').trim() || 'loan',
             description: String(formData.get('description') || '').trim() || undefined,
+            termValue: submittedTermValue,
+            termUnit: submittedTermUnit,
             createdAt: editingLoanId
               ? instrumentBundles.find((entry) => entry.id === editingLoanId)?.createdAt
               : undefined

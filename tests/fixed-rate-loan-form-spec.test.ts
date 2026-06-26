@@ -1,24 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { loadFixedRateLoanProductSpecFromFiles } from '../src/finance_engine/engine'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import YAML from 'yaml'
 import {
   FIXED_RATE_LOAN_PRODUCT_SPEC,
   FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER,
+  mapFormDataToFixedRateLoanSpecInputs,
   orderedSpecFields
 } from '../public/controller/fixed-rate-loan-form.js'
 
-describe('fixed-rate-loan frontend form metadata seam', () => {
-  it('keeps frontend field metadata aligned with fixed-rate product spec inputs', () => {
-    const loadedSpec = loadFixedRateLoanProductSpecFromFiles()
-    const loadedByName = new Map(loadedSpec.inputs.map((field) => [field.name, field]))
+function readRepoFile(relativePath: string): string {
+  return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
+}
 
-    for (const field of FIXED_RATE_LOAN_PRODUCT_SPEC.inputs) {
-      const fromLoader = loadedByName.get(field.name)
-      expect(fromLoader).toBeDefined()
-      expect(field.label).toBe(fromLoader?.label)
-      expect(field.required).toBe(fromLoader?.required)
-      expect(field.type).toBe(fromLoader?.type)
-      expect(field.constraints ?? {}).toEqual(fromLoader?.constraints ?? {})
-    }
+describe('fixed-rate-loan frontend form metadata seam', () => {
+  it('keeps the frontend product spec module aligned with the repository product spec', () => {
+    const loadedSpec = YAML.parse(
+      readRepoFile('docs/product-specs/products/loans/fixed-rate-loan/product.yaml')
+    )
+
+    expect(FIXED_RATE_LOAN_PRODUCT_SPEC).toEqual(loadedSpec)
   })
 
   it('uses ui section field order from the product spec for fixed-rate loan form fields', () => {
@@ -31,5 +32,28 @@ describe('fixed-rate-loan frontend form metadata seam', () => {
     expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.termMonths.formName).toBe('termValue')
     expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.principal.formName).toBe('principal')
     expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.startDate.formName).toBe('startDate')
+  })
+
+  it('maps existing loan form fields into canonical fixed-rate product spec inputs', () => {
+    const specInputs = mapFormDataToFixedRateLoanSpecInputs({
+      get(name: string) {
+        const entries: Record<string, string> = {
+          principal: '100000',
+          annualRate: '5',
+          termValue: '30',
+          termUnit: 'years',
+          startDate: '2026-01-01'
+        }
+
+        return Object.prototype.hasOwnProperty.call(entries, name) ? entries[name] : null
+      }
+    } as any)
+
+    expect(specInputs).toEqual({
+      principal: 100000,
+      annualInterestRatePct: 5,
+      termMonths: 360,
+      startDate: '2026-01-01'
+    })
   })
 })

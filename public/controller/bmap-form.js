@@ -79,6 +79,7 @@ function ensureLabelTitleElement(label) {
 // `orderedSpecFields` is imported from `spec-form-utils.js`
 
 function applyBmapSpecToForm({ bmapForm, bmapBox }) {
+  void bmapBox
   if (!bmapForm) return
 
   const fields = orderedSpecFields(BMAP_PRODUCT_SPEC)
@@ -103,10 +104,6 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
     }
   })
 
-  if (bmapBox) {
-    const summaryTitle = bmapBox.querySelector('.summary-title')
-    if (summaryTitle) summaryTitle.textContent = BMAP_PRODUCT_SPEC.ui.formTitle
-  }
 }
 
 export { BMAP_PRODUCT_SPEC, BMAP_FRONTEND_FIELD_ADAPTER, applyBmapSpecToForm, orderedSpecFields }

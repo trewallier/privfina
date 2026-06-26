@@ -2,7 +2,7 @@ const PMAP_PRODUCT_SPEC = {
   id: 'government-security.pmap.standard',
   family: 'government-security',
   variant: 'pmap',
-  displayName: 'Prémium Magyar Állampapír',
+  displayName: 'Premium Hungarian Government Security',
   inputs: [
     {
       name: 'principal',

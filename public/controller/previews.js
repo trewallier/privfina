@@ -107,7 +107,7 @@ function createInvestmentPreviewSync({
         return
       }
 
-      if (subtype === 'inflation-linked-bond' && typeof calculatePmapFromSpecInputs === 'function' && typeof mapFormDataToPmapSpecInputs === 'function' && form) {
+      if (subtype === 'pmap' && typeof calculatePmapFromSpecInputs === 'function' && typeof mapFormDataToPmapSpecInputs === 'function' && form) {
         const specInputs = mapFormDataToPmapSpecInputs(new FormData(form))
         const preview = calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
 

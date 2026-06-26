@@ -60,6 +60,7 @@ function reorderInvestmentRowsBySpec(investmentForm, fields) {
 }
 
 function applyPmapSpecToForm({ investmentForm, investmentBox }) {
+  void investmentBox
   if (!investmentForm) return
 
   const fields = orderedSpecFields(PMAP_PRODUCT_SPEC)
@@ -84,11 +85,6 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
     }
   })
 
-  if (investmentBox) {
-    const summaryTitle = investmentBox.querySelector('.summary-title')
-    if (summaryTitle) summaryTitle.textContent = PMAP_PRODUCT_SPEC.ui.formTitle
-  }
-
   reorderInvestmentRowsBySpec(investmentForm, fields)
 }
 
@@ -109,6 +105,7 @@ function mapPmapSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
 
   return {
     id: meta.id,
+    productId: PMAP_PRODUCT_SPEC.id,
     label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle,
     subtype: 'inflation-linked-bond',
     purchaseDate: legacyInput.transactionDate,

@@ -3,7 +3,7 @@ kind: financial-product
 id: government-security.pmap.standard
 family: government-security
 variant: pmap
-displayName: Prémium Magyar Állampapír
+displayName: Premium Hungarian Government Security
 description: Hungarian retail government bond with inflation-linked variable coupon and annual interest payment.
 
 category: retail-government-bond

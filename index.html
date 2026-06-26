@@ -863,6 +863,7 @@
                       <span class="label-title">Bond subtype</span>
                       <select id="investment-subtype" name="subtype" required>
                         <option value="regular-bond">Regular bond</option>
+                        <option value="dkj">Discount Treasury Bond (DKJ)</option>
                         <option value="discount-bond">Discount bond</option>
                         <option value="inflation-linked-bond">Inflation-linked bond</option>
                         <option value="custom-bond">Custom bond</option>
@@ -919,6 +920,18 @@
                         <button type="button" class="field-help-close" data-help-close="investment-purchase-price-help" aria-label="Close">x</button>
                         <p>Upfront amount paid. For discount bonds this is mandatory and must be below face value.</p>
                       </div>
+                    </label>
+                    <label id="investment-term-months-wrap" hidden>
+                      <span class="label-title">Term Bucket in Months</span>
+                      <select id="investment-term-months" name="termMonths">
+                        <option value="3">3</option>
+                        <option value="6">6</option>
+                        <option value="12">12</option>
+                      </select>
+                    </label>
+                    <label id="investment-remaining-days-wrap" hidden>
+                      <span class="label-title">Remaining Days</span>
+                      <input id="investment-remaining-days" name="remainingDays" type="number" min="1" step="1" />
                     </label>
                     <label id="investment-annual-rate-wrap">
                       <span class="label-title"><span id="investment-annual-rate-label">Annual rate</span> <button type="button" class="info-chip" data-help-button="investment-annual-rate-help" aria-label="Annual rate help">i</button></span>

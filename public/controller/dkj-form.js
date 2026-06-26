@@ -70,6 +70,13 @@ const DKJ_FRONTEND_FIELD_ADAPTER = {
 
 import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
 
+function addMonthsToIsoDate(dateIso, months) {
+  const source = new Date(`${dateIso}T00:00:00Z`)
+  if (Number.isNaN(source.getTime())) return ''
+  const target = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + months, source.getUTCDate()))
+  return target.toISOString().slice(0, 10)
+}
+
 function ensureLabelTitleElement(label) {
   let titleElement = label.querySelector('.investment-field-label')
   if (!titleElement) {
@@ -122,7 +129,18 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
     if (!input) return
 
     input.name = adapter.formName
-    input.type = toInputType(field)
+    const hasEnum = Array.isArray(field?.constraints?.enum) && field.constraints.enum.length > 0
+    if (hasEnum && input.tagName === 'SELECT') {
+      input.innerHTML = ''
+      field.constraints.enum.forEach((value) => {
+        const option = document.createElement('option')
+        option.value = String(value)
+        option.textContent = String(value)
+        input.appendChild(option)
+      })
+    } else {
+      input.type = toInputType(field)
+    }
     input.required = Boolean(field.required)
     if (input.type === 'number') {
       applyNumericConstraints(input, field.constraints)
@@ -144,4 +162,72 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
   reorderInvestmentRowBySpec(investmentForm, fields)
 }
 
-export { DKJ_PRODUCT_SPEC, DKJ_FRONTEND_FIELD_ADAPTER, applyDkjSpecToForm, orderedSpecFields }
+function setDkjFieldVisibility(investmentForm, visibleFieldNames) {
+  if (!investmentForm) return
+
+  const dkjOnlyFields = ['termMonths', 'remainingDays']
+
+  dkjOnlyFields.forEach((fieldName) => {
+    const adapter = DKJ_FRONTEND_FIELD_ADAPTER[fieldName]
+    if (!adapter) return
+    const input = investmentForm.querySelector(`#${adapter.inputId}`)
+    const label = input ? input.closest('label') : null
+    if (label) {
+      label.hidden = !visibleFieldNames.includes(fieldName)
+    }
+  })
+}
+
+function mapFormDataToDkjSpecInputs(formData) {
+  return {
+    faceValue: Number(formData.get('principal')),
+    purchasePricePct: Number(formData.get('purchasePrice')),
+    termMonths: Number(formData.get('termMonths')),
+    settlementDate: String(formData.get('transactionDate') || '').trim(),
+    maturityDate: String(formData.get('dueDate') || '').trim() || undefined,
+    remainingDays: String(formData.get('remainingDays') || '').trim()
+      ? Number(formData.get('remainingDays'))
+      : undefined
+  }
+}
+
+function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
+  const purchasePrice = (specInputs.faceValue * specInputs.purchasePricePct) / 100
+  const settlementDate = String(specInputs.settlementDate || '').trim()
+  const maturityDate = String(specInputs.maturityDate || '').trim() || addMonthsToIsoDate(settlementDate, specInputs.termMonths)
+
+  return {
+    id: meta.id,
+    label: meta.label || 'Discount Treasury Bond',
+    subtype: 'dkj',
+    purchaseDate: settlementDate,
+    maturityDate,
+    issueDate: settlementDate,
+    transactionDate: settlementDate,
+    dueDate: maturityDate,
+    principal: Number(specInputs.faceValue),
+    purchasePrice,
+    annualRate: undefined,
+    spreadRate: undefined,
+    yearlyInflationRaw: '',
+    saleDate: '',
+    saleValue: undefined,
+    couponPeriod: '',
+    category: meta.category || 'investment',
+    description: meta.description,
+    createdAt: meta.createdAt,
+    termMonths: specInputs.termMonths,
+    remainingDays: specInputs.remainingDays,
+    purchasePricePct: specInputs.purchasePricePct
+  }
+}
+
+export {
+  DKJ_PRODUCT_SPEC,
+  DKJ_FRONTEND_FIELD_ADAPTER,
+  applyDkjSpecToForm,
+  setDkjFieldVisibility,
+  mapFormDataToDkjSpecInputs,
+  mapDkjSpecInputsToInvestmentBundleInput,
+  orderedSpecFields
+}

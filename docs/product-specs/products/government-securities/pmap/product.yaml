@@ -127,14 +127,14 @@ outputs:
     description: Principal repaid at maturity.
 
 assumptions:
-  - PMÁP is modeled as an annual-pay inflation-linked retail bond.
+  - PMAP is modeled as an annual-pay inflation-linked retail bond.
   - Product-term intent in this pilot is 10 years.
   - Annual coupon rate is effective inflation base plus fixed premium.
   - Effective inflation base is max(previous-year-average-inflation, 0).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
-  - PMÁP denomination unit is 1 HUF.
+  - PMAP denomination unit is 1 HUF.
   - The first coupon period may differ from a regular annual period.
-  - The issuer does not redeem PMÁP before maturity.
+  - The issuer does not redeem PMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
   - Collateral-purpose transfer is out of scope and restricted by the official product rules.
   - This spec remains a product-type model and does not attempt to encode every live series edge case.
@@ -144,7 +144,7 @@ ui:
   formTitle: Premium Hungarian Government Security
   sections:
     - id: pmap-core
-      title: PMÁP Inputs
+      title: PMAP Inputs
       fieldNames:
         - principal
         - interestPremiumPct

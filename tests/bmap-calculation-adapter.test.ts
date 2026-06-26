@@ -10,7 +10,7 @@ function readRepoFile(relativePath: string): string {
 }
 
 describe('bmap calculation adapter seam', () => {
-  it('bridges BMÁP nominal example inputs through existing investment calculation path', () => {
+  it('bridges BMAP nominal example inputs through existing investment calculation path', () => {
     const exampleYaml = readRepoFile('docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml')
     const parsed = YAML.parse(exampleYaml) as any
 

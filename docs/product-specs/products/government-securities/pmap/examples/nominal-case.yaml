@@ -1,8 +1,8 @@
 specVersion: v1alpha1
 productId: government-security.pmap.standard
 exampleId: nominal-case
-title: Nominal PMÁP example
-description: Baseline inflation-linked PMÁP scenario with explicit prior-year inflation input.
+title: Nominal PMAP example
+description: Baseline inflation-linked PMAP scenario with explicit prior-year inflation input.
 
 inputs:
   principal: 1000000

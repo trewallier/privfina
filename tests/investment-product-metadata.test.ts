@@ -12,7 +12,7 @@ function inputByName(spec: any, inputName: string) {
 }
 
 describe('spec-backed investment metadata helper', () => {
-  it('builds BMÁP, DKJ, and PMAP subtype option labels from spec metadata', () => {
+  it('builds BMAP, DKJ, and PMAP subtype option labels from spec metadata', () => {
     const options = buildSpecBackedInvestmentSubtypeOptions()
     const optionByValue = new Map(options.map((entry) => [entry.value, entry]))
 
@@ -24,7 +24,7 @@ describe('spec-backed investment metadata helper', () => {
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
   })
 
-  it('derives BMÁP required and label metadata from mapped spec fields', () => {
+  it('derives BMAP required and label metadata from mapped spec fields', () => {
     const config = buildSpecBackedInvestmentSubtypeUiConfig().bmap
 
     expect(config.text.principalLabel).toBe(inputByName(BMAP_PRODUCT_SPEC, 'principal')?.label)

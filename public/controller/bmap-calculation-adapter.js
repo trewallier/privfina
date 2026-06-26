@@ -100,7 +100,7 @@ function generateQuarterlyCouponFlows(specInputs, purchaseAmount, annualCouponRa
       amount: purchaseAmount,
       direction: 'outflow',
       category: 'investment',
-      description: 'BMÁP'
+      description: 'BMAP'
     }
   ]
 
@@ -114,7 +114,7 @@ function generateQuarterlyCouponFlows(specInputs, purchaseAmount, annualCouponRa
         amount: couponAmount,
         direction: 'inflow',
         category: 'investment',
-        description: 'BMÁP'
+        description: 'BMAP'
       })
     }
     couponDate = addMonthsUtc(couponDate, 3)
@@ -125,7 +125,7 @@ function generateQuarterlyCouponFlows(specInputs, purchaseAmount, annualCouponRa
     amount: principal,
     direction: 'inflow',
     category: 'investment',
-    description: 'BMÁP'
+    description: 'BMAP'
   })
 
   return flows.sort((left, right) => left.date.localeCompare(right.date))
@@ -140,7 +140,7 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
   return {
     id: extras.id || `bmap-${Date.now()}`,
     instrumentType: 'investment',
-    label: extras.label || 'Bónusz Magyar Állampapír',
+    label: extras.label || 'Bonus Hungarian Government Security',
     config: {
       subtype: 'bmap',
       principal: calculated.purchaseAmount - calculated.accruedInterestAmount,

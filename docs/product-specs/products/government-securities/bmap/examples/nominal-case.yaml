@@ -1,8 +1,8 @@
 specVersion: v1alpha1
 productId: government-security.bmap.standard
 exampleId: nominal-case
-title: Nominal BMÁP example
-description: Baseline BMÁP scenario with explicit DKJ base-yield input.
+title: Nominal BMAP example
+description: Baseline BMAP scenario with explicit DKJ base-yield input.
 
 inputs:
   principal: 1000000

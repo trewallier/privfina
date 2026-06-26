@@ -12,7 +12,7 @@ function mapPmapSpecInputsToLegacyInvestmentInput(specInputs) {
   const purchaseDate = typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
   const issueDate = typeof specInputs.issueDate === 'string' ? String(specInputs.issueDate).trim() : ''
 
-  // PMÁP pilot assumes a 10-year term by product assumption
+  // PMAP pilot assumes a 10-year term by product assumption
   const start = new Date(startDate)
   const maturity = new Date(Date.UTC(start.getUTCFullYear() + 10, start.getUTCMonth(), start.getUTCDate()))
   const maturityIso = maturity.toISOString().slice(0, 10)

@@ -22,7 +22,7 @@ function createFormDataLike(entries: Record<string, string>): { get(name: string
 }
 
 describe('bmap ui/controller integration seam', () => {
-  it('maps spec-backed BMÁP form values through adapter and BMÁP bundle generation', () => {
+  it('maps spec-backed BMAP form values through adapter and BMAP bundle generation', () => {
     const exampleYaml = readRepoFile('docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml')
     const parsed = YAML.parse(exampleYaml) as any
 

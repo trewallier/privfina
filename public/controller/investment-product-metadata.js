@@ -116,10 +116,10 @@ function buildBmapSubtypeUiConfig() {
     },
     text: {
       principalLabel: inputLabel(BMAP_PRODUCT_SPEC, 'principal', 'Principal'),
-      principalNote: 'Principal amount used for BMÁP coupon and redemption calculations.',
+      principalNote: 'Principal amount used for BMAP coupon and redemption calculations.',
       purchasePriceLabel: 'Purchase price',
       annualRateLabel: 'Annual rate',
-      annualRateNote: 'BMÁP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
+      annualRateNote: 'BMAP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
     },
     annualRateReadOnly: false
   }

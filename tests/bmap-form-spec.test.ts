@@ -7,7 +7,7 @@ import {
 } from '../public/controller/bmap-form.js'
 
 describe('bmap frontend form metadata seam', () => {
-  it('keeps frontend field metadata aligned with BMÁP product spec inputs', () => {
+  it('keeps frontend field metadata aligned with BMAP product spec inputs', () => {
     const loadedSpec = loadBmapProductSpecYamlFromFiles()
     const loadedByName = new Map((loadedSpec as any).inputs.map((field: any) => [field.name, field]))
 
@@ -25,7 +25,7 @@ describe('bmap frontend form metadata seam', () => {
     }
   })
 
-  it('uses ui section field order from BMÁP product spec', () => {
+  it('uses ui section field order from BMAP product spec', () => {
     const orderedNames = orderedSpecFields(BMAP_PRODUCT_SPEC).map((field) => field.name)
     expect(orderedNames).toEqual([
       'principal',
@@ -38,7 +38,7 @@ describe('bmap frontend form metadata seam', () => {
     ])
   })
 
-  it('keeps adapter mapping minimal while preserving BMÁP DOM wiring', () => {
+  it('keeps adapter mapping minimal while preserving BMAP DOM wiring', () => {
     expect(BMAP_FRONTEND_FIELD_ADAPTER.principal.inputId).toBe('bmap-principal')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.dkjBaseYieldPct.inputId).toBe('bmap-dkj-base-yield-pct')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.interestPremiumPct.inputId).toBe(

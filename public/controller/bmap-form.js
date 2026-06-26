@@ -2,7 +2,7 @@ const BMAP_PRODUCT_SPEC = {
   id: 'government-security.bmap.standard',
   family: 'government-security',
   variant: 'bmap',
-  displayName: 'Bónusz Magyar Állampapír',
+  displayName: 'Bonus Hungarian Government Security',
   inputs: [
     {
       name: 'principal',
@@ -34,11 +34,11 @@ const BMAP_PRODUCT_SPEC = {
     { name: 'firstCouponDate', type: 'string', label: 'First Coupon Date', required: false, unit: 'date' }
   ],
   ui: {
-    formTitle: 'Bónusz Magyar Állampapír',
+    formTitle: 'Bonus Hungarian Government Security',
     sections: [
       {
         id: 'bmap-core',
-        title: 'BMÁP Inputs',
+        title: 'BMAP Inputs',
         fieldNames: [
           'principal',
           'dkjBaseYieldPct',

@@ -1,4 +1,4 @@
-# Bónusz Magyar Állampapír (BMÁP)
+# Bonus Hungarian Government Security / Bónusz Magyar Állampapír (BMÁP)
 
 Hungarian retail government bond with DKJ-linked variable coupon and quarterly interest payments.
 

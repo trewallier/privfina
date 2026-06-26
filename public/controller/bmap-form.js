@@ -106,4 +106,22 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
 
 }
 
-export { BMAP_PRODUCT_SPEC, BMAP_FRONTEND_FIELD_ADAPTER, applyBmapSpecToForm, orderedSpecFields }
+function mapFormDataToBmapSpecInputs(formData) {
+  return {
+    principal: Number(formData.get('principal')),
+    dkjBaseYieldPct: Number(formData.get('dkjBaseYieldPct')),
+    interestPremiumPct: Number(formData.get('interestPremiumPct')),
+    startDate: String(formData.get('startDate') || '').trim(),
+    purchaseDate: String(formData.get('purchaseDate') || '').trim() || undefined,
+    issueDate: String(formData.get('issueDate') || '').trim() || undefined,
+    firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined
+  }
+}
+
+export {
+  BMAP_PRODUCT_SPEC,
+  BMAP_FRONTEND_FIELD_ADAPTER,
+  applyBmapSpecToForm,
+  mapFormDataToBmapSpecInputs,
+  orderedSpecFields
+}

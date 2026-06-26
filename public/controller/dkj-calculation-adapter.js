@@ -1,9 +1,25 @@
 import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-input-validators.js'
 
+function addMonthsToIsoDate(dateIso, months) {
+  const source = new Date(`${dateIso}T00:00:00Z`)
+  if (Number.isNaN(source.getTime())) {
+    throw new Error('settlementDate must be an ISO date string.')
+  }
+
+  const target = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + months, source.getUTCDate()))
+  return target.toISOString().slice(0, 10)
+}
+
 function mapDkjSpecInputsToLegacyInvestmentInput(specInputs) {
   const faceValue = toNonNegativeNumber(specInputs.faceValue, 'faceValue')
   const purchasePricePct = toNonNegativeNumber(specInputs.purchasePricePct, 'purchasePricePct')
   const termMonths = toPositiveInteger(specInputs.termMonths, 'termMonths')
+  const settlementDate = String(specInputs.settlementDate || '').trim()
+  if (!settlementDate) {
+    throw new Error('settlementDate is required.')
+  }
+
+  const maturityDate = String(specInputs.maturityDate || '').trim() || addMonthsToIsoDate(settlementDate, termMonths)
 
   const purchasePrice = (faceValue * purchasePricePct) / 100
 
@@ -11,9 +27,9 @@ function mapDkjSpecInputsToLegacyInvestmentInput(specInputs) {
     subtype: 'discount-bond',
     principal: faceValue,
     purchasePrice,
-    issueDate: String(specInputs.settlementDate || '').trim(),
-    transactionDate: String(specInputs.settlementDate || '').trim(),
-    dueDate: specInputs.maturityDate
+    issueDate: settlementDate,
+    transactionDate: settlementDate,
+    dueDate: maturityDate
   }
 }
 
@@ -36,6 +52,16 @@ function mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview) {
   }
 }
 
+function resolveAnnualizedYieldPct(specInputs, fallbackAnnualizedYieldPct, simpleReturnPct) {
+  const remainingDaysRaw = specInputs?.remainingDays
+  if (remainingDaysRaw === undefined || remainingDaysRaw === null || remainingDaysRaw === '') {
+    return fallbackAnnualizedYieldPct
+  }
+
+  const remainingDays = toPositiveInteger(remainingDaysRaw, 'remainingDays')
+  return simpleReturnPct * (360 / remainingDays)
+}
+
 function calculateDkjFromSpecInputs(specInputs, options) {
   const createInvestmentMaturityPreview = options?.createInvestmentMaturityPreview
   if (typeof createInvestmentMaturityPreview !== 'function') {
@@ -44,7 +70,11 @@ function calculateDkjFromSpecInputs(specInputs, options) {
 
   const legacyInput = mapDkjSpecInputsToLegacyInvestmentInput(specInputs)
   const legacyPreview = createInvestmentMaturityPreview(legacyInput)
-  return mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview)
+  const mapped = mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview)
+  return {
+    ...mapped,
+    annualizedYieldPct: resolveAnnualizedYieldPct(specInputs, mapped.annualizedYieldPct, mapped.simpleReturnPct)
+  }
 }
 
 export { mapDkjSpecInputsToLegacyInvestmentInput, mapLegacyInvestmentPreviewToSpecOutputs, calculateDkjFromSpecInputs }

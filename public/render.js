@@ -1,24 +1,11 @@
-function renderConfiguredTable(
-  oneTimeFlows,
-  recurringFlows,
-  instrumentBundles,
-  tbody,
-  isFlowIncluded,
-  onToggleInclude,
-  onEditOneTime,
-  onDeleteOneTime,
-  onEditRecurring,
-  onDeleteRecurring,
-  onEditInstrument,
-  onDeleteInstrument
-) {
-  tbody.innerHTML = ''
+function buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, isFlowIncluded) {
   const rows = []
 
   for (const flow of oneTimeFlows) {
     rows.push({
       id: flow.id,
       type: 'one-time',
+      label: flow.category || 'one-time',
       startOrDate: flow.date,
       endOrCount: '-',
       period: '-',
@@ -33,6 +20,7 @@ function renderConfiguredTable(
     rows.push({
       id: flow.id,
       type: 'recurring',
+      label: flow.category || 'recurring',
       startOrDate: flow.startDate,
       endOrCount: flow.endDate || (flow.occurrences ? `count: ${flow.occurrences}` : '-'),
       period: flow.period,
@@ -55,6 +43,7 @@ function renderConfiguredTable(
     rows.push({
       id: bundle.id,
       type: bundle.instrumentType,
+      label: bundle.label || bundle.config?.label || bundle.instrumentType,
       startOrDate: firstDate,
       endOrCount: `${lastDate} (${generatedFlows.length} flows)`,
       period:
@@ -68,7 +57,127 @@ function renderConfiguredTable(
     })
   }
 
-  rows.sort((a, b) => a.startOrDate.localeCompare(b.startOrDate))
+  rows.sort((a, b) => String(a.startOrDate).localeCompare(String(b.startOrDate)))
+  return rows
+}
+
+function bindRowActions(root, rowData, handlers) {
+  const {
+    onToggleInclude,
+    onEditOneTime,
+    onDeleteOneTime,
+    onEditRecurring,
+    onDeleteRecurring,
+    onEditInstrument,
+    onDeleteInstrument
+  } = handlers
+
+  root.querySelector('.action-toggle-include')?.addEventListener('click', () => {
+    onToggleInclude(rowData.id, !rowData.included)
+  })
+
+  root.querySelector('.action-edit')?.addEventListener('click', () => {
+    if (rowData.type === 'one-time') {
+      onEditOneTime(rowData.id)
+    } else if (rowData.type === 'recurring') {
+      onEditRecurring(rowData.id)
+    } else {
+      onEditInstrument(rowData.id)
+    }
+  })
+
+  root.querySelector('.action-delete')?.addEventListener('click', () => {
+    if (rowData.type === 'one-time') {
+      onDeleteOneTime(rowData.id)
+    } else if (rowData.type === 'recurring') {
+      onDeleteRecurring(rowData.id)
+    } else {
+      onDeleteInstrument(rowData.id)
+    }
+  })
+}
+
+function renderActionButtons(rowData) {
+  return `
+    <div class="row-actions">
+      <button
+        class="icon-button action-toggle-include ${rowData.included ? 'is-active' : ''}"
+        data-id="${rowData.id}"
+        data-type="${rowData.type}"
+        type="button"
+        aria-label="${rowData.included ? 'Exclude from cumulative summary' : 'Include in cumulative summary'}"
+        title="${rowData.included ? 'Exclude from cumulative summary' : 'Include in cumulative summary'}"
+      >${renderActionIcon('include', rowData.included)}</button>
+      <button
+        class="icon-button action-edit"
+        data-id="${rowData.id}"
+        data-type="${rowData.type}"
+        type="button"
+        aria-label="Edit cash flow"
+        title="Edit cash flow"
+      >${renderActionIcon('edit')}</button>
+      <button
+        class="icon-button danger action-delete"
+        data-id="${rowData.id}"
+        data-type="${rowData.type}"
+        type="button"
+        aria-label="Delete cash flow"
+        title="Delete cash flow"
+      >${renderActionIcon('delete')}</button>
+    </div>
+  `
+}
+
+function formatSignedAmount(amount, direction) {
+  const absolute = Math.abs(Number(amount) || 0).toFixed(2)
+  if (direction === 'outflow' || (typeof amount === 'number' && amount < 0)) {
+    return `−${absolute}`
+  }
+
+  if (direction === 'inflow') {
+    return `+${absolute}`
+  }
+
+  return absolute
+}
+
+function formatDateSummary(rowData) {
+  if (rowData.endOrCount && rowData.endOrCount !== '-') {
+    return `${rowData.startOrDate} → ${rowData.endOrCount}`
+  }
+
+  return String(rowData.startOrDate || '—')
+}
+
+function renderConfiguredTable(
+  oneTimeFlows,
+  recurringFlows,
+  instrumentBundles,
+  tbody,
+  isFlowIncluded,
+  onToggleInclude,
+  onEditOneTime,
+  onDeleteOneTime,
+  onEditRecurring,
+  onDeleteRecurring,
+  onEditInstrument,
+  onDeleteInstrument
+) {
+  if (!tbody) {
+    return
+  }
+
+  tbody.innerHTML = ''
+  const rows = buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, isFlowIncluded)
+  const handlers = {
+    onToggleInclude,
+    onEditOneTime,
+    onDeleteOneTime,
+    onEditRecurring,
+    onDeleteRecurring,
+    onEditInstrument,
+    onDeleteInstrument
+  }
 
   if (!rows.length) {
     const row = document.createElement('tr')
@@ -88,64 +197,129 @@ function renderConfiguredTable(
       <td>${rowData.endOrCount}</td>
       <td>${rowData.period}</td>
       <td>${rowData.direction}</td>
-      <td>${rowData.amount.toFixed(2)}</td>
+      <td>${Number(rowData.amount).toFixed(2)}</td>
       <td>${rowData.category}</td>
       <td class="action-col">
-        <div class="row-actions">
-        <button
-          class="icon-button action-toggle-include ${rowData.included ? 'is-active' : ''}"
-          data-id="${rowData.id}"
-          data-type="${rowData.type}"
-          type="button"
-          aria-label="${rowData.included ? 'Exclude from cumulative summary' : 'Include in cumulative summary'}"
-          title="${rowData.included ? 'Exclude from cumulative summary' : 'Include in cumulative summary'}"
-        >${renderActionIcon('include', rowData.included)}</button>
-        <button
-          class="icon-button action-edit"
-          data-id="${rowData.id}"
-          data-type="${rowData.type}"
-          type="button"
-          aria-label="Edit cash flow"
-          title="Edit cash flow"
-        >${renderActionIcon('edit')}</button>
-        <button
-          class="icon-button danger action-delete"
-          data-id="${rowData.id}"
-          data-type="${rowData.type}"
-          type="button"
-          aria-label="Delete cash flow"
-          title="Delete cash flow"
-        >${renderActionIcon('delete')}</button>
-        </div>
+        ${renderActionButtons(rowData)}
       </td>
     `
 
-    row.querySelector('.action-toggle-include')?.addEventListener('click', () => {
-      onToggleInclude(rowData.id, !rowData.included)
-    })
-
-    row.querySelector('.action-edit')?.addEventListener('click', () => {
-      if (rowData.type === 'one-time') {
-        onEditOneTime(rowData.id)
-      } else if (rowData.type === 'recurring') {
-        onEditRecurring(rowData.id)
-      } else {
-        onEditInstrument(rowData.id)
-      }
-    })
-
-    row.querySelector('.action-delete')?.addEventListener('click', () => {
-      if (rowData.type === 'one-time') {
-        onDeleteOneTime(rowData.id)
-      } else if (rowData.type === 'recurring') {
-        onDeleteRecurring(rowData.id)
-      } else {
-        onDeleteInstrument(rowData.id)
-      }
-    })
-
+    bindRowActions(row, rowData, handlers)
     tbody.appendChild(row)
   }
+}
+
+function renderConfiguredCards(
+  oneTimeFlows,
+  recurringFlows,
+  instrumentBundles,
+  container,
+  isFlowIncluded,
+  onToggleInclude,
+  onEditOneTime,
+  onDeleteOneTime,
+  onEditRecurring,
+  onDeleteRecurring,
+  onEditInstrument,
+  onDeleteInstrument
+) {
+  if (!container) {
+    return
+  }
+
+  container.innerHTML = ''
+  const rows = buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, isFlowIncluded)
+  const handlers = {
+    onToggleInclude,
+    onEditOneTime,
+    onDeleteOneTime,
+    onEditRecurring,
+    onDeleteRecurring,
+    onEditInstrument,
+    onDeleteInstrument
+  }
+
+  if (!rows.length) {
+    const empty = document.createElement('div')
+    empty.className = 'flow-card-empty'
+    empty.textContent = 'No cash flows configured yet.'
+    container.appendChild(empty)
+    return
+  }
+
+  for (const rowData of rows) {
+    const card = document.createElement('article')
+    card.className = 'flow-card'
+    card.dataset.id = rowData.id
+    card.dataset.type = rowData.type
+    const amountClass =
+      rowData.direction === 'outflow' || Number(rowData.amount) < 0 ? 'is-outflow' : 'is-inflow'
+
+    card.innerHTML = `
+      <div class="flow-card-top">
+        <div class="flow-card-heading">
+          <span class="flow-card-type">${rowData.type}</span>
+          <h4 class="flow-card-title">${rowData.label}</h4>
+        </div>
+        <p class="flow-card-amount ${amountClass}">${formatSignedAmount(rowData.amount, rowData.direction)}</p>
+      </div>
+      <p class="flow-card-meta">${formatDateSummary(rowData)}</p>
+      <div class="flow-card-actions">
+        ${renderActionButtons(rowData)}
+      </div>
+    `
+
+    bindRowActions(card, rowData, handlers)
+    container.appendChild(card)
+  }
+}
+
+function renderConfiguredLists(options) {
+  const {
+    oneTimeFlows,
+    recurringFlows,
+    instrumentBundles,
+    tableBody,
+    cardsContainer,
+    isFlowIncluded,
+    onToggleInclude,
+    onEditOneTime,
+    onDeleteOneTime,
+    onEditRecurring,
+    onDeleteRecurring,
+    onEditInstrument,
+    onDeleteInstrument
+  } = options
+
+  renderConfiguredTable(
+    oneTimeFlows,
+    recurringFlows,
+    instrumentBundles,
+    tableBody,
+    isFlowIncluded,
+    onToggleInclude,
+    onEditOneTime,
+    onDeleteOneTime,
+    onEditRecurring,
+    onDeleteRecurring,
+    onEditInstrument,
+    onDeleteInstrument
+  )
+
+  renderConfiguredCards(
+    oneTimeFlows,
+    recurringFlows,
+    instrumentBundles,
+    cardsContainer,
+    isFlowIncluded,
+    onToggleInclude,
+    onEditOneTime,
+    onDeleteOneTime,
+    onEditRecurring,
+    onDeleteRecurring,
+    onEditInstrument,
+    onDeleteInstrument
+  )
 }
 
 function renderActionIcon(type, included = false) {
@@ -211,10 +385,8 @@ function buildHoldPath(series, xScale, yScale) {
   let path = `M ${xScale(new Date(first.date).getTime())} ${yScale(first.cumulativeTotal)}`
 
   for (let index = 1; index < series.length; index += 1) {
-    const previous = series[index - 1]
     const current = series[index]
     const currentX = xScale(new Date(current.date).getTime())
-    const previousY = yScale(previous.cumulativeTotal)
     const currentY = yScale(current.cumulativeTotal)
 
     path += ` H ${currentX} V ${currentY}`
@@ -310,8 +482,12 @@ function renderChart(series, container, options = {}) {
 }
 
 export {
+  buildConfiguredRows,
   renderConfiguredTable,
+  renderConfiguredCards,
+  renderConfiguredLists,
   renderChart,
   downsampleSeriesForChart,
-  formatAxisAmount
+  formatAxisAmount,
+  formatSignedAmount
 }

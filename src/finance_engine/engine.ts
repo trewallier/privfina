@@ -47,6 +47,7 @@ export type {
   SimulationStep,
   StatefulSimulationSpec
 } from './interfaces'
+export type { InstrumentType, GeneratedCashFlow, InstrumentBundle } from './models'
 export { generateRecurringCashFlows, evaluateRecurring } from './recurring'
 export {
   generateSalaryInstrumentCashFlows,

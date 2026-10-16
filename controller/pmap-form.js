@@ -100,6 +100,7 @@ function mapPmapSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
   return {
     id: meta.id,
     productId: PMAP_PRODUCT_SPEC.id,
+    productSpecVersion: PMAP_PRODUCT_SPEC.specVersion,
     label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle,
     subtype: 'inflation-linked-bond',
     purchaseDate: legacyInput.transactionDate,

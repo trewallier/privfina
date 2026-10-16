@@ -1,4 +1,5 @@
 const BMAP_PRODUCT_SPEC = {
+  specVersion: 'v1alpha1',
   id: 'government-security.bmap.standard',
   family: 'government-security',
   variant: 'bmap',

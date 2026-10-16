@@ -27,8 +27,8 @@ Scenarios / Use-cases
 - External macro data: optionally fetch public data in-browser via CORS-aware APIs and normalize it for calculations.
 - Salary instrument setup: users can configure salary as a recurring inflow with either cron-like schedule mode or a predefined custom monthly rule.
 - Subscription instrument setup: users can configure subscription as a recurring outflow using the same schedule capabilities as recurring inflow.
-- Loan instrument setup: users can configure principal, fixed interest, term, repayment day, and whether disbursement inflow should be accounted.
-- Loan repayment preview: users can see a read-only monthly repayment value update immediately when loan inputs change.
+- Loan instrument setup: users can configure principal, fixed interest, term, repayment day, whether disbursement inflow should be accounted, and optional grace period / end-of-grace interest capitalization.
+- Loan repayment preview: users can see a read-only monthly repayment value update immediately when loan inputs change, including when optional grace/capitalization options change.
 - Investment instrument setup: users can configure regular bond, discount bond, and inflation-linked bond variants with finite maturity outputs.
 - Investment subtype UX: users can clearly see and switch a prominent investment subtype selector, and the form adapts visible and editable fields to the selected subtype.
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
@@ -90,6 +90,7 @@ Acceptance criteria
 - [x] Loan instrument supports disbursement accounting toggle and persists the choice.
 - [x] Loan instrument computes and displays read-only monthly repayment preview as inputs change.
 - [x] Loan instrument generates optional one-time disbursement inflow and fixed monthly repayment outflows using monthly compounding and fixed-rate annuity assumptions.
+- [x] Loan instrument optionally supports a grace period (interest-only by default) and optional end-of-grace interest capitalization; both default off and leave existing annuity behavior unchanged when unset.
 - [x] Investment instrument supports regular bond, discount bond, and inflation-linked variants with finite maturity-driven flow generation.
 - [x] Regular bond instrument generates one-time maturity inflow paying principal plus monthly-compounded interest.
 - [x] Discount bond instrument requires issue date, due date, transaction date, purchase price, and face value; it generates one-time maturity inflow equal to configured face value.

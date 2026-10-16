@@ -1,0 +1,22 @@
+specVersion: v1alpha1
+productId: loan.fixed-rate.standard
+exampleId: grace-capitalize-case
+title: Fixed-rate loan with grace period and end-of-grace interest capitalization
+description: Optional grace months accrue unpaid interest that is capitalized onto principal before amortization begins.
+
+inputs:
+  principal: 12000
+  annualInterestRatePct: 12.0
+  termMonths: 15
+  startDate: 2026-01-01
+  gracePeriodMonths: 3
+  capitalizeInterestAtGraceEnd: true
+
+expected:
+  paymentCount: 12
+  amortizingPrincipal: 12363.612
+  monthlyPayment: 1098.49195
+
+notes:
+  - Monthly rate is 1%. After 3 months of capitalization, amortizing principal is 12000 * (1.01^3).
+  - Exactly 12 amortizing outflow payments remain after grace; no cash outflows during grace.

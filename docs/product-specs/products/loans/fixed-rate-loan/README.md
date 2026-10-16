@@ -12,8 +12,9 @@ This iteration excludes:
 - Variable-rate structures
 - Fees, insurance, or escrow
 - Prepayment or early exit penalties
-- Grace periods
 - Tax implications
+
+Optional grace period and end-of-grace interest capitalization are in scope (default off).
 
 ## Worked Examples
 

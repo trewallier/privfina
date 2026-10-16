@@ -83,8 +83,10 @@ This section defines the next iteration of instrument behavior so implementation
 	- fixed annual interest rate
 	- term duration (months or years)
 	- repayment day of month (fixed)
+	- optional grace period in months (default 0)
+	- optional end-of-grace interest capitalization toggle (default off; meaningful only with grace > 0)
 - Interest and repayment model for v1:
-	- Concept: annuity-style amortization producing a fixed monthly payment that covers interest and principal. This is a conceptual design note only; exact formulas, rounding, and edge-case rules are maintained in the product specification and engine implementation.
+	- Concept: annuity-style amortization producing a fixed monthly payment that covers interest and principal. Optional grace may be interest-only, or may capitalize unpaid interest onto principal at grace end before amortization. Exact formulas, rounding, and edge-case rules are maintained in the product specification and engine implementation.
 	- Source of truth / implementation references:
 		- Product specs:
 			- Fixed-rate loan: [docs/product-specs/products/loans/fixed-rate-loan/product.yaml](docs/product-specs/products/loans/fixed-rate-loan/product.yaml)
@@ -95,7 +97,8 @@ This section defines the next iteration of instrument behavior so implementation
 			- Fixed-rate mortgage example: [docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml) and [tests/fixed-rate-mortgage-calculation-adapter.test.ts](tests/fixed-rate-mortgage-calculation-adapter.test.ts)
 - Generated flows:
 	- optional one-time disbursement inflow at start
-	- fixed monthly repayment outflows over the amortization term
+	- optional interest-only outflows during grace (when capitalization is off)
+	- fixed monthly amortizing repayment outflows over the post-grace term
 - Future extensions (not in this iteration): one-time and recurring fee flows, early full repayment rules, and associated penalties.
 
 #### Investment (stateful by product rules, finite maturity first)

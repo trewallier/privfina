@@ -49,7 +49,7 @@ Out of scope for this epic
 ### 5) Product Analytics And Account Model Evolution
 - [ ] Add daily, weekly, and monthly liquidity projections.
 - [ ] Add inflation-linked and bond-rate-linked interest rules.
-- [ ] Support grace periods and end-term interest capitalization.
+- [x] Support grace periods and end-term interest capitalization.
 - [ ] Add scenario analysis for income and expense changes.
 - [ ] Add discount-rate configuration and NPV analytics.
 - [ ] Add multi-account modeling and account-scoped cumulative summaries (future extension; current model is single-account).

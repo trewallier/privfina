@@ -457,16 +457,102 @@ function calculateLoanMonthlyInstallment(principal, annualRate, termMonths) {
   return (normalizedPrincipal * monthlyRate * factor) / (factor - 1)
 }
 
-function createLoanRepaymentPreview(input) {
-  const principal = Number(input.principal)
+function normalizeLoanGracePeriodMonths(value, termMonths) {
+  if (value === undefined || value === null || value === '') {
+    return 0
+  }
+
+  const gracePeriodMonths = Number(value)
+  if (!Number.isInteger(gracePeriodMonths) || gracePeriodMonths < 0) {
+    throw new Error('Grace period months must be a non-negative integer.')
+  }
+
+  if (gracePeriodMonths >= termMonths) {
+    throw new Error('Grace period months must be less than the loan term.')
+  }
+
+  return gracePeriodMonths
+}
+
+function resolveLoanSchedule(input) {
+  const principal = normalizeAmount(input.principal)
   const annualRate = Number(input.annualRate)
   const termMonths = Number(input.termMonths)
-  const monthlyInstallment = calculateLoanMonthlyInstallment(principal, annualRate, termMonths)
+
+  if (!Number.isFinite(annualRate) || annualRate < 0) {
+    throw new Error('Loan annual rate must be non-negative.')
+  }
+
+  if (!Number.isInteger(termMonths) || termMonths <= 0) {
+    throw new Error('Loan term must be a positive integer number of months.')
+  }
+
+  const gracePeriodMonths = normalizeLoanGracePeriodMonths(input.gracePeriodMonths, termMonths)
+  const capitalizeInterestAtGraceEnd =
+    gracePeriodMonths > 0 && input.capitalizeInterestAtGraceEnd === true
+  const amortizationMonths = termMonths - gracePeriodMonths
+  const monthlyRate = annualRate / 12
+
+  let amortizingPrincipal = principal
+  let graceInterestOnlyPayment = 0
+  let graceCashTotal = 0
+
+  if (gracePeriodMonths > 0) {
+    if (capitalizeInterestAtGraceEnd) {
+      amortizingPrincipal = principal * Math.pow(1 + monthlyRate, gracePeriodMonths)
+    } else {
+      graceInterestOnlyPayment = principal * monthlyRate
+      graceCashTotal = graceInterestOnlyPayment * gracePeriodMonths
+    }
+  }
+
+  const monthlyInstallment = calculateLoanMonthlyInstallment(
+    amortizingPrincipal,
+    annualRate,
+    amortizationMonths
+  )
+  const amortizationTotal = monthlyInstallment * amortizationMonths
+  const totalRepayment = graceCashTotal + amortizationTotal
+  const paymentCount = capitalizeInterestAtGraceEnd
+    ? amortizationMonths
+    : gracePeriodMonths + amortizationMonths
+
   return {
+    principal,
+    annualRate,
+    termMonths,
+    gracePeriodMonths,
+    capitalizeInterestAtGraceEnd,
+    amortizationMonths,
+    monthlyRate,
+    amortizingPrincipal,
+    graceInterestOnlyPayment,
     monthlyInstallment,
-    totalRepayment: monthlyInstallment * termMonths,
-    totalInterest: monthlyInstallment * termMonths - principal,
-    termMonths
+    paymentCount,
+    totalRepayment,
+    totalInterest: totalRepayment - principal
+  }
+}
+
+function createLoanRepaymentPreview(input) {
+  const schedule = resolveLoanSchedule({
+    principal: input.principal,
+    annualRate: input.annualRate,
+    termMonths: input.termMonths,
+    gracePeriodMonths: input.gracePeriodMonths,
+    capitalizeInterestAtGraceEnd: input.capitalizeInterestAtGraceEnd
+  })
+
+  return {
+    monthlyInstallment: schedule.monthlyInstallment,
+    totalRepayment: schedule.totalRepayment,
+    totalInterest: schedule.totalInterest,
+    termMonths: schedule.termMonths,
+    paymentCount: schedule.paymentCount,
+    gracePeriodMonths: schedule.gracePeriodMonths,
+    amortizationMonths: schedule.amortizationMonths,
+    graceInterestOnlyPayment: schedule.graceInterestOnlyPayment,
+    amortizingPrincipal: schedule.amortizingPrincipal
   }
 }
 
@@ -479,13 +565,24 @@ function normalizeLoanTermMonths(termValue, termUnit) {
   return termUnit === 'years' ? parsed * 12 : parsed
 }
 
+function incrementLoanYearMonth(year, month) {
+  const nextMonth = month + 1
+  if (nextMonth > 11) {
+    return { year: year + 1, month: 0 }
+  }
+  return { year, month: nextMonth }
+}
+
 function generateLoanInstrumentFlows(input) {
-  const principal = normalizeAmount(input.principal)
-  const annualRate = Number(input.annualRate)
   const termMonths = normalizeLoanTermMonths(input.termValue, input.termUnit)
+  const schedule = resolveLoanSchedule({
+    principal: input.principal,
+    annualRate: input.annualRate,
+    termMonths,
+    gracePeriodMonths: input.gracePeriodMonths,
+    capitalizeInterestAtGraceEnd: input.capitalizeInterestAtGraceEnd
+  })
   const repaymentDayOfMonth = Number(input.repaymentDayOfMonth)
-  const monthlyInstallment = calculateLoanMonthlyInstallment(principal, annualRate, termMonths)
-  const monthlyRate = annualRate / 12
   const startDate = parseIsoDate(String(input.startDate || '').trim())
   const category = input.category || 'loan'
   const description = input.description
@@ -494,45 +591,68 @@ function generateLoanInstrumentFlows(input) {
   if (input.includeDisbursement !== false) {
     flows.push({
       date: formatIsoDate(startDate),
-      amount: principal,
+      amount: schedule.principal,
       direction: 'inflow',
       category,
       description
     })
   }
 
-  let remainingPrincipal = principal
   let year = startDate.getUTCFullYear()
   let month = startDate.getUTCMonth()
   if (repaymentDayOfMonth < startDate.getUTCDate()) {
-    month += 1
-    if (month > 11) {
-      month = 0
-      year += 1
+    const next = incrementLoanYearMonth(year, month)
+    year = next.year
+    month = next.month
+  }
+
+  if (schedule.gracePeriodMonths > 0 && !schedule.capitalizeInterestAtGraceEnd) {
+    for (let index = 0; index < schedule.gracePeriodMonths; index += 1) {
+      const monthDays = daysInMonthUtc(year, month)
+      const day = Math.min(repaymentDayOfMonth, monthDays)
+      const paymentDate = new Date(Date.UTC(year, month, day))
+      flows.push({
+        date: formatIsoDate(paymentDate),
+        amount: schedule.graceInterestOnlyPayment,
+        direction: 'outflow',
+        category,
+        description
+      })
+      const next = incrementLoanYearMonth(year, month)
+      year = next.year
+      month = next.month
+    }
+  } else if (schedule.gracePeriodMonths > 0 && schedule.capitalizeInterestAtGraceEnd) {
+    for (let index = 0; index < schedule.gracePeriodMonths; index += 1) {
+      const next = incrementLoanYearMonth(year, month)
+      year = next.year
+      month = next.month
     }
   }
 
-  for (let index = 0; index < termMonths; index += 1) {
+  let remainingPrincipal = schedule.amortizingPrincipal
+  for (let index = 0; index < schedule.amortizationMonths; index += 1) {
     const monthDays = daysInMonthUtc(year, month)
     const day = Math.min(repaymentDayOfMonth, monthDays)
     const paymentDate = new Date(Date.UTC(year, month, day))
-    const interestPortion = remainingPrincipal * monthlyRate
-    const principalPortion = Math.min(monthlyInstallment - interestPortion, remainingPrincipal)
+    const interestPortion = remainingPrincipal * schedule.monthlyRate
+    const principalPortion = Math.min(
+      schedule.monthlyInstallment - interestPortion,
+      remainingPrincipal
+    )
     remainingPrincipal = Math.max(0, remainingPrincipal - principalPortion)
 
     flows.push({
       date: formatIsoDate(paymentDate),
-      amount: monthlyInstallment,
+      amount: schedule.monthlyInstallment,
       direction: 'outflow',
       category,
       description
     })
 
-    month += 1
-    if (month > 11) {
-      month = 0
-      year += 1
-    }
+    const next = incrementLoanYearMonth(year, month)
+    year = next.year
+    month = next.month
   }
 
   return flows.sort((a, b) => a.date.localeCompare(b.date))
@@ -540,12 +660,23 @@ function generateLoanInstrumentFlows(input) {
 
 function generateLoanInstrumentBundle(input) {
   const termMonths = normalizeLoanTermMonths(input.termValue, input.termUnit)
+  const gracePeriodMonths = normalizeLoanGracePeriodMonths(input.gracePeriodMonths, termMonths)
+  const capitalizeInterestAtGraceEnd =
+    gracePeriodMonths > 0 && input.capitalizeInterestAtGraceEnd === true
   const preview = createLoanRepaymentPreview({
     principal: input.principal,
     annualRate: input.annualRate,
-    termMonths
+    termMonths,
+    gracePeriodMonths,
+    capitalizeInterestAtGraceEnd
   })
-  const generatedFlows = generateLoanInstrumentFlows({ ...input, termValue: termMonths, termUnit: 'months' })
+  const generatedFlows = generateLoanInstrumentFlows({
+    ...input,
+    termValue: termMonths,
+    termUnit: 'months',
+    gracePeriodMonths,
+    capitalizeInterestAtGraceEnd
+  })
 
   return normalizeInstrumentBundle({
     id: input.id || createId('loan'),
@@ -563,6 +694,8 @@ function generateLoanInstrumentBundle(input) {
       termUnit: input.termUnit || 'months',
       startDate: input.startDate,
       repaymentDayOfMonth: Number(input.repaymentDayOfMonth),
+      gracePeriodMonths,
+      capitalizeInterestAtGraceEnd,
       includeDisbursement: input.includeDisbursement !== false,
       category: input.category || 'loan',
       description: input.description

@@ -17,6 +17,8 @@ export interface FixedRateLoanSpecInputs {
   annualInterestRatePct: number
   termMonths: number
   startDate: string
+  gracePeriodMonths?: number
+  capitalizeInterestAtGraceEnd?: boolean
   repaymentDayOfMonth?: number
   includeDisbursement?: boolean
   category?: string
@@ -79,6 +81,8 @@ export function mapFixedRateLoanSpecInputsToLoanInstrumentInput(
     termMonths: specInputs.termMonths,
     startDate: specInputs.startDate,
     repaymentDayOfMonth: specInputs.repaymentDayOfMonth ?? deriveRepaymentDayOfMonth(specInputs.startDate),
+    gracePeriodMonths: specInputs.gracePeriodMonths,
+    capitalizeInterestAtGraceEnd: specInputs.capitalizeInterestAtGraceEnd,
     includeDisbursement: specInputs.includeDisbursement,
     category: specInputs.category,
     description: specInputs.description

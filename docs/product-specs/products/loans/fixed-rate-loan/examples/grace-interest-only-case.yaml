@@ -1,0 +1,21 @@
+specVersion: v1alpha1
+productId: loan.fixed-rate.standard
+exampleId: grace-interest-only-case
+title: Fixed-rate loan with interest-only grace period
+description: Optional grace months collect interest-only payments, then amortize the original principal over the remaining term.
+
+inputs:
+  principal: 12000
+  annualInterestRatePct: 12.0
+  termMonths: 15
+  startDate: 2026-01-01
+  gracePeriodMonths: 3
+  capitalizeInterestAtGraceEnd: false
+
+expected:
+  paymentCount: 15
+  graceInterestOnlyPayment: 120
+  monthlyPayment: 1066.185464
+
+notes:
+  - Three interest-only outflows of principal * monthlyRate, then 12 level amortizing payments on the original principal.

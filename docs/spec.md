@@ -15,6 +15,9 @@ Scenarios / Use-cases
 - Cash-flow management page: users can add, view, edit, and delete any number of cash flows.
 - Split workspace UX: users can work in a dedicated cash-flow management panel and a separate visualization panel.
 - Collapsible flow composer UX: users can open one flow-creation panel at a time (Swagger-like), then hide composer boxes to focus on the configured flow list and chart.
+- Adaptive responsive workspace UX (ROADMAP §4 / ADR 0019): on wide screens the existing two-workspace desktop composition and visual language remain; on narrow screens browse (configured list + chart access) is separated from compose (add/edit), and the configured overview uses a card-style list instead of a wide table.
+- Progressive add entry: users pick a cash-flow or instrument type first, then complete only that form.
+- Narrow compose step: add/edit opens as a dedicated form step with Save / Cancel and returns to browse after success.
 - Flow inclusion toggles: users can include or exclude specific configured flows from cumulative calculations without deleting them.
 - One-time cash flow: users can configure a single income or payout with amount and date.
 - Recurring cash flow: users can configure income or payout with monthly, weekly, or annual cron-like schedules, start date, end date or occurrence count, and amount.
@@ -37,6 +40,8 @@ Scenarios / Use-cases
 Assumptions
 - The app runs entirely in-browser for v1.
 - The primary v1 interaction model is a single page with basic form controls, a list/table of cash flows, and a cumulative chart.
+- Responsive overhaul keeps one SPA and one visual language; desktop remains a first-class layout, not a stretched mobile layout (ADR 0019).
+- Responsive overhaul does not change cash-flow/instrument domain models, persistence, import/export, or calculation contracts.
 - The smallest time step handled by the model is one calendar day.
 - The cumulative chart's maximum resolution is daily (no sub-day granularity).
 - Browser storage is treated as a cache; export/import is the durability mechanism.
@@ -55,6 +60,12 @@ Acceptance criteria
 - [x] Users can create any number of cash flows through the page controls.
 - [x] The main UI separates cash-flow management and visualization into distinct workspace sections.
 - [x] Flow creation boxes are collapsible and can be hidden when not in use to focus on configured flows and chart output.
+- [ ] Wide-viewport layout keeps the intentional two-workspace desktop composition and current visual language (not a stretched phone layout).
+- [ ] Narrow-viewport browse mode shows configured flows as a card-style list (no horizontal scrolling table as the primary overview).
+- [ ] Narrow-viewport compose mode presents add/edit in a dedicated form step with explicit Save / Cancel and returns to browse after success.
+- [ ] Add entry uses progressive type selection before showing instrument/cash-flow fields.
+- [ ] Narrow viewports can reach range controls and the cumulative chart without scrolling past long composer UI.
+- [ ] Primary actions remain touch-friendly; delete confirms; successful add/edit shows brief feedback.
 - [x] Users can create one-time and recurring cash-flow definitions through the page controls.
 - [x] Users can view and delete existing one-time and recurring cash-flow definitions, and changes are reflected immediately in the UI state.
 - [x] Users can edit existing cash flows, and changes are reflected immediately in the UI state.

@@ -413,8 +413,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 30px;
-        height: 30px;
+        width: 44px;
+        height: 44px;
         padding: 0;
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -512,21 +512,245 @@
         color: #a94442;
       }
 
+      .flow-card-list {
+        display: none;
+        margin-top: 10px;
+        gap: 10px;
+      }
+
+      .flow-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px 14px;
+      }
+
+      .flow-card-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .flow-card-type {
+        display: inline-block;
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--accent-strong);
+        font-weight: 700;
+      }
+
+      .flow-card-title {
+        margin: 2px 0 0;
+        font-size: 1.05rem;
+      }
+
+      .flow-card-amount {
+        margin: 0;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .flow-card-amount.is-inflow {
+        color: #116530;
+      }
+
+      .flow-card-amount.is-outflow {
+        color: #a94442;
+      }
+
+      .flow-card-meta {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.35;
+      }
+
+      .flow-card-actions {
+        margin-top: 12px;
+      }
+
+      .flow-card-empty {
+        padding: 20px;
+        border-radius: 12px;
+        background: var(--accent-soft);
+        color: var(--muted);
+      }
+
+      .compose-mobile-bar,
+      .add-type-picker,
+      .mobile-nav,
+      #app-toast {
+        display: none;
+      }
+
+      .compose-mobile-bar {
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .compose-mobile-bar h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .add-type-picker {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .add-type-picker .primary {
+        width: 100%;
+        min-height: 48px;
+        text-align: left;
+      }
+
+      .mobile-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1200;
+        display: none;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+        background: rgba(255, 253, 247, 0.96);
+        border-top: 1px solid var(--border);
+        backdrop-filter: blur(8px);
+      }
+
+      .mobile-nav button {
+        min-height: 48px;
+        border-color: transparent;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .mobile-nav button.is-active {
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        border-color: #9bc9c2;
+        font-weight: 700;
+      }
+
+      #app-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 84px;
+        transform: translateX(-50%);
+        z-index: 1300;
+        max-width: min(420px, calc(100vw - 24px));
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #1f4a45;
+        color: #fff;
+        box-shadow: var(--shadow);
+      }
+
+      #app-toast[data-level='error'] {
+        background: #7a2e2c;
+      }
+
+      #app-toast[data-level='warning'] {
+        background: #6d4b10;
+      }
+
       @media (max-width: 1020px) {
         .workspace-grid {
           grid-template-columns: 1fr;
+        }
+
+        main {
+          padding-bottom: 96px;
+        }
+
+        .desktop-only-toolbar,
+        .table-shell,
+        #toggle-composer {
+          display: none !important;
+        }
+
+        .flow-card-list {
+          display: grid;
+        }
+
+        .mobile-nav {
+          display: grid;
+        }
+
+        #app-toast:not([hidden]) {
+          display: block;
+        }
+
+        .compose-mobile-bar {
+          display: flex;
+        }
+
+        .add-type-picker {
+          display: grid;
+        }
+
+        main[data-shell-view='browse'] #composer-region,
+        main[data-shell-view='browse'] #viz-pane,
+        main[data-shell-view='chart'] #manage-pane,
+        main[data-shell-view='compose'] #configured-section,
+        main[data-shell-view='compose'] #viz-pane {
+          display: none;
+        }
+
+        main[data-shell-view='compose'][data-picking-type='true'] #flow-composer,
+        main[data-shell-view='compose'][data-picking-type='false'] #add-type-picker {
+          display: none !important;
+        }
+
+        main[data-shell-view='compose'] .flow-box:not([open]) {
+          display: none;
+        }
+
+        main[data-shell-view='compose'] .flow-box[open] > summary {
+          pointer-events: none;
+        }
+
+        .viz-range label input {
+          min-height: 44px;
+        }
+
+        #chart svg {
+          height: 220px;
+        }
+      }
+
+      @media (min-width: 1021px) {
+        .compose-mobile-bar,
+        .add-type-picker,
+        .mobile-nav,
+        .flow-card-list {
+          display: none !important;
+        }
+
+        #app-toast:not([hidden]) {
+          display: block;
+          bottom: 24px;
         }
       }
     </style>
   </head>
   <body>
-    <main>
+    <main data-viewport="wide" data-shell-view="browse" data-picking-type="false">
       <h1 class="page-title">Privfina</h1>
       <p class="lead">Create, edit, and delete cash flows and instrument bundles while visualizing cumulative totals.</p>
       <div id="schema-warning" class="warning-banner" hidden></div>
+      <div id="app-toast" role="status" aria-live="polite" hidden></div>
 
       <div class="workspace-grid">
-        <section class="card stack" aria-labelledby="manage-pane-title">
+        <section id="manage-pane" class="card stack" aria-labelledby="manage-pane-title">
           <div class="pane-header">
             <div>
               <h2 id="manage-pane-title" class="pane-title">Cash-Flow Workspace</h2>
@@ -535,13 +759,28 @@
             <button id="toggle-composer" class="ghost" type="button" aria-expanded="true">Hide Add Flow Boxes</button>
           </div>
 
-          <div class="composer-toolbar">
+          <div id="composer-region">
+          <div class="compose-mobile-bar">
+            <button id="compose-back" class="ghost" type="button">Back</button>
+            <h3 id="compose-title">Add cash flow</h3>
+          </div>
+
+          <div class="composer-toolbar desktop-only-toolbar">
             <button id="open-one-time-box" class="primary" type="button">+ One-Time Flow</button>
             <button id="open-recurring-box" class="primary" type="button">+ Recurring Flow</button>
             <button id="open-salary-box" class="primary" type="button">+ Salary Instrument</button>
             <button id="open-subscription-box" class="primary" type="button">+ Subscription Instrument</button>
             <button id="open-loan-box" class="primary" type="button">+ Loan Instrument</button>
             <button id="open-investment-box" class="primary" type="button">+ Investment Instrument</button>
+          </div>
+
+          <div id="add-type-picker" class="add-type-picker" aria-label="Choose what to add">
+            <button class="primary" type="button" data-add-type="one-time">One-time flow</button>
+            <button class="primary" type="button" data-add-type="recurring">Recurring flow</button>
+            <button class="primary" type="button" data-add-type="salary">Salary instrument</button>
+            <button class="primary" type="button" data-add-type="subscription">Subscription instrument</button>
+            <button class="primary" type="button" data-add-type="loan">Loan instrument</button>
+            <button class="primary" type="button" data-add-type="investment">Investment instrument</button>
           </div>
 
           <section id="flow-composer" class="flow-composer" aria-label="Flow composer panels">
@@ -1058,8 +1297,9 @@
               </div>
             </details>
           </section>
+          </div>
 
-          <section>
+          <section id="configured-section">
             <h3>Configured Cash Flows</h3>
             <div class="toolbar">
               <button id="export-json-button" class="primary" type="button">Export JSON Backup</button>
@@ -1086,10 +1326,11 @@
                 <tbody id="configured-flow-rows"></tbody>
               </table>
             </div>
+            <div id="configured-flow-cards" class="flow-card-list" aria-label="Configured cash flows"></div>
           </section>
         </section>
 
-        <section class="card stack" aria-labelledby="viz-pane-title">
+        <section id="viz-pane" class="card stack" aria-labelledby="viz-pane-title">
           <div>
             <h2 id="viz-pane-title" class="pane-title">Visualization Workspace</h2>
             <p class="pane-copy">Review cumulative cash-flow behavior across the selected date range.</p>
@@ -1107,6 +1348,12 @@
           <div id="chart"></div>
         </section>
       </div>
+
+      <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile workspace" hidden>
+        <button type="button" data-shell-target="browse">Flows</button>
+        <button type="button" data-shell-target="chart">Chart</button>
+        <button type="button" data-shell-target="add">Add</button>
+      </nav>
     </main>
     <div id="investment-info-popup" class="investment-info-popup" hidden>
       <div class="investment-info-popup-head">

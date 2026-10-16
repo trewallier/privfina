@@ -118,7 +118,15 @@ function rollBusinessDay(baseDateIso, convention = 'preceding', holidays = []) {
   throw new Error('Unsupported business-day convention.')
 }
 
-function normalizeGeneratedFlow(flow, fallbackCategory) {
+function normalizeOptionalString(value) {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+  const trimmed = value.trim()
+  return trimmed ? trimmed : undefined
+}
+
+function normalizeGeneratedFlow(flow, fallbackCategory, lineageContext = {}) {
   if (!flow || typeof flow !== 'object') {
     return null
   }
@@ -128,18 +136,35 @@ function normalizeGeneratedFlow(flow, fallbackCategory) {
   const direction = normalizeDirection(flow.direction)
   const category = String(flow.category || '').trim() || fallbackCategory
   const description = typeof flow.description === 'string' ? flow.description : undefined
+  const id = normalizeOptionalString(flow.id)
+  const sourceInstrumentId =
+    normalizeOptionalString(flow.sourceInstrumentId) || normalizeOptionalString(lineageContext.sourceInstrumentId)
+  const sourceInstrumentType =
+    normalizeOptionalString(flow.sourceInstrumentType) || normalizeOptionalString(lineageContext.sourceInstrumentType)
 
   if (!date || !Number.isFinite(amount) || amount < 0) {
     return null
   }
 
   return {
+    id,
     date,
     amount,
     direction,
     category,
-    description
+    description,
+    sourceInstrumentId,
+    sourceInstrumentType
   }
+}
+
+function stampGeneratedFlowLineage(flows, bundleId, instrumentType) {
+  return flows.map((flow, index) => ({
+    ...flow,
+    id: normalizeOptionalString(flow.id) || `${bundleId}-flow-${index}`,
+    sourceInstrumentId: bundleId,
+    sourceInstrumentType: instrumentType
+  }))
 }
 
 function normalizeInstrumentBundle(bundle) {
@@ -167,7 +192,18 @@ function normalizeInstrumentBundle(bundle) {
     typeof bundle.label === 'string' && bundle.label.trim()
       ? bundle.label.trim()
       : `${instrumentType} instrument`
-  const config = bundle.config && typeof bundle.config === 'object' ? bundle.config : {}
+  const config = bundle.config && typeof bundle.config === 'object' ? { ...bundle.config } : {}
+  const productId =
+    normalizeOptionalString(bundle.productId) || normalizeOptionalString(config.productId)
+  const productSpecVersion =
+    normalizeOptionalString(bundle.productSpecVersion) ||
+    normalizeOptionalString(config.productSpecVersion)
+  if (productId) {
+    config.productId = productId
+  }
+  if (productSpecVersion) {
+    config.productSpecVersion = productSpecVersion
+  }
   const fallbackCategory =
     instrumentType === 'salary'
       ? 'salary'
@@ -176,16 +212,23 @@ function normalizeInstrumentBundle(bundle) {
         : instrumentType === 'investment'
           ? 'investment'
           : 'subscription'
-  const generatedFlows = Array.isArray(bundle.generatedFlows)
-    ? bundle.generatedFlows
-        .map((entry) => normalizeGeneratedFlow(entry, fallbackCategory))
-        .filter((entry) => entry !== null)
-    : []
+  const lineageContext = { sourceInstrumentId: id, sourceInstrumentType: instrumentType }
+  const generatedFlows = stampGeneratedFlowLineage(
+    Array.isArray(bundle.generatedFlows)
+      ? bundle.generatedFlows
+          .map((entry) => normalizeGeneratedFlow(entry, fallbackCategory, lineageContext))
+          .filter((entry) => entry !== null)
+      : [],
+    id,
+    instrumentType
+  )
 
   return {
     id,
     instrumentType,
     label,
+    productId,
+    productSpecVersion,
     config,
     preview: bundle.preview && typeof bundle.preview === 'object' ? bundle.preview : undefined,
     generatedFlows,
@@ -508,8 +551,11 @@ function generateLoanInstrumentBundle(input) {
     id: input.id || createId('loan'),
     instrumentType: 'loan',
     label: input.label || 'Loan',
+    productId: input.productId,
+    productSpecVersion: input.productSpecVersion,
     config: {
       productId: input.productId,
+      productSpecVersion: input.productSpecVersion,
       principal: Number(input.principal),
       annualRate: Number(input.annualRate),
       termMonths,
@@ -876,8 +922,11 @@ function generateInvestmentInstrumentBundle(input) {
     id: input.id || createId('investment'),
     instrumentType: 'investment',
     label: input.label || 'Investment',
+    productId: input.productId,
+    productSpecVersion: input.productSpecVersion,
     config: {
       productId: input.productId,
+      productSpecVersion: input.productSpecVersion,
       subtype: input.subtype,
       purchaseDate: input.purchaseDate,
       maturityDate: input.maturityDate,
@@ -906,11 +955,18 @@ function generateInvestmentInstrumentBundle(input) {
 }
 
 function flattenInstrumentFlows(instrumentBundles) {
+  if (!Array.isArray(instrumentBundles)) {
+    return []
+  }
+
   return instrumentBundles.flatMap((bundle) => {
-    return (bundle.generatedFlows || []).map((flow) => ({
+    const instrumentType = bundle?.instrumentType
+    const bundleId = typeof bundle?.id === 'string' ? bundle.id : undefined
+    return (bundle.generatedFlows || []).map((flow, index) => ({
       ...flow,
-      sourceInstrumentId: bundle.id,
-      sourceInstrumentType: bundle.instrumentType
+      id: normalizeOptionalString(flow.id) || (bundleId ? `${bundleId}-flow-${index}` : undefined),
+      sourceInstrumentId: normalizeOptionalString(flow.sourceInstrumentId) || bundleId,
+      sourceInstrumentType: normalizeOptionalString(flow.sourceInstrumentType) || instrumentType
     }))
   })
 }
@@ -918,6 +974,7 @@ function flattenInstrumentFlows(instrumentBundles) {
 export {
   normalizeInstrumentBundle,
   normalizeInstrumentBundles,
+  stampGeneratedFlowLineage,
   parseHolidayList,
   rollBusinessDay,
   generateSalaryInstrumentBundle,

@@ -1,6 +1,7 @@
-import { createInvestmentMaturityPreview } from '../instruments.js'
+import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { parseIsoDate, formatIsoDate } from '../recurrence.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
+import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
 
 // numeric validators are imported from spec-input-validators.js
 
@@ -137,11 +138,15 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
   const startDateIso = String(specInputs.startDate || '').trim()
   const purchaseDateIso = typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
 
-  return {
+  return normalizeInstrumentBundle({
     id: extras.id || `bmap-${Date.now()}`,
     instrumentType: 'investment',
-    label: extras.label || 'Bonus Hungarian Government Security',
+    label: extras.label || BMAP_PRODUCT_SPEC.ui.formTitle,
+    productId: BMAP_PRODUCT_SPEC.id,
+    productSpecVersion: BMAP_PRODUCT_SPEC.specVersion,
     config: {
+      productId: BMAP_PRODUCT_SPEC.id,
+      productSpecVersion: BMAP_PRODUCT_SPEC.specVersion,
       subtype: 'bmap',
       principal: calculated.purchaseAmount - calculated.accruedInterestAmount,
       dkjBaseYieldPct: Number(specInputs.dkjBaseYieldPct),
@@ -174,7 +179,7 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
     generatedFlows: flows,
     createdAt: extras.createdAt,
     updatedAt: new Date().toISOString()
-  }
+  })
 }
 
 export {

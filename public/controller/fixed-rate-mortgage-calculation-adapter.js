@@ -20,6 +20,7 @@ function mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput(specInputs, extra
   return {
     ...extras,
     productId: FIXED_RATE_MORTGAGE_PRODUCT_SPEC.id,
+    productSpecVersion: FIXED_RATE_MORTGAGE_PRODUCT_SPEC.specVersion,
     label: String(extras.label || '').trim() || FIXED_RATE_MORTGAGE_PRODUCT_SPEC.ui.formTitle,
     principal: legacyInput.principal,
     annualRate: legacyInput.annualRate,

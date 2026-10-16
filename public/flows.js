@@ -1,4 +1,5 @@
 import { expandRecurringFlows } from './recurrence.js'
+import { flattenInstrumentFlows } from './instruments.js'
 
 function toSignedAmount(flow) {
   return flow.direction === 'inflow' ? flow.amount : -flow.amount
@@ -35,10 +36,9 @@ function buildEffectiveFlows(oneTime, recurring, rangeStart, rangeEnd, instrumen
     }
   })
 
-  const instrumentFlows = instrumentBundles.flatMap((bundle) => {
-    const generatedFlows = Array.isArray(bundle.generatedFlows) ? bundle.generatedFlows : []
-    return generatedFlows.filter((flow) => flow.date >= rangeStart && flow.date <= rangeEnd)
-  })
+  const instrumentFlows = flattenInstrumentFlows(instrumentBundles).filter(
+    (flow) => flow.date >= rangeStart && flow.date <= rangeEnd
+  )
 
   return [...oneTimeInRange, ...recurringExpanded, ...instrumentFlows].sort((a, b) =>
     a.date.localeCompare(b.date)

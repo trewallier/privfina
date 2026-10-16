@@ -2,7 +2,7 @@
 
 Purpose
 -------
-Record the current, conservative mapping of where formulas live for a quick review during migration.
+Record the current mapping of where formulas live for review during and after the product-spec migration.
 
 What "formula ownership" means
 ------------------------------
@@ -11,59 +11,60 @@ Following docs/source-of-truth-ownership.md: product specs in `docs/product-spec
 Inventory (by product)
 -----------------------
 
-- Fixed-rate loan
-  - In specs: `docs/product-specs/products/loans/fixed-rate-loan/product.yaml` (derived `monthlyInterestRate`, outputs `monthlyPayment`, `totalInterest`).
-  - In DESIGN.md: loan amortization intent and annuity-style repayment described (see `DESIGN.md`, Loan section).
-  - In code: annuity formula and amortization implemented in `src/finance_engine/instruments/loan.ts` (`calculateLoanMonthlyInstallment`, `simulateLoanAmortization`, `generateLoanInstrumentCashFlows`).
-  - Duplication status: spec (contract) ↔ code (implementation) aligned; design doc provides rationale (acceptable duplication per ownership rules).
+- Fixed-rate loan (`loan.fixed-rate.standard`) — **fully-spec-backed**
+  - Spec: `docs/product-specs/products/loans/fixed-rate-loan/product.yaml`
+  - Engine primitives: `src/finance_engine/instruments/loan.ts`
+  - Browser path: `public/instruments.js` via `public/controller/fixed-rate-loan-calculation-adapter.js` and shared `loan-legacy-bridges.js`
+  - Frontend embedded spec: `public/controller/fixed-rate-loan-product-spec.js` (parity-tested against YAML)
+  - Status: spec ↔ adapter ↔ examples aligned; dual TS/JS formula copies remain until bundler convergence (ADR 0017)
 
-- Fixed-rate mortgage
-  - In specs: `docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml` (same derived names as loan).
-  - In DESIGN.md: high-level mortgage modeling in Loan section.
-  - In code: loan primitives exist (`src/finance_engine/instruments/loan.ts`) but no dedicated mortgage spec loader/mapping implemented yet.
-  - Duplication status: spec exists but not yet wired to engine (spec-only per PRODUCT_CATALOG.md).
+- Fixed-rate mortgage (`loan.fixed-rate.mortgage`) — **calc-aligned** (UI parked)
+  - Spec: `docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml`
+  - Engine primitives: same loan primitives as standard fixed-rate loan
+  - Browser path: `public/controller/fixed-rate-mortgage-calculation-adapter.js` → shared `loan-legacy-bridges.js` → `createLoanRepaymentPreview`
+  - Frontend embedded spec: `public/controller/fixed-rate-mortgage-product-spec.js` (parity-tested); form metadata in `fixed-rate-mortgage-form.js` is ready but not wired into `index.html` / `app-controller.js`
+  - Status: calculations and form metadata seams exist; composer UI intentionally deferred
 
-- DKJ (discount treasury bill)
-  - In specs: `docs/product-specs/products/government-securities/dkj/product.yaml` (expects `annualizedYieldPct`, 360-day convention mentioned in assumptions).
-  - In DESIGN.md: explicit discount-bond algebra (current_value% and yield% formulas, 360-day convention) in Investment → Discount bond section.
-  - In code: implemented in `src/finance_engine/instruments/common.ts` as `deriveDiscountBondMetrics` (computes `currentValuePercent` and `yieldPercent`).
-  - Duplication status: formula present in DESIGN.md and implemented in code; spec references the concept but does not embed the algebra (design+code duplication; spec needs explicit mapping to code primitive).
+- DKJ (`government-security.dkj.standard`) — **fully-spec-backed**
+  - Spec: `docs/product-specs/products/government-securities/dkj/product.yaml`
+  - Engine primitives: `deriveDiscountBondMetrics` in `src/finance_engine/instruments/common.ts`
+  - Browser path: `public/controller/dkj-calculation-adapter.js` → discount-bond preview in `public/instruments.js`
+  - Status: day-based yield and adapter seam aligned for v1
 
-- PMAP (inflation‑linked retail bond)
-  - In specs: `docs/product-specs/products/government-securities/pmap/product.yaml` (states `effectiveInflationBasePct = max(previousYearAverageInflation, 0)` and `annualCouponRate = effectiveInflationBase + interestPremium`).
-  - In DESIGN.md: inflation-linked bond accrual and effective-rate guidance (Investment section).
-  - In code: accrual schedule and maturity calculation implemented in `src/finance_engine/instruments/common.ts` (`deriveInflationLinkedAccrualSchedule`, `calculateInflationLinkedMaturityAmount`) and used in `src/finance_engine/instruments/investment.ts`.
-  - Duplication/status: code provides primitives but does not explicitly enforce the spec-stated 0% floor; spec ↔ code mismatch (action required).
+- PMAP (`government-security.pmap.standard`) — **fully-spec-backed**
+  - Spec: `docs/product-specs/products/government-securities/pmap/product.yaml`
+  - Engine primitives: inflation-linked helpers in `src/finance_engine/instruments/common.ts`
+  - Browser path: `public/controller/pmap-calculation-adapter.js` applies `max(previousYearAverageInflationPct, 0)` when mapping to legacy investment input / outputs
+  - Status: floor and coupon composition enforced in the adapter seam for v1
 
-- BMAP (DKJ‑linked variable coupon)
-  - In specs: `docs/product-specs/products/government-securities/bmap/product.yaml` (defines `annualCouponRate = effectiveDkjBaseYield + interestPremium` and `effectiveDkjBaseYield = max(rawDKJBase, 0)`; DKJ base derived from weighted recent auctions is a product rule).
-  - In DESIGN.md: rate‑setting intent for DKJ-linked bonds is described under investments and product assumptions.
-  - In code: no BMAP-specific rate-setter implemented; engine accepts `dkjBaseYieldPct` as an input in the spec but does not compute auction-weighted base-yield (`src/finance_engine/instruments/` contains no auction aggregator).
-  - Duplication/status: spec documents the product rule; code currently requires the base-yield as an input (spec-only for derivation logic). Clear gap.
+- BMAP (`government-security.bmap.standard`) — **fully-spec-backed** (auction derivation future)
+  - Spec: `docs/product-specs/products/government-securities/bmap/product.yaml`
+  - Browser path: `public/controller/bmap-calculation-adapter.js` accepts user-supplied `dkjBaseYieldPct`
+  - Status: coupon composition from base yield + premium is spec-backed; weighted auction DKJ base derivation remains future external-data work
 
-Current cleanup priority (one small next step)
---------------------------------------------
-- Add small spec→engine loader(s) and unit tests for PMAP and BMAP that:
-  - map product YAML inputs to existing `InvestmentInstrumentInput` fields,
-  - assert PMAP applies the `max(previousYearAverageInflation, 0)` floor in computed outputs,
-  - accept `dkjBaseYieldPct` for BMAP and mark auction-weighted derivation as TODO.
+Current cleanup priority
+------------------------
+1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done in this cleanup pass).
+2. Promote mortgage to fully-spec-backed only when a dedicated composer box is wired.
+3. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §5 / ADR 0017.
 
 Notes
 -----
-- This audit records observations only; no formulas were removed or code changed.
-- Formula migration should proceed product-by-product and only after spec-backed tests exist (follow `docs/source-of-truth-ownership.md` rules).
+- Catalog statuses in `docs/product-specs/PRODUCT_CATALOG.md` are authoritative for migration state.
+- Dual TS (`src/finance_engine/`) and JS (`public/instruments.js`) calculation surfaces are an accepted interim state (ADR 0017), not product-spec incompleteness.
 
 Files referenced
 ----------------
 - `DESIGN.md`
 - `docs/source-of-truth-ownership.md`
+- `docs/adr/0017-converge-on-single-browser-calculation-surface.md`
+- `docs/product-specs/PRODUCT_CATALOG.md`
 - `docs/product-specs/products/loans/fixed-rate-loan/product.yaml`
 - `docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml`
 - `docs/product-specs/products/government-securities/dkj/product.yaml`
 - `docs/product-specs/products/government-securities/pmap/product.yaml`
 - `docs/product-specs/products/government-securities/bmap/product.yaml`
+- `public/controller/loan-legacy-bridges.js`
 - `src/finance_engine/instruments/loan.ts`
 - `src/finance_engine/instruments/investment.ts`
 - `src/finance_engine/instruments/common.ts`
-
-No formulas were moved or removed in this audit step.

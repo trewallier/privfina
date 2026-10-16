@@ -1,38 +1,16 @@
-import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-input-validators.js'
+import { FIXED_RATE_MORTGAGE_PRODUCT_SPEC } from './fixed-rate-mortgage-product-spec.js'
+import {
+  mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput,
+  mapLegacyLoanPreviewToSpecOutputs,
+  calculateFixedRateLoanLikeFromSpecInputs
+} from './loan-legacy-bridges.js'
 
 function mapFixedRateMortgageSpecInputsToLegacyCalculationInput(specInputs) {
-  const principal = toNonNegativeNumber(specInputs.principal, 'principal')
-  const annualInterestRatePct = toNonNegativeNumber(
-    specInputs.annualInterestRatePct,
-    'annualInterestRatePct'
-  )
-  const termMonths = toPositiveInteger(specInputs.termMonths, 'termMonths')
-
-  return {
-    principal,
-    annualRate: annualInterestRatePct / 100,
-    termMonths
-  }
-}
-
-function mapLegacyLoanPreviewToSpecOutputs(legacyPreview) {
-  return {
-    monthlyPayment: toFiniteNumber(legacyPreview.monthlyInstallment, 'monthlyInstallment'),
-    paymentCount: toPositiveInteger(legacyPreview.termMonths, 'termMonths'),
-    totalInterest: toFiniteNumber(legacyPreview.totalInterest, 'totalInterest'),
-    totalPaid: toFiniteNumber(legacyPreview.totalRepayment, 'totalRepayment')
-  }
+  return mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(specInputs)
 }
 
 function calculateFixedRateMortgageFromSpecInputs(specInputs, options) {
-  const createLoanRepaymentPreview = options?.createLoanRepaymentPreview
-  if (typeof createLoanRepaymentPreview !== 'function') {
-    throw new Error('createLoanRepaymentPreview function is required.')
-  }
-
-  const legacyInput = mapFixedRateMortgageSpecInputsToLegacyCalculationInput(specInputs)
-  const legacyPreview = createLoanRepaymentPreview(legacyInput)
-  return mapLegacyLoanPreviewToSpecOutputs(legacyPreview)
+  return calculateFixedRateLoanLikeFromSpecInputs(specInputs, options)
 }
 
 function mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput(specInputs, extras = {}) {
@@ -41,6 +19,8 @@ function mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput(specInputs, extra
 
   return {
     ...extras,
+    productId: FIXED_RATE_MORTGAGE_PRODUCT_SPEC.id,
+    label: String(extras.label || '').trim() || FIXED_RATE_MORTGAGE_PRODUCT_SPEC.ui.formTitle,
     principal: legacyInput.principal,
     annualRate: legacyInput.annualRate,
     termValue: legacyInput.termMonths,

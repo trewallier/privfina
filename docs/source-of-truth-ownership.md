@@ -59,15 +59,16 @@
 
 ## Current Transition State
 
-The repository is actively migrating toward the model above:
+The repository has completed the first product-spec migration wave for the cataloged loan and government-security products (see `PRODUCT_CATALOG.md`):
 
-- **Legacy state**: Product logic was scattered across DESIGN.md, code, and UI forms.
-- **In-progress**: Product specs (ADR 0013–0016) are being introduced for new products (loans, government securities).
-- **Target state**: All products have explicit specs; code implements reusable primitives; UI derives metadata from specs.
+- **Done for catalog pilots**: fixed-rate loan, DKJ, PMÁP, and BMÁP are fully-spec-backed; fixed-rate mortgage is calc-aligned with UI parked.
+- **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders.
+- **Known dual surface**: TypeScript engine primitives and `public/instruments.js` both host calculation code until a bundler lands (ADR 0017).
+- **Target state**: All products have explicit specs; code implements reusable primitives; UI derives metadata from specs; one browser calculation surface.
 
 **Practical implications during transition**:
-- Some products still live primarily in code and DESIGN.md; their specs are being developed incrementally (see ROADMAP.md).
-- Temporary duplication may exist (e.g., field definitions in both spec and UI) during product migration; mark these as transitional and resolve in the next iteration.
+- Prefer extending product specs and shared adapter bridges over adding product branches in the engine.
+- Embedded frontend product-spec modules must stay parity-tested against YAML until build-time loading exists.
 - When you encounter legacy product logic (hardcoded in engine, UI, or design doc), use this table to decide: which artifact type should own this information in the target state? Move it there and update the source.
 
 ## References

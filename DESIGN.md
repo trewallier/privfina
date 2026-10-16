@@ -51,8 +51,7 @@ An instrument is a source of one or more cash flows.
 - `Loan`: principal flows, scheduled repayments, and interest rules
 - `Investment`: contributions, distributions, and valuation-related flows
 
-The current implementation only includes the common `CashFlow` model. Instrument-specific types will be layered on top as small additions.
-The current implementation includes one-time cash-flow creation, recurring monthly/weekly/annual generation, and cumulative-series helpers without introducing a full instrument hierarchy yet.
+The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, and investment subtypes (see `src/finance_engine/instruments/` and the browser path in `public/instruments.js`). Product-specific contracts for cataloged loans and government securities live under `docs/product-specs/` (ADR 0013–0016).
 
 ### Instrument Design (planned v1 expansion)
 
@@ -208,11 +207,14 @@ Evaluation strategies:
 
 Status:
 
-- partially implemented for one-time and recurring flow generation (monthly, weekly, annual)
+- implemented for one-time and recurring flow generation (monthly, weekly, annual)
+- instrument expansion paths exist for salary, subscription, loan amortization, and investment subtypes
+- browser UI still executes through `public/instruments.js` while TypeScript primitives live under `src/finance_engine/` (convergence goal: ADR 0017)
 
 Current modules:
 
 - `finance_engine.engine`: one-time cash-flow creation, recurring schedule generation, and cumulative-series calculation helpers
+- `finance_engine.instruments.*`: salary, subscription, loan, investment, and shared simulation helpers
 
 ### 4. Analytics
 

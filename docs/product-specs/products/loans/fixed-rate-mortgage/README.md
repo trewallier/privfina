@@ -18,3 +18,8 @@ This iteration excludes:
 ## Worked Examples
 
 The examples in this folder are executable acceptance criteria for the specification. If an example does not produce the expected outputs, the spec is not ready for implementation.
+
+## Implementation Status
+
+- **calc-aligned**: calculation adapter and form metadata seams exist under `public/controller/` and are covered by tests.
+- **UI parked**: there is no dedicated mortgage composer in `public/index.html` / `app-controller.js` yet. Promoting this product to fully-spec-backed means wiring that composer and controller flow, not inventing new amortization math.

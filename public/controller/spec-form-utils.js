@@ -15,4 +15,53 @@ function orderedSpecFields(productSpec) {
   return sectionOrder.map((name) => fieldByName.get(name)).filter(Boolean)
 }
 
-export { toInputType, applyNumericConstraints, orderedSpecFields }
+function ensureFieldLabelTitleElement(label, className) {
+  let titleElement = label.querySelector(`.${className}`)
+  if (!titleElement) {
+    titleElement = document.createElement('span')
+    titleElement.className = className
+    label.insertBefore(titleElement, label.firstChild)
+    label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
+  }
+  return titleElement
+}
+
+function reorderFormRowBySpec(form, fields, fieldAdapter) {
+  const firstRow = form.querySelector('.row')
+  if (!firstRow) {
+    return
+  }
+
+  const mappedInputIds = fields
+    .map((field) => fieldAdapter[field.name])
+    .filter(Boolean)
+    .map((entry) => entry.inputId)
+
+  const mappedLabelsInOrder = fields
+    .map((field) => {
+      const adapter = fieldAdapter[field.name]
+      if (!adapter) {
+        return null
+      }
+      const input = form.querySelector(`#${adapter.inputId}`)
+      return input ? input.closest('label') : null
+    })
+    .filter(Boolean)
+
+  const remainingLabels = Array.from(firstRow.children).filter((node) => {
+    const input = node.querySelector('input, select')
+    return !input || !mappedInputIds.includes(input.id)
+  })
+
+  ;[...mappedLabelsInOrder, ...remainingLabels].forEach((label) => {
+    firstRow.appendChild(label)
+  })
+}
+
+export {
+  toInputType,
+  applyNumericConstraints,
+  orderedSpecFields,
+  ensureFieldLabelTitleElement,
+  reorderFormRowBySpec
+}

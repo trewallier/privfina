@@ -19,7 +19,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       label: 'Principal',
       required: true,
       unit: 'currency',
-      description: 'Initial borrowed amount.',
+      description: 'Initial borrowed amount used for amortization.',
       constraints: {
         minimum: 1
       }
@@ -53,7 +53,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       label: 'Start Date',
       required: true,
       unit: 'date',
-      description: 'Loan start date in ISO format.'
+      description: 'Date the loan starts and interest begins to accrue.'
     },
     {
       name: 'gracePeriodMonths',
@@ -61,8 +61,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       label: 'Grace Period (Months)',
       required: false,
       unit: 'months',
-      description:
-        'Optional months at the start of the term before amortizing repayments begin. Defaults to 0.',
+      description: 'Optional months at the start before amortizing repayments begin. Defaults to 0.',
       constraints: {
         minimum: 0
       }
@@ -73,7 +72,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       label: 'Capitalize Interest at End of Grace',
       required: false,
       description:
-        'When enabled with a positive grace period, unpaid grace interest is added to principal at the end of grace instead of collecting interest-only payments. Ignored when grace period is 0.'
+        'With a positive grace period, adds unpaid grace interest to principal at grace end instead of interest-only payments.'
     }
   ],
   derivedVariables: [

@@ -11,6 +11,7 @@
 | **Validation rules** | Product spec (constraints, rules, cross-field logic) | Scattered UI checks and engine guards (migrate to spec) |
 | **Worked examples** | Product spec examples folder | Code comments, separate test fixtures (examples are the test contract) |
 | **Reusable calculation primitives** | Engine code (`src/finance_engine/`) | Product-specific logic; variant branching; UI adapters |
+| **Instrument bundle persistence contract** | `InstrumentBundle` / `GeneratedCashFlow` in `src/finance_engine/models.ts` (types) and `public/instruments.js` normalize (runtime) | Ad-hoc UI-only flow shapes without lineage |
 | **Product-specific generators** | Engine code parameterized by spec | Hardcoded product branches; use specs to drive generators instead |
 | **Rendering & interaction** | UI code (`public/app*.js`, `public/controller/`) | Product definitions (derive field labels, order, visibility from specs) |
 | **UI field metadata** | Product spec (labels, help text, grouping, visibility rules) | Hardcoded in forms; maintain parity with specs |
@@ -62,8 +63,10 @@
 The repository has completed the first product-spec migration wave for the cataloged loan and government-security products (see `PRODUCT_CATALOG.md`):
 
 - **Done for catalog pilots**: fixed-rate loan, DKJ, PMÁP, and BMÁP are fully-spec-backed; fixed-rate mortgage is calc-aligned with UI parked.
+- **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion`.
 - **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders.
 - **Known dual surface**: TypeScript engine primitives and `public/instruments.js` both host calculation code until a bundler lands (ADR 0017).
+- **Next for roadmap §3**: export schema field-level migrations / round-trip depth, then evaluation-result caching.
 - **Target state**: All products have explicit specs; code implements reusable primitives; UI derives metadata from specs; one browser calculation surface.
 
 **Practical implications during transition**:

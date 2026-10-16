@@ -155,14 +155,18 @@ Canonical note
 	- generation remains range-aware where applicable and avoids out-of-range work
 	- no additional NPV implementation changes are introduced by this scope
 
-### Instrument Bundle Model (proposed)
+### Instrument Bundle Model
 
-- Add an `InstrumentBundle` concept that stores:
-	- instrument metadata and input parameters
-	- generation assumptions (schedule mode, compounding conventions)
-	- generated dated flow list (one-time and recurring occurrences materialized for the bounded horizon)
-	- lineage identifiers linking generated flows back to source instrument
-- UI list behavior should allow include/exclude and edit/delete at instrument level while preserving generated flow traceability.
+- `InstrumentBundle` (see `src/finance_engine/models.ts` and `public/instruments.js` normalize) stores:
+	- instrument metadata and input parameters (`config`)
+	- optional product-spec reference (`productId`, `productSpecVersion`) when the instrument is catalog-backed (ADR 0013)
+	- generation assumptions (schedule mode, compounding conventions) inside `config`
+	- generated dated flow list for the bounded horizon
+	- lineage on each generated flow: stable `id`, `sourceInstrumentId`, `sourceInstrumentType`
+- Save/edit regenerates `generatedFlows` and `updatedAt` while preserving bundle `id` and `createdAt`.
+- Charting consumes lineage-stamped flows via `flattenInstrumentFlows` / `buildEffectiveFlows`.
+- UI list behavior allows include/exclude and edit/delete at instrument level while preserving generated flow traceability.
+- Export schema field-level migrations for older bundles without lineage remain roadmap §3 PR 2 work.
 
 ## Architecture
 
@@ -241,11 +245,10 @@ Planned changes are organized by existing repository paths so implementation can
 ### Engine and Domain (`src/finance_engine/`)
 
 - `interfaces.ts`
-	- add instrument-facing interfaces (for example `InstrumentDefinition`, `InstrumentBundle`, generation context)
-	- define typed preview outputs for loan repayment and investment maturity calculations
+	- instrument-facing inputs and typed preview outputs for loan repayment and investment maturity
 - `models.ts`
-	- add discriminated unions for salary/subscription/loan/investment input models
-	- add persisted bundle metadata types (instrument id, generated flow lineage)
+	- `InstrumentBundle`, `GeneratedCashFlow`, and `InstrumentType` lineage/persistence contract
+	- continue refining discriminated unions for salary/subscription/loan/investment inputs as needed
 - `date_utils.ts`
 	- add helper for "last working day on or before target day" computation
 	- keep weekday-only convention in v1 (holiday calendars deferred)
@@ -270,9 +273,9 @@ Planned changes are organized by existing repository paths so implementation can
 	- render instrument-level rows and details while preserving include/exclude actions
 	- show derived summaries (for example remaining term, next payment date)
 - `flows.js`
-	- normalize generated instrument flows into chart-consumable cash-flow entries
+	- chart-consumable effective flows, including lineage-stamped instrument flows
 - `storage.js` and `import-export.js`
-	- extend schema versioning for instrument bundle payloads and migration hooks
+	- schema v3 already carries `instrumentBundles`; field-level lineage migrations are the next schema bump
 	- preserve backward compatibility with existing one-time/recurring-only exports
 
 ### Tests (`tests/`)

@@ -21,7 +21,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [x] Refine inflation-linked bond contract: mandatory issue/due/transaction dates, annual spread, and period inflation inputs; derive annual maturity schedule and accrual factors from financial date markers.
 
 ### 3) Bundle Persistence And Compatibility
-- [ ] Implement pre-save bounded flow-bundle generation for instrument workflows and persist bundle lineage metadata.
+- [x] Implement pre-save bounded flow-bundle generation for instrument workflows and persist bundle lineage metadata.
 - [ ] Extend import/export schema and migrations for instrument bundles while preserving backward compatibility.
 - [ ] Add caching layer for evaluation results with clear invalidation semantics.
 

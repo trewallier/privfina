@@ -9,8 +9,15 @@ import {
 } from './instruments.js'
 
 const EXPORT_KIND = 'privfina.export'
-const CURRENT_EXPORT_SCHEMA_VERSION = 3
+const CURRENT_EXPORT_SCHEMA_VERSION = 4
 const MIN_SUPPORTED_IMPORT_SCHEMA_VERSION = 1
+
+/**
+ * Import policy for instrument bundles (ADR 0018):
+ * trust stored `generatedFlows` on import; do not re-run generators.
+ * Lineage/product-spec metadata may be filled by normalize/migration only.
+ */
+const IMPORT_GENERATED_FLOWS_POLICY = 'trust-stored'
 
 function normalizeOneTimeFlow(flow) {
   if (!flow || typeof flow !== 'object') {
@@ -131,6 +138,14 @@ function extractImportData(payload) {
   }
 }
 
+/**
+ * Schema v4 upgrade for instrument bundles.
+ * Fills lineage / product-spec metadata via normalize only; never regenerates cash amounts.
+ */
+function migrateInstrumentBundlesToSchemaV4(instrumentBundles) {
+  return normalizeInstrumentBundles(instrumentBundles)
+}
+
 function migrateImportDataToCurrent(schemaVersion, data) {
   let currentVersion = schemaVersion
   let currentData = data
@@ -159,6 +174,19 @@ function migrateImportDataToCurrent(schemaVersion, data) {
       continue
     }
 
+    if (currentVersion === 3) {
+      warnings.push(
+        'Imported schema v3. Instrument bundles were upgraded with lineage metadata; stored cash-flow amounts were preserved.'
+      )
+      currentVersion = 4
+      currentData = {
+        oneTimeCashFlows: currentData.oneTimeCashFlows || [],
+        recurringCashFlows: currentData.recurringCashFlows || [],
+        instrumentBundles: migrateInstrumentBundlesToSchemaV4(currentData.instrumentBundles || [])
+      }
+      continue
+    }
+
     throw new Error(`No migration path is available from schema v${currentVersion}.`)
   }
 
@@ -178,6 +206,7 @@ function parseImportDocument(payload) {
     normalizeRecurringDefinitions(migrated.data.recurringCashFlows),
     'recurring'
   )
+  // Trust imported generatedFlows; normalize only stamps/preserves lineage metadata.
   const instrumentBundles = ensureFlowIds(
     normalizeInstrumentBundles(migrated.data.instrumentBundles),
     'instrument'
@@ -188,7 +217,8 @@ function parseImportDocument(payload) {
     recurringFlows,
     instrumentBundles,
     schemaVersion: migrated.schemaVersion,
-    warnings: migrated.warnings
+    warnings: migrated.warnings,
+    importGeneratedFlowsPolicy: IMPORT_GENERATED_FLOWS_POLICY
   }
 }
 
@@ -220,12 +250,15 @@ function checkStorageSchemaVersion() {
 }
 
 export {
+  EXPORT_KIND,
   CURRENT_EXPORT_SCHEMA_VERSION,
   MIN_SUPPORTED_IMPORT_SCHEMA_VERSION,
+  IMPORT_GENERATED_FLOWS_POLICY,
   normalizeOneTimeFlow,
   normalizeOneTimeFlows,
   ensureFlowIds,
   buildExportDocument,
+  migrateInstrumentBundlesToSchemaV4,
   migrateImportDataToCurrent,
   parseImportDocument,
   checkStorageSchemaVersion

@@ -600,11 +600,12 @@ function initController() {
   }
 
   function getHelpTextById(helpId) {
-    if (!investmentForm || !helpId) {
+    if (!helpId) {
       return ''
     }
 
-    const helpParagraph = investmentForm.querySelector(`#${helpId} p`)
+    const helpNode = document.getElementById(helpId)
+    const helpParagraph = helpNode ? helpNode.querySelector('p') : null
     return helpParagraph ? helpParagraph.textContent.trim() : ''
   }
 
@@ -1180,13 +1181,13 @@ function initController() {
     })
   }
 
-  if (investmentForm) {
-    investmentForm.querySelectorAll('[data-help-button]').forEach((button) => {
+  ;[loanForm, investmentForm].filter(Boolean).forEach((form) => {
+    form.querySelectorAll('[data-help-button]').forEach((button) => {
       button.addEventListener('click', () => {
         toggleInvestmentInfoPopup(button)
       })
     })
-  }
+  })
 
   investmentInfoPopupClose?.addEventListener('click', closeInvestmentInfoPopup)
   window.addEventListener('resize', () => {

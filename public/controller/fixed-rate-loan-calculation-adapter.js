@@ -1,39 +1,16 @@
-import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-input-validators.js'
 import { FIXED_RATE_LOAN_PRODUCT_SPEC } from './fixed-rate-loan-product-spec.js'
+import {
+  mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput,
+  mapLegacyLoanPreviewToSpecOutputs,
+  calculateFixedRateLoanLikeFromSpecInputs
+} from './loan-legacy-bridges.js'
 
 function mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs) {
-  const principal = toNonNegativeNumber(specInputs.principal, 'principal')
-  const annualInterestRatePct = toNonNegativeNumber(
-    specInputs.annualInterestRatePct,
-    'annualInterestRatePct'
-  )
-  const termMonths = toPositiveInteger(specInputs.termMonths, 'termMonths')
-
-  return {
-    principal,
-    annualRate: annualInterestRatePct / 100,
-    termMonths
-  }
-}
-
-function mapLegacyLoanPreviewToSpecOutputs(legacyPreview) {
-  return {
-    monthlyPayment: toFiniteNumber(legacyPreview.monthlyInstallment, 'monthlyInstallment'),
-    paymentCount: toPositiveInteger(legacyPreview.termMonths, 'termMonths'),
-    totalInterest: toFiniteNumber(legacyPreview.totalInterest, 'totalInterest'),
-    totalPaid: toFiniteNumber(legacyPreview.totalRepayment, 'totalRepayment')
-  }
+  return mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(specInputs)
 }
 
 function calculateFixedRateLoanFromSpecInputs(specInputs, options) {
-  const createLoanRepaymentPreview = options?.createLoanRepaymentPreview
-  if (typeof createLoanRepaymentPreview !== 'function') {
-    throw new Error('createLoanRepaymentPreview function is required.')
-  }
-
-  const legacyInput = mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs)
-  const legacyPreview = createLoanRepaymentPreview(legacyInput)
-  return mapLegacyLoanPreviewToSpecOutputs(legacyPreview)
+  return calculateFixedRateLoanLikeFromSpecInputs(specInputs, options)
 }
 
 function mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras = {}) {

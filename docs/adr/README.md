@@ -11,5 +11,8 @@ Conventions
 Location
 - ADRs live in `docs/adr/`.
 
+Recent decisions
+- `0017-converge-on-single-browser-calculation-surface.md` — keep TS engine as formula owner; treat `public/instruments.js` as interim until bundler ADR.
+
 How to create
 - Use the `docs/adr/template.md` or the `create-adr.prompt.md` helper in `.github/prompts/`.

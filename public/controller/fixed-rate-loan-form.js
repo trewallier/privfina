@@ -18,57 +18,18 @@ const FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER = {
 }
 
 import { FIXED_RATE_LOAN_PRODUCT_SPEC } from './fixed-rate-loan-product-spec.js'
-import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
+import {
+  toInputType,
+  applyNumericConstraints,
+  orderedSpecFields,
+  ensureFieldLabelTitleElement,
+  reorderFormRowBySpec
+} from './spec-form-utils.js'
 
 function mapLoanTermValueToMonths(termValue, termUnit) {
   const numericTermValue = Number(termValue)
   const normalizedTermUnit = String(termUnit || 'months').trim().toLowerCase() === 'years' ? 'years' : 'months'
   return normalizedTermUnit === 'years' ? numericTermValue * 12 : numericTermValue
-}
-
-function ensureLabelTitleElement(label) {
-  let titleElement = label.querySelector('.loan-field-label')
-  if (!titleElement) {
-    titleElement = document.createElement('span')
-    titleElement.className = 'loan-field-label'
-    label.insertBefore(titleElement, label.firstChild)
-    label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
-  }
-  return titleElement
-}
-
-// `orderedSpecFields` is imported from `spec-form-utils.js`
-
-function reorderLoanRowBySpec(loanForm, fields) {
-  const firstRow = loanForm.querySelector('.row')
-  if (!firstRow) {
-    return
-  }
-
-  const mappedInputIds = fields
-    .map((field) => FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER[field.name])
-    .filter(Boolean)
-    .map((entry) => entry.inputId)
-
-  const mappedLabelsInOrder = fields
-    .map((field) => {
-      const adapter = FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER[field.name]
-      if (!adapter) {
-        return null
-      }
-      const input = loanForm.querySelector(`#${adapter.inputId}`)
-      return input ? input.closest('label') : null
-    })
-    .filter(Boolean)
-
-  const remainingLabels = Array.from(firstRow.children).filter((node) => {
-    const input = node.querySelector('input, select')
-    return !input || !mappedInputIds.includes(input.id)
-  })
-
-  ;[...mappedLabelsInOrder, ...remainingLabels].forEach((label) => {
-    firstRow.appendChild(label)
-  })
 }
 
 function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
@@ -100,7 +61,7 @@ function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
 
     const label = input.closest('label')
     if (label) {
-      const titleElement = ensureLabelTitleElement(label)
+      const titleElement = ensureFieldLabelTitleElement(label, 'loan-field-label')
       titleElement.textContent = field.label
     }
   })
@@ -112,7 +73,7 @@ function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
     }
   }
 
-  reorderLoanRowBySpec(loanForm, fields)
+  reorderFormRowBySpec(loanForm, fields, FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER)
 }
 
 function mapFormDataToFixedRateLoanSpecInputs(formData) {

@@ -1,6 +1,11 @@
 import { PMAP_PRODUCT_SPEC } from './pmap-product-spec.js'
 import { mapPmapSpecInputsToLegacyInvestmentInput } from './pmap-calculation-adapter.js'
-import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
+import {
+  toInputType,
+  applyNumericConstraints,
+  orderedSpecFields,
+  ensureFieldLabelTitleElement
+} from './spec-form-utils.js'
 
 const PMAP_FRONTEND_FIELD_ADAPTER = {
   principal: { inputId: 'investment-principal', formName: 'principal' },
@@ -10,17 +15,6 @@ const PMAP_FRONTEND_FIELD_ADAPTER = {
   purchaseDate: { inputId: 'investment-transaction-date', formName: 'purchaseDate' },
   issueDate: { inputId: 'investment-due-date', formName: 'issueDate' },
   firstCouponDate: { inputId: 'investment-coupon-period', formName: 'firstCouponDate' }
-}
-
-function ensureLabelTitleElement(label) {
-  let titleElement = label.querySelector('.pmap-field-label')
-  if (!titleElement) {
-    titleElement = document.createElement('span')
-    titleElement.className = 'pmap-field-label'
-    label.insertBefore(titleElement, label.firstChild)
-    label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
-  }
-  return titleElement
 }
 
 function reorderInvestmentRowsBySpec(investmentForm, fields) {
@@ -81,7 +75,7 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
 
     const label = input.closest('label')
     if (label) {
-      ensureLabelTitleElement(label).textContent = field.label
+      ensureFieldLabelTitleElement(label, 'pmap-field-label').textContent = field.label
     }
   })
 

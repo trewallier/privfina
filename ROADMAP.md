@@ -37,8 +37,8 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.
 - [ ] Define Node package management and update strategy (ADR required)
-- [ ] Choose build tooling and bundler (ADR required)
-- [ ] Add GitHub Actions CI/CD workflows for build, test, and deploy
+- [ ] Choose build tooling and bundler (ADR required; see ADR 0017 for single calculation-surface goal)
+- [x] Add GitHub Actions CI/CD workflows for build, test, and deploy
 - [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
 - [ ] Document update strategy and release process (patch/minor/major cadence)
 

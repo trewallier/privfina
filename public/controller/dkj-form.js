@@ -68,54 +68,19 @@ const DKJ_FRONTEND_FIELD_ADAPTER = {
   remainingDays: { inputId: 'investment-remaining-days', formName: 'remainingDays' }
 }
 
-import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
+import {
+  toInputType,
+  applyNumericConstraints,
+  orderedSpecFields,
+  ensureFieldLabelTitleElement,
+  reorderFormRowBySpec
+} from './spec-form-utils.js'
 
 function addMonthsToIsoDate(dateIso, months) {
   const source = new Date(`${dateIso}T00:00:00Z`)
   if (Number.isNaN(source.getTime())) return ''
   const target = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + months, source.getUTCDate()))
   return target.toISOString().slice(0, 10)
-}
-
-function ensureLabelTitleElement(label) {
-  let titleElement = label.querySelector('.investment-field-label')
-  if (!titleElement) {
-    titleElement = document.createElement('span')
-    titleElement.className = 'investment-field-label'
-    label.insertBefore(titleElement, label.firstChild)
-    label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
-  }
-  return titleElement
-}
-
-// `orderedSpecFields` is imported from `spec-form-utils.js`
-
-function reorderInvestmentRowBySpec(investmentForm, fields) {
-  const firstRow = investmentForm.querySelector('.row')
-  if (!firstRow) return
-
-  const mappedInputIds = fields
-    .map((field) => DKJ_FRONTEND_FIELD_ADAPTER[field.name])
-    .filter(Boolean)
-    .map((entry) => entry.inputId)
-
-  const mappedLabelsInOrder = fields
-    .map((field) => {
-      const adapter = DKJ_FRONTEND_FIELD_ADAPTER[field.name]
-      if (!adapter) return null
-      const input = investmentForm.querySelector(`#${adapter.inputId}`)
-      return input ? input.closest('label') : null
-    })
-    .filter(Boolean)
-
-  const remainingLabels = Array.from(firstRow.children).filter((node) => {
-    const input = node.querySelector('input, select')
-    return !input || !mappedInputIds.includes(input.id)
-  })
-
-  ;[...mappedLabelsInOrder, ...remainingLabels].forEach((label) => {
-    firstRow.appendChild(label)
-  })
 }
 
 function applyDkjSpecToForm({ investmentForm, investmentBox }) {
@@ -150,12 +115,11 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
 
     const label = input.closest('label')
     if (label) {
-      const titleElement = ensureLabelTitleElement(label)
-      titleElement.textContent = field.label
+      ensureFieldLabelTitleElement(label, 'investment-field-label').textContent = field.label
     }
   })
 
-  reorderInvestmentRowBySpec(investmentForm, fields)
+  reorderFormRowBySpec(investmentForm, fields, DKJ_FRONTEND_FIELD_ADAPTER)
 }
 
 function setDkjFieldVisibility(investmentForm, visibleFieldNames) {

@@ -1,56 +1,11 @@
-const FIXED_RATE_MORTGAGE_PRODUCT_SPEC = {
-  inputs: [
-    {
-      name: 'principal',
-      type: 'number',
-      label: 'Home Loan Principal',
-      required: true,
-      unit: 'currency',
-      constraints: {
-        minimum: 1000
-      }
-    },
-    {
-      name: 'annualInterestRatePct',
-      type: 'number',
-      label: 'Fixed Annual Interest Rate',
-      required: true,
-      unit: 'percent',
-      constraints: {
-        minimum: 0,
-        maximum: 100
-      }
-    },
-    {
-      name: 'termMonths',
-      type: 'integer',
-      label: 'Mortgage Term in Months',
-      required: true,
-      unit: 'months',
-      constraints: {
-        minimum: 12,
-        maximum: 480
-      }
-    },
-    {
-      name: 'startDate',
-      type: 'string',
-      label: 'Mortgage Start Date',
-      required: true,
-      unit: 'date'
-    }
-  ],
-  ui: {
-    formTitle: 'Fixed Rate Mortgage',
-    sections: [
-      {
-        id: 'mortgage-core',
-        title: 'Mortgage Inputs',
-        fieldNames: ['principal', 'annualInterestRatePct', 'termMonths', 'startDate']
-      }
-    ]
-  }
-}
+/**
+ * Fixed-rate mortgage form metadata seam.
+ *
+ * Intentionally parked: calculation adapter + form metadata are calc-aligned and
+ * covered by tests, but there is no dedicated mortgage composer box in
+ * `public/index.html` / `app-controller.js` yet. Wire those when promoting the
+ * product from calc-aligned to fully-spec-backed.
+ */
 
 const FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER = {
   principal: {
@@ -71,52 +26,14 @@ const FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER = {
   }
 }
 
-import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
-
-function ensureLabelTitleElement(label) {
-  let titleElement = label.querySelector('.mortgage-field-label')
-  if (!titleElement) {
-    titleElement = document.createElement('span')
-    titleElement.className = 'mortgage-field-label'
-    label.insertBefore(titleElement, label.firstChild)
-    label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
-  }
-  return titleElement
-}
-
-// `orderedSpecFields` is imported from `spec-form-utils.js`
-
-function reorderMortgageRowBySpec(mortgageForm, fields) {
-  const firstRow = mortgageForm.querySelector('.row')
-  if (!firstRow) {
-    return
-  }
-
-  const mappedInputIds = fields
-    .map((field) => FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER[field.name])
-    .filter(Boolean)
-    .map((entry) => entry.inputId)
-
-  const mappedLabelsInOrder = fields
-    .map((field) => {
-      const adapter = FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER[field.name]
-      if (!adapter) {
-        return null
-      }
-      const input = mortgageForm.querySelector(`#${adapter.inputId}`)
-      return input ? input.closest('label') : null
-    })
-    .filter(Boolean)
-
-  const remainingLabels = Array.from(firstRow.children).filter((node) => {
-    const input = node.querySelector('input, select')
-    return !input || !mappedInputIds.includes(input.id)
-  })
-
-  ;[...mappedLabelsInOrder, ...remainingLabels].forEach((label) => {
-    firstRow.appendChild(label)
-  })
-}
+import { FIXED_RATE_MORTGAGE_PRODUCT_SPEC } from './fixed-rate-mortgage-product-spec.js'
+import {
+  toInputType,
+  applyNumericConstraints,
+  orderedSpecFields,
+  ensureFieldLabelTitleElement,
+  reorderFormRowBySpec
+} from './spec-form-utils.js'
 
 function applyFixedRateMortgageSpecToForm({ mortgageForm, mortgageBox }) {
   if (!mortgageForm) {
@@ -147,7 +64,7 @@ function applyFixedRateMortgageSpecToForm({ mortgageForm, mortgageBox }) {
 
     const label = input.closest('label')
     if (label) {
-      const titleElement = ensureLabelTitleElement(label)
+      const titleElement = ensureFieldLabelTitleElement(label, 'mortgage-field-label')
       titleElement.textContent = field.label
     }
   })
@@ -159,12 +76,22 @@ function applyFixedRateMortgageSpecToForm({ mortgageForm, mortgageBox }) {
     }
   }
 
-  reorderMortgageRowBySpec(mortgageForm, fields)
+  reorderFormRowBySpec(mortgageForm, fields, FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER)
+}
+
+function mapFormDataToFixedRateMortgageSpecInputs(formData) {
+  return {
+    principal: Number(formData.get('principal')),
+    annualInterestRatePct: Number(formData.get('annualRate')),
+    termMonths: Number(formData.get('termValue')),
+    startDate: String(formData.get('startDate') || '').trim()
+  }
 }
 
 export {
   FIXED_RATE_MORTGAGE_PRODUCT_SPEC,
   FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER,
   applyFixedRateMortgageSpecToForm,
+  mapFormDataToFixedRateMortgageSpecInputs,
   orderedSpecFields
 }

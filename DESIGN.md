@@ -313,6 +313,7 @@ The first UI should provide simple controls to manage an arbitrary number of cas
 	- a management workspace for creating, editing, importing/exporting, and listing cash-flow definitions
 	- a visualization workspace focused on range controls and cumulative chart output
 - The split should remain responsive: side-by-side on wider screens and stacked on smaller screens.
+- Adaptive UX direction (ADR 0019 / ROADMAP §4): keep one SPA and the current desktop visual language; on narrow viewports, separate browse (list + chart access) from compose (add/edit), and prefer a card-style configured list over a wide multi-column table.
 
 ### Cash-flow management controls
 
@@ -331,6 +332,7 @@ There is no hard limit on the number of cash flows a user can create, other than
 - Supported recurring schedules are monthly (`m h day * *`), weekly (`m h * * weekday`), and annual (`m h day month *`).
 - Form presentation should be collapsible in a Swagger-like composer style so only currently relevant form boxes are expanded.
 - Users should be able to hide the full composer area when not actively adding or editing, keeping focus on configured flows and chart analysis.
+- Planned narrow-viewport compose: progressive type selection, then a dedicated add/edit step with explicit Save / Cancel, without changing field contracts above.
 
 Current implementation includes one-time and recurring add forms on the main webpage.
 
@@ -338,6 +340,7 @@ Current implementation includes one-time and recurring add forms on the main web
 
 - Default sort should be by next effective date, then creation order.
 - Current implementation exposes include/exclude toggles, edit actions, and delete actions per row for one-time and recurring definitions.
+- Planned narrow-viewport list: card rows summarizing type/name, signed amount, date range or equivalent, plus include/edit/delete actions (no horizontal table scroll as the primary mobile pattern).
 - Changes should update persisted browser state immediately.
 
 ## Visualization: Cumulative Cash-Flow Diagram

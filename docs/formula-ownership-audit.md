@@ -46,7 +46,7 @@ Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done in this cleanup pass).
 2. Promote mortgage to fully-spec-backed only when a dedicated composer box is wired.
-3. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §5 / ADR 0017.
+3. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017.
 
 Notes
 -----

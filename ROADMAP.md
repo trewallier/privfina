@@ -25,7 +25,28 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [x] Extend import/export schema and migrations for instrument bundles while preserving backward compatibility.
 - [x] Add caching layer for evaluation results with clear invalidation semantics.
 
-### 4) Product Analytics And Account Model Evolution
+### 4) Responsive Workspace UX Overhaul (next epic)
+Goal: keep today’s desktop look and two-workspace usefulness, while making phone use intuitive (browse vs add/edit separation, no sideways table scrolling). Architecture choice: ADR 0019. Requirements live in `docs/spec.md`; interaction guidance in `DESIGN.md`.
+
+Constraints
+- Same SPA, same visual language (tokens, card chrome, chart styling); not a second mobile product.
+- No domain/persistence/calculation contract changes in this epic.
+- Desktop must remain a first-class layout (side-by-side management + visualization), not a stretched phone UI.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [ ] Establish responsive shell breakpoints and document wide vs narrow behavior without changing business logic.
+- [ ] Desktop polish pass: preserve side-by-side workspaces, composer hide/show, and current visual density while ensuring the shell can host adaptive list/compose modes.
+- [ ] Narrow browse mode: replace the wide overview table with a card-style configured-flow list (type/name, amount + direction, date summary, include toggle, edit/delete).
+- [ ] Narrow compose mode: open add/edit as a dedicated full-width form step (or equivalent overlay/panel) with clear Save / Cancel; return to browse after success.
+- [ ] Progressive add entry: type picker first (one-time, recurring, salary, subscription, loan, investment), then only the relevant form.
+- [ ] Mobile chart access: reach visualization (range controls + cumulative chart) without scrolling past long composer UI; keep chart usable with touch-friendly controls.
+- [ ] Touch and feedback basics: adequate tap targets, delete confirmation, brief saved/added feedback after compose succeeds.
+- [ ] Regression checklist: desktop two-workspace layout still looks intentional; existing create/edit/include/exclude/import/export/chart behaviors unchanged in meaning.
+
+Out of scope for this epic
+- Native apps, redesign of investment subtype math/forms beyond layout/navigation, new analytics features from §5, bundler/WASM work.
+
+### 5) Product Analytics And Account Model Evolution
 - [ ] Add daily, weekly, and monthly liquidity projections.
 - [ ] Add inflation-linked and bond-rate-linked interest rules.
 - [ ] Support grace periods and end-term interest capitalization.
@@ -33,7 +54,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [ ] Add discount-rate configuration and NPV analytics.
 - [ ] Add multi-account modeling and account-scoped cumulative summaries (future extension; current model is single-account).
 
-### 5) Platform, Data Integrations, And Operations
+### 6) Platform, Data Integrations, And Operations
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.
 - [ ] Define Node package management and update strategy (ADR required)
@@ -42,7 +63,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
 - [ ] Document update strategy and release process (patch/minor/major cadence)
 
-### 6) Performance And Future Hosting Evolution
+### 7) Performance And Future Hosting Evolution
 - [ ] v2: WASM spike: compile a small compute kernel and call it from JS
 - [ ] v2: replace hottest compute paths with WASM
 - [ ] v3: optional cloud sync/backing store (future; not now)

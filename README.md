@@ -10,6 +10,7 @@ This repository is evolving toward a browser-hosted personal finance planning ap
 - Implemented v1 slice: one-time and recurring cash-flow create/view/delete plus cumulative cash-flow chart with date-range controls.
 - Recurring definitions support monthly, weekly, and annual cron-like schedules.
 - Split workspace UX: dedicated cash-flow management area and separate visualization area.
+- Planned adaptive responsive UX (ROADMAP §4 / ADR 0019): keep desktop two-workspace look; on mobile separate browse vs add/edit and prefer a card list over the wide overview table.
 - Swagger-like collapsible flow composer panels with hide/show behavior for focus-oriented workflow.
 - Per-flow include toggles in the configured list to quickly include/exclude cash flows from cumulative visualization.
 - Optional external macro data fetched in-browser through a CORS-aware adapter.

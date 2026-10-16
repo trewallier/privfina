@@ -60,12 +60,12 @@ Acceptance criteria
 - [x] Users can create any number of cash flows through the page controls.
 - [x] The main UI separates cash-flow management and visualization into distinct workspace sections.
 - [x] Flow creation boxes are collapsible and can be hidden when not in use to focus on configured flows and chart output.
-- [ ] Wide-viewport layout keeps the intentional two-workspace desktop composition and current visual language (not a stretched phone layout).
-- [ ] Narrow-viewport browse mode shows configured flows as a card-style list (no horizontal scrolling table as the primary overview).
-- [ ] Narrow-viewport compose mode presents add/edit in a dedicated form step with explicit Save / Cancel and returns to browse after success.
-- [ ] Add entry uses progressive type selection before showing instrument/cash-flow fields.
-- [ ] Narrow viewports can reach range controls and the cumulative chart without scrolling past long composer UI.
-- [ ] Primary actions remain touch-friendly; delete confirms; successful add/edit shows brief feedback.
+- [x] Wide-viewport layout keeps the intentional two-workspace desktop composition and current visual language (not a stretched phone layout).
+- [x] Narrow-viewport browse mode shows configured flows as a card-style list (no horizontal scrolling table as the primary overview).
+- [x] Narrow-viewport compose mode presents add/edit in a dedicated form step with explicit Save / Cancel and returns to browse after success.
+- [x] Add entry uses progressive type selection before showing instrument/cash-flow fields.
+- [x] Narrow viewports can reach range controls and the cumulative chart without scrolling past long composer UI.
+- [x] Primary actions remain touch-friendly; delete confirms; successful add/edit shows brief feedback.
 - [x] Users can create one-time and recurring cash-flow definitions through the page controls.
 - [x] Users can view and delete existing one-time and recurring cash-flow definitions, and changes are reflected immediately in the UI state.
 - [x] Users can edit existing cash flows, and changes are reflected immediately in the UI state.

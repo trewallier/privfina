@@ -6,7 +6,14 @@ function closeAllBoxes(boxes) {
   })
 }
 
-function createComposerManager({ flowComposer, toggleComposerButton, boxes, openButtons = {} }) {
+function createComposerManager({
+  flowComposer,
+  toggleComposerButton,
+  boxes,
+  openButtons = {},
+  onOpenBox,
+  onCollapse
+} = {}) {
   const boxKeys = Object.keys(boxes)
 
   function setComposerVisibility(isVisible) {
@@ -19,8 +26,11 @@ function createComposerManager({ flowComposer, toggleComposerButton, boxes, open
     toggleComposerButton.textContent = isVisible ? 'Hide Add Flow Boxes' : 'Show Add Flow Boxes'
   }
 
-  function collapseComposerBoxes() {
+  function collapseComposerBoxes({ notify = true } = {}) {
     closeAllBoxes(boxes)
+    if (notify) {
+      onCollapse?.()
+    }
   }
 
   function openComposerBox(type) {
@@ -31,6 +41,8 @@ function createComposerManager({ flowComposer, toggleComposerButton, boxes, open
     if (box) {
       box.open = true
     }
+
+    onOpenBox?.(type)
   }
 
   function bindBoxToggleEvents() {
@@ -55,6 +67,8 @@ function createComposerManager({ flowComposer, toggleComposerButton, boxes, open
             other.open = false
           }
         })
+
+        onOpenBox?.(key)
       })
     })
   }

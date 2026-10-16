@@ -1021,73 +1021,133 @@
                 <form id="loan-form">
                   <div class="row">
                     <label>
-                      Label
+                      <span class="label-title"><span class="loan-field-label">Label</span> <button type="button" class="info-chip" data-help-button="loan-label-help" aria-label="Label help">i</button></span>
                       <input id="loan-label" name="label" type="text" placeholder="Loan" />
+                      <div id="loan-label-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-label-help" aria-label="Close">x</button>
+                        <p>Display name for this loan in the configured instruments list.</p>
+                      </div>
                     </label>
                     <label>
-                      Start date
+                      <span class="label-title"><span class="loan-field-label">Start date</span> <button type="button" class="info-chip" data-help-button="loan-start-date-help" aria-label="Start date help">i</button></span>
                       <input id="loan-start-date" name="startDate" type="date" required />
+                      <div id="loan-start-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-start-date-help" aria-label="Close">x</button>
+                        <p>Date the loan starts and interest begins to accrue.</p>
+                      </div>
                     </label>
                     <label>
-                      Principal
+                      <span class="label-title"><span class="loan-field-label">Principal</span> <button type="button" class="info-chip" data-help-button="loan-principal-help" aria-label="Principal help">i</button></span>
                       <input id="loan-principal" name="principal" type="number" min="0" step="0.01" required />
+                      <div id="loan-principal-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-principal-help" aria-label="Close">x</button>
+                        <p>Initial borrowed amount used for amortization.</p>
+                      </div>
                     </label>
                     <label>
-                      Annual interest rate
+                      <span class="label-title"><span class="loan-field-label">Annual interest rate</span> <button type="button" class="info-chip" data-help-button="loan-annual-rate-help" aria-label="Annual interest rate help">i</button></span>
                       <input id="loan-annual-rate" name="annualRate" type="number" min="0" step="0.0001" required />
+                      <div id="loan-annual-rate-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-annual-rate-help" aria-label="Close">x</button>
+                        <p>Nominal annual fixed interest rate in percent.</p>
+                      </div>
                     </label>
                     <label>
-                      Term
+                      <span class="label-title"><span class="loan-field-label">Term</span> <button type="button" class="info-chip" data-help-button="loan-term-value-help" aria-label="Term help">i</button></span>
                       <input id="loan-term-value" name="termValue" type="number" min="1" step="1" required />
+                      <div id="loan-term-value-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-term-value-help" aria-label="Close">x</button>
+                        <p>Loan duration count; combined with term unit to get total months, including any grace period.</p>
+                      </div>
                     </label>
                     <label>
-                      Term unit
+                      <span class="label-title"><span class="loan-field-label">Term unit</span> <button type="button" class="info-chip" data-help-button="loan-term-unit-help" aria-label="Term unit help">i</button></span>
                       <select id="loan-term-unit" name="termUnit">
                         <option value="months">Months</option>
                         <option value="years">Years</option>
                       </select>
+                      <div id="loan-term-unit-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-term-unit-help" aria-label="Close">x</button>
+                        <p>Whether the term value is measured in months or years.</p>
+                      </div>
                     </label>
                     <label>
-                      Repayment day of month
+                      <span class="label-title"><span class="loan-field-label">Repayment day of month</span> <button type="button" class="info-chip" data-help-button="loan-repayment-day-help" aria-label="Repayment day of month help">i</button></span>
                       <input id="loan-repayment-day" name="repaymentDayOfMonth" type="number" min="1" max="31" step="1" value="1" />
+                      <div id="loan-repayment-day-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-repayment-day-help" aria-label="Close">x</button>
+                        <p>Calendar day used for each scheduled monthly repayment.</p>
+                      </div>
                     </label>
                     <label>
-                      Category
+                      <span class="label-title"><span class="loan-field-label">Category</span> <button type="button" class="info-chip" data-help-button="loan-category-help" aria-label="Category help">i</button></span>
                       <input id="loan-category" name="category" type="text" placeholder="loan" />
+                      <div id="loan-category-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-category-help" aria-label="Close">x</button>
+                        <p>Optional tag for grouping this instrument in lists and reports.</p>
+                      </div>
                     </label>
                   </div>
                   <div class="row">
                     <label>
-                      Description
+                      <span class="label-title"><span class="loan-field-label">Description</span> <button type="button" class="info-chip" data-help-button="loan-description-help" aria-label="Description help">i</button></span>
                       <input id="loan-description" name="description" type="text" placeholder="Optional notes" />
+                      <div id="loan-description-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-description-help" aria-label="Close">x</button>
+                        <p>Optional free-text notes for this loan.</p>
+                      </div>
                     </label>
                     <label class="inline-field">
                       <input id="loan-include-disbursement" name="includeDisbursement" type="checkbox" checked />
-                      Account loan disbursement inflow
+                      <span class="label-title"><span class="loan-field-label">Account loan disbursement inflow</span> <button type="button" class="info-chip" data-help-button="loan-include-disbursement-help" aria-label="Account loan disbursement inflow help">i</button></span>
+                      <div id="loan-include-disbursement-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-include-disbursement-help" aria-label="Close">x</button>
+                        <p>When enabled, records the principal as an inflow on the start date.</p>
+                      </div>
                     </label>
                   </div>
                   <div class="row">
                     <label>
-                      <span class="loan-field-label">Grace Period (Months)</span>
+                      <span class="label-title"><span class="loan-field-label">Grace Period (Months)</span> <button type="button" class="info-chip" data-help-button="loan-grace-period-months-help" aria-label="Grace Period (Months) help">i</button></span>
                       <input id="loan-grace-period-months" name="gracePeriodMonths" type="number" min="0" step="1" value="0" />
+                      <div id="loan-grace-period-months-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-grace-period-months-help" aria-label="Close">x</button>
+                        <p>Optional months at the start before amortizing repayments begin. Defaults to 0.</p>
+                      </div>
                     </label>
                     <label class="inline-field">
                       <input id="loan-capitalize-interest-at-grace-end" name="capitalizeInterestAtGraceEnd" type="checkbox" />
-                      <span class="loan-field-label">Capitalize Interest at End of Grace</span>
+                      <span class="label-title"><span class="loan-field-label">Capitalize Interest at End of Grace</span> <button type="button" class="info-chip" data-help-button="loan-capitalize-interest-at-grace-end-help" aria-label="Capitalize Interest at End of Grace help">i</button></span>
+                      <div id="loan-capitalize-interest-at-grace-end-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-capitalize-interest-at-grace-end-help" aria-label="Close">x</button>
+                        <p>With a positive grace period, adds unpaid grace interest to principal at grace end instead of interest-only payments.</p>
+                      </div>
                     </label>
                   </div>
                   <div class="row">
                     <label>
-                      Monthly repayment preview
+                      <span class="label-title"><span class="loan-field-label">Monthly repayment preview</span> <button type="button" class="info-chip" data-help-button="loan-monthly-preview-help" aria-label="Monthly repayment preview help">i</button></span>
                       <input id="loan-monthly-preview" type="text" readonly />
+                      <div id="loan-monthly-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-monthly-preview-help" aria-label="Close">x</button>
+                        <p>Estimated constant monthly payment after any grace period.</p>
+                      </div>
                     </label>
                     <label>
-                      Total repayment preview
+                      <span class="label-title"><span class="loan-field-label">Total repayment preview</span> <button type="button" class="info-chip" data-help-button="loan-total-repayment-preview-help" aria-label="Total repayment preview help">i</button></span>
                       <input id="loan-total-repayment-preview" type="text" readonly />
+                      <div id="loan-total-repayment-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-total-repayment-preview-help" aria-label="Close">x</button>
+                        <p>Estimated sum of all scheduled payments over the full term.</p>
+                      </div>
                     </label>
                     <label>
-                      Total interest preview
+                      <span class="label-title"><span class="loan-field-label">Total interest preview</span> <button type="button" class="info-chip" data-help-button="loan-total-interest-preview-help" aria-label="Total interest preview help">i</button></span>
                       <input id="loan-total-interest-preview" type="text" readonly />
+                      <div id="loan-total-interest-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="loan-total-interest-preview-help" aria-label="Close">x</button>
+                        <p>Estimated total interest cost over the full term.</p>
+                      </div>
                     </label>
                   </div>
                   <div class="actions">

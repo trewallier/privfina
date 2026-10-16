@@ -93,6 +93,10 @@ function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
     if (label) {
       const titleElement = ensureFieldLabelTitleElement(label, 'loan-field-label')
       titleElement.textContent = field.label
+      const infoChip = label.querySelector('[data-help-button]')
+      if (infoChip) {
+        infoChip.setAttribute('aria-label', `${field.label} help`)
+      }
     }
   })
 

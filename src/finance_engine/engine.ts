@@ -50,6 +50,16 @@ export type {
 export type { InstrumentType, GeneratedCashFlow, InstrumentBundle } from './models'
 export { generateRecurringCashFlows, evaluateRecurring } from './recurring'
 export {
+  EvalResultCache,
+  fingerprintRecurringDefinition,
+  buildRecurringEvaluateCacheKey,
+  buildRecurringExpandCacheKey,
+  buildInstrumentRangeCacheKey,
+  sharedEvalResultCache,
+  evaluateRecurringWithCache
+} from './eval_cache'
+export type { EvalCacheKind, EvalCacheStats } from './eval_cache'
+export {
   generateSalaryInstrumentCashFlows,
   generateSubscriptionInstrumentCashFlows,
   runStatefulSimulation,

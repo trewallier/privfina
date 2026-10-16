@@ -66,7 +66,7 @@ The repository has completed the first product-spec migration wave for the catal
 - **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion`.
 - **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders.
 - **Known dual surface**: TypeScript engine primitives and `public/instruments.js` both host calculation code until a bundler lands (ADR 0017).
-- **Next for roadmap §3**: evaluation-result caching with invalidation keyed by bundle/lineage identity.
+- **Roadmap §3 complete** for lineage, schema v4 migrations, and evaluation-result caching; next epic work is §4 analytics / account model.
 - **Target state**: All products have explicit specs; code implements reusable primitives; UI derives metadata from specs; one browser calculation surface.
 
 **Practical implications during transition**:

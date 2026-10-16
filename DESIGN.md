@@ -218,6 +218,7 @@ Status:
 Current modules:
 
 - `finance_engine.engine`: one-time cash-flow creation, recurring schedule generation, and cumulative-series calculation helpers
+- `finance_engine.eval_cache`: evaluation-result cache with fingerprint keys and explicit invalidation helpers
 - `finance_engine.instruments.*`: salary, subscription, loan, investment, and shared simulation helpers
 
 ### 4. Analytics

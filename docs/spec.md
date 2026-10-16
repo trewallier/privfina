@@ -97,6 +97,7 @@ Acceptance criteria
 - [x] Persisted instrument bundles stamp generated-flow lineage (`id`, `sourceInstrumentId`, `sourceInstrumentType`) and optional `productId` / `productSpecVersion` for catalog-backed products.
 - [x] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data (current export schema v4; v1–v3 migrate in).
 - [x] Import trusts stored instrument `generatedFlows` (no silent regenerate); migrations only fill lineage/product-spec metadata (ADR 0018).
+- [x] Evaluation-result cache covers recurring evaluate/expand and instrument range slices, with explicit invalidation on definition/bundle mutations.
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

@@ -63,20 +63,12 @@ const BMAP_FRONTEND_FIELD_ADAPTER = {
   firstCouponDate: { inputId: 'bmap-first-coupon-date' }
 }
 
-import { toInputType, applyNumericConstraints, orderedSpecFields } from './spec-form-utils.js'
-
-function ensureLabelTitleElement(label) {
-  let titleElement = label.querySelector('.bmap-field-label')
-  if (!titleElement) {
-    titleElement = document.createElement('span')
-    titleElement.className = 'bmap-field-label'
-    label.insertBefore(titleElement, label.firstChild)
-    label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
-  }
-  return titleElement
-}
-
-// `orderedSpecFields` is imported from `spec-form-utils.js`
+import {
+  toInputType,
+  applyNumericConstraints,
+  orderedSpecFields,
+  ensureFieldLabelTitleElement
+} from './spec-form-utils.js'
 
 function applyBmapSpecToForm({ bmapForm, bmapBox }) {
   void bmapBox
@@ -100,10 +92,9 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
 
     const label = input.closest('label')
     if (label) {
-      ensureLabelTitleElement(label).textContent = field.label
+      ensureFieldLabelTitleElement(label, 'bmap-field-label').textContent = field.label
     }
   })
-
 }
 
 function mapFormDataToBmapSpecInputs(formData) {

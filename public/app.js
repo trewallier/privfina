@@ -33,8 +33,16 @@ import {
   upsertFlowById,
   removeFlowById,
   buildEffectiveFlows,
-  calculateCumulativeSeries
+  calculateCumulativeSeries,
+  expandRecurringFlowsCached
 } from './flows.js'
+import {
+  EvalResultCache,
+  fingerprintRecurringDefinition,
+  buildRecurringExpandCacheKey,
+  buildInstrumentRangeCacheKey,
+  sharedEvalResultCache
+} from './eval-cache.js'
 import { initController } from './app-controller.js'
 
 export {
@@ -64,9 +72,15 @@ export {
   checkStorageSchemaVersion,
   expandRecurringFlows,
   buildEffectiveFlows,
+  expandRecurringFlowsCached,
   calculateCumulativeSeries,
   upsertFlowById,
-  removeFlowById
+  removeFlowById,
+  EvalResultCache,
+  fingerprintRecurringDefinition,
+  buildRecurringExpandCacheKey,
+  buildInstrumentRangeCacheKey,
+  sharedEvalResultCache
 }
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'

@@ -1,5 +1,10 @@
 import { expandRecurringFlows } from './recurrence.js'
 import { flattenInstrumentFlows } from './instruments.js'
+import {
+  sharedEvalResultCache,
+  buildRecurringExpandCacheKey,
+  buildInstrumentRangeCacheKey
+} from './eval-cache.js'
 
 function toSignedAmount(flow) {
   return flow.direction === 'inflow' ? flow.amount : -flow.amount
@@ -26,18 +31,53 @@ function removeFlowById(flows, id) {
   return flows.filter((flow) => flow.id !== id)
 }
 
-function buildEffectiveFlows(oneTime, recurring, rangeStart, rangeEnd, instrumentBundles = []) {
+function expandRecurringFlowsCached(definition, rangeStart, rangeEnd, cache = sharedEvalResultCache) {
+  const key = buildRecurringExpandCacheKey(definition, rangeStart, rangeEnd)
+  const cached = cache.get(key)
+  if (cached !== undefined) {
+    return cached
+  }
+
+  const expanded = expandRecurringFlows(definition, rangeStart, rangeEnd)
+  cache.set(key, expanded)
+  return expanded.map((flow) => ({ ...flow }))
+}
+
+function instrumentFlowsInRange(bundle, rangeStart, rangeEnd, cache = sharedEvalResultCache) {
+  const bundleId = typeof bundle?.id === 'string' ? bundle.id : ''
+  const updatedAt = typeof bundle?.updatedAt === 'string' ? bundle.updatedAt : ''
+  const key = buildInstrumentRangeCacheKey(bundleId, updatedAt, rangeStart, rangeEnd)
+  const cached = cache.get(key)
+  if (cached !== undefined) {
+    return cached
+  }
+
+  const flows = flattenInstrumentFlows([bundle]).filter(
+    (flow) => flow.date >= rangeStart && flow.date <= rangeEnd
+  )
+  cache.set(key, flows)
+  return flows.map((flow) => ({ ...flow }))
+}
+
+function buildEffectiveFlows(
+  oneTime,
+  recurring,
+  rangeStart,
+  rangeEnd,
+  instrumentBundles = [],
+  cache = sharedEvalResultCache
+) {
   const oneTimeInRange = oneTime.filter((flow) => flow.date >= rangeStart && flow.date <= rangeEnd)
   const recurringExpanded = recurring.flatMap((definition) => {
     try {
-      return expandRecurringFlows(definition, rangeStart, rangeEnd)
+      return expandRecurringFlowsCached(definition, rangeStart, rangeEnd, cache)
     } catch {
       return []
     }
   })
 
-  const instrumentFlows = flattenInstrumentFlows(instrumentBundles).filter(
-    (flow) => flow.date >= rangeStart && flow.date <= rangeEnd
+  const instrumentFlows = instrumentBundles.flatMap((bundle) =>
+    instrumentFlowsInRange(bundle, rangeStart, rangeEnd, cache)
   )
 
   return [...oneTimeInRange, ...recurringExpanded, ...instrumentFlows].sort((a, b) =>
@@ -82,6 +122,7 @@ export {
   toSignedAmount,
   upsertFlowById,
   removeFlowById,
+  expandRecurringFlowsCached,
   buildEffectiveFlows,
   calculateCumulativeSeries,
   suggestRange,

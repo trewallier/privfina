@@ -63,13 +63,17 @@ describe('dkj ui/controller integration seam', () => {
     expect(outputs.simpleReturnPct).toBeCloseTo(parsed.expected.simpleReturnPct, 8)
     expect(outputs.annualizedYieldPct).toBeCloseTo(parsed.expected.annualizedYieldPct, 8)
 
+    expect(bundle.productId).toBe('government-security.dkj.standard')
+    expect(bundle.productSpecVersion).toBe('v1alpha1')
     expect(bundle.config.subtype).toBe('dkj')
     expect(bundle.config.termMonths).toBe(12)
     expect(bundle.config.remainingDays).toBe(360)
     expect(bundle.generatedFlows).toHaveLength(2)
     expect(bundle.generatedFlows[0]).toMatchObject({
       direction: 'outflow',
-      amount: parsed.expected.purchaseAmount
+      amount: parsed.expected.purchaseAmount,
+      sourceInstrumentId: bundle.id,
+      sourceInstrumentType: 'investment'
     })
     expect(bundle.generatedFlows[1]).toMatchObject({
       direction: 'inflow',

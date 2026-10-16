@@ -95,7 +95,8 @@ Acceptance criteria
 - [x] Inflation-linked investment accepts manual yearly inflation inputs for v1.
 - [x] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
 - [x] Persisted instrument bundles stamp generated-flow lineage (`id`, `sourceInstrumentId`, `sourceInstrumentType`) and optional `productId` / `productSpecVersion` for catalog-backed products.
-- [ ] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data (field-level lineage migrations still open).
+- [x] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data (current export schema v4; v1–v3 migrate in).
+- [x] Import trusts stored instrument `generatedFlows` (no silent regenerate); migrations only fill lineage/product-spec metadata (ADR 0018).
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

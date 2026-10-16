@@ -13,6 +13,7 @@ Location
 
 Recent decisions
 - `0017-converge-on-single-browser-calculation-surface.md` — keep TS engine as formula owner; treat `public/instruments.js` as interim until bundler ADR.
+- `0018-trust-stored-instrument-flows-on-import.md` — import trusts stored `generatedFlows`; migrations only fill lineage metadata (schema v4).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 
 How to create

@@ -5,6 +5,19 @@ import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-i
  * and the existing browser calculation path in `public/instruments.js`.
  */
 
+function normalizeOptionalGracePeriodMonths(value) {
+  if (value === undefined || value === null || value === '') {
+    return 0
+  }
+
+  const gracePeriodMonths = Number(value)
+  if (!Number.isInteger(gracePeriodMonths) || gracePeriodMonths < 0) {
+    throw new Error('gracePeriodMonths must be a non-negative integer.')
+  }
+
+  return gracePeriodMonths
+}
+
 function mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(specInputs) {
   const principal = toNonNegativeNumber(specInputs.principal, 'principal')
   const annualInterestRatePct = toNonNegativeNumber(
@@ -12,18 +25,26 @@ function mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(specInputs) {
     'annualInterestRatePct'
   )
   const termMonths = toPositiveInteger(specInputs.termMonths, 'termMonths')
+  const gracePeriodMonths = normalizeOptionalGracePeriodMonths(specInputs.gracePeriodMonths)
+  const capitalizeInterestAtGraceEnd =
+    gracePeriodMonths > 0 && specInputs.capitalizeInterestAtGraceEnd === true
 
   return {
     principal,
     annualRate: annualInterestRatePct / 100,
-    termMonths
+    termMonths,
+    gracePeriodMonths,
+    capitalizeInterestAtGraceEnd
   }
 }
 
 function mapLegacyLoanPreviewToSpecOutputs(legacyPreview) {
+  const paymentCountSource =
+    legacyPreview.paymentCount !== undefined ? legacyPreview.paymentCount : legacyPreview.termMonths
+
   return {
     monthlyPayment: toFiniteNumber(legacyPreview.monthlyInstallment, 'monthlyInstallment'),
-    paymentCount: toPositiveInteger(legacyPreview.termMonths, 'termMonths'),
+    paymentCount: toPositiveInteger(paymentCountSource, 'paymentCount'),
     totalInterest: toFiniteNumber(legacyPreview.totalInterest, 'totalInterest'),
     totalPaid: toFiniteNumber(legacyPreview.totalRepayment, 'totalRepayment')
   }

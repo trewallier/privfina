@@ -42,7 +42,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       label: 'Term in Months',
       required: true,
       unit: 'months',
-      description: 'Total number of monthly payments.',
+      description: 'Total contractual term in months, including any optional grace period.',
       constraints: {
         minimum: 1
       }
@@ -54,6 +54,26 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       required: true,
       unit: 'date',
       description: 'Loan start date in ISO format.'
+    },
+    {
+      name: 'gracePeriodMonths',
+      type: 'integer',
+      label: 'Grace Period (Months)',
+      required: false,
+      unit: 'months',
+      description:
+        'Optional months at the start of the term before amortizing repayments begin. Defaults to 0.',
+      constraints: {
+        minimum: 0
+      }
+    },
+    {
+      name: 'capitalizeInterestAtGraceEnd',
+      type: 'boolean',
+      label: 'Capitalize Interest at End of Grace',
+      required: false,
+      description:
+        'When enabled with a positive grace period, unpaid grace interest is added to principal at the end of grace instead of collecting interest-only payments. Ignored when grace period is 0.'
     }
   ],
   derivedVariables: [
@@ -73,7 +93,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       label: 'Monthly Payment',
       required: true,
       unit: 'currency',
-      description: 'Constant monthly payment amount.'
+      description: 'Constant amortizing monthly payment amount after any grace period.'
     },
     {
       name: 'paymentCount',
@@ -81,7 +101,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       label: 'Payment Count',
       required: true,
       unit: 'count',
-      description: 'Number of scheduled monthly payments.'
+      description: 'Number of scheduled cash outflow payments across the full lifecycle.'
     },
     {
       name: 'totalInterest',
@@ -103,7 +123,11 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
   assumptions: [
     'Payments are monthly and occur on a regular monthly cadence.',
     'Interest rate is fixed for the whole term.',
-    'No fees, taxes, insurance, grace periods, or prepayments are included in this first pilot.',
+    'Grace period and end-of-grace interest capitalization are optional and default off.',
+    'With grace and capitalization off (default), behavior matches a plain level-payment annuity over the full term.',
+    'With grace and capitalization off for interest, grace months are interest-only; remaining months amortize original principal.',
+    'With grace and capitalization on, no cash outflows occur during grace; accrued interest is capitalized onto principal with monthly compounding before amortization begins.',
+    'No fees, taxes, insurance, or prepayments are included in this product.',
     'Rounding policy can remain implementation-defined for now, but should be documented later if needed.'
   ],
   ui: {
@@ -113,10 +137,19 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
         id: 'loan-core',
         title: 'Loan Inputs',
         fieldNames: ['principal', 'annualInterestRatePct', 'termMonths', 'startDate']
+      },
+      {
+        id: 'loan-options',
+        title: 'Optional Repayment Options',
+        fieldNames: ['gracePeriodMonths', 'capitalizeInterestAtGraceEnd']
       }
     ]
   },
-  exampleRefs: ['./examples/nominal-case.yaml']
+  exampleRefs: [
+    './examples/nominal-case.yaml',
+    './examples/grace-interest-only-case.yaml',
+    './examples/grace-capitalize-case.yaml'
+  ]
 }
 
 export { FIXED_RATE_LOAN_PRODUCT_SPEC }

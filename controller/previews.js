@@ -1,8 +1,23 @@
+function normalizePreviewGracePeriodMonths(value) {
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return 0
+  }
+
+  const gracePeriodMonths = Number(value)
+  if (!Number.isInteger(gracePeriodMonths) || gracePeriodMonths < 0) {
+    throw new Error('Grace period months must be a non-negative integer.')
+  }
+
+  return gracePeriodMonths
+}
+
 function createLoanPreviewSync({
   principalInput,
   annualRateInput,
   termValueInput,
   termUnitInput,
+  gracePeriodMonthsInput,
+  capitalizeInterestAtGraceEndInput,
   monthlyPreviewInput,
   totalRepaymentPreviewInput,
   totalInterestPreviewInput,
@@ -20,13 +35,18 @@ function createLoanPreviewSync({
       const termValue = Number(termValueInput?.value)
       const termUnit = termUnitInput?.value || 'months'
       const termMonths = termUnit === 'years' ? termValue * 12 : termValue
+      const gracePeriodMonths = normalizePreviewGracePeriodMonths(gracePeriodMonthsInput?.value)
+      const capitalizeInterestAtGraceEnd =
+        gracePeriodMonths > 0 && Boolean(capitalizeInterestAtGraceEndInput?.checked)
 
       if (typeof calculateFixedRateLoanFromSpecInputs === 'function') {
         const specOutputs = calculateFixedRateLoanFromSpecInputs(
           {
             principal,
             annualInterestRatePct: annualRateInputValue,
-            termMonths
+            termMonths,
+            gracePeriodMonths,
+            capitalizeInterestAtGraceEnd
           },
           { createLoanRepaymentPreview }
         )
@@ -40,7 +60,9 @@ function createLoanPreviewSync({
       const preview = createLoanRepaymentPreview({
         principal,
         annualRate: annualRateInputValue,
-        termMonths
+        termMonths,
+        gracePeriodMonths,
+        capitalizeInterestAtGraceEnd
       })
 
       monthlyPreviewInput.value = preview.monthlyInstallment.toFixed(2)
@@ -211,6 +233,8 @@ function bindLoanPreviewEvents({
   annualRateInput,
   termValueInput,
   termUnitInput,
+  gracePeriodMonthsInput,
+  capitalizeInterestAtGraceEndInput,
   syncLoanPreview
 }) {
   ;['input', 'change'].forEach((eventName) => {
@@ -218,6 +242,8 @@ function bindLoanPreviewEvents({
     annualRateInput?.addEventListener(eventName, syncLoanPreview)
     termValueInput?.addEventListener(eventName, syncLoanPreview)
     termUnitInput?.addEventListener(eventName, syncLoanPreview)
+    gracePeriodMonthsInput?.addEventListener(eventName, syncLoanPreview)
+    capitalizeInterestAtGraceEndInput?.addEventListener(eventName, syncLoanPreview)
   })
 }
 

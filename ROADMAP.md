@@ -63,13 +63,35 @@ Out of scope for this epic
 - [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
 - [ ] Document update strategy and release process (patch/minor/major cadence)
 
-### 7) Performance And Future Hosting Evolution
+### 7) Client Storage Hardening And Multi-Backend Architecture
+Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port.
+
+Constraints
+- Remain a static SPA on GitHub Pages; no backend database in this epic.
+- Private user data stays device-local and unsynced (ADR 0004 product posture unchanged).
+- Prefer keeping ADR 0012 “persist full generated flows” semantics unless a follow-on ADR explicitly changes that contract.
+- Export/import JSON remains the durability and portability path; browser storage remains a cache.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [ ] ADR: storage port + capability model (async repository for one-time flows, recurring defs, instrument bundles, schema version; capabilities: quota reporting, atomic multi-collection write, sync vs async).
+- [ ] Extract persistence behind the port: move `public/storage.js` / controller save-load call sites to the port; ship a `localStorage` adapter as the default with equivalent behavior.
+- [ ] Atomic multi-key writes + failure surfacing: single commit path for import/bootstrap; surface `QuotaExceededError` with user-visible recovery (export prompt), not silent failure.
+- [ ] Payload / quota headroom: measure and document size drivers (especially persisted `generatedFlows`); add budget checks or compaction policy so moderate portfolios stay under typical ~5MB `localStorage` limits before IndexedDB.
+- [ ] IndexedDB adapter (second path): selectable/fallback backend with larger quota and non-blocking I/O; prove the port with two working backends.
+- [ ] In-browser backend migration: one-shot migrate `localStorage` → IndexedDB (and reverse/export safety); preserve schemaVersion + export/import envelope unchanged.
+- [ ] Architecture hooks for upcoming epics (document extension points only; no cloud implementation): encrypted blob envelope shape stub, sync cursor / revision field placeholders on collections, conflict-resolution seam for §8 multi-device work; require §5 scenarios / multi-account and §6 CSV imports to write through the same port.
+- [ ] Regression / acceptance: existing create/edit/import/export/chart behaviors unchanged in meaning; dual-backend smoke tests; update `DESIGN.md` and `docs/spec.md` so the storage port is the documented persistence surface (IndexedDB or localStorage as adapters).
+
+Out of scope for this epic
+- WASM compute, live cloud provider, auth, and multi-device sync runtime (see §8).
+
+### 8) Performance And Future Hosting Evolution
 - [ ] v2: WASM spike: compile a small compute kernel and call it from JS
 - [ ] v2: replace hottest compute paths with WASM
-- [ ] v3: optional cloud sync/backing store (future; not now)
-- [ ] Cloud sync integration (provider TBD) with encrypted data format
-- [ ] Migration path from browser storage/export-import to cloud-backed storage
-- [ ] Multi-device sync and conflict resolution
+- [ ] v3: optional cloud sync/backing store via §7 storage port (future; not now)
+- [ ] Cloud sync integration (provider TBD) with encrypted data format, using §7 envelope/revision hooks
+- [ ] Migration path from browser storage/export-import to cloud-backed storage through §7 backend migration hooks
+- [ ] Multi-device sync and conflict resolution via §7 conflict-resolution seam
 
 ## Maintenance Rules
 

@@ -17,7 +17,9 @@ describe('loan legacy bridges', () => {
     ).toEqual({
       principal: 100000,
       annualRate: 0.05,
-      termMonths: 360
+      termMonths: 360,
+      gracePeriodMonths: 0,
+      capitalizeInterestAtGraceEnd: false
     })
   })
 
@@ -37,6 +39,21 @@ describe('loan legacy bridges', () => {
     })
   })
 
+  it('prefers explicit paymentCount from preview when grace reduces cash outflows', () => {
+    expect(
+      mapLegacyLoanPreviewToSpecOutputs({
+        monthlyInstallment: 100,
+        termMonths: 15,
+        paymentCount: 12,
+        totalInterest: 50,
+        totalRepayment: 1200
+      })
+    ).toMatchObject({
+      paymentCount: 12,
+      monthlyPayment: 100
+    })
+  })
+
   it('delegates calculation through the provided preview function', () => {
     let calls = 0
     const outputs = calculateFixedRateLoanLikeFromSpecInputs(
@@ -51,7 +68,9 @@ describe('loan legacy bridges', () => {
           expect(input).toEqual({
             principal: 1000,
             annualRate: 0.12,
-            termMonths: 12
+            termMonths: 12,
+            gracePeriodMonths: 0,
+            capitalizeInterestAtGraceEnd: false
           })
           return {
             monthlyInstallment: 88.85,

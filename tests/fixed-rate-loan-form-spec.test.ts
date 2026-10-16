@@ -24,7 +24,14 @@ describe('fixed-rate-loan frontend form metadata seam', () => {
 
   it('uses ui section field order from the product spec for fixed-rate loan form fields', () => {
     const orderedNames = orderedSpecFields(FIXED_RATE_LOAN_PRODUCT_SPEC).map((field) => field.name)
-    expect(orderedNames).toEqual(['principal', 'annualInterestRatePct', 'termMonths', 'startDate'])
+    expect(orderedNames).toEqual([
+      'principal',
+      'annualInterestRatePct',
+      'termMonths',
+      'startDate',
+      'gracePeriodMonths',
+      'capitalizeInterestAtGraceEnd'
+    ])
   })
 
   it('keeps the minimal adapter mapping from spec names to existing loan form names', () => {
@@ -32,6 +39,10 @@ describe('fixed-rate-loan frontend form metadata seam', () => {
     expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.termMonths.formName).toBe('termValue')
     expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.principal.formName).toBe('principal')
     expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.startDate.formName).toBe('startDate')
+    expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.gracePeriodMonths.formName).toBe('gracePeriodMonths')
+    expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER.capitalizeInterestAtGraceEnd.formName).toBe(
+      'capitalizeInterestAtGraceEnd'
+    )
   })
 
   it('maps existing loan form fields into canonical fixed-rate product spec inputs', () => {
@@ -53,7 +64,36 @@ describe('fixed-rate-loan frontend form metadata seam', () => {
       principal: 100000,
       annualInterestRatePct: 5,
       termMonths: 360,
-      startDate: '2026-01-01'
+      startDate: '2026-01-01',
+      gracePeriodMonths: 0,
+      capitalizeInterestAtGraceEnd: false
+    })
+  })
+
+  it('maps optional grace and capitalization form fields into product-spec inputs', () => {
+    const specInputs = mapFormDataToFixedRateLoanSpecInputs({
+      get(name: string) {
+        const entries: Record<string, string> = {
+          principal: '12000',
+          annualRate: '12',
+          termValue: '15',
+          termUnit: 'months',
+          startDate: '2026-01-01',
+          gracePeriodMonths: '3',
+          capitalizeInterestAtGraceEnd: 'on'
+        }
+
+        return Object.prototype.hasOwnProperty.call(entries, name) ? entries[name] : null
+      }
+    } as any)
+
+    expect(specInputs).toEqual({
+      principal: 12000,
+      annualInterestRatePct: 12,
+      termMonths: 15,
+      startDate: '2026-01-01',
+      gracePeriodMonths: 3,
+      capitalizeInterestAtGraceEnd: true
     })
   })
 })

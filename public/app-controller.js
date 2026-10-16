@@ -174,6 +174,10 @@ function initController() {
   const loanAnnualRateInput = document.getElementById('loan-annual-rate')
   const loanTermValueInput = document.getElementById('loan-term-value')
   const loanTermUnitInput = document.getElementById('loan-term-unit')
+  const loanGracePeriodMonthsInput = document.getElementById('loan-grace-period-months')
+  const loanCapitalizeInterestAtGraceEndInput = document.getElementById(
+    'loan-capitalize-interest-at-grace-end'
+  )
   const loanMonthlyPreviewInput = document.getElementById('loan-monthly-preview')
   const loanTotalRepaymentPreviewInput = document.getElementById('loan-total-repayment-preview')
   const loanTotalInterestPreviewInput = document.getElementById('loan-total-interest-preview')
@@ -874,6 +878,8 @@ function initController() {
     annualRateInput: loanAnnualRateInput,
     termValueInput: loanTermValueInput,
     termUnitInput: loanTermUnitInput,
+    gracePeriodMonthsInput: loanGracePeriodMonthsInput,
+    capitalizeInterestAtGraceEndInput: loanCapitalizeInterestAtGraceEndInput,
     monthlyPreviewInput: loanMonthlyPreviewInput,
     totalRepaymentPreviewInput: loanTotalRepaymentPreviewInput,
     totalInterestPreviewInput: loanTotalInterestPreviewInput,
@@ -935,6 +941,10 @@ function initController() {
     loanForm.querySelector('#loan-category').value = config.category || 'loan'
     loanForm.querySelector('#loan-description').value = config.description || ''
     loanForm.querySelector('#loan-include-disbursement').checked = config.includeDisbursement !== false
+    loanForm.querySelector('#loan-grace-period-months').value =
+      config.gracePeriodMonths !== undefined ? String(config.gracePeriodMonths) : '0'
+    loanForm.querySelector('#loan-capitalize-interest-at-grace-end').checked =
+      Boolean(config.capitalizeInterestAtGraceEnd)
 
     loanSubmitButton.textContent = 'Save Loan Instrument'
     loanCancelButton.hidden = false
@@ -1225,6 +1235,8 @@ function initController() {
     annualRateInput: loanAnnualRateInput,
     termValueInput: loanTermValueInput,
     termUnitInput: loanTermUnitInput,
+    gracePeriodMonthsInput: loanGracePeriodMonthsInput,
+    capitalizeInterestAtGraceEndInput: loanCapitalizeInterestAtGraceEndInput,
     syncLoanPreview
   })
   investmentPreviewController.bindEvents()
@@ -1614,6 +1626,8 @@ function initController() {
             label: String(formData.get('label') || '').trim() || FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle,
             repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
             includeDisbursement: formData.get('includeDisbursement') === 'on',
+            gracePeriodMonths: specInputs.gracePeriodMonths,
+            capitalizeInterestAtGraceEnd: specInputs.capitalizeInterestAtGraceEnd,
             category: String(formData.get('category') || '').trim() || 'loan',
             description: String(formData.get('description') || '').trim() || undefined,
             termValue: submittedTermValue,

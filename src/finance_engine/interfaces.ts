@@ -84,6 +84,18 @@ export interface LoanInstrumentInput {
   termMonths: number
   startDate: string
   repaymentDayOfMonth: number
+  /**
+   * Optional months at the start of the term before amortizing repayments begin.
+   * Defaults to 0 (no grace). Must be less than termMonths when set.
+   */
+  gracePeriodMonths?: number
+  /**
+   * When true with a positive grace period, unpaid grace interest is capitalized onto
+   * principal at the end of the grace period (no cash outflows during grace).
+   * When false with a positive grace period, interest-only payments are due during grace.
+   * Ignored when gracePeriodMonths is 0.
+   */
+  capitalizeInterestAtGraceEnd?: boolean
   includeDisbursement?: boolean
   category?: string
   description?: string
@@ -138,6 +150,14 @@ export interface LoanRepaymentPreview {
   totalRepayment: number
   totalInterest: number
   termMonths: number
+  /** Number of cash outflow payments across the full lifecycle. */
+  paymentCount: number
+  gracePeriodMonths: number
+  amortizationMonths: number
+  /** Interest-only amount due each grace month when capitalization is off; otherwise 0. */
+  graceInterestOnlyPayment: number
+  /** Principal entering amortization (includes capitalized grace interest when enabled). */
+  amortizingPrincipal: number
 }
 
 export interface InvestmentMaturityPreview {

@@ -54,7 +54,9 @@ describe('fixed-rate-loan ui/controller integration seam', () => {
       principal: parsed.inputs.principal,
       annualInterestRatePct: parsed.inputs.annualInterestRatePct,
       termMonths: parsed.inputs.termMonths,
-      startDate: parsed.inputs.startDate
+      startDate: parsed.inputs.startDate,
+      gracePeriodMonths: 0,
+      capitalizeInterestAtGraceEnd: false
     })
 
     expect(outputs.paymentCount).toBe(parsed.expected.paymentCount)

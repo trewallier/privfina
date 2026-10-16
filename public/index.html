@@ -1068,6 +1068,16 @@
                   </div>
                   <div class="row">
                     <label>
+                      <span class="loan-field-label">Grace Period (Months)</span>
+                      <input id="loan-grace-period-months" name="gracePeriodMonths" type="number" min="0" step="1" value="0" />
+                    </label>
+                    <label class="inline-field">
+                      <input id="loan-capitalize-interest-at-grace-end" name="capitalizeInterestAtGraceEnd" type="checkbox" />
+                      <span class="loan-field-label">Capitalize Interest at End of Grace</span>
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>
                       Monthly repayment preview
                       <input id="loan-monthly-preview" type="text" readonly />
                     </label>

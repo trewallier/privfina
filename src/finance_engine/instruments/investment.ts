@@ -133,12 +133,20 @@ export function generateInvestmentInstrumentCashFlows(input: InvestmentBundleInp
 export function createInvestmentInstrumentBundle(input: InvestmentBundleInput) {
   const generatedFlows = generateInvestmentInstrumentCashFlows(input)
   const preview = createInvestmentMaturityPreview(input)
+  const id = input.id || `investment-${Date.now()}`
+  const instrumentType = 'investment' as const
+  const productId = input.productId
+  const productSpecVersion = input.productSpecVersion
 
   return {
-    id: input.id || `investment-${Date.now()}`,
-    instrumentType: 'investment',
+    id,
+    instrumentType,
     label: input.label || 'Investment',
+    productId,
+    productSpecVersion,
     config: {
+      productId,
+      productSpecVersion,
       subtype: input.subtype,
       purchaseDate: input.purchaseDate,
       maturityDate: input.maturityDate,
@@ -157,7 +165,12 @@ export function createInvestmentInstrumentBundle(input: InvestmentBundleInput) {
       description: input.description
     },
     preview,
-    generatedFlows,
+    generatedFlows: generatedFlows.map((flow, index) => ({
+      ...flow,
+      id: `${id}-flow-${index}`,
+      sourceInstrumentId: id,
+      sourceInstrumentType: instrumentType
+    })),
     createdAt: input.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

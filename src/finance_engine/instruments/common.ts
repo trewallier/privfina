@@ -322,6 +322,8 @@ export interface BundleIdentityInput {
   label?: string
   id?: string
   createdAt?: string
+  productId?: string
+  productSpecVersion?: string
 }
 
 export type LoanBundleInput = LoanInstrumentInput & BundleIdentityInput

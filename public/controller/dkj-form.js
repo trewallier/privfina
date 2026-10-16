@@ -1,4 +1,6 @@
 const DKJ_PRODUCT_SPEC = {
+  specVersion: 'v1alpha1',
+  id: 'government-security.dkj.standard',
   inputs: [
     {
       name: 'faceValue',
@@ -158,6 +160,8 @@ function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
 
   return {
     id: meta.id,
+    productId: DKJ_PRODUCT_SPEC.id,
+    productSpecVersion: DKJ_PRODUCT_SPEC.specVersion,
     label: meta.label || 'Discount Treasury Bond',
     subtype: 'dkj',
     purchaseDate: settlementDate,

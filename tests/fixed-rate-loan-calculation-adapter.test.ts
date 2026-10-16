@@ -85,6 +85,7 @@ describe('fixed-rate-loan calculation adapter seam', () => {
 
     expect(mapped).toMatchObject({
       productId: 'loan.fixed-rate.standard',
+      productSpecVersion: 'v1alpha1',
       principal: 100000,
       annualRate: 0.05,
       termValue: 30,

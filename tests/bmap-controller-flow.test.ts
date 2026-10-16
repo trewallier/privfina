@@ -52,6 +52,8 @@ describe('bmap ui/controller integration seam', () => {
     })
 
     expect(outputs).toMatchObject(parsed.expected)
+    expect(bundle.productId).toBe('government-security.bmap.standard')
+    expect(bundle.productSpecVersion).toBe('v1alpha1')
     expect(bundle.config.subtype).toBe('bmap')
     expect(bundle.config.principal).toBe(parsed.inputs.principal)
     expect(bundle.config.couponPaymentFrequency).toBe('quarterly')
@@ -59,7 +61,9 @@ describe('bmap ui/controller integration seam', () => {
     expect(bundle.generatedFlows[0]).toMatchObject({
       direction: 'outflow',
       amount: bundle.preview.purchaseAmount,
-      date: parsed.inputs.purchaseDate
+      date: parsed.inputs.purchaseDate,
+      sourceInstrumentId: bundle.id,
+      sourceInstrumentType: 'investment'
     })
     expect(bundle.generatedFlows[bundle.generatedFlows.length - 1]).toMatchObject({
       direction: 'inflow',

@@ -62,7 +62,10 @@ describe('fixed-rate-loan ui/controller integration seam', () => {
     expect(outputs.totalInterest).toBeCloseTo(bundle.preview.totalInterest, 8)
     expect(outputs.totalPaid).toBeCloseTo(bundle.preview.totalRepayment, 8)
 
+    expect(bundle.productId).toBe(FIXED_RATE_LOAN_PRODUCT_SPEC.id)
+    expect(bundle.productSpecVersion).toBe(FIXED_RATE_LOAN_PRODUCT_SPEC.specVersion)
     expect(bundle.config.productId).toBe(FIXED_RATE_LOAN_PRODUCT_SPEC.id)
+    expect(bundle.config.productSpecVersion).toBe(FIXED_RATE_LOAN_PRODUCT_SPEC.specVersion)
     expect(bundle.config.annualRate).toBeCloseTo(0.05, 8)
     expect(bundle.config.termMonths).toBe(360)
     expect(bundle.config.termValue).toBe(30)
@@ -70,8 +73,11 @@ describe('fixed-rate-loan ui/controller integration seam', () => {
     expect(bundle.generatedFlows[0]).toMatchObject({
       direction: 'inflow',
       amount: parsed.inputs.principal,
-      date: parsed.inputs.startDate
+      date: parsed.inputs.startDate,
+      sourceInstrumentId: bundle.id,
+      sourceInstrumentType: 'loan'
     })
+    expect(bundle.generatedFlows[0].id).toBe(`${bundle.id}-flow-0`)
     expect(bundle.generatedFlows.filter((flow) => flow.direction === 'outflow')).toHaveLength(parsed.expected.paymentCount)
   })
 })

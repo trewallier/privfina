@@ -171,12 +171,20 @@ export function generateLoanInstrumentCashFlows(input: LoanInstrumentInput): Cas
 export function createLoanInstrumentBundle(input: LoanBundleInput) {
   const generatedFlows = generateLoanInstrumentCashFlows(input)
   const preview = createLoanRepaymentPreview(input)
+  const id = input.id || `loan-${Date.now()}`
+  const instrumentType = 'loan' as const
+  const productId = input.productId
+  const productSpecVersion = input.productSpecVersion
 
   return {
-    id: input.id || `loan-${Date.now()}`,
-    instrumentType: 'loan',
+    id,
+    instrumentType,
     label: input.label || 'Loan',
+    productId,
+    productSpecVersion,
     config: {
+      productId,
+      productSpecVersion,
       principal: input.principal,
       annualRate: input.annualRate,
       termMonths: input.termMonths,
@@ -187,7 +195,12 @@ export function createLoanInstrumentBundle(input: LoanBundleInput) {
       description: input.description
     },
     preview,
-    generatedFlows,
+    generatedFlows: generatedFlows.map((flow, index) => ({
+      ...flow,
+      id: `${id}-flow-${index}`,
+      sourceInstrumentId: id,
+      sourceInstrumentType: instrumentType
+    })),
     createdAt: input.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

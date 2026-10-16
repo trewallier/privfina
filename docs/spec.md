@@ -94,7 +94,8 @@ Acceptance criteria
 - [ ] Custom bond instrument design supports periodic rate-reset schedules, with fixed-rate fallback allowed for v1 implementation.
 - [x] Inflation-linked investment accepts manual yearly inflation inputs for v1.
 - [x] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
-- [ ] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data.
+- [x] Persisted instrument bundles stamp generated-flow lineage (`id`, `sourceInstrumentId`, `sourceInstrumentType`) and optional `productId` / `productSpecVersion` for catalog-backed products.
+- [ ] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data (field-level lineage migrations still open).
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

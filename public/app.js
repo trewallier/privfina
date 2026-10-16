@@ -25,7 +25,8 @@ import {
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentBundle,
   normalizeInstrumentBundle,
-  normalizeInstrumentBundles
+  normalizeInstrumentBundles,
+  flattenInstrumentFlows
 } from './instruments.js'
 import {
   upsertFlowById,
@@ -54,6 +55,7 @@ export {
   generateInvestmentInstrumentBundle,
   normalizeInstrumentBundle,
   normalizeInstrumentBundles,
+  flattenInstrumentFlows,
   buildExportDocument,
   parseImportDocument,
   migrateImportDataToCurrent,

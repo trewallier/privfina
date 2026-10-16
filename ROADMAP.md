@@ -22,7 +22,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 
 ### 3) Bundle Persistence And Compatibility
 - [x] Implement pre-save bounded flow-bundle generation for instrument workflows and persist bundle lineage metadata.
-- [ ] Extend import/export schema and migrations for instrument bundles while preserving backward compatibility.
+- [x] Extend import/export schema and migrations for instrument bundles while preserving backward compatibility.
 - [ ] Add caching layer for evaluation results with clear invalidation semantics.
 
 ### 4) Product Analytics And Account Model Evolution

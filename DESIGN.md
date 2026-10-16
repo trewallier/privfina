@@ -166,7 +166,7 @@ Canonical note
 - Save/edit regenerates `generatedFlows` and `updatedAt` while preserving bundle `id` and `createdAt`.
 - Charting consumes lineage-stamped flows via `flattenInstrumentFlows` / `buildEffectiveFlows`.
 - UI list behavior allows include/exclude and edit/delete at instrument level while preserving generated flow traceability.
-- Export schema field-level migrations for older bundles without lineage remain roadmap §3 PR 2 work.
+- Export schema v4 includes lineage-aware instrument bundles; older exports migrate in without regenerating cash amounts (ADR 0018).
 
 ## Architecture
 
@@ -275,7 +275,8 @@ Planned changes are organized by existing repository paths so implementation can
 - `flows.js`
 	- chart-consumable effective flows, including lineage-stamped instrument flows
 - `storage.js` and `import-export.js`
-	- schema v3 already carries `instrumentBundles`; field-level lineage migrations are the next schema bump
+	- schema v4 export envelope with lineage-aware `instrumentBundles`
+	- migrate v1–v3 imports; trust stored generated flows (ADR 0018)
 	- preserve backward compatibility with existing one-time/recurring-only exports
 
 ### Tests (`tests/`)

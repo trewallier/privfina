@@ -1,6 +1,7 @@
 import {
   CURRENT_EXPORT_SCHEMA_VERSION,
   MIN_SUPPORTED_IMPORT_SCHEMA_VERSION,
+  IMPORT_GENERATED_FLOWS_POLICY,
   normalizeOneTimeFlow,
   normalizeOneTimeFlows,
   ensureFlowIds,
@@ -39,6 +40,7 @@ import { initController } from './app-controller.js'
 export {
   CURRENT_EXPORT_SCHEMA_VERSION,
   MIN_SUPPORTED_IMPORT_SCHEMA_VERSION,
+  IMPORT_GENERATED_FLOWS_POLICY,
   parseOccurrences,
   normalizeOneTimeFlow,
   normalizeOneTimeFlows,

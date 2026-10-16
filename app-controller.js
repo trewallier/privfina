@@ -36,8 +36,12 @@ import {
   extendRange
 } from './flows.js'
 import { sharedEvalResultCache } from './eval-cache.js'
-import { renderConfiguredTable, renderChart } from './render.js'
+import { renderConfiguredLists, renderChart } from './render.js'
 import { createComposerManager } from './controller/composer.js'
+import {
+  createResponsiveShell,
+  createToastController
+} from './controller/responsive-shell.js'
 import {
   createLoanPreviewSync,
   createInvestmentPreviewSync,
@@ -128,9 +132,16 @@ function initController() {
   const importInput = document.getElementById('import-json-input')
   const importButton = document.getElementById('import-json-button')
   const rows = document.getElementById('configured-flow-rows')
+  const cards = document.getElementById('configured-flow-cards')
   const chart = document.getElementById('chart')
   const startInput = document.getElementById('range-start')
   const endInput = document.getElementById('range-end')
+  const shellRoot = document.querySelector('main')
+  const mobileNav = document.getElementById('mobile-nav')
+  const appToast = document.getElementById('app-toast')
+  const composeBackButton = document.getElementById('compose-back')
+  const composeTitle = document.getElementById('compose-title')
+  const addTypePicker = document.getElementById('add-type-picker')
   const flowComposer = document.getElementById('flow-composer')
   const toggleComposerButton = document.getElementById('toggle-composer')
   const openOneTimeBoxButton = document.getElementById('open-one-time-box')
@@ -418,6 +429,42 @@ function initController() {
     excludedFlowIds.add(id)
   }
 
+  const toast = createToastController(appToast)
+  const COMPOSE_TITLES = {
+    'one-time': 'One-time flow',
+    recurring: 'Recurring flow',
+    salary: 'Salary instrument',
+    subscription: 'Subscription instrument',
+    loan: 'Loan instrument',
+    investment: 'Investment instrument'
+  }
+
+  function updateComposeTitle(type, pickingType) {
+    if (!composeTitle) {
+      return
+    }
+
+    if (pickingType) {
+      composeTitle.textContent = 'Choose what to add'
+      return
+    }
+
+    composeTitle.textContent = COMPOSE_TITLES[type] || 'Add cash flow'
+  }
+
+  const shell = createResponsiveShell({
+    root: shellRoot,
+    mobileNav,
+    onViewChange: (view, state) => {
+      updateComposeTitle(state.composeType, state.pickingType)
+      if (view === 'browse' || view === 'chart') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+  })
+  shell.bindMedia()
+  shell.bindMobileNav()
+
   const composerManager = createComposerManager({
     flowComposer,
     toggleComposerButton,
@@ -436,9 +483,27 @@ function initController() {
       subscription: openSubscriptionBoxButton,
       loan: openLoanBoxButton,
       investment: openInvestmentBoxButton
+    },
+    onOpenBox: (type) => {
+      shell.enterCompose(type)
+      updateComposeTitle(type, false)
+    },
+    onCollapse: () => {
+      if (shell.isNarrow()) {
+        shell.exitCompose()
+      }
     }
   })
   const { collapseComposerBoxes, openComposerBox } = composerManager
+
+  function confirmDelete(label) {
+    return window.confirm(`Delete this ${label}? This cannot be undone.`)
+  }
+
+  function notifySaved(message) {
+    toast.show(message, 'success')
+    setStorageStatus(message, 'success')
+  }
 
   applyFixedRateLoanSpecToForm({ loanForm, loanBox })
   applyBmapSpecToForm({ bmapForm: investmentForm, bmapBox: investmentBox })
@@ -1056,6 +1121,49 @@ function initController() {
 
   composerManager.bindEvents()
 
+  if (addTypePicker) {
+    addTypePicker.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-add-type]')
+      if (!button || !addTypePicker.contains(button)) {
+        return
+      }
+
+      const type = button.getAttribute('data-add-type')
+      if (!type) {
+        return
+      }
+
+      openComposerBox(type)
+    })
+  }
+
+  if (composeBackButton) {
+    composeBackButton.addEventListener('click', () => {
+      const state = shell.getState()
+      if (state.view === 'compose' && !state.pickingType && state.composeType) {
+        resetOneTimeForm()
+        resetRecurringForm()
+        resetSalaryForm()
+        resetSubscriptionForm()
+        resetLoanForm()
+        resetInvestmentForm()
+        collapseComposerBoxes({ notify: false })
+        shell.enterTypePicker()
+        updateComposeTitle(null, true)
+        return
+      }
+
+      resetOneTimeForm()
+      resetRecurringForm()
+      resetSalaryForm()
+      resetSubscriptionForm()
+      resetLoanForm()
+      resetInvestmentForm()
+      collapseComposerBoxes({ notify: false })
+      shell.exitCompose()
+    })
+  }
+
   if (salaryScheduleModeInput) {
     salaryScheduleModeInput.addEventListener('change', () => {
       applySalaryModeVisibility(salaryScheduleModeInput.value)
@@ -1144,20 +1252,25 @@ function initController() {
     const sortedOneTime = [...oneTimeFlows].sort((a, b) => a.date.localeCompare(b.date))
     const sortedRecurring = [...recurringFlows].sort((a, b) => a.startDate.localeCompare(b.startDate))
 
-    renderConfiguredTable(
-      sortedOneTime,
-      sortedRecurring,
+    renderConfiguredLists({
+      oneTimeFlows: sortedOneTime,
+      recurringFlows: sortedRecurring,
       instrumentBundles,
-      rows,
+      tableBody: rows,
+      cardsContainer: cards,
       isFlowIncluded,
-      (id, included) => {
+      onToggleInclude: (id, included) => {
         setFlowIncluded(id, included)
         rerender()
       },
-      (id) => {
+      onEditOneTime: (id) => {
         startOneTimeEdit(id)
       },
-      (id) => {
+      onDeleteOneTime: (id) => {
+        if (!confirmDelete('one-time cash flow')) {
+          return
+        }
+
         oneTimeFlows = removeFlowById(oneTimeFlows, id)
         excludedFlowIds.delete(id)
         saveCashFlowList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
@@ -1169,10 +1282,14 @@ function initController() {
         resetRangeIfEmpty()
         rerender()
       },
-      (id) => {
+      onEditRecurring: (id) => {
         startRecurringEdit(id)
       },
-      (id) => {
+      onDeleteRecurring: (id) => {
+        if (!confirmDelete('recurring cash flow')) {
+          return
+        }
+
         recurringFlows = removeFlowById(recurringFlows, id)
         excludedFlowIds.delete(id)
         saveCashFlowList(RECURRING_STORAGE_KEY, recurringFlows)
@@ -1184,7 +1301,7 @@ function initController() {
         resetRangeIfEmpty()
         rerender()
       },
-      (id) => {
+      onEditInstrument: (id) => {
         const target = instrumentBundles.find((bundle) => bundle.id === id)
         if (!target) {
           return
@@ -1200,7 +1317,11 @@ function initController() {
           startInvestmentEdit(id)
         }
       },
-      (id) => {
+      onDeleteInstrument: (id) => {
+        if (!confirmDelete('instrument')) {
+          return
+        }
+
         instrumentBundles = removeFlowById(instrumentBundles, id)
         excludedFlowIds.delete(id)
         saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
@@ -1224,7 +1345,7 @@ function initController() {
         resetRangeIfEmpty()
         rerender()
       }
-    )
+    })
 
     const startDate = startInput.value
     const endDate = endInput.value
@@ -1284,6 +1405,7 @@ function initController() {
 
     resetOneTimeForm()
     collapseComposerBoxes()
+    notifySaved('One-time cash flow saved.')
     rerender()
   })
 
@@ -1347,6 +1469,7 @@ function initController() {
 
     resetRecurringForm()
     collapseComposerBoxes()
+    notifySaved('Recurring cash flow saved.')
     rerender()
   })
 
@@ -1389,6 +1512,7 @@ function initController() {
 
       resetSalaryForm()
       collapseComposerBoxes()
+      notifySaved('Salary instrument saved.')
       rerender()
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save salary instrument.'
@@ -1431,6 +1555,7 @@ function initController() {
 
       resetSubscriptionForm()
       collapseComposerBoxes()
+      notifySaved('Subscription instrument saved.')
       rerender()
     } catch (error) {
       const message =
@@ -1515,6 +1640,7 @@ function initController() {
 
       resetLoanForm()
       collapseComposerBoxes()
+      notifySaved('Loan instrument saved.')
       rerender()
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save loan instrument.'
@@ -1560,6 +1686,7 @@ function initController() {
 
         resetInvestmentForm()
         collapseComposerBoxes()
+        notifySaved('Investment instrument saved.')
         rerender()
         return
       }
@@ -1595,6 +1722,7 @@ function initController() {
 
         resetInvestmentForm()
         collapseComposerBoxes()
+        notifySaved('Investment instrument saved.')
         rerender()
         return
       }
@@ -1630,6 +1758,7 @@ function initController() {
 
         resetInvestmentForm()
         collapseComposerBoxes()
+        notifySaved('Investment instrument saved.')
         rerender()
         return
       }
@@ -1678,6 +1807,7 @@ function initController() {
 
       resetInvestmentForm()
       collapseComposerBoxes()
+      notifySaved('Investment instrument saved.')
       rerender()
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save investment instrument.'

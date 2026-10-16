@@ -1,6 +1,6 @@
 # ADR 0019: Adaptive Responsive Workspace UX
 
-Status: proposed
+Status: accepted
 
 Date: 2026-10-16
 

@@ -34,14 +34,14 @@ Constraints
 - Desktop must remain a first-class layout (side-by-side management + visualization), not a stretched phone UI.
 
 Plan slices (implement in order; each slice should stay PR-sized)
-- [ ] Establish responsive shell breakpoints and document wide vs narrow behavior without changing business logic.
-- [ ] Desktop polish pass: preserve side-by-side workspaces, composer hide/show, and current visual density while ensuring the shell can host adaptive list/compose modes.
-- [ ] Narrow browse mode: replace the wide overview table with a card-style configured-flow list (type/name, amount + direction, date summary, include toggle, edit/delete).
-- [ ] Narrow compose mode: open add/edit as a dedicated full-width form step (or equivalent overlay/panel) with clear Save / Cancel; return to browse after success.
-- [ ] Progressive add entry: type picker first (one-time, recurring, salary, subscription, loan, investment), then only the relevant form.
-- [ ] Mobile chart access: reach visualization (range controls + cumulative chart) without scrolling past long composer UI; keep chart usable with touch-friendly controls.
-- [ ] Touch and feedback basics: adequate tap targets, delete confirmation, brief saved/added feedback after compose succeeds.
-- [ ] Regression checklist: desktop two-workspace layout still looks intentional; existing create/edit/include/exclude/import/export/chart behaviors unchanged in meaning.
+- [x] Establish responsive shell breakpoints and document wide vs narrow behavior without changing business logic.
+- [x] Desktop polish pass: preserve side-by-side workspaces, composer hide/show, and current visual density while ensuring the shell can host adaptive list/compose modes.
+- [x] Narrow browse mode: replace the wide overview table with a card-style configured-flow list (type/name, amount + direction, date summary, include toggle, edit/delete).
+- [x] Narrow compose mode: open add/edit as a dedicated full-width form step (or equivalent overlay/panel) with clear Save / Cancel; return to browse after success.
+- [x] Progressive add entry: type picker first (one-time, recurring, salary, subscription, loan, investment), then only the relevant form.
+- [x] Mobile chart access: reach visualization (range controls + cumulative chart) without scrolling past long composer UI; keep chart usable with touch-friendly controls.
+- [x] Touch and feedback basics: adequate tap targets, delete confirmation, brief saved/added feedback after compose succeeds.
+- [x] Regression checklist: desktop two-workspace layout still looks intentional; existing create/edit/include/exclude/import/export/chart behaviors unchanged in meaning.
 
 Out of scope for this epic
 - Native apps, redesign of investment subtype math/forms beyond layout/navigation, new analytics features from §5, bundler/WASM work.

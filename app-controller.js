@@ -35,6 +35,7 @@ import {
   suggestRange,
   extendRange
 } from './flows.js'
+import { sharedEvalResultCache } from './eval-cache.js'
 import { renderConfiguredTable, renderChart } from './render.js'
 import { createComposerManager } from './controller/composer.js'
 import {
@@ -74,6 +75,12 @@ import {
 } from './controller/investment-product-metadata.js'
 
 const INVESTMENT_FAMILY_TITLE = 'Government Security Bonds'
+
+function saveCashFlowList(key, value) {
+  saveList(key, value)
+  // Definition/bundle mutations invalidate all cached expand/evaluate results.
+  sharedEvalResultCache.invalidateAll()
+}
 
 const GENERIC_BOND_SUBTYPE_OPTIONS = [
   { value: 'regular-bond', label: 'Regular bond' },
@@ -1036,15 +1043,15 @@ function initController() {
   }
 
   if (JSON.stringify(oneTimeFlows) !== JSON.stringify(loadList(ONE_TIME_STORAGE_KEY))) {
-    saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
+    saveCashFlowList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
   }
 
   if (JSON.stringify(recurringFlows) !== JSON.stringify(rawRecurringFlows)) {
-    saveList(RECURRING_STORAGE_KEY, recurringFlows)
+    saveCashFlowList(RECURRING_STORAGE_KEY, recurringFlows)
   }
 
   if (JSON.stringify(instrumentBundles) !== JSON.stringify(rawInstrumentBundles)) {
-    saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+    saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
   }
 
   composerManager.bindEvents()
@@ -1153,7 +1160,7 @@ function initController() {
       (id) => {
         oneTimeFlows = removeFlowById(oneTimeFlows, id)
         excludedFlowIds.delete(id)
-        saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
+        saveCashFlowList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
 
         if (editingOneTimeId === id) {
           resetOneTimeForm()
@@ -1168,7 +1175,7 @@ function initController() {
       (id) => {
         recurringFlows = removeFlowById(recurringFlows, id)
         excludedFlowIds.delete(id)
-        saveList(RECURRING_STORAGE_KEY, recurringFlows)
+        saveCashFlowList(RECURRING_STORAGE_KEY, recurringFlows)
 
         if (editingRecurringId === id) {
           resetRecurringForm()
@@ -1196,7 +1203,7 @@ function initController() {
       (id) => {
         instrumentBundles = removeFlowById(instrumentBundles, id)
         excludedFlowIds.delete(id)
-        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
         if (editingSalaryId === id) {
           resetSalaryForm()
@@ -1269,7 +1276,7 @@ function initController() {
     }
 
     oneTimeFlows = upsertFlowById(oneTimeFlows, oneTimeFlow)
-    saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
+    saveCashFlowList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
 
     const updatedRange = extendRange(startInput.value, endInput.value, date, date)
     startInput.value = updatedRange.startDate
@@ -1332,7 +1339,7 @@ function initController() {
     }
 
     recurringFlows = upsertFlowById(recurringFlows, recurringFlow)
-    saveList(RECURRING_STORAGE_KEY, recurringFlows)
+    saveCashFlowList(RECURRING_STORAGE_KEY, recurringFlows)
 
     const updatedRange = extendRange(startInput.value, endInput.value, startDate, endDate || startDate)
     startInput.value = updatedRange.startDate
@@ -1372,7 +1379,7 @@ function initController() {
       }
 
       instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-      saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+      saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
       const firstDate = bundle.generatedFlows[0].date
       const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
@@ -1414,7 +1421,7 @@ function initController() {
       }
 
       instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-      saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+      saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
       const firstDate = bundle.generatedFlows[0].date
       const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
@@ -1498,7 +1505,7 @@ function initController() {
       }
 
       instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-      saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+      saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
       const firstDate = bundle.generatedFlows[0].date
       const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
@@ -1543,7 +1550,7 @@ function initController() {
         }
 
         instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
         const firstDate = bundle.generatedFlows[0].date
         const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
@@ -1578,7 +1585,7 @@ function initController() {
         }
 
         instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
         const firstDate = bundle.generatedFlows[0].date
         const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
@@ -1613,7 +1620,7 @@ function initController() {
         }
 
         instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
         const firstDate = bundle.generatedFlows[0].date
         const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
@@ -1661,7 +1668,7 @@ function initController() {
       }
 
       instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-      saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+      saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
       const firstDate = bundle.generatedFlows[0].date
       const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
@@ -1713,9 +1720,9 @@ function initController() {
         recurringFlows = imported.recurringFlows
         instrumentBundles = imported.instrumentBundles
         excludedFlowIds.clear()
-        saveList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
-        saveList(RECURRING_STORAGE_KEY, recurringFlows)
-        saveList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+        saveCashFlowList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
+        saveCashFlowList(RECURRING_STORAGE_KEY, recurringFlows)
+        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
         localStorage.setItem(STORAGE_SCHEMA_VERSION_KEY, String(imported.schemaVersion))
 
         const importedRange = suggestRange([

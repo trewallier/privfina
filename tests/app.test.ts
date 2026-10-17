@@ -642,7 +642,7 @@ describe('browser recurrence validation helpers', () => {
     )
 
     expect(container.innerHTML).toContain('class="zero-axis"')
-    expect(container.innerHTML).toContain('stroke="#bcb1a3"')
+    expect(container.innerHTML).toContain('stroke="#a8b4c4"')
   })
 
   it('renders an informative empty state for range without flows', () => {

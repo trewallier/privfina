@@ -6,18 +6,18 @@
     <title>Privfina</title>
     <style>
       :root {
-        --bg: #f2efe8;
-        --bg-mesh-1: #f7e6d0;
-        --bg-mesh-2: #d7eee7;
-        --card: #fffdf7;
-        --card-soft: #fff7eb;
-        --text: #24211c;
-        --muted: #6f6558;
-        --accent: #0f766e;
-        --accent-strong: #0d5f59;
-        --accent-soft: #dff5f1;
-        --border: #d9d0c4;
-        --shadow: 0 20px 40px -30px rgba(36, 33, 28, 0.48);
+        --bg: #eef2f7;
+        --bg-mesh-1: #d6e4f7;
+        --bg-mesh-2: #d9eef8;
+        --card: #f7fafc;
+        --card-soft: #eef5fb;
+        --text: #1a2332;
+        --muted: #5a6a7d;
+        --accent: #2563eb;
+        --accent-strong: #1d4ed8;
+        --accent-soft: #dbeafe;
+        --border: #c5d0de;
+        --shadow: 0 20px 40px -30px rgba(26, 35, 50, 0.48);
       }
 
       * {
@@ -32,9 +32,9 @@
         margin: 0;
         font-family: "Avenir Next", "Segoe UI", sans-serif;
         background:
-          radial-gradient(circle at 0% 0%, var(--bg-mesh-1) 0%, rgba(247, 230, 208, 0) 45%),
-          radial-gradient(circle at 100% 0%, var(--bg-mesh-2) 0%, rgba(215, 238, 231, 0) 40%),
-          linear-gradient(160deg, #f3f2ee 0%, #ece6dc 55%, #f8f8f6 100%);
+          radial-gradient(circle at 0% 0%, var(--bg-mesh-1) 0%, rgba(214, 228, 247, 0) 45%),
+          radial-gradient(circle at 100% 0%, var(--bg-mesh-2) 0%, rgba(217, 238, 248, 0) 40%),
+          linear-gradient(160deg, #f0f4f9 0%, #e4ebf4 55%, #f5f8fb 100%);
         color: var(--text);
       }
 
@@ -120,7 +120,7 @@
         border: 1px solid var(--border);
         border-radius: 12px;
         overflow: hidden;
-        background: linear-gradient(180deg, #fffdf8 0%, var(--card-soft) 100%);
+        background: linear-gradient(180deg, #f8fbfe 0%, var(--card-soft) 100%);
       }
 
       .flow-box > summary {
@@ -139,7 +139,7 @@
 
       .flow-box[open] > summary {
         border-bottom: 1px solid var(--border);
-        background: rgba(15, 118, 110, 0.06);
+        background: rgba(37, 99, 235, 0.06);
       }
 
       .summary-main {
@@ -211,9 +211,9 @@
         margin-top: 4px;
         padding: 9px 10px;
         border-radius: 10px;
-        border: 1px solid #b7ddd7;
-        background: #effaf7;
-        color: #1f4a45;
+        border: 1px solid #a8c4e8;
+        background: #eef5fc;
+        color: #1e3a5f;
       }
 
       .field-help p {
@@ -228,7 +228,7 @@
         right: 8px;
         border: 0;
         background: transparent;
-        color: #1f4a45;
+        color: #1e3a5f;
         font-size: 0.95rem;
         line-height: 1;
         cursor: pointer;
@@ -239,10 +239,10 @@
         position: fixed;
         z-index: 1400;
         width: min(320px, calc(100vw - 24px));
-        border: 1px solid #b7ddd7;
+        border: 1px solid #a8c4e8;
         border-radius: 12px;
-        background: #f7fffc;
-        box-shadow: 0 14px 28px -20px rgba(20, 57, 50, 0.85);
+        background: #f5f9ff;
+        box-shadow: 0 14px 28px -20px rgba(30, 58, 95, 0.85);
         padding: 10px 12px;
       }
 
@@ -262,7 +262,7 @@
       .investment-info-popup-close {
         border: 0;
         background: transparent;
-        color: #1f4a45;
+        color: #1e3a5f;
         font-size: 1rem;
         line-height: 1;
         cursor: pointer;
@@ -271,14 +271,14 @@
 
       .investment-info-popup-text {
         margin: 8px 0 0;
-        color: #1f4a45;
+        color: #1e3a5f;
         font-size: 0.82rem;
         line-height: 1.38;
       }
 
       .investment-subtype-hero {
-        border: 1px solid #9bc9c2;
-        background: linear-gradient(140deg, #f0fbf8 0%, #e6f5ff 100%);
+        border: 1px solid #93b4e0;
+        background: linear-gradient(140deg, #eef6ff 0%, #e0f0ff 100%);
         border-radius: 12px;
         padding: 10px;
       }
@@ -353,7 +353,7 @@
 
       button.secondary:hover,
       button.ghost:hover {
-        background: #f6f1e8;
+        background: #eef3f9;
       }
 
       .actions {
@@ -429,7 +429,7 @@
       }
 
       .icon-button:hover {
-        background: #f6f1e8;
+        background: #eef3f9;
         color: var(--text);
       }
 
@@ -451,7 +451,7 @@
         padding: 6px;
         border: 1px solid var(--border);
         border-radius: 10px;
-        background: #fffaf0;
+        background: #f5f8fc;
       }
 
       #chart {
@@ -619,7 +619,7 @@
         grid-template-columns: repeat(3, 1fr);
         gap: 4px;
         padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-        background: rgba(255, 253, 247, 0.96);
+        background: rgba(247, 250, 252, 0.96);
         border-top: 1px solid var(--border);
         backdrop-filter: blur(8px);
       }
@@ -635,7 +635,7 @@
       .mobile-nav button.is-active {
         color: var(--accent-strong);
         background: var(--accent-soft);
-        border-color: #9bc9c2;
+        border-color: #93b4e0;
         font-weight: 700;
       }
 
@@ -649,7 +649,7 @@
         padding: 10px 14px;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: #1f4a45;
+        background: #1e3a5f;
         color: #fff;
         box-shadow: var(--shadow);
       }

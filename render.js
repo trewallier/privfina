@@ -450,33 +450,33 @@ function renderChart(series, container, options = {}) {
   const yTickMarkup = yTicks
     .map(
       (tick) => `
-      <line class="grid-line" x1="${leftPad}" y1="${tick.y}" x2="${width - rightPad}" y2="${tick.y}" stroke="#e6e0d6" stroke-width="1" />
-      <text class="y-tick-label" x="${leftPad - 10}" y="${tick.y + 4}" text-anchor="end" fill="#6f6558" font-size="11">${formatAxisAmount(tick.value)}</text>
+      <line class="grid-line" x1="${leftPad}" y1="${tick.y}" x2="${width - rightPad}" y2="${tick.y}" stroke="#dce4ee" stroke-width="1" />
+      <text class="y-tick-label" x="${leftPad - 10}" y="${tick.y + 4}" text-anchor="end" fill="#5a6a7d" font-size="11">${formatAxisAmount(tick.value)}</text>
     `
     )
     .join('')
 
   const zeroY = yScale(0)
   const hasZeroCrossing = minTotal < 0 && maxTotal > 0
-  const zeroAxisColor = hasZeroCrossing ? '#c0392b' : '#bcb1a3'
+  const zeroAxisColor = hasZeroCrossing ? '#c0392b' : '#a8b4c4'
   const startLabel = formatDateLabel(sampledSeries[0].date)
   const endLabel = formatDateLabel(sampledSeries[sampledSeries.length - 1].date)
   const samplingNote =
     sampledSeries.length < series.length
-      ? `<text x="${width - rightPad}" y="18" text-anchor="end" fill="#6f6558" font-size="11">Showing ${sampledSeries.length.toLocaleString()} of ${series.length.toLocaleString()} points</text>`
+      ? `<text x="${width - rightPad}" y="18" text-anchor="end" fill="#5a6a7d" font-size="11">Showing ${sampledSeries.length.toLocaleString()} of ${series.length.toLocaleString()} points</text>`
       : ''
 
   container.innerHTML = `
     <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Cumulative cash-flow chart">
       ${yTickMarkup}
-      <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${height - bottomPad}" stroke="#c9bfae" stroke-width="1" />
-      <line x1="${leftPad}" y1="${height - bottomPad}" x2="${width - rightPad}" y2="${height - bottomPad}" stroke="#c9bfae" stroke-width="1" />
+      <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${height - bottomPad}" stroke="#b0bdce" stroke-width="1" />
+      <line x1="${leftPad}" y1="${height - bottomPad}" x2="${width - rightPad}" y2="${height - bottomPad}" stroke="#b0bdce" stroke-width="1" />
       <line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${width - rightPad}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />
-      <path class="series-line" d="${holdPath}" fill="none" stroke="#0f766e" stroke-width="3" />
-      <text x="${leftPad}" y="18" fill="#6f6558" font-size="12">Cumulative total amount</text>
+      <path class="series-line" d="${holdPath}" fill="none" stroke="#2563eb" stroke-width="3" />
+      <text x="${leftPad}" y="18" fill="#5a6a7d" font-size="12">Cumulative total amount</text>
       ${samplingNote}
-      <text x="${leftPad}" y="${height - 10}" fill="#6f6558" font-size="12">${startLabel}</text>
-      <text x="${width - rightPad}" y="${height - 10}" text-anchor="end" fill="#6f6558" font-size="12">${endLabel}</text>
+      <text x="${leftPad}" y="${height - 10}" fill="#5a6a7d" font-size="12">${startLabel}</text>
+      <text x="${width - rightPad}" y="${height - 10}" text-anchor="end" fill="#5a6a7d" font-size="12">${endLabel}</text>
     </svg>
   `
 }

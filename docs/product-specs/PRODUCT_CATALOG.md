@@ -13,6 +13,15 @@ These statuses track the rollout of the spec-driven product model (ADR 0013–00
 
 Statuses are transitional rollout markers reflecting current integration state, not completion guarantees.
 
+**What `calc-aligned` requires in this repo** (engine bar; UI may stay parked):
+
+- Family-level product-spec mapper under `src/finance_engine/product_specs/` that loads schema-v2 YAML and drives reusable primitives (no per-product amortizer forks).
+- Executable tests that assert engine-computed outputs from example inputs (not only YAML constant lock-in).
+- Catalog row, [`formula-ownership-audit.md`](../formula-ownership-audit.md), and product README updated to `calc-aligned`.
+- For Hirdetmény-style packaging vs bare math, follow dual-lane acceptance in [ADR 0021](../adr/0021-commercial-mortgage-calculation-primitives.md).
+
+Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playbooks/product-lifecycle.md).
+
 ## Products
 
 | Product ID | Family | Variant | Product Code | Spec Version | Migration Status | Spec Path | Example Path | Notes |

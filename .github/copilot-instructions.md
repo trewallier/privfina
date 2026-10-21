@@ -2,10 +2,12 @@
 
 These instructions aim to make repository assistance consistent and traceable.
 
+- Start with root [`AGENTS.md`](../AGENTS.md) for read order, non-negotiables, and task routers; docs index is [`docs/README.md`](../docs/README.md).
 - Always ensure major scope, architecture, or acceptance-criteria changes update `docs/vision.md`, `docs/spec.md`, `docs/adr/`, and `ROADMAP.md` as appropriate.
 - Prefer small, focused PRs that include tests exercising new logic and minimal additional dependencies.
 - Require explicit traceability: each PR should reference the `docs/spec.md` section and the related `ROADMAP.md` item; if architectural, reference the ADR in `docs/adr/`.
 - Encourage using the `.github/prompts/` helpers to scaffold ADRs and spec updates.
+- For product add/promote workflows, follow [`docs/dev-playbooks/product-lifecycle.md`](../docs/dev-playbooks/product-lifecycle.md).
 - Note: this repository uses `master` as the default branch.
 
 ## Commit Format Preference

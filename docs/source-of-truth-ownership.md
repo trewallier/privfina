@@ -2,6 +2,8 @@
 
 **Purpose**: Clarify where each type of information belongs in the privfina repository, so contributors know where to document product logic, code, UI behavior, and constraints.
 
+**See also:** [`AGENTS.md`](../AGENTS.md) (agent entry), [`docs/README.md`](README.md) (docs index), [`dev-playbooks/product-lifecycle.md`](dev-playbooks/product-lifecycle.md) (add/promote products), [`product-specs/PRODUCT_CATALOG.md`](product-specs/PRODUCT_CATALOG.md) (migration status glossary).
+
 ## Ownership Table
 
 | Information Type | Owns | Does Not Own |
@@ -66,7 +68,7 @@ The repository has completed the first product-spec migration wave for the catal
 - **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion`.
 - **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders.
 - **Known dual surface**: TypeScript engine primitives and `public/instruments.js` both host calculation code until a bundler lands (ADR 0017).
-- **Roadmap §3 complete** for lineage, schema v4 migrations, and evaluation-result caching; next epic work is §4 analytics / account model.
+- **Roadmap §3 complete** for lineage, schema v4 migrations, and evaluation-result caching; **§4 responsive UX slices are done**. Open follow-ons are remaining §5 analytics items, §6 platform/bundler, and §7 storage port—see [`ROADMAP.md`](../ROADMAP.md).
 - **Target state**: All products have explicit specs; code implements reusable primitives; UI derives metadata from specs; one browser calculation surface.
 
 **Practical implications during transition**:
@@ -81,7 +83,9 @@ The repository has completed the first product-spec migration wave for the catal
 - **ADR 0015**: Data-Driven Product Variants—establishes engine primitives vs. product variants ownership.
 - **ADR 0016**: Product Specification Validation and UI Schema—defines validation and UI metadata ownership.
 - **ADR 0020**: Product Spec Schema v2—freezes v1; active contract is `v2alpha1` with expandable loan/mortgage identity and commercial constructs.
+- **ADR 0021**: Commercial mortgage calculation primitives and dual-lane acceptance vs packaging fixtures.
 - **docs/spec.md**: Living functional specification; describes v1 scenarios and assumptions.
 - **DESIGN.md**: Architectural rationale and domain concepts; does not enumerate all product details (those live in specs).
 - **docs/product-specs/README.md**: Folder conventions and usage.
 - **docs/product-specs/PRODUCT_CATALOG.md**: Registry of all defined products and their spec locations.
+- **docs/dev-playbooks/product-lifecycle.md**: Checklists for adding and promoting products.

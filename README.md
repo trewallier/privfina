@@ -1,46 +1,42 @@
 # Privfina
 
-This repository is evolving toward a browser-hosted personal finance planning application designed for static deployment on GitHub Pages. The initial direction is client-side cash-flow modeling, browser storage persistence, and a clean calculation-engine interface for future optimization.
+Browser-hosted personal finance planning for static deployment on GitHub Pages: client-side cash-flow modeling, browser storage with export/import, and a calculation engine separated from the UI.
 
 ## Current Direction
 
-- Static web app architecture for GitHub Pages.
-- Browser storage persistence with export/import JSON for user data portability.
-- Isolated calculation engine interface to separate UI from compute.
-- Implemented v1 slice: one-time and recurring cash-flow create/view/delete plus cumulative cash-flow chart with date-range controls.
-- Recurring definitions support monthly, weekly, and annual cron-like schedules.
-- Split workspace UX: dedicated cash-flow management area and separate visualization area.
-- Planned adaptive responsive UX (ROADMAP §4 / ADR 0019): keep desktop two-workspace look; on mobile separate browse vs add/edit and prefer a card list over the wide overview table.
-- Swagger-like collapsible flow composer panels with hide/show behavior for focus-oriented workflow.
-- Per-flow include toggles in the configured list to quickly include/exclude cash flows from cumulative visualization.
-- Optional external macro data fetched in-browser through a CORS-aware adapter.
-- Documentation-driven workflow with architecture decisions captured in `docs/adr/`.
+- Static web app on GitHub Pages (no backend runtime).
+- Browser storage as a cache; export/import JSON for durability.
+- Isolated calculation engine (`src/finance_engine/`) with an interim browser surface in `public/` (ADR 0017).
+- Instruments: one-time/recurring cash flows, salary, subscription, loan, investment; cumulative chart with date-range controls.
+- Adaptive responsive UX (ROADMAP §4 / ADR 0019): desktop two-workspace layout; narrow viewports separate browse vs compose.
+- Product definitions as YAML under `docs/product-specs/` (schema v2 / ADR 0020); migration statuses live in the [product catalog](docs/product-specs/PRODUCT_CATALOG.md).
+- Documentation-driven workflow with decisions in `docs/adr/`.
 
 ## Project Layout
 
 ```text
 .
-├── DESIGN.md
-├── LICENSE
+├── AGENTS.md                 # Agent entry: read order, routers, non-negotiables
+├── DESIGN.md                 # Domain design (investment formulas canonical here)
 ├── README.md
 ├── ROADMAP.md
 ├── docs/
+│   ├── README.md             # Documentation index
 │   ├── vision.md
 │   ├── spec.md
-│   └── adr/
-├── .github/
+│   ├── source-of-truth-ownership.md
+│   ├── formula-ownership-audit.md
+│   ├── adr/
+│   ├── product-specs/        # Catalog, schema v2, product YAML + examples
+│   └── dev-playbooks/        # How-to checklists (product lifecycle)
+├── src/finance_engine/       # TypeScript calculation primitives + product_specs
+├── public/                   # SPA UI + controller adapters
+├── tests/
+├── .github/prompts/          # ADR / spec / roadmap helpers
 └── data/
 ```
 
-## Direction Notes
-
-- v1 targets GitHub Pages static hosting with no backend runtime.
-- Local browser storage is treated as a cache, with export/import JSON as the durability mechanism.
-- The repository is currently in transition from an earlier Python prototype to a browser-first web app.
-
 ## Development
-
-Install dependencies and run the minimal TypeScript package layout:
 
 ```bash
 npm install
@@ -48,18 +44,36 @@ npm test
 npm run build
 ```
 
-The initial source lives under `src/` and the package exposes a browser-friendly finance engine API surface.
+Default branch: `master`.
 
 ## Documentation & Decision Workflow
 
-- **What:** This repository uses a docs-as-code workflow to keep design, specification, and architectural decisions close to code. Key artifacts live in `docs/` and `docs/adr/`:
-    - `docs/vision.md` — project vision, goals, constraints (high level)
-    - `docs/spec.md` — living specification, glossary, scenarios, acceptance criteria
-    - `docs/adr/` — immutable Architecture Decision Records (one decision per file)
-- **When to update:** Update Vision/Spec/ADR when scope, acceptance criteria, or architecture change. Update `docs/spec.md` during spec→plan→implement→verify iterations. Create a new ADR when an accepted architectural decision changes.
-- **Where they connect:** Each implementation PR should link to the relevant `docs/spec.md` section and any related `ROADMAP.md` item; if the change contains an architectural decision, link a new or existing ADR from `docs/adr/`.
-- **Why this helps:** Traceability from roadmap → spec → PR → tests keeps reviews focused and makes future audits simpler.
+Docs-as-code keeps design, specification, and architecture next to the code.
+
+| Need | Start here |
+| --- | --- |
+| Agent quick-start | [`AGENTS.md`](AGENTS.md) |
+| Docs index | [`docs/README.md`](docs/README.md) |
+| Goals / constraints | [`docs/vision.md`](docs/vision.md) |
+| Scenarios / acceptance criteria | [`docs/spec.md`](docs/spec.md) |
+| Domain / investment formulas | [`DESIGN.md`](DESIGN.md) |
+| Architecture decisions | [`docs/adr/`](docs/adr/) |
+| Who owns what | [`docs/source-of-truth-ownership.md`](docs/source-of-truth-ownership.md) |
+| Product registry + migration statuses | [`docs/product-specs/PRODUCT_CATALOG.md`](docs/product-specs/PRODUCT_CATALOG.md) |
+| Add / promote a product | [`docs/dev-playbooks/product-lifecycle.md`](docs/dev-playbooks/product-lifecycle.md) |
+| Formula ↔ code map | [`docs/formula-ownership-audit.md`](docs/formula-ownership-audit.md) |
+| Sequencing | [`ROADMAP.md`](ROADMAP.md) |
+
+- **When to update:** Vision/Spec/ADR when scope, acceptance criteria, or architecture change. Create a new ADR when an accepted architectural decision changes (do not edit accepted ADRs).
+- **PR traceability:** Link the relevant `docs/spec.md` section and `ROADMAP.md` item; link an ADR when the change is architectural.
+- **Product migration statuses** (`spec-only` → `inputs-driven` → `calc-aligned` → `fully-spec-backed`) are defined only in the [product catalog](docs/product-specs/PRODUCT_CATALOG.md)—do not redefine them elsewhere.
+
+## Direction Notes
+
+- v1 targets GitHub Pages static hosting with no backend runtime.
+- Local browser storage is a cache; export/import JSON is the durability path.
+- The app is browser-first TypeScript/JavaScript; product contracts are schema-v2 YAML.
 
 ## Next Steps
 
-The planned next increments are tracked in `ROADMAP.md`. The architecture and extension rules live in `DESIGN.md` so later work can stay aligned with repository direction.
+Planned increments are tracked in [`ROADMAP.md`](ROADMAP.md). Extension rules and domain design live in [`DESIGN.md`](DESIGN.md); cataloged product detail lives under [`docs/product-specs/`](docs/product-specs/).

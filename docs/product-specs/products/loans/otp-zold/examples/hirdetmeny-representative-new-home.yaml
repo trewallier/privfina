@@ -1,0 +1,32 @@
+specVersion: v2alpha1
+productId: mortgage-loan.otp-zold.standard
+exampleId: hirdetmeny-representative-new-home
+title: Hirdetmény representative OTP Zöld new-home purchase
+description: >
+  Official representative example from section 6 of the OTP forint home-loan
+  Hirdetmény (valid packaging for applications from 2026-04-20; example basis
+  dated 2026-04-01): 12.000.000 Ft, 20 years, new-home purchase, OTP Zöld at
+  7,99% customer rate (8,49% base less 50 bp Zöld kamatkedvezmény).
+
+inputs:
+  principal: 12000000
+  annualInterestRatePct: 7.99
+  termMonths: 240
+  startDate: 2026-04-01
+  loanPurpose: new-home-purchase
+
+expected:
+  paymentCount: 240
+  monthlyPayment: 101128
+  totalPaid: 24360086
+  totalCreditCostFees: 89365
+  thmPct: 8.5
+  rateType: fixed-for-full-term
+  baseContractualAnnualRatePct: 8.49
+  contractualAnnualRatePct: 7.99
+  greenRateDiscountBp: 50
+
+notes:
+  - "Source: Lakáshitel_H_kondicio_20260420, §6 Reprezentatív példák, OTP Zöld Lakáshitel / új lakás vásárlás."
+  - "monthlyPayment and totalPaid are the published Hirdetmény figures (installment includes the bank's representative packaging; totalPaid includes 89.365 Ft fee/cost component)."
+  - "Bare engine annuity at 7,99% / 12 monthly compounding is validated separately in unit tests and is not required to equal the published installment."

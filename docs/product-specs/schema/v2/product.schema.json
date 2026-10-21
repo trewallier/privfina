@@ -440,6 +440,14 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "appliesToFeeNames": {
+          "type": "array",
+          "description": "For fee-waiver discounts: explicit fee names this waiver applies to. When omitted, fee-waivers apply only to fees with type disbursement.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -470,6 +478,11 @@
         "unit": {
           "type": "string",
           "enum": ["amount", "percent", "bp"]
+        },
+        "maxAmount": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Optional absolute cap applied after percent/bp evaluation (for example folyósítási díj max Ft)."
         },
         "timing": {
           "type": "string",

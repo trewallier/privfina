@@ -18,4 +18,4 @@ State-subsidized Falusi CSOK / Otthonteremtés home loan (`productCode: falusi-c
 
 ## Status
 
-**spec-only** — catalog + worked example + unit tests. Composer / THM engine path not wired.
+**calc-aligned** — finance-engine product-spec mapper computes customer-rate schedule, upfront fee package, and fee-inclusive THM (ADR 0021). Hirdetmény §6 installment/THM packaging figures remain dual-lane fixtures. Composer UI is intentionally parked (fully-spec-backed follow-on).

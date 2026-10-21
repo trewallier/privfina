@@ -11,6 +11,25 @@ export {
   generateLoanInstrumentCashFlows,
   createLoanInstrumentBundle
 } from './instruments/loan'
+export type {
+  AppliedFeeLine,
+  CreditCostPackage,
+  FeeApplicationOptions,
+  ProductDiscountDefinition,
+  ProductFeeDefinition
+} from './instruments/loan_fees'
+export {
+  applyFeesAndDiscounts,
+  DEFAULT_REPRESENTATIVE_EXCLUDED_FEE_NAMES
+} from './instruments/loan_fees'
+export type {
+  MortgageRateResolutionInput,
+  ProductSubsidyDefinition,
+  ResolvedMortgageCustomerRate
+} from './instruments/loan_subsidy'
+export { resolveMortgageCustomerRate } from './instruments/loan_subsidy'
+export type { ThmComputationInput, ThmComputationResult } from './instruments/thm'
+export { computeThmPct, expandScheduleToMonthlyPayments } from './instruments/thm'
 export {
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentCashFlows,

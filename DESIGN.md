@@ -109,14 +109,21 @@ This section defines the next iteration of instrument behavior so implementation
 			- Otthon Start (schema v2 catalog): [docs/product-specs/products/loans/otthon-start/product.yaml](docs/product-specs/products/loans/otthon-start/product.yaml)
 			- Vidéki Otthonfelújítási (schema v2 catalog): [docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml](docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml)
 		- Engine implementation (loan primitives): [src/finance_engine/instruments/loan.ts](src/finance_engine/instruments/loan.ts)
+		- Commercial mortgage primitives (ADR 0021): [src/finance_engine/instruments/loan_fees.ts](src/finance_engine/instruments/loan_fees.ts), [src/finance_engine/instruments/loan_subsidy.ts](src/finance_engine/instruments/loan_subsidy.ts), [src/finance_engine/instruments/thm.ts](src/finance_engine/instruments/thm.ts)
+		- Mortgage-loan product-spec seam: [src/finance_engine/product_specs/mortgage_loan.ts](src/finance_engine/product_specs/mortgage_loan.ts)
 		- Worked examples / living documentation and tests:
 			- Fixed-rate loan example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml) and [tests/fixed-rate-loan-example.test.ts](tests/fixed-rate-loan-example.test.ts)
 			- Fixed-rate mortgage example: [docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml) and [tests/fixed-rate-mortgage-calculation-adapter.test.ts](tests/fixed-rate-mortgage-calculation-adapter.test.ts)
+			- Hirdetmény mortgage calc-aligned tests: [tests/hirdetmeny-mortgage-calc-aligned.test.ts](tests/hirdetmeny-mortgage-calc-aligned.test.ts) (engine-lane goldens for otp-1x1, otp-zold, vegig-fix, csok-plusz, falusi-csok, otthon-start, videki-otthonfelujitasi); per-product `tests/*-product.test.ts` suites retain §6 packaging fixture lock-in
 - Generated flows:
 	- optional one-time disbursement inflow at start
 	- optional interest-only outflows during grace (when capitalization is off)
 	- fixed monthly amortizing repayment outflows over the post-grace term
-- Future extensions (not in this iteration): one-time and recurring fee flows driven from product-spec `fees`, early full repayment rules, state-interest subsidy cash-flow splits from `subsidy`, and associated penalties. Schema v2 already accepts those product fields so catalog authoring can precede engine support.
+- Commercial packaging (ADR 0021):
+	- Upfront fee/discount application from product-spec `fees` / `discounts` produces a credit-cost package used for `totalCreditCostFees` and fee-inclusive THM.
+	- State-subsidized products resolve the **customer** annual rate for schedule math; ügyleti / state cash-flow splits remain deferred.
+	- Dual-lane acceptance: engine schedule + fee package + engine THM are computed; Hirdetmény §6 installment/THM packaging figures may differ and stay as fixtures.
+- Future extensions: early full repayment rules, state-interest subsidy cash-flow splits, multi-segment interest-period resets, post-subsidy rate steps, and associated on-event penalties.
 
 #### Investment (stateful by product rules, finite maturity first)
 

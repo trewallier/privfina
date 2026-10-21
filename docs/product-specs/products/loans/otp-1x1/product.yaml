@@ -65,6 +65,7 @@ fees:
     type: disbursement
     value: 0.75
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: 0,75%, max 200.000 Ft; 100% waived under OTP Díjkedvezményes akció when insurance conditions are met (or for refinancing).
   - name: hitelbiztositeki-ertek-megallapitas
@@ -89,6 +90,7 @@ fees:
     type: other
     value: 2
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for OTP 1x1.
   - name: elotorlesztesi-dij

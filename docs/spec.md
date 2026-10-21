@@ -37,6 +37,7 @@ Scenarios / Use-cases
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
+- Mortgage calc-aligned engine path (ADR 0021): Hirdetmény mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; published §6 packaging figures remain separately auditable fixtures.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -121,6 +122,10 @@ Acceptance criteria
 - [x] Falusi CSOK (`productCode: falusi-csok`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / 66.802 Ft / THM 3,3%) locked in unit tests.
 - [x] Otthon Start (`productCode: otthon-start`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / published 69.362 Ft amortizing installment with grace packaging / THM 3,2%) locked in unit tests.
 - [x] Vidéki Otthonfelújítási (`productCode: videki-otthonfelujitasi`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 10 years / 4,87% / 63.457 Ft / THM 5,5%) locked in unit tests.
+- [x] Mortgage-loan engine applies structured product-spec fees/discounts into an upfront credit-cost package without product-specific amortization branches (ADR 0021).
+- [x] State-subsidized mortgage-loan products resolve the customer annual rate for schedule generation; interest-only-then-annuity maps to existing grace primitives.
+- [x] Fee-inclusive THM is computed from net proceeds, scheduled repayments, and packaged upfront costs; Hirdetmény §6 installment/THM packaging may differ from engine lane (dual-lane acceptance).
+- [x] All seven Hirdetmény mortgage-loan products are calc-aligned in the finance engine (executable example tests); composer UI remains out of scope.
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

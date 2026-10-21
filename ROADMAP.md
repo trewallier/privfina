@@ -56,7 +56,9 @@ Out of scope for this epic
 - [x] Author Végig Fix mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
 - [x] Author CSOK Plusz mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
 - [x] Author remaining Hirdetmény 2026-04-20 mortgage product specs (Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) on schema v2.
-- [ ] Engine primitives for state-interest subsidy and structured fee/discount application driven by product specs.
+- [x] Engine primitives for structured fee/discount application, subsidy customer-rate resolution, and fee-inclusive THM (ADR 0021).
+- [x] Generic mortgage-loan product-spec mapper and calc-aligned engine-lane tests for all seven Hirdetmény mortgage products (composer UI still parked).
+- [ ] State-interest subsidy cash-flow splits and multi-segment interest-period resets (beyond customer-rate schedule).
 - [ ] Add scenario analysis for income and expense changes.
 - [ ] Add discount-rate configuration and NPV analytics.
 - [ ] Add multi-account modeling and account-scoped cumulative summaries (future extension; current model is single-account).

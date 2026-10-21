@@ -61,6 +61,8 @@ discounts:
     type: fee-waiver
     value: 100
     unit: percent
+    appliesToFeeNames:
+      - egyszeri-kamatcsokkentes-dij
     conditions:
       - promotional-action-active
   - name: energetikai-tanusitvany-dij-terites
@@ -76,6 +78,7 @@ fees:
     type: disbursement
     value: 0.75
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: 0,75%, max 200.000 Ft; waived for OTP Zöld under OTP Zöld Díjkedvezményes akció.
   - name: hitelbiztositeki-ertek-megallapitas
@@ -100,12 +103,14 @@ fees:
     type: other
     value: 2
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for OTP Zöld.
   - name: elotorlesztesi-dij
     type: prepayment
     value: 1
     unit: percent
+    maxAmount: 30000
     timing: on-event
     description: 1,00%, max 30.000 Ft per occasion for OTP Zöld Lakáshitelek.
   - name: szerzodesmodositasi-dij

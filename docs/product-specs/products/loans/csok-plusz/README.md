@@ -27,4 +27,4 @@ Authored against product specification schema **v2** (`specVersion: v2alpha1`, A
 
 ## Status
 
-**spec-only** — catalog + worked example + unit tests for published Hirdetmény numbers and engine grace+annuity schedule shape. Composer UI and fee-inclusive THM / subsidy-split engine path are follow-on work.
+**calc-aligned** — finance-engine product-spec mapper computes customer-rate schedule, upfront fee package, and fee-inclusive THM (ADR 0021). Hirdetmény §6 installment/THM packaging figures remain dual-lane fixtures. Composer UI is intentionally parked (fully-spec-backed follow-on).

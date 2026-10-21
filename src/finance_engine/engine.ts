@@ -15,19 +15,6 @@ import {
   generateInvestmentInstrumentCashFlows,
   createInvestmentInstrumentBundle
 } from './instruments'
-import {
-  parseFixedRateLoanProductSpecYaml,
-  validateFixedRateLoanProductSpec,
-  loadFixedRateLoanProductSpec,
-  mapFixedRateLoanSpecInputsToLoanInstrumentInput,
-  generateLoanInstrumentCashFlowsFromFixedRateProductSpec
-} from './product_specs/fixed_rate_loan'
-import {
-  DEFAULT_FIXED_RATE_LOAN_PRODUCT_SPEC_PATH,
-  DEFAULT_PRODUCT_SCHEMA_PATH,
-  loadFixedRateLoanProductSpecFromFiles
-} from './product_specs/loader'
-
 export type {
   DateRange,
   CashFlowDefinition,
@@ -82,10 +69,32 @@ export {
   generateLoanInstrumentCashFlowsFromFixedRateProductSpec
 } from './product_specs/fixed_rate_loan'
 export {
+  parseMortgageLoanProductSpecYaml,
+  validateMortgageLoanProductSpec,
+  loadMortgageLoanProductSpec,
+  mapMortgageLoanSpecInputsToLoanInstrumentInput,
+  calculateMortgageLoanFromProductSpec,
+  generateLoanInstrumentCashFlowsFromMortgageLoanProductSpec
+} from './product_specs/mortgage_loan'
+export type {
+  MortgageLoanProductSpec,
+  MortgageLoanSpecInputs,
+  MortgageLoanEngineOutputs
+} from './product_specs/mortgage_loan'
+export {
   DEFAULT_FIXED_RATE_LOAN_PRODUCT_SPEC_PATH,
   DEFAULT_PRODUCT_SCHEMA_PATH,
-  loadFixedRateLoanProductSpecFromFiles
+  MORTGAGE_LOAN_PRODUCT_SPEC_PATHS,
+  loadFixedRateLoanProductSpecFromFiles,
+  loadMortgageLoanProductSpecFromFiles
 } from './product_specs/loader'
+export type { MortgageLoanProductCode } from './product_specs/loader'
+export {
+  applyFeesAndDiscounts,
+  DEFAULT_REPRESENTATIVE_EXCLUDED_FEE_NAMES
+} from './instruments/loan_fees'
+export { resolveMortgageCustomerRate } from './instruments/loan_subsidy'
+export { computeThmPct, expandScheduleToMonthlyPayments } from './instruments/thm'
 
 function signedAmount(cashFlow: CashFlow): number {
   return cashFlow.direction === CashFlowDirection.Inflow ? cashFlow.amount : -cashFlow.amount

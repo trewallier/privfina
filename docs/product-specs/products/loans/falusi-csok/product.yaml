@@ -1,0 +1,200 @@
+specVersion: v2alpha1
+kind: financial-product
+id: mortgage-loan.falusi-csok.standard
+family: mortgage-loan
+variant: falusi-csok
+productCode: falusi-csok
+displayName: OTP Otthonteremtési Lakáshitel (Falusi CSOK)
+description: >
+  State-subsidized Falusi CSOK / Otthonteremtési home loan for preferred small
+  settlements, with customer rate fixed at 3% during subsidy and 1y → 1y → 5y
+  interest periods. Conditions sourced from the OTP Hirdetmény effective for
+  applications accepted from 2026-04-20 (Lakáshitel H kondíció 2026-04-20),
+  section 2.2.1.1.
+
+engine:
+  instrumentType: loan
+  rateType: state-subsidized
+  amortizationType: level-payment
+  paymentFrequency: monthly
+  gracePeriodMonths: 0
+  interestPeriodMonths: 12
+
+subsidy:
+  type: state-interest-subsidy
+  customerRate: 0.03
+  subsidyDurationMonths: 300
+
+loanPurposes:
+  - used-home-purchase
+  - renovation
+  - modernization
+  - extension
+
+pricing:
+  rateSettingRule: state-subsidized-customer-rate-fixed-with-akk-linked-transactional-cap
+  notes:
+    - "Adósok által fizetendő kamat 3,00% a kamattámogatás ideje alatt (max 25 év)."
+    - "Ügyleti kamat 2026. április 1-től 8,18%; 2026. május 1-től 8,22% (ÁKK 115% + 1 pp cap)."
+    - "Kamatperiódus: első két periódus 1-1 év, majd 5 éves periódusok."
+    - "THM reprezentatív példa használt lakás vásárlásra 3,3% (12 mFt / 20 év, többgyermekes / preferált kistelepülés)."
+
+fees:
+  - name: folyositasi-dij
+    type: disbursement
+    value: 1
+    unit: percent
+    timing: upfront
+    description: Falusi CSOK folyósítási díj 1,00%, max 200.000 Ft.
+  - name: hitelbiztositeki-ertek-megallapitas
+    type: appraisal
+    value: 58765
+    unit: amount
+    timing: upfront
+    description: On-site appraisal for demand under 50 mFt (alap).
+  - name: fedezetkezelesi-koltseg
+    type: property-management
+    value: 20000
+    unit: amount
+    timing: upfront
+    description: 20.000 Ft per collateral.
+  - name: elotorlesztesi-dij
+    type: prepayment
+    value: 1.5
+    unit: percent
+    timing: on-event
+    description: Standard prepayment fee band for Falusi CSOK packaging.
+  - name: szerzodesmodositasi-dij
+    type: contract-modification
+    value: 51850
+    unit: amount
+    timing: on-event
+    description: Flat contract modification fee.
+
+discounts: []
+
+eligibilityRules:
+  - Eligible under 302/2023. (VII. 11.) Korm. rendelet for preferred small settlements (Falusi CSOK / Otthonteremtés).
+  - Mortgage collateral on residential real estate is required.
+  - Property insurance meeting lender conditions is required.
+  - State interest subsidy applies only to non-overdue principal.
+
+inputs:
+  - name: principal
+    type: number
+    label: Loan Principal
+    required: true
+    unit: currency
+    description: Approved forint principal under Falusi CSOK / Otthonteremtés.
+    constraints:
+      minimum: 1
+
+  - name: annualInterestRatePct
+    type: number
+    label: Customer Annual Interest Rate
+    required: true
+    unit: percent
+    description: Adósok által fizetendő kamat during subsidy (fixed 3,00%).
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [3]
+
+  - name: transactionalAnnualRatePct
+    type: number
+    label: Transactional Annual Interest Rate
+    required: false
+    unit: percent
+    description: Ügyleti kamat (ÁKK-linked cap). April 2026 packaging uses 8,18%.
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [8.18, 8.22]
+
+  - name: termMonths
+    type: integer
+    label: Term in Months
+    required: true
+    unit: months
+    description: Full contractual term in months.
+    constraints:
+      minimum: 12
+      maximum: 480
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Loan start date in ISO format.
+
+  - name: loanPurpose
+    type: string
+    label: Loan Purpose
+    required: true
+    description: Purpose code affecting fees and THM presentation.
+    constraints:
+      enum:
+        - used-home-purchase
+        - renovation
+        - modernization
+        - extension
+
+derivedVariables:
+  - name: monthlyInterestRate
+    type: number
+    label: Monthly Customer Interest Rate
+    required: false
+    unit: rate
+    description: Customer annual rate divided by 12 and converted from percent to decimal.
+
+outputs:
+  - name: monthlyPayment
+    type: number
+    label: Monthly Installment
+    required: true
+    unit: currency
+    description: Level monthly annuity installment.
+
+  - name: paymentCount
+    type: integer
+    label: Payment Count
+    required: true
+    unit: count
+    description: Number of scheduled monthly repayments.
+
+  - name: totalPaid
+    type: number
+    label: Total Paid
+    required: true
+    unit: currency
+    description: Hirdetmény total including packaged fees when taken from the representative example.
+
+  - name: thmPct
+    type: number
+    label: THM
+    required: false
+    unit: percent
+    description: Published total cost of credit indicator for the representative case.
+
+assumptions:
+  - Customer rate is fixed at 3,00% during state interest subsidy (up to 25 years).
+  - Representative Hirdetmény example uses used-home purchase for a multi-child family in a preferred small settlement, 12.000.000 Ft, 20 years.
+  - Engine cash-flow generation uses the shared fixed-rate loan annuity primitive at the customer rate; Hirdetmény published installment/THM figures are retained as official representative outputs.
+  - Other subsidized and market productCodes are separate catalog entries.
+
+ui:
+  formTitle: OTP Otthonteremtési Lakáshitel (Falusi CSOK)
+  sections:
+    - id: falusi-csok-core
+      title: Loan Inputs
+      fieldNames:
+        - principal
+        - annualInterestRatePct
+        - transactionalAnnualRatePct
+        - termMonths
+        - startDate
+        - loanPurpose
+
+exampleRefs:
+  - ./examples/hirdetmeny-representative-used-home.yaml

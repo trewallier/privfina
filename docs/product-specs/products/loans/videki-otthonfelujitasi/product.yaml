@@ -1,0 +1,197 @@
+specVersion: v2alpha1
+kind: financial-product
+id: mortgage-loan.videki-otthonfelujitasi.standard
+family: mortgage-loan
+variant: videki-otthonfelujitasi
+productCode: videki-otthonfelujitasi
+displayName: OTP Vidéki Otthonfelújítási Lakáshitel
+description: >
+  State-subsidized rural home-renovation loan with a fixed 3 pp interest subsidy
+  for up to 10 years and 1y → 1y → 5y interest periods. Customer rate for the
+  April 2026 packaging is 4,87%. Conditions sourced from the OTP Hirdetmény
+  effective for applications accepted from 2026-04-20
+  (Lakáshitel H kondíció 2026-04-20), section 2.2.1.3.
+
+engine:
+  instrumentType: loan
+  rateType: state-subsidized
+  amortizationType: level-payment
+  paymentFrequency: monthly
+  gracePeriodMonths: 0
+  interestPeriodMonths: 12
+
+subsidy:
+  type: state-interest-subsidy
+  customerRate: 0.0487
+  subsidyDurationMonths: 120
+
+loanPurposes:
+  - renovation
+  - modernization
+
+pricing:
+  rateSettingRule: state-subsidized-customer-rate-fixed-with-akk-linked-transactional-cap
+  notes:
+    - "State provides a fixed 3 pp interest subsidy for up to 10 years; customer rate = ügyleti kamat − 3 pp (April 2026 packaging 4,87%)."
+    - "Ügyleti kamat 2026. április 1-től 7,87%; 2026. május 1-től 7,90%."
+    - "Kamatperiódus: 1, 1, majd 5 éves periódusok."
+    - "Excluded from OTP Díjkedvezményes akció."
+    - "THM reprezentatív példa 5,5% (12 mFt / 10 év packaging in §6)."
+
+discounts: []
+
+fees:
+  - name: folyositasi-dij
+    type: disbursement
+    value: 0.75
+    unit: percent
+    timing: upfront
+    description: Standard folyósítási díj 0,75%, max 200.000 Ft (Vidéki Otthonfelújítási is outside the OTP Díjkedvezményes akció).
+  - name: hitelbiztositeki-ertek-megallapitas
+    type: appraisal
+    value: 58765
+    unit: amount
+    timing: upfront
+    description: On-site appraisal for demand under 50 mFt (alap).
+  - name: fedezetkezelesi-koltseg
+    type: property-management
+    value: 20000
+    unit: amount
+    timing: upfront
+    description: 20.000 Ft per collateral.
+  - name: elotorlesztesi-dij
+    type: prepayment
+    value: 1.5
+    unit: percent
+    timing: on-event
+    description: Standard prepayment fee band.
+  - name: szerzodesmodositasi-dij
+    type: contract-modification
+    value: 51850
+    unit: amount
+    timing: on-event
+    description: Flat contract modification fee.
+
+eligibilityRules:
+  - Eligible under 389/2024. (XII. 11.) Korm. rendelet Vidéki Otthonfelújítási Program (families with children or pensioner applicants in small settlements).
+  - Mortgage collateral on residential real estate is required.
+  - Property insurance meeting lender conditions is required.
+  - State interest subsidy applies only to non-overdue principal.
+
+inputs:
+  - name: principal
+    type: number
+    label: Loan Principal
+    required: true
+    unit: currency
+    description: Approved forint principal under Vidéki Otthonfelújítás.
+    constraints:
+      minimum: 1
+
+  - name: annualInterestRatePct
+    type: number
+    label: Customer Annual Interest Rate
+    required: true
+    unit: percent
+    description: Adós által fizetendő kamat after the fixed 3 pp subsidy (April 2026 packaging 4,87%).
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [4.87, 4.9]
+
+  - name: transactionalAnnualRatePct
+    type: number
+    label: Transactional Annual Interest Rate
+    required: false
+    unit: percent
+    description: Ügyleti kamat (ÁKK-linked cap). April 2026 packaging uses 7,87%.
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [7.87, 7.9]
+
+  - name: termMonths
+    type: integer
+    label: Term in Months
+    required: true
+    unit: months
+    description: Full contractual term in months (representative §6 packaging uses 120 months / 10 years).
+    constraints:
+      minimum: 12
+      maximum: 480
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Loan start date in ISO format.
+
+  - name: loanPurpose
+    type: string
+    label: Loan Purpose
+    required: true
+    description: Renovation/modernization purpose for the rural home-improvement program.
+    constraints:
+      enum:
+        - renovation
+        - modernization
+
+derivedVariables:
+  - name: monthlyInterestRate
+    type: number
+    label: Monthly Customer Interest Rate
+    required: false
+    unit: rate
+    description: Customer annual rate divided by 12 and converted from percent to decimal.
+
+outputs:
+  - name: monthlyPayment
+    type: number
+    label: Monthly Installment
+    required: true
+    unit: currency
+    description: Level monthly annuity installment.
+
+  - name: paymentCount
+    type: integer
+    label: Payment Count
+    required: true
+    unit: count
+    description: Number of scheduled monthly repayments.
+
+  - name: totalPaid
+    type: number
+    label: Total Paid
+    required: true
+    unit: currency
+    description: Hirdetmény total including packaged fees when taken from the representative example.
+
+  - name: thmPct
+    type: number
+    label: THM
+    required: false
+    unit: percent
+    description: Published total cost of credit indicator for the representative case.
+
+assumptions:
+  - Customer rate equals ügyleti kamat minus a fixed 3 pp state subsidy for up to 10 years.
+  - Representative Hirdetmény §6 example uses 12.000.000 Ft over 10 years (120 installments) at 4,87%.
+  - Engine cash-flow generation uses the shared fixed-rate loan annuity primitive at the customer rate; Hirdetmény published installment/THM figures are retained as official representative outputs.
+  - Excluded from OTP Díjkedvezményes akció packaging.
+
+ui:
+  formTitle: OTP Vidéki Otthonfelújítási Lakáshitel
+  sections:
+    - id: videki-otthonfelujitasi-core
+      title: Loan Inputs
+      fieldNames:
+        - principal
+        - annualInterestRatePct
+        - transactionalAnnualRatePct
+        - termMonths
+        - startDate
+        - loanPurpose
+
+exampleRefs:
+  - ./examples/hirdetmeny-representative-renovation.yaml

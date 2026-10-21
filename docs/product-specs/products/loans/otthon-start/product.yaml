@@ -1,0 +1,223 @@
+specVersion: v2alpha1
+kind: financial-product
+id: mortgage-loan.otthon-start.standard
+family: mortgage-loan
+variant: otthon-start
+productCode: otthon-start
+displayName: OTP Évnyerő Otthon Start Lakáshitel
+description: >
+  State-subsidized Otthon Start home loan with customer rate fixed at 3% during
+  subsidy and 5-year interest periods. Conditions sourced from the OTP
+  Hirdetmény effective for applications accepted from 2026-04-20
+  (Lakáshitel H kondíció 2026-04-20), section 2.2.1.4.
+
+engine:
+  instrumentType: loan
+  rateType: state-subsidized
+  amortizationType: interest-only-then-annuity
+  paymentFrequency: monthly
+  gracePeriodMonths: 12
+  interestPeriodMonths: 60
+
+subsidy:
+  type: state-interest-subsidy
+  customerRate: 0.03
+  subsidyDurationMonths: 300
+
+loanPurposes:
+  - used-home-purchase
+  - new-home-purchase
+  - construction
+
+pricing:
+  rateSettingRule: state-subsidized-customer-rate-fixed-with-akk-linked-transactional-cap
+  notes:
+    - "Adósok által fizetendő kamat 3,00% a kamattámogatás ideje alatt (max 25 év)."
+    - "Ügyleti kamat 2026. április 1-től 7,87%; 2026. május 1-től 7,90%."
+    - "Kamatperiódus hossza 5 év."
+    - "THM reprezentatív példa új/használt lakás vásárlásra 3,2% (12 mFt / 20 év)."
+
+discounts:
+  - name: otp-dijkedvezmenyes-folyositasi-dij-elengedes
+    type: fee-waiver
+    value: 100
+    unit: percent
+    conditions:
+      - groupama-insurance-conditions-met
+      - or-refinancing-purpose
+
+fees:
+  - name: folyositasi-dij
+    type: disbursement
+    value: 0.75
+    unit: percent
+    timing: upfront
+    description: Otthon Start folyósítási díj 0,75%, max 30.000 Ft; 100% waived under OTP Díjkedvezményes akció when insurance conditions are met.
+  - name: hitelbiztositeki-ertek-megallapitas
+    type: appraisal
+    value: 58765
+    unit: amount
+    timing: upfront
+    description: On-site appraisal for demand under 50 mFt (alap).
+  - name: fedezetkezelesi-koltseg
+    type: property-management
+    value: 20000
+    unit: amount
+    timing: upfront
+    description: 20.000 Ft per collateral.
+  - name: elotorlesztesi-dij
+    type: prepayment
+    value: 1
+    unit: percent
+    timing: on-event
+    description: 1,00% for Otthon Start.
+  - name: szerzodesmodositasi-dij
+    type: contract-modification
+    value: 51850
+    unit: amount
+    timing: on-event
+    description: Flat contract modification fee.
+
+eligibilityRules:
+  - Eligible under 227/2025. (VII. 31.) Korm. rendelet Otthon Start program rules.
+  - Mortgage collateral on residential real estate is required.
+  - Property insurance meeting lender conditions is required.
+  - State interest subsidy applies only to non-overdue principal.
+
+inputs:
+  - name: principal
+    type: number
+    label: Loan Principal
+    required: true
+    unit: currency
+    description: Approved forint principal under Otthon Start.
+    constraints:
+      minimum: 1
+
+  - name: annualInterestRatePct
+    type: number
+    label: Customer Annual Interest Rate
+    required: true
+    unit: percent
+    description: Adósok által fizetendő kamat during subsidy (fixed 3,00%).
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [3]
+
+  - name: transactionalAnnualRatePct
+    type: number
+    label: Transactional Annual Interest Rate
+    required: false
+    unit: percent
+    description: Ügyleti kamat (ÁKK-linked cap). April 2026 packaging uses 7,87%.
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [7.87, 7.9]
+
+  - name: termMonths
+    type: integer
+    label: Term in Months
+    required: true
+    unit: months
+    description: Full contractual term in months (includes any optional grace).
+    constraints:
+      minimum: 12
+      maximum: 480
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Loan start date in ISO format.
+
+  - name: gracePeriodMonths
+    type: integer
+    label: Grace Period (Months)
+    required: false
+    unit: months
+    description: Optional interest-only months before annuity amortization (representative §6 packaging uses 12).
+    constraints:
+      minimum: 0
+      enum: [0, 12]
+
+  - name: loanPurpose
+    type: string
+    label: Loan Purpose
+    required: true
+    description: Purpose code affecting fees and THM presentation.
+    constraints:
+      enum:
+        - used-home-purchase
+        - new-home-purchase
+        - construction
+
+derivedVariables:
+  - name: monthlyInterestRate
+    type: number
+    label: Monthly Customer Interest Rate
+    required: false
+    unit: rate
+    description: Customer annual rate divided by 12 and converted from percent to decimal.
+
+outputs:
+  - name: graceInterestOnlyPayment
+    type: number
+    label: Grace Monthly Payment
+    required: false
+    unit: currency
+    description: Interest-only installment during optional grace (when used).
+
+  - name: monthlyPayment
+    type: number
+    label: Amortizing Monthly Installment
+    required: true
+    unit: currency
+    description: Level annuity installment after any grace period.
+
+  - name: paymentCount
+    type: integer
+    label: Payment Count
+    required: true
+    unit: count
+    description: Number of scheduled monthly repayments.
+
+  - name: totalPaid
+    type: number
+    label: Total Paid
+    required: true
+    unit: currency
+    description: Hirdetmény total including packaged fees when taken from the representative example.
+
+  - name: thmPct
+    type: number
+    label: THM
+    required: false
+    unit: percent
+    description: Published total cost of credit indicator for the representative case.
+
+assumptions:
+  - Customer rate is fixed at 3,00% during state interest subsidy (up to 25 years).
+  - Interest periods are 5 years for the full term.
+  - Optional 12-month interest-only grace is available; the §6 representative totalPaid packaging aligns with grace then annuity.
+  - Representative Hirdetmény example uses new/used home purchase, 12.000.000 Ft, 20 years.
+  - Engine cash-flow generation uses the shared loan grace + annuity primitives at the customer rate; Hirdetmény published installment/THM figures are retained as official representative outputs.
+
+ui:
+  formTitle: OTP Évnyerő Otthon Start Lakáshitel
+  sections:
+    - id: otthon-start-core
+      title: Loan Inputs
+      fieldNames:
+        - principal
+        - annualInterestRatePct
+        - transactionalAnnualRatePct
+        - termMonths
+        - startDate
+        - gracePeriodMonths
+        - loanPurpose
+
+exampleRefs:
+  - ./examples/hirdetmeny-representative-home-purchase.yaml

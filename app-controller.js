@@ -56,6 +56,24 @@ import {
   calculateFixedRateLoanFromSpecInputs,
   mapFixedRateLoanSpecInputsToLegacyLoanBundleInput
 } from './controller/fixed-rate-loan-calculation-adapter.js'
+import {
+  FIXED_RATE_MORTGAGE_PRODUCT_SPEC,
+  mapFormDataToFixedRateMortgageSpecInputs
+} from './controller/fixed-rate-mortgage-form.js'
+import { mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput } from './controller/fixed-rate-mortgage-calculation-adapter.js'
+import {
+  buildCommercialLoanProductOptions,
+  findCommercialLoanProduct,
+  findCommercialLoanProductById
+} from './controller/commercial-loan-product-metadata.js'
+import {
+  applyCommercialLoanProductSelection,
+  mapFormDataToCommercialLoanSpecInputs
+} from './controller/commercial-loan-form.js'
+import {
+  calculateCommercialLoanFromSpecInputs,
+  mapCommercialLoanSpecInputsToLegacyLoanBundleInput
+} from './controller/commercial-loan-calculation-adapter.js'
 import { BMAP_PRODUCT_SPEC, applyBmapSpecToForm, mapFormDataToBmapSpecInputs } from './controller/bmap-form.js'
 import { generateBmapInstrumentBundleFromSpecInputs } from './controller/bmap-calculation-adapter.js'
 import {
@@ -113,18 +131,21 @@ function initController() {
   const salaryForm = document.getElementById('salary-form')
   const subscriptionForm = document.getElementById('subscription-form')
   const loanForm = document.getElementById('loan-form')
+  const commercialLoanForm = document.getElementById('commercial-loan-form')
   const investmentForm = document.getElementById('investment-form')
   const oneTimeSubmitButton = document.getElementById('one-time-submit')
   const recurringSubmitButton = document.getElementById('recurring-submit')
   const salarySubmitButton = document.getElementById('salary-submit')
   const subscriptionSubmitButton = document.getElementById('subscription-submit')
   const loanSubmitButton = document.getElementById('loan-submit')
+  const commercialLoanSubmitButton = document.getElementById('commercial-loan-submit')
   const investmentSubmitButton = document.getElementById('investment-submit')
   const oneTimeCancelButton = document.getElementById('one-time-cancel-edit')
   const recurringCancelButton = document.getElementById('recurring-cancel-edit')
   const salaryCancelButton = document.getElementById('salary-cancel-edit')
   const subscriptionCancelButton = document.getElementById('subscription-cancel-edit')
   const loanCancelButton = document.getElementById('loan-cancel-edit')
+  const commercialLoanCancelButton = document.getElementById('commercial-loan-cancel-edit')
   const investmentCancelButton = document.getElementById('investment-cancel-edit')
   const schemaWarning = document.getElementById('schema-warning')
   const storageStatus = document.getElementById('storage-status')
@@ -149,13 +170,34 @@ function initController() {
   const openSalaryBoxButton = document.getElementById('open-salary-box')
   const openSubscriptionBoxButton = document.getElementById('open-subscription-box')
   const openLoanBoxButton = document.getElementById('open-loan-box')
+  const openCommercialLoanBoxButton = document.getElementById('open-commercial-loan-box')
   const openInvestmentBoxButton = document.getElementById('open-investment-box')
   const oneTimeBox = document.getElementById('one-time-box')
   const recurringBox = document.getElementById('recurring-box')
   const salaryBox = document.getElementById('salary-box')
   const subscriptionBox = document.getElementById('subscription-box')
   const loanBox = document.getElementById('loan-box')
+  const commercialLoanBox = document.getElementById('commercial-loan-box')
   const investmentBox = document.getElementById('investment-box')
+  const loanVariantInput = document.getElementById('loan-variant')
+  const commercialLoanProductInput = document.getElementById('commercial-loan-product')
+  const commercialLoanEligibilityHint = document.getElementById('commercial-loan-eligibility-hint')
+  const commercialLoanDiscountHint = document.getElementById('commercial-loan-discount-hint')
+  const commercialLoanPostSubsidyInfo = document.getElementById('commercial-loan-post-subsidy-info')
+  const commercialLoanCommercialNote = document.getElementById('commercial-loan-commercial-note')
+  const commercialLoanPrincipalInput = document.getElementById('commercial-loan-principal')
+  const commercialLoanAnnualRateInput = document.getElementById('commercial-loan-annual-rate')
+  const commercialLoanTermMonthsInput = document.getElementById('commercial-loan-term-months')
+  const commercialLoanGracePeriodMonthsInput = document.getElementById(
+    'commercial-loan-grace-period-months'
+  )
+  const commercialLoanMonthlyPreviewInput = document.getElementById('commercial-loan-monthly-preview')
+  const commercialLoanTotalRepaymentPreviewInput = document.getElementById(
+    'commercial-loan-total-repayment-preview'
+  )
+  const commercialLoanTotalInterestPreviewInput = document.getElementById(
+    'commercial-loan-total-interest-preview'
+  )
   const investmentGenericCoreRow = document.getElementById('investment-generic-core-row')
   const investmentGenericSecondaryRow = document.getElementById('investment-generic-secondary-row')
   const investmentPreviewRow = document.getElementById('investment-preview-row')
@@ -416,9 +458,22 @@ function initController() {
   let editingSalaryId = null
   let editingSubscriptionId = null
   let editingLoanId = null
+  let editingCommercialLoanId = null
   let editingInvestmentId = null
   let activeInfoTrigger = null
   const excludedFlowIds = new Set()
+
+  if (commercialLoanProductInput) {
+    buildCommercialLoanProductOptions().forEach((option) => {
+      const element = document.createElement('option')
+      element.value = option.value
+      element.textContent = option.label
+      commercialLoanProductInput.appendChild(element)
+    })
+    if (!commercialLoanProductInput.value && commercialLoanProductInput.options.length > 0) {
+      commercialLoanProductInput.value = commercialLoanProductInput.options[0].value
+    }
+  }
 
   function isFlowIncluded(id) {
     return !excludedFlowIds.has(id)
@@ -439,7 +494,8 @@ function initController() {
     recurring: 'Recurring flow',
     salary: 'Salary instrument',
     subscription: 'Subscription instrument',
-    loan: 'Loan instrument',
+    loan: 'Simplified loan',
+    'commercial-loan': 'Commercial loan',
     investment: 'Investment instrument'
   }
 
@@ -478,6 +534,7 @@ function initController() {
       salary: salaryBox,
       subscription: subscriptionBox,
       loan: loanBox,
+      'commercial-loan': commercialLoanBox,
       investment: investmentBox
     },
     openButtons: {
@@ -486,6 +543,7 @@ function initController() {
       salary: openSalaryBoxButton,
       subscription: openSubscriptionBoxButton,
       loan: openLoanBoxButton,
+      'commercial-loan': openCommercialLoanBoxButton,
       investment: openInvestmentBoxButton
     },
     onOpenBox: (type) => {
@@ -856,9 +914,46 @@ function initController() {
   function resetLoanForm() {
     editingLoanId = null
     loanForm.reset()
+    if (loanVariantInput) {
+      loanVariantInput.value = 'fixed-rate-standard'
+    }
     loanSubmitButton.textContent = 'Add Loan Instrument'
     loanCancelButton.hidden = true
     syncLoanPreview()
+  }
+
+  function syncCommercialLoanProductUi({ forceDefaults = false } = {}) {
+    if (!commercialLoanForm || !commercialLoanProductInput) {
+      return
+    }
+
+    applyCommercialLoanProductSelection({
+      form: commercialLoanForm,
+      productCode: commercialLoanProductInput.value,
+      eligibilityElement: commercialLoanEligibilityHint,
+      discountElement: commercialLoanDiscountHint,
+      postSubsidyElement: commercialLoanPostSubsidyInfo,
+      commercialNoteElement: commercialLoanCommercialNote,
+      forceDefaults
+    })
+  }
+
+  function resetCommercialLoanForm() {
+    editingCommercialLoanId = null
+    if (commercialLoanForm) {
+      commercialLoanForm.reset()
+    }
+    if (commercialLoanProductInput && commercialLoanProductInput.options.length > 0) {
+      commercialLoanProductInput.value = commercialLoanProductInput.options[0].value
+    }
+    if (commercialLoanSubmitButton) {
+      commercialLoanSubmitButton.textContent = 'Add Commercial Loan'
+    }
+    if (commercialLoanCancelButton) {
+      commercialLoanCancelButton.hidden = true
+    }
+    syncCommercialLoanProductUi({ forceDefaults: true })
+    syncCommercialLoanPreview()
   }
 
   function resetInvestmentForm() {
@@ -886,6 +981,20 @@ function initController() {
     totalInterestPreviewInput: loanTotalInterestPreviewInput,
     createLoanRepaymentPreview,
     calculateFixedRateLoanFromSpecInputs
+  })
+
+  const syncCommercialLoanPreview = createLoanPreviewSync({
+    principalInput: commercialLoanPrincipalInput,
+    annualRateInput: commercialLoanAnnualRateInput,
+    termValueInput: commercialLoanTermMonthsInput,
+    termUnitInput: { value: 'months' },
+    gracePeriodMonthsInput: commercialLoanGracePeriodMonthsInput,
+    capitalizeInterestAtGraceEndInput: { checked: false },
+    monthlyPreviewInput: commercialLoanMonthlyPreviewInput,
+    totalRepaymentPreviewInput: commercialLoanTotalRepaymentPreviewInput,
+    totalInterestPreviewInput: commercialLoanTotalInterestPreviewInput,
+    createLoanRepaymentPreview,
+    calculateFixedRateLoanFromSpecInputs: calculateCommercialLoanFromSpecInputs
   })
 
   const investmentPreviewController = createInvestmentPreviewSync({
@@ -916,15 +1025,80 @@ function initController() {
   })
   const { syncInvestmentPreview } = investmentPreviewController
 
+  function startCommercialLoanEdit(id) {
+    const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'loan')
+    if (!bundle || !commercialLoanForm) {
+      return
+    }
+
+    const config = bundle.config || {}
+    const product =
+      findCommercialLoanProductById(bundle.productId) ||
+      findCommercialLoanProduct(config.commercialProductCode)
+    if (!product) {
+      return
+    }
+
+    editingCommercialLoanId = id
+    commercialLoanProductInput.value = product.productCode
+    commercialLoanForm.querySelector('#commercial-loan-label').value =
+      bundle.label || product.displayName
+    commercialLoanForm.querySelector('#commercial-loan-start-date').value = config.startDate || ''
+    commercialLoanForm.querySelector('#commercial-loan-principal').value =
+      config.principal !== undefined ? String(config.principal) : ''
+    commercialLoanForm.querySelector('#commercial-loan-annual-rate').value =
+      config.annualRate !== undefined ? String(Number(config.annualRate) * 100) : ''
+    commercialLoanForm.querySelector('#commercial-loan-term-months').value =
+      config.termValue !== undefined
+        ? String(config.termValue)
+        : config.termMonths !== undefined
+          ? String(config.termMonths)
+          : String(product.defaultTermMonths)
+    commercialLoanForm.querySelector('#commercial-loan-grace-period-months').value =
+      config.gracePeriodMonths !== undefined
+        ? String(config.gracePeriodMonths)
+        : String(product.defaultGracePeriodMonths)
+    commercialLoanForm.querySelector('#commercial-loan-repayment-day').value =
+      config.repaymentDayOfMonth !== undefined ? String(config.repaymentDayOfMonth) : '1'
+    commercialLoanForm.querySelector('#commercial-loan-category').value = config.category || 'loan'
+    commercialLoanForm.querySelector('#commercial-loan-description').value = config.description || ''
+    commercialLoanForm.querySelector('#commercial-loan-include-disbursement').checked =
+      config.includeDisbursement !== false
+
+    syncCommercialLoanProductUi({ forceDefaults: false })
+    const purposeSelect = commercialLoanForm.querySelector('#commercial-loan-purpose')
+    if (purposeSelect && config.loanPurpose) {
+      purposeSelect.value = config.loanPurpose
+    }
+
+    commercialLoanSubmitButton.textContent = 'Save Commercial Loan'
+    commercialLoanCancelButton.hidden = false
+    syncCommercialLoanPreview()
+    openComposerBox('commercial-loan')
+  }
+
   function startLoanEdit(id) {
     const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'loan')
     if (!bundle) {
       return
     }
 
+    if (findCommercialLoanProductById(bundle.productId)) {
+      startCommercialLoanEdit(id)
+      return
+    }
+
     const config = bundle.config || {}
+    const isMortgage = bundle.productId === FIXED_RATE_MORTGAGE_PRODUCT_SPEC.id
     editingLoanId = id
-    loanForm.querySelector('#loan-label').value = bundle.label || FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle
+    if (loanVariantInput) {
+      loanVariantInput.value = isMortgage ? 'fixed-rate-mortgage' : 'fixed-rate-standard'
+    }
+    loanForm.querySelector('#loan-label').value =
+      bundle.label ||
+      (isMortgage
+        ? FIXED_RATE_MORTGAGE_PRODUCT_SPEC.ui.formTitle
+        : FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle)
     loanForm.querySelector('#loan-start-date').value = config.startDate || ''
     loanForm.querySelector('#loan-principal').value = config.principal !== undefined ? String(config.principal) : ''
     loanForm.querySelector('#loan-annual-rate').value =
@@ -1157,6 +1331,7 @@ function initController() {
         resetSalaryForm()
         resetSubscriptionForm()
         resetLoanForm()
+        resetCommercialLoanForm()
         resetInvestmentForm()
         collapseComposerBoxes({ notify: false })
         shell.enterTypePicker()
@@ -1169,6 +1344,7 @@ function initController() {
       resetSalaryForm()
       resetSubscriptionForm()
       resetLoanForm()
+      resetCommercialLoanForm()
       resetInvestmentForm()
       collapseComposerBoxes({ notify: false })
       shell.exitCompose()
@@ -1240,13 +1416,30 @@ function initController() {
     capitalizeInterestAtGraceEndInput: loanCapitalizeInterestAtGraceEndInput,
     syncLoanPreview
   })
+  bindLoanPreviewEvents({
+    principalInput: commercialLoanPrincipalInput,
+    annualRateInput: commercialLoanAnnualRateInput,
+    termValueInput: commercialLoanTermMonthsInput,
+    termUnitInput: null,
+    gracePeriodMonthsInput: commercialLoanGracePeriodMonthsInput,
+    capitalizeInterestAtGraceEndInput: null,
+    syncLoanPreview: syncCommercialLoanPreview
+  })
+  if (commercialLoanProductInput) {
+    commercialLoanProductInput.addEventListener('change', () => {
+      syncCommercialLoanProductUi({ forceDefaults: true })
+      syncCommercialLoanPreview()
+    })
+  }
   investmentPreviewController.bindEvents()
 
   applySalaryModeVisibility(
     salaryScheduleModeInput ? salaryScheduleModeInput.value : 'custom-monthly-working-day'
   )
   applyInvestmentSubtypeUi(investmentSubtypeInput ? investmentSubtypeInput.value : 'regular-bond')
+  syncCommercialLoanProductUi({ forceDefaults: true })
   syncLoanPreview()
+  syncCommercialLoanPreview()
   syncInvestmentPreview()
 
   const defaultRange = suggestRange([
@@ -1349,6 +1542,10 @@ function initController() {
 
         if (editingLoanId === id) {
           resetLoanForm()
+        }
+
+        if (editingCommercialLoanId === id) {
+          resetCommercialLoanForm()
         }
 
         if (editingInvestmentId === id) {
@@ -1602,6 +1799,13 @@ function initController() {
     collapseComposerBoxes()
   })
 
+  if (commercialLoanCancelButton) {
+    commercialLoanCancelButton.addEventListener('click', () => {
+      resetCommercialLoanForm()
+      collapseComposerBoxes()
+    })
+  }
+
   investmentCancelButton.addEventListener('click', () => {
     resetInvestmentForm()
     collapseComposerBoxes()
@@ -1612,33 +1816,61 @@ function initController() {
 
     try {
       const formData = new FormData(loanForm)
+      const variant = String(formData.get('loanVariant') || 'fixed-rate-standard')
       const submittedTermUnit =
         String(formData.get('termUnit') || 'months').trim().toLowerCase() === 'years'
           ? 'years'
           : 'months'
       const submittedTermValue = Number(formData.get('termValue'))
-      const specInputs = mapFormDataToFixedRateLoanSpecInputs(formData)
+      const extrasBase = {
+        id: editingLoanId || undefined,
+        repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
+        includeDisbursement: formData.get('includeDisbursement') === 'on',
+        category: String(formData.get('category') || '').trim() || 'loan',
+        description: String(formData.get('description') || '').trim() || undefined,
+        createdAt: editingLoanId
+          ? instrumentBundles.find((entry) => entry.id === editingLoanId)?.createdAt
+          : undefined
+      }
 
-      const bundle = generateLoanInstrumentBundle(
-        mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(
-          specInputs,
-          {
-            id: editingLoanId || undefined,
-            label: String(formData.get('label') || '').trim() || FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle,
-            repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
-            includeDisbursement: formData.get('includeDisbursement') === 'on',
+      let bundle
+      if (variant === 'fixed-rate-mortgage') {
+        const mortgageInputs = mapFormDataToFixedRateMortgageSpecInputs(formData)
+        const termMonths =
+          submittedTermUnit === 'years' ? submittedTermValue * 12 : submittedTermValue
+        const gracePeriodMonths = Number(formData.get('gracePeriodMonths') || 0)
+        const capitalizeInterestAtGraceEnd =
+          gracePeriodMonths > 0 && formData.get('capitalizeInterestAtGraceEnd') === 'on'
+        bundle = generateLoanInstrumentBundle(
+          mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput(
+            {
+              ...mortgageInputs,
+              termMonths,
+              gracePeriodMonths,
+              capitalizeInterestAtGraceEnd
+            },
+            {
+              ...extrasBase,
+              label:
+                String(formData.get('label') || '').trim() ||
+                FIXED_RATE_MORTGAGE_PRODUCT_SPEC.ui.formTitle
+            }
+          )
+        )
+      } else {
+        const specInputs = mapFormDataToFixedRateLoanSpecInputs(formData)
+        bundle = generateLoanInstrumentBundle(
+          mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(specInputs, {
+            ...extrasBase,
+            label:
+              String(formData.get('label') || '').trim() || FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle,
             gracePeriodMonths: specInputs.gracePeriodMonths,
             capitalizeInterestAtGraceEnd: specInputs.capitalizeInterestAtGraceEnd,
-            category: String(formData.get('category') || '').trim() || 'loan',
-            description: String(formData.get('description') || '').trim() || undefined,
             termValue: submittedTermValue,
-            termUnit: submittedTermUnit,
-            createdAt: editingLoanId
-              ? instrumentBundles.find((entry) => entry.id === editingLoanId)?.createdAt
-              : undefined
-          }
+            termUnit: submittedTermUnit
+          })
         )
-      )
+      }
 
       if (!bundle || !bundle.generatedFlows.length) {
         return
@@ -1662,6 +1894,58 @@ function initController() {
       setStorageStatus(message, 'error')
     }
   })
+
+  if (commercialLoanForm) {
+    commercialLoanForm.addEventListener('submit', (event) => {
+      event.preventDefault()
+
+      try {
+        const formData = new FormData(commercialLoanForm)
+        const productCode = String(formData.get('productCode') || '').trim()
+        const product = findCommercialLoanProduct(productCode)
+        if (!product) {
+          throw new Error('Select a commercial mortgage product.')
+        }
+
+        const specInputs = mapFormDataToCommercialLoanSpecInputs(formData, product)
+        const bundle = generateLoanInstrumentBundle(
+          mapCommercialLoanSpecInputsToLegacyLoanBundleInput(specInputs, {
+            id: editingCommercialLoanId || undefined,
+            label: String(formData.get('label') || '').trim() || product.displayName,
+            repaymentDayOfMonth: Number(formData.get('repaymentDayOfMonth')),
+            includeDisbursement: formData.get('includeDisbursement') === 'on',
+            category: String(formData.get('category') || '').trim() || 'loan',
+            description: String(formData.get('description') || '').trim() || undefined,
+            createdAt: editingCommercialLoanId
+              ? instrumentBundles.find((entry) => entry.id === editingCommercialLoanId)?.createdAt
+              : undefined
+          })
+        )
+
+        if (!bundle || !bundle.generatedFlows.length) {
+          return
+        }
+
+        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+
+        const firstDate = bundle.generatedFlows[0].date
+        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
+        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+        startInput.value = updatedRange.startDate
+        endInput.value = updatedRange.endDate
+
+        resetCommercialLoanForm()
+        collapseComposerBoxes()
+        notifySaved('Commercial loan saved.')
+        rerender()
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to save commercial loan instrument.'
+        setStorageStatus(message, 'error')
+      }
+    })
+  }
 
   investmentForm.addEventListener('submit', (event) => {
     event.preventDefault()

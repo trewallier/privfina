@@ -698,7 +698,9 @@ function generateLoanInstrumentBundle(input) {
       capitalizeInterestAtGraceEnd,
       includeDisbursement: input.includeDisbursement !== false,
       category: input.category || 'loan',
-      description: input.description
+      description: input.description,
+      loanPurpose: input.loanPurpose,
+      commercialProductCode: input.commercialProductCode
     },
     preview,
     generatedFlows,

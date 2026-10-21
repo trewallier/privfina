@@ -1,0 +1,240 @@
+specVersion: v2alpha1
+kind: financial-product
+id: mortgage-loan.otp-zold.standard
+family: mortgage-loan
+variant: otp-zold
+productCode: otp-zold
+displayName: OTP Zöld Lakáshitel
+description: >
+  OTP Jelzálogbank green market forint home loan with a contractual rate fixed
+  for the full term (Egyszeri kamatcsökkentéssel) and a 50 bp Zöld kamatkedvezmény
+  when green housing conditions are met. Conditions sourced from the OTP
+  Hirdetmény effective for applications accepted from 2026-04-20
+  (Lakáshitel H kondíció 2026-04-20).
+
+engine:
+  instrumentType: loan
+  rateType: fixed
+  amortizationType: level-payment
+  paymentFrequency: monthly
+  gracePeriodMonths: 0
+  interestPeriodMonths: 240
+
+subsidy:
+  type: none
+
+loanPurposes:
+  - new-home-purchase
+  - construction
+  - renovation
+  - modernization
+
+pricing:
+  rateSettingRule: fixed-for-full-term-with-green-and-optional-loyalty-discounts
+  notes:
+    - "Base ügyleti kamat 8,49%; with Zöld kamatkedvezmény (50 bp) the customer rate is 7,99% when green housing conditions are met (Hirdetmény 2.1.2)."
+    - "THM reprezentatív példa új lakás vásárlásra 8,5% (12 mFt / 20 év, Zöld kedvezménnyel)."
+    - "Optional 12-month interest-only türelmi idő is available on the product family but is not the representative annuity case."
+
+discounts:
+  - name: zold-kamatkedvezmeny
+    type: rate-discount
+    value: 50
+    unit: bp
+    conditions:
+      - green-housing-energy-conditions-met
+      - zold-lakascel-teljesult
+  - name: huseg-szolgaltatas
+    type: rate-discount
+    value: 120
+    unit: bp
+    conditions:
+      - loyalty-service-income-routing
+      - max-discount-band-0-to-1.2-percent
+  - name: otp-zold-folyositasi-dij-elengedes
+    type: fee-waiver
+    value: 100
+    unit: percent
+    conditions:
+      - otp-zold-dijkedvezmenyes-akcio
+  - name: egyszeri-kamatcsokkentes-dij-elengedes
+    type: fee-waiver
+    value: 100
+    unit: percent
+    conditions:
+      - promotional-action-active
+  - name: energetikai-tanusitvany-dij-terites
+    type: cashback
+    value: 1
+    unit: amount
+    conditions:
+      - closing-authentic-energy-certificate-in-debtor-name
+      - groupama-insurance-conditions-met
+
+fees:
+  - name: folyositasi-dij
+    type: disbursement
+    value: 0.75
+    unit: percent
+    timing: upfront
+    description: 0,75%, max 200.000 Ft; waived for OTP Zöld under OTP Zöld Díjkedvezményes akció.
+  - name: hitelbiztositeki-ertek-megallapitas
+    type: appraisal
+    value: 58765
+    unit: amount
+    timing: upfront
+    description: On-site appraisal for demand under 50 mFt (alap); Zöld action may cap customer pay above 35.000 Ft.
+  - name: azonnali-ertekbecsles
+    type: appraisal
+    value: 21980
+    unit: amount
+    timing: upfront
+    description: Statistical instant appraisal; waived under OTP Zöld Díjkedvezményes akció for one property.
+  - name: fedezetkezelesi-koltseg
+    type: property-management
+    value: 20000
+    unit: amount
+    timing: upfront
+    description: 20.000 Ft per collateral.
+  - name: egyszeri-kamatcsokkentes-dij
+    type: other
+    value: 2
+    unit: percent
+    timing: upfront
+    description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for OTP Zöld.
+  - name: elotorlesztesi-dij
+    type: prepayment
+    value: 1
+    unit: percent
+    timing: on-event
+    description: 1,00%, max 30.000 Ft per occasion for OTP Zöld Lakáshitelek.
+  - name: szerzodesmodositasi-dij
+    type: contract-modification
+    value: 51850
+    unit: amount
+    timing: on-event
+    description: Flat contract modification fee (e.g. prolongation).
+
+eligibilityRules:
+  - Mortgage collateral on residential real estate is required.
+  - Property insurance meeting lender conditions is required.
+  - Green housing energy-performance conditions must be met for the Zöld kamatkedvezmény and green-purpose packaging.
+  - Closing authentic energy certificate (Hiteles energetikai tanúsítvány) documents green-purpose completion.
+
+inputs:
+  - name: principal
+    type: number
+    label: Loan Principal
+    required: true
+    unit: currency
+    description: Approved forint principal disbursed for the green home-loan purpose.
+    constraints:
+      minimum: 1
+
+  - name: annualInterestRatePct
+    type: number
+    label: Customer Annual Interest Rate
+    required: true
+    unit: percent
+    description: >
+      Customer rate after Zöld kamatkedvezmény when green conditions are met (7,99%).
+      Base ügyleti kamat without green discount is 8,49%.
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [7.99, 8.49]
+
+  - name: termMonths
+    type: integer
+    label: Term in Months
+    required: true
+    unit: months
+    description: Full contractual term in months.
+    constraints:
+      minimum: 12
+      maximum: 480
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Loan start date in ISO format.
+
+  - name: loanPurpose
+    type: string
+    label: Loan Purpose
+    required: true
+    description: Green-eligible purpose code affecting fees and THM presentation.
+    constraints:
+      enum:
+        - new-home-purchase
+        - construction
+        - renovation
+        - modernization
+
+derivedVariables:
+  - name: monthlyInterestRate
+    type: number
+    label: Monthly Interest Rate
+    required: false
+    unit: rate
+    description: Annual customer rate divided by 12 and converted from percent to decimal.
+
+outputs:
+  - name: monthlyPayment
+    type: number
+    label: Monthly Installment
+    required: true
+    unit: currency
+    description: Level monthly annuity installment after any optional grace period.
+
+  - name: paymentCount
+    type: integer
+    label: Payment Count
+    required: true
+    unit: count
+    description: Number of scheduled monthly repayments.
+
+  - name: totalInterest
+    type: number
+    label: Total Interest
+    required: true
+    unit: currency
+    description: Total interest paid over the full term (engine annuity path).
+
+  - name: totalPaid
+    type: number
+    label: Total Paid
+    required: true
+    unit: currency
+    description: Sum of scheduled repayments (engine) or Hirdetmény total including packaged fees when taken from the representative example.
+
+  - name: thmPct
+    type: number
+    label: THM
+    required: false
+    unit: percent
+    description: Published total cost of credit indicator for the representative case.
+
+assumptions:
+  - Base contractual rate is 8,49% fixed for the full term; representative packaging applies 50 bp Zöld kamatkedvezmény for a 7,99% customer rate when green conditions are met.
+  - Representative Hirdetmény example uses new-home purchase, 12.000.000 Ft, 20 years, annuity repayment, single disbursement, conditions as of 2026-04-01 packaging with 2026-04-20 Hirdetmény product rates.
+  - Optional 12-month interest-only grace exists on the market-loan family but is out of scope for the representative annuity example.
+  - Engine cash-flow generation uses the shared fixed-rate loan annuity primitive; Hirdetmény published installment/THM figures are retained as official representative outputs and may package fees differently from bare annuity math.
+  - OTP 1x1, Végig Fix, and subsidized constructions are separate productCodes.
+
+ui:
+  formTitle: OTP Zöld Lakáshitel
+  sections:
+    - id: otp-zold-core
+      title: Loan Inputs
+      fieldNames:
+        - principal
+        - annualInterestRatePct
+        - termMonths
+        - startDate
+        - loanPurpose
+
+exampleRefs:
+  - ./examples/hirdetmeny-representative-new-home.yaml

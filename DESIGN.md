@@ -102,6 +102,7 @@ This section defines the next iteration of instrument behavior so implementation
 			- Fixed-rate loan: [docs/product-specs/products/loans/fixed-rate-loan/product.yaml](docs/product-specs/products/loans/fixed-rate-loan/product.yaml)
 			- Fixed-rate mortgage: [docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml)
 			- OTP 1x1 (schema v2 catalog): [docs/product-specs/products/loans/otp-1x1/product.yaml](docs/product-specs/products/loans/otp-1x1/product.yaml)
+			- OTP Zöld (schema v2 catalog): [docs/product-specs/products/loans/otp-zold/product.yaml](docs/product-specs/products/loans/otp-zold/product.yaml)
 		- Engine implementation (loan primitives): [src/finance_engine/instruments/loan.ts](src/finance_engine/instruments/loan.ts)
 		- Worked examples / living documentation and tests:
 			- Fixed-rate loan example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml) and [tests/fixed-rate-loan-example.test.ts](tests/fixed-rate-loan-example.test.ts)

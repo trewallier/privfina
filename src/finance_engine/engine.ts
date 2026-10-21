@@ -94,7 +94,24 @@ export {
   DEFAULT_REPRESENTATIVE_EXCLUDED_FEE_NAMES
 } from './instruments/loan_fees'
 export { resolveMortgageCustomerRate } from './instruments/loan_subsidy'
-export { computeThmPct, expandScheduleToMonthlyPayments } from './instruments/thm'
+export {
+  yearFractionEqualMonths,
+  yearFractionActualDays,
+  netDrawdownWithUpfrontCosts,
+  roundThmPercent,
+  thmPresentValue,
+  calculateThm,
+  buildThmFlowsFromMonthly,
+  computeThmPct,
+  expandScheduleToMonthlyPayments
+} from './instruments/thm'
+export type {
+  ThmCashFlow,
+  ThmComputationInput,
+  ThmComputationResult,
+  ThmFlow,
+  ThmCalculationResult
+} from './instruments/thm'
 
 function signedAmount(cashFlow: CashFlow): number {
   return cashFlow.direction === CashFlowDirection.Inflow ? cashFlow.amount : -cashFlow.amount

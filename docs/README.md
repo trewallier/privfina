@@ -39,7 +39,7 @@ public/  SPA UI
 
 - **Schema:** active contract is v2 (`specVersion: v2alpha1`, ADR 0020); v1 is frozen.
 - **Statuses:** `spec-only` → `inputs-driven` → `calc-aligned` → `fully-spec-backed` — defined only in the [product catalog](product-specs/PRODUCT_CATALOG.md).
-- **Hirdetmény / packaging vs engine math:** dual-lane acceptance is documented in [ADR 0021](adr/0021-commercial-mortgage-calculation-primitives.md); do not force annuity installments to equal published packaging Ft inside `loan.ts`.
+- **Hirdetmény / offering fidelity:** [ADR 0023](adr/0023-loan-product-readiness-and-offering-fidelity.md) retires dual-lane UI for readiness; public-offering products require engine THM match ([ADR 0022](adr/0022-thm-calculator-for-hirdetmeny-verification.md)) before commercially-usable. Fee/subsidy primitives remain in [ADR 0021](adr/0021-commercial-mortgage-calculation-primitives.md).
 
 ## Process helpers
 

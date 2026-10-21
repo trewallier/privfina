@@ -66,10 +66,10 @@ Goal: all nine catalog loans can be composed so the chart reflects **customer** 
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Spec + catalog glossary: document `schedule-usable` and `commercially-usable`; retire dual-lane readiness language (ADR 0023 + this docs slice).
-- [ ] Simplified loan surface: fold `fixed-rate-mortgage` into the existing loan composer as a subtype/variant (shared simplified annuity math).
-- [ ] Commercial loan composer box + investment-style product picker for the seven Hirdetmény `mortgage-loan` codes.
-- [ ] Schedule-usable wiring per commercial product: form → customer-rate schedule → preview → persist bundle with `productId` / `productSpecVersion`; purpose/eligibility/discount as hints.
-- [ ] Promote catalog rows to `schedule-usable` when the above path works (Vidéki remains blocked until offering installment/principal reconciliation).
+- [x] Simplified loan surface: fold `fixed-rate-mortgage` into the existing loan composer as a subtype/variant (shared simplified annuity math).
+- [x] Commercial loan composer box + investment-style product picker for the seven Hirdetmény `mortgage-loan` codes.
+- [x] Schedule-usable wiring per commercial product: form → customer-rate schedule → preview → persist bundle with `productId` / `productSpecVersion`; purpose/eligibility/discount as hints.
+- [x] Promote catalog rows to `schedule-usable` when the above path works (Vidéki schedule-usable with commercially-usable still blocked until offering reconciliation + THM match).
 
 #### 5b) Loan products — commercially-usable (offering fidelity)
 Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until engine THM (ADR 0022) matches published `thmPct`. Simplified examples stay on annuity primitives.

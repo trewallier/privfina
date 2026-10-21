@@ -27,15 +27,15 @@ describe('fixed-rate-mortgage frontend form metadata seam', () => {
     expect(orderedNames).toEqual(['principal', 'annualInterestRatePct', 'termMonths', 'startDate'])
   })
 
-  it('keeps the minimal adapter mapping from spec names to parked mortgage form names', () => {
+  it('keeps the minimal adapter mapping from spec names to shared simplified-loan form names', () => {
     expect(FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER.annualInterestRatePct.formName).toBe('annualRate')
     expect(FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER.termMonths.formName).toBe('termValue')
     expect(FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER.principal.formName).toBe('principal')
     expect(FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER.startDate.formName).toBe('startDate')
-    expect(FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER.principal.inputId).toBe('mortgage-principal')
+    expect(FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER.principal.inputId).toBe('loan-principal')
   })
 
-  it('maps parked mortgage form fields into canonical fixed-rate mortgage product spec inputs', () => {
+  it('maps shared simplified-loan form fields into canonical fixed-rate mortgage product spec inputs', () => {
     const specInputs = mapFormDataToFixedRateMortgageSpecInputs({
       get(name: string) {
         const entries: Record<string, string> = {

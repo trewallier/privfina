@@ -1,27 +1,26 @@
 /**
  * Fixed-rate mortgage form metadata seam.
  *
- * Intentionally parked: calculation adapter + form metadata are calc-aligned and
- * covered by tests, but there is no dedicated mortgage composer box in
- * `public/index.html` / `app-controller.js` yet. Wire those when promoting the
- * product from calc-aligned to fully-spec-backed.
+ * Schedule-usable (ADR 0023): shares the simplified loan composer DOM (`#loan-*`
+ * fields) as a variant alongside fixed-rate-standard. Commercial Hirdetmény
+ * products use the separate commercial loan composer.
  */
 
 const FIXED_RATE_MORTGAGE_FRONTEND_FIELD_ADAPTER = {
   principal: {
-    inputId: 'mortgage-principal',
+    inputId: 'loan-principal',
     formName: 'principal'
   },
   annualInterestRatePct: {
-    inputId: 'mortgage-annual-rate',
+    inputId: 'loan-annual-rate',
     formName: 'annualRate'
   },
   termMonths: {
-    inputId: 'mortgage-term-value',
+    inputId: 'loan-term-value',
     formName: 'termValue'
   },
   startDate: {
-    inputId: 'mortgage-start-date',
+    inputId: 'loan-start-date',
     formName: 'startDate'
   }
 }

@@ -130,13 +130,13 @@ Acceptance criteria
 - [x] Fee-inclusive THM helpers exist (ADR 0021 monthly helper + ADR 0022 83/2010 calculator) for product verification.
 - [x] All seven Hirdetmény mortgage-loan products are calc-aligned in the finance engine (executable example tests).
 - [x] ADR 0023 records schedule-usable vs commercially-usable readiness, customer-perspective subsidy only, and offering-fidelity (no dual-lane UI).
-- [ ] Simplified loan composer exposes fixed-rate loan and fixed-rate mortgage as selectable variants on one form (shared simplified annuity math).
-- [ ] Commercial loan composer box exists with an investment-style product picker over the seven Hirdetmény mortgage product codes.
-- [ ] Each schedule-usable commercial product can create/edit/preview/persist a customer-perspective repayment bundle stamped with `productId` / `productSpecVersion`.
-- [ ] Purpose, eligibility, and discount conditions appear as soft hints only (no blocking validation) in the schedule-usable commercial composer.
-- [ ] Subsidized products include only customer inflows/outflows in the user balance; bank↔state settlement legs are absent.
-- [ ] Post-subsidy rate steps, when shown, are informational copy only (not simulated schedule resets) until a later epic.
-- [ ] Public-offering products must not present dual-lane (engine vs packaging) figures in the UI.
+- [x] Simplified loan composer exposes fixed-rate loan and fixed-rate mortgage as selectable variants on one form (shared simplified annuity math).
+- [x] Commercial loan composer box exists with an investment-style product picker over the seven Hirdetmény mortgage product codes.
+- [x] Each schedule-usable commercial product can create/edit/preview/persist a customer-perspective repayment bundle stamped with `productId` / `productSpecVersion`.
+- [x] Purpose, eligibility, and discount conditions appear as soft hints only (no blocking validation) in the schedule-usable commercial composer.
+- [x] Subsidized products include only customer inflows/outflows in the user balance; bank↔state settlement legs are absent.
+- [x] Post-subsidy rate steps, when shown, are informational copy only (not simulated schedule resets) until a later epic.
+- [x] Public-offering products must not present dual-lane (engine vs packaging) figures in the UI.
 - [ ] A public-offering product is not commercially-usable / fully-spec-backed until ADR 0022 engine THM `percentRounded` matches the example published `thmPct`.
 - [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule.
 

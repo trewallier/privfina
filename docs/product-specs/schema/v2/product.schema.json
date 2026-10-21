@@ -471,6 +471,11 @@
           "type": "string",
           "enum": ["amount", "percent", "bp"]
         },
+        "maxAmount": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Optional absolute cap applied after percent/bp evaluation (for example folyósítási díj max Ft)."
+        },
         "timing": {
           "type": "string",
           "enum": ["upfront", "periodic", "on-event"]

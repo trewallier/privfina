@@ -65,6 +65,7 @@ fees:
     type: disbursement
     value: 0.75
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: >
       0,75%, max 200.000 Ft. Under OTP Díjkedvezményes akció with insurance conditions,
@@ -91,6 +92,7 @@ fees:
     type: other
     value: 2
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for Végig Fix.
   - name: elotorlesztesi-dij

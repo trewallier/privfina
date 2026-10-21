@@ -62,7 +62,7 @@
 
 The repository has completed the first product-spec migration wave for the cataloged loan and government-security products (see `PRODUCT_CATALOG.md`):
 
-- **Done for catalog pilots**: fixed-rate loan, DKJ, PMÁP, and BMÁP are fully-spec-backed; fixed-rate mortgage is calc-aligned with UI parked.
+- **Done for catalog pilots**: fixed-rate loan, DKJ, PMÁP, and BMÁP are fully-spec-backed; fixed-rate mortgage and the seven Hirdetmény mortgage-loan products are calc-aligned with UI parked (ADR 0021 engine lane).
 - **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion`.
 - **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders.
 - **Known dual surface**: TypeScript engine primitives and `public/instruments.js` both host calculation code until a bundler lands (ADR 0017).

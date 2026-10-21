@@ -51,6 +51,7 @@ fees:
     type: disbursement
     value: 0.75
     unit: percent
+    maxAmount: 30000
     timing: upfront
     description: Otthon Start folyósítási díj 0,75%, max 30.000 Ft; 100% waived under OTP Díjkedvezményes akció when insurance conditions are met.
   - name: hitelbiztositeki-ertek-megallapitas

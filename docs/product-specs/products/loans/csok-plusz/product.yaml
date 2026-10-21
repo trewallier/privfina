@@ -53,6 +53,7 @@ fees:
     type: disbursement
     value: 0.75
     unit: percent
+    maxAmount: 300000
     timing: upfront
     description: >
       CSOK Plusz folyósítási díj 0,75%, max 300.000 Ft. Under OTP Díjkedvezményes akció

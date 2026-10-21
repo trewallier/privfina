@@ -44,6 +44,7 @@ fees:
     type: disbursement
     value: 1
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: Falusi CSOK folyósítási díj 1,00%, max 200.000 Ft.
   - name: hitelbiztositeki-ertek-megallapitas

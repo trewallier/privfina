@@ -1,10 +1,28 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { loadFixedRateLoanProductSpec } from './fixed_rate_loan'
+import {
+  loadMortgageLoanProductSpec,
+  type MortgageLoanProductSpec
+} from './mortgage_loan'
 
 export const DEFAULT_FIXED_RATE_LOAN_PRODUCT_SPEC_PATH =
   'docs/product-specs/products/loans/fixed-rate-loan/product.yaml'
 export const DEFAULT_PRODUCT_SCHEMA_PATH = 'docs/product-specs/schema/v2/product.schema.json'
+
+export const MORTGAGE_LOAN_PRODUCT_SPEC_PATHS = {
+  'otp-1x1': 'docs/product-specs/products/loans/otp-1x1/product.yaml',
+  'otp-zold': 'docs/product-specs/products/loans/otp-zold/product.yaml',
+  'vegig-fix': 'docs/product-specs/products/loans/vegig-fix/product.yaml',
+  'csok-plusz': 'docs/product-specs/products/loans/csok-plusz/product.yaml',
+  'falusi-csok': 'docs/product-specs/products/loans/falusi-csok/product.yaml',
+  'otthon-start': 'docs/product-specs/products/loans/otthon-start/product.yaml',
+  'videki-otthonfelujitasi':
+    'docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml',
+  'fixed-rate-mortgage': 'docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml'
+} as const
+
+export type MortgageLoanProductCode = keyof typeof MORTGAGE_LOAN_PRODUCT_SPEC_PATHS
 
 export interface ProductSpecFieldDefinition {
   name: string
@@ -182,6 +200,35 @@ export function loadFixedRateLoanProductSpecFromFiles(
     const details = error instanceof Error ? error.message : String(error)
     throw new Error(
       `Failed to load fixed-rate loan product spec from ${productSpecPath} using schema ${productSchemaPath}: ${details}`
+    )
+  }
+}
+
+export interface MortgageLoanProductSpecLoaderOptions {
+  rootDir?: string
+  productSpecPath?: string
+  productSchemaPath?: string
+  productCode?: MortgageLoanProductCode
+}
+
+export function loadMortgageLoanProductSpecFromFiles(
+  options: MortgageLoanProductSpecLoaderOptions = {}
+): MortgageLoanProductSpec {
+  const rootDir = options.rootDir ?? '.'
+  const productCode = options.productCode ?? 'otp-1x1'
+  const defaultPath = MORTGAGE_LOAN_PRODUCT_SPEC_PATHS[productCode]
+  const productSpecPath = resolve(rootDir, options.productSpecPath ?? defaultPath)
+  const productSchemaPath = resolve(rootDir, options.productSchemaPath ?? DEFAULT_PRODUCT_SCHEMA_PATH)
+
+  const productYamlText = readUtf8File(productSpecPath)
+  const productSchema = readJsonFile(productSchemaPath)
+
+  try {
+    return loadMortgageLoanProductSpec(productYamlText, productSchema)
+  } catch (error) {
+    const details = error instanceof Error ? error.message : String(error)
+    throw new Error(
+      `Failed to load mortgage-loan product spec from ${productSpecPath} using schema ${productSchemaPath}: ${details}`
     )
   }
 }

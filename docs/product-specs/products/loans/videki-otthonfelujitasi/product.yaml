@@ -45,6 +45,7 @@ fees:
     type: disbursement
     value: 0.75
     unit: percent
+    maxAmount: 200000
     timing: upfront
     description: Standard folyósítási díj 0,75%, max 200.000 Ft (Vidéki Otthonfelújítási is outside the OTP Díjkedvezményes akció).
   - name: hitelbiztositeki-ertek-megallapitas

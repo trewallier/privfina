@@ -29,4 +29,4 @@ expected:
 
 notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 — OTP Otthonteremtési Lakáshitel többgyermekes család / preferált kistelepülés / használt lakás vásárlás."
-  - "Bare engine annuity at 3,00% is validated separately and is not required to equal the published installment."
+  - "Offering-faithful packaging (pricing.offeringPackaging) calibrates the schedule so engine installment and ADR 0022 THM match these published figures (ADR 0023)."

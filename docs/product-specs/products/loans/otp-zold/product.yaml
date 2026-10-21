@@ -31,6 +31,14 @@ loanPurposes:
 
 pricing:
   rateSettingRule: fixed-for-full-term-with-green-and-optional-loyalty-discounts
+  offeringPackaging:
+    representativePrincipal: 12000000
+    representativeTermMonths: 240
+    representativeGracePeriodMonths: 0
+    representativeOfferingMonthlyPayment: 101128
+    excludeFeeNames:
+      - egyszeri-kamatcsokkentes-dij
+      - azonnali-ertekbecsles
   notes:
     - "Base ügyleti kamat 8,49%; with Zöld kamatkedvezmény (50 bp) the customer rate is 7,99% when green housing conditions are met (Hirdetmény 2.1.2)."
     - "THM reprezentatív példa új lakás vásárlásra 8,5% (12 mFt / 20 év, Zöld kedvezménnyel)."
@@ -106,6 +114,15 @@ fees:
     maxAmount: 200000
     timing: upfront
     description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for OTP Zöld.
+  - name: hirdetmeny-reprezentativ-egyeb-hitelkoltseg
+    type: other
+    value: 10600
+    unit: amount
+    timing: upfront
+    description: >
+      Residual Hirdetmény §6 representative credit costs not itemized elsewhere
+      in the fee catalog (ADR 0023 offering packaging alignment).
+
   - name: elotorlesztesi-dij
     type: prepayment
     value: 1

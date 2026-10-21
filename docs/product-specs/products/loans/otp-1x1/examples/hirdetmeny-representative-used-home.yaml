@@ -27,4 +27,4 @@ expected:
 notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 Reprezentatív példák, OTP 1x1 Lakáshitel / használt lakás vásárlás."
   - "monthlyPayment and totalPaid are the published Hirdetmény figures (installment includes the bank's representative packaging; totalPaid includes 193.965 Ft fee/cost component)."
-  - "Bare engine annuity at 7,99% / 12 monthly compounding is validated separately in unit tests and is not required to equal the published installment."
+  - "Offering-faithful packaging (pricing.offeringPackaging) calibrates the schedule so engine installment and ADR 0022 THM match these published figures (ADR 0023)."

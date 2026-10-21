@@ -34,4 +34,4 @@ expected:
 notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 — OTP Évnyerő Otthon Start Lakáshitel / új / használt lakás vásárlás."
   - "Published table lists 69.362 Ft/hó; totalPaid − fees aligns with 12×30.416 + 228×69.362 packaging (optional türelmi idő)."
-  - "Bare engine grace+annuity at 3,00% is validated separately and is not required to equal the published installments."
+  - "Offering-faithful packaging (pricing.offeringPackaging) calibrates the schedule so engine installment and ADR 0022 THM match these published figures (ADR 0023)."

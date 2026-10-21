@@ -75,7 +75,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until engine THM (ADR 0022) matches published `thmPct`. Simplified examples stay on annuity primitives.
 
 Plan slices
-- [ ] Align public-offering engine packaging so ADR 0022 `percentRounded` matches example `thmPct` (and offering repayment figures) per product; quarantine clears only when reconciled.
+- [x] Align public-offering engine packaging so ADR 0022 `percentRounded` matches example `thmPct` (and offering repayment figures) per product; quarantine clears only when reconciled (Vidéki remains quarantined).
 - [ ] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
 - [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after THM match + composer parity tests.
 

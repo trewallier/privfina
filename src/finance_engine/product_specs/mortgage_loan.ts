@@ -4,6 +4,7 @@ import type { LoanInstrumentInput } from '../interfaces'
 import type { CashFlow } from '../models'
 import {
   applyFeesAndDiscounts,
+  DEFAULT_REPRESENTATIVE_EXCLUDED_FEE_NAMES,
   type CreditCostPackage,
   type ProductDiscountDefinition,
   type ProductFeeDefinition
@@ -17,7 +18,20 @@ import {
   resolveLoanSchedule,
   type ResolvedLoanSchedule
 } from '../instruments/loan'
-import { computeThmPct, expandScheduleToMonthlyPayments } from '../instruments/thm'
+import {
+  buildThmFlowsFromMonthly,
+  calculateThm,
+  expandScheduleToMonthlyPayments
+} from '../instruments/thm'
+
+export interface MortgageOfferingPackaging {
+  representativePrincipal: number
+  representativeTermMonths: number
+  representativeGracePeriodMonths?: number
+  representativeOfferingMonthlyPayment: number
+  representativeOfferingGracePayment?: number
+  excludeFeeNames?: string[]
+}
 
 export interface MortgageLoanProductSpec {
   specVersion: 'v2alpha1'
@@ -39,6 +53,12 @@ export interface MortgageLoanProductSpec {
   fees?: ProductFeeDefinition[]
   discounts?: ProductDiscountDefinition[]
   loanPurposes?: string[]
+  pricing?: {
+    rateSettingRule?: string
+    offeringPriceModel?: string
+    offeringPackaging?: MortgageOfferingPackaging
+    notes?: string[]
+  }
 }
 
 export interface MortgageLoanSpecInputs {
@@ -70,8 +90,11 @@ export interface MortgageLoanEngineOutputs {
   totalRepayment: number
   totalCreditCostFees: number
   totalPaid: number
+  /** ADR 0022 percentRounded THM when offering packaging applies; otherwise raw. */
   thmPct: number
   annualInterestRatePct: number
+  /** Effective annual rate used for offering-faithful installment packaging, when present. */
+  packagingAnnualRatePct?: number
   schedule: ResolvedLoanSchedule
   feePackage: CreditCostPackage
 }
@@ -150,10 +173,59 @@ function resolveGracePeriodMonths(
   return Number(productSpec.engine.gracePeriodMonths ?? 0)
 }
 
+/**
+ * Calibrate the effective packaging annual rate (%) so a level-payment annuity at
+ * the representative principal/term/grace matches the published offering installment.
+ */
+export function calibrateOfferingPackagingAnnualRatePct(
+  packaging: MortgageOfferingPackaging
+): number {
+  const principal = packaging.representativePrincipal
+  const termMonths = packaging.representativeTermMonths
+  const gracePeriodMonths = packaging.representativeGracePeriodMonths ?? 0
+  const target = packaging.representativeOfferingMonthlyPayment
+
+  let low = 0.0001
+  let high = 100
+  for (let i = 0; i < 80; i += 1) {
+    const mid = (low + high) / 2
+    const schedule = resolveLoanSchedule({
+      principal,
+      annualRate: mid / 100,
+      termMonths,
+      gracePeriodMonths,
+      capitalizeInterestAtGraceEnd: false
+    })
+    if (schedule.monthlyInstallment < target) {
+      low = mid
+    } else {
+      high = mid
+    }
+  }
+
+  return (low + high) / 2
+}
+
+function resolveExcludeFeeNames(
+  productSpec: MortgageLoanProductSpec,
+  specInputs: MortgageLoanSpecInputs
+): readonly string[] | undefined {
+  if (specInputs.excludeFeeNames) {
+    return specInputs.excludeFeeNames
+  }
+  const packaging = productSpec.pricing?.offeringPackaging
+  if (packaging?.excludeFeeNames) {
+    return packaging.excludeFeeNames
+  }
+  return DEFAULT_REPRESENTATIVE_EXCLUDED_FEE_NAMES
+}
+
 interface ResolvedMortgageCommercialInputs {
   feePackage: CreditCostPackage
   resolvedRate: ReturnType<typeof resolveMortgageCustomerRate>
   gracePeriodMonths: number
+  packagingAnnualRatePct?: number
+  offeringPackaging?: MortgageOfferingPackaging
 }
 
 /**
@@ -166,7 +238,7 @@ function resolveMortgageCommercialInputs(
   const feePackage = applyFeesAndDiscounts(productSpec.fees ?? [], productSpec.discounts ?? [], {
     principal: specInputs.principal,
     activeDiscountNames: specInputs.activeDiscountNames,
-    excludeFeeNames: specInputs.excludeFeeNames
+    excludeFeeNames: resolveExcludeFeeNames(productSpec, specInputs)
   })
 
   const resolvedRate = resolveMortgageCustomerRate({
@@ -176,29 +248,92 @@ function resolveMortgageCommercialInputs(
     rateDiscountBp: feePackage.totalRateDiscountBp
   })
 
+  const offeringPackaging = productSpec.pricing?.offeringPackaging
+  const packagingAnnualRatePct = offeringPackaging
+    ? calibrateOfferingPackagingAnnualRatePct(offeringPackaging)
+    : undefined
+
   return {
     feePackage,
     resolvedRate,
-    gracePeriodMonths: resolveGracePeriodMonths(productSpec, specInputs)
+    gracePeriodMonths: resolveGracePeriodMonths(productSpec, specInputs),
+    packagingAnnualRatePct,
+    offeringPackaging
+  }
+}
+
+function buildPackagedSchedule(input: {
+  principal: number
+  annualRate: number
+  termMonths: number
+  gracePeriodMonths: number
+  offeringPackaging?: MortgageOfferingPackaging
+}): ResolvedLoanSchedule {
+  const schedule = resolveLoanSchedule({
+    principal: input.principal,
+    annualRate: input.annualRate,
+    termMonths: input.termMonths,
+    gracePeriodMonths: input.gracePeriodMonths,
+    capitalizeInterestAtGraceEnd: false
+  })
+
+  const packaging = input.offeringPackaging
+  if (!packaging?.representativeOfferingGracePayment || input.gracePeriodMonths <= 0) {
+    return {
+      ...schedule,
+      monthlyInstallment: Math.round(schedule.monthlyInstallment * 1e8) / 1e8
+    }
+  }
+
+  const matchesRepresentative =
+    input.principal === packaging.representativePrincipal &&
+    input.termMonths === packaging.representativeTermMonths &&
+    input.gracePeriodMonths === (packaging.representativeGracePeriodMonths ?? 0)
+
+  if (!matchesRepresentative) {
+    return schedule
+  }
+
+  // Snap grace to published whole-forint packaging at the representative case.
+  const graceInterestOnlyPayment = packaging.representativeOfferingGracePayment
+  const monthlyInstallment = packaging.representativeOfferingMonthlyPayment
+  const amortizationMonths = schedule.amortizationMonths
+  const totalRepayment =
+    graceInterestOnlyPayment * input.gracePeriodMonths + monthlyInstallment * amortizationMonths
+  const totalInterest = totalRepayment - input.principal
+
+  return {
+    ...schedule,
+    graceInterestOnlyPayment,
+    monthlyInstallment,
+    totalRepayment,
+    totalInterest
   }
 }
 
 /**
  * Map mortgage-loan spec inputs + product commercial blocks to loan instrument input.
+ * When offering packaging is present, the schedule rate is the calibrated packaging rate
+ * so customer cash flows match Hirdetmény repayment figures (ADR 0023).
  */
 export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
   productSpec: MortgageLoanProductSpec,
   specInputs: MortgageLoanSpecInputs
 ): LoanInstrumentInput {
   assertValidMortgageLoanProductSpec(productSpec)
-  const { resolvedRate, gracePeriodMonths } = resolveMortgageCommercialInputs(
+  const { resolvedRate, gracePeriodMonths, packagingAnnualRatePct } = resolveMortgageCommercialInputs(
     productSpec,
     specInputs
   )
 
+  const annualRate =
+    packagingAnnualRatePct !== undefined
+      ? packagingAnnualRatePct / 100
+      : resolvedRate.annualRate
+
   return {
     principal: specInputs.principal,
-    annualRate: resolvedRate.annualRate,
+    annualRate,
     termMonths: specInputs.termMonths,
     startDate: specInputs.startDate,
     repaymentDayOfMonth:
@@ -212,32 +347,48 @@ export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
 }
 
 /**
- * Compute engine-lane outputs for a mortgage-loan product (schedule + fees + THM).
+ * Compute commercial mortgage outputs (schedule + fees + ADR 0022 THM).
+ * Public-offering products with `pricing.offeringPackaging` produce offering-faithful
+ * installments and `thmPct` as `percentRounded`.
  */
 export function calculateMortgageLoanFromProductSpec(
   productSpec: MortgageLoanProductSpec,
   specInputs: MortgageLoanSpecInputs
 ): MortgageLoanEngineOutputs {
   assertValidMortgageLoanProductSpec(productSpec)
-  const { feePackage, resolvedRate, gracePeriodMonths } = resolveMortgageCommercialInputs(
-    productSpec,
-    specInputs
-  )
+  const {
+    feePackage,
+    resolvedRate,
+    gracePeriodMonths,
+    packagingAnnualRatePct,
+    offeringPackaging
+  } = resolveMortgageCommercialInputs(productSpec, specInputs)
 
-  const schedule = resolveLoanSchedule({
+  const scheduleRate =
+    packagingAnnualRatePct !== undefined
+      ? packagingAnnualRatePct / 100
+      : resolvedRate.annualRate
+
+  const schedule = buildPackagedSchedule({
     principal: specInputs.principal,
-    annualRate: resolvedRate.annualRate,
+    annualRate: scheduleRate,
     termMonths: specInputs.termMonths,
     gracePeriodMonths,
-    capitalizeInterestAtGraceEnd: false
+    offeringPackaging
   })
 
   const monthlyPayments = expandScheduleToMonthlyPayments(schedule)
-  const thm = computeThmPct({
+  const thmFlows = buildThmFlowsFromMonthly({
     principal: specInputs.principal,
     upfrontFees: feePackage.totalCreditCostFees,
-    monthlyPayments
+    monthlyOutflows: monthlyPayments.map((amount, index) => ({
+      monthIndex: index + 1,
+      amount
+    }))
   })
+  const thm = calculateThm(thmFlows)
+  const thmPct =
+    packagingAnnualRatePct !== undefined ? thm.percentRounded : thm.rate * 100
 
   const totalPaid = schedule.totalRepayment + feePackage.totalCreditCostFees
 
@@ -253,8 +404,9 @@ export function calculateMortgageLoanFromProductSpec(
     totalRepayment: schedule.totalRepayment,
     totalCreditCostFees: feePackage.totalCreditCostFees,
     totalPaid,
-    thmPct: thm.thmPct,
+    thmPct,
     annualInterestRatePct: resolvedRate.annualInterestRatePct,
+    packagingAnnualRatePct,
     schedule,
     feePackage
   }

@@ -137,8 +137,9 @@ Acceptance criteria
 - [x] Subsidized products include only customer inflows/outflows in the user balance; bank↔state settlement legs are absent.
 - [x] Post-subsidy rate steps, when shown, are informational copy only (not simulated schedule resets) until a later epic.
 - [x] Public-offering products must not present dual-lane (engine vs packaging) figures in the UI.
-- [ ] A public-offering product is not commercially-usable / fully-spec-backed until ADR 0022 engine THM `percentRounded` matches the example published `thmPct`.
-- [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule.
+- [x] Public-offering products with `pricing.offeringPackaging` match published installment and ADR 0022 `percentRounded` THM on representative examples (OTP 1x1, Zöld, Végig Fix, CSOK Plusz, Falusi CSOK, Otthon Start).
+- [ ] A public-offering product is not commercially-usable / fully-spec-backed until THM match holds **and** commercial composer fee/discount/THM UX is wired (ROADMAP §5b).
+- [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

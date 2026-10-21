@@ -5,7 +5,7 @@ import {
 } from '../src/finance_engine/engine'
 
 describe('mortgage-loan product_specs mapper', () => {
-  it('loads otp-1x1 and computes engine-lane schedule, fees, and THM', () => {
+  it('loads otp-1x1 and computes offering-faithful schedule, fees, and THM', () => {
     const product = loadMortgageLoanProductSpecFromFiles({ productCode: 'otp-1x1' })
     const result = calculateMortgageLoanFromProductSpec(product, {
       principal: 12_000_000,
@@ -19,13 +19,14 @@ describe('mortgage-loan product_specs mapper', () => {
     expect(result.productSpecVersion).toBe('v2alpha1')
     expect(result.paymentCount).toBe(240)
     expect(result.graceInterestOnlyPayment).toBeUndefined()
-    expect(result.totalCreditCostFees).toBe(90_000 + 58_765 + 20_000)
+    expect(result.totalCreditCostFees).toBe(193_965)
+    expect(result.monthlyPayment).toBeCloseTo(101_128, 5)
+    expect(result.thmPct).toBe(8.6)
     expect(result.totalPaid).toBeCloseTo(result.totalRepayment + result.totalCreditCostFees, 8)
-    expect(result.thmPct).toBeGreaterThan(7.99)
     expect(result.monthlyPayment).toBeCloseTo(result.schedule.monthlyInstallment, 8)
   })
 
-  it('maps csok-plusz grace then annuity from engine metadata', () => {
+  it('maps csok-plusz offering-packaged grace then annuity', () => {
     const product = loadMortgageLoanProductSpecFromFiles({ productCode: 'csok-plusz' })
     const result = calculateMortgageLoanFromProductSpec(product, {
       principal: 12_000_000,
@@ -38,9 +39,10 @@ describe('mortgage-loan product_specs mapper', () => {
     })
 
     expect(result.paymentCount).toBe(240)
-    expect(result.graceInterestOnlyPayment).toBeCloseTo(12_000_000 * 0.03 / 12, 8)
+    expect(result.graceInterestOnlyPayment).toBe(30_416)
+    expect(result.monthlyPayment).toBeCloseTo(69_362, 5)
+    expect(result.thmPct).toBe(3.3)
     expect(result.schedule.gracePeriodMonths).toBe(12)
-    expect(result.monthlyPayment).toBeGreaterThan(result.graceInterestOnlyPayment!)
   })
 
   it('applies otp-zold folyósítási waiver when discount is activated', () => {

@@ -61,6 +61,8 @@ discounts:
     type: fee-waiver
     value: 100
     unit: percent
+    appliesToFeeNames:
+      - egyszeri-kamatcsokkentes-dij
     conditions:
       - promotional-action-active
   - name: energetikai-tanusitvany-dij-terites

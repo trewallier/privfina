@@ -119,4 +119,77 @@ describe('applyFeesAndDiscounts', () => {
 
     expect(result.lines[0].grossAmount).toBe(30_000)
   })
+
+  it('applies non-disbursement waivers only when appliesToFeeNames lists the fee', () => {
+    const result = applyFeesAndDiscounts(
+      [
+        {
+          name: 'egyszeri-kamatcsokkentes-dij',
+          type: 'other',
+          value: 2,
+          unit: 'percent',
+          maxAmount: 200_000,
+          timing: 'upfront'
+        },
+        {
+          name: 'folyositasi-dij',
+          type: 'disbursement',
+          value: 0.75,
+          unit: 'percent',
+          maxAmount: 200_000,
+          timing: 'upfront'
+        }
+      ],
+      [
+        {
+          name: 'egyszeri-kamatcsokkentes-dij-elengedes',
+          type: 'fee-waiver',
+          value: 100,
+          unit: 'percent',
+          appliesToFeeNames: ['egyszeri-kamatcsokkentes-dij']
+        }
+      ],
+      {
+        principal: 12_000_000,
+        activeDiscountNames: ['egyszeri-kamatcsokkentes-dij-elengedes'],
+        excludeFeeNames: []
+      }
+    )
+
+    const kamatcsokkentes = result.lines.find(
+      (line) => line.name === 'egyszeri-kamatcsokkentes-dij'
+    )
+    const disbursement = result.lines.find((line) => line.name === 'folyositasi-dij')
+    expect(kamatcsokkentes?.amount).toBe(0)
+    expect(disbursement?.amount).toBe(90_000)
+  })
+
+  it('does not apply default fee-waivers to non-disbursement fees by name substring', () => {
+    const result = applyFeesAndDiscounts(
+      [
+        {
+          name: 'egyszeri-kamatcsokkentes-dij',
+          type: 'other',
+          value: 50_000,
+          unit: 'amount',
+          timing: 'upfront'
+        }
+      ],
+      [
+        {
+          name: 'egyszeri-kamatcsokkentes-dij-elengedes',
+          type: 'fee-waiver',
+          value: 100,
+          unit: 'percent'
+        }
+      ],
+      {
+        principal: 12_000_000,
+        activeDiscountNames: ['egyszeri-kamatcsokkentes-dij-elengedes'],
+        excludeFeeNames: []
+      }
+    )
+
+    expect(result.lines[0].amount).toBe(50_000)
+  })
 })

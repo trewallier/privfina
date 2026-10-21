@@ -114,7 +114,7 @@ This section defines the next iteration of instrument behavior so implementation
 		- Worked examples / living documentation and tests:
 			- Fixed-rate loan example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml) and [tests/fixed-rate-loan-example.test.ts](tests/fixed-rate-loan-example.test.ts)
 			- Fixed-rate mortgage example: [docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml) and [tests/fixed-rate-mortgage-calculation-adapter.test.ts](tests/fixed-rate-mortgage-calculation-adapter.test.ts)
-			- Hirdetmény mortgage calc-aligned tests: `tests/*-product.test.ts` for otp-1x1, otp-zold, vegig-fix, csok-plusz, falusi-csok, otthon-start, videki-otthonfelujitasi
+			- Hirdetmény mortgage calc-aligned tests: [tests/hirdetmeny-mortgage-calc-aligned.test.ts](tests/hirdetmeny-mortgage-calc-aligned.test.ts) (engine-lane goldens for otp-1x1, otp-zold, vegig-fix, csok-plusz, falusi-csok, otthon-start, videki-otthonfelujitasi); per-product `tests/*-product.test.ts` suites retain §6 packaging fixture lock-in
 - Generated flows:
 	- optional one-time disbursement inflow at start
 	- optional interest-only outflows during grace (when capitalization is off)

@@ -31,4 +31,5 @@ expected:
 notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 — OTP Vidéki Otthonfelújítási Lakáshitel."
   - "paymentCount 120 is inferred from published installment × term aligning with totalPaid − fees (10-year packaging)."
-  - "Bare engine annuity at 4,87% is validated separately and is not required to equal the published installment."
+  - "QUARANTINED packaging fixture: published monthlyPayment 63.457 × 120 ≈ 7,61 mFt cannot amortize the stated 12 mFt principal. Treat §6 installment/totalPaid/fees as audit-only until reconciled against the Hirdetmény source."
+  - "Engine lane uses bare customer-rate annuity (~126.517 Ft/hó at 4,87% / 120 months) pinned in tests/hirdetmeny-mortgage-calc-aligned.test.ts; do not rewrite amortization to chase §6."

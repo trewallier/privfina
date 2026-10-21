@@ -34,6 +34,9 @@ export interface ResolvedMortgageCustomerRate {
   rateDiscountBp: number
 }
 
+/** Absolute tolerance (percentage points) for subsidy customerRate vs input rate. */
+export const SUBSIDY_CUSTOMER_RATE_TOLERANCE_PP = 1e-6
+
 function ensureFiniteNumber(value: number, label: string): number {
   if (!Number.isFinite(value)) {
     throw new Error(`${label} must be a finite number.`)
@@ -45,8 +48,10 @@ function ensureFiniteNumber(value: number, label: string): number {
  * Resolve the customer annual rate used by loan amortization primitives.
  *
  * Schedule math uses the example/user `annualInterestRatePct` (after optional bp discounts).
- * The subsidy block contributes metadata and an optional consistency check against
- * `subsidy.customerRate`; ügyleti / state cash-flow splits remain deferred.
+ * When `subsidy.type === 'state-interest-subsidy'` and `subsidy.customerRate` is set, the
+ * input percent rate must match `customerRate * 100` within
+ * {@link SUBSIDY_CUSTOMER_RATE_TOLERANCE_PP} (checked before rate discounts).
+ * Ügyleti / state cash-flow splits remain deferred.
  */
 export function resolveMortgageCustomerRate(
   input: MortgageRateResolutionInput
@@ -71,6 +76,15 @@ export function resolveMortgageCustomerRate(
   if (isStateSubsidized && subsidy?.customerRate !== undefined) {
     subsidyCustomerRatePct =
       ensureFiniteNumber(subsidy.customerRate, 'subsidy.customerRate') * 100
+    if (
+      Math.abs(annualInterestRatePct - subsidyCustomerRatePct) >
+      SUBSIDY_CUSTOMER_RATE_TOLERANCE_PP
+    ) {
+      throw new Error(
+        `annualInterestRatePct (${annualInterestRatePct}) must match subsidy.customerRate ` +
+          `(${subsidyCustomerRatePct}%) within ${SUBSIDY_CUSTOMER_RATE_TOLERANCE_PP} pp.`
+      )
+    }
   }
 
   annualInterestRatePct = Math.max(0, annualInterestRatePct - rateDiscountBp / 100)

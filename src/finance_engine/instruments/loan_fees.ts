@@ -23,6 +23,11 @@ export interface ProductDiscountDefinition {
   value?: number
   unit?: DiscountUnit
   conditions?: string[]
+  /**
+   * For fee-waiver discounts: explicit fee names this waiver applies to.
+   * When omitted, fee-waivers apply only to fees with type `disbursement`.
+   */
+  appliesToFeeNames?: string[]
 }
 
 export interface FeeApplicationOptions {
@@ -104,8 +109,13 @@ function resolveWaiverPercent(
     if (!activeDiscountNames.has(discount.name)) {
       continue
     }
-    // Waivers apply to disbursement fees by default; name-targeted waivers still use value %.
-    if (fee.type !== 'disbursement' && !discount.name.includes(fee.name)) {
+    const targetedNames = discount.appliesToFeeNames
+    if (targetedNames !== undefined && targetedNames !== null) {
+      if (!targetedNames.includes(fee.name)) {
+        continue
+      }
+    } else if (fee.type !== 'disbursement') {
+      // Default: unnamed fee-waivers apply only to disbursement fees.
       continue
     }
     const value = discount.value ?? 0

@@ -150,15 +150,19 @@ function resolveGracePeriodMonths(
   return Number(productSpec.engine.gracePeriodMonths ?? 0)
 }
 
+interface ResolvedMortgageCommercialInputs {
+  feePackage: CreditCostPackage
+  resolvedRate: ReturnType<typeof resolveMortgageCustomerRate>
+  gracePeriodMonths: number
+}
+
 /**
- * Map mortgage-loan spec inputs + product commercial blocks to loan instrument input.
+ * Shared commercial resolution used by map + calculate paths (fees, customer rate, grace).
  */
-export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
+function resolveMortgageCommercialInputs(
   productSpec: MortgageLoanProductSpec,
   specInputs: MortgageLoanSpecInputs
-): LoanInstrumentInput {
-  assertValidMortgageLoanProductSpec(productSpec)
-
+): ResolvedMortgageCommercialInputs {
   const feePackage = applyFeesAndDiscounts(productSpec.fees ?? [], productSpec.discounts ?? [], {
     principal: specInputs.principal,
     activeDiscountNames: specInputs.activeDiscountNames,
@@ -172,7 +176,25 @@ export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
     rateDiscountBp: feePackage.totalRateDiscountBp
   })
 
-  const gracePeriodMonths = resolveGracePeriodMonths(productSpec, specInputs)
+  return {
+    feePackage,
+    resolvedRate,
+    gracePeriodMonths: resolveGracePeriodMonths(productSpec, specInputs)
+  }
+}
+
+/**
+ * Map mortgage-loan spec inputs + product commercial blocks to loan instrument input.
+ */
+export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
+  productSpec: MortgageLoanProductSpec,
+  specInputs: MortgageLoanSpecInputs
+): LoanInstrumentInput {
+  assertValidMortgageLoanProductSpec(productSpec)
+  const { resolvedRate, gracePeriodMonths } = resolveMortgageCommercialInputs(
+    productSpec,
+    specInputs
+  )
 
   return {
     principal: specInputs.principal,
@@ -197,21 +219,11 @@ export function calculateMortgageLoanFromProductSpec(
   specInputs: MortgageLoanSpecInputs
 ): MortgageLoanEngineOutputs {
   assertValidMortgageLoanProductSpec(productSpec)
+  const { feePackage, resolvedRate, gracePeriodMonths } = resolveMortgageCommercialInputs(
+    productSpec,
+    specInputs
+  )
 
-  const feePackage = applyFeesAndDiscounts(productSpec.fees ?? [], productSpec.discounts ?? [], {
-    principal: specInputs.principal,
-    activeDiscountNames: specInputs.activeDiscountNames,
-    excludeFeeNames: specInputs.excludeFeeNames
-  })
-
-  const resolvedRate = resolveMortgageCustomerRate({
-    annualInterestRatePct: specInputs.annualInterestRatePct,
-    transactionalAnnualRatePct: specInputs.transactionalAnnualRatePct,
-    subsidy: productSpec.subsidy,
-    rateDiscountBp: feePackage.totalRateDiscountBp
-  })
-
-  const gracePeriodMonths = resolveGracePeriodMonths(productSpec, specInputs)
   const schedule = resolveLoanSchedule({
     principal: specInputs.principal,
     annualRate: resolvedRate.annualRate,

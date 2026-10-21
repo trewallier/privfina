@@ -18,4 +18,4 @@ State-subsidized rural renovation loan (`productCode: videki-otthonfelujitasi`) 
 
 ## Status
 
-**calc-aligned** — finance-engine product-spec mapper computes customer-rate schedule, upfront fee package, and fee-inclusive THM (ADR 0021). Hirdetmény §6 installment/THM packaging figures remain dual-lane fixtures. Composer UI is intentionally parked (fully-spec-backed follow-on).
+**calc-aligned** — finance-engine product-spec mapper computes customer-rate schedule, upfront fee package, and fee-inclusive THM (ADR 0021). §6 installment/totalPaid packaging is **quarantined** (published installment×term cannot amortize the stated principal; engine goldens use bare annuity ≈ 126.517 Ft/hó). Composer UI is intentionally parked (fully-spec-backed follow-on).

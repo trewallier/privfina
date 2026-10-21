@@ -40,4 +40,32 @@ describe('resolveMortgageCustomerRate', () => {
     expect(resolved.annualInterestRatePct).toBeCloseTo(7.99, 10)
     expect(resolved.annualRate).toBeCloseTo(0.0799, 10)
   })
+
+  it('throws when subsidized input rate disagrees with subsidy.customerRate', () => {
+    expect(() =>
+      resolveMortgageCustomerRate({
+        annualInterestRatePct: 3.5,
+        subsidy: {
+          type: 'state-interest-subsidy',
+          customerRate: 0.03,
+          subsidyDurationMonths: 300
+        }
+      })
+    ).toThrow(/must match subsidy\.customerRate/)
+  })
+
+  it('allows rate discounts after a matching subsidized customer rate', () => {
+    const resolved = resolveMortgageCustomerRate({
+      annualInterestRatePct: 3,
+      rateDiscountBp: 50,
+      subsidy: {
+        type: 'state-interest-subsidy',
+        customerRate: 0.03,
+        subsidyDurationMonths: 300
+      }
+    })
+
+    expect(resolved.subsidyCustomerRatePct).toBeCloseTo(3, 10)
+    expect(resolved.annualInterestRatePct).toBeCloseTo(2.5, 10)
+  })
 })

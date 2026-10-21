@@ -118,7 +118,9 @@ Acceptance criteria
 - [x] OTP Zöld (`productCode: otp-zold`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% with 50 bp green discount / 101.128 Ft installment / THM 8,5%) locked in unit tests.
 - [x] Végig Fix (`productCode: vegig-fix`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 8,49% / 104.960 Ft installment / THM 9,2%) locked in unit tests.
 - [x] CSOK Plusz (`productCode: csok-plusz`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% customer rate / 12-month grace 30.416 Ft then 69.362 Ft / THM 3,3%) locked in unit tests.
-- [ ] Remaining state-supported mortgage product folders (Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) are authored under `docs/product-specs/products/` using schema v2 fields.
+- [x] Falusi CSOK (`productCode: falusi-csok`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / 66.802 Ft / THM 3,3%) locked in unit tests.
+- [x] Otthon Start (`productCode: otthon-start`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / published 69.362 Ft amortizing installment with grace packaging / THM 3,2%) locked in unit tests.
+- [x] Vidéki Otthonfelújítási (`productCode: videki-otthonfelujitasi`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 10 years / 4,87% / 63.457 Ft / THM 5,5%) locked in unit tests.
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

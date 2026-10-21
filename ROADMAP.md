@@ -55,7 +55,7 @@ Out of scope for this epic
 - [x] Author OTP Zöld mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
 - [x] Author Végig Fix mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
 - [x] Author CSOK Plusz mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
-- [ ] Author remaining mortgage product specs (Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) on schema v2.
+- [x] Author remaining Hirdetmény 2026-04-20 mortgage product specs (Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) on schema v2.
 - [ ] Engine primitives for state-interest subsidy and structured fee/discount application driven by product specs.
 - [ ] Add scenario analysis for income and expense changes.
 - [ ] Add discount-rate configuration and NPV analytics.

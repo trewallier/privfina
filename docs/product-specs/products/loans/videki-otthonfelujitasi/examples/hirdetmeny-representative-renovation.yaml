@@ -1,0 +1,34 @@
+specVersion: v2alpha1
+productId: mortgage-loan.videki-otthonfelujitasi.standard
+exampleId: hirdetmeny-representative-renovation
+title: Hirdetmény representative Vidéki Otthonfelújítási renovation
+description: >
+  Official representative example from section 6 of the OTP forint home-loan
+  Hirdetmény: OTP Vidéki Otthonfelújítási Lakáshitel — 12.000.000 Ft at 4,87%
+  customer rate. Published total paid implies a 10-year / 120-installment
+  packaging (matching the max 10-year subsidy horizon).
+
+inputs:
+  principal: 12000000
+  annualInterestRatePct: 4.87
+  transactionalAnnualRatePct: 7.87
+  termMonths: 120
+  startDate: 2026-04-01
+  loanPurpose: renovation
+
+expected:
+  paymentCount: 120
+  monthlyPayment: 63457
+  totalPaid: 7731977
+  totalCreditCostFees: 117145
+  thmPct: 5.5
+  rateType: state-subsidized-with-1y-1y-5y-interest-periods
+  contractualAnnualRatePct: 4.87
+  transactionalAnnualRatePct: 7.87
+  subsidyDurationMonths: 120
+  fixedSubsidyPp: 3
+
+notes:
+  - "Source: Lakáshitel_H_kondicio_20260420, §6 — OTP Vidéki Otthonfelújítási Lakáshitel."
+  - "paymentCount 120 is inferred from published installment × term aligning with totalPaid − fees (10-year packaging)."
+  - "Bare engine annuity at 4,87% is validated separately and is not required to equal the published installment."

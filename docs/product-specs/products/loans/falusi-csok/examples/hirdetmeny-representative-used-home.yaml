@@ -1,0 +1,32 @@
+specVersion: v2alpha1
+productId: mortgage-loan.falusi-csok.standard
+exampleId: hirdetmeny-representative-used-home
+title: Hirdetmény representative Falusi CSOK used-home purchase
+description: >
+  Official representative example from section 6 of the OTP forint home-loan
+  Hirdetmény: OTP Otthonteremtési Lakáshitel for a multi-child family in a
+  preferred small settlement — 12.000.000 Ft, 20 years, used-home purchase at
+  3,00% customer rate.
+
+inputs:
+  principal: 12000000
+  annualInterestRatePct: 3
+  transactionalAnnualRatePct: 8.18
+  termMonths: 240
+  startDate: 2026-04-01
+  loanPurpose: used-home-purchase
+
+expected:
+  paymentCount: 240
+  monthlyPayment: 66802
+  totalPaid: 16256448
+  totalCreditCostFees: 223965
+  thmPct: 3.3
+  rateType: state-subsidized-with-1y-1y-5y-interest-periods
+  contractualAnnualRatePct: 3
+  transactionalAnnualRatePct: 8.18
+  subsidyDurationMonths: 300
+
+notes:
+  - "Source: Lakáshitel_H_kondicio_20260420, §6 — OTP Otthonteremtési Lakáshitel többgyermekes család / preferált kistelepülés / használt lakás vásárlás."
+  - "Bare engine annuity at 3,00% is validated separately and is not required to equal the published installment."

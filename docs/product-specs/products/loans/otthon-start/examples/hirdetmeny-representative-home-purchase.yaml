@@ -1,0 +1,37 @@
+specVersion: v2alpha1
+productId: mortgage-loan.otthon-start.standard
+exampleId: hirdetmeny-representative-home-purchase
+title: Hirdetmény representative Otthon Start home purchase
+description: >
+  Official representative example from section 6 of the OTP forint home-loan
+  Hirdetmény: OTP Évnyerő Otthon Start Lakáshitel — 12.000.000 Ft, 20 years,
+  new/used home purchase at 3,00% customer rate. The table prints a single
+  69.362 Ft installment; totalPaid − fees matches the same 12-month
+  interest-only then annuity packaging used for CSOK Plusz.
+
+inputs:
+  principal: 12000000
+  annualInterestRatePct: 3
+  transactionalAnnualRatePct: 7.87
+  termMonths: 240
+  startDate: 2026-04-01
+  gracePeriodMonths: 12
+  loanPurpose: new-home-purchase
+
+expected:
+  paymentCount: 240
+  graceInterestOnlyPayment: 30416
+  monthlyPayment: 69362
+  amortizingFromMonth: 13
+  totalPaid: 16313440
+  totalCreditCostFees: 133965
+  thmPct: 3.2
+  rateType: state-subsidized-with-5y-interest-periods
+  contractualAnnualRatePct: 3
+  transactionalAnnualRatePct: 7.87
+  subsidyDurationMonths: 300
+
+notes:
+  - "Source: Lakáshitel_H_kondicio_20260420, §6 — OTP Évnyerő Otthon Start Lakáshitel / új / használt lakás vásárlás."
+  - "Published table lists 69.362 Ft/hó; totalPaid − fees aligns with 12×30.416 + 228×69.362 packaging (optional türelmi idő)."
+  - "Bare engine grace+annuity at 3,00% is validated separately and is not required to equal the published installments."

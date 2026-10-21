@@ -28,8 +28,24 @@ export type {
   ResolvedMortgageCustomerRate
 } from './instruments/loan_subsidy'
 export { resolveMortgageCustomerRate } from './instruments/loan_subsidy'
-export type { ThmComputationInput, ThmComputationResult } from './instruments/thm'
-export { computeThmPct, expandScheduleToMonthlyPayments } from './instruments/thm'
+export type {
+  ThmCashFlow,
+  ThmComputationInput,
+  ThmComputationResult,
+  ThmFlow,
+  ThmCalculationResult
+} from './instruments/thm'
+export {
+  yearFractionEqualMonths,
+  yearFractionActualDays,
+  netDrawdownWithUpfrontCosts,
+  roundThmPercent,
+  thmPresentValue,
+  calculateThm,
+  buildThmFlowsFromMonthly,
+  computeThmPct,
+  expandScheduleToMonthlyPayments
+} from './instruments/thm'
 export {
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentCashFlows,

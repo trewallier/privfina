@@ -1,4 +1,4 @@
-specVersion: v1alpha1
+specVersion: v2alpha1
 productId: government-security.pmap.standard
 exampleId: inflation-reset-case
 title: Inflation reset PMAP example

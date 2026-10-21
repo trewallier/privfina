@@ -1,4 +1,4 @@
-specVersion: v1alpha1
+specVersion: v2alpha1
 productId: loan.fixed-rate.mortgage
 exampleId: nominal-case
 title: Nominal fixed-rate mortgage example

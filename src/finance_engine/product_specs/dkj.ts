@@ -4,11 +4,12 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 export interface DkjProductSpec {
-  specVersion: 'v1alpha1'
+  specVersion: 'v2alpha1'
   kind: 'financial-product'
   id: 'government-security.dkj.standard'
   family: 'government-security'
   variant: 'dkj'
+  productCode: 'dkj'
 }
 
 export function parseDkjProductSpecYaml(yamlText: string): unknown {
@@ -45,7 +46,7 @@ function assertValidDkjProductSpec(spec: unknown): asserts spec is DkjProductSpe
 
 export function loadDkjProductSpecYamlFromFiles(rootDir = '.'): DkjProductSpec {
   const productSpecPath = resolve(rootDir, 'docs/product-specs/products/government-securities/dkj/product.yaml')
-  const productSchemaPath = resolve(rootDir, 'docs/product-specs/schema/v1/product.schema.json')
+  const productSchemaPath = resolve(rootDir, 'docs/product-specs/schema/v2/product.schema.json')
 
   const yamlText = readFileSync(productSpecPath, 'utf8')
   const productSchemaText = readFileSync(productSchemaPath, 'utf8')

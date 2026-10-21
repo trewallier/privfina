@@ -1,8 +1,9 @@
 const BMAP_PRODUCT_SPEC = {
-  specVersion: 'v1alpha1',
+  specVersion: 'v2alpha1',
   id: 'government-security.bmap.standard',
   family: 'government-security',
   variant: 'bmap',
+  productCode: 'bmap',
   displayName: 'Bonus Hungarian Government Security',
   inputs: [
     {

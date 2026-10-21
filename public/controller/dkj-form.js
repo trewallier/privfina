@@ -1,5 +1,5 @@
 const DKJ_PRODUCT_SPEC = {
-  specVersion: 'v1alpha1',
+  specVersion: 'v2alpha1',
   id: 'government-security.dkj.standard',
   inputs: [
     {

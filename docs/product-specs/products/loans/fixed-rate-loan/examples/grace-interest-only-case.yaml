@@ -1,4 +1,4 @@
-specVersion: v1alpha1
+specVersion: v2alpha1
 productId: loan.fixed-rate.standard
 exampleId: grace-interest-only-case
 title: Fixed-rate loan with interest-only grace period

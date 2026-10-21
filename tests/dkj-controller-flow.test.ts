@@ -64,7 +64,7 @@ describe('dkj ui/controller integration seam', () => {
     expect(outputs.annualizedYieldPct).toBeCloseTo(parsed.expected.annualizedYieldPct, 8)
 
     expect(bundle.productId).toBe('government-security.dkj.standard')
-    expect(bundle.productSpecVersion).toBe('v1alpha1')
+    expect(bundle.productSpecVersion).toBe('v2alpha1')
     expect(bundle.config.subtype).toBe('dkj')
     expect(bundle.config.termMonths).toBe(12)
     expect(bundle.config.remainingDays).toBe(360)

@@ -4,11 +4,12 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 export interface BmapProductSpec {
-  specVersion: 'v1alpha1'
+  specVersion: 'v2alpha1'
   kind: 'financial-product'
   id: 'government-security.bmap.standard'
   family: 'government-security'
   variant: 'bmap'
+  productCode: 'bmap'
 }
 
 function buildValidationError(errors: string[]): Error {
@@ -45,7 +46,7 @@ function assertValidBmapProductSpec(spec: unknown): asserts spec is BmapProductS
 
 export function loadBmapProductSpecYamlFromFiles(rootDir = '.'): BmapProductSpec {
   const productSpecPath = resolve(rootDir, 'docs/product-specs/products/government-securities/bmap/product.yaml')
-  const productSchemaPath = resolve(rootDir, 'docs/product-specs/schema/v1/product.schema.json')
+  const productSchemaPath = resolve(rootDir, 'docs/product-specs/schema/v2/product.schema.json')
 
   const yamlText = readFileSync(productSpecPath, 'utf8')
   const productSchemaText = readFileSync(productSchemaPath, 'utf8')

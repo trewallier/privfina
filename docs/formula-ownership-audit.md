@@ -18,7 +18,7 @@ Inventory (by product)
   - Frontend embedded spec: `public/controller/fixed-rate-loan-product-spec.js` (parity-tested against YAML)
   - Status: spec ↔ adapter ↔ examples aligned; dual TS/JS formula copies remain until bundler convergence (ADR 0017)
 
-- Fixed-rate mortgage (`loan.fixed-rate.mortgage`) — **calc-aligned** (UI parked)
+- Fixed-rate mortgage (`loan.fixed-rate.mortgage`, family `mortgage-loan`) — **calc-aligned** (UI parked)
   - Spec: `docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml`
   - Engine primitives: same loan primitives as standard fixed-rate loan
   - Browser path: `public/controller/fixed-rate-mortgage-calculation-adapter.js` → shared `loan-legacy-bridges.js` → `createLoanRepaymentPreview`

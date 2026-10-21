@@ -4,7 +4,7 @@ A standard fixed-rate home mortgage with equal monthly payments over a fixed ter
 
 ## Scope
 
-This specification models a plain fixed-rate mortgage with level monthly payments and fixed interest rate over the full term. It demonstrates that product variants can be expressed through specification data and metadata without modifying engine logic.
+This specification models a plain fixed-rate mortgage with level monthly payments and fixed interest rate over the full term. It uses schema v2 family `mortgage-loan` with `engine.instrumentType: loan` so amortization reuses loan primitives (ADR 0020).
 
 ## Out of Scope
 

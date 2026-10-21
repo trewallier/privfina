@@ -1,8 +1,9 @@
-specVersion: v1alpha1
+specVersion: v2alpha1
 kind: financial-product
 id: loan.fixed-rate.standard
 family: loan
 variant: fixed-rate
+productCode: fixed-rate-standard
 displayName: Fixed Rate Loan
 description: Standard amortizing fixed-rate loan with equal monthly payments.
 
@@ -11,6 +12,13 @@ engine:
   rateType: fixed
   amortizationType: level-payment
   paymentFrequency: monthly
+
+subsidy:
+  type: none
+
+discounts: []
+fees: []
+eligibilityRules: []
 
 inputs:
   - name: principal

@@ -104,6 +104,7 @@ This section defines the next iteration of instrument behavior so implementation
 			- OTP 1x1 (schema v2 catalog): [docs/product-specs/products/loans/otp-1x1/product.yaml](docs/product-specs/products/loans/otp-1x1/product.yaml)
 			- OTP Zöld (schema v2 catalog): [docs/product-specs/products/loans/otp-zold/product.yaml](docs/product-specs/products/loans/otp-zold/product.yaml)
 			- Végig Fix (schema v2 catalog): [docs/product-specs/products/loans/vegig-fix/product.yaml](docs/product-specs/products/loans/vegig-fix/product.yaml)
+			- CSOK Plusz (schema v2 catalog): [docs/product-specs/products/loans/csok-plusz/product.yaml](docs/product-specs/products/loans/csok-plusz/product.yaml)
 		- Engine implementation (loan primitives): [src/finance_engine/instruments/loan.ts](src/finance_engine/instruments/loan.ts)
 		- Worked examples / living documentation and tests:
 			- Fixed-rate loan example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml) and [tests/fixed-rate-loan-example.test.ts](tests/fixed-rate-loan-example.test.ts)

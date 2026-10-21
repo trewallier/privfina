@@ -1,0 +1,227 @@
+specVersion: v2alpha1
+kind: financial-product
+id: mortgage-loan.csok-plusz.standard
+family: mortgage-loan
+variant: csok-plusz
+productCode: csok-plusz
+displayName: OTP Évnyerő CSOK Plusz Lakáshitel
+description: >
+  State-subsidized CSOK Plusz home loan from OTP Jelzálogbank with a mandatory
+  12-month interest-only grace period, customer rate fixed at 3% during subsidy,
+  and 1y → 1y → 5y interest-period structure. Conditions sourced from the OTP
+  Hirdetmény effective for applications accepted from 2026-04-20
+  (Lakáshitel H kondíció 2026-04-20), section 2.2.1.2.
+
+engine:
+  instrumentType: loan
+  rateType: state-subsidized
+  amortizationType: interest-only-then-annuity
+  paymentFrequency: monthly
+  gracePeriodMonths: 12
+  interestPeriodMonths: 12
+
+subsidy:
+  type: state-interest-subsidy
+  customerRate: 0.03
+  subsidyDurationMonths: 300
+
+loanPurposes:
+  - used-home-purchase
+  - new-home-purchase
+  - extension
+
+pricing:
+  rateSettingRule: state-subsidized-customer-rate-fixed-with-akk-linked-transactional-cap
+  notes:
+    - "Adósok által fizetendő kamat 3,00% a kamattámogatás ideje alatt (max 25 év, plus any first-child repayment pause)."
+    - "Ügyleti kamat 2026. április 1-től 7,87% (ÁKK-linked cap); 2026. május 1-től 7,90%."
+    - "Kamatperiódus: első két periódus 1-1 év, majd 5 éves periódusok a futamidő végéig."
+    - "CSOK Plusz only available with 12-month türelmi idő (interest-only then annuity)."
+    - "THM reprezentatív példa új/használt lakás vásárlásra díjkedvezmény nélkül 3,3% (12 mFt / 20 év)."
+
+discounts:
+  - name: otp-dijkedvezmenyes-folyositasi-dij-csokkentes
+    type: fee-waiver
+    value: 91.67
+    unit: percent
+    conditions:
+      - groupama-insurance-conditions-met
+      - customer-pays-8-33-percent-of-disbursement-fee-capped-at-25000-ft
+
+fees:
+  - name: folyositasi-dij
+    type: disbursement
+    value: 0.75
+    unit: percent
+    timing: upfront
+    description: >
+      CSOK Plusz folyósítási díj 0,75%, max 300.000 Ft. Under OTP Díjkedvezményes akció
+      with insurance conditions, only 8,33% of the fee (max 25.000 Ft of that share) remains payable.
+  - name: hitelbiztositeki-ertek-megallapitas
+    type: appraisal
+    value: 58765
+    unit: amount
+    timing: upfront
+    description: On-site appraisal for demand under 50 mFt (alap).
+  - name: fedezetkezelesi-koltseg
+    type: property-management
+    value: 20000
+    unit: amount
+    timing: upfront
+    description: 20.000 Ft per collateral.
+  - name: elotorlesztesi-dij
+    type: prepayment
+    value: 1
+    unit: percent
+    timing: on-event
+    description: 1,00% for CSOK Plusz.
+  - name: szerzodesmodositasi-dij
+    type: contract-modification
+    value: 51850
+    unit: amount
+    timing: on-event
+    description: Flat contract modification fee (e.g. prolongation).
+
+eligibilityRules:
+  - Eligible under 518/2023. (XI. 30.) Korm. rendelet CSOK Plusz program rules.
+  - Mortgage collateral on residential real estate is required.
+  - Property insurance meeting lender conditions is required.
+  - State interest subsidy applies only to non-overdue principal; overdue principal accrues the full ügyleti kamat.
+  - Mandatory 12-month interest-only grace at the start of the term.
+
+inputs:
+  - name: principal
+    type: number
+    label: Loan Principal
+    required: true
+    unit: currency
+    description: Approved forint principal under the CSOK Plusz program.
+    constraints:
+      minimum: 1
+
+  - name: annualInterestRatePct
+    type: number
+    label: Customer Annual Interest Rate
+    required: true
+    unit: percent
+    description: Adósok által fizetendő kamat during the subsidy period (fixed 3,00%).
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [3]
+
+  - name: transactionalAnnualRatePct
+    type: number
+    label: Transactional Annual Interest Rate
+    required: false
+    unit: percent
+    description: Ügyleti kamat (ÁKK-linked cap). April 2026 packaging uses 7,87%.
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [7.87, 7.9]
+
+  - name: termMonths
+    type: integer
+    label: Term in Months
+    required: true
+    unit: months
+    description: Full contractual term in months (includes the mandatory 12-month grace).
+    constraints:
+      minimum: 13
+      maximum: 480
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Loan start date in ISO format.
+
+  - name: gracePeriodMonths
+    type: integer
+    label: Grace Period (Months)
+    required: true
+    unit: months
+    description: Mandatory interest-only months before annuity amortization begins.
+    constraints:
+      enum: [12]
+
+  - name: loanPurpose
+    type: string
+    label: Loan Purpose
+    required: true
+    description: Purpose code affecting fees and THM presentation.
+    constraints:
+      enum:
+        - used-home-purchase
+        - new-home-purchase
+        - extension
+
+derivedVariables:
+  - name: monthlyInterestRate
+    type: number
+    label: Monthly Customer Interest Rate
+    required: false
+    unit: rate
+    description: Customer annual rate divided by 12 and converted from percent to decimal.
+
+outputs:
+  - name: graceInterestOnlyPayment
+    type: number
+    label: Grace Monthly Payment
+    required: true
+    unit: currency
+    description: Interest-only installment during the mandatory 12-month grace.
+
+  - name: monthlyPayment
+    type: number
+    label: Amortizing Monthly Installment
+    required: true
+    unit: currency
+    description: Level annuity installment from month 13 onward.
+
+  - name: paymentCount
+    type: integer
+    label: Payment Count
+    required: true
+    unit: count
+    description: Number of scheduled monthly repayments across grace and amortization.
+
+  - name: totalPaid
+    type: number
+    label: Total Paid
+    required: true
+    unit: currency
+    description: Hirdetmény total including packaged fees when taken from the representative example.
+
+  - name: thmPct
+    type: number
+    label: THM
+    required: false
+    unit: percent
+    description: Published total cost of credit indicator for the representative case.
+
+assumptions:
+  - Customer rate is fixed at 3,00% during state interest subsidy (up to 25 years, extendable by first-child repayment pause).
+  - First 12 months are interest-only; amortization begins in month 13 over the remaining term.
+  - Representative Hirdetmény example uses new/used home purchase, 12.000.000 Ft, 20 years, conditions as of 2026-04-01 packaging with 2026-04-20 Hirdetmény product rates.
+  - Engine cash-flow generation uses the shared loan grace + annuity primitives at the customer rate; Hirdetmény published installment/THM figures are retained as official representative outputs and may package fees differently from bare annuity math.
+  - Market products (otp-1x1, otp-zold, vegig-fix) and other subsidized codes are separate productCodes.
+
+ui:
+  formTitle: OTP Évnyerő CSOK Plusz Lakáshitel
+  sections:
+    - id: csok-plusz-core
+      title: Loan Inputs
+      fieldNames:
+        - principal
+        - annualInterestRatePct
+        - transactionalAnnualRatePct
+        - termMonths
+        - startDate
+        - gracePeriodMonths
+        - loanPurpose
+
+exampleRefs:
+  - ./examples/hirdetmeny-representative-home-purchase.yaml

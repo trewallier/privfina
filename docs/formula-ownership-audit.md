@@ -18,19 +18,18 @@ Inventory (by product)
   - Frontend embedded spec: `public/controller/fixed-rate-loan-product-spec.js` (parity-tested against YAML)
   - Status: spec ↔ adapter ↔ examples aligned; dual TS/JS formula copies remain until bundler convergence (ADR 0017)
 
-- Fixed-rate mortgage (`loan.fixed-rate.mortgage`, family `mortgage-loan`) — **calc-aligned** (UI parked)
+- Fixed-rate mortgage (`loan.fixed-rate.mortgage`, family `mortgage-loan`) — **calc-aligned** → target **schedule-usable** on simplified loan composer (ADR 0023)
   - Spec: `docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml`
-  - Engine primitives: same loan primitives as standard fixed-rate loan
+  - Engine primitives: same simplified loan primitives as standard fixed-rate loan
   - Browser path: `public/controller/fixed-rate-mortgage-calculation-adapter.js` → shared `loan-legacy-bridges.js` → `createLoanRepaymentPreview`
-  - Frontend embedded spec: `public/controller/fixed-rate-mortgage-product-spec.js` (parity-tested); form metadata in `fixed-rate-mortgage-form.js` is ready but not wired into `index.html` / `app-controller.js`
-  - Status: calculations and form metadata seams exist; composer UI intentionally deferred
+  - Frontend embedded spec: `public/controller/fixed-rate-mortgage-product-spec.js` (parity-tested); form metadata ready — wire as simplified-loan subtype
 
-- Hirdetmény mortgage-loan products (`otp-1x1`, `otp-zold`, `vegig-fix`, `csok-plusz`, `falusi-csok`, `otthon-start`, `videki-otthonfelujitasi`) — **calc-aligned** (UI parked)
+- Hirdetmény mortgage-loan products (`otp-1x1`, `otp-zold`, `vegig-fix`, `csok-plusz`, `falusi-csok`, `otthon-start`, `videki-otthonfelujitasi`) — **calc-aligned** → target **schedule-usable** then **commercially-usable** (ADR 0023)
   - Specs: `docs/product-specs/products/loans/<productCode>/product.yaml`
-  - Engine primitives: `loan.ts` schedule + `loan_fees.ts` / `loan_subsidy.ts` / `thm.ts` (ADR 0021)
+  - Engine primitives: `loan.ts` schedule + `loan_fees.ts` / `loan_subsidy.ts` / `thm.ts` (ADR 0021 / 0022)
   - Product-spec seam: `src/finance_engine/product_specs/mortgage_loan.ts` (shared; no per-product amortizer)
-  - Browser / composer: not wired (frontend out of scope for this promotion)
-  - Status: executable engine-lane tests in `tests/hirdetmeny-mortgage-calc-aligned.test.ts`; §6 installment/THM packaging remain dual-lane fixtures
+  - Browser / composer: commercial loan box + product picker (ROADMAP §5a); commercially-usable requires THM match (§5b)
+  - Status: executable engine tests in `tests/hirdetmeny-mortgage-calc-aligned.test.ts`; dual-lane UI retired for readiness
 
 - DKJ (`government-security.dkj.standard`) — **fully-spec-backed**
   - Spec: `docs/product-specs/products/government-securities/dkj/product.yaml`
@@ -52,9 +51,10 @@ Inventory (by product)
 Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done in this cleanup pass).
-2. Promote fixed-rate mortgage and Hirdetmény mortgage-loan products to fully-spec-backed only when dedicated composers are wired.
-3. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017.
-4. Optional follow-ons (ADR 0021 deferred): state/ügyleti subsidy cash-flow splits, multi-segment interest periods, regulatory THM day-count refinements.
+2. ROADMAP §5a: schedule-usable UI — fold fixed-rate mortgage into simplified loan composer; commercial loan picker for seven Hirdetmény products (ADR 0023).
+3. ROADMAP §5b: commercially-usable — engine THM (ADR 0022) must match published `thmPct` before public-offering promotion; no dual-lane UI.
+4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017.
+5. Deferred (out of scope for §5a/5b): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets.
 
 Notes
 -----

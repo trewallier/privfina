@@ -29,6 +29,9 @@ Scenarios / Use-cases
 - Subscription instrument setup: users can configure subscription as a recurring outflow using the same schedule capabilities as recurring inflow.
 - Loan instrument setup: users can configure principal, fixed interest, term, repayment day, whether disbursement inflow should be accounted, and optional grace period / end-of-grace interest capitalization.
 - Loan repayment preview: users can see a read-only monthly repayment value update immediately when loan inputs change, including when optional grace/capitalization options change.
+- Simplified loan variants: users can choose between the example fixed-rate loan and the example fixed-rate mortgage on one simplified loan composer (shared annuity math).
+- Commercial loan composer: users open a separate commercial-loan box, pick a public-offering mortgage product (investment-style picker), and configure a customer-perspective repayment schedule.
+- Loan product readiness (ADR 0023): schedule-usable means customer cash flows on the chart; commercially-usable additionally requires fees/THM/purpose UX and engine THM matching the published offering `thmPct` (no dual-lane display).
 - Investment instrument setup: users can configure regular bond, discount bond, and inflation-linked bond variants with finite maturity outputs.
 - Investment subtype UX: users can clearly see and switch a prominent investment subtype selector, and the form adapts visible and editable fields to the selected subtype.
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
@@ -37,7 +40,7 @@ Scenarios / Use-cases
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
-- Mortgage calc-aligned engine path (ADR 0021): Hirdetmény mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; published §6 packaging figures remain separately auditable fixtures.
+- Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023): Hirdetmény mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering readiness requires engine THM to match published `thmPct` (dual-lane UI retired).
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -124,8 +127,18 @@ Acceptance criteria
 - [x] Vidéki Otthonfelújítási (`productCode: videki-otthonfelujitasi`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 10 years / 4,87% / 63.457 Ft / THM 5,5%) locked in unit tests.
 - [x] Mortgage-loan engine applies structured product-spec fees/discounts into an upfront credit-cost package without product-specific amortization branches (ADR 0021).
 - [x] State-subsidized mortgage-loan products resolve the customer annual rate for schedule generation; interest-only-then-annuity maps to existing grace primitives.
-- [x] Fee-inclusive THM is computed from net proceeds, scheduled repayments, and packaged upfront costs; Hirdetmény §6 installment/THM packaging may differ from engine lane (dual-lane acceptance).
-- [x] All seven Hirdetmény mortgage-loan products are calc-aligned in the finance engine (executable example tests); composer UI remains out of scope.
+- [x] Fee-inclusive THM helpers exist (ADR 0021 monthly helper + ADR 0022 83/2010 calculator) for product verification.
+- [x] All seven Hirdetmény mortgage-loan products are calc-aligned in the finance engine (executable example tests).
+- [x] ADR 0023 records schedule-usable vs commercially-usable readiness, customer-perspective subsidy only, and offering-fidelity (no dual-lane UI).
+- [ ] Simplified loan composer exposes fixed-rate loan and fixed-rate mortgage as selectable variants on one form (shared simplified annuity math).
+- [ ] Commercial loan composer box exists with an investment-style product picker over the seven Hirdetmény mortgage product codes.
+- [ ] Each schedule-usable commercial product can create/edit/preview/persist a customer-perspective repayment bundle stamped with `productId` / `productSpecVersion`.
+- [ ] Purpose, eligibility, and discount conditions appear as soft hints only (no blocking validation) in the schedule-usable commercial composer.
+- [ ] Subsidized products include only customer inflows/outflows in the user balance; bank↔state settlement legs are absent.
+- [ ] Post-subsidy rate steps, when shown, are informational copy only (not simulated schedule resets) until a later epic.
+- [ ] Public-offering products must not present dual-lane (engine vs packaging) figures in the UI.
+- [ ] A public-offering product is not commercially-usable / fully-spec-backed until ADR 0022 engine THM `percentRounded` matches the example published `thmPct`.
+- [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule.
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

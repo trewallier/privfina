@@ -58,7 +58,30 @@ Out of scope for this epic
 - [x] Author remaining Hirdetmény 2026-04-20 mortgage product specs (Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) on schema v2.
 - [x] Engine primitives for structured fee/discount application, subsidy customer-rate resolution, and fee-inclusive THM (ADR 0021).
 - [x] Generic mortgage-loan product-spec mapper and calc-aligned engine-lane tests for all seven Hirdetmény mortgage products (composer UI still parked).
-- [ ] State-interest subsidy cash-flow splits and multi-segment interest-period resets (beyond customer-rate schedule).
+- [x] ADR 0022: 83/2010 THM calculator for Hirdetmény verification.
+- [x] ADR 0023: schedule-usable vs commercially-usable readiness; public-offering fidelity; customer-perspective subsidy only; dual-lane UI retired.
+
+#### 5a) Loan products — schedule-usable (customer cash flows on UI)
+Goal: all nine catalog loans can be composed so the chart reflects **customer** inflows/outflows. Soft hints for purpose / eligibility / discounts. No bank↔state subsidy legs. Post-subsidy rate steps informational only. Architecture: ADR 0023.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] Spec + catalog glossary: document `schedule-usable` and `commercially-usable`; retire dual-lane readiness language (ADR 0023 + this docs slice).
+- [ ] Simplified loan surface: fold `fixed-rate-mortgage` into the existing loan composer as a subtype/variant (shared simplified annuity math).
+- [ ] Commercial loan composer box + investment-style product picker for the seven Hirdetmény `mortgage-loan` codes.
+- [ ] Schedule-usable wiring per commercial product: form → customer-rate schedule → preview → persist bundle with `productId` / `productSpecVersion`; purpose/eligibility/discount as hints.
+- [ ] Promote catalog rows to `schedule-usable` when the above path works (Vidéki remains blocked until offering installment/principal reconciliation).
+
+#### 5b) Loan products — commercially-usable (offering fidelity)
+Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until engine THM (ADR 0022) matches published `thmPct`. Simplified examples stay on annuity primitives.
+
+Plan slices
+- [ ] Align public-offering engine packaging so ADR 0022 `percentRounded` matches example `thmPct` (and offering repayment figures) per product; quarantine clears only when reconciled.
+- [ ] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
+- [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after THM match + composer parity tests.
+
+#### 5c) Deferred (explicitly out of scope for 5a/5b)
+- [ ] Bank↔state subsidy settlement cash-flow splits (future government-cost views).
+- [ ] Multi-segment interest-period resets and post-subsidy rate steps as simulated schedule changes (informational UI copy only until then).
 - [ ] Add scenario analysis for income and expense changes.
 - [ ] Add discount-rate configuration and NPV analytics.
 - [ ] Add multi-account modeling and account-scoped cumulative summaries (future extension; current model is single-account).

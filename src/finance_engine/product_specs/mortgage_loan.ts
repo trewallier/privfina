@@ -13,7 +13,6 @@ import {
   type ProductSubsidyDefinition
 } from '../instruments/loan_subsidy'
 import {
-  createLoanRepaymentPreview,
   generateLoanInstrumentCashFlows,
   resolveLoanSchedule,
   type ResolvedLoanSchedule
@@ -228,18 +227,6 @@ export function calculateMortgageLoanFromProductSpec(
     monthlyPayments
   })
 
-  const preview = createLoanRepaymentPreview({
-    principal: specInputs.principal,
-    annualRate: resolvedRate.annualRate,
-    termMonths: specInputs.termMonths,
-    startDate: specInputs.startDate,
-    repaymentDayOfMonth:
-      specInputs.repaymentDayOfMonth ?? deriveRepaymentDayOfMonth(specInputs.startDate),
-    gracePeriodMonths,
-    capitalizeInterestAtGraceEnd: false,
-    includeDisbursement: false
-  })
-
   const totalPaid = schedule.totalRepayment + feePackage.totalCreditCostFees
 
   return {
@@ -250,7 +237,7 @@ export function calculateMortgageLoanFromProductSpec(
     graceInterestOnlyPayment:
       schedule.gracePeriodMonths > 0 ? schedule.graceInterestOnlyPayment : undefined,
     paymentCount: schedule.paymentCount,
-    totalInterest: preview.totalInterest,
+    totalInterest: schedule.totalInterest,
     totalRepayment: schedule.totalRepayment,
     totalCreditCostFees: feePackage.totalCreditCostFees,
     totalPaid,

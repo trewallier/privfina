@@ -20,5 +20,9 @@ Recent decisions
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` and `public/eval-cache.js` (invalidate on mutation; no new ADR — implementation of ROADMAP §3).
 
+When to write an ADR
+- Add an ADR for architecture, persistence, hosting, schema majors, or calculation-strategy boundaries.
+- Do **not** create an ADR merely to introduce a new product YAML; follow [`../dev-playbooks/product-lifecycle.md`](../dev-playbooks/product-lifecycle.md) and register the product in the catalog. Agent entry: [`../../AGENTS.md`](../../AGENTS.md).
+
 How to create
 - Use the `docs/adr/template.md` or the `create-adr.prompt.md` helper in `.github/prompts/`.

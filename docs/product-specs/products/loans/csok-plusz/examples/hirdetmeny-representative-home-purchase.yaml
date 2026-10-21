@@ -1,0 +1,37 @@
+specVersion: v2alpha1
+productId: mortgage-loan.csok-plusz.standard
+exampleId: hirdetmeny-representative-home-purchase
+title: Hirdetmény representative CSOK Plusz home purchase
+description: >
+  Official representative example from section 6 of the OTP forint home-loan
+  Hirdetmény (valid packaging for applications from 2026-04-20; example basis
+  dated 2026-04-01): 12.000.000 Ft, 20 years, new/used home purchase, CSOK Plusz
+  at 3,00% customer rate with mandatory 12-month interest-only grace.
+
+inputs:
+  principal: 12000000
+  annualInterestRatePct: 3
+  transactionalAnnualRatePct: 7.87
+  termMonths: 240
+  startDate: 2026-04-01
+  gracePeriodMonths: 12
+  loanPurpose: new-home-purchase
+
+expected:
+  paymentCount: 240
+  graceInterestOnlyPayment: 30416
+  monthlyPayment: 69362
+  amortizingFromMonth: 13
+  totalPaid: 16373440
+  totalCreditCostFees: 193965
+  thmPct: 3.3
+  rateType: state-subsidized-with-5y-interest-periods
+  contractualAnnualRatePct: 3
+  transactionalAnnualRatePct: 7.87
+  subsidyDurationMonths: 300
+
+notes:
+  - "Source: Lakáshitel_H_kondicio_20260420, §6 Reprezentatív példák, OTP Évnyerő CSOK Plusz Lakáshitel / új / használt lakás vásárlás."
+  - "Grace months 1–12 publish 30.416 Ft/hó; from month 13 the amortizing installment is 69.362 Ft/hó."
+  - "totalPaid includes 193.965 Ft fee/cost component from the Hirdetmény packaging."
+  - "Bare engine grace+annuity at 3,00% / 12 monthly compounding is validated separately in unit tests and is not required to equal the published installments."

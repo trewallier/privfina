@@ -1,18 +1,28 @@
 const FIXED_RATE_MORTGAGE_PRODUCT_SPEC = {
-  specVersion: 'v1alpha1',
+  specVersion: 'v2alpha1',
   kind: 'financial-product',
   id: 'loan.fixed-rate.mortgage',
-  family: 'loan',
+  family: 'mortgage-loan',
   variant: 'fixed-rate',
+  productCode: 'fixed-rate-mortgage',
   displayName: 'Fixed Rate Mortgage',
-  description:
-    'Standard fixed-rate mortgage with equal monthly payments over the full loan term.',
+  description: 'Standard fixed-rate mortgage with equal monthly payments over the full loan term.',
   engine: {
     instrumentType: 'loan',
     rateType: 'fixed',
     amortizationType: 'level-payment',
     paymentFrequency: 'monthly'
   },
+  subsidy: {
+    type: 'none'
+  },
+  loanPurposes: [
+    'used-home-purchase',
+    'new-home-purchase'
+  ],
+  discounts: [],
+  fees: [],
+  eligibilityRules: [],
   inputs: [
     {
       name: 'principal',
@@ -65,8 +75,7 @@ const FIXED_RATE_MORTGAGE_PRODUCT_SPEC = {
       label: 'Monthly Interest Rate',
       required: false,
       unit: 'rate',
-      description:
-        'Annual mortgage rate divided by 12 and converted from percent to decimal.'
+      description: 'Annual mortgage rate divided by 12 and converted from percent to decimal.'
     }
   ],
   outputs: [
@@ -116,11 +125,19 @@ const FIXED_RATE_MORTGAGE_PRODUCT_SPEC = {
       {
         id: 'mortgage-core',
         title: 'Mortgage Inputs',
-        fieldNames: ['principal', 'annualInterestRatePct', 'termMonths', 'startDate']
+        fieldNames: [
+          'principal',
+          'annualInterestRatePct',
+          'termMonths',
+          'startDate'
+        ]
       }
     ]
   },
-  exampleRefs: ['./examples/nominal-case.yaml', './examples/long-term-case.yaml']
+  exampleRefs: [
+    './examples/nominal-case.yaml',
+    './examples/long-term-case.yaml'
+  ]
 }
 
 export { FIXED_RATE_MORTGAGE_PRODUCT_SPEC }

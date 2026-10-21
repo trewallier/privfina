@@ -56,7 +56,7 @@ describe('pmap ui/controller integration seam', () => {
 
     expect(outputs).toEqual(parsed.expected)
     expect(bundle.productId).toBe('government-security.pmap.standard')
-    expect(bundle.productSpecVersion).toBe('v1alpha1')
+    expect(bundle.productSpecVersion).toBe('v2alpha1')
     expect(bundle.config.subtype).toBe('inflation-linked-bond')
     expect(bundle.config.spreadRate).toBeCloseTo(0.005, 8)
     expect(bundle.generatedFlows).toHaveLength(2)

@@ -50,6 +50,9 @@ Out of scope for this epic
 - [ ] Add daily, weekly, and monthly liquidity projections.
 - [ ] Add inflation-linked and bond-rate-linked interest rules.
 - [x] Support grace periods and end-term interest capitalization.
+- [x] Product-spec schema v2 for expandable loan/mortgage products (open `variant`, `productCode`, subsidy/fees/discounts/purposes/eligibility; ADR 0020).
+- [ ] Author concrete state-supported mortgage product specs (CSOK Plus, Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási, green / végig-fix style codes) on schema v2.
+- [ ] Engine primitives for state-interest subsidy and structured fee/discount application driven by product specs.
 - [ ] Add scenario analysis for income and expense changes.
 - [ ] Add discount-rate configuration and NPV analytics.
 - [ ] Add multi-account modeling and account-scoped cumulative summaries (future extension; current model is single-account).

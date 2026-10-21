@@ -17,7 +17,7 @@ describe('fixed-rate loan product spec integration', () => {
       'docs/product-specs/products/loans/fixed-rate-loan/product.yaml'
     )
     const productSchema = JSON.parse(
-      readRepoFile('docs/product-specs/schema/v1/product.schema.json')
+      readRepoFile('docs/product-specs/schema/v2/product.schema.json')
     )
 
     const spec = loadFixedRateLoanProductSpec(productYamlText, productSchema)
@@ -25,6 +25,7 @@ describe('fixed-rate loan product spec integration', () => {
     expect(spec.id).toBe('loan.fixed-rate.standard')
     expect(spec.family).toBe('loan')
     expect(spec.variant).toBe('fixed-rate')
+    expect(spec.productCode).toBe('fixed-rate-standard')
   })
 
   it('uses existing loan calculation path with same output as manual loan input', () => {
@@ -32,7 +33,7 @@ describe('fixed-rate loan product spec integration', () => {
       'docs/product-specs/products/loans/fixed-rate-loan/product.yaml'
     )
     const productSchema = JSON.parse(
-      readRepoFile('docs/product-specs/schema/v1/product.schema.json')
+      readRepoFile('docs/product-specs/schema/v2/product.schema.json')
     )
     const spec = loadFixedRateLoanProductSpec(productYamlText, productSchema)
 

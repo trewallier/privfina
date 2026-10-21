@@ -1,8 +1,9 @@
 const PMAP_PRODUCT_SPEC = {
-  specVersion: 'v1alpha1',
+  specVersion: 'v2alpha1',
   id: 'government-security.pmap.standard',
   family: 'government-security',
   variant: 'pmap',
+  productCode: 'pmap',
   displayName: 'Premium Hungarian Government Security',
   inputs: [
     {

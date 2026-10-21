@@ -5,11 +5,12 @@ import type { CashFlow } from '../models'
 import { generateLoanInstrumentCashFlows } from '../instruments/loan'
 
 export interface FixedRateLoanProductSpec {
-  specVersion: 'v1alpha1'
+  specVersion: 'v2alpha1'
   kind: 'financial-product'
   id: 'loan.fixed-rate.standard'
   family: 'loan'
   variant: 'fixed-rate'
+  productCode: 'fixed-rate-standard'
 }
 
 export interface FixedRateLoanSpecInputs {

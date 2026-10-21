@@ -80,6 +80,7 @@ The repository has completed the first product-spec migration wave for the catal
 - **ADR 0014**: Specification-by-Example—specifies the worked example contract.
 - **ADR 0015**: Data-Driven Product Variants—establishes engine primitives vs. product variants ownership.
 - **ADR 0016**: Product Specification Validation and UI Schema—defines validation and UI metadata ownership.
+- **ADR 0020**: Product Spec Schema v2—freezes v1; active contract is `v2alpha1` with expandable loan/mortgage identity and commercial constructs.
 - **docs/spec.md**: Living functional specification; describes v1 scenarios and assumptions.
 - **DESIGN.md**: Architectural rationale and domain concepts; does not enumerate all product details (those live in specs).
 - **docs/product-specs/README.md**: Folder conventions and usage.

@@ -24,7 +24,7 @@ describe('import/export schema v4', () => {
       id: 'loan-roundtrip-1',
       label: 'Car loan',
       productId: 'loan.fixed-rate.standard',
-      productSpecVersion: 'v1alpha1',
+      productSpecVersion: 'v2alpha1',
       principal: 1200,
       annualRate: 0,
       termValue: 3,
@@ -107,7 +107,7 @@ describe('import/export schema v4', () => {
       label: 'Legacy loan',
       config: {
         productId: 'loan.fixed-rate.standard',
-        productSpecVersion: 'v1alpha1',
+        productSpecVersion: 'v2alpha1',
         principal: 1000
       },
       generatedFlows: [

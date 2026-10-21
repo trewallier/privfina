@@ -17,7 +17,7 @@ describe('fixed-rate loan example as executable specification', () => {
       'docs/product-specs/products/loans/fixed-rate-loan/product.yaml'
     )
     const productSchema = JSON.parse(
-      readRepoFile('docs/product-specs/schema/v1/product.schema.json')
+      readRepoFile('docs/product-specs/schema/v2/product.schema.json')
     )
     return loadFixedRateLoanProductSpec(productYamlText, productSchema)
   }

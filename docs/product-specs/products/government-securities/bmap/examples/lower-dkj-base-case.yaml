@@ -1,4 +1,4 @@
-specVersion: v1alpha1
+specVersion: v2alpha1
 productId: government-security.bmap.standard
 exampleId: lower-dkj-base-case
 title: Lower DKJ base-yield BMAP example

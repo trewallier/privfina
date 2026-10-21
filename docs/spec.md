@@ -36,6 +36,7 @@ Scenarios / Use-cases
 - Investment field guidance UX: users can open and close inline definition bubbles from input-title info icons.
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
+- Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -110,6 +111,10 @@ Acceptance criteria
 - [x] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data (current export schema v4; v1–v3 migrate in).
 - [x] Import trusts stored instrument `generatedFlows` (no silent regenerate); migrations only fill lineage/product-spec metadata (ADR 0018).
 - [x] Evaluation-result cache covers recurring evaluate/expand and instrument range slices, with explicit invalidation on definition/bundle mutations.
+- [x] Product specifications validate against schema v2 (`specVersion: v2alpha1`) with families `loan`, `mortgage-loan`, and `government-security` (ADR 0020).
+- [x] Product identity uses free-form `variant` plus required `productCode`; schema v1 remains frozen and is not extended for new loan/mortgage constructs.
+- [x] Product schema v2 accepts structured optional `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing` blocks so future retail mortgage products can be authored as data.
+- [ ] Concrete state-supported mortgage product folders (for example CSOK Plus, Falusi CSOK, Otthon Start) are authored under `docs/product-specs/products/` using schema v2 fields (roadmap follow-on; schema readiness is in place).
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

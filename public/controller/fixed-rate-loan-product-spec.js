@@ -1,9 +1,10 @@
 const FIXED_RATE_LOAN_PRODUCT_SPEC = {
-  specVersion: 'v1alpha1',
+  specVersion: 'v2alpha1',
   kind: 'financial-product',
   id: 'loan.fixed-rate.standard',
   family: 'loan',
   variant: 'fixed-rate',
+  productCode: 'fixed-rate-standard',
   displayName: 'Fixed Rate Loan',
   description: 'Standard amortizing fixed-rate loan with equal monthly payments.',
   engine: {
@@ -12,6 +13,12 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
     amortizationType: 'level-payment',
     paymentFrequency: 'monthly'
   },
+  subsidy: {
+    type: 'none'
+  },
+  discounts: [],
+  fees: [],
+  eligibilityRules: [],
   inputs: [
     {
       name: 'principal',
@@ -71,8 +78,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       type: 'boolean',
       label: 'Capitalize Interest at End of Grace',
       required: false,
-      description:
-        'With a positive grace period, adds unpaid grace interest to principal at grace end instead of interest-only payments.'
+      description: 'With a positive grace period, adds unpaid grace interest to principal at grace end instead of interest-only payments.'
     }
   ],
   derivedVariables: [
@@ -135,12 +141,20 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
       {
         id: 'loan-core',
         title: 'Loan Inputs',
-        fieldNames: ['principal', 'annualInterestRatePct', 'termMonths', 'startDate']
+        fieldNames: [
+          'principal',
+          'annualInterestRatePct',
+          'termMonths',
+          'startDate'
+        ]
       },
       {
         id: 'loan-options',
         title: 'Optional Repayment Options',
-        fieldNames: ['gracePeriodMonths', 'capitalizeInterestAtGraceEnd']
+        fieldNames: [
+          'gracePeriodMonths',
+          'capitalizeInterestAtGraceEnd'
+        ]
       }
     ]
   },

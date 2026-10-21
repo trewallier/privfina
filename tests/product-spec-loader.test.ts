@@ -12,10 +12,11 @@ describe('fixed-rate loan product spec loader seam', () => {
   it('loads and validates fixed-rate-loan product spec from repository files', () => {
     const spec = loadFixedRateLoanProductSpecFromFiles()
 
-    expect(spec.specVersion).toBe('v1alpha1')
+    expect(spec.specVersion).toBe('v2alpha1')
     expect(spec.id).toBe('loan.fixed-rate.standard')
     expect(spec.family).toBe('loan')
     expect(spec.variant).toBe('fixed-rate')
+    expect(spec.productCode).toBe('fixed-rate-standard')
   })
 
   it('returns stable top-level fields for later frontend and adapter seams', () => {
@@ -39,11 +40,12 @@ describe('fixed-rate loan product spec loader seam', () => {
       writeFileSync(
         invalidSpecPath,
         [
-          'specVersion: v1alpha1',
+          'specVersion: v2alpha1',
           'kind: financial-product',
           'id: loan.fixed-rate.standard',
           'family: loan',
           'variant: fixed-rate',
+          'productCode: fixed-rate-standard',
           'displayName: Invalid Fixed Rate Loan',
           'engine:',
           '  instrumentType: loan',

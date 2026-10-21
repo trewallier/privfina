@@ -1,4 +1,4 @@
-specVersion: v1alpha1
+specVersion: v2alpha1
 productId: government-security.dkj.standard
 exampleId: nominal-case
 title: Nominal DKJ example

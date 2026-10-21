@@ -1,4 +1,4 @@
-specVersion: v1alpha1
+specVersion: v2alpha1
 productId: government-security.bmap.standard
 exampleId: nominal-case
 title: Nominal BMAP example

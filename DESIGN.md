@@ -51,7 +51,17 @@ An instrument is a source of one or more cash flows.
 - `Loan`: principal flows, scheduled repayments, and interest rules
 - `Investment`: contributions, distributions, and valuation-related flows
 
-The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, and investment subtypes (see `src/finance_engine/instruments/` and the browser path in `public/instruments.js`). Product-specific contracts for cataloged loans and government securities live under `docs/product-specs/` (ADR 0013–0016).
+The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, and investment subtypes (see `src/finance_engine/instruments/` and the browser path in `public/instruments.js`). Product-specific contracts for cataloged loans, mortgage loans, and government securities live under `docs/product-specs/` (ADR 0013–0016, schema v2 / ADR 0020).
+
+### Product Specification Schema (v2)
+
+- Active validation contract: `docs/product-specs/schema/v2/` with `specVersion: v2alpha1`.
+- Schema v1 is frozen; do not add new loan/mortgage commercial fields there.
+- Product identity: free-form `variant` (label) plus required `productCode` (stable id such as `csok-plusz` or `dkj`).
+- Families: `loan`, `mortgage-loan`, `government-security`. Mortgage products keep `engine.instrumentType: loan` so they reuse loan amortization primitives.
+- Commercial constructs (optional on a product): `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing`. Prefer these over new top-level one-off fields.
+- Legacy government-security top-level fields (`issuanceModel`, `rateSettingRule`, …) remain valid in v2alpha1; full relocation into `pricing` alone is deferred.
+- Engine code stays primitive-focused (ADR 0015); schema readiness does not by itself implement subsidized cash-flow math.
 
 ### Instrument Design (planned v1 expansion)
 
@@ -99,7 +109,7 @@ This section defines the next iteration of instrument behavior so implementation
 	- optional one-time disbursement inflow at start
 	- optional interest-only outflows during grace (when capitalization is off)
 	- fixed monthly amortizing repayment outflows over the post-grace term
-- Future extensions (not in this iteration): one-time and recurring fee flows, early full repayment rules, and associated penalties.
+- Future extensions (not in this iteration): one-time and recurring fee flows driven from product-spec `fees`, early full repayment rules, state-interest subsidy cash-flow splits from `subsidy`, and associated penalties. Schema v2 already accepts those product fields so catalog authoring can precede engine support.
 
 #### Investment (stateful by product rules, finite maturity first)
 

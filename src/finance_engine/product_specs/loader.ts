@@ -4,7 +4,7 @@ import { loadFixedRateLoanProductSpec } from './fixed_rate_loan'
 
 export const DEFAULT_FIXED_RATE_LOAN_PRODUCT_SPEC_PATH =
   'docs/product-specs/products/loans/fixed-rate-loan/product.yaml'
-export const DEFAULT_PRODUCT_SCHEMA_PATH = 'docs/product-specs/schema/v1/product.schema.json'
+export const DEFAULT_PRODUCT_SCHEMA_PATH = 'docs/product-specs/schema/v2/product.schema.json'
 
 export interface ProductSpecFieldDefinition {
   name: string
@@ -28,6 +28,7 @@ export interface NormalizedFixedRateLoanProductSpec {
   id: string
   family: string
   variant: string
+  productCode: string
   displayName: string
   engine: Record<string, unknown>
   inputs: ProductSpecFieldDefinition[]
@@ -124,6 +125,7 @@ function normalizeFixedRateLoanProductSpec(spec: unknown): NormalizedFixedRateLo
     id: asString(candidate.id, 'id'),
     family: asString(candidate.family, 'family'),
     variant: asString(candidate.variant, 'variant'),
+    productCode: asString(candidate.productCode, 'productCode'),
     displayName: asString(candidate.displayName, 'displayName'),
     engine: asObject(candidate.engine, 'engine'),
     inputs: asFieldDefinitions(candidate.inputs, 'inputs'),

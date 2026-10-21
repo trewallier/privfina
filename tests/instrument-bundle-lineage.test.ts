@@ -32,9 +32,9 @@ describe('instrument bundle lineage contract', () => {
     })
 
     expect(bundle.productId).toBe('loan.fixed-rate.standard')
-    expect(bundle.productSpecVersion).toBe('v1alpha1')
+    expect(bundle.productSpecVersion).toBe('v2alpha1')
     expect(bundle.config.productId).toBe('loan.fixed-rate.standard')
-    expect(bundle.config.productSpecVersion).toBe('v1alpha1')
+    expect(bundle.config.productSpecVersion).toBe('v2alpha1')
     expect(bundle.generatedFlows.length).toBeGreaterThan(1)
     expect(bundle.generatedFlows[0]).toMatchObject({
       id: 'loan-fixed-1-flow-0',
@@ -81,14 +81,14 @@ describe('instrument bundle lineage contract', () => {
       label: 'Legacy bond',
       config: {
         productId: 'government-security.dkj.standard',
-        productSpecVersion: 'v1alpha1',
+        productSpecVersion: 'v2alpha1',
         subtype: 'dkj'
       },
       generatedFlows: [{ date: '2026-01-01', amount: 100, direction: 'outflow', category: 'investment' }]
     })
 
     expect(normalized?.productId).toBe('government-security.dkj.standard')
-    expect(normalized?.productSpecVersion).toBe('v1alpha1')
+    expect(normalized?.productSpecVersion).toBe('v2alpha1')
     expect(normalized?.generatedFlows[0]).toMatchObject({
       id: 'inv-legacy-flow-0',
       sourceInstrumentId: 'inv-legacy',
@@ -185,7 +185,7 @@ describe('instrument bundle lineage contract', () => {
       repaymentDayOfMonth: 1,
       includeDisbursement: true,
       productId: 'loan.fixed-rate.standard',
-      productSpecVersion: 'v1alpha1'
+      productSpecVersion: 'v2alpha1'
     })
     const investment = createInvestmentInstrumentBundle({
       id: 'ts-inv-1',
@@ -196,7 +196,7 @@ describe('instrument bundle lineage contract', () => {
       annualRate: 0.05,
       purchasePrice: 950,
       productId: 'investment.regular-bond',
-      productSpecVersion: 'v1alpha1'
+      productSpecVersion: 'v2alpha1'
     })
 
     expect(loan.generatedFlows[0]).toMatchObject({
@@ -211,7 +211,7 @@ describe('instrument bundle lineage contract', () => {
       sourceInstrumentId: 'ts-inv-1',
       sourceInstrumentType: 'investment'
     })
-    expect(investment.productSpecVersion).toBe('v1alpha1')
+    expect(investment.productSpecVersion).toBe('v2alpha1')
   })
 
   it('stamps lineage for investment generation without a product-spec id', () => {

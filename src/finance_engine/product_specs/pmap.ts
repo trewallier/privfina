@@ -4,11 +4,12 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 export interface PmapProductSpec {
-  specVersion: 'v1alpha1'
+  specVersion: 'v2alpha1'
   kind: 'financial-product'
   id: 'government-security.pmap.standard'
   family: 'government-security'
   variant: 'pmap'
+  productCode: 'pmap'
 }
 
 export function parsePmapProductSpecYaml(yamlText: string): unknown {
@@ -45,7 +46,7 @@ function assertValidPmapProductSpec(spec: unknown): asserts spec is PmapProductS
 
 export function loadPmapProductSpecYamlFromFiles(rootDir = '.'): PmapProductSpec {
   const productSpecPath = resolve(rootDir, 'docs/product-specs/products/government-securities/pmap/product.yaml')
-  const productSchemaPath = resolve(rootDir, 'docs/product-specs/schema/v1/product.schema.json')
+  const productSchemaPath = resolve(rootDir, 'docs/product-specs/schema/v2/product.schema.json')
 
   const yamlText = readFileSync(productSpecPath, 'utf8')
   const productSchemaText = readFileSync(productSchemaPath, 'utf8')

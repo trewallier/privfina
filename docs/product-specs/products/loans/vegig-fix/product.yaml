@@ -1,0 +1,231 @@
+specVersion: v2alpha1
+kind: financial-product
+id: mortgage-loan.vegig-fix.standard
+family: mortgage-loan
+variant: vegig-fix
+productCode: vegig-fix
+displayName: Végig Fix Lakáshitel
+description: >
+  OTP Jelzálogbank market forint home loan with a contractual rate fixed for the
+  full term (Egyszeri kamatcsökkentéssel). Conditions sourced from the OTP
+  Hirdetmény effective for applications accepted from 2026-04-20
+  (Lakáshitel H kondíció 2026-04-20), section 2.1.3.
+
+engine:
+  instrumentType: loan
+  rateType: fixed
+  amortizationType: level-payment
+  paymentFrequency: monthly
+  gracePeriodMonths: 0
+  interestPeriodMonths: 240
+
+subsidy:
+  type: none
+
+loanPurposes:
+  - used-home-purchase
+  - new-home-purchase
+  - construction
+  - renovation
+  - modernization
+  - extension
+  - refinancing
+
+pricing:
+  rateSettingRule: fixed-for-full-term-with-optional-loyalty-and-employee-discounts
+  notes:
+    - "Ügyleti kamat 8,49% a futamidő végéig fix (Hirdetmény 2.1.3, 2026-04-20)."
+    - "THM reprezentatív példa használt lakás vásárlásra díjkedvezmény nélkül 9,2% (12 mFt / 20 év)."
+    - "Optional 12-month interest-only türelmi idő is available on the product family but is not the representative annuity case."
+
+discounts:
+  - name: huseg-szolgaltatas
+    type: rate-discount
+    value: 120
+    unit: bp
+    conditions:
+      - loyalty-service-income-routing
+      - max-discount-band-0-to-1.2-percent
+  - name: otp-dijkedvezmenyes-folyositasi-dij-csokkentes
+    type: fee-waiver
+    value: 87.5
+    unit: percent
+    conditions:
+      - groupama-insurance-conditions-met
+      - customer-pays-12-5-percent-of-disbursement-fee-capped-at-25000-ft
+  - name: egyszeri-kamatcsokkentes-dij-elengedes
+    type: fee-waiver
+    value: 100
+    unit: percent
+    conditions:
+      - promotional-action-active
+
+fees:
+  - name: folyositasi-dij
+    type: disbursement
+    value: 0.75
+    unit: percent
+    timing: upfront
+    description: >
+      0,75%, max 200.000 Ft. Under OTP Díjkedvezményes akció with insurance conditions,
+      only 12,50% of the fee (max 25.000 Ft of that share) remains payable.
+  - name: hitelbiztositeki-ertek-megallapitas
+    type: appraisal
+    value: 58765
+    unit: amount
+    timing: upfront
+    description: On-site appraisal for demand under 50 mFt (alap); action may cap customer pay at 35.000 Ft.
+  - name: azonnali-ertekbecsles
+    type: appraisal
+    value: 21980
+    unit: amount
+    timing: upfront
+    description: Statistical instant appraisal; waived under OTP Díjkedvezményes akció for one property.
+  - name: fedezetkezelesi-koltseg
+    type: property-management
+    value: 20000
+    unit: amount
+    timing: upfront
+    description: 20.000 Ft per collateral.
+  - name: egyszeri-kamatcsokkentes-dij
+    type: other
+    value: 2
+    unit: percent
+    timing: upfront
+    description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for Végig Fix.
+  - name: elotorlesztesi-dij
+    type: prepayment
+    value: 1.5
+    unit: percent
+    timing: on-event
+    description: 1,5% on or within a rate period.
+  - name: szerzodesmodositasi-dij
+    type: contract-modification
+    value: 51850
+    unit: amount
+    timing: on-event
+    description: Flat contract modification fee (e.g. prolongation).
+
+eligibilityRules:
+  - Mortgage collateral on residential real estate is required.
+  - Property insurance meeting lender conditions is required.
+  - Optional loyalty rate discount requires qualifying income routed to OTP repayment and/or linked retail accounts.
+
+inputs:
+  - name: principal
+    type: number
+    label: Loan Principal
+    required: true
+    unit: currency
+    description: Approved forint principal disbursed for the home-loan purpose.
+    constraints:
+      minimum: 1
+
+  - name: annualInterestRatePct
+    type: number
+    label: Contractual Annual Interest Rate
+    required: true
+    unit: percent
+    description: Fixed ügyleti kamat for the full term before optional loyalty/employee discounts.
+    constraints:
+      minimum: 0
+      maximum: 100
+      enum: [8.49]
+
+  - name: termMonths
+    type: integer
+    label: Term in Months
+    required: true
+    unit: months
+    description: Full contractual term in months.
+    constraints:
+      minimum: 12
+      maximum: 480
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: true
+    unit: date
+    description: Loan start date in ISO format.
+
+  - name: loanPurpose
+    type: string
+    label: Loan Purpose
+    required: true
+    description: Purpose code affecting fees and THM presentation.
+    constraints:
+      enum:
+        - used-home-purchase
+        - new-home-purchase
+        - construction
+        - renovation
+        - modernization
+        - extension
+        - refinancing
+
+derivedVariables:
+  - name: monthlyInterestRate
+    type: number
+    label: Monthly Interest Rate
+    required: false
+    unit: rate
+    description: Annual contractual rate divided by 12 and converted from percent to decimal.
+
+outputs:
+  - name: monthlyPayment
+    type: number
+    label: Monthly Installment
+    required: true
+    unit: currency
+    description: Level monthly annuity installment after any optional grace period.
+
+  - name: paymentCount
+    type: integer
+    label: Payment Count
+    required: true
+    unit: count
+    description: Number of scheduled monthly repayments.
+
+  - name: totalInterest
+    type: number
+    label: Total Interest
+    required: true
+    unit: currency
+    description: Total interest paid over the full term (engine annuity path).
+
+  - name: totalPaid
+    type: number
+    label: Total Paid
+    required: true
+    unit: currency
+    description: Sum of scheduled repayments (engine) or Hirdetmény total including packaged fees when taken from the representative example.
+
+  - name: thmPct
+    type: number
+    label: THM
+    required: false
+    unit: percent
+    description: Published total cost of credit indicator for the representative case.
+
+assumptions:
+  - Contractual rate is fixed for the full term at 8,49% unless loyalty/employee discounts apply.
+  - Representative Hirdetmény example uses used-home purchase, 12.000.000 Ft, 20 years, annuity repayment, single disbursement, conditions as of 2026-04-01 packaging with 2026-04-20 Hirdetmény product rates.
+  - Optional 12-month interest-only grace exists on the market-loan family but is out of scope for the representative annuity example.
+  - Engine cash-flow generation uses the shared fixed-rate loan annuity primitive; Hirdetmény published installment/THM figures are retained as official representative outputs and may package fees differently from bare annuity math.
+  - OTP 1x1, OTP Zöld, and subsidized constructions are separate productCodes.
+
+ui:
+  formTitle: Végig Fix Lakáshitel
+  sections:
+    - id: vegig-fix-core
+      title: Loan Inputs
+      fieldNames:
+        - principal
+        - annualInterestRatePct
+        - termMonths
+        - startDate
+        - loanPurpose
+
+exampleRefs:
+  - ./examples/hirdetmeny-representative-used-home.yaml

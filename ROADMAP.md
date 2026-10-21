@@ -53,7 +53,8 @@ Out of scope for this epic
 - [x] Product-spec schema v2 for expandable loan/mortgage products (open `variant`, `productCode`, subsidy/fees/discounts/purposes/eligibility; ADR 0020).
 - [x] Author OTP 1x1 mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
 - [x] Author OTP Zöld mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
-- [ ] Author remaining mortgage product specs (CSOK Plus, Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási, Végig Fix) on schema v2.
+- [x] Author Végig Fix mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
+- [ ] Author remaining mortgage product specs (CSOK Plus, Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) on schema v2.
 - [ ] Engine primitives for state-interest subsidy and structured fee/discount application driven by product specs.
 - [ ] Add scenario analysis for income and expense changes.
 - [ ] Add discount-rate configuration and NPV analytics.

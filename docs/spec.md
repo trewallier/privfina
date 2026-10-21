@@ -116,7 +116,8 @@ Acceptance criteria
 - [x] Product schema v2 accepts structured optional `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing` blocks so future retail mortgage products can be authored as data.
 - [x] OTP 1x1 (`productCode: otp-1x1`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% / 101.128 Ft installment) locked in unit tests.
 - [x] OTP Zöld (`productCode: otp-zold`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% with 50 bp green discount / 101.128 Ft installment / THM 8,5%) locked in unit tests.
-- [ ] Remaining state-supported mortgage product folders (CSOK Plus, Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási, Végig Fix) are authored under `docs/product-specs/products/` using schema v2 fields.
+- [x] Végig Fix (`productCode: vegig-fix`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 8,49% / 104.960 Ft installment / THM 9,2%) locked in unit tests.
+- [ ] Remaining state-supported mortgage product folders (CSOK Plus, Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) are authored under `docs/product-specs/products/` using schema v2 fields.
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

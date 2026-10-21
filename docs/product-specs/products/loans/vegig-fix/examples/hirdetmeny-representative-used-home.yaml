@@ -1,0 +1,30 @@
+specVersion: v2alpha1
+productId: mortgage-loan.vegig-fix.standard
+exampleId: hirdetmeny-representative-used-home
+title: Hirdetmény representative Végig Fix used-home purchase
+description: >
+  Official representative example from section 6 of the OTP forint home-loan
+  Hirdetmény (valid packaging for applications from 2026-04-20; example basis
+  dated 2026-04-01): 12.000.000 Ft, 20 years, used-home purchase, Végig Fix at
+  8,49% fixed for the full term.
+
+inputs:
+  principal: 12000000
+  annualInterestRatePct: 8.49
+  termMonths: 240
+  startDate: 2026-04-01
+  loanPurpose: used-home-purchase
+
+expected:
+  paymentCount: 240
+  monthlyPayment: 104960
+  totalPaid: 25384365
+  totalCreditCostFees: 193965
+  thmPct: 9.2
+  rateType: fixed-for-full-term
+  contractualAnnualRatePct: 8.49
+
+notes:
+  - "Source: Lakáshitel_H_kondicio_20260420, §6 Reprezentatív példák, Végig Fix Lakáshitel / használt lakás vásárlás."
+  - "monthlyPayment and totalPaid are the published Hirdetmény figures (installment includes the bank's representative packaging; totalPaid includes 193.965 Ft fee/cost component)."
+  - "Bare engine annuity at 8,49% / 12 monthly compounding is validated separately in unit tests and is not required to equal the published installment."

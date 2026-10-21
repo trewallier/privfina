@@ -206,6 +206,16 @@
         background: var(--accent-soft);
       }
 
+      .field-help-static {
+        margin: 0.35rem 0 0.75rem;
+        padding: 0.55rem 0.7rem;
+        font-size: 0.9rem;
+        line-height: 1.35;
+        color: var(--muted, #5b6573);
+        background: color-mix(in srgb, var(--surface, #fff) 88%, var(--border, #d7dde7));
+        border-radius: 6px;
+      }
+
       .field-help {
         position: relative;
         margin-top: 4px;
@@ -770,7 +780,8 @@
             <button id="open-recurring-box" class="primary" type="button">+ Recurring Flow</button>
             <button id="open-salary-box" class="primary" type="button">+ Salary Instrument</button>
             <button id="open-subscription-box" class="primary" type="button">+ Subscription Instrument</button>
-            <button id="open-loan-box" class="primary" type="button">+ Loan Instrument</button>
+            <button id="open-loan-box" class="primary" type="button">+ Simplified Loan</button>
+            <button id="open-commercial-loan-box" class="primary" type="button">+ Commercial Loan</button>
             <button id="open-investment-box" class="primary" type="button">+ Investment Instrument</button>
           </div>
 
@@ -779,7 +790,8 @@
             <button class="primary" type="button" data-add-type="recurring">Recurring flow</button>
             <button class="primary" type="button" data-add-type="salary">Salary instrument</button>
             <button class="primary" type="button" data-add-type="subscription">Subscription instrument</button>
-            <button class="primary" type="button" data-add-type="loan">Loan instrument</button>
+            <button class="primary" type="button" data-add-type="loan">Simplified loan</button>
+            <button class="primary" type="button" data-add-type="commercial-loan">Commercial loan</button>
             <button class="primary" type="button" data-add-type="investment">Investment instrument</button>
           </div>
 
@@ -1013,12 +1025,21 @@
             <details id="loan-box" class="flow-box">
               <summary>
                 <span class="summary-main">
-                  <span class="summary-title">Loan Instrument</span>
+                  <span class="summary-title">Simplified Loan</span>
                 </span>
-                <span class="summary-hint">Annuity preview updates live</span>
+                <span class="summary-hint">Example annuity products · live preview</span>
               </summary>
               <div class="flow-form-wrap">
                 <form id="loan-form">
+                  <div class="investment-subtype-hero">
+                    <label>
+                      <span class="label-title">Simplified product</span>
+                      <select id="loan-variant" name="loanVariant" required>
+                        <option value="fixed-rate-standard">Fixed-rate loan</option>
+                        <option value="fixed-rate-mortgage">Fixed-rate mortgage</option>
+                      </select>
+                    </label>
+                  </div>
                   <div class="row">
                     <label>
                       <span class="label-title"><span class="loan-field-label">Label</span> <button type="button" class="info-chip" data-help-button="loan-label-help" aria-label="Label help">i</button></span>
@@ -1153,6 +1174,95 @@
                   <div class="actions">
                     <button id="loan-submit" class="primary" type="submit">Add Loan Instrument</button>
                     <button id="loan-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="commercial-loan-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Commercial Loan</span>
+                </span>
+                <span class="summary-hint">Public-offering mortgages · customer schedule</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="commercial-loan-form">
+                  <div class="investment-subtype-hero">
+                    <label>
+                      <span class="label-title">Mortgage product</span>
+                      <select id="commercial-loan-product" name="productCode" required></select>
+                    </label>
+                  </div>
+                  <p id="commercial-loan-eligibility-hint" class="field-help-static"></p>
+                  <p id="commercial-loan-discount-hint" class="field-help-static"></p>
+                  <p id="commercial-loan-post-subsidy-info" class="field-help-static" hidden></p>
+                  <p id="commercial-loan-commercial-note" class="field-help-static" hidden></p>
+                  <div class="row">
+                    <label>
+                      <span class="label-title">Label</span>
+                      <input id="commercial-loan-label" name="label" type="text" placeholder="Commercial loan" />
+                    </label>
+                    <label>
+                      <span class="label-title">Start date</span>
+                      <input id="commercial-loan-start-date" name="startDate" type="date" required />
+                    </label>
+                    <label>
+                      <span class="label-title">Principal</span>
+                      <input id="commercial-loan-principal" name="principal" type="number" min="0" step="0.01" required />
+                    </label>
+                    <label>
+                      <span class="label-title">Customer annual rate (%)</span>
+                      <input id="commercial-loan-annual-rate" name="annualRate" type="number" min="0" step="0.0001" required />
+                    </label>
+                    <label>
+                      <span class="label-title">Term (months)</span>
+                      <input id="commercial-loan-term-months" name="termMonths" type="number" min="1" step="1" required />
+                    </label>
+                    <label>
+                      <span class="label-title">Grace period (months)</span>
+                      <input id="commercial-loan-grace-period-months" name="gracePeriodMonths" type="number" min="0" step="1" value="0" />
+                    </label>
+                    <label>
+                      <span class="label-title">Loan purpose</span>
+                      <select id="commercial-loan-purpose" name="loanPurpose"></select>
+                    </label>
+                    <label>
+                      <span class="label-title">Repayment day of month</span>
+                      <input id="commercial-loan-repayment-day" name="repaymentDayOfMonth" type="number" min="1" max="31" step="1" value="1" />
+                    </label>
+                    <label>
+                      <span class="label-title">Category</span>
+                      <input id="commercial-loan-category" name="category" type="text" placeholder="loan" />
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>
+                      <span class="label-title">Description</span>
+                      <input id="commercial-loan-description" name="description" type="text" placeholder="Optional notes" />
+                    </label>
+                    <label class="inline-field">
+                      <input id="commercial-loan-include-disbursement" name="includeDisbursement" type="checkbox" checked />
+                      <span class="label-title">Account loan disbursement inflow</span>
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>
+                      <span class="label-title">Monthly repayment preview</span>
+                      <input id="commercial-loan-monthly-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title">Total repayment preview</span>
+                      <input id="commercial-loan-total-repayment-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title">Total interest preview</span>
+                      <input id="commercial-loan-total-interest-preview" type="text" readonly />
+                    </label>
+                  </div>
+                  <div class="actions">
+                    <button id="commercial-loan-submit" class="primary" type="submit">Add Commercial Loan</button>
+                    <button id="commercial-loan-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
                   </div>
                 </form>
               </div>

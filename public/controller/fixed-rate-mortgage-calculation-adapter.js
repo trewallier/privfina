@@ -26,7 +26,9 @@ function mapFixedRateMortgageSpecInputsToLegacyLoanBundleInput(specInputs, extra
     annualRate: legacyInput.annualRate,
     termValue: legacyInput.termMonths,
     termUnit: 'months',
-    startDate
+    startDate,
+    gracePeriodMonths: legacyInput.gracePeriodMonths,
+    capitalizeInterestAtGraceEnd: legacyInput.capitalizeInterestAtGraceEnd
   }
 }
 

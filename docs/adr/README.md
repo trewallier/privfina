@@ -18,6 +18,7 @@ Recent decisions
 - `0020-product-spec-schema-v2-for-expandable-loan-products.md` — freeze schema v1; active product specs use `v2alpha1` with open `variant`, required `productCode`, mortgage family, and subsidy/fee/discount constructs.
 - `0021-commercial-mortgage-calculation-primitives.md` — fee/discount application, subsidy customer-rate resolution, and fee-inclusive THM as reusable engine primitives; dual-lane acceptance vs Hirdetmény packaging.
 - `0022-thm-calculator-for-hirdetmeny-verification.md` — 83/2010 Annex THM primitive for verifying (or computing) Hirdetmény `thmPct` during product implementation.
+- `0023-loan-product-readiness-and-offering-fidelity.md` — schedule-usable vs commercially-usable; public-offering fidelity (THM match, no dual-lane UI); customer-perspective subsidy; commercial loan composer architecture.
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` and `public/eval-cache.js` (invalidate on mutation; no new ADR — implementation of ROADMAP §3).
 

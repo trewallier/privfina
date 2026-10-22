@@ -34,7 +34,9 @@ function mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(specInputs) {
     annualRate: annualInterestRatePct / 100,
     termMonths,
     gracePeriodMonths,
-    capitalizeInterestAtGraceEnd
+    capitalizeInterestAtGraceEnd,
+    interestDayCountConvention: specInputs.interestDayCountConvention ?? '30/360',
+    paymentRounding: specInputs.paymentRounding ?? 'none'
   }
 }
 

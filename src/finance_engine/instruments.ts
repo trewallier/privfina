@@ -2,9 +2,21 @@ export { generateSalaryInstrumentCashFlows } from './instruments/salary'
 export { generateSubscriptionInstrumentCashFlows } from './instruments/subscription'
 export type { StatefulSimulationResult } from './instruments/simulation'
 export { runStatefulSimulation } from './instruments/simulation'
-export type { LoanAmortizationStep, ResolvedLoanSchedule } from './instruments/loan'
+export type {
+  InterestDayCountConvention,
+  LoanAmortizationStep,
+  LoanPaymentRounding,
+  LoanScheduleRateOptions,
+  ResolvedLoanSchedule
+} from './instruments/loan'
 export {
+  ACT_360_YEAR_DAYS,
+  ACT_365_YEAR_DAYS,
+  ACT_366_YEAR_DAYS,
+  EQUAL_MONTH_DAYS_LEAP,
+  EQUAL_MONTH_DAYS_NON_LEAP,
   calculateLoanMonthlyInstallment,
+  monthlyInterestRateFromAnnual,
   resolveLoanSchedule,
   simulateLoanAmortization,
   createLoanRepaymentPreview,

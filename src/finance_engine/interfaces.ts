@@ -78,6 +78,23 @@ export interface SubscriptionInstrumentInput {
   description?: string
 }
 
+/**
+ * Interest day-count convention for equal monthly installments (ADR 0025).
+ * See `monthlyInterestRateFromAnnual` for formulas.
+ * - `30/360` — default; r/12
+ * - `act/360` — OTP Hirdetmény: r × (365/12) / 360
+ * - `act/365` — equal-month ACT/365: r × (365/12) / 365 (= r/12)
+ * - `act/366` — equal-month ACT/366: r × (366/12) / 366 (= r/12)
+ */
+export type InterestDayCountConvention = '30/360' | 'act/360' | 'act/365' | 'act/366'
+
+/**
+ * Whole-forint payment rounding used by Hirdetmény representative schedules (ADR 0025).
+ * - `none`: keep full floating precision (default)
+ * - `forint`: level installment → nearest forint; grace interest-only → floor
+ */
+export type LoanPaymentRounding = 'none' | 'forint'
+
 export interface LoanInstrumentInput {
   principal: number
   annualRate: number
@@ -96,6 +113,10 @@ export interface LoanInstrumentInput {
    * Ignored when gracePeriodMonths is 0.
    */
   capitalizeInterestAtGraceEnd?: boolean
+  /** ADR 0025 — defaults to `30/360`. */
+  interestDayCountConvention?: InterestDayCountConvention
+  /** ADR 0025 — defaults to `none`. */
+  paymentRounding?: LoanPaymentRounding
   includeDisbursement?: boolean
   category?: string
   description?: string

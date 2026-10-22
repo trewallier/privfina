@@ -12,6 +12,8 @@ engine:
   rateType: fixed
   amortizationType: level-payment
   paymentFrequency: monthly
+  interestDayCountConvention: "30/360"
+  paymentRounding: none
 
 subsidy:
   type: none
@@ -109,14 +111,14 @@ outputs:
     description: Sum of all payments across the full term.
 
 assumptions:
-  - Payments are monthly and occur on a regular monthly cadence.
-  - Interest rate is fixed for the whole term.
-  - Grace period and end-of-grace interest capitalization are optional and default off.
-  - With grace and capitalization off (default), behavior matches a plain level-payment annuity over the full term.
-  - With grace and capitalization off for interest, grace months are interest-only; remaining months amortize original principal.
-  - With grace and capitalization on, no cash outflows occur during grace; accrued interest is capitalized onto principal with monthly compounding before amortization begins.
-  - No fees, taxes, insurance, or prepayments are included in this product.
-  - Rounding policy can remain implementation-defined for now, but should be documented later if needed.
+  - "Payments are monthly and occur on a regular monthly cadence."
+  - "Interest rate is fixed for the whole term."
+  - "Grace period and end-of-grace interest capitalization are optional and default off."
+  - "With grace and capitalization off (default), behavior matches a plain level-payment annuity over the full term."
+  - "With grace and capitalization off for interest, grace months are interest-only; remaining months amortize original principal."
+  - "With grace and capitalization on, no cash outflows occur during grace; accrued interest is capitalized onto principal with monthly compounding before amortization begins."
+  - "No fees, taxes, insurance, or prepayments are included in this product."
+  - "engine.interestDayCountConvention is 30/360 (r/12) and paymentRounding is none (ADR 0025)."
 
 ui:
   formTitle: Fixed Rate Loan

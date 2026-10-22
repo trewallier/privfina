@@ -19,7 +19,9 @@ describe('loan legacy bridges', () => {
       annualRate: 0.05,
       termMonths: 360,
       gracePeriodMonths: 0,
-      capitalizeInterestAtGraceEnd: false
+      capitalizeInterestAtGraceEnd: false,
+      interestDayCountConvention: '30/360',
+      paymentRounding: 'none'
     })
   })
 
@@ -70,7 +72,9 @@ describe('loan legacy bridges', () => {
             annualRate: 0.12,
             termMonths: 12,
             gracePeriodMonths: 0,
-            capitalizeInterestAtGraceEnd: false
+            capitalizeInterestAtGraceEnd: false,
+            interestDayCountConvention: '30/360',
+            paymentRounding: 'none'
           })
           return {
             monthlyInstallment: 88.85,

@@ -17,6 +17,8 @@ engine:
   rateType: state-subsidized
   amortizationType: level-payment
   paymentFrequency: monthly
+  interestDayCountConvention: "act/360"
+  paymentRounding: forint
   gracePeriodMonths: 0
   interestPeriodMonths: 12
 
@@ -176,10 +178,10 @@ outputs:
     description: Published total cost of credit indicator for the representative case.
 
 assumptions:
-  - Customer rate equals ügyleti kamat minus a fixed 3 pp state subsidy for up to 10 years.
-  - Representative Hirdetmény §6 example uses 12.000.000 Ft over 10 years (120 installments) at 4,87%.
-  - Engine cash-flow generation uses the shared fixed-rate loan annuity primitive at the customer rate; Hirdetmény published installment/THM figures are retained as official representative outputs.
-  - Excluded from OTP Díjkedvezményes akció packaging.
+  - "Customer rate equals ügyleti kamat minus a fixed 3 pp state subsidy for up to 10 years."
+  - "Representative Hirdetmény §6 example uses 12.000.000 Ft over 10 years (120 installments) at 4,87%."
+  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025). §6 installment×term packaging remains quarantined; fee-package totals may still differ from published figures until a later §5b slice."
+  - "Excluded from OTP Díjkedvezményes akció packaging."
 
 ui:
   formTitle: OTP Vidéki Otthonfelújítási Lakáshitel

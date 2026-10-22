@@ -18,6 +18,8 @@ function createLoanPreviewSync({
   termUnitInput,
   gracePeriodMonthsInput,
   capitalizeInterestAtGraceEndInput,
+  /** Optional product picker (commercial composer); value is productCode. */
+  productCodeInput,
   monthlyPreviewInput,
   totalRepaymentPreviewInput,
   totalInterestPreviewInput,
@@ -38,6 +40,7 @@ function createLoanPreviewSync({
       const gracePeriodMonths = normalizePreviewGracePeriodMonths(gracePeriodMonthsInput?.value)
       const capitalizeInterestAtGraceEnd =
         gracePeriodMonths > 0 && Boolean(capitalizeInterestAtGraceEndInput?.checked)
+      const productCode = String(productCodeInput?.value || '').trim()
 
       if (typeof calculateFixedRateLoanFromSpecInputs === 'function') {
         const specOutputs = calculateFixedRateLoanFromSpecInputs(
@@ -46,9 +49,13 @@ function createLoanPreviewSync({
             annualInterestRatePct: annualRateInputValue,
             termMonths,
             gracePeriodMonths,
-            capitalizeInterestAtGraceEnd
+            capitalizeInterestAtGraceEnd,
+            ...(productCode ? { productCode } : {})
           },
-          { createLoanRepaymentPreview }
+          {
+            createLoanRepaymentPreview,
+            ...(productCode ? { productCode } : {})
+          }
         )
 
         monthlyPreviewInput.value = specOutputs.monthlyPayment.toFixed(2)

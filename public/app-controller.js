@@ -990,6 +990,7 @@ function initController() {
     termUnitInput: { value: 'months' },
     gracePeriodMonthsInput: commercialLoanGracePeriodMonthsInput,
     capitalizeInterestAtGraceEndInput: { checked: false },
+    productCodeInput: commercialLoanProductInput,
     monthlyPreviewInput: commercialLoanMonthlyPreviewInput,
     totalRepaymentPreviewInput: commercialLoanTotalRepaymentPreviewInput,
     totalInterestPreviewInput: commercialLoanTotalInterestPreviewInput,

@@ -1,6 +1,10 @@
 import Ajv2020 from 'ajv/dist/2020'
 import YAML from 'yaml'
-import type { LoanInstrumentInput } from '../interfaces'
+import type {
+  InterestDayCountConvention,
+  LoanInstrumentInput,
+  LoanPaymentRounding
+} from '../interfaces'
 import type { CashFlow } from '../models'
 import {
   applyFeesAndDiscounts,
@@ -39,6 +43,10 @@ export interface MortgageLoanProductSpec {
     paymentFrequency?: string
     gracePeriodMonths?: number
     interestPeriodMonths?: number
+    /** ADR 0025 — defaults to 30/360 when omitted. */
+    interestDayCountConvention?: InterestDayCountConvention
+    /** ADR 0025 — defaults to none when omitted. */
+    paymentRounding?: LoanPaymentRounding
   }
   subsidy?: ProductSubsidyDefinition
   fees?: ProductFeeDefinition[]
@@ -218,6 +226,8 @@ export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
       specInputs.repaymentDayOfMonth ?? deriveRepaymentDayOfMonth(specInputs.startDate),
     gracePeriodMonths,
     capitalizeInterestAtGraceEnd: false,
+    interestDayCountConvention: productSpec.engine.interestDayCountConvention ?? '30/360',
+    paymentRounding: productSpec.engine.paymentRounding ?? 'none',
     includeDisbursement: specInputs.includeDisbursement ?? false,
     category: specInputs.category ?? 'mortgage-loan',
     description: specInputs.description ?? productSpec.displayName
@@ -264,7 +274,9 @@ export function calculateMortgageLoanFromProductSpec(
     annualRate: resolvedRate.annualRate,
     termMonths: specInputs.termMonths,
     gracePeriodMonths,
-    capitalizeInterestAtGraceEnd: false
+    capitalizeInterestAtGraceEnd: false,
+    interestDayCountConvention: productSpec.engine.interestDayCountConvention ?? '30/360',
+    paymentRounding: productSpec.engine.paymentRounding ?? 'none'
   })
 
   const monthlyPayments = expandScheduleToMonthlyPayments(schedule)

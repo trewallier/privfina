@@ -4,8 +4,25 @@ import {
 } from './loan-legacy-bridges.js'
 import { findCommercialLoanProduct } from './commercial-loan-product-metadata.js'
 
+function withProductDayCount(specInputs, product) {
+  return {
+    ...specInputs,
+    interestDayCountConvention:
+      specInputs.interestDayCountConvention ??
+      product.interestDayCountConvention ??
+      'act/360',
+    paymentRounding: specInputs.paymentRounding ?? product.paymentRounding ?? 'forint'
+  }
+}
+
 function calculateCommercialLoanFromSpecInputs(specInputs, options) {
-  return calculateFixedRateLoanLikeFromSpecInputs(specInputs, options)
+  const product =
+    findCommercialLoanProduct(specInputs.productCode) ||
+    findCommercialLoanProduct(options?.productCode)
+  if (!product) {
+    throw new Error('Unknown commercial loan product.')
+  }
+  return calculateFixedRateLoanLikeFromSpecInputs(withProductDayCount(specInputs, product), options)
 }
 
 function mapCommercialLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras = {}) {
@@ -17,7 +34,9 @@ function mapCommercialLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras =
     throw new Error('Unknown commercial loan product.')
   }
 
-  const legacyInput = mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(specInputs)
+  const legacyInput = mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(
+    withProductDayCount(specInputs, product)
+  )
   const startDate = String(specInputs.startDate || '').trim()
 
   return {
@@ -32,6 +51,8 @@ function mapCommercialLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras =
     startDate,
     gracePeriodMonths: legacyInput.gracePeriodMonths,
     capitalizeInterestAtGraceEnd: false,
+    interestDayCountConvention: legacyInput.interestDayCountConvention,
+    paymentRounding: legacyInput.paymentRounding,
     loanPurpose: specInputs.loanPurpose,
     commercialProductCode: product.productCode
   }

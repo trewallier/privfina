@@ -27,4 +27,4 @@ Authored against product specification schema **v2** (`specVersion: v2alpha1`, A
 
 ## Status
 
-**calc-aligned** — finance-engine product-spec mapper computes customer-rate schedule, upfront fee package, and fee-inclusive THM (ADR 0021). Hirdetmény §6 installment/THM packaging figures remain dual-lane fixtures. Composer UI is intentionally parked (fully-spec-backed follow-on).
+**schedule-usable** — checks 1–2 green (ADR 0025 ACT/360 + forint); check 3 still open (3.2 vs 3.3) because fee package Δ −25 200 blocks THM match. Commercial fee/THM UX is a later §5b slice.

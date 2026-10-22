@@ -28,5 +28,5 @@ expected:
 
 notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 Reprezentatív példák, OTP Zöld Lakáshitel / új lakás vásárlás."
-  - "monthlyPayment and totalPaid are the published Hirdetmény figures (installment includes the bank's representative packaging; totalPaid includes 89.365 Ft fee/cost component)."
-  - "Verification (ADR 0024): (1) engine installment from amount/term/stated rate; (2) law-based THM from these offering repayment + fee numbers; (3) law-based THM from engine-calculated monthly payments. Do not hide gaps with an invisible packaging-rate adjustment."
+  - "monthlyPayment and totalPaid are the published Hirdetmény figures (installment matches ADR 0025 ACT/360 equal-month formula r×(365/12)/360 with forint rounding; totalPaid includes 89.365 Ft fee/cost component)."
+  - "Verification (ADR 0024 / 0025): (1) engine installment from amount/term/stated rate with ACT/360 equal-month + forint rounding; (2) law-based THM from these offering repayment + fee numbers; (3) law-based THM from engine-calculated monthly payments + fee package. Do not hide gaps with an invisible packaging-rate adjustment."

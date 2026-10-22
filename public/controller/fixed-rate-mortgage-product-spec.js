@@ -118,6 +118,7 @@ const FIXED_RATE_MORTGAGE_PRODUCT_SPEC = {
     'This pilot mortgage product is modeled as a plain fixed-rate amortizing loan.',
     'Payments are monthly and occur on a regular monthly cadence.',
     'Interest rate is fixed for the whole term.',
+    'engine.interestDayCountConvention is 30/360 (r/12) and paymentRounding is none (ADR 0025).',
     'Property taxes, insurance, escrow, legal fees, and origination fees are excluded in this iteration.',
     'Prepayments and refinancing are out of scope for this variant.'
   ],

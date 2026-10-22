@@ -135,7 +135,7 @@ const FIXED_RATE_LOAN_PRODUCT_SPEC = {
     'With grace and capitalization off for interest, grace months are interest-only; remaining months amortize original principal.',
     'With grace and capitalization on, no cash outflows occur during grace; accrued interest is capitalized onto principal with monthly compounding before amortization begins.',
     'No fees, taxes, insurance, or prepayments are included in this product.',
-    'Rounding policy can remain implementation-defined for now, but should be documented later if needed.'
+    'engine.interestDayCountConvention is 30/360 (r/12) and paymentRounding is none (ADR 0025).'
   ],
   ui: {
     formTitle: 'Fixed Rate Loan',

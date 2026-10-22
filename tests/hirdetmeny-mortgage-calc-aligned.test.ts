@@ -50,6 +50,10 @@ interface ProductCase {
   feePackageGap?: {
     reason: string
   }
+  /** When set, check 3 THM from engine payments is not yet expected green. */
+  check3Gap?: {
+    reason: string
+  }
   packagingQuarantined?: boolean
 }
 
@@ -109,8 +113,11 @@ const CASES: ProductCase[] = [
       graceInterestOnlyPayment: 30416
     },
     feePackageGap: {
+      reason: 'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200).'
+    },
+    check3Gap: {
       reason:
-        'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200); fee gap alone keeps check 3 at 3.2 vs published 3.3.'
+        'Fee package Δ −25 200 alone keeps engine THM at 3.2 vs published 3.3 (installment already matches).'
     }
   },
   {
@@ -315,20 +322,16 @@ describe('Hirdetmény representative example verification (ADR 0024)', () => {
         expect(result.thmPct).toBe(productCase.enginePins.thmPctRounded)
 
         const publishedThm = Number(example.expected.thmPct)
-        if (productCase.installmentGap) {
+        if (productCase.installmentGap || productCase.check3Gap) {
+          expect(productCase.check3Gap?.reason.length ?? productCase.installmentGap?.reason.length ?? 0).toBeGreaterThan(
+            20
+          )
           expect(thm.percentRounded).not.toBe(publishedThm)
           return
         }
 
-        // Check 3 is THM identity (fee totals asserted separately). Closing check 1
-        // often greens check 3; csok-plusz still needs fee-package fidelity.
-        if (productCase.enginePins.thmPctRounded === publishedThm) {
-          expect(thm.percentRounded).toBe(publishedThm)
-          return
-        }
-
-        expect(productCase.feePackageGap?.reason.length ?? 0).toBeGreaterThan(20)
-        expect(thm.percentRounded).not.toBe(publishedThm)
+        // Check 3 is THM identity; fee totals are asserted separately (may still gap).
+        expect(thm.percentRounded).toBe(publishedThm)
       })
     })
   }

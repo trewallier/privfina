@@ -4,7 +4,7 @@ Status: accepted
 
 Date: 2026-10-22
 
-Supersedes: none (narrows ADR 0021 dual-lane for **installments**; fee-package dual-lane remains until a later §5b slice)
+Supersedes: the installment dual-lane posture of ADR 0021 for public-offering mortgages (engine bare annuity vs published §6 installment as co-equal accepted outputs). ADR 0021 fee/discount primitives, subsidy customer-rate resolution, and monthly THM helper remain in force; **fee-package** dual-lane vs published `totalCreditCostFees` remains until a later §5b slice. (Same partial-supersede pattern as ADR 0023 for UI readiness.)
 
 Related: 0021 (commercial mortgage primitives), 0022 (83/2010 THM year fractions), 0023 (readiness), 0024 (three-check verification), ROADMAP §5b
 
@@ -45,3 +45,4 @@ Related: 0021 (commercial mortgage primitives), 0022 (83/2010 THM year fractions
 - ROADMAP §5b check-1 installment gaps close for the six non-quarantined offerings; Vidéki remains packaging-quarantined (published installment×term < principal) but uses the same convention for its engine pin.
 - ADR 0021’s installment “packaging lane” is no longer the explanation for those deltas; residual commercially-usable debt is primarily **fee-package** fidelity (check 3) plus composer UX.
 - Schema / TypeScript / product YAML / tests use `act/360`, `act/365`, `act/366`, `30/360`; every loan product YAML states its convention.
+- Until the bundler ADR (0017) lands, the same convention + rounding is dual-surfaced in `public/instruments.js` and threaded through `loan-legacy-bridges` / commercial metadata so schedule-usable UI matches the engine harness.

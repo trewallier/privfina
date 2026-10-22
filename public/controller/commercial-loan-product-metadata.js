@@ -14,12 +14,19 @@ const PURPOSE_LABELS = {
   refinancing: 'Refinancing'
 }
 
+/** ADR 0025 — Hirdetmény mortgages use ACT/360 equal-month + forint rounding. */
+const HIRDETMENY_DAY_COUNT = {
+  interestDayCountConvention: 'act/360',
+  paymentRounding: 'forint'
+}
+
 const COMMERCIAL_LOAN_PRODUCTS = [
   {
     productCode: 'otp-1x1',
     productId: 'mortgage-loan.otp-1x1.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP 1x1 Lakáshitel',
+    ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 7.99,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 0,
@@ -49,6 +56,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.otp-zold.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Zöld Lakáshitel',
+    ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 7.99,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 0,
@@ -70,6 +78,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.vegig-fix.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Végig Fix Lakáshitel',
+    ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 8.49,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 0,
@@ -97,6 +106,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.csok-plusz.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Évnyerő CSOK Plusz Lakáshitel',
+    ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 12,
@@ -119,6 +129,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.falusi-csok.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Falusi CSOK Lakáshitel',
+    ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 0,
@@ -145,6 +156,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.otthon-start.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Otthon Start Lakáshitel',
+    ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 12,
@@ -164,6 +176,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.videki-otthonfelujitasi.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Vidéki Otthonfelújítási Hitel',
+    ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 4.87,
     defaultTermMonths: 120,
     defaultGracePeriodMonths: 0,

@@ -5,7 +5,11 @@ import {
   findCommercialLoanProduct
 } from '../public/controller/commercial-loan-product-metadata.js'
 import { mapFormDataToCommercialLoanSpecInputs } from '../public/controller/commercial-loan-form.js'
-import { mapCommercialLoanSpecInputsToLegacyLoanBundleInput } from '../public/controller/commercial-loan-calculation-adapter.js'
+import {
+  calculateCommercialLoanFromSpecInputs,
+  mapCommercialLoanSpecInputsToLegacyLoanBundleInput
+} from '../public/controller/commercial-loan-calculation-adapter.js'
+import { createLoanRepaymentPreview } from '../public/instruments.js'
 
 describe('commercial loan schedule-usable metadata', () => {
   it('exposes all seven Hirdetmény mortgage product codes for the commercial picker', () => {
@@ -59,6 +63,25 @@ describe('commercial loan schedule-usable metadata', () => {
     expect(legacy.termUnit).toBe('months')
     expect(legacy.loanPurpose).toBe('used-home-purchase')
     expect(legacy.capitalizeInterestAtGraceEnd).toBe(false)
+    expect(legacy.interestDayCountConvention).toBe('act/360')
+    expect(legacy.paymentRounding).toBe('forint')
+  })
+
+  it('applies ACT/360 forint installments on the commercial browser calculation path', () => {
+    const product = findCommercialLoanProduct('otp-1x1')
+    const outputs = calculateCommercialLoanFromSpecInputs(
+      {
+        productCode: 'otp-1x1',
+        principal: 12_000_000,
+        annualInterestRatePct: 7.99,
+        termMonths: 240,
+        startDate: '2026-04-01',
+        loanPurpose: 'used-home-purchase'
+      },
+      { createLoanRepaymentPreview, productCode: product?.productCode }
+    )
+    expect(outputs.monthlyPayment).toBe(101128)
+    expect(outputs.paymentCount).toBe(240)
   })
 
   it('marks Vidéki as blocked for commercially-usable while remaining schedule-usable', () => {

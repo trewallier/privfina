@@ -18,4 +18,4 @@ State-subsidized Falusi CSOK / Otthonteremtés home loan (`productCode: falusi-c
 
 ## Status
 
-**schedule-usable** — checks 1–3 green (ADR 0025 ACT/360 + forint; fee package matches §6). Commercial composer fee/discount/THM UX is wired; catalog promotion to commercially-usable is the next §5b slice.
+**commercially-usable** — ADR 0024 checks 1–3 green; commercial composer fee/discount/THM UX + composer parity tests. Full embedded product-spec modules (fully-spec-backed) deferred.

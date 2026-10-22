@@ -86,6 +86,7 @@ describe('commercial loan schedule-usable metadata', () => {
 
   it('marks Vidéki as blocked for commercially-usable while remaining schedule-usable', () => {
     const product = findCommercialLoanProduct('videki-otthonfelujitasi')
+    expect(product?.migrationStatus).toBe('schedule-usable')
     expect(product?.commerciallyBlockedReason).toMatch(/THM match|reconciled/i)
   })
 })

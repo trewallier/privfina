@@ -28,7 +28,7 @@ Inventory (by product)
   - Specs: `docs/product-specs/products/loans/<productCode>/product.yaml`
   - Engine primitives: `loan.ts` schedule + `loan_fees.ts` / `loan_subsidy.ts` / `thm.ts` (ADR 0021 / 0022)
   - Product-spec seam: `src/finance_engine/product_specs/mortgage_loan.ts` (shared; no per-product amortizer)
-  - Browser / composer: commercial loan box + product picker (ROADMAP §5a); commercially-usable requires THM match (§5b)
+  - Browser / composer: commercial loan box with fee/discount/THM UX; six products commercially-usable (§5b)
   - Status: executable engine tests in `tests/hirdetmeny-mortgage-calc-aligned.test.ts`; dual-lane UI retired for readiness
 
 - DKJ (`government-security.dkj.standard`) — **fully-spec-backed**
@@ -52,7 +52,7 @@ Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done in this cleanup pass).
 2. ROADMAP §5a: schedule-usable UI — fold fixed-rate mortgage into simplified loan composer; commercial loan picker for seven Hirdetmény products (ADR 0023).
-3. ROADMAP §5b: checks 1–3 green for six non-quarantined offerings; commercial composer fee/discount/THM UX dual-surfaces `loan_fees` + Annex THM in `public/controller/` — next catalog promotion to commercially-usable + composer YAML parity (Vidéki still quarantined).
+3. ROADMAP §5b closed for six offerings (commercially-usable + composer parity). Remaining: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules.
 4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count, fees, and THM are dual-surfaced until then).
 5. Deferred (out of scope for §5a/5b): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets.
 

@@ -5,6 +5,7 @@ import {
   deleteFolder,
   emptyListStatus,
   moveItem,
+  moveRootEntry,
   normalizeListStatus,
   reconcileListStatus,
   renameFolder,
@@ -83,5 +84,35 @@ describe('list-status', () => {
         items: [{ id: 'y', label: 'Y' }]
       }
     ])
+  })
+
+  it('reorders within the same folder using pre-move insert-before indices', () => {
+    let status = reconcileListStatus(emptyListStatus(), ['a', 'b', 'c'])
+    status = createFolder(status, 'Group')
+    const folderId = status.folders[0].id
+    status = moveItem(status, 'a', { type: 'folder', folderId })
+    status = moveItem(status, 'b', { type: 'folder', folderId })
+    status = moveItem(status, 'c', { type: 'folder', folderId })
+    expect(status.folderItemOrder[folderId]).toEqual(['a', 'b', 'c'])
+
+    // Move a onto c (insert before c's pre-move index 2) → a lands before c.
+    status = moveItem(status, 'a', { type: 'folder', folderId, index: 2 })
+    expect(status.folderItemOrder[folderId]).toEqual(['b', 'a', 'c'])
+
+    // Move c onto b (b is at index 0) → c before b.
+    status = moveItem(status, 'c', { type: 'folder', folderId, index: 0 })
+    expect(status.folderItemOrder[folderId]).toEqual(['c', 'b', 'a'])
+  })
+
+  it('reorders root entries with the same insert-before semantics', () => {
+    let status = reconcileListStatus(emptyListStatus(), ['a', 'b', 'c'])
+    status = createFolder(status, 'Group')
+    const folderId = status.folders[0].id
+    // rootOrder: a, b, c, folder
+    status = moveRootEntry(status, { kind: 'item', id: 'a' }, 2)
+    expect(status.rootOrder.map((entry) => entry.id)).toEqual(['b', 'a', 'c', folderId])
+
+    status = moveRootEntry(status, { kind: 'folder', id: folderId }, 0)
+    expect(status.rootOrder.map((entry) => entry.id)).toEqual([folderId, 'b', 'a', 'c'])
   })
 })

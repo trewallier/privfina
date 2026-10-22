@@ -23,12 +23,22 @@ function createLoanPreviewSync({
   monthlyPreviewInput,
   totalRepaymentPreviewInput,
   totalInterestPreviewInput,
+  /** Optional commercial packaging previews (single THM number, fee total). */
+  feesPreviewInput,
+  thmPreviewInput,
+  /** Optional () => ({ activeDiscountNames, includeOptionalFeeNames }). */
+  readCommercialPackaging,
   createLoanRepaymentPreview,
   calculateFixedRateLoanFromSpecInputs
 }) {
   return function syncLoanPreview() {
     if (!monthlyPreviewInput || !totalRepaymentPreviewInput || !totalInterestPreviewInput) {
       return
+    }
+
+    const clearCommercialExtras = () => {
+      if (feesPreviewInput) feesPreviewInput.value = '—'
+      if (thmPreviewInput) thmPreviewInput.value = '—'
     }
 
     try {
@@ -41,6 +51,8 @@ function createLoanPreviewSync({
       const capitalizeInterestAtGraceEnd =
         gracePeriodMonths > 0 && Boolean(capitalizeInterestAtGraceEndInput?.checked)
       const productCode = String(productCodeInput?.value || '').trim()
+      const packaging =
+        typeof readCommercialPackaging === 'function' ? readCommercialPackaging() || {} : {}
 
       if (typeof calculateFixedRateLoanFromSpecInputs === 'function') {
         const specOutputs = calculateFixedRateLoanFromSpecInputs(
@@ -50,7 +62,13 @@ function createLoanPreviewSync({
             termMonths,
             gracePeriodMonths,
             capitalizeInterestAtGraceEnd,
-            ...(productCode ? { productCode } : {})
+            ...(productCode ? { productCode } : {}),
+            ...(packaging.activeDiscountNames
+              ? { activeDiscountNames: packaging.activeDiscountNames }
+              : {}),
+            ...(packaging.includeOptionalFeeNames
+              ? { includeOptionalFeeNames: packaging.includeOptionalFeeNames }
+              : {})
           },
           {
             createLoanRepaymentPreview,
@@ -61,6 +79,16 @@ function createLoanPreviewSync({
         monthlyPreviewInput.value = specOutputs.monthlyPayment.toFixed(2)
         totalRepaymentPreviewInput.value = specOutputs.totalPaid.toFixed(2)
         totalInterestPreviewInput.value = specOutputs.totalInterest.toFixed(2)
+        if (feesPreviewInput) {
+          feesPreviewInput.value =
+            specOutputs.totalCreditCostFees === undefined
+              ? '—'
+              : Number(specOutputs.totalCreditCostFees).toFixed(2)
+        }
+        if (thmPreviewInput) {
+          thmPreviewInput.value =
+            specOutputs.thmPct === undefined ? '—' : `${Number(specOutputs.thmPct).toFixed(1)}%`
+        }
         return
       }
 
@@ -75,10 +103,12 @@ function createLoanPreviewSync({
       monthlyPreviewInput.value = preview.monthlyInstallment.toFixed(2)
       totalRepaymentPreviewInput.value = preview.totalRepayment.toFixed(2)
       totalInterestPreviewInput.value = preview.totalInterest.toFixed(2)
+      clearCommercialExtras()
     } catch {
       monthlyPreviewInput.value = '—'
       totalRepaymentPreviewInput.value = '—'
       totalInterestPreviewInput.value = '—'
+      clearCommercialExtras()
     }
   }
 }

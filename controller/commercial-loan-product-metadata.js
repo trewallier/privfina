@@ -1,7 +1,8 @@
 /**
  * Schedule-usable catalog for public-offering mortgage-loan products (ADR 0023).
- * Lightweight metadata for the commercial loan composer; full embedded YAML parity
- * lands with commercially-usable promotion.
+ * Lightweight metadata for the commercial loan composer. Fee/discount commercial
+ * blocks live in `commercial-loan-commercial-blocks.js`; full embedded YAML parity
+ * lands with commercially-usable / fully-spec-backed promotion.
  */
 
 const PURPOSE_LABELS = {

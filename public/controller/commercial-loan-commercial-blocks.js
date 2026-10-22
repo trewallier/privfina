@@ -1,7 +1,8 @@
 /**
- * Upfront fee / selectable discount blocks for the commercial loan composer.
- * Mirrored from docs/product-specs/products/loans/<productCode>/product.yaml
- * (keep in sync; full embedded YAML parity is the later fully-spec-backed slice).
+ * Migration scaffolding: upfront fee / selectable discount blocks for the commercial
+ * loan composer. Mirrored from docs/product-specs/products/loans/<productCode>/product.yaml
+ * (keep in sync via commercial-loan-composer-parity tests; full embedded YAML parity is
+ * the later fully-spec-backed slice).
  */
 
 const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {

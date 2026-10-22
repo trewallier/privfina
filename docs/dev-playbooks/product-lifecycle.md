@@ -5,7 +5,7 @@ Checklist for contributors and agents. Detail stays in the linked owners; this f
 Authoritative status definitions: [`../product-specs/PRODUCT_CATALOG.md`](../product-specs/PRODUCT_CATALOG.md).  
 Ownership rules: [`../source-of-truth-ownership.md`](../source-of-truth-ownership.md).  
 Agent entry: [`../../AGENTS.md`](../../AGENTS.md).  
-Readiness policy: [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md).
+Readiness policy: [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md); public-offering commercially-usable bar: [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) + [ADR 0024](../adr/0024-representative-example-three-check-verification.md).
 
 ## A. Add a product (spec-only)
 
@@ -41,7 +41,7 @@ Frontend may stay below schedule-usable.
 ## D. Promote to commercially-usable
 
 1. Surface fees / selectable discounts / purpose / THM on the commercial composer as specified.
-2. For public offerings: assert ADR 0022 `percentRounded` equals example published `thmPct`. Product is **not** commercially usable until this holds.
+2. For public offerings: all three [ADR 0024](../adr/0024-representative-example-three-check-verification.md) checks must be green (engine installment at stated rate; THM from offering numbers; THM from engine payments + fee package). ADR 0022 `percentRounded` ≡ published `thmPct` is necessary but not sufficient alone ([ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md)).
 3. Clear packaging quarantines (e.g. Vidéki) only after offering figures reconcile with an amortizing schedule.
 4. Bump catalog status → **`commercially-usable`**.
 
@@ -61,7 +61,7 @@ Frontend may stay below schedule-usable.
 - Treating “examples pass” when tests only assert YAML constants and never run the engine
 - Extending frozen schema v1 for new mortgage/commercial fields (use v2 / ADR 0020)
 - Dual-lane UI (engine vs packaging) for public-offering products
-- Marking a public-offering product commercially-usable / fully-spec-backed without THM match
+- Marking a public-offering product commercially-usable / fully-spec-backed without all three ADR 0024 checks green
 
 ## Quick links
 
@@ -71,5 +71,6 @@ Frontend may stay below schedule-usable.
 | Fees / subsidy rate / THM primitives | [ADR 0021](../adr/0021-commercial-mortgage-calculation-primitives.md) |
 | 83/2010 THM verification | [ADR 0022](../adr/0022-thm-calculator-for-hirdetmeny-verification.md) |
 | Readiness + offering fidelity | [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md) |
+| Three-check commercially-usable bar | [ADR 0024](../adr/0024-representative-example-three-check-verification.md) / [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) |
 | Spec-by-example | [ADR 0014](../adr/0014-specification-by-example-for-products.md) |
 | Data-driven variants | [ADR 0015](../adr/0015-data-driven-product-variants.md) |

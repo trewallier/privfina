@@ -1,6 +1,6 @@
 /**
- * Browser dual-surface of the ADR 0022 monthly→Annex THM path used by
- * `calculateThmFromMonthlyRepayments` (src/finance_engine/instruments/thm.ts).
+ * Migration scaffolding / browser dual-surface of the ADR 0022 monthly→Annex THM path
+ * used by `calculateThmFromMonthlyRepayments` (src/finance_engine/instruments/thm.ts).
  * Keep aligned with TypeScript until bundler convergence (ADR 0017).
  */
 

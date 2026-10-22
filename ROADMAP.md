@@ -57,7 +57,7 @@ Out of scope for this epic
 - [x] Author CSOK Plusz mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
 - [x] Author remaining Hirdetmény 2026-04-20 mortgage product specs (Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) on schema v2.
 - [x] Engine primitives for structured fee/discount application, subsidy customer-rate resolution, and fee-inclusive THM (ADR 0021).
-- [x] Generic mortgage-loan product-spec mapper and calc-aligned engine-lane tests for all seven Hirdetmény mortgage products (composer UI still parked).
+- [x] Generic mortgage-loan product-spec mapper and calc-aligned engine-lane tests for all seven Hirdetmény mortgage products (composer UI delivered in §5a/§5b).
 - [x] ADR 0022: 83/2010 THM calculator for Hirdetmény verification.
 - [x] ADR 0023: schedule-usable vs commercially-usable readiness; public-offering fidelity; customer-perspective subsidy only; dual-lane UI retired.
 
@@ -93,13 +93,13 @@ Plan slices
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.
 - [ ] Define Node package management and update strategy (ADR required)
-- [ ] Choose build tooling and bundler (ADR required; see ADR 0017 for single calculation-surface goal)
+- [ ] Choose build tooling and bundler (ADR required; see ADR 0017 for single calculation-surface goal — retires dual-surface `public/instruments.js` / `loan-fees.js` / `thm.js` / `eval-cache.js` / BMAP adapter math)
 - [x] Add GitHub Actions CI/CD workflows for build, test, and deploy
 - [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
 - [ ] Document update strategy and release process (patch/minor/major cadence)
 
 ### 7) Client Storage Hardening And Multi-Backend Architecture
-Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port.
+Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).
 
 Constraints
 - Remain a static SPA on GitHub Pages; no backend database in this epic.

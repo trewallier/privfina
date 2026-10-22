@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
+import YAML from 'yaml'
 import {
   calculateFixedRateMortgageFromSpecInputs,
   mapFixedRateMortgageSpecInputsToLegacyCalculationInput,
@@ -59,6 +60,28 @@ describe('fixed-rate-mortgage calculation adapter seam', () => {
       'totalInterest',
       'totalPaid'
     ].sort())
+  })
+
+  it('bridges long-term-case example and asserts expected payment count', () => {
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/loans/fixed-rate-mortgage/examples/long-term-case.yaml'
+    )
+    const parsed = YAML.parse(exampleYaml) as {
+      inputs: {
+        principal: number
+        annualInterestRatePct: number
+        termMonths: number
+        startDate: string
+      }
+      expected: { paymentCount: number }
+    }
+
+    const adapterOutputs = calculateFixedRateMortgageFromSpecInputs(parsed.inputs, {
+      createLoanRepaymentPreview
+    })
+
+    expect(adapterOutputs.paymentCount).toBe(parsed.expected.paymentCount)
+    expect(adapterOutputs.paymentCount).toBe(360)
   })
 
   it('maps spec-shaped inputs to existing submit bundle input shape without changing legacy fields', () => {

@@ -31,7 +31,7 @@ Scenarios / Use-cases
 - Loan repayment preview: users can see a read-only monthly repayment value update immediately when loan inputs change, including when optional grace/capitalization options change.
 - Simplified loan variants: users can choose between the example fixed-rate loan and the example fixed-rate mortgage on one simplified loan composer (shared annuity math).
 - Commercial loan composer: users open a separate commercial-loan box, pick a public-offering mortgage product (investment-style picker), and configure a customer-perspective repayment schedule.
-- Loan product readiness (ADR 0023): schedule-usable means customer cash flows on the chart; commercially-usable additionally requires fees/THM/purpose UX and engine THM matching the published offering `thmPct` (no dual-lane display).
+- Loan product readiness (ADR 0023 / 0026): schedule-usable means customer cash flows on the chart; commercially-usable additionally requires fees/THM/purpose UX and, for public offerings, all three ADR 0024 checks green (no dual-lane display).
 - Investment instrument setup: users can configure regular bond, discount bond, and inflation-linked bond variants with finite maturity outputs.
 - Investment subtype UX: users can clearly see and switch a prominent investment subtype selector, and the form adapts visible and editable fields to the selected subtype.
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
@@ -42,7 +42,7 @@ Scenarios / Use-cases
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
-- Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023): Hirdetmény mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering readiness requires engine THM to match published `thmPct` (dual-lane UI retired).
+- Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): Hirdetmény mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -134,6 +134,7 @@ Acceptance criteria
 - [x] Fee-inclusive THM helpers exist (ADR 0021 monthly helper + ADR 0022 83/2010 calculator) for product verification.
 - [x] All seven Hirdetmény mortgage-loan products are calc-aligned in the finance engine (executable example tests).
 - [x] ADR 0023 records schedule-usable vs commercially-usable readiness, customer-perspective subsidy only, and offering-fidelity (no dual-lane UI).
+- [x] ADR 0026 clarifies that public-offering commercially-usable requires all three ADR 0024 checks (supersedes ADR 0023’s THM-match-only bar).
 - [x] Simplified loan composer exposes fixed-rate loan and fixed-rate mortgage as selectable variants on one form (shared simplified annuity math).
 - [x] Commercial loan composer box exists with an investment-style product picker over the seven Hirdetmény mortgage product codes.
 - [x] Each schedule-usable commercial product can create/edit/preview/persist a customer-perspective repayment bundle stamped with `productId` / `productSpecVersion`.

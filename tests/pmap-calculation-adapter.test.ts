@@ -61,4 +61,22 @@ describe('pmap calculation adapter seam', () => {
       'redemptionValue'
     ].sort())
   })
+
+  it('bridges inflation-reset-case example and floors negative inflation base', () => {
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/pmap/examples/inflation-reset-case.yaml'
+    )
+    const parsed = YAML.parse(exampleYaml) as {
+      inputs: Record<string, unknown>
+      expected: Record<string, unknown>
+    }
+
+    const adapterOutputs = calculatePmapFromSpecInputs(parsed.inputs, {
+      createInvestmentMaturityPreview
+    })
+
+    expect(adapterOutputs).toEqual(parsed.expected)
+    expect(adapterOutputs.effectiveInflationBasePct).toBe(0)
+    expect(adapterOutputs.annualCouponRatePct).toBe(0.5)
+  })
 })

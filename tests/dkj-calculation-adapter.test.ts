@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
+import YAML from 'yaml'
 import {
   calculateDkjFromSpecInputs,
   mapDkjSpecInputsToLegacyInvestmentInput,
@@ -66,6 +67,39 @@ describe('dkj calculation adapter seam', () => {
       'simpleReturnPct',
       'annualizedYieldPct'
     ].sort())
+  })
+
+  it('bridges shorter-maturity-case example and asserts day-based yield outputs', () => {
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/dkj/examples/shorter-maturity-case.yaml'
+    )
+    const parsed = YAML.parse(exampleYaml) as {
+      inputs: {
+        faceValue: number
+        purchasePricePct: number
+        termMonths: number
+        settlementDate: string
+        maturityDate: string
+        remainingDays: number
+      }
+      expected: {
+        purchaseAmount: number
+        redemptionValue: number
+        grossGain: number
+        simpleReturnPct: number
+        annualizedYieldPct: number
+      }
+    }
+
+    const adapterOutputs = calculateDkjFromSpecInputs(parsed.inputs, {
+      createInvestmentMaturityPreview
+    })
+
+    expect(adapterOutputs.purchaseAmount).toBe(parsed.expected.purchaseAmount)
+    expect(adapterOutputs.redemptionValue).toBe(parsed.expected.redemptionValue)
+    expect(adapterOutputs.grossGain).toBe(parsed.expected.grossGain)
+    expect(adapterOutputs.simpleReturnPct).toBeCloseTo(parsed.expected.simpleReturnPct, 8)
+    expect(adapterOutputs.annualizedYieldPct).toBeCloseTo(parsed.expected.annualizedYieldPct, 8)
   })
 
   it('uses remainingDays from DKJ spec input to annualize yield when provided', () => {

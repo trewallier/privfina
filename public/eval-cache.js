@@ -1,6 +1,6 @@
 /**
- * Browser evaluation-result cache (mirrors src/finance_engine/eval_cache.ts).
- * Used by chart/expand paths; invalidate on definition or bundle mutations.
+ * Migration scaffolding / browser dual-surface of `src/finance_engine/eval_cache.ts`
+ * (ADR 0017). Used by chart/expand paths; invalidate on definition or bundle mutations.
  */
 
 function cloneCacheValue(value) {

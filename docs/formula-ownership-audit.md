@@ -18,23 +18,28 @@ Inventory (by product)
   - Frontend embedded spec: `public/controller/fixed-rate-loan-product-spec.js` (parity-tested against YAML)
   - Status: spec ↔ adapter ↔ examples aligned; dual TS/JS formula copies remain until bundler convergence (ADR 0017)
 
-- Fixed-rate mortgage (`loan.fixed-rate.mortgage`, family `mortgage-loan`) — **calc-aligned** → target **schedule-usable** on simplified loan composer (ADR 0023)
+- Fixed-rate mortgage (`loan.fixed-rate.mortgage`, family `mortgage-loan`) — **schedule-usable**
   - Spec: `docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml`
   - Engine primitives: same simplified loan primitives as standard fixed-rate loan
   - Browser path: `public/controller/fixed-rate-mortgage-calculation-adapter.js` → shared `loan-legacy-bridges.js` → `createLoanRepaymentPreview`
-  - Frontend embedded spec: `public/controller/fixed-rate-mortgage-product-spec.js` (parity-tested); form metadata ready — wire as simplified-loan subtype
+  - Frontend embedded spec: `public/controller/fixed-rate-mortgage-product-spec.js` (parity-tested); wired as simplified-loan subtype on the loan composer
+  - Note: simplified examples skip `commercially-usable`; promotion to `fully-spec-backed` is optional once controller-flow parity matches fixed-rate loan (catalog may under-claim today)
 
-- Hirdetmény mortgage-loan products (`otp-1x1`, `otp-zold`, `vegig-fix`, `csok-plusz`, `falusi-csok`, `otthon-start`, `videki-otthonfelujitasi`) — **calc-aligned** → target **schedule-usable** then **commercially-usable** (ADR 0023)
+- Hirdetmény mortgage-loan products
+  - Six offerings (`otp-1x1`, `otp-zold`, `vegig-fix`, `csok-plusz`, `falusi-csok`, `otthon-start`) — **commercially-usable** (ADR 0024 checks 1–3 + commercial composer UX; ADR 0026)
+  - Vidéki (`videki-otthonfelujitasi`) — **schedule-usable** / packaging-quarantined (commercially-usable blocked until §6 reconciles)
   - Specs: `docs/product-specs/products/loans/<productCode>/product.yaml`
   - Engine primitives: `loan.ts` schedule + `loan_fees.ts` / `loan_subsidy.ts` / `thm.ts` (ADR 0021 / 0022)
   - Product-spec seam: `src/finance_engine/product_specs/mortgage_loan.ts` (shared; no per-product amortizer)
-  - Browser / composer: commercial loan box with fee/discount/THM UX; six products commercially-usable (§5b)
+  - Browser / composer: commercial loan box with fee/discount/THM UX; hand-mirrored metadata/blocks in `commercial-loan-product-metadata.js` / `commercial-loan-commercial-blocks.js` (migration scaffolding until fully-spec-backed embedded modules)
+  - Browser rate path: composer supplies **customer** annual %; `commercial-loan-calculation-adapter.js` applies discount bp only (no full `loan_subsidy` dual-surface — intentional while subsidy windows stay informational)
   - Status: executable engine tests in `tests/hirdetmeny-mortgage-calc-aligned.test.ts`; dual-lane UI retired for readiness
 
 - DKJ (`government-security.dkj.standard`) — **fully-spec-backed**
   - Spec: `docs/product-specs/products/government-securities/dkj/product.yaml`
   - Engine primitives: `deriveDiscountBondMetrics` in `src/finance_engine/instruments/common.ts`
   - Browser path: `public/controller/dkj-calculation-adapter.js` → discount-bond preview in `public/instruments.js`
+  - Note: persisted / legacy bundles may use investment `subtype: 'dkj'` as an alias for the `discount-bond` calculation strategy (not a productCode amortizer branch)
   - Status: day-based yield and adapter seam aligned for v1
 
 - PMAP (`government-security.pmap.standard`) — **fully-spec-backed**
@@ -45,27 +50,31 @@ Inventory (by product)
 
 - BMAP (`government-security.bmap.standard`) — **fully-spec-backed** (auction derivation future)
   - Spec: `docs/product-specs/products/government-securities/bmap/product.yaml`
+  - Engine primitives: accrued-interest ACT/360 and quarterly coupon schedule helpers in `src/finance_engine/instruments/bmap.ts` (ADR 0017 TS-first); browser adapter delegates / mirrors until bundler
   - Browser path: `public/controller/bmap-calculation-adapter.js` accepts user-supplied `dkjBaseYieldPct`
   - Status: coupon composition from base yield + premium is spec-backed; weighted auction DKJ base derivation remains future external-data work
 
 Current cleanup priority
 ------------------------
-1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done in this cleanup pass).
-2. ROADMAP §5a: schedule-usable UI — fold fixed-rate mortgage into simplified loan composer; commercial loan picker for seven Hirdetmény products (ADR 0023).
-3. ROADMAP §5b closed for six offerings (commercially-usable + composer parity). Remaining: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules.
-4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count, fees, and THM are dual-surfaced until then).
-5. Deferred (out of scope for §5a/5b): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets.
+1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
+2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
+3. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count, fees, THM, BMAP helpers, and eval cache are dual-surfaced until then).
+4. ROADMAP §7 storage port (replace raw `localStorage` helpers).
+5. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets.
 
 Notes
 -----
 - Catalog statuses in `docs/product-specs/PRODUCT_CATALOG.md` are authoritative for migration state.
 - Dual TS (`src/finance_engine/`) and JS (`public/instruments.js`) calculation surfaces are an accepted interim state (ADR 0017), not product-spec incompleteness.
+- Status `inputs-driven` remains a live intermediate ladder step (catalog glossary) even though no current row uses it.
+- Investment `regular-bond` / `discount-bond` / `inflation-linked-bond` / `custom-bond` if-chains are approved calculation-strategy profiles (ADR 0015), not Hirdetmény productCode forks.
 
 Files referenced
 ----------------
 - `DESIGN.md`
 - `docs/source-of-truth-ownership.md`
 - `docs/adr/0017-converge-on-single-browser-calculation-surface.md`
+- `docs/adr/0026-commercially-usable-requires-three-check-verification.md`
 - `docs/product-specs/PRODUCT_CATALOG.md`
 - `docs/product-specs/products/loans/fixed-rate-loan/product.yaml`
 - `docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml`
@@ -77,6 +86,7 @@ Files referenced
 - `src/finance_engine/instruments/loan_fees.ts`
 - `src/finance_engine/instruments/loan_subsidy.ts`
 - `src/finance_engine/instruments/thm.ts`
+- `src/finance_engine/instruments/bmap.ts`
 - `src/finance_engine/product_specs/mortgage_loan.ts`
 - `src/finance_engine/instruments/investment.ts`
 - `src/finance_engine/instruments/common.ts`

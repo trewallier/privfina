@@ -24,25 +24,33 @@ import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../src/finance_engine/product_specs
  *
  * 3) THM from engine payments — ADR 0022 percentRounded from engine-calculated
  *    monthly payments + engine fee package must equal stated thmPct. Checks
- *    global system wiring.
+ *    global system wiring (schedule fidelity AND fee-package fidelity).
  *
- * Do not hide check-1 gaps with an invisible packaging-rate adjustment.
+ * While a check is not yet green, pin the current engine outputs so regressions
+ * fail the suite, and keep published deltas visible.
  */
+
+interface EnginePins {
+  monthlyPayment: number
+  totalCreditCostFees: number
+  /** ADR 0022 percentRounded from engine schedule + engine fees. */
+  thmPctRounded: number
+  paymentCount: number
+  graceInterestOnlyPayment?: number
+}
 
 interface ProductCase {
   productCode: MortgageLoanProductCode
   examplePath: string
   activeDiscountNames?: string[]
-  /**
-   * When set, check 1 is known to fail at the stated rate. Check 3 stays
-   * documented as blocked until check 1 is green.
-   */
+  /** Stated-rate engine outputs to pin (regression guard). */
+  enginePins: EnginePins
   installmentGap?: {
     reason: string
   }
-  /**
-   * §6 packaging cannot amortize stated principal (Vidéki).
-   */
+  feePackageGap?: {
+    reason: string
+  }
   packagingQuarantined?: boolean
 }
 
@@ -51,9 +59,18 @@ const CASES: ProductCase[] = [
     productCode: 'otp-1x1',
     examplePath:
       'docs/product-specs/products/loans/otp-1x1/examples/hirdetmeny-representative-used-home.yaml',
+    enginePins: {
+      monthlyPayment: 100298.13848711438,
+      totalCreditCostFees: 168765,
+      thmPctRounded: 8.5,
+      paymentCount: 240
+    },
     installmentGap: {
       reason:
         'Bare level-payment annuity at 7.99% yields ~100 298 Ft vs published 101 128 Ft; root cause not yet modeled in shared loan primitives.'
+    },
+    feePackageGap: {
+      reason: 'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200).'
     }
   },
   {
@@ -61,52 +78,108 @@ const CASES: ProductCase[] = [
     examplePath:
       'docs/product-specs/products/loans/otp-zold/examples/hirdetmeny-representative-new-home.yaml',
     activeDiscountNames: ['otp-zold-folyositasi-dij-elengedes'],
+    enginePins: {
+      monthlyPayment: 100298.13848711438,
+      totalCreditCostFees: 78765,
+      thmPctRounded: 8.4,
+      paymentCount: 240
+    },
     installmentGap: {
       reason:
         'Same annuity gap as OTP 1x1 at 7.99% customer rate (~100 298 vs 101 128 Ft).'
+    },
+    feePackageGap: {
+      reason: 'Engine representative fees 78 765 Ft vs published 89 365 Ft (Δ −10 600).'
     }
   },
   {
     productCode: 'vegig-fix',
     examplePath:
       'docs/product-specs/products/loans/vegig-fix/examples/hirdetmeny-representative-used-home.yaml',
+    enginePins: {
+      monthlyPayment: 104062.85064980926,
+      totalCreditCostFees: 168765,
+      thmPctRounded: 9.0,
+      paymentCount: 240
+    },
     installmentGap: {
       reason:
         'Bare level-payment annuity at 8.49% yields ~104 063 Ft vs published 104 960 Ft.'
+    },
+    feePackageGap: {
+      reason: 'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200).'
     }
   },
   {
     productCode: 'csok-plusz',
     examplePath:
       'docs/product-specs/products/loans/csok-plusz/examples/hirdetmeny-representative-home-purchase.yaml',
+    enginePins: {
+      monthlyPayment: 69112.93407683661,
+      totalCreditCostFees: 168765,
+      thmPctRounded: 3.2,
+      paymentCount: 240,
+      graceInterestOnlyPayment: 30000
+    },
     installmentGap: {
       reason:
         'After 12-month interest-only grace, bare annuity at 3% yields ~69 113 Ft vs published 69 362 Ft; published grace 30 416 Ft vs engine 30 000 Ft.'
+    },
+    feePackageGap: {
+      reason:
+        'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200); fee gap alone blocks check 3 even with published installments.'
     }
   },
   {
     productCode: 'falusi-csok',
     examplePath:
       'docs/product-specs/products/loans/falusi-csok/examples/hirdetmeny-representative-used-home.yaml',
+    enginePins: {
+      monthlyPayment: 66551.71174247048,
+      totalCreditCostFees: 198765,
+      thmPctRounded: 3.2,
+      paymentCount: 240
+    },
     installmentGap: {
       reason:
         'Bare level-payment annuity at 3% yields ~66 552 Ft vs published 66 802 Ft.'
+    },
+    feePackageGap: {
+      reason:
+        'Engine representative fees 198 765 Ft vs published 223 965 Ft (Δ −25 200); aligning fees alone would already round THM to 3.3.'
     }
   },
   {
     productCode: 'otthon-start',
     examplePath:
       'docs/product-specs/products/loans/otthon-start/examples/hirdetmeny-representative-home-purchase.yaml',
+    enginePins: {
+      monthlyPayment: 69112.93407683661,
+      totalCreditCostFees: 108765,
+      thmPctRounded: 3.1,
+      paymentCount: 240,
+      graceInterestOnlyPayment: 30000
+    },
     installmentGap: {
       reason:
         'Same grace/annuity gap pattern as CSOK Plusz at 3% customer rate.'
+    },
+    feePackageGap: {
+      reason:
+        'Engine representative fees 108 765 Ft vs published 133 965 Ft (Δ −25 200); aligning fees alone would already round THM to 3.2.'
     }
   },
   {
     productCode: 'videki-otthonfelujitasi',
     examplePath:
       'docs/product-specs/products/loans/videki-otthonfelujitasi/examples/hirdetmeny-representative-renovation.yaml',
-    packagingQuarantined: true
+    packagingQuarantined: true,
+    enginePins: {
+      monthlyPayment: 126517.46675141586,
+      totalCreditCostFees: 168765,
+      thmPctRounded: 5.3,
+      paymentCount: 120
+    }
   }
 ]
 
@@ -151,6 +224,19 @@ function offeringMonthlyPayments(example: {
   return payments
 }
 
+function expectEnginePins(
+  result: ReturnType<typeof calculateMortgageLoanFromProductSpec>,
+  pins: EnginePins
+): void {
+  expect(result.paymentCount).toBe(pins.paymentCount)
+  expect(result.monthlyPayment).toBeCloseTo(pins.monthlyPayment, 8)
+  expect(result.totalCreditCostFees).toBe(pins.totalCreditCostFees)
+  expect(result.thmPct).toBe(pins.thmPctRounded)
+  if (pins.graceInterestOnlyPayment !== undefined) {
+    expect(result.graceInterestOnlyPayment).toBeCloseTo(pins.graceInterestOnlyPayment, 8)
+  }
+}
+
 describe('Hirdetmény representative example verification (ADR 0024)', () => {
   const productSchema = JSON.parse(readRepoFile(DEFAULT_PRODUCT_SCHEMA_PATH))
 
@@ -168,6 +254,14 @@ describe('Hirdetmény representative example verification (ADR 0024)', () => {
           expect(publishedInstallment * paymentCount).toBeLessThan(principal)
           expect(readRepoFile(productCase.examplePath)).toMatch(/QUARANTINED packaging fixture/i)
         })
+
+        it('pins stated-rate engine schedule and fees beside packaging quarantine', () => {
+          const result = calculateMortgageLoanFromProductSpec(product, {
+            ...example.inputs,
+            activeDiscountNames: productCase.activeDiscountNames
+          })
+          expectEnginePins(result, productCase.enginePins)
+        })
         return
       }
 
@@ -176,22 +270,31 @@ describe('Hirdetmény representative example verification (ADR 0024)', () => {
           ...example.inputs,
           activeDiscountNames: productCase.activeDiscountNames
         })
-
         const published = Number(example.expected.monthlyPayment)
+
+        // Always pin stated-rate engine math so regressions fail even while gapped.
+        expect(result.monthlyPayment).toBeCloseTo(productCase.enginePins.monthlyPayment, 8)
+        expect(result.paymentCount).toBe(productCase.enginePins.paymentCount)
+        if (productCase.enginePins.graceInterestOnlyPayment !== undefined) {
+          expect(result.graceInterestOnlyPayment).toBeCloseTo(
+            productCase.enginePins.graceInterestOnlyPayment,
+            8
+          )
+        }
 
         if (productCase.installmentGap) {
           expect(result.monthlyPayment).not.toBeCloseTo(published, 0)
           expect(productCase.installmentGap.reason.length).toBeGreaterThan(20)
           if (example.expected.graceInterestOnlyPayment !== undefined) {
-            const publishedGrace = Number(example.expected.graceInterestOnlyPayment)
-            expect(result.graceInterestOnlyPayment).toBeDefined()
-            expect(result.graceInterestOnlyPayment!).not.toBeCloseTo(publishedGrace, 0)
+            expect(result.graceInterestOnlyPayment!).not.toBeCloseTo(
+              Number(example.expected.graceInterestOnlyPayment),
+              0
+            )
           }
           return
         }
 
         expect(result.monthlyPayment).toBeCloseTo(published, 5)
-        expect(result.paymentCount).toBe(Number(example.expected.paymentCount))
         if (example.expected.graceInterestOnlyPayment !== undefined) {
           expect(result.graceInterestOnlyPayment).toBeCloseTo(
             Number(example.expected.graceInterestOnlyPayment),
@@ -209,6 +312,24 @@ describe('Hirdetmény representative example verification (ADR 0024)', () => {
         expect(thm.percentRounded).toBe(Number(example.expected.thmPct))
       })
 
+      it('documents engine vs published fee-package delta independently', () => {
+        const result = calculateMortgageLoanFromProductSpec(product, {
+          ...example.inputs,
+          activeDiscountNames: productCase.activeDiscountNames
+        })
+        const publishedFees = Number(example.expected.totalCreditCostFees)
+
+        expect(result.totalCreditCostFees).toBe(productCase.enginePins.totalCreditCostFees)
+
+        if (productCase.feePackageGap) {
+          expect(result.totalCreditCostFees).not.toBe(publishedFees)
+          expect(productCase.feePackageGap.reason.length).toBeGreaterThan(20)
+          return
+        }
+
+        expect(result.totalCreditCostFees).toBeCloseTo(publishedFees, 8)
+      })
+
       it('check 3: law-based THM reproduces stated thmPct from engine monthly payments', () => {
         const result = calculateMortgageLoanFromProductSpec(product, {
           ...example.inputs,
@@ -221,13 +342,13 @@ describe('Hirdetmény representative example verification (ADR 0024)', () => {
           monthlyPayments: enginePayments
         })
 
-        // Engine output thmPct must be the same ADR 0022 rounding of those flows.
         expect(result.thmPct).toBe(thm.percentRounded)
+        expect(result.thmPct).toBe(productCase.enginePins.thmPctRounded)
 
-        if (productCase.installmentGap) {
-          // Global path cannot match while engine installments still differ from
-          // the offering — keep the gap visible.
-          expect(thm.percentRounded).not.toBe(Number(example.expected.thmPct))
+        const publishedThm = Number(example.expected.thmPct)
+        if (productCase.installmentGap || productCase.feePackageGap) {
+          // Check 3 needs both schedule fidelity and fee-package fidelity.
+          expect(thm.percentRounded).not.toBe(publishedThm)
           return
         }
 
@@ -235,7 +356,7 @@ describe('Hirdetmény representative example verification (ADR 0024)', () => {
           Number(example.expected.totalCreditCostFees),
           8
         )
-        expect(thm.percentRounded).toBe(Number(example.expected.thmPct))
+        expect(thm.percentRounded).toBe(publishedThm)
       })
     })
   }

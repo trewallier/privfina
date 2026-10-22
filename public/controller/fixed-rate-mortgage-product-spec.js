@@ -11,7 +11,9 @@ const FIXED_RATE_MORTGAGE_PRODUCT_SPEC = {
     instrumentType: 'loan',
     rateType: 'fixed',
     amortizationType: 'level-payment',
-    paymentFrequency: 'monthly'
+    paymentFrequency: 'monthly',
+    interestDayCountConvention: '30/360',
+    paymentRounding: 'none'
   },
   subsidy: {
     type: 'none'

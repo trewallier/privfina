@@ -5,7 +5,7 @@ import {
 } from '../src/finance_engine/engine'
 
 describe('mortgage-loan product_specs mapper', () => {
-  it('loads otp-1x1 and computes ADR 0025 schedule, fees, and ADR 0022 THM', () => {
+  it('loads otp-1x1 and computes ADR 0026 ACT/360 schedule, fees, and ADR 0022 THM', () => {
     const product = loadMortgageLoanProductSpecFromFiles({ productCode: 'otp-1x1' })
     const result = calculateMortgageLoanFromProductSpec(product, {
       principal: 12_000_000,
@@ -17,7 +17,7 @@ describe('mortgage-loan product_specs mapper', () => {
 
     expect(result.productCode).toBe('otp-1x1')
     expect(result.productSpecVersion).toBe('v2alpha1')
-    expect(product.engine.interestDayCountConvention).toBe('365-over-360')
+    expect(product.engine.interestDayCountConvention).toBe('act/360')
     expect(product.engine.paymentRounding).toBe('forint')
     expect(result.paymentCount).toBe(240)
     expect(result.graceInterestOnlyPayment).toBeUndefined()
@@ -28,7 +28,7 @@ describe('mortgage-loan product_specs mapper', () => {
     expect(result.monthlyPayment).toBe(result.schedule.monthlyInstallment)
   })
 
-  it('maps csok-plusz grace then annuity with 365/360 forint rounding', () => {
+  it('maps csok-plusz grace then annuity with ACT/360 forint rounding', () => {
     const product = loadMortgageLoanProductSpecFromFiles({ productCode: 'csok-plusz' })
     const result = calculateMortgageLoanFromProductSpec(product, {
       principal: 12_000_000,

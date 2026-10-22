@@ -1,6 +1,6 @@
 # 0025 — Loan Interest Day-Count Convention (365/360) for Offering Installments
 
-Status: accepted
+Status: superseded by 0026
 
 Date: 2026-10-22
 
@@ -27,6 +27,10 @@ Related: 0021 (commercial mortgage primitives), 0023 (readiness), 0024 (three-ch
   - `paymentRounding`: `none` (default) | `forint` (level installment → nearest forint; grace interest-only → floor toward zero / `Math.floor`)
 - Hirdetmény `mortgage-loan` product specs set `365-over-360` + `forint` on `engine` so check 1 uses the same contractual percent the offering prints.
 - Do **not** invent rate adjustments, and do **not** branch amortization on `productCode`.
+
+## Superseded by
+
+- `0026-loan-interest-day-count-act-conventions.md` — renames conventions to ACT/360, ACT/365, ACT/366, 30/360 and documents equal-month formulas.
 
 ## Consequences
 

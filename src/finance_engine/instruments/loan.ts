@@ -69,16 +69,33 @@ function normalizeGracePeriodMonths(value: unknown, termMonths: number): number 
   return gracePeriodMonths
 }
 
+/** 83/2010. (III. 25.) Korm. rendelet 5. § (2) d — equal month length (non-leap). */
+export const EQUAL_MONTH_DAYS_NON_LEAP = 365 / MONTHS_PER_YEAR
+/** Equal month length when a product states ACT/366 leap-year basis. */
+export const EQUAL_MONTH_DAYS_LEAP = 366 / MONTHS_PER_YEAR
+export const ACT_360_YEAR_DAYS = 360
+export const ACT_365_YEAR_DAYS = 365
+export const ACT_366_YEAR_DAYS = 366
+
+const INTEREST_DAY_COUNT_CONVENTIONS: readonly InterestDayCountConvention[] = [
+  '30/360',
+  'act/360',
+  'act/365',
+  'act/366'
+]
+
 function normalizeInterestDayCountConvention(
   value: InterestDayCountConvention | undefined
 ): InterestDayCountConvention {
-  if (value === undefined || value === 'nominal-12') {
-    return 'nominal-12'
+  if (value === undefined) {
+    return '30/360'
   }
-  if (value === '365-over-360') {
-    return '365-over-360'
+  if ((INTEREST_DAY_COUNT_CONVENTIONS as readonly string[]).includes(value)) {
+    return value
   }
-  throw new Error('interestDayCountConvention must be nominal-12 or 365-over-360.')
+  throw new Error(
+    'interestDayCountConvention must be one of 30/360, act/360, act/365, act/366.'
+  )
 }
 
 function normalizePaymentRounding(value: LoanPaymentRounding | undefined): LoanPaymentRounding {
@@ -91,16 +108,29 @@ function normalizePaymentRounding(value: LoanPaymentRounding | undefined): LoanP
   throw new Error('paymentRounding must be none or forint.')
 }
 
-/** Monthly interest factor from annual contractual rate (ADR 0025). */
+/**
+ * Monthly interest factor from annual contractual rate for equal installments (ADR 0026).
+ *
+ * - `30/360`: r/12
+ * - `act/360`: r × (365/12) / 360  (OTP: kamat = tőke × r × (365/12) / 360)
+ * - `act/365`: r × (365/12) / 365  (= r/12 under equal months)
+ * - `act/366`: r × (366/12) / 366  (= r/12 under equal months)
+ */
 export function monthlyInterestRateFromAnnual(
   annualRate: number,
-  convention: InterestDayCountConvention = 'nominal-12'
+  convention: InterestDayCountConvention = '30/360'
 ): number {
   const normalized = normalizeInterestDayCountConvention(convention)
-  if (normalized === '365-over-360') {
-    return (annualRate * 365) / (360 * MONTHS_PER_YEAR)
+  switch (normalized) {
+    case 'act/360':
+      return (annualRate * EQUAL_MONTH_DAYS_NON_LEAP) / ACT_360_YEAR_DAYS
+    case 'act/365':
+      return (annualRate * EQUAL_MONTH_DAYS_NON_LEAP) / ACT_365_YEAR_DAYS
+    case 'act/366':
+      return (annualRate * EQUAL_MONTH_DAYS_LEAP) / ACT_366_YEAR_DAYS
+    case '30/360':
+      return annualRate / MONTHS_PER_YEAR
   }
-  return annualRate / MONTHS_PER_YEAR
 }
 
 function roundLevelInstallment(amount: number, rounding: LoanPaymentRounding): number {
@@ -409,7 +439,7 @@ export function createLoanInstrumentBundle(input: LoanBundleInput) {
       repaymentDayOfMonth: input.repaymentDayOfMonth,
       gracePeriodMonths,
       capitalizeInterestAtGraceEnd,
-      interestDayCountConvention: input.interestDayCountConvention ?? 'nominal-12',
+      interestDayCountConvention: input.interestDayCountConvention ?? '30/360',
       paymentRounding: input.paymentRounding ?? 'none',
       includeDisbursement: input.includeDisbursement !== false,
       category: input.category ?? 'loan',

@@ -120,13 +120,13 @@
         },
         "interestDayCountConvention": {
           "type": "string",
-          "enum": ["nominal-12", "365-over-360"],
-          "description": "Monthly interest factor from annual contractual rate (ADR 0025). Default nominal-12 when omitted."
+          "enum": ["30/360", "act/360", "act/365", "act/366"],
+          "description": "Equal-installment day-count convention (ADR 0026). Default 30/360 when omitted. act/360 = r×(365/12)/360 (OTP); act/365 = r×(365/12)/365; act/366 = r×(366/12)/366; 30/360 = r/12."
         },
         "paymentRounding": {
           "type": "string",
           "enum": ["none", "forint"],
-          "description": "Whole-forint rounding for level installment (nearest) and grace interest-only (floor). Default none when omitted (ADR 0025)."
+          "description": "Whole-forint rounding for level installment (nearest) and grace interest-only (floor). Default none when omitted (ADR 0025/0026)."
         }
       }
     },

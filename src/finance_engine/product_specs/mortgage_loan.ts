@@ -43,9 +43,9 @@ export interface MortgageLoanProductSpec {
     paymentFrequency?: string
     gracePeriodMonths?: number
     interestPeriodMonths?: number
-    /** ADR 0025 — defaults to nominal-12 when omitted. */
+    /** ADR 0026 — defaults to 30/360 when omitted. */
     interestDayCountConvention?: InterestDayCountConvention
-    /** ADR 0025 — defaults to none when omitted. */
+    /** ADR 0025/0026 — defaults to none when omitted. */
     paymentRounding?: LoanPaymentRounding
   }
   subsidy?: ProductSubsidyDefinition
@@ -226,7 +226,7 @@ export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
       specInputs.repaymentDayOfMonth ?? deriveRepaymentDayOfMonth(specInputs.startDate),
     gracePeriodMonths,
     capitalizeInterestAtGraceEnd: false,
-    interestDayCountConvention: productSpec.engine.interestDayCountConvention ?? 'nominal-12',
+    interestDayCountConvention: productSpec.engine.interestDayCountConvention ?? '30/360',
     paymentRounding: productSpec.engine.paymentRounding ?? 'none',
     includeDisbursement: specInputs.includeDisbursement ?? false,
     category: specInputs.category ?? 'mortgage-loan',
@@ -275,7 +275,7 @@ export function calculateMortgageLoanFromProductSpec(
     termMonths: specInputs.termMonths,
     gracePeriodMonths,
     capitalizeInterestAtGraceEnd: false,
-    interestDayCountConvention: productSpec.engine.interestDayCountConvention ?? 'nominal-12',
+    interestDayCountConvention: productSpec.engine.interestDayCountConvention ?? '30/360',
     paymentRounding: productSpec.engine.paymentRounding ?? 'none'
   })
 

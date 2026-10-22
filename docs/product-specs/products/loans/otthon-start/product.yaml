@@ -16,7 +16,7 @@ engine:
   rateType: state-subsidized
   amortizationType: interest-only-then-annuity
   paymentFrequency: monthly
-  interestDayCountConvention: 365-over-360
+  interestDayCountConvention: "act/360"
   paymentRounding: forint
   gracePeriodMonths: 12
   interestPeriodMonths: 60
@@ -202,11 +202,11 @@ outputs:
     description: Published total cost of credit indicator for the representative case.
 
 assumptions:
-  - Customer rate is fixed at 3,00% during state interest subsidy (up to 25 years).
-  - Interest periods are 5 years for the full term.
-  - Optional 12-month interest-only grace is available; the §6 representative totalPaid packaging aligns with grace then annuity.
-  - Representative Hirdetmény example uses new/used home purchase, 12.000.000 Ft, 20 years.
-  - Engine schedule uses shared loan primitives with engine.interestDayCountConvention 365-over-360 and paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice.
+  - "Customer rate is fixed at 3,00% during state interest subsidy (up to 25 years)."
+  - "Interest periods are 5 years for the full term."
+  - "Optional 12-month interest-only grace is available; the §6 representative totalPaid packaging aligns with grace then annuity."
+  - "Representative Hirdetmény example uses new/used home purchase, 12.000.000 Ft, 20 years."
+  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0026) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice."
 
 ui:
   formTitle: OTP Évnyerő Otthon Start Lakáshitel

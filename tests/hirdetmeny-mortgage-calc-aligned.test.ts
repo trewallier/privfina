@@ -16,7 +16,8 @@ import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../src/finance_engine/product_specs
  * Representative Hirdetmény examples verify products with three checks (ADR 0024):
  *
  * 1) Engine installment — principal, term, stated interest rate (and grace) must
- *    reproduce the offering monthly payment via ADR 0025 365/360 + forint rounding.
+ *    reproduce the offering monthly payment via ADR 0026 ACT/360 equal-month
+ *    (r × (365/12) / 360) + forint rounding.
  *
  * 2) THM from offering numbers — ADR 0022 percentRounded from the offering’s own
  *    repayment vector + fee total must equal stated thmPct.
@@ -218,8 +219,8 @@ describe('Hirdetmény representative example verification (ADR 0024)', () => {
       const product = loadMortgageLoanProductSpec(readRepoFile(productPath), productSchema)
       const example = loadExample(productCase.examplePath)
 
-      it('uses ADR 0025 365-over-360 day-count and forint payment rounding', () => {
-        expect(product.engine.interestDayCountConvention).toBe('365-over-360')
+      it('uses ADR 0026 ACT/360 equal-month day-count and forint payment rounding', () => {
+        expect(product.engine.interestDayCountConvention).toBe('act/360')
         expect(product.engine.paymentRounding).toBe('forint')
       })
 

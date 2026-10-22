@@ -5,12 +5,22 @@ import {
   calculateFixedRateLoanLikeFromSpecInputs
 } from './loan-legacy-bridges.js'
 
+function withSimplifiedDayCount(specInputs) {
+  const engine = FIXED_RATE_LOAN_PRODUCT_SPEC.engine || {}
+  return {
+    ...specInputs,
+    interestDayCountConvention:
+      specInputs.interestDayCountConvention ?? engine.interestDayCountConvention ?? '30/360',
+    paymentRounding: specInputs.paymentRounding ?? engine.paymentRounding ?? 'none'
+  }
+}
+
 function mapFixedRateLoanSpecInputsToLegacyCalculationInput(specInputs) {
-  return mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(specInputs)
+  return mapFixedRateLoanLikeSpecInputsToLegacyCalculationInput(withSimplifiedDayCount(specInputs))
 }
 
 function calculateFixedRateLoanFromSpecInputs(specInputs, options) {
-  return calculateFixedRateLoanLikeFromSpecInputs(specInputs, options)
+  return calculateFixedRateLoanLikeFromSpecInputs(withSimplifiedDayCount(specInputs), options)
 }
 
 function mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras = {}) {
@@ -31,7 +41,9 @@ function mapFixedRateLoanSpecInputsToLegacyLoanBundleInput(specInputs, extras = 
     termUnit,
     startDate,
     gracePeriodMonths: legacyInput.gracePeriodMonths,
-    capitalizeInterestAtGraceEnd: legacyInput.capitalizeInterestAtGraceEnd
+    capitalizeInterestAtGraceEnd: legacyInput.capitalizeInterestAtGraceEnd,
+    interestDayCountConvention: legacyInput.interestDayCountConvention,
+    paymentRounding: legacyInput.paymentRounding
   }
 }
 

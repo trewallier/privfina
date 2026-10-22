@@ -1,8 +1,7 @@
 /**
- * Schedule-usable catalog for public-offering mortgage-loan products (ADR 0023).
- * Lightweight metadata for the commercial loan composer. Fee/discount commercial
- * blocks live in `commercial-loan-commercial-blocks.js`; full embedded YAML parity
- * lands with commercially-usable / fully-spec-backed promotion.
+ * Commercial loan composer catalog for public-offering mortgage-loan products (ADR 0023).
+ * Fee/discount commercial blocks live in `commercial-loan-commercial-blocks.js`.
+ * Full embedded YAML product-spec modules remain a later fully-spec-backed step.
  */
 
 const PURPOSE_LABELS = {
@@ -27,6 +26,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.otp-1x1.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP 1x1 Lakáshitel',
+    migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 7.99,
     defaultTermMonths: 240,
@@ -42,8 +42,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
       'refinancing'
     ],
     eligibilityHints: [
-      'Market forint home loan; conditions follow the OTP Hirdetmény for applications from 2026-04-20.',
-      'Optional loyalty and fee-waiver discounts are hints only in schedule-usable mode.'
+      'Market forint home loan; conditions follow the OTP Hirdetmény for applications from 2026-04-20.'
     ],
     discountHints: [
       'Loyalty service rate discount (up to 1.2%) may apply when income-routing conditions are met.',
@@ -57,6 +56,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.otp-zold.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Zöld Lakáshitel',
+    migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 7.99,
     defaultTermMonths: 240,
@@ -79,6 +79,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.vegig-fix.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Végig Fix Lakáshitel',
+    migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 8.49,
     defaultTermMonths: 240,
@@ -97,7 +98,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
       'Contractual rate fixed for the full term at the Hirdetmény Végig Fix rate.'
     ],
     discountHints: [
-      'Fee-waiver discounts may apply under OTP Díjkedvezményes conditions (hints only).'
+      'Fee-waiver discounts may apply under OTP Díjkedvezményes conditions.'
     ],
     postSubsidyInfo: null,
     commerciallyBlockedReason: null
@@ -107,6 +108,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.csok-plusz.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Évnyerő CSOK Plusz Lakáshitel',
+    migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
     defaultTermMonths: 240,
@@ -119,10 +121,10 @@ const COMMERCIAL_LOAN_PRODUCTS = [
       'Only customer repayments are included in the user balance (bank↔state subsidy legs out of scope).'
     ],
     discountHints: [
-      'Disbursement fee reductions may apply under program conditions (hints only).'
+      'Disbursement fee reductions may apply under program conditions.'
     ],
     postSubsidyInfo:
-      'Interest-period resets (1y → 1y → 5y) and post-subsidy rate steps are informational only; the schedule uses the customer rate for the full term in schedule-usable mode.',
+      'Interest-period resets (1y → 1y → 5y) and post-subsidy rate steps are informational only; the schedule uses the customer rate for the full term.',
     commerciallyBlockedReason: null
   },
   {
@@ -130,26 +132,20 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.falusi-csok.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Falusi CSOK Lakáshitel',
+    migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 0,
     graceRequired: false,
-    loanPurposes: [
-      'used-home-purchase',
-      'new-home-purchase',
-      'construction',
-      'renovation',
-      'modernization',
-      'extension'
-    ],
+    loanPurposes: ['used-home-purchase', 'renovation', 'modernization', 'extension'],
     eligibilityHints: [
       'State-subsidized Falusi CSOK / Otthonteremtés rules apply.',
       'Only customer repayments are included in the user balance.'
     ],
     discountHints: [],
     postSubsidyInfo:
-      'Interest-period resets and post-subsidy rate steps are informational only in schedule-usable mode.',
+      'Interest-period resets and post-subsidy rate steps are informational only.',
     commerciallyBlockedReason: null
   },
   {
@@ -157,19 +153,20 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.otthon-start.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Otthon Start Lakáshitel',
+    migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
     defaultTermMonths: 240,
     defaultGracePeriodMonths: 12,
     graceRequired: false,
-    loanPurposes: ['used-home-purchase', 'new-home-purchase', 'construction', 'extension'],
+    loanPurposes: ['used-home-purchase', 'new-home-purchase', 'construction'],
     eligibilityHints: [
       'State-subsidized Otthon Start customer rate during the subsidy window.',
       'Only customer repayments are included in the user balance.'
     ],
     discountHints: [],
     postSubsidyInfo:
-      '5-year interest periods and post-subsidy rate steps are informational only; schedule uses the customer rate in schedule-usable mode.',
+      '5-year interest periods and post-subsidy rate steps are informational only; schedule uses the customer rate.',
     commerciallyBlockedReason: null
   },
   {
@@ -177,6 +174,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productId: 'mortgage-loan.videki-otthonfelujitasi.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Vidéki Otthonfelújítási Hitel',
+    migrationStatus: 'schedule-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 4.87,
     defaultTermMonths: 120,
@@ -189,7 +187,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     ],
     discountHints: [],
     postSubsidyInfo:
-      'Subsidy lasts up to 120 months; post-subsidy rate steps are informational only in schedule-usable mode.',
+      'Subsidy lasts up to 120 months; post-subsidy rate steps are informational only.',
     commerciallyBlockedReason:
       'Published Hirdetmény §6 installment packaging cannot amortize the stated principal; commercially-usable requires reconciled offering figures and THM match (ADR 0023).'
   }
@@ -199,7 +197,8 @@ function buildCommercialLoanProductOptions() {
   return COMMERCIAL_LOAN_PRODUCTS.map((product) => ({
     value: product.productCode,
     label: product.displayName,
-    productId: product.productId
+    productId: product.productId,
+    migrationStatus: product.migrationStatus
   }))
 }
 

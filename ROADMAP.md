@@ -80,7 +80,7 @@ Plan slices
 - [x] Close fee-package gaps by authoring missing land-registry lines in product YAML (`tulajdoni-lap-lekeres` 9 600, `terkepmasolat-lekeres` 5 000, `fedezetvaltozasi-koltseg` 10 600; otp-zold new-home packaging adds only fedezetváltozási) so engine `totalCreditCostFees` matches published §6.
 - [x] Close remaining check-3 gap (csok-plusz) once fee package matches; Vidéki reconcile separately.
 - [x] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
-- [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after all three checks pass + composer parity tests.
+- [x] Promote six non-quarantined products to `commercially-usable` after all three checks pass + composer↔YAML / THM parity tests (Vidéki remains schedule-usable / packaging-quarantined; fully-spec-backed embedded product-spec modules deferred).
 
 #### 5c) Deferred (explicitly out of scope for 5a/5b)
 - [ ] Bank↔state subsidy settlement cash-flow splits (future government-cost views).

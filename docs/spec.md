@@ -145,8 +145,8 @@ Acceptance criteria
 - [x] Fee-package fidelity: product YAML includes §6 land-registry lines (tulajdoni lap 2×, térképmásolat, fedezetváltozási; otp-zold new-home adds fedezetváltozási only) so engine `totalCreditCostFees` matches published figures for the six non-quarantined offerings.
 - [x] CSOK Plusz passes check 3 (engine THM 3.3) after fee-package fidelity closes the former 3.2 vs 3.3 gap (ROADMAP §5b fee-package slice).
 - [x] Commercial composer surfaces selectable discount toggles, optional fee toggles, purpose, fee-package total, and a single engine THM preview (ADR 0022 `percentRounded`; no dual-lane UI) (ROADMAP §5b).
-- [ ] A public-offering product is not commercially-usable / fully-spec-backed until all three checks pass **and** commercial composer fee/discount/THM UX is wired with catalog promotion / composer parity tests (ROADMAP §5b).
-- [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
+- [x] Six non-quarantined Hirdetmény products are promoted to **commercially-usable** after composer parity tests (fee/discount blocks ↔ YAML; composer package THM ≡ published `thmPct`; form → bundle lineage) (ROADMAP §5b).
+- [x] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

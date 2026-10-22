@@ -43,6 +43,6 @@ Related: 0021 (commercial mortgage primitives), 0022 (83/2010 THM year fractions
 ## Consequences
 
 - ROADMAP §5b check-1 installment gaps close for the six non-quarantined offerings; Vidéki remains packaging-quarantined (published installment×term < principal) but uses the same convention for its engine pin.
-- ADR 0021’s installment “packaging lane” is no longer the explanation for those deltas; checks 1–3 are green for the six non-quarantined offerings after fee-package YAML fidelity. Residual commercially-usable debt is commercial composer UX (fees/discounts/THM preview) plus Vidéki packaging reconciliation.
+- ADR 0021’s installment “packaging lane” is no longer the explanation for those deltas; checks 1–3 are green for the six non-quarantined offerings after fee-package YAML fidelity. Commercial composer fee/discount/THM UX is wired; residual commercially-usable debt is catalog promotion + composer YAML parity, plus Vidéki packaging reconciliation.
 - Schema / TypeScript / product YAML / tests use `act/360`, `act/365`, `act/366`, `30/360`; every loan product YAML states its convention.
 - Until the bundler ADR (0017) lands, the same convention + rounding is dual-surfaced in `public/instruments.js` and threaded through `loan-legacy-bridges` / commercial metadata so schedule-usable UI matches the engine harness.

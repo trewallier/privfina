@@ -52,8 +52,8 @@ Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done in this cleanup pass).
 2. ROADMAP §5a: schedule-usable UI — fold fixed-rate mortgage into simplified loan composer; commercial loan picker for seven Hirdetmény products (ADR 0023).
-3. ROADMAP §5b: ADR 0025 closed check 1; fee-package YAML closed fee totals + csok-plusz check 3 — checks 1–3 green for six non-quarantined offerings; next commercial composer UX / catalog promotion (Vidéki still quarantined).
-4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count logic is dual-surfaced until then).
+3. ROADMAP §5b: checks 1–3 green for six non-quarantined offerings; commercial composer fee/discount/THM UX dual-surfaces `loan_fees` + Annex THM in `public/controller/` — next catalog promotion to commercially-usable + composer YAML parity (Vidéki still quarantined).
+4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count, fees, and THM are dual-surfaced until then).
 5. Deferred (out of scope for §5a/5b): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets.
 
 Notes

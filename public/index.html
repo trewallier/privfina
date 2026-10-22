@@ -315,6 +315,30 @@
         width: auto;
       }
 
+      .commercial-packaging-fieldset {
+        margin: 0.75rem 0;
+        padding: 0.65rem 0.8rem 0.85rem;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--card-soft) 70%, #fff);
+      }
+
+      .commercial-packaging-fieldset legend {
+        padding: 0 0.35rem;
+        font-size: 0.92rem;
+        font-weight: 650;
+      }
+
+      .commercial-toggle-list {
+        display: grid;
+        gap: 0.45rem;
+        margin-top: 0.35rem;
+      }
+
+      .commercial-toggle-list .field-help-static {
+        margin: 0;
+      }
+
       input,
       select,
       button {
@@ -1184,7 +1208,7 @@
                 <span class="summary-main">
                   <span class="summary-title">Commercial Loan</span>
                 </span>
-                <span class="summary-hint">Public-offering mortgages · customer schedule</span>
+                <span class="summary-hint">Public-offering mortgages · fees · discounts · THM</span>
               </summary>
               <div class="flow-form-wrap">
                 <form id="commercial-loan-form">
@@ -1246,6 +1270,16 @@
                       <span class="label-title">Account loan disbursement inflow</span>
                     </label>
                   </div>
+                  <fieldset class="commercial-packaging-fieldset">
+                    <legend>Selectable discounts</legend>
+                    <p class="field-help-static">Rate-discount toggles reduce the customer rate entered above. Fee waivers change the fee package and THM.</p>
+                    <div id="commercial-loan-discount-toggles" class="commercial-toggle-list"></div>
+                  </fieldset>
+                  <fieldset class="commercial-packaging-fieldset">
+                    <legend>Optional fees</legend>
+                    <p class="field-help-static">Core §6 credit-cost fees are always included. Optional add-ons are off by default.</p>
+                    <div id="commercial-loan-optional-fee-toggles" class="commercial-toggle-list"></div>
+                  </fieldset>
                   <div class="row">
                     <label>
                       <span class="label-title">Monthly repayment preview</span>
@@ -1258,6 +1292,14 @@
                     <label>
                       <span class="label-title">Total interest preview</span>
                       <input id="commercial-loan-total-interest-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title">Fee package preview</span>
+                      <input id="commercial-loan-fees-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title">THM preview</span>
+                      <input id="commercial-loan-thm-preview" type="text" readonly />
                     </label>
                   </div>
                   <div class="actions">

@@ -7,9 +7,13 @@ import {
 import {
   normalizeInstrumentBundles
 } from './instruments.js'
+import {
+  emptyListStatus,
+  normalizeListStatus
+} from './list-status.js'
 
 const EXPORT_KIND = 'privfina.export'
-const CURRENT_EXPORT_SCHEMA_VERSION = 4
+const CURRENT_EXPORT_SCHEMA_VERSION = 5
 const MIN_SUPPORTED_IMPORT_SCHEMA_VERSION = 1
 
 /**
@@ -76,11 +80,32 @@ function ensureFlowIds(flows, prefix) {
   })
 }
 
-function buildExportDocument(oneTimeFlows, recurringFlows, instrumentBundlesOrNowIso, maybeNowIso) {
+function buildExportDocument(
+  oneTimeFlows,
+  recurringFlows,
+  instrumentBundlesOrNowIso,
+  maybeListStatusOrNowIso,
+  maybeNowIso
+) {
   const instrumentBundles = Array.isArray(instrumentBundlesOrNowIso)
     ? normalizeInstrumentBundles(instrumentBundlesOrNowIso)
     : []
-  const nowIso = typeof instrumentBundlesOrNowIso === 'string' ? instrumentBundlesOrNowIso : maybeNowIso
+
+  let listStatus = emptyListStatus()
+  let nowIso
+
+  if (typeof instrumentBundlesOrNowIso === 'string') {
+    nowIso = instrumentBundlesOrNowIso
+  } else if (
+    maybeListStatusOrNowIso &&
+    typeof maybeListStatusOrNowIso === 'object' &&
+    !Array.isArray(maybeListStatusOrNowIso)
+  ) {
+    listStatus = normalizeListStatus(maybeListStatusOrNowIso)
+    nowIso = typeof maybeNowIso === 'string' ? maybeNowIso : undefined
+  } else if (typeof maybeListStatusOrNowIso === 'string') {
+    nowIso = maybeListStatusOrNowIso
+  }
 
   return {
     kind: EXPORT_KIND,
@@ -89,7 +114,8 @@ function buildExportDocument(oneTimeFlows, recurringFlows, instrumentBundlesOrNo
     data: {
       oneTimeCashFlows: normalizeOneTimeFlows(oneTimeFlows),
       recurringCashFlows: normalizeRecurringDefinitions(recurringFlows),
-      instrumentBundles
+      instrumentBundles,
+      listStatus
     }
   }
 }
@@ -133,7 +159,8 @@ function extractImportData(payload) {
     data: {
       oneTimeCashFlows: source.oneTimeCashFlows || [],
       recurringCashFlows: source.recurringCashFlows || [],
-      instrumentBundles: source.instrumentBundles || []
+      instrumentBundles: source.instrumentBundles || [],
+      listStatus: source.listStatus
     }
   }
 }
@@ -187,6 +214,20 @@ function migrateImportDataToCurrent(schemaVersion, data) {
       continue
     }
 
+    if (currentVersion === 4) {
+      warnings.push(
+        'Imported schema v4 without list organization. listStatus was initialized empty and will be reconciled against known flows.'
+      )
+      currentVersion = 5
+      currentData = {
+        oneTimeCashFlows: currentData.oneTimeCashFlows || [],
+        recurringCashFlows: currentData.recurringCashFlows || [],
+        instrumentBundles: currentData.instrumentBundles || [],
+        listStatus: emptyListStatus()
+      }
+      continue
+    }
+
     throw new Error(`No migration path is available from schema v${currentVersion}.`)
   }
 
@@ -211,11 +252,13 @@ function parseImportDocument(payload) {
     normalizeInstrumentBundles(migrated.data.instrumentBundles),
     'instrument'
   )
+  const listStatus = normalizeListStatus(migrated.data.listStatus)
 
   return {
     oneTimeFlows,
     recurringFlows,
     instrumentBundles,
+    listStatus,
     schemaVersion: migrated.schemaVersion,
     warnings: migrated.warnings,
     importGeneratedFlowsPolicy: IMPORT_GENERATED_FLOWS_POLICY

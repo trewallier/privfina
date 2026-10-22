@@ -2,9 +2,12 @@ import {
   ONE_TIME_STORAGE_KEY,
   RECURRING_STORAGE_KEY,
   INSTRUMENT_BUNDLES_STORAGE_KEY,
+  LIST_STATUS_STORAGE_KEY,
   STORAGE_SCHEMA_VERSION_KEY,
   loadList,
-  saveList
+  saveList,
+  loadObject,
+  saveObject
 } from './storage.js'
 import {
   normalizeOneTimeFlows,
@@ -13,6 +16,20 @@ import {
   parseImportDocument,
   checkStorageSchemaVersion
 } from './import-export.js'
+import {
+  createFolder,
+  deleteFolder,
+  emptyListStatus,
+  moveItem,
+  moveRootEntry,
+  normalizeListStatus,
+  reconcileListStatus,
+  removeItemFromStatus,
+  renameFolder,
+  seedListStatusOrder,
+  setFolderCollapsed
+} from './list-status.js'
+import { buildConfiguredRows } from './render.js'
 import {
   normalizeInstrumentBundles,
   generateSalaryInstrumentBundle,
@@ -157,6 +174,7 @@ function initController() {
   const exportButton = document.getElementById('export-json-button')
   const importInput = document.getElementById('import-json-input')
   const importButton = document.getElementById('import-json-button')
+  const newFolderButton = document.getElementById('new-folder-button')
   const rows = document.getElementById('configured-flow-rows')
   const cards = document.getElementById('configured-flow-cards')
   const chart = document.getElementById('chart')
@@ -460,6 +478,7 @@ function initController() {
   let recurringFlows = ensureFlowIds(normalizeRecurringDefinitions(rawRecurringFlows), 'recurring')
   const rawInstrumentBundles = loadList(INSTRUMENT_BUNDLES_STORAGE_KEY)
   let instrumentBundles = ensureFlowIds(normalizeInstrumentBundles(rawInstrumentBundles), 'instrument')
+  let listStatus = normalizeListStatus(loadObject(LIST_STATUS_STORAGE_KEY) || emptyListStatus())
   let editingOneTimeId = null
   let editingRecurringId = null
   let editingSalaryId = null
@@ -469,6 +488,33 @@ function initController() {
   let editingInvestmentId = null
   let activeInfoTrigger = null
   const excludedFlowIds = new Set()
+
+  function knownConfiguredIds() {
+    return [
+      ...oneTimeFlows.map((flow) => flow.id),
+      ...recurringFlows.map((flow) => flow.id),
+      ...instrumentBundles.map((bundle) => bundle.id)
+    ]
+  }
+
+  function persistListStatus(nextStatus) {
+    listStatus = reconcileListStatus(nextStatus, knownConfiguredIds())
+    saveObject(LIST_STATUS_STORAGE_KEY, listStatus)
+  }
+
+  function dateOrderedConfiguredIds() {
+    const rows = buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, () => true, {
+      sortByDate: true
+    })
+    return rows.map((row) => row.id)
+  }
+
+  function syncListStatus() {
+    const seeded = seedListStatusOrder(listStatus, dateOrderedConfiguredIds())
+    persistListStatus(seeded)
+  }
+
+  syncListStatus()
 
   if (commercialLoanProductInput) {
     buildCommercialLoanProductOptions().forEach((option) => {
@@ -1514,14 +1560,66 @@ function initController() {
   startInput.value = defaultRange.startDate
   endInput.value = defaultRange.endDate
 
+  function handleListDrop(payload, target) {
+    if (!payload || !target) {
+      return
+    }
+
+    if (payload.kind === 'folder') {
+      if (target.type === 'folder') {
+        const folderRootIndex = listStatus.rootOrder.findIndex(
+          (entry) => entry.kind === 'folder' && entry.id === target.folderId
+        )
+        if (folderRootIndex < 0) {
+          return
+        }
+        persistListStatus(
+          moveRootEntry(listStatus, { kind: 'folder', id: payload.id }, folderRootIndex)
+        )
+        rerender()
+        return
+      }
+
+      persistListStatus(
+        moveRootEntry(listStatus, { kind: 'folder', id: payload.id }, target.index)
+      )
+      rerender()
+      return
+    }
+
+    if (payload.kind !== 'item') {
+      return
+    }
+
+    if (target.type === 'folder') {
+      persistListStatus(
+        moveItem(listStatus, payload.id, {
+          type: 'folder',
+          folderId: target.folderId,
+          index: target.index
+        })
+      )
+      rerender()
+      return
+    }
+
+    persistListStatus(
+      moveItem(listStatus, payload.id, {
+        type: 'root',
+        index: target.index
+      })
+    )
+    rerender()
+  }
+
   function rerender() {
-    const sortedOneTime = [...oneTimeFlows].sort((a, b) => a.date.localeCompare(b.date))
-    const sortedRecurring = [...recurringFlows].sort((a, b) => a.startDate.localeCompare(b.startDate))
+    syncListStatus()
 
     renderConfiguredLists({
-      oneTimeFlows: sortedOneTime,
-      recurringFlows: sortedRecurring,
+      oneTimeFlows,
+      recurringFlows,
       instrumentBundles,
+      listStatus,
       tableBody: rows,
       cardsContainer: cards,
       isFlowIncluded,
@@ -1539,6 +1637,7 @@ function initController() {
 
         oneTimeFlows = removeFlowById(oneTimeFlows, id)
         excludedFlowIds.delete(id)
+        persistListStatus(removeItemFromStatus(listStatus, id))
         saveCashFlowList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
 
         if (editingOneTimeId === id) {
@@ -1558,6 +1657,7 @@ function initController() {
 
         recurringFlows = removeFlowById(recurringFlows, id)
         excludedFlowIds.delete(id)
+        persistListStatus(removeItemFromStatus(listStatus, id))
         saveCashFlowList(RECURRING_STORAGE_KEY, recurringFlows)
 
         if (editingRecurringId === id) {
@@ -1590,6 +1690,7 @@ function initController() {
 
         instrumentBundles = removeFlowById(instrumentBundles, id)
         excludedFlowIds.delete(id)
+        persistListStatus(removeItemFromStatus(listStatus, id))
         saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
 
         if (editingSalaryId === id) {
@@ -1614,7 +1715,20 @@ function initController() {
 
         resetRangeIfEmpty()
         rerender()
-      }
+      },
+      onToggleFolder: (folderId, collapsed) => {
+        persistListStatus(setFolderCollapsed(listStatus, folderId, collapsed))
+        rerender()
+      },
+      onRenameFolder: (folderId, name) => {
+        persistListStatus(renameFolder(listStatus, folderId, name))
+        rerender()
+      },
+      onDeleteFolder: (folderId) => {
+        persistListStatus(deleteFolder(listStatus, folderId))
+        rerender()
+      },
+      onListDrop: handleListDrop
     })
 
     const startDate = startInput.value
@@ -2177,9 +2291,21 @@ function initController() {
   startInput.addEventListener('change', rerender)
   endInput.addEventListener('change', rerender)
 
+  if (newFolderButton) {
+    newFolderButton.addEventListener('click', () => {
+      const name = window.prompt('Folder name', 'Folder')
+      if (name === null) {
+        return
+      }
+      persistListStatus(createFolder(listStatus, name))
+      rerender()
+    })
+  }
+
   if (exportButton) {
     exportButton.addEventListener('click', () => {
-      const exportDoc = buildExportDocument(oneTimeFlows, recurringFlows, instrumentBundles)
+      syncListStatus()
+      const exportDoc = buildExportDocument(oneTimeFlows, recurringFlows, instrumentBundles, listStatus)
       const blob = new Blob([JSON.stringify(exportDoc, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const stamp = exportDoc.exportedAt.slice(0, 10)
@@ -2209,6 +2335,8 @@ function initController() {
         recurringFlows = imported.recurringFlows
         instrumentBundles = imported.instrumentBundles
         excludedFlowIds.clear()
+        listStatus = normalizeListStatus(imported.listStatus || emptyListStatus())
+        persistListStatus(listStatus)
         saveCashFlowList(ONE_TIME_STORAGE_KEY, oneTimeFlows)
         saveCashFlowList(RECURRING_STORAGE_KEY, recurringFlows)
         saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)

@@ -121,6 +121,8 @@
         border-radius: 12px;
         overflow: hidden;
         background: linear-gradient(180deg, #f8fbfe 0%, var(--card-soft) 100%);
+        min-width: 0;
+        max-width: 100%;
       }
 
       .flow-box > summary {
@@ -159,23 +161,30 @@
 
       .flow-form-wrap {
         padding: 12px 14px 14px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       form {
         display: grid;
         gap: 12px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
         gap: 10px;
+        min-width: 0;
       }
 
       label {
         font-size: 0.9rem;
         display: grid;
         gap: 6px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .label-title {
@@ -291,6 +300,8 @@
         background: linear-gradient(140deg, #eef6ff 0%, #e0f0ff 100%);
         border-radius: 12px;
         padding: 10px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .investment-subtype-hero label {
@@ -303,6 +314,9 @@
         font-size: 1rem;
         font-weight: 700;
         background: #fff;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
       }
 
       .inline-field {
@@ -351,6 +365,13 @@
         border: 1px solid var(--border);
         padding: 8px 10px;
         background: #fff;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      input.money-amount {
+        font-variant-numeric: tabular-nums;
       }
 
       button {
@@ -478,7 +499,7 @@
       }
 
       .import-group {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 8px;
         flex-wrap: wrap;
@@ -486,6 +507,21 @@
         border: 1px solid var(--border);
         border-radius: 10px;
         background: #f5f8fc;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+
+      .import-group input[type='file'] {
+        flex: 1 1 12rem;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .import-group button {
+        flex: 0 1 auto;
+        white-space: normal;
       }
 
       #chart {
@@ -759,6 +795,24 @@
         #chart svg {
           height: 220px;
         }
+
+        .import-group {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .import-group input[type='file'],
+        .import-group button {
+          width: 100%;
+        }
+
+        .toolbar {
+          align-items: stretch;
+        }
+
+        .toolbar > .primary {
+          width: 100%;
+        }
       }
 
       @media (min-width: 1021px) {
@@ -836,7 +890,7 @@
                     </label>
                     <label>
                       Amount
-                      <input id="amount" name="amount" type="number" min="0" step="0.01" required />
+                      <input id="amount" name="amount" class="money-amount" type="text" inputmode="decimal" required />
                     </label>
                     <label>
                       Direction
@@ -886,7 +940,7 @@
                     </label>
                     <label>
                       Amount
-                      <input id="recurring-amount" name="amount" type="number" min="0" step="0.01" required />
+                      <input id="recurring-amount" name="amount" class="money-amount" type="text" inputmode="decimal" required />
                     </label>
                     <label>
                       Direction
@@ -943,7 +997,7 @@
                     </label>
                     <label>
                       Amount
-                      <input id="salary-amount" name="amount" type="number" min="0" step="0.01" required />
+                      <input id="salary-amount" name="amount" class="money-amount" type="text" inputmode="decimal" required />
                     </label>
                     <label>
                       Category
@@ -1026,7 +1080,7 @@
                     </label>
                     <label>
                       Amount
-                      <input id="subscription-amount" name="amount" type="number" min="0" step="0.01" required />
+                      <input id="subscription-amount" name="amount" class="money-amount" type="text" inputmode="decimal" required />
                     </label>
                     <label>
                       Category
@@ -1083,7 +1137,7 @@
                     </label>
                     <label>
                       <span class="label-title"><span class="loan-field-label">Principal</span> <button type="button" class="info-chip" data-help-button="loan-principal-help" aria-label="Principal help">i</button></span>
-                      <input id="loan-principal" name="principal" type="number" min="0" step="0.01" required />
+                      <input id="loan-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
                       <div id="loan-principal-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="loan-principal-help" aria-label="Close">x</button>
                         <p>Initial borrowed amount used for amortization.</p>
@@ -1172,7 +1226,7 @@
                   <div class="row">
                     <label>
                       <span class="label-title"><span class="loan-field-label">Monthly repayment preview</span> <button type="button" class="info-chip" data-help-button="loan-monthly-preview-help" aria-label="Monthly repayment preview help">i</button></span>
-                      <input id="loan-monthly-preview" type="text" readonly />
+                      <input id="loan-monthly-preview" class="money-amount" type="text" readonly />
                       <div id="loan-monthly-preview-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="loan-monthly-preview-help" aria-label="Close">x</button>
                         <p>Estimated constant monthly payment after any grace period.</p>
@@ -1180,7 +1234,7 @@
                     </label>
                     <label>
                       <span class="label-title"><span class="loan-field-label">Total repayment preview</span> <button type="button" class="info-chip" data-help-button="loan-total-repayment-preview-help" aria-label="Total repayment preview help">i</button></span>
-                      <input id="loan-total-repayment-preview" type="text" readonly />
+                      <input id="loan-total-repayment-preview" class="money-amount" type="text" readonly />
                       <div id="loan-total-repayment-preview-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="loan-total-repayment-preview-help" aria-label="Close">x</button>
                         <p>Estimated sum of all scheduled payments over the full term.</p>
@@ -1188,7 +1242,7 @@
                     </label>
                     <label>
                       <span class="label-title"><span class="loan-field-label">Total interest preview</span> <button type="button" class="info-chip" data-help-button="loan-total-interest-preview-help" aria-label="Total interest preview help">i</button></span>
-                      <input id="loan-total-interest-preview" type="text" readonly />
+                      <input id="loan-total-interest-preview" class="money-amount" type="text" readonly />
                       <div id="loan-total-interest-preview-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="loan-total-interest-preview-help" aria-label="Close">x</button>
                         <p>Estimated total interest cost over the full term.</p>
@@ -1214,8 +1268,12 @@
                 <form id="commercial-loan-form">
                   <div class="investment-subtype-hero">
                     <label>
-                      <span class="label-title">Mortgage product</span>
+                      <span class="label-title">Mortgage product <button type="button" class="info-chip" data-help-button="commercial-loan-product-help" aria-label="Mortgage product help">i</button></span>
                       <select id="commercial-loan-product" name="productCode" required></select>
+                      <div id="commercial-loan-product-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-product-help" aria-label="Close">x</button>
+                        <p>Public-offering mortgage product that drives rates, fees, discounts, and THM packaging.</p>
+                      </div>
                     </label>
                   </div>
                   <p id="commercial-loan-eligibility-hint" class="field-help-static"></p>
@@ -1224,50 +1282,94 @@
                   <p id="commercial-loan-commercial-note" class="field-help-static" hidden></p>
                   <div class="row">
                     <label>
-                      <span class="label-title">Label</span>
+                      <span class="label-title">Label <button type="button" class="info-chip" data-help-button="commercial-loan-label-help" aria-label="Label help">i</button></span>
                       <input id="commercial-loan-label" name="label" type="text" placeholder="Commercial loan" />
+                      <div id="commercial-loan-label-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-label-help" aria-label="Close">x</button>
+                        <p>Display name for this commercial loan in the configured instruments list.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Start date</span>
+                      <span class="label-title">Start date <button type="button" class="info-chip" data-help-button="commercial-loan-start-date-help" aria-label="Start date help">i</button></span>
                       <input id="commercial-loan-start-date" name="startDate" type="date" required />
+                      <div id="commercial-loan-start-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-start-date-help" aria-label="Close">x</button>
+                        <p>Loan start date in ISO format.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Principal</span>
-                      <input id="commercial-loan-principal" name="principal" type="number" min="0" step="0.01" required />
+                      <span class="label-title">Principal <button type="button" class="info-chip" data-help-button="commercial-loan-principal-help" aria-label="Principal help">i</button></span>
+                      <input id="commercial-loan-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
+                      <div id="commercial-loan-principal-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-principal-help" aria-label="Close">x</button>
+                        <p>Approved forint principal disbursed for the home-loan purpose.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Customer annual rate (%)</span>
+                      <span class="label-title">Customer annual rate (%) <button type="button" class="info-chip" data-help-button="commercial-loan-annual-rate-help" aria-label="Customer annual rate help">i</button></span>
                       <input id="commercial-loan-annual-rate" name="annualRate" type="number" min="0" step="0.0001" required />
+                      <div id="commercial-loan-annual-rate-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-annual-rate-help" aria-label="Close">x</button>
+                        <p>Fixed ügyleti kamat for the full term before optional loyalty/employee discounts.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Term (months)</span>
+                      <span class="label-title">Term (months) <button type="button" class="info-chip" data-help-button="commercial-loan-term-months-help" aria-label="Term help">i</button></span>
                       <input id="commercial-loan-term-months" name="termMonths" type="number" min="1" step="1" required />
+                      <div id="commercial-loan-term-months-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-term-months-help" aria-label="Close">x</button>
+                        <p>Full contractual term in months.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Grace period (months)</span>
+                      <span class="label-title">Grace period (months) <button type="button" class="info-chip" data-help-button="commercial-loan-grace-period-months-help" aria-label="Grace period help">i</button></span>
                       <input id="commercial-loan-grace-period-months" name="gracePeriodMonths" type="number" min="0" step="1" value="0" />
+                      <div id="commercial-loan-grace-period-months-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-grace-period-months-help" aria-label="Close">x</button>
+                        <p>Optional months at the start before amortizing repayments begin. Defaults to 0.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Loan purpose</span>
+                      <span class="label-title">Loan purpose <button type="button" class="info-chip" data-help-button="commercial-loan-purpose-help" aria-label="Loan purpose help">i</button></span>
                       <select id="commercial-loan-purpose" name="loanPurpose"></select>
+                      <div id="commercial-loan-purpose-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-purpose-help" aria-label="Close">x</button>
+                        <p>Purpose code affecting fees and THM presentation.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Repayment day of month</span>
+                      <span class="label-title">Repayment day of month <button type="button" class="info-chip" data-help-button="commercial-loan-repayment-day-help" aria-label="Repayment day of month help">i</button></span>
                       <input id="commercial-loan-repayment-day" name="repaymentDayOfMonth" type="number" min="1" max="31" step="1" value="1" />
+                      <div id="commercial-loan-repayment-day-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-repayment-day-help" aria-label="Close">x</button>
+                        <p>Calendar day used for each scheduled monthly repayment.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Category</span>
+                      <span class="label-title">Category <button type="button" class="info-chip" data-help-button="commercial-loan-category-help" aria-label="Category help">i</button></span>
                       <input id="commercial-loan-category" name="category" type="text" placeholder="loan" />
+                      <div id="commercial-loan-category-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-category-help" aria-label="Close">x</button>
+                        <p>Optional tag for grouping this instrument in lists and reports.</p>
+                      </div>
                     </label>
                   </div>
                   <div class="row">
                     <label>
-                      <span class="label-title">Description</span>
+                      <span class="label-title">Description <button type="button" class="info-chip" data-help-button="commercial-loan-description-help" aria-label="Description help">i</button></span>
                       <input id="commercial-loan-description" name="description" type="text" placeholder="Optional notes" />
+                      <div id="commercial-loan-description-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-description-help" aria-label="Close">x</button>
+                        <p>Optional free-text notes for this commercial loan.</p>
+                      </div>
                     </label>
                     <label class="inline-field">
                       <input id="commercial-loan-include-disbursement" name="includeDisbursement" type="checkbox" checked />
-                      <span class="label-title">Account loan disbursement inflow</span>
+                      <span class="label-title">Account loan disbursement inflow <button type="button" class="info-chip" data-help-button="commercial-loan-include-disbursement-help" aria-label="Account loan disbursement inflow help">i</button></span>
+                      <div id="commercial-loan-include-disbursement-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-include-disbursement-help" aria-label="Close">x</button>
+                        <p>When enabled, records the principal as an inflow on the start date.</p>
+                      </div>
                     </label>
                   </div>
                   <fieldset class="commercial-packaging-fieldset">
@@ -1282,24 +1384,44 @@
                   </fieldset>
                   <div class="row">
                     <label>
-                      <span class="label-title">Monthly repayment preview</span>
-                      <input id="commercial-loan-monthly-preview" type="text" readonly />
+                      <span class="label-title">Monthly repayment preview <button type="button" class="info-chip" data-help-button="commercial-loan-monthly-preview-help" aria-label="Monthly repayment preview help">i</button></span>
+                      <input id="commercial-loan-monthly-preview" class="money-amount" type="text" readonly />
+                      <div id="commercial-loan-monthly-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-monthly-preview-help" aria-label="Close">x</button>
+                        <p>Level monthly annuity installment after any optional grace period.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Total repayment preview</span>
-                      <input id="commercial-loan-total-repayment-preview" type="text" readonly />
+                      <span class="label-title">Total repayment preview <button type="button" class="info-chip" data-help-button="commercial-loan-total-repayment-preview-help" aria-label="Total repayment preview help">i</button></span>
+                      <input id="commercial-loan-total-repayment-preview" class="money-amount" type="text" readonly />
+                      <div id="commercial-loan-total-repayment-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-total-repayment-preview-help" aria-label="Close">x</button>
+                        <p>Sum of scheduled repayments (engine) or Hirdetmény total including packaged fees when taken from the representative example.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Total interest preview</span>
-                      <input id="commercial-loan-total-interest-preview" type="text" readonly />
+                      <span class="label-title">Total interest preview <button type="button" class="info-chip" data-help-button="commercial-loan-total-interest-preview-help" aria-label="Total interest preview help">i</button></span>
+                      <input id="commercial-loan-total-interest-preview" class="money-amount" type="text" readonly />
+                      <div id="commercial-loan-total-interest-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-total-interest-preview-help" aria-label="Close">x</button>
+                        <p>Total interest paid over the full term (engine annuity path).</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">Fee package preview</span>
-                      <input id="commercial-loan-fees-preview" type="text" readonly />
+                      <span class="label-title">Fee package preview <button type="button" class="info-chip" data-help-button="commercial-loan-fees-preview-help" aria-label="Fee package preview help">i</button></span>
+                      <input id="commercial-loan-fees-preview" class="money-amount" type="text" readonly />
+                      <div id="commercial-loan-fees-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-fees-preview-help" aria-label="Close">x</button>
+                        <p>Sum of upfront credit-cost fees included in the fee package and THM calculation for the selected product.</p>
+                      </div>
                     </label>
                     <label>
-                      <span class="label-title">THM preview</span>
+                      <span class="label-title">THM preview <button type="button" class="info-chip" data-help-button="commercial-loan-thm-preview-help" aria-label="THM preview help">i</button></span>
                       <input id="commercial-loan-thm-preview" type="text" readonly />
+                      <div id="commercial-loan-thm-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-loan-thm-preview-help" aria-label="Close">x</button>
+                        <p>Published total cost of credit indicator for the representative case.</p>
+                      </div>
                     </label>
                   </div>
                   <div class="actions">
@@ -1366,7 +1488,7 @@
                     </label>
                     <label id="investment-principal-wrap">
                       <span class="label-title"><span id="investment-principal-label">Principal / face value</span> <button type="button" class="info-chip" data-help-button="investment-principal-help" aria-label="Principal help">i</button></span>
-                      <input id="investment-principal" name="principal" type="number" min="0" step="0.01" required />
+                      <input id="investment-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
                       <div id="investment-principal-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="investment-principal-help" aria-label="Close">x</button>
                         <p>Base notional amount for principal redemption and yield calculations.</p>
@@ -1374,7 +1496,7 @@
                     </label>
                     <label id="investment-purchase-price-wrap">
                       <span class="label-title"><span id="investment-purchase-price-label">Purchase price</span> <button type="button" class="info-chip" data-help-button="investment-purchase-price-help" aria-label="Purchase price help">i</button></span>
-                      <input id="investment-purchase-price" name="purchasePrice" type="number" min="0" step="0.01" />
+                      <input id="investment-purchase-price" name="purchasePrice" class="money-amount" type="text" inputmode="decimal" />
                       <div id="investment-purchase-price-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="investment-purchase-price-help" aria-label="Close">x</button>
                         <p>Upfront amount paid. For discount bonds this is mandatory and must be below face value.</p>
@@ -1436,7 +1558,7 @@
                     </label>
                     <label id="investment-sale-value-wrap">
                       <span class="label-title">Reserved sale value (future scope) <button type="button" class="info-chip" data-help-button="investment-sale-value-help" aria-label="Sale value help">i</button></span>
-                      <input id="investment-sale-value" name="saleValue" type="number" min="0" step="0.01" />
+                      <input id="investment-sale-value" name="saleValue" class="money-amount" type="text" inputmode="decimal" />
                       <div id="investment-sale-value-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="investment-sale-value-help" aria-label="Close">x</button>
                         <p>Reserved companion value for optional future sale-date workflows.</p>
@@ -1454,15 +1576,15 @@
                   <div id="investment-preview-row" class="row">
                     <label>
                       Maturity preview
-                      <input id="investment-maturity-preview" type="text" readonly />
+                      <input id="investment-maturity-preview" class="money-amount" type="text" readonly />
                     </label>
                     <label>
                       Purchase amount preview
-                      <input id="investment-purchase-preview" type="text" readonly />
+                      <input id="investment-purchase-preview" class="money-amount" type="text" readonly />
                     </label>
                     <label>
                       Gain preview
-                      <input id="investment-gain-preview" type="text" readonly />
+                      <input id="investment-gain-preview" class="money-amount" type="text" readonly />
                     </label>
                     <label id="investment-discount-yield-wrap">
                       Discount yield (derived)
@@ -1481,7 +1603,7 @@
                     <div class="row">
                       <label id="bmap-principal-wrap">
                         <span class="label-title"><span id="bmap-principal-label">Principal</span></span>
-                        <input id="bmap-principal" name="principal" type="number" min="1" step="0.01" required />
+                        <input id="bmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
                       </label>
                       <label id="bmap-dkj-base-yield-pct-wrap">
                         <span class="label-title"><span id="bmap-dkj-base-yield-pct-label">DKJ Base Yield</span></span>

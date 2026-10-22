@@ -578,8 +578,8 @@ describe('browser recurrence validation helpers', () => {
   })
 
   it('formats axis amounts with separators', () => {
-    expect(formatAxisAmount(12345.678)).toBe('12,345.68')
-    expect(formatAxisAmount(-2000)).toBe('-2,000')
+    expect(formatAxisAmount(12345.678)).toBe('12 345.68')
+    expect(formatAxisAmount(-2000)).toBe('−2 000.00')
   })
 
   it('downsamples large chart series while preserving boundaries', () => {

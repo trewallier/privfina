@@ -37,6 +37,8 @@ Scenarios / Use-cases
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
 - Inflation-linked bond setup: users must provide issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period; payment schedule and accrual rates are derived fields.
 - Investment field guidance UX: users can open and close inline definition bubbles from input-title info icons.
+- Commercial loan field guidance UX: commercial loan inputs and preview outputs expose the same info-icon pattern, with help copy aligned to product-spec field descriptions.
+- Money amount display UX: money amount inputs, previews, configured-list amounts, and chart axis labels group thousands with spaces (for example `5 000`, `1 000 000`).
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
@@ -103,6 +105,8 @@ Acceptance criteria
 - [x] Investment subtype selector is visually prominent and subtype changes dynamically update relevant field labels.
 - [x] Investment form dynamically toggles subtype-specific field visibility and required/editable state (for example inflation fields only for inflation-linked bonds, annual rate read-only for discount bonds).
 - [x] Investment input labels provide clickable info icons that open and close inline definition help bubbles.
+- [x] Commercial loan inputs and preview outputs provide clickable info icons with help copy aligned to product-spec field descriptions.
+- [x] Money amount boxes display large values with space-grouped thousands (for example `5 000`, `1 000 000`).
 - [x] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.
 - [x] Inflation-linked bond instrument derives annual maturity payment dates, effective annual rate, and accrual date markers using the canonical definitions in `DESIGN.md`.
 - [x] Inflation-linked bond instrument calculates first and subsequent period accrual factors using the canonical formulas in `DESIGN.md`.

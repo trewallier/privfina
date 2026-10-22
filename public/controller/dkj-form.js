@@ -77,6 +77,7 @@ import {
   ensureFieldLabelTitleElement,
   reorderFormRowBySpec
 } from './spec-form-utils.js'
+import { parseMoneyAmount } from './money-format.js'
 
 function addMonthsToIsoDate(dateIso, months) {
   const source = new Date(`${dateIso}T00:00:00Z`)
@@ -106,8 +107,13 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
         option.textContent = String(value)
         input.appendChild(option)
       })
+    } else if (field.unit === 'currency' || input.classList.contains('money-amount')) {
+      input.type = 'text'
+      input.setAttribute('inputmode', 'decimal')
+      input.classList.add('money-amount')
     } else {
       input.type = toInputType(field)
+      input.classList.remove('money-amount')
     }
     input.required = Boolean(field.required)
     if (input.type === 'number') {
@@ -142,8 +148,8 @@ function setDkjFieldVisibility(investmentForm, visibleFieldNames) {
 
 function mapFormDataToDkjSpecInputs(formData) {
   return {
-    faceValue: Number(formData.get('principal')),
-    purchasePricePct: Number(formData.get('purchasePrice')),
+    faceValue: parseMoneyAmount(formData.get('principal')),
+    purchasePricePct: parseMoneyAmount(formData.get('purchasePrice')),
     termMonths: Number(formData.get('termMonths')),
     settlementDate: String(formData.get('transactionDate') || '').trim(),
     maturityDate: String(formData.get('dueDate') || '').trim() || undefined,

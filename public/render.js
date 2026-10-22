@@ -1,3 +1,5 @@
+import { formatMoneyAmount } from './controller/money-format.js'
+
 function buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, isFlowIncluded) {
   const rows = []
 
@@ -129,7 +131,7 @@ function renderActionButtons(rowData) {
 }
 
 function formatSignedAmount(amount, direction) {
-  const absolute = Math.abs(Number(amount) || 0).toFixed(2)
+  const absolute = formatMoneyAmount(Math.abs(Number(amount) || 0))
   if (direction === 'outflow' || (typeof amount === 'number' && amount < 0)) {
     return `−${absolute}`
   }
@@ -197,7 +199,7 @@ function renderConfiguredTable(
       <td>${rowData.endOrCount}</td>
       <td>${rowData.period}</td>
       <td>${rowData.direction}</td>
-      <td>${Number(rowData.amount).toFixed(2)}</td>
+      <td>${formatMoneyAmount(rowData.amount)}</td>
       <td>${rowData.category}</td>
       <td class="action-col">
         ${renderActionButtons(rowData)}
@@ -339,11 +341,7 @@ function renderActionIcon(type, included = false) {
 }
 
 function formatAxisAmount(value) {
-  const formatter = new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  })
-  return formatter.format(value)
+  return formatMoneyAmount(value, { fractionDigits: 2 })
 }
 
 function formatDateLabel(isoDate) {

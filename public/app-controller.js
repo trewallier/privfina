@@ -95,6 +95,11 @@ import {
   buildSpecBackedInvestmentSubtypeOptions,
   buildSpecBackedInvestmentSubtypeUiConfig
 } from './controller/investment-product-metadata.js'
+import {
+  formatMoneyAmount,
+  parseMoneyAmount,
+  bindMoneyAmountInputs
+} from './controller/money-format.js'
 
 const INVESTMENT_FAMILY_TITLE = 'Government Security Bonds'
 
@@ -1070,7 +1075,7 @@ function initController() {
       bundle.label || product.displayName
     commercialLoanForm.querySelector('#commercial-loan-start-date').value = config.startDate || ''
     commercialLoanForm.querySelector('#commercial-loan-principal').value =
-      config.principal !== undefined ? String(config.principal) : ''
+      config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
     commercialLoanForm.querySelector('#commercial-loan-annual-rate').value =
       config.baseAnnualInterestRatePct !== undefined
         ? String(config.baseAnnualInterestRatePct)
@@ -1137,7 +1142,8 @@ function initController() {
         ? FIXED_RATE_MORTGAGE_PRODUCT_SPEC.ui.formTitle
         : FIXED_RATE_LOAN_PRODUCT_SPEC.ui.formTitle)
     loanForm.querySelector('#loan-start-date').value = config.startDate || ''
-    loanForm.querySelector('#loan-principal').value = config.principal !== undefined ? String(config.principal) : ''
+    loanForm.querySelector('#loan-principal').value =
+      config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
     loanForm.querySelector('#loan-annual-rate').value =
       config.annualRate !== undefined ? String(Number(config.annualRate) * 100) : ''
     loanForm.querySelector('#loan-term-value').value =
@@ -1178,7 +1184,8 @@ function initController() {
     investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
     investmentForm.querySelector('#investment-subtype').value = subtypeFromConfig
     if (subtypeFromConfig === 'bmap') {
-      investmentForm.querySelector('#bmap-principal').value = config.principal !== undefined ? String(config.principal) : ''
+      investmentForm.querySelector('#bmap-principal').value =
+        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
       investmentForm.querySelector('#bmap-dkj-base-yield-pct').value = config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
       investmentForm.querySelector('#bmap-interest-premium-pct').value = config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
       investmentForm.querySelector('#bmap-start-date').value = config.startDate || ''
@@ -1200,8 +1207,10 @@ function initController() {
     investmentForm.querySelector('#investment-transaction-date').value =
       config.transactionDate || config.purchaseDate || ''
     investmentForm.querySelector('#investment-due-date').value = config.dueDate || config.maturityDate || ''
-    investmentForm.querySelector('#investment-principal').value = config.principal !== undefined ? String(config.principal) : ''
-    investmentForm.querySelector('#investment-purchase-price').value = config.purchasePrice !== undefined ? String(config.purchasePrice) : ''
+    investmentForm.querySelector('#investment-principal').value =
+      config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+    investmentForm.querySelector('#investment-purchase-price').value =
+      config.purchasePrice !== undefined ? formatMoneyAmount(config.purchasePrice) : ''
     investmentForm.querySelector('#investment-annual-rate').value = config.annualRate !== undefined ? String(config.annualRate) : ''
     investmentForm.querySelector('#investment-spread-rate').value = config.spreadRate !== undefined ? String(config.spreadRate) : ''
     investmentForm.querySelector('#investment-yearly-inflation').value = config.yearlyInflationRaw
@@ -1210,7 +1219,8 @@ function initController() {
         : '')
     investmentForm.querySelector('#investment-coupon-period').value = config.couponPeriod || ''
     investmentForm.querySelector('#investment-sale-date').value = config.saleDate || ''
-    investmentForm.querySelector('#investment-sale-value').value = config.saleValue !== undefined ? String(config.saleValue) : ''
+    investmentForm.querySelector('#investment-sale-value').value =
+      config.saleValue !== undefined ? formatMoneyAmount(config.saleValue) : ''
     investmentForm.querySelector('#investment-category').value = config.category || 'investment'
     investmentForm.querySelector('#investment-description').value = config.description || ''
 
@@ -1239,7 +1249,7 @@ function initController() {
 
     editingOneTimeId = id
     oneTimeForm.querySelector('#date').value = target.date
-    oneTimeForm.querySelector('#amount').value = String(target.amount)
+    oneTimeForm.querySelector('#amount').value = formatMoneyAmount(target.amount)
     oneTimeForm.querySelector('#direction').value = target.direction
     oneTimeForm.querySelector('#category').value = target.category || 'general'
     oneTimeSubmitButton.textContent = 'Save Cash Flow'
@@ -1259,7 +1269,7 @@ function initController() {
     recurringForm.querySelector('#end-date').value = target.endDate || ''
     recurringForm.querySelector('#occurrences').value =
       target.occurrences !== undefined ? String(target.occurrences) : ''
-    recurringForm.querySelector('#recurring-amount').value = String(target.amount)
+    recurringForm.querySelector('#recurring-amount').value = formatMoneyAmount(target.amount)
     recurringForm.querySelector('#recurring-direction').value = target.direction
     recurringForm.querySelector('#recurring-category').value = target.category || 'general'
     recurringSubmitButton.textContent = 'Save Recurring Cash Flow'
@@ -1283,7 +1293,7 @@ function initController() {
     salaryForm.querySelector('#salary-occurrences').value =
       config.occurrences !== undefined ? String(config.occurrences) : ''
     salaryForm.querySelector('#salary-amount').value =
-      config.amount !== undefined ? String(config.amount) : ''
+      config.amount !== undefined ? formatMoneyAmount(config.amount) : ''
     salaryForm.querySelector('#salary-category').value = config.category || 'salary'
     salaryForm.querySelector('#salary-description').value = config.description || ''
     salaryForm.querySelector('#salary-schedule-mode').value =
@@ -1320,7 +1330,7 @@ function initController() {
     subscriptionForm.querySelector('#subscription-occurrences').value =
       config.occurrences !== undefined ? String(config.occurrences) : ''
     subscriptionForm.querySelector('#subscription-amount').value =
-      config.amount !== undefined ? String(config.amount) : ''
+      config.amount !== undefined ? formatMoneyAmount(config.amount) : ''
     subscriptionForm.querySelector('#subscription-category').value = config.category || 'subscription'
     subscriptionForm.querySelector('#subscription-description').value = config.description || ''
 
@@ -1394,13 +1404,15 @@ function initController() {
     })
   }
 
-  ;[loanForm, investmentForm].filter(Boolean).forEach((form) => {
+  ;[loanForm, investmentForm, commercialLoanForm].filter(Boolean).forEach((form) => {
     form.querySelectorAll('[data-help-button]').forEach((button) => {
       button.addEventListener('click', () => {
         toggleInvestmentInfoPopup(button)
       })
     })
   })
+
+  bindMoneyAmountInputs(document)
 
   investmentInfoPopupClose?.addEventListener('click', closeInvestmentInfoPopup)
   window.addEventListener('resize', () => {
@@ -1637,7 +1649,7 @@ function initController() {
     event.preventDefault()
 
     const formData = new FormData(oneTimeForm)
-    const amount = Number(formData.get('amount'))
+    const amount = parseMoneyAmount(formData.get('amount'))
     const date = String(formData.get('date') || '')
     const direction = String(formData.get('direction') || 'inflow')
     const category = String(formData.get('category') || '').trim() || 'general'
@@ -1675,7 +1687,7 @@ function initController() {
     const startDate = String(formData.get('startDate') || '')
     const endDate = String(formData.get('endDate') || '').trim()
     const occurrencesRaw = String(formData.get('occurrences') || '').trim()
-    const amount = Number(formData.get('amount'))
+    const amount = parseMoneyAmount(formData.get('amount'))
     const direction = String(formData.get('direction') || 'inflow')
     const category = String(formData.get('category') || '').trim() || 'general'
 
@@ -1742,7 +1754,7 @@ function initController() {
         startDate: String(formData.get('startDate') || '').trim(),
         endDate: String(formData.get('endDate') || '').trim() || undefined,
         occurrences: String(formData.get('occurrences') || '').trim(),
-        amount: Number(formData.get('amount')),
+        amount: parseMoneyAmount(formData.get('amount')),
         category: String(formData.get('category') || '').trim() || 'salary',
         description: String(formData.get('description') || '').trim() || undefined,
         scheduleMode: String(formData.get('scheduleMode') || 'custom-monthly-working-day'),
@@ -1790,7 +1802,7 @@ function initController() {
         startDate: String(formData.get('startDate') || '').trim(),
         endDate: String(formData.get('endDate') || '').trim() || undefined,
         occurrences: String(formData.get('occurrences') || '').trim(),
-        amount: Number(formData.get('amount')),
+        amount: parseMoneyAmount(formData.get('amount')),
         category: String(formData.get('category') || '').trim() || 'subscription',
         description: String(formData.get('description') || '').trim() || undefined,
         createdAt: editingSubscriptionId
@@ -2124,13 +2136,13 @@ function initController() {
         issueDate: String(formData.get('issueDate') || '').trim(),
         transactionDate: rawTransactionDate,
         dueDate: rawDueDate,
-        principal: Number(formData.get('principal')),
-        purchasePrice: Number(formData.get('purchasePrice')),
+        principal: parseMoneyAmount(formData.get('principal')),
+        purchasePrice: parseMoneyAmount(formData.get('purchasePrice')),
         annualRate: Number(formData.get('annualRate')),
         spreadRate: Number(formData.get('spreadRate')),
         yearlyInflationRaw: String(formData.get('yearlyInflationRaw') || '').trim(),
         saleDate: String(formData.get('saleDate') || '').trim(),
-        saleValue: Number(formData.get('saleValue')),
+        saleValue: parseMoneyAmount(formData.get('saleValue')),
         couponPeriod: String(formData.get('couponPeriod') || '').trim(),
         category: String(formData.get('category') || '').trim() || 'investment',
         description: String(formData.get('description') || '').trim() || undefined,

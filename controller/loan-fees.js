@@ -1,5 +1,6 @@
 /**
- * Browser dual-surface of `src/finance_engine/instruments/loan_fees.ts` (ADR 0017 / 0021).
+ * Migration scaffolding / browser dual-surface of
+ * `src/finance_engine/instruments/loan_fees.ts` (ADR 0017 / 0021).
  * Keep behavior aligned with the TypeScript primitive until bundler convergence.
  */
 

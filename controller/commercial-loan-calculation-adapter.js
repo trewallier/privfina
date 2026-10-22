@@ -39,6 +39,12 @@ function resolveExcludedFeeNames(specInputs, blocks) {
   })
 }
 
+/**
+ * Composer supplies the customer annual % (post-subsidy). Only selectable rate
+ * discounts (bp) are applied here. Full `resolveMortgageCustomerRate` lives in
+ * `src/finance_engine/instruments/loan_subsidy.ts` for engine/YAML verification —
+ * intentionally not dual-surfaced while subsidy windows stay informational (ADR 0023).
+ */
 function resolveCustomerAnnualRatePct(specInputs, feePackage) {
   const base = Number(specInputs.annualInterestRatePct)
   const discountBp = feePackage.totalRateDiscountBp || 0

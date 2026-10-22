@@ -27,4 +27,4 @@ expected:
 notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 Reprezentatív példák, Végig Fix Lakáshitel / használt lakás vásárlás."
   - "monthlyPayment and totalPaid are the published Hirdetmény figures (installment includes the bank's representative packaging; totalPaid includes 193.965 Ft fee/cost component)."
-  - "Bare engine annuity at 8,49% / 12 monthly compounding is validated separately in unit tests and is not required to equal the published installment."
+  - "Verification (ADR 0024): (1) engine installment from amount/term/stated rate; (2) law-based THM from these offering repayment + fee numbers; (3) law-based THM from engine-calculated monthly payments. Do not hide gaps with an invisible packaging-rate adjustment."

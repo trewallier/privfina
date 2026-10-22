@@ -74,6 +74,7 @@ export {
   loadMortgageLoanProductSpec,
   mapMortgageLoanSpecInputsToLoanInstrumentInput,
   calculateMortgageLoanFromProductSpec,
+  calculateThmFromMonthlyRepayments,
   generateLoanInstrumentCashFlowsFromMortgageLoanProductSpec
 } from './product_specs/mortgage_loan'
 export type {

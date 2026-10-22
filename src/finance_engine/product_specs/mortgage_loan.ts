@@ -17,7 +17,12 @@ import {
   resolveLoanSchedule,
   type ResolvedLoanSchedule
 } from '../instruments/loan'
-import { computeThmPct, expandScheduleToMonthlyPayments } from '../instruments/thm'
+import {
+  buildThmFlowsFromMonthly,
+  calculateThm,
+  expandScheduleToMonthlyPayments,
+  type ThmCalculationResult
+} from '../instruments/thm'
 
 export interface MortgageLoanProductSpec {
   specVersion: 'v2alpha1'
@@ -39,6 +44,11 @@ export interface MortgageLoanProductSpec {
   fees?: ProductFeeDefinition[]
   discounts?: ProductDiscountDefinition[]
   loanPurposes?: string[]
+  pricing?: {
+    rateSettingRule?: string
+    offeringPriceModel?: string
+    notes?: string[]
+  }
 }
 
 export interface MortgageLoanSpecInputs {
@@ -70,6 +80,7 @@ export interface MortgageLoanEngineOutputs {
   totalRepayment: number
   totalCreditCostFees: number
   totalPaid: number
+  /** ADR 0022 `percentRounded` from engine schedule + fee package. */
   thmPct: number
   annualInterestRatePct: number
   schedule: ResolvedLoanSchedule
@@ -185,6 +196,8 @@ function resolveMortgageCommercialInputs(
 
 /**
  * Map mortgage-loan spec inputs + product commercial blocks to loan instrument input.
+ * Schedule uses the contractual customer rate from the product inputs (no invisible
+ * packaging-rate adjustment).
  */
 export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
   productSpec: MortgageLoanProductSpec,
@@ -212,7 +225,29 @@ export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
 }
 
 /**
- * Compute engine-lane outputs for a mortgage-loan product (schedule + fees + THM).
+ * ADR 0022 THM from an explicit monthly repayment vector + upfront fees.
+ * Used to verify the legal THM solver independently of product schedule generation.
+ */
+export function calculateThmFromMonthlyRepayments(input: {
+  principal: number
+  upfrontFees: number
+  monthlyPayments: readonly number[]
+}): ThmCalculationResult {
+  const flows = buildThmFlowsFromMonthly({
+    principal: input.principal,
+    upfrontFees: input.upfrontFees,
+    monthlyOutflows: input.monthlyPayments.map((amount, index) => ({
+      monthIndex: index + 1,
+      amount
+    }))
+  })
+  return calculateThm(flows)
+}
+
+/**
+ * Compute mortgage outputs from product spec + inputs.
+ * Monthly schedule uses the stated contractual customer rate via shared loan primitives.
+ * `thmPct` is ADR 0022 `percentRounded` from that schedule and the fee package.
  */
 export function calculateMortgageLoanFromProductSpec(
   productSpec: MortgageLoanProductSpec,
@@ -233,7 +268,7 @@ export function calculateMortgageLoanFromProductSpec(
   })
 
   const monthlyPayments = expandScheduleToMonthlyPayments(schedule)
-  const thm = computeThmPct({
+  const thm = calculateThmFromMonthlyRepayments({
     principal: specInputs.principal,
     upfrontFees: feePackage.totalCreditCostFees,
     monthlyPayments
@@ -253,7 +288,7 @@ export function calculateMortgageLoanFromProductSpec(
     totalRepayment: schedule.totalRepayment,
     totalCreditCostFees: feePackage.totalCreditCostFees,
     totalPaid,
-    thmPct: thm.thmPct,
+    thmPct: thm.percentRounded,
     annualInterestRatePct: resolvedRate.annualInterestRatePct,
     schedule,
     feePackage

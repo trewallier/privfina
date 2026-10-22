@@ -52,7 +52,7 @@ Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done in this cleanup pass).
 2. ROADMAP §5a: schedule-usable UI — fold fixed-rate mortgage into simplified loan composer; commercial loan picker for seven Hirdetmény products (ADR 0023).
-3. ROADMAP §5b: commercially-usable — engine THM (ADR 0022) must match published `thmPct` before public-offering promotion; no dual-lane UI.
+3. ROADMAP §5b: representative examples use three checks (ADR 0024) — engine installment, THM from offering numbers, THM from engine payments (+ fee package); installment and fee gaps tracked independently; next close check-1 and fee-package gaps, then check 3 / commercial composer UX / catalog promotion.
 4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017.
 5. Deferred (out of scope for §5a/5b): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets.
 

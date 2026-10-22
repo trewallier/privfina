@@ -72,12 +72,15 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Promote catalog rows to `schedule-usable` when the above path works (Vidéki schedule-usable with commercially-usable still blocked until offering reconciliation + THM match).
 
 #### 5b) Loan products — commercially-usable (offering fidelity)
-Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until engine THM (ADR 0022) matches published `thmPct`. Simplified examples stay on annuity primitives.
+Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until **all three ADR 0024 checks** are green (engine installment at stated rate; THM from offering numbers; THM from engine payments + fee package). Closing check 1 alone does not always close check 3 — fee-package fidelity is an independent gate (e.g. csok-plusz). Simplified examples stay on annuity primitives.
 
 Plan slices
-- [ ] Align public-offering engine packaging so ADR 0022 `percentRounded` matches example `thmPct` (and offering repayment figures) per product; quarantine clears only when reconciled.
+- [x] Representative-example verification harness (ADR 0024): (1) engine installment from amount/term/rate; (2) law-based THM from offering numbers; (3) law-based THM from engine monthly payments — gaps stay visible (no packaging-rate camouflage). Engine outputs pinned while gapped; fee-package deltas asserted separately; check 2 green for six products; Vidéki packaging quarantined with stated-rate engine pin retained.
+- [ ] Close check-1 installment gaps at the stated rate (shared loan primitives / product mapping).
+- [ ] Close fee-package gaps (~−25 200 Ft vs published `totalCreditCostFees` for most peers; −10 600 for otp-zold) so check 3 is not blocked by fees alone.
+- [ ] Close check-3 gaps (engine payments + fee package → stated thmPct) once both schedule and fee packages match; use check 2 to isolate THM/fee issues (Vidéki reconcile separately).
 - [ ] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
-- [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after THM match + composer parity tests.
+- [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after all three checks pass + composer parity tests.
 
 #### 5c) Deferred (explicitly out of scope for 5a/5b)
 - [ ] Bank↔state subsidy settlement cash-flow splits (future government-cost views).

@@ -137,8 +137,13 @@ Acceptance criteria
 - [x] Subsidized products include only customer inflows/outflows in the user balance; bank↔state settlement legs are absent.
 - [x] Post-subsidy rate steps, when shown, are informational copy only (not simulated schedule resets) until a later epic.
 - [x] Public-offering products must not present dual-lane (engine vs packaging) figures in the UI.
-- [ ] A public-offering product is not commercially-usable / fully-spec-backed until ADR 0022 engine THM `percentRounded` matches the example published `thmPct`.
-- [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule.
+- [x] Representative Hirdetmény examples verify products with three checks (ADR 0024): (1) engine installment from amount, term, and stated interest rate; (2) law-based THM from offering repayment + fee numbers; (3) law-based THM from engine-calculated monthly payments. Gaps must not be hidden by an invisible packaging-rate adjustment.
+- [x] Check 2 passes for the six non-quarantined Hirdetmény products (THM solver + offering fee totals reproduce stated `thmPct`).
+- [ ] Public-offering products pass check 1 (engine installment at stated rate) without packaging-rate camouflage.
+- [x] While checks 1/3 remain gapped, tests pin stated-rate engine installment/fees/rounded THM and assert fee-package deltas independently of installment gaps (ADR 0024).
+- [ ] Public-offering products pass check 3 (THM from engine payments + engine fees) once both schedule fidelity and fee-package fidelity are green (closing either alone is not always enough).
+- [ ] A public-offering product is not commercially-usable / fully-spec-backed until all three checks pass **and** commercial composer fee/discount/THM UX is wired (ROADMAP §5b).
+- [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

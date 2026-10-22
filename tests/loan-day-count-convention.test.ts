@@ -10,7 +10,7 @@ import {
   resolveLoanSchedule
 } from '../src/finance_engine/instruments/loan'
 
-describe('loan interest day-count conventions (ADR 0026)', () => {
+describe('loan interest day-count conventions (ADR 0025)', () => {
   it('defaults to 30/360 (r/12)', () => {
     expect(monthlyInterestRateFromAnnual(0.0799)).toBeCloseTo(0.0799 / 12, 12)
     expect(monthlyInterestRateFromAnnual(0.0799, '30/360')).toBeCloseTo(0.0799 / 12, 12)

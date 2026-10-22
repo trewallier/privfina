@@ -1,12 +1,13 @@
 # ADRs (Architecture Decision Records)
 
 Purpose
-- Record important architecture and scope decisions in-repo as immutable Markdown files.
+- Record important architecture and scope decisions in-repo as Markdown files.
 
 Conventions
 - One decision per file. Files are numbered with a four-digit prefix (e.g. `0001-...md`).
-- Do not edit accepted ADRs. When a decision changes, create a new ADR that references and supersedes the earlier one.
 - Keep ADRs short: status, context, decision, consequences, date, and supersedes (optional).
+- **Immutability applies on `master`:** once an ADR is merged to `master`, do not edit its accepted decision text. When a *later* change of mind is needed, add a new ADR that references and supersedes the earlier one.
+- **Same-PR refinement:** do **not** introduce an ADR in a PR and then add another ADR in that same PR that supersedes it. Edit the in-flight ADR (and rename the file if the title/slug should change) until the PR merges. The read-only rule does not apply to ADRs that exist only on the feature branch / open PR.
 
 Location
 - ADRs live in `docs/adr/`.
@@ -20,8 +21,7 @@ Recent decisions
 - `0022-thm-calculator-for-hirdetmeny-verification.md` — 83/2010 Annex THM primitive for verifying (or computing) Hirdetmény `thmPct` during product implementation.
 - `0023-loan-product-readiness-and-offering-fidelity.md` — schedule-usable vs commercially-usable; public-offering fidelity (THM match, no dual-lane UI); customer-perspective subsidy; commercial loan composer architecture.
 - `0024-representative-example-three-check-verification.md` — representative examples: (1) engine installment at stated rate, (2) THM from offering numbers, (3) THM from engine payments; no packaging-rate camouflage.
-- `0025-loan-interest-day-count-365-over-360.md` — superseded by 0026 (historical `365-over-360` naming).
-- `0026-loan-interest-day-count-act-conventions.md` — ACT/360, ACT/365, ACT/366, 30/360 equal-month formulas; OTP Hirdetmény uses ACT/360 `r×(365/12)/360` (closes ADR 0024 check 1).
+- `0025-loan-interest-day-count-act-conventions.md` — ACT/360, ACT/365, ACT/366, 30/360 equal-month formulas; OTP Hirdetmény uses ACT/360 `r×(365/12)/360` (closes ADR 0024 check 1).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` and `public/eval-cache.js` (invalidate on mutation; no new ADR — implementation of ROADMAP §3).
 

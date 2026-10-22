@@ -140,7 +140,7 @@ Acceptance criteria
 - [x] Representative Hirdetmény examples verify products with three checks (ADR 0024): (1) engine installment from amount, term, and stated interest rate; (2) law-based THM from offering repayment + fee numbers; (3) law-based THM from engine-calculated monthly payments. Gaps must not be hidden by an invisible packaging-rate adjustment.
 - [x] Check 2 passes for the six non-quarantined Hirdetmény products (THM solver + offering fee totals reproduce stated `thmPct`).
 - [x] Tests pin engine installment/fees/rounded THM and assert fee-package deltas independently of installment/THM checks (ADR 0024).
-- [x] Public-offering products pass check 1 (engine installment at stated rate) via ADR 0026 ACT/360 equal-month (`r × (365/12) / 360`) + forint rounding — no packaging-rate camouflage.
+- [x] Public-offering products pass check 1 (engine installment at stated rate) via ADR 0025 ACT/360 equal-month (`r × (365/12) / 360`) + forint rounding — no packaging-rate camouflage.
 - [x] Five of six non-quarantined products pass check 3 (THM from engine payments + engine fees) after check 1 closes; fee totals may still differ from published `totalCreditCostFees`.
 - [ ] CSOK Plusz passes check 3 once fee-package fidelity closes the remaining 3.2 vs 3.3 gap (ROADMAP §5b fee-package slice).
 - [ ] A public-offering product is not commercially-usable / fully-spec-backed until all three checks pass **and** commercial composer fee/discount/THM UX is wired (ROADMAP §5b).

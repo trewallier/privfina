@@ -442,7 +442,7 @@ Rules and reports depend heavily on dates and classifications. Keep them typed a
 
 ## Decision Logging & Iterative Workflow
 
-- **Architecture Decision Records (ADRs):** Important architecture and scope decisions are recorded as immutable ADRs in `docs/adr/`. Each ADR captures one decision; when a decision changes, a new ADR is added that supersedes the previous one.
+- **Architecture Decision Records (ADRs):** Important architecture and scope decisions are recorded in `docs/adr/`. Each ADR captures one decision. Immutability applies once an ADR is on `master`; later changes of mind get a superseding ADR. Within an open PR, refine the in-flight ADR instead of superseding it in the same PR (see [`docs/adr/README.md`](docs/adr/README.md)).
 - **Spec → Plan → Implement → Verify:**
 	- Update `docs/spec.md` with scenarios, assumptions, and acceptance criteria for a planned change.
 	- Create a small roadmap item in `ROADMAP.md` and a focused PR that links to the spec section.

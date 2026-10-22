@@ -109,7 +109,7 @@ function normalizePaymentRounding(value: LoanPaymentRounding | undefined): LoanP
 }
 
 /**
- * Monthly interest factor from annual contractual rate for equal installments (ADR 0026).
+ * Monthly interest factor from annual contractual rate for equal installments (ADR 0025).
  *
  * - `30/360`: r/12
  * - `act/360`: r × (365/12) / 360  (OTP: kamat = tőke × r × (365/12) / 360)

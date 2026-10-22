@@ -5,7 +5,7 @@ import {
 } from '../src/finance_engine/engine'
 
 describe('mortgage-loan product_specs mapper', () => {
-  it('loads otp-1x1 and computes ADR 0026 ACT/360 schedule, fees, and ADR 0022 THM', () => {
+  it('loads otp-1x1 and computes ADR 0025 ACT/360 schedule, fees, and ADR 0022 THM', () => {
     const product = loadMortgageLoanProductSpecFromFiles({ productCode: 'otp-1x1' })
     const result = calculateMortgageLoanFromProductSpec(product, {
       principal: 12_000_000,

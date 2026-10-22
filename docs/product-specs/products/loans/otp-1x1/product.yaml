@@ -214,7 +214,7 @@ assumptions:
   - "Contractual rate is fixed for the full term at 7,99% unless loyalty/employee discounts apply."
   - "Representative Hirdetmény example uses used-home purchase, 12.000.000 Ft, 20 years, annuity repayment, single disbursement, conditions as of 2026-04-01 packaging with 2026-04-20 Hirdetmény product rates."
   - "Optional 12-month interest-only grace exists on the market-loan family but is out of scope for the representative annuity example."
-  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0026) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice."
+  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice."
   - "Green, CSOK, and other subsidized constructions are separate productCodes."
 
 ui:

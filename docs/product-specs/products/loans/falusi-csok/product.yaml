@@ -183,7 +183,7 @@ outputs:
 assumptions:
   - "Customer rate is fixed at 3,00% during state interest subsidy (up to 25 years)."
   - "Representative Hirdetmény example uses used-home purchase for a multi-child family in a preferred small settlement, 12.000.000 Ft, 20 years."
-  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0026) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice."
+  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice."
   - "Other subsidized and market productCodes are separate catalog entries."
 
 ui:

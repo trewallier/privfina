@@ -43,9 +43,9 @@ export interface MortgageLoanProductSpec {
     paymentFrequency?: string
     gracePeriodMonths?: number
     interestPeriodMonths?: number
-    /** ADR 0026 — defaults to 30/360 when omitted. */
+    /** ADR 0025 — defaults to 30/360 when omitted. */
     interestDayCountConvention?: InterestDayCountConvention
-    /** ADR 0025/0026 — defaults to none when omitted. */
+    /** ADR 0025 — defaults to none when omitted. */
     paymentRounding?: LoanPaymentRounding
   }
   subsidy?: ProductSubsidyDefinition

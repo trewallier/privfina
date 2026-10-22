@@ -16,6 +16,8 @@ engine:
   rateType: state-subsidized
   amortizationType: interest-only-then-annuity
   paymentFrequency: monthly
+  interestDayCountConvention: 365-over-360
+  paymentRounding: forint
   gracePeriodMonths: 12
   interestPeriodMonths: 60
 
@@ -204,7 +206,7 @@ assumptions:
   - Interest periods are 5 years for the full term.
   - Optional 12-month interest-only grace is available; the §6 representative totalPaid packaging aligns with grace then annuity.
   - Representative Hirdetmény example uses new/used home purchase, 12.000.000 Ft, 20 years.
-  - Engine cash-flow generation uses the shared loan grace + annuity primitives at the customer rate; Hirdetmény published installment/THM figures are retained as official representative outputs.
+  - Engine schedule uses shared loan primitives with engine.interestDayCountConvention 365-over-360 and paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice.
 
 ui:
   formTitle: OTP Évnyerő Otthon Start Lakáshitel

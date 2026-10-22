@@ -139,9 +139,10 @@ Acceptance criteria
 - [x] Public-offering products must not present dual-lane (engine vs packaging) figures in the UI.
 - [x] Representative Hirdetmény examples verify products with three checks (ADR 0024): (1) engine installment from amount, term, and stated interest rate; (2) law-based THM from offering repayment + fee numbers; (3) law-based THM from engine-calculated monthly payments. Gaps must not be hidden by an invisible packaging-rate adjustment.
 - [x] Check 2 passes for the six non-quarantined Hirdetmény products (THM solver + offering fee totals reproduce stated `thmPct`).
-- [ ] Public-offering products pass check 1 (engine installment at stated rate) without packaging-rate camouflage.
-- [x] While checks 1/3 remain gapped, tests pin stated-rate engine installment/fees/rounded THM and assert fee-package deltas independently of installment gaps (ADR 0024).
-- [ ] Public-offering products pass check 3 (THM from engine payments + engine fees) once both schedule fidelity and fee-package fidelity are green (closing either alone is not always enough).
+- [x] Tests pin engine installment/fees/rounded THM and assert fee-package deltas independently of installment/THM checks (ADR 0024).
+- [x] Public-offering products pass check 1 (engine installment at stated rate) via ADR 0025 `365-over-360` + forint rounding — no packaging-rate camouflage.
+- [x] Five of six non-quarantined products pass check 3 (THM from engine payments + engine fees) after check 1 closes; fee totals may still differ from published `totalCreditCostFees`.
+- [ ] CSOK Plusz passes check 3 once fee-package fidelity closes the remaining 3.2 vs 3.3 gap (ROADMAP §5b fee-package slice).
 - [ ] A public-offering product is not commercially-usable / fully-spec-backed until all three checks pass **and** commercial composer fee/discount/THM UX is wired (ROADMAP §5b).
 - [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
 

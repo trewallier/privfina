@@ -2,9 +2,16 @@ export { generateSalaryInstrumentCashFlows } from './instruments/salary'
 export { generateSubscriptionInstrumentCashFlows } from './instruments/subscription'
 export type { StatefulSimulationResult } from './instruments/simulation'
 export { runStatefulSimulation } from './instruments/simulation'
-export type { LoanAmortizationStep, ResolvedLoanSchedule } from './instruments/loan'
+export type {
+  InterestDayCountConvention,
+  LoanAmortizationStep,
+  LoanPaymentRounding,
+  LoanScheduleRateOptions,
+  ResolvedLoanSchedule
+} from './instruments/loan'
 export {
   calculateLoanMonthlyInstallment,
+  monthlyInterestRateFromAnnual,
   resolveLoanSchedule,
   simulateLoanAmortization,
   createLoanRepaymentPreview,

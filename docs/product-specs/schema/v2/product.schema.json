@@ -117,6 +117,16 @@
         "interestPeriodMonths": {
           "type": "integer",
           "minimum": 1
+        },
+        "interestDayCountConvention": {
+          "type": "string",
+          "enum": ["nominal-12", "365-over-360"],
+          "description": "Monthly interest factor from annual contractual rate (ADR 0025). Default nominal-12 when omitted."
+        },
+        "paymentRounding": {
+          "type": "string",
+          "enum": ["none", "forint"],
+          "description": "Whole-forint rounding for level installment (nearest) and grace interest-only (floor). Default none when omitted (ADR 0025)."
         }
       }
     },

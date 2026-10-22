@@ -78,6 +78,20 @@ export interface SubscriptionInstrumentInput {
   description?: string
 }
 
+/**
+ * How annual contractual rate converts to a monthly interest factor (ADR 0025).
+ * - `nominal-12`: annualRate / 12 (simplified examples; default)
+ * - `365-over-360`: annualRate × (365/360) / 12 (Hirdetmény offering schedules)
+ */
+export type InterestDayCountConvention = 'nominal-12' | '365-over-360'
+
+/**
+ * Whole-forint payment rounding used by Hirdetmény representative schedules (ADR 0025).
+ * - `none`: keep full floating precision (default)
+ * - `forint`: level installment → nearest forint; grace interest-only → floor
+ */
+export type LoanPaymentRounding = 'none' | 'forint'
+
 export interface LoanInstrumentInput {
   principal: number
   annualRate: number
@@ -96,6 +110,10 @@ export interface LoanInstrumentInput {
    * Ignored when gracePeriodMonths is 0.
    */
   capitalizeInterestAtGraceEnd?: boolean
+  /** ADR 0025 — defaults to `nominal-12`. */
+  interestDayCountConvention?: InterestDayCountConvention
+  /** ADR 0025 — defaults to `none`. */
+  paymentRounding?: LoanPaymentRounding
   includeDisbursement?: boolean
   category?: string
   description?: string

@@ -16,6 +16,8 @@ engine:
   rateType: fixed
   amortizationType: level-payment
   paymentFrequency: monthly
+  interestDayCountConvention: 365-over-360
+  paymentRounding: forint
   gracePeriodMonths: 0
   interestPeriodMonths: 240
 
@@ -214,7 +216,7 @@ assumptions:
   - Contractual rate is fixed for the full term at 8,49% unless loyalty/employee discounts apply.
   - Representative Hirdetmény example uses used-home purchase, 12.000.000 Ft, 20 years, annuity repayment, single disbursement, conditions as of 2026-04-01 packaging with 2026-04-20 Hirdetmény product rates.
   - Optional 12-month interest-only grace exists on the market-loan family but is out of scope for the representative annuity example.
-  - Engine cash-flow generation uses the shared fixed-rate loan annuity primitive; Hirdetmény published installment/THM figures are retained as official representative outputs and may package fees differently from bare annuity math.
+  - Engine schedule uses shared loan primitives with engine.interestDayCountConvention 365-over-360 and paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice.
   - OTP 1x1, OTP Zöld, and subsidized constructions are separate productCodes.
 
 ui:

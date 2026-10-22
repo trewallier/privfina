@@ -1,5 +1,10 @@
 import { daysInMonthUtc, parseIsoDate } from '../date_utils'
-import type { LoanInstrumentInput, LoanRepaymentPreview } from '../interfaces'
+import type {
+  InterestDayCountConvention,
+  LoanInstrumentInput,
+  LoanPaymentRounding,
+  LoanRepaymentPreview
+} from '../interfaces'
 import type { CashFlow } from '../models'
 import { CashFlowDirection } from '../models'
 import {
@@ -13,6 +18,8 @@ import {
   validateDayOfMonth
 } from './common'
 import { runStatefulSimulation } from './simulation'
+
+export type { InterestDayCountConvention, LoanPaymentRounding }
 
 export interface LoanAmortizationStep {
   installmentIndex: number
@@ -29,6 +36,8 @@ export interface ResolvedLoanSchedule {
   gracePeriodMonths: number
   capitalizeInterestAtGraceEnd: boolean
   amortizationMonths: number
+  interestDayCountConvention: InterestDayCountConvention
+  paymentRounding: LoanPaymentRounding
   monthlyRate: number
   amortizingPrincipal: number
   graceInterestOnlyPayment: number
@@ -36,6 +45,11 @@ export interface ResolvedLoanSchedule {
   paymentCount: number
   totalRepayment: number
   totalInterest: number
+}
+
+export interface LoanScheduleRateOptions {
+  interestDayCountConvention?: InterestDayCountConvention
+  paymentRounding?: LoanPaymentRounding
 }
 
 function normalizeGracePeriodMonths(value: unknown, termMonths: number): number {
@@ -55,12 +69,56 @@ function normalizeGracePeriodMonths(value: unknown, termMonths: number): number 
   return gracePeriodMonths
 }
 
+function normalizeInterestDayCountConvention(
+  value: InterestDayCountConvention | undefined
+): InterestDayCountConvention {
+  if (value === undefined || value === 'nominal-12') {
+    return 'nominal-12'
+  }
+  if (value === '365-over-360') {
+    return '365-over-360'
+  }
+  throw new Error('interestDayCountConvention must be nominal-12 or 365-over-360.')
+}
+
+function normalizePaymentRounding(value: LoanPaymentRounding | undefined): LoanPaymentRounding {
+  if (value === undefined || value === 'none') {
+    return 'none'
+  }
+  if (value === 'forint') {
+    return 'forint'
+  }
+  throw new Error('paymentRounding must be none or forint.')
+}
+
+/** Monthly interest factor from annual contractual rate (ADR 0025). */
+export function monthlyInterestRateFromAnnual(
+  annualRate: number,
+  convention: InterestDayCountConvention = 'nominal-12'
+): number {
+  const normalized = normalizeInterestDayCountConvention(convention)
+  if (normalized === '365-over-360') {
+    return (annualRate * 365) / (360 * MONTHS_PER_YEAR)
+  }
+  return annualRate / MONTHS_PER_YEAR
+}
+
+function roundLevelInstallment(amount: number, rounding: LoanPaymentRounding): number {
+  return rounding === 'forint' ? Math.round(amount) : amount
+}
+
+function roundGraceInterestOnly(amount: number, rounding: LoanPaymentRounding): number {
+  return rounding === 'forint' ? Math.floor(amount) : amount
+}
+
 export function resolveLoanSchedule(input: {
   principal: number
   annualRate: number
   termMonths: number
   gracePeriodMonths?: number
   capitalizeInterestAtGraceEnd?: boolean
+  interestDayCountConvention?: InterestDayCountConvention
+  paymentRounding?: LoanPaymentRounding
 }): ResolvedLoanSchedule {
   const principal = ensurePositiveAmount(input.principal)
   const annualRate = Number(input.annualRate)
@@ -78,7 +136,11 @@ export function resolveLoanSchedule(input: {
   const capitalizeInterestAtGraceEnd =
     gracePeriodMonths > 0 && input.capitalizeInterestAtGraceEnd === true
   const amortizationMonths = termMonths - gracePeriodMonths
-  const monthlyRate = annualRate / MONTHS_PER_YEAR
+  const interestDayCountConvention = normalizeInterestDayCountConvention(
+    input.interestDayCountConvention
+  )
+  const paymentRounding = normalizePaymentRounding(input.paymentRounding)
+  const monthlyRate = monthlyInterestRateFromAnnual(annualRate, interestDayCountConvention)
 
   let amortizingPrincipal = principal
   let graceInterestOnlyPayment = 0
@@ -88,7 +150,7 @@ export function resolveLoanSchedule(input: {
     if (capitalizeInterestAtGraceEnd) {
       amortizingPrincipal = principal * Math.pow(1 + monthlyRate, gracePeriodMonths)
     } else {
-      graceInterestOnlyPayment = principal * monthlyRate
+      graceInterestOnlyPayment = roundGraceInterestOnly(principal * monthlyRate, paymentRounding)
       graceCashTotal = graceInterestOnlyPayment * gracePeriodMonths
     }
   }
@@ -96,7 +158,8 @@ export function resolveLoanSchedule(input: {
   const monthlyInstallment = calculateLoanMonthlyInstallment(
     amortizingPrincipal,
     annualRate,
-    amortizationMonths
+    amortizationMonths,
+    { interestDayCountConvention, paymentRounding }
   )
   const amortizationTotal = monthlyInstallment * amortizationMonths
   const totalRepayment = graceCashTotal + amortizationTotal
@@ -111,6 +174,8 @@ export function resolveLoanSchedule(input: {
     gracePeriodMonths,
     capitalizeInterestAtGraceEnd,
     amortizationMonths,
+    interestDayCountConvention,
+    paymentRounding,
     monthlyRate,
     amortizingPrincipal,
     graceInterestOnlyPayment,
@@ -124,7 +189,8 @@ export function resolveLoanSchedule(input: {
 export function calculateLoanMonthlyInstallment(
   principal: number,
   annualRate: number,
-  termMonths: number
+  termMonths: number,
+  options: LoanScheduleRateOptions = {}
 ): number {
   if (!Number.isFinite(principal) || principal <= 0) {
     throw new Error('Principal must be a positive finite number.')
@@ -138,21 +204,35 @@ export function calculateLoanMonthlyInstallment(
     throw new Error('Annual rate must be a non-negative finite number.')
   }
 
-  const monthlyRate = annualRate / MONTHS_PER_YEAR
+  const interestDayCountConvention = normalizeInterestDayCountConvention(
+    options.interestDayCountConvention
+  )
+  const paymentRounding = normalizePaymentRounding(options.paymentRounding)
+  const monthlyRate = monthlyInterestRateFromAnnual(annualRate, interestDayCountConvention)
   if (monthlyRate === 0) {
-    return principal / termMonths
+    return roundLevelInstallment(principal / termMonths, paymentRounding)
   }
 
   const factor = Math.pow(1 + monthlyRate, termMonths)
-  return (principal * monthlyRate * factor) / (factor - 1)
+  const raw = (principal * monthlyRate * factor) / (factor - 1)
+  return roundLevelInstallment(raw, paymentRounding)
 }
 
 export function simulateLoanAmortization(
   principal: number,
   annualRate: number,
-  termMonths: number
+  termMonths: number,
+  options: LoanScheduleRateOptions = {}
 ): LoanAmortizationStep[] {
-  const installmentAmount = calculateLoanMonthlyInstallment(principal, annualRate, termMonths)
+  const interestDayCountConvention = normalizeInterestDayCountConvention(
+    options.interestDayCountConvention
+  )
+  const paymentRounding = normalizePaymentRounding(options.paymentRounding)
+  const monthlyRate = monthlyInterestRateFromAnnual(annualRate, interestDayCountConvention)
+  const installmentAmount = calculateLoanMonthlyInstallment(principal, annualRate, termMonths, {
+    interestDayCountConvention,
+    paymentRounding
+  })
   const indices = Array.from({ length: termMonths }, (_, index) => index + 1)
 
   const simulation = runStatefulSimulation({
@@ -168,7 +248,7 @@ export function simulateLoanAmortization(
       }
     })),
     transition: (state, event) => {
-      const interestPortion = state.remainingPrincipal * (annualRate / MONTHS_PER_YEAR)
+      const interestPortion = state.remainingPrincipal * monthlyRate
       const principalPortion = Math.min(installmentAmount - interestPortion, state.remainingPrincipal)
       const remainingPrincipal = Math.max(0, state.remainingPrincipal - principalPortion)
 
@@ -193,7 +273,13 @@ export function simulateLoanAmortization(
 export function createLoanRepaymentPreview(
   input: Pick<
     LoanInstrumentInput,
-    'principal' | 'annualRate' | 'termMonths' | 'gracePeriodMonths' | 'capitalizeInterestAtGraceEnd'
+    | 'principal'
+    | 'annualRate'
+    | 'termMonths'
+    | 'gracePeriodMonths'
+    | 'capitalizeInterestAtGraceEnd'
+    | 'interestDayCountConvention'
+    | 'paymentRounding'
   >
 ): LoanRepaymentPreview {
   const schedule = resolveLoanSchedule(input)
@@ -323,6 +409,8 @@ export function createLoanInstrumentBundle(input: LoanBundleInput) {
       repaymentDayOfMonth: input.repaymentDayOfMonth,
       gracePeriodMonths,
       capitalizeInterestAtGraceEnd,
+      interestDayCountConvention: input.interestDayCountConvention ?? 'nominal-12',
+      paymentRounding: input.paymentRounding ?? 'none',
       includeDisbursement: input.includeDisbursement !== false,
       category: input.category ?? 'loan',
       description: input.description

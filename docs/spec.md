@@ -43,6 +43,7 @@ Scenarios / Use-cases
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
 - Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): Hirdetmény mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
+- Configured-flow folders: users can organize flows into flat collapsible folders (no nested folders), rename folders, drag items into/out of folders (mouse drag-and-drop or touch long-press), and reorder items; folder collapsed state and item order persist in `listStatus` and round-trip through export/import.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -116,8 +117,12 @@ Acceptance criteria
 - [x] Inflation-linked investment accepts manual yearly inflation inputs for v1.
 - [x] Instrument save/edit computes full bounded dated flow bundles before persistence, and charting consumes generated dated flows directly.
 - [x] Persisted instrument bundles stamp generated-flow lineage (`id`, `sourceInstrumentId`, `sourceInstrumentType`) and optional `productId` / `productSpecVersion` for catalog-backed products.
-- [x] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data (current export schema v4; v1–v3 migrate in).
+- [x] Import/export schema versioning includes instrument bundle payloads with backward compatibility for existing one-time/recurring data (current export schema v5; v1–v4 migrate in).
 - [x] Import trusts stored instrument `generatedFlows` (no silent regenerate); migrations only fill lineage/product-spec metadata (ADR 0018).
+- [x] Users can create flat folders in the configured-flow list, expand/collapse them, and rename a folder when it is expanded.
+- [x] Users can drag configured flows into and out of folders (mouse drag-and-drop or touch long-press) with a visible dragging affordance; folders cannot contain other folders.
+- [x] Item order and folder collapsed state persist in browser `listStatus` and are saved/restored by export/import JSON (schema v5 `data.listStatus`).
+- [x] Deleting a folder moves its items back to the root list without deleting the flows.
 - [x] Evaluation-result cache covers recurring evaluate/expand and instrument range slices, with explicit invalidation on definition/bundle mutations.
 - [x] Product specifications validate against schema v2 (`specVersion: v2alpha1`) with families `loan`, `mortgage-loan`, and `government-security` (ADR 0020).
 - [x] Product identity uses free-form `variant` plus required `productCode`; schema v1 remains frozen and is not extended for new loan/mortgage constructs.

@@ -33,13 +33,6 @@ loanPurposes:
 
 pricing:
   rateSettingRule: fixed-for-full-term-with-optional-loyalty-and-employee-discounts
-  offeringPackaging:
-    representativePrincipal: 12000000
-    representativeTermMonths: 240
-    representativeGracePeriodMonths: 0
-    representativeOfferingMonthlyPayment: 101128
-    excludeFeeNames:
-      - egyszeri-kamatcsokkentes-dij
   notes:
     - Ügyleti kamat 7,99% a futamidő végéig fix (Hirdetmény 2.1.1, 2026-04-20).
     - THM reprezentatív példa használt lakás vásárlásra díjkedvezmény nélkül 8,6% (12 mFt / 20 év).
@@ -100,15 +93,6 @@ fees:
     maxAmount: 200000
     timing: upfront
     description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for OTP 1x1.
-  - name: hirdetmeny-reprezentativ-egyeb-hitelkoltseg
-    type: other
-    value: 3220
-    unit: amount
-    timing: upfront
-    description: >
-      Residual Hirdetmény §6 representative credit costs not itemized elsewhere
-      in the fee catalog (ADR 0023 offering packaging alignment).
-
   - name: elotorlesztesi-dij
     type: prepayment
     value: 1.5

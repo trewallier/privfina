@@ -34,4 +34,4 @@ notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 Reprezentatív példák, OTP Évnyerő CSOK Plusz Lakáshitel / új / használt lakás vásárlás."
   - "Grace months 1–12 publish 30.416 Ft/hó; from month 13 the amortizing installment is 69.362 Ft/hó."
   - "totalPaid includes 193.965 Ft fee/cost component from the Hirdetmény packaging."
-  - "Offering-faithful packaging (pricing.offeringPackaging) calibrates the schedule so engine installment and ADR 0022 THM match these published figures (ADR 0023)."
+  - "Verification (ADR 0022/0023): (1) engine monthly cash flow at the stated contractual rate must match this installment; (2) ADR 0022 THM percentRounded from that schedule and the fee package must match thmPct. Do not hide gaps with an invisible packaging-rate adjustment."

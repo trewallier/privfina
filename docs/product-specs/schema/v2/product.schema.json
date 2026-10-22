@@ -170,45 +170,6 @@
           "type": "string",
           "minLength": 1
         },
-        "offeringPackaging": {
-          "type": "object",
-          "description": "Hirdetmény §6 offering-faithful installment packaging (ADR 0023). When present, commercial schedule/THM use a calibrated packaging rate so representative repayments and ADR 0022 THM match published figures.",
-          "additionalProperties": false,
-          "required": [
-            "representativePrincipal",
-            "representativeTermMonths",
-            "representativeOfferingMonthlyPayment"
-          ],
-          "properties": {
-            "representativePrincipal": {
-              "type": "number",
-              "exclusiveMinimum": 0
-            },
-            "representativeTermMonths": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "representativeGracePeriodMonths": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "representativeOfferingMonthlyPayment": {
-              "type": "number",
-              "exclusiveMinimum": 0
-            },
-            "representativeOfferingGracePayment": {
-              "type": "number",
-              "exclusiveMinimum": 0
-            },
-            "excludeFeeNames": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minLength": 1
-              }
-            }
-          }
-        },
         "notes": {
           "type": "array",
           "items": {

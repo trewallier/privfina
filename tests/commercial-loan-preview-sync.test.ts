@@ -30,7 +30,7 @@ describe('commercial loan preview sync (ADR 0025)', () => {
 
     sync()
 
-    expect(monthlyPreviewInput.value).toBe('101128.00')
+    expect(monthlyPreviewInput.value).toBe('101 128.00')
     expect(totalInterestPreviewInput.value).not.toBe('—')
     expect(totalRepaymentPreviewInput.value).not.toBe('—')
   })

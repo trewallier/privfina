@@ -127,7 +127,9 @@ describe('loan form field info popups', () => {
 
   it('wires loan form info chips through the shared floating info popup handler', () => {
     expect(appController).toContain('document.getElementById(helpId)')
-    expect(appController).toContain(';[loanForm, investmentForm].filter(Boolean).forEach((form) => {')
+    expect(appController).toContain(
+      ';[loanForm, investmentForm, commercialLoanForm].filter(Boolean).forEach((form) => {'
+    )
     expect(appController).toContain("form.querySelectorAll('[data-help-button]')")
     expect(appController).toContain('toggleInvestmentInfoPopup(button)')
   })

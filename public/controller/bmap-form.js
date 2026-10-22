@@ -71,6 +71,7 @@ import {
   orderedSpecFields,
   ensureFieldLabelTitleElement
 } from './spec-form-utils.js'
+import { parseMoneyAmount } from './money-format.js'
 
 function applyBmapSpecToForm({ bmapForm, bmapBox }) {
   void bmapBox
@@ -85,7 +86,13 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
     if (!input) return
 
     input.name = field.name
-    input.type = toInputType(field)
+    if (field.unit === 'currency' || input.classList.contains('money-amount')) {
+      input.type = 'text'
+      input.setAttribute('inputmode', 'decimal')
+      input.classList.add('money-amount')
+    } else {
+      input.type = toInputType(field)
+    }
     input.required = Boolean(field.required)
     if (input.type === 'number') {
       applyNumericConstraints(input, field.constraints)
@@ -101,7 +108,7 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
 
 function mapFormDataToBmapSpecInputs(formData) {
   return {
-    principal: Number(formData.get('principal')),
+    principal: parseMoneyAmount(formData.get('principal')),
     dkjBaseYieldPct: Number(formData.get('dkjBaseYieldPct')),
     interestPremiumPct: Number(formData.get('interestPremiumPct')),
     startDate: String(formData.get('startDate') || '').trim(),

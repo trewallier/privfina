@@ -1,3 +1,5 @@
+import { formatMoneyAmount, parseMoneyAmount } from './money-format.js'
+
 function normalizePreviewGracePeriodMonths(value) {
   if (value === undefined || value === null || String(value).trim() === '') {
     return 0
@@ -42,7 +44,7 @@ function createLoanPreviewSync({
     }
 
     try {
-      const principal = Number(principalInput?.value)
+      const principal = parseMoneyAmount(principalInput?.value)
       const annualRateInputValue = Number(annualRateInput?.value)
       const termValue = Number(termValueInput?.value)
       const termUnit = termUnitInput?.value || 'months'
@@ -76,14 +78,14 @@ function createLoanPreviewSync({
           }
         )
 
-        monthlyPreviewInput.value = specOutputs.monthlyPayment.toFixed(2)
-        totalRepaymentPreviewInput.value = specOutputs.totalPaid.toFixed(2)
-        totalInterestPreviewInput.value = specOutputs.totalInterest.toFixed(2)
+        monthlyPreviewInput.value = formatMoneyAmount(specOutputs.monthlyPayment)
+        totalRepaymentPreviewInput.value = formatMoneyAmount(specOutputs.totalPaid)
+        totalInterestPreviewInput.value = formatMoneyAmount(specOutputs.totalInterest)
         if (feesPreviewInput) {
           feesPreviewInput.value =
             specOutputs.totalCreditCostFees === undefined
               ? '—'
-              : Number(specOutputs.totalCreditCostFees).toFixed(2)
+              : formatMoneyAmount(specOutputs.totalCreditCostFees)
         }
         if (thmPreviewInput) {
           thmPreviewInput.value =
@@ -100,9 +102,9 @@ function createLoanPreviewSync({
         capitalizeInterestAtGraceEnd
       })
 
-      monthlyPreviewInput.value = preview.monthlyInstallment.toFixed(2)
-      totalRepaymentPreviewInput.value = preview.totalRepayment.toFixed(2)
-      totalInterestPreviewInput.value = preview.totalInterest.toFixed(2)
+      monthlyPreviewInput.value = formatMoneyAmount(preview.monthlyInstallment)
+      totalRepaymentPreviewInput.value = formatMoneyAmount(preview.totalRepayment)
+      totalInterestPreviewInput.value = formatMoneyAmount(preview.totalInterest)
       clearCommercialExtras()
     } catch {
       monthlyPreviewInput.value = '—'
@@ -151,9 +153,9 @@ function createInvestmentPreviewSync({
         const specInputs = mapFormDataToDkjSpecInputs(new FormData(form))
         const preview = calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
 
-        purchasePreviewInput.value = preview.purchaseAmount.toFixed(2)
-        maturityPreviewInput.value = preview.redemptionValue.toFixed(2)
-        gainPreviewInput.value = preview.grossGain.toFixed(2)
+        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount)
+        maturityPreviewInput.value = formatMoneyAmount(preview.redemptionValue)
+        gainPreviewInput.value = formatMoneyAmount(preview.grossGain)
         if (discountYieldPreviewInput) {
           discountYieldPreviewInput.value = `${preview.annualizedYieldPct.toFixed(4)}%`
         }
@@ -171,7 +173,7 @@ function createInvestmentPreviewSync({
         const preview = calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
 
         purchasePreviewInput.value = '—'
-        maturityPreviewInput.value = preview.redemptionValue.toFixed(2)
+        maturityPreviewInput.value = formatMoneyAmount(preview.redemptionValue)
         gainPreviewInput.value = '—'
         if (discountYieldPreviewInput) {
           discountYieldPreviewInput.value = '—'
@@ -197,18 +199,18 @@ function createInvestmentPreviewSync({
         issueDate: String(issueDateInput?.value || ''),
         transactionDate: transactionDateValue,
         dueDate: dueDateValue,
-        principal: Number(principalInput?.value),
-        purchasePrice: Number(purchasePriceInput?.value),
+        principal: parseMoneyAmount(principalInput?.value),
+        purchasePrice: parseMoneyAmount(purchasePriceInput?.value),
         annualRate: Number(annualRateInput?.value),
         spreadRate: Number(spreadRateInput?.value),
         yearlyInflationRaw: String(yearlyInflationInput?.value || ''),
         saleDate: String(saleDateInput?.value || ''),
-        saleValue: Number(saleValueInput?.value)
+        saleValue: parseMoneyAmount(saleValueInput?.value)
       })
 
-      purchasePreviewInput.value = preview.purchaseAmount.toFixed(2)
-      maturityPreviewInput.value = preview.maturityAmount.toFixed(2)
-      gainPreviewInput.value = preview.gainAmount.toFixed(2)
+      purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount)
+      maturityPreviewInput.value = formatMoneyAmount(preview.maturityAmount)
+      gainPreviewInput.value = formatMoneyAmount(preview.gainAmount)
       if (discountYieldPreviewInput) {
         discountYieldPreviewInput.value = preview.discountMetrics
           ? `${preview.discountMetrics.yieldPercent.toFixed(4)}%`

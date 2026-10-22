@@ -149,8 +149,8 @@ describe('commercial loan composer UX (§5b)', () => {
 
     sync()
 
-    expect(monthlyPreviewInput.value).toBe('101128.00')
-    expect(feesPreviewInput.value).toBe('193965.00')
+    expect(monthlyPreviewInput.value).toBe('101 128.00')
+    expect(feesPreviewInput.value).toBe('193 965.00')
     expect(thmPreviewInput.value).toBe('8.6%')
   })
 

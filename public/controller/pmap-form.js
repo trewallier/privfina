@@ -6,6 +6,7 @@ import {
   orderedSpecFields,
   ensureFieldLabelTitleElement
 } from './spec-form-utils.js'
+import { parseMoneyAmount } from './money-format.js'
 
 const PMAP_FRONTEND_FIELD_ADAPTER = {
   principal: { inputId: 'investment-principal', formName: 'principal' },
@@ -66,7 +67,13 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
     if (!input) return
 
     input.name = adapter.formName
-    input.type = toInputType(field)
+    if (field.unit === 'currency' || input.classList.contains('money-amount')) {
+      input.type = 'text'
+      input.setAttribute('inputmode', 'decimal')
+      input.classList.add('money-amount')
+    } else {
+      input.type = toInputType(field)
+    }
     input.required = Boolean(field.required)
     if (input.type === 'number') {
       applyNumericConstraints(input, field.constraints)
@@ -84,7 +91,7 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
 
 function mapFormDataToPmapSpecInputs(formData) {
   return {
-    principal: Number(formData.get('principal')),
+    principal: parseMoneyAmount(formData.get('principal')),
     interestPremiumPct: Number(formData.get('spreadRate')),
     previousYearAverageInflationPct: Number(formData.get('yearlyInflation')),
     startDate: String(formData.get('startDate') || '').trim(),

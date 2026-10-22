@@ -5,7 +5,8 @@ This directory is a legacy artifact from the earlier Python-based prototype. The
 ## Notes
 
 - Data files in this directory are not part of the browser runtime for v1.
-- Export/import JSON uses an explicit `schemaVersion` (current: **v4**) so format changes can be detected and migrated.
+- Export/import JSON uses an explicit `schemaVersion` (current: **v5**) so format changes can be detected and migrated.
+- Schema v5 adds `data.listStatus` (folder names/collapsed flags and configured-flow item order); older exports migrate in with an empty `listStatus` that the app reconciles against known flow ids.
 - When schema versions change, the app warns users and recommends exporting a fresh backup file.
 - Instrument-bundle imports trust stored `generatedFlows` and only fill lineage metadata on upgrade (see ADR 0018).
 - Future work may extend offline formats, but v1 relies on browser storage plus JSON export/import.

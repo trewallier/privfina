@@ -193,7 +193,7 @@ Canonical note
 - Save/edit regenerates `generatedFlows` and `updatedAt` while preserving bundle `id` and `createdAt`.
 - Charting consumes lineage-stamped flows via `flattenInstrumentFlows` / `buildEffectiveFlows`.
 - UI list behavior allows include/exclude and edit/delete at instrument level while preserving generated flow traceability.
-- Export schema v4 includes lineage-aware instrument bundles; older exports migrate in without regenerating cash amounts (ADR 0018).
+- Export schema v5 includes lineage-aware instrument bundles plus `listStatus` (folder outline / collapse / item order); older exports migrate in without regenerating cash amounts (ADR 0018).
 
 ## Architecture
 
@@ -288,9 +288,9 @@ Module ownership for contributors. Open follow-ons (bundler ADR 0017, storage po
 	- composers, preview, persist/edit, chart-consumable flows (dual-surface formulas until ADR 0017 bundler)
 - `storage.js`
 	- interim `localStorage` helpers; replace behind the §7 storage port
-- `storage.js` and `import-export.js`
-	- schema v4 export envelope with lineage-aware `instrumentBundles`
-	- migrate v1–v3 imports; trust stored generated flows (ADR 0018)
+- `storage.js`, `list-status.js`, and `import-export.js`
+	- schema v5 export envelope with lineage-aware `instrumentBundles` and `listStatus`
+	- migrate v1–v4 imports; trust stored generated flows (ADR 0018)
 	- preserve backward compatibility with existing one-time/recurring-only exports
 
 ### Tests (`tests/`)
@@ -351,9 +351,12 @@ Current implementation includes one-time and recurring add forms on the main web
 
 ### List behavior
 
-- Default sort should be by next effective date, then creation order.
-- Current implementation exposes include/exclude toggles, edit actions, and delete actions per row for one-time and recurring definitions.
-- Planned narrow-viewport list: card rows summarizing type/name, signed amount, date range or equivalent, plus include/edit/delete actions (no horizontal table scroll as the primary mobile pattern).
+- Default sort (when `listStatus` has no explicit order yet) is by next effective date, then creation order.
+- Users can organize configured flows into **flat** folders (folders cannot contain other folders). Each folder has a name and collapsed/expanded state; when expanded, an edit control appears under the name for renaming, and child items render beneath the folder.
+- Item order, folder membership, and folder collapsed state live in persisted `listStatus` (browser storage + export/import), not on cash-flow domain records.
+- Items can be dragged into/out of folders and reordered (mouse drag-and-drop or touch long-press) with a visible dragging affordance.
+- Current implementation exposes include/exclude toggles, edit actions, and delete actions per row for one-time, recurring, and instrument definitions.
+- Narrow-viewport list: card rows summarizing type/name, signed amount, date range or equivalent, plus include/edit/delete actions (no horizontal table scroll as the primary mobile pattern); the same `listStatus` outline drives both the desktop table and mobile cards.
 - Changes should update persisted browser state immediately.
 
 ## Visualization: Cumulative Cash-Flow Diagram

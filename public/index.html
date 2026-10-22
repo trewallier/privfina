@@ -649,6 +649,102 @@
         color: var(--muted);
       }
 
+      .flow-folder-row td,
+      .flow-folder-card {
+        background: #f3f7fb;
+      }
+
+      .flow-folder-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+
+      .folder-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .folder-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+        background: transparent;
+        padding: 4px 0;
+        font: inherit;
+        font-weight: 700;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .folder-chevron {
+        display: inline-block;
+        width: 1rem;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .folder-edit-row {
+        display: flex;
+        gap: 6px;
+        margin-left: 1.5rem;
+      }
+
+      .folder-children {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .flow-card.is-nested,
+      tr.flow-item-row.is-nested td:first-child {
+        padding-left: 22px;
+      }
+
+      tr.flow-item-row.is-nested td:first-child {
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+
+      .flow-item-row,
+      .flow-folder-row,
+      .flow-card,
+      .flow-folder-card .folder-header {
+        cursor: grab;
+        touch-action: manipulation;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+      }
+
+      .flow-item-row.is-dragging,
+      .flow-folder-row.is-dragging,
+      .flow-card.is-dragging,
+      .folder-header.is-dragging,
+      .list-drag-ghost {
+        cursor: grabbing;
+        opacity: 0.92;
+        transform: scale(1.03);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+      }
+
+      .list-drag-ghost {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        padding: 10px 12px;
+      }
+
+      .is-drop-target {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        background: var(--accent-soft);
+      }
+
+      body.is-list-dragging {
+        user-select: none;
+      }
+
       .compose-mobile-bar,
       .add-type-picker,
       .mobile-nav,
@@ -1646,6 +1742,7 @@
           <section id="configured-section">
             <h3>Configured Cash Flows</h3>
             <div class="toolbar">
+              <button id="new-folder-button" type="button">New folder</button>
               <button id="export-json-button" class="primary" type="button">Export JSON Backup</button>
               <div class="import-group" role="group" aria-label="Import JSON backup controls">
                 <input id="import-json-input" type="file" accept="application/json,.json" />

@@ -1,7 +1,16 @@
 import { formatMoneyAmount } from './controller/money-format.js'
+import { buildListOutline } from './list-status.js'
+import { bindDraggable, bindDropSurface } from './list-dnd.js'
 
-function buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, isFlowIncluded) {
+function buildConfiguredRows(
+  oneTimeFlows,
+  recurringFlows,
+  instrumentBundles,
+  isFlowIncluded,
+  options = {}
+) {
   const rows = []
+  const sortByDate = options.sortByDate !== false
 
   for (const flow of oneTimeFlows) {
     rows.push({
@@ -59,8 +68,19 @@ function buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, is
     })
   }
 
-  rows.sort((a, b) => String(a.startOrDate).localeCompare(String(b.startOrDate)))
+  if (sortByDate) {
+    rows.sort((a, b) => String(a.startOrDate).localeCompare(String(b.startOrDate)))
+  }
+
   return rows
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
 }
 
 function bindRowActions(root, rowData, handlers) {
@@ -151,37 +171,146 @@ function formatDateSummary(rowData) {
   return String(rowData.startOrDate || '—')
 }
 
-function renderConfiguredTable(
-  oneTimeFlows,
-  recurringFlows,
-  instrumentBundles,
-  tbody,
-  isFlowIncluded,
-  onToggleInclude,
-  onEditOneTime,
-  onDeleteOneTime,
-  onEditRecurring,
-  onDeleteRecurring,
-  onEditInstrument,
-  onDeleteInstrument
-) {
+function resolveOutline(options) {
+  if (Array.isArray(options.outline)) {
+    return options.outline
+  }
+
+  const {
+    oneTimeFlows,
+    recurringFlows,
+    instrumentBundles,
+    isFlowIncluded,
+    listStatus
+  } = options
+
+  const rows = buildConfiguredRows(
+    oneTimeFlows,
+    recurringFlows,
+    instrumentBundles,
+    isFlowIncluded,
+    { sortByDate: !listStatus || !listStatus.rootOrder?.length }
+  )
+
+  if (!listStatus) {
+    return rows.map((row) => ({ type: 'item', row }))
+  }
+
+  const rowsById = new Map(rows.map((row) => [row.id, row]))
+  return buildListOutline(listStatus, rowsById)
+}
+
+function bindFolderActions(root, folder, handlers) {
+  root.querySelector('.action-toggle-folder')?.addEventListener('click', () => {
+    handlers.onToggleFolder?.(folder.id, !folder.collapsed)
+  })
+
+  root.querySelector('.action-rename-folder')?.addEventListener('click', () => {
+    const nextName = window.prompt('Folder name', folder.name)
+    if (nextName === null) {
+      return
+    }
+    handlers.onRenameFolder?.(folder.id, nextName)
+  })
+
+  root.querySelector('.action-delete-folder')?.addEventListener('click', () => {
+    if (!window.confirm(`Delete folder “${folder.name}”? Items move back to the root list.`)) {
+      return
+    }
+    handlers.onDeleteFolder?.(folder.id)
+  })
+}
+
+function appendItemTableRow(tbody, rowData, handlers, dnd, meta = {}) {
+  const row = document.createElement('tr')
+  row.className = meta.nested ? 'flow-item-row is-nested' : 'flow-item-row'
+  row.dataset.id = rowData.id
+  row.dataset.itemId = rowData.id
+  if (meta.folderId) {
+    row.dataset.folderId = meta.folderId
+    row.dataset.dropTarget = 'folder-item'
+    row.dataset.dropIndex = String(meta.index ?? 0)
+  } else {
+    row.dataset.dropTarget = 'root'
+    row.dataset.dropIndex = String(meta.index ?? 0)
+  }
+
+  row.innerHTML = `
+      <td>${escapeHtml(rowData.type)}</td>
+      <td>${escapeHtml(rowData.startOrDate)}</td>
+      <td>${escapeHtml(rowData.endOrCount)}</td>
+      <td>${escapeHtml(rowData.period)}</td>
+      <td>${escapeHtml(rowData.direction)}</td>
+      <td>${formatMoneyAmount(rowData.amount)}</td>
+      <td>${escapeHtml(rowData.category)}</td>
+      <td class="action-col">
+        ${renderActionButtons(rowData)}
+      </td>
+    `
+
+  bindRowActions(row, rowData, handlers)
+  if (dnd?.enabled) {
+    bindDraggable(row, { kind: 'item', id: rowData.id }, dnd.onDrop, dnd.root)
+  }
+  tbody.appendChild(row)
+}
+
+function appendFolderTableRows(tbody, folderEntry, handlers, dnd, rootIndex) {
+  const { folder, items } = folderEntry
+  const header = document.createElement('tr')
+  header.className = `flow-folder-row ${folder.collapsed ? 'is-collapsed' : 'is-expanded'}`
+  header.dataset.folderId = folder.id
+  header.dataset.dropTarget = 'folder'
+  header.dataset.dropIndex = String(items.length)
+  header.dataset.rootIndex = String(rootIndex)
+
+  const editBlock = folder.collapsed
+    ? ''
+    : `
+      <div class="folder-edit-row">
+        <button class="icon-button action-rename-folder" type="button" aria-label="Rename folder" title="Rename folder">${renderActionIcon('edit')}</button>
+        <button class="icon-button danger action-delete-folder" type="button" aria-label="Delete folder" title="Delete folder">${renderActionIcon('delete')}</button>
+      </div>
+    `
+
+  header.innerHTML = `
+    <td colspan="8">
+      <div class="folder-header">
+        <button class="folder-toggle action-toggle-folder" type="button" aria-expanded="${folder.collapsed ? 'false' : 'true'}" aria-label="${folder.collapsed ? 'Expand folder' : 'Collapse folder'}">
+          <span class="folder-chevron" aria-hidden="true">${folder.collapsed ? '▶' : '▼'}</span>
+          <span class="folder-name">${escapeHtml(folder.name)}</span>
+        </button>
+        ${editBlock}
+      </div>
+    </td>
+  `
+
+  bindFolderActions(header, folder, handlers)
+  if (dnd?.enabled) {
+    bindDraggable(header, { kind: 'folder', id: folder.id }, dnd.onDrop, dnd.root)
+  }
+  tbody.appendChild(header)
+
+  if (!folder.collapsed) {
+    items.forEach((rowData, index) => {
+      appendItemTableRow(tbody, rowData, handlers, dnd, {
+        nested: true,
+        folderId: folder.id,
+        index
+      })
+    })
+  }
+}
+
+function renderConfiguredTable(options) {
+  const { tableBody: tbody, outline, handlers, dnd } = options
   if (!tbody) {
     return
   }
 
   tbody.innerHTML = ''
-  const rows = buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, isFlowIncluded)
-  const handlers = {
-    onToggleInclude,
-    onEditOneTime,
-    onDeleteOneTime,
-    onEditRecurring,
-    onDeleteRecurring,
-    onEditInstrument,
-    onDeleteInstrument
-  }
 
-  if (!rows.length) {
+  if (!outline.length) {
     const row = document.createElement('tr')
     const cell = document.createElement('td')
     cell.colSpan = 8
@@ -191,57 +320,112 @@ function renderConfiguredTable(
     return
   }
 
-  for (const rowData of rows) {
-    const row = document.createElement('tr')
-    row.innerHTML = `
-      <td>${rowData.type}</td>
-      <td>${rowData.startOrDate}</td>
-      <td>${rowData.endOrCount}</td>
-      <td>${rowData.period}</td>
-      <td>${rowData.direction}</td>
-      <td>${formatMoneyAmount(rowData.amount)}</td>
-      <td>${rowData.category}</td>
-      <td class="action-col">
-        ${renderActionButtons(rowData)}
-      </td>
-    `
+  outline.forEach((entry, rootIndex) => {
+    if (entry.type === 'folder') {
+      appendFolderTableRows(tbody, entry, handlers, dnd, rootIndex)
+      return
+    }
 
-    bindRowActions(row, rowData, handlers)
-    tbody.appendChild(row)
-  }
+    appendItemTableRow(tbody, entry.row, handlers, dnd, { index: rootIndex })
+  })
 }
 
-function renderConfiguredCards(
-  oneTimeFlows,
-  recurringFlows,
-  instrumentBundles,
-  container,
-  isFlowIncluded,
-  onToggleInclude,
-  onEditOneTime,
-  onDeleteOneTime,
-  onEditRecurring,
-  onDeleteRecurring,
-  onEditInstrument,
-  onDeleteInstrument
-) {
+function appendItemCard(container, rowData, handlers, dnd, meta = {}) {
+  const card = document.createElement('article')
+  card.className = meta.nested ? 'flow-card is-nested' : 'flow-card'
+  card.dataset.id = rowData.id
+  card.dataset.type = rowData.type
+  card.dataset.itemId = rowData.id
+  if (meta.folderId) {
+    card.dataset.folderId = meta.folderId
+    card.dataset.dropTarget = 'folder-item'
+    card.dataset.dropIndex = String(meta.index ?? 0)
+  } else {
+    card.dataset.dropTarget = 'root'
+    card.dataset.dropIndex = String(meta.index ?? 0)
+  }
+
+  const amountClass =
+    rowData.direction === 'outflow' || Number(rowData.amount) < 0 ? 'is-outflow' : 'is-inflow'
+
+  card.innerHTML = `
+      <div class="flow-card-top">
+        <div class="flow-card-heading">
+          <span class="flow-card-type">${escapeHtml(rowData.type)}</span>
+          <h4 class="flow-card-title">${escapeHtml(rowData.label)}</h4>
+        </div>
+        <p class="flow-card-amount ${amountClass}">${formatSignedAmount(rowData.amount, rowData.direction)}</p>
+      </div>
+      <p class="flow-card-meta">${escapeHtml(formatDateSummary(rowData))}</p>
+      <div class="flow-card-actions">
+        ${renderActionButtons(rowData)}
+      </div>
+    `
+
+  bindRowActions(card, rowData, handlers)
+  if (dnd?.enabled) {
+    bindDraggable(card, { kind: 'item', id: rowData.id }, dnd.onDrop, dnd.root)
+  }
+  container.appendChild(card)
+}
+
+function appendFolderCard(container, folderEntry, handlers, dnd, rootIndex) {
+  const { folder, items } = folderEntry
+  const block = document.createElement('section')
+  block.className = `flow-folder-card ${folder.collapsed ? 'is-collapsed' : 'is-expanded'}`
+  block.dataset.folderId = folder.id
+  block.dataset.dropTarget = 'folder'
+  block.dataset.dropIndex = String(items.length)
+  block.dataset.rootIndex = String(rootIndex)
+
+  const editBlock = folder.collapsed
+    ? ''
+    : `
+      <div class="folder-edit-row">
+        <button class="icon-button action-rename-folder" type="button" aria-label="Rename folder" title="Rename folder">${renderActionIcon('edit')}</button>
+        <button class="icon-button danger action-delete-folder" type="button" aria-label="Delete folder" title="Delete folder">${renderActionIcon('delete')}</button>
+      </div>
+    `
+
+  block.innerHTML = `
+    <div class="folder-header">
+      <button class="folder-toggle action-toggle-folder" type="button" aria-expanded="${folder.collapsed ? 'false' : 'true'}" aria-label="${folder.collapsed ? 'Expand folder' : 'Collapse folder'}">
+        <span class="folder-chevron" aria-hidden="true">${folder.collapsed ? '▶' : '▼'}</span>
+        <span class="folder-name">${escapeHtml(folder.name)}</span>
+      </button>
+      ${editBlock}
+    </div>
+    <div class="folder-children"></div>
+  `
+
+  bindFolderActions(block, folder, handlers)
+  if (dnd?.enabled) {
+    bindDraggable(block, { kind: 'folder', id: folder.id }, dnd.onDrop, dnd.root)
+  }
+
+  const children = block.querySelector('.folder-children')
+  if (!folder.collapsed) {
+    items.forEach((rowData, index) => {
+      appendItemCard(children, rowData, handlers, dnd, {
+        nested: true,
+        folderId: folder.id,
+        index
+      })
+    })
+  }
+
+  container.appendChild(block)
+}
+
+function renderConfiguredCards(options) {
+  const { cardsContainer: container, outline, handlers, dnd } = options
   if (!container) {
     return
   }
 
   container.innerHTML = ''
-  const rows = buildConfiguredRows(oneTimeFlows, recurringFlows, instrumentBundles, isFlowIncluded)
-  const handlers = {
-    onToggleInclude,
-    onEditOneTime,
-    onDeleteOneTime,
-    onEditRecurring,
-    onDeleteRecurring,
-    onEditInstrument,
-    onDeleteInstrument
-  }
 
-  if (!rows.length) {
+  if (!outline.length) {
     const empty = document.createElement('div')
     empty.className = 'flow-card-empty'
     empty.textContent = 'No cash flows configured yet.'
@@ -249,31 +433,14 @@ function renderConfiguredCards(
     return
   }
 
-  for (const rowData of rows) {
-    const card = document.createElement('article')
-    card.className = 'flow-card'
-    card.dataset.id = rowData.id
-    card.dataset.type = rowData.type
-    const amountClass =
-      rowData.direction === 'outflow' || Number(rowData.amount) < 0 ? 'is-outflow' : 'is-inflow'
+  outline.forEach((entry, rootIndex) => {
+    if (entry.type === 'folder') {
+      appendFolderCard(container, entry, handlers, dnd, rootIndex)
+      return
+    }
 
-    card.innerHTML = `
-      <div class="flow-card-top">
-        <div class="flow-card-heading">
-          <span class="flow-card-type">${rowData.type}</span>
-          <h4 class="flow-card-title">${rowData.label}</h4>
-        </div>
-        <p class="flow-card-amount ${amountClass}">${formatSignedAmount(rowData.amount, rowData.direction)}</p>
-      </div>
-      <p class="flow-card-meta">${formatDateSummary(rowData)}</p>
-      <div class="flow-card-actions">
-        ${renderActionButtons(rowData)}
-      </div>
-    `
-
-    bindRowActions(card, rowData, handlers)
-    container.appendChild(card)
-  }
+    appendItemCard(container, entry.row, handlers, dnd, { index: rootIndex })
+  })
 }
 
 function renderConfiguredLists(options) {
@@ -284,44 +451,57 @@ function renderConfiguredLists(options) {
     tableBody,
     cardsContainer,
     isFlowIncluded,
+    listStatus,
+    outline: providedOutline,
     onToggleInclude,
     onEditOneTime,
     onDeleteOneTime,
     onEditRecurring,
     onDeleteRecurring,
     onEditInstrument,
-    onDeleteInstrument
+    onDeleteInstrument,
+    onToggleFolder,
+    onRenameFolder,
+    onDeleteFolder,
+    onListDrop
   } = options
 
-  renderConfiguredTable(
-    oneTimeFlows,
-    recurringFlows,
-    instrumentBundles,
-    tableBody,
-    isFlowIncluded,
+  const handlers = {
     onToggleInclude,
     onEditOneTime,
     onDeleteOneTime,
     onEditRecurring,
     onDeleteRecurring,
     onEditInstrument,
-    onDeleteInstrument
-  )
+    onDeleteInstrument,
+    onToggleFolder,
+    onRenameFolder,
+    onDeleteFolder
+  }
 
-  renderConfiguredCards(
-    oneTimeFlows,
-    recurringFlows,
-    instrumentBundles,
-    cardsContainer,
-    isFlowIncluded,
-    onToggleInclude,
-    onEditOneTime,
-    onDeleteOneTime,
-    onEditRecurring,
-    onDeleteRecurring,
-    onEditInstrument,
-    onDeleteInstrument
-  )
+  const outline =
+    providedOutline ||
+    resolveOutline({
+      oneTimeFlows,
+      recurringFlows,
+      instrumentBundles,
+      isFlowIncluded,
+      listStatus
+    })
+
+  const dndRoot = cardsContainer?.parentElement || tableBody?.parentElement
+  const dnd = {
+    enabled: typeof onListDrop === 'function',
+    onDrop: onListDrop,
+    root: dndRoot
+  }
+
+  if (dnd.enabled && dndRoot) {
+    bindDropSurface(dndRoot, onListDrop)
+  }
+
+  renderConfiguredTable({ tableBody, outline, handlers, dnd })
+  renderConfiguredCards({ cardsContainer, outline, handlers, dnd })
 }
 
 function renderActionIcon(type, included = false) {

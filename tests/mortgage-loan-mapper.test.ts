@@ -21,7 +21,7 @@ describe('mortgage-loan product_specs mapper', () => {
     expect(product.engine.paymentRounding).toBe('forint')
     expect(result.paymentCount).toBe(240)
     expect(result.graceInterestOnlyPayment).toBeUndefined()
-    expect(result.totalCreditCostFees).toBe(90_000 + 58_765 + 20_000)
+    expect(result.totalCreditCostFees).toBe(90_000 + 58_765 + 20_000 + 9_600 + 5_000 + 10_600)
     expect(result.totalPaid).toBeCloseTo(result.totalRepayment + result.totalCreditCostFees, 8)
     expect(result.monthlyPayment).toBe(101_128)
     expect(result.thmPct).toBe(8.6)
@@ -44,8 +44,8 @@ describe('mortgage-loan product_specs mapper', () => {
     expect(result.graceInterestOnlyPayment).toBe(30_416)
     expect(result.schedule.gracePeriodMonths).toBe(12)
     expect(result.monthlyPayment).toBe(69_362)
-    // Fee package still short of §6; rounded THM stays 3.2 vs published 3.3.
-    expect(result.thmPct).toBe(3.2)
+    expect(result.totalCreditCostFees).toBe(90_000 + 58_765 + 20_000 + 9_600 + 5_000 + 10_600)
+    expect(result.thmPct).toBe(3.3)
   })
 
   it('applies otp-zold folyósítási waiver when discount is activated', () => {

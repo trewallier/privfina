@@ -77,8 +77,8 @@ Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display*
 Plan slices
 - [x] Representative-example verification harness (ADR 0024): (1) engine installment from amount/term/rate; (2) law-based THM from offering numbers; (3) law-based THM from engine monthly payments — gaps stay visible (no packaging-rate camouflage). Engine outputs pinned while gapped; fee-package deltas asserted separately; check 2 green for six products; Vidéki packaging quarantined with stated-rate engine pin retained.
 - [x] Close check-1 installment gaps at the stated rate (ADR 0025: shared ACT/360 equal-month day-count `r×(365/12)/360` + forint rounding via product YAML; no packaging-rate camouflage).
-- [ ] Close fee-package gaps (~−25 200 Ft vs published `totalCreditCostFees` for most peers; −10 600 for otp-zold) so csok-plusz check 3 is not blocked by fees alone (other five already match published `thmPct` on check 3 with current engine fees).
-- [ ] Close remaining check-3 gap (csok-plusz) once fee package matches; Vidéki reconcile separately.
+- [x] Close fee-package gaps by authoring missing land-registry lines in product YAML (`tulajdoni-lap-lekeres` 9 600, `terkepmasolat-lekeres` 5 000, `fedezetvaltozasi-koltseg` 10 600; otp-zold new-home packaging adds only fedezetváltozási) so engine `totalCreditCostFees` matches published §6.
+- [x] Close remaining check-3 gap (csok-plusz) once fee package matches; Vidéki reconcile separately.
 - [ ] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
 - [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after all three checks pass + composer parity tests.
 

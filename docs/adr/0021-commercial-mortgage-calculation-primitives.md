@@ -30,7 +30,7 @@ Related: 0013 (product specification layer), 0014 (specification-by-example), 00
   - **Engine lane**: customer-rate schedule (+ grace) + fee package + engine THM — asserted by executable tests from example inputs.
   - **Packaging lane**: published §6 installment / totalPaid / thmPct remain fixtures where bank packaging ≠ engine math; tests may compare within documented tolerance but must not rewrite the annuity formula to chase packaging.
 - Calc-aligned for these products (frontend out of scope) means the TypeScript product-spec → engine seam and executable engine assertions above; composer wiring remains a later fully-spec-backed step.
-- Default **representative packaging profile** for engine fee totals: include `timing: upfront` fees except optional add-ons named `azonnali-ertekbecsles` and `egyszeri-kamatcsokkentes-dij`, with no promotional waivers unless the caller activates discount names (OTP Zöld may activate its product-default folyósítási waiver). When the resulting total differs from §6 `totalCreditCostFees`, treat §6 as packaging fixture.
+- Default **representative packaging profile** for engine fee totals: include `timing: upfront` fees except optional add-ons named `azonnali-ertekbecsles` and `egyszeri-kamatcsokkentes-dij`, with no promotional waivers unless the caller activates discount names (OTP Zöld may activate its product-default folyósítási waiver). Product YAML must author the §6 land-registry credit-cost lines (`tulajdoni-lap-lekeres`, `terkepmasolat-lekeres`, `fedezetvaltozasi-koltseg` as applicable) so engine `totalCreditCostFees` matches published figures for non-quarantined offerings.
 
 ## Consequences
 

@@ -29,6 +29,27 @@ describe('applyFeesAndDiscounts', () => {
       timing: 'upfront' as const
     },
     {
+      name: 'tulajdoni-lap-lekeres',
+      type: 'land-registry',
+      value: 9_600,
+      unit: 'amount' as const,
+      timing: 'upfront' as const
+    },
+    {
+      name: 'terkepmasolat-lekeres',
+      type: 'land-registry',
+      value: 5_000,
+      unit: 'amount' as const,
+      timing: 'upfront' as const
+    },
+    {
+      name: 'fedezetvaltozasi-koltseg',
+      type: 'land-registry',
+      value: 10_600,
+      unit: 'amount' as const,
+      timing: 'upfront' as const
+    },
+    {
       name: 'azonnali-ertekbecsles',
       type: 'appraisal',
       value: 21_980,
@@ -79,10 +100,13 @@ describe('applyFeesAndDiscounts', () => {
     expect(result.lines.map((line) => line.name)).toEqual([
       'folyositasi-dij',
       'hitelbiztositeki-ertek-megallapitas',
-      'fedezetkezelesi-koltseg'
+      'fedezetkezelesi-koltseg',
+      'tulajdoni-lap-lekeres',
+      'terkepmasolat-lekeres',
+      'fedezetvaltozasi-koltseg'
     ])
     expect(result.lines[0].grossAmount).toBe(90_000)
-    expect(result.totalCreditCostFees).toBe(90_000 + 58_765 + 20_000)
+    expect(result.totalCreditCostFees).toBe(90_000 + 58_765 + 20_000 + 9_600 + 5_000 + 10_600)
     expect(result.totalRateDiscountBp).toBe(0)
   })
 
@@ -97,7 +121,7 @@ describe('applyFeesAndDiscounts', () => {
 
     const disbursement = result.lines.find((line) => line.name === 'folyositasi-dij')
     expect(disbursement?.amount).toBe(0)
-    expect(result.totalCreditCostFees).toBe(58_765 + 20_000)
+    expect(result.totalCreditCostFees).toBe(58_765 + 20_000 + 9_600 + 5_000 + 10_600)
     expect(result.totalRateDiscountBp).toBe(120)
   })
 

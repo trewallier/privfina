@@ -101,6 +101,16 @@ fees:
     unit: amount
     timing: upfront
     description: 20.000 Ft per collateral.
+  - name: fedezetvaltozasi-koltseg
+    type: land-registry
+    value: 10600
+    unit: amount
+    timing: upfront
+    description: >
+      Fedezetváltozási költség (10.600 Ft/fedezet/jelzálog) for mortgage release;
+      included in Hirdetmény §6 total credit-cost fees / THM packaging.
+      §6 new-home purchase packaging does not add tulajdoni lap / térképmásolat
+      (térkép applies to családi házas collateral; new-lakás example omits those lines).
   - name: egyszeri-kamatcsokkentes-dij
     type: other
     value: 2
@@ -228,7 +238,8 @@ assumptions:
   - "Base contractual rate is 8,49% fixed for the full term; representative packaging applies 50 bp Zöld kamatkedvezmény for a 7,99% customer rate when green conditions are met."
   - "Representative Hirdetmény example uses new-home purchase, 12.000.000 Ft, 20 years, annuity repayment, single disbursement, conditions as of 2026-04-01 packaging with 2026-04-20 Hirdetmény product rates."
   - "Optional 12-month interest-only grace exists on the market-loan family but is out of scope for the representative annuity example."
-  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice."
+  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate."
+  - "Representative fee package (with Zöld folyósítási waiver) is appraisal + fedezetkezelési + fedezetváltozási; §6 new-home packaging omits tulajdoni lap / térképmásolat lines."
   - "OTP 1x1, Végig Fix, and subsidized constructions are separate productCodes."
 
 ui:

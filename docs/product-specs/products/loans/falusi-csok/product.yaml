@@ -61,6 +61,30 @@ fees:
     unit: amount
     timing: upfront
     description: 20.000 Ft per collateral.
+  - name: tulajdoni-lap-lekeres
+    type: land-registry
+    value: 9600
+    unit: amount
+    timing: upfront
+    description: >
+      E-hiteles tulajdoni lap (4.800 Ft/ingatlan × 2 lekérés — bírálat + folyósítás)
+      for one collateral in the §6 representative packaging.
+  - name: terkepmasolat-lekeres
+    type: land-registry
+    value: 5000
+    unit: amount
+    timing: upfront
+    description: >
+      Térképmásolat lekérési költség (5.000 Ft/ingatlan) assumed for one családi házas
+      collateral in the §6 representative packaging.
+  - name: fedezetvaltozasi-koltseg
+    type: land-registry
+    value: 10600
+    unit: amount
+    timing: upfront
+    description: >
+      Fedezetváltozási költség (10.600 Ft/fedezet/jelzálog) for mortgage release;
+      included in Hirdetmény §6 total credit-cost fees / THM packaging.
   - name: elotorlesztesi-dij
     type: prepayment
     value: 1.5
@@ -183,7 +207,8 @@ outputs:
 assumptions:
   - "Customer rate is fixed at 3,00% during state interest subsidy (up to 25 years)."
   - "Representative Hirdetmény example uses used-home purchase for a multi-child family in a preferred small settlement, 12.000.000 Ft, 20 years."
-  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate; fee-package totals may still differ from published totalCreditCostFees until a later §5b slice."
+  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate."
+  - "Representative fee package includes folyósítási + appraisal + fedezetkezelési + tulajdoni lap (2×) + térképmásolat + fedezetváltozási so engine totalCreditCostFees matches published §6."
   - "Other subsidized and market productCodes are separate catalog entries."
 
 ui:

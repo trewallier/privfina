@@ -115,6 +115,13 @@ export type {
   ThmFlow,
   ThmCalculationResult
 } from './instruments/thm'
+export type { BmapRateOutputs, BmapSpecInputs } from './instruments/bmap'
+export {
+  deriveBmapMaturityDate,
+  deriveBmapRateOutputs,
+  deriveBmapAccruedInterestAmount,
+  generateBmapQuarterlyCouponFlows
+} from './instruments/bmap'
 
 function signedAmount(cashFlow: CashFlow): number {
   return cashFlow.direction === CashFlowDirection.Inflow ? cashFlow.amount : -cashFlow.amount

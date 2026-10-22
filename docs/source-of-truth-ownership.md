@@ -62,18 +62,20 @@
 
 ## Current Transition State
 
-The repository has completed the first product-spec migration wave for the cataloged loan and government-security products (see `PRODUCT_CATALOG.md`):
+Catalog statuses in [`PRODUCT_CATALOG.md`](product-specs/PRODUCT_CATALOG.md) are authoritative. Snapshot after ROADMAP §5a/§5b:
 
-- **Done for catalog pilots**: fixed-rate loan, DKJ, PMÁP, and BMÁP are fully-spec-backed; fixed-rate mortgage and the seven Hirdetmény mortgage-loan products are calc-aligned with UI parked (ADR 0021 engine lane).
+- **fully-spec-backed**: fixed-rate loan, DKJ, PMÁP, BMÁP (embedded form/adapter parity; dual TS/JS formula copies remain until ADR 0017 bundler).
+- **commercially-usable**: six Hirdetmény mortgage-loan products (checks 1–3 green + commercial composer UX; embedded `*-product-spec.js` modules still deferred → not yet fully-spec-backed).
+- **schedule-usable**: fixed-rate mortgage (simplified loan composer); Vidéki Otthonfelújítási (packaging-quarantined; commercially-usable blocked until §6 reconciles).
 - **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion`.
-- **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders.
-- **Known dual surface**: TypeScript engine primitives and `public/instruments.js` both host calculation code until a bundler lands (ADR 0017).
-- **Roadmap §3 complete** for lineage, schema v4 migrations, and evaluation-result caching; **§4 responsive UX slices are done**. Open follow-ons are remaining §5 analytics items, §6 platform/bundler, and §7 storage port—see [`ROADMAP.md`](../ROADMAP.md).
+- **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders. Commercial loan UI metadata/fee blocks are hand-mirrored from YAML (migration scaffolding until fully-spec-backed).
+- **Known dual surface**: TypeScript engine primitives and `public/instruments.js` (plus `loan-fees.js` / `thm.js` / `eval-cache.js`) both host calculation code until a bundler lands (ADR 0017).
+- **Roadmap §3–§4 complete**. Open follow-ons: remaining §5 analytics / §5c deferred subsidy splits, §6 platform/bundler, §7 storage port—see [`ROADMAP.md`](../ROADMAP.md).
 - **Target state**: All products have explicit specs; code implements reusable primitives; UI derives metadata from specs; one browser calculation surface.
 
 **Practical implications during transition**:
 - Prefer extending product specs and shared adapter bridges over adding product branches in the engine.
-- Embedded frontend product-spec modules must stay parity-tested against YAML until build-time loading exists.
+- Embedded frontend product-spec modules and hand-mirrored commercial metadata must stay parity-tested against YAML until build-time loading exists.
 - When you encounter legacy product logic (hardcoded in engine, UI, or design doc), use this table to decide: which artifact type should own this information in the target state? Move it there and update the source.
 
 ## References
@@ -83,7 +85,8 @@ The repository has completed the first product-spec migration wave for the catal
 - **ADR 0015**: Data-Driven Product Variants—establishes engine primitives vs. product variants ownership.
 - **ADR 0016**: Product Specification Validation and UI Schema—defines validation and UI metadata ownership.
 - **ADR 0020**: Product Spec Schema v2—freezes v1; active contract is `v2alpha1` with expandable loan/mortgage identity and commercial constructs.
-- **ADR 0021**: Commercial mortgage calculation primitives and dual-lane acceptance vs packaging fixtures.
+- **ADR 0021**: Commercial mortgage calculation primitives (fees, subsidy customer-rate, monthly THM helper). Dual-lane *readiness/UI* posture for public offerings is superseded by ADR 0023 / 0025 / 0026.
+- **ADR 0023 / 0024 / 0026**: Loan readiness levels; commercially-usable for public offerings requires all three ADR 0024 checks.
 - **docs/spec.md**: Living functional specification; describes v1 scenarios and assumptions.
 - **DESIGN.md**: Architectural rationale and domain concepts; does not enumerate all product details (those live in specs).
 - **docs/product-specs/README.md**: Folder conventions and usage.

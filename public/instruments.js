@@ -850,6 +850,8 @@ function daysBetween(startDate, endDate) {
 }
 
 function assertDiscountBondContract(input) {
+  // `dkj` is a legacy investment-subtype alias for the discount-bond calculation
+  // strategy (product code government-security.dkj); not a productCode amortizer branch.
   if (input.subtype !== 'discount-bond' && input.subtype !== 'dkj') {
     return
   }

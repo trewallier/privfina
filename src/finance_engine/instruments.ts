@@ -63,3 +63,10 @@ export {
   generateInvestmentInstrumentCashFlows,
   createInvestmentInstrumentBundle
 } from './instruments/investment'
+export type { BmapRateOutputs, BmapSpecInputs } from './instruments/bmap'
+export {
+  deriveBmapMaturityDate,
+  deriveBmapRateOutputs,
+  deriveBmapAccruedInterestAmount,
+  generateBmapQuarterlyCouponFlows
+} from './instruments/bmap'

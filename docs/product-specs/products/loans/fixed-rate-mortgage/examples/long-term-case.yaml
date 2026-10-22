@@ -15,4 +15,4 @@ expected:
 
 notes:
   - This second example exists to prove that multiple worked examples can live beside the same product spec.
-  - Additional numeric assertions can be added later after engine verification.
+  - paymentCount is asserted via tests/fixed-rate-mortgage-calculation-adapter.test.ts.

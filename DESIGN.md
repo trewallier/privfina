@@ -63,9 +63,9 @@ The current implementation includes the common `CashFlow` model plus instrument 
 - Legacy government-security top-level fields (`issuanceModel`, `rateSettingRule`, …) remain valid in v2alpha1; full relocation into `pricing` alone is deferred.
 - Engine code stays primitive-focused (ADR 0015); schema readiness does not by itself implement subsidized cash-flow math.
 
-### Instrument Design (planned v1 expansion)
+### Instrument Design
 
-This section defines the next iteration of instrument behavior so implementation can proceed in small, testable increments.
+Baseline instrument behavior for salary, subscription, loan, and investment (implemented; see ROADMAP §1–§2). Product-specific commercial detail lives in YAML product specs once cataloged.
 
 #### Salary (stateless, recurring inflow)
 
@@ -268,7 +268,7 @@ Current modules:
 
 ## Implementation Blueprint By Repository Structure
 
-Planned changes are organized by existing repository paths so implementation can be staged safely.
+Module ownership for contributors. Open follow-ons (bundler ADR 0017, storage port §7, analytics) stay in [`ROADMAP.md`](ROADMAP.md).
 
 ### Engine and Domain (`src/finance_engine/`)
 
@@ -276,32 +276,18 @@ Planned changes are organized by existing repository paths so implementation can
 	- instrument-facing inputs and typed preview outputs for loan repayment and investment maturity
 - `models.ts`
 	- `InstrumentBundle`, `GeneratedCashFlow`, and `InstrumentType` lineage/persistence contract
-	- continue refining discriminated unions for salary/subscription/loan/investment inputs as needed
-- `date_utils.ts`
-	- add helper for "last working day on or before target day" computation
-	- keep weekday-only convention in v1 (holiday calendars deferred)
-- `schedule.ts` / `recurring.ts`
-	- add adapter utilities from custom salary rule to concrete dated occurrences
-	- preserve cron-like schedule support as alternate mode
-- `engine.ts`
-	- add bundle generators per instrument type
-	- add loan installment preview calculator (monthly annuity, fixed-rate)
-	- add investment maturity calculators (regular, discount, inflation-linked baseline)
-	- expose deterministic APIs used by UI for pre-save generation and preview
+- `date_utils.ts` / `schedule.ts` / `recurring.ts`
+	- working-day helpers, salary custom monthly rule adapters, cron-like alternate mode
+- `instruments/` + `engine.ts`
+	- bundle generators, loan annuity / day-count / fees / subsidy / THM, investment maturity helpers, BMAP primitives
+	- product-spec mappers under `product_specs/`
 
 ### Browser App (`public/`)
 
-- `index.html`
-	- add instrument composer sections with mode-specific fields
-	- include read-only preview fields (for example loan monthly installment)
-- `app-controller.js`
-	- orchestrate instrument form state, preview recomputation on input change, and save/edit lifecycle
-	- persist and update instrument bundles plus generated flows
-- `render.js`
-	- render instrument-level rows and details while preserving include/exclude actions
-	- show derived summaries (for example remaining term, next payment date)
-- `flows.js`
-	- chart-consumable effective flows, including lineage-stamped instrument flows
+- `index.html` / `app-controller.js` / `render.js` / `flows.js`
+	- composers, preview, persist/edit, chart-consumable flows (dual-surface formulas until ADR 0017 bundler)
+- `storage.js`
+	- interim `localStorage` helpers; replace behind the §7 storage port
 - `storage.js` and `import-export.js`
 	- schema v4 export envelope with lineage-aware `instrumentBundles`
 	- migrate v1–v3 imports; trust stored generated flows (ADR 0018)

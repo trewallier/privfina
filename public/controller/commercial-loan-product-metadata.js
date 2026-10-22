@@ -1,7 +1,9 @@
 /**
- * Commercial loan composer catalog for public-offering mortgage-loan products (ADR 0023).
+ * Migration scaffolding (ADR 0013–0016 / ownership): hand-authored commercial loan
+ * composer catalog for public-offering mortgage-loan products (ADR 0023).
  * Fee/discount commercial blocks live in `commercial-loan-commercial-blocks.js`.
- * Full embedded YAML product-spec modules remain a later fully-spec-backed step.
+ * Keep displayName / defaults / migrationStatus in sync with product YAML + PRODUCT_CATALOG
+ * until fully-spec-backed embedded `*-product-spec.js` modules replace this map.
  */
 
 const PURPOSE_LABELS = {
@@ -152,7 +154,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'otthon-start',
     productId: 'mortgage-loan.otthon-start.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Otthon Start Lakáshitel',
+    displayName: 'OTP Évnyerő Otthon Start Lakáshitel',
     migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
@@ -189,7 +191,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     postSubsidyInfo:
       'Subsidy lasts up to 120 months; post-subsidy rate steps are informational only.',
     commerciallyBlockedReason:
-      'Published Hirdetmény §6 installment packaging cannot amortize the stated principal; commercially-usable requires reconciled offering figures and THM match (ADR 0023).'
+      'Published Hirdetmény §6 installment packaging cannot amortize the stated principal; commercially-usable requires reconciled offering figures and all three ADR 0024 checks (ADR 0026).'
   }
 ]
 

@@ -1,3 +1,8 @@
+/**
+ * Migration scaffolding / browser dual-surface of
+ * `src/finance_engine/instruments/bmap.ts` rate, accrued-interest, and coupon helpers
+ * (ADR 0017). Bundle assembly and legacy investment preview stay here until bundler.
+ */
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { parseIsoDate, formatIsoDate } from '../recurrence.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'

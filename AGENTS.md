@@ -7,7 +7,7 @@ Start here. Prefer linking to authoritative docs over inventing parallel process
 1. [`ROADMAP.md`](ROADMAP.md) — pick the next PR-sized slice
 2. [`docs/source-of-truth-ownership.md`](docs/source-of-truth-ownership.md) — where each kind of information belongs
 3. [`docs/product-specs/PRODUCT_CATALOG.md`](docs/product-specs/PRODUCT_CATALOG.md) — product registry and migration statuses
-4. Relevant ADR(s) under [`docs/adr/`](docs/adr/) (recent: 0017 calculation surface, 0020 schema v2, 0021 commercial mortgage primitives)
+4. Relevant ADR(s) under [`docs/adr/`](docs/adr/) (recent: 0017 calculation surface, 0020 schema v2, 0023–0026 readiness / three-check commercially-usable)
 5. [`DESIGN.md`](DESIGN.md) — domain concepts and investment formulas only; product detail lives in YAML once cataloged
 6. [`docs/spec.md`](docs/spec.md) — scenarios and acceptance criteria to satisfy in the PR
 7. Code under `src/finance_engine/` (primitives + `product_specs/`) and `public/` (UI/adapters) per ownership rules
@@ -27,7 +27,7 @@ Human-oriented hubs: [`README.md`](README.md), [`docs/README.md`](docs/README.md
 | Task | Go next |
 | --- | --- |
 | New or changed financial product | [`docs/product-specs/README.md`](docs/product-specs/README.md) + [`docs/dev-playbooks/product-lifecycle.md`](docs/dev-playbooks/product-lifecycle.md) |
-| Promote migration status (`spec-only` → `calc-aligned` → `fully-spec-backed`) | Catalog glossary + [product lifecycle playbook](docs/dev-playbooks/product-lifecycle.md) |
+| Promote migration status (`spec-only` → `inputs-driven` → `calc-aligned` → `schedule-usable` → `commercially-usable` → `fully-spec-backed`) | Catalog glossary + [product lifecycle playbook](docs/dev-playbooks/product-lifecycle.md) |
 | Architecture / persistence / hosting boundary | [`.github/prompts/create-adr.prompt.md`](.github/prompts/create-adr.prompt.md) → [`docs/adr/`](docs/adr/) |
 | Next work slice / PR framing | [`ROADMAP.md`](ROADMAP.md) + [`.github/prompts/next-roadmap-item.prompt.md`](.github/prompts/next-roadmap-item.prompt.md) |
 | Spec scenario / AC | [`.github/prompts/update-spec.prompt.md`](.github/prompts/update-spec.prompt.md) → [`docs/spec.md`](docs/spec.md) |

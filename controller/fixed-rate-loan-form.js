@@ -40,6 +40,7 @@ import {
   ensureFieldLabelTitleElement,
   reorderFormRowBySpec
 } from './spec-form-utils.js'
+import { parseMoneyAmount } from './money-format.js'
 
 function mapLoanTermValueToMonths(termValue, termUnit) {
   const numericTermValue = Number(termValue)
@@ -79,7 +80,14 @@ function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
 
     input.name = adapter.formName
     if (input.type !== 'checkbox') {
-      input.type = toInputType(field)
+      // Currency fields use formatted text inputs (space-grouped thousands).
+      if (field.unit === 'currency' || input.classList.contains('money-amount')) {
+        input.type = 'text'
+        input.setAttribute('inputmode', 'decimal')
+        input.classList.add('money-amount')
+      } else {
+        input.type = toInputType(field)
+      }
       input.required = Boolean(field.required)
       if (input.type === 'number') {
         applyNumericConstraints(input, field.constraints)
@@ -122,7 +130,7 @@ function mapFormDataToFixedRateLoanSpecInputs(formData) {
       formData.get('capitalizeInterestAtGraceEnd') === 'true')
 
   return {
-    principal: Number(formData.get('principal')),
+    principal: parseMoneyAmount(formData.get('principal')),
     annualInterestRatePct: Number(formData.get('annualRate')),
     termMonths: mapLoanTermValueToMonths(termValue, termUnit),
     startDate: String(formData.get('startDate') || '').trim(),

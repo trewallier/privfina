@@ -33,6 +33,7 @@ import {
   ensureFieldLabelTitleElement,
   reorderFormRowBySpec
 } from './spec-form-utils.js'
+import { parseMoneyAmount } from './money-format.js'
 
 function applyFixedRateMortgageSpecToForm({ mortgageForm, mortgageBox }) {
   if (!mortgageForm) {
@@ -52,7 +53,13 @@ function applyFixedRateMortgageSpecToForm({ mortgageForm, mortgageBox }) {
     }
 
     input.name = adapter.formName
-    input.type = toInputType(field)
+    if (field.unit === 'currency' || input.classList.contains('money-amount')) {
+      input.type = 'text'
+      input.setAttribute('inputmode', 'decimal')
+      input.classList.add('money-amount')
+    } else {
+      input.type = toInputType(field)
+    }
     input.required = Boolean(field.required)
     if (input.type === 'number') {
       applyNumericConstraints(input, field.constraints)
@@ -80,7 +87,7 @@ function applyFixedRateMortgageSpecToForm({ mortgageForm, mortgageBox }) {
 
 function mapFormDataToFixedRateMortgageSpecInputs(formData) {
   return {
-    principal: Number(formData.get('principal')),
+    principal: parseMoneyAmount(formData.get('principal')),
     annualInterestRatePct: Number(formData.get('annualRate')),
     termMonths: Number(formData.get('termValue')),
     startDate: String(formData.get('startDate') || '').trim()

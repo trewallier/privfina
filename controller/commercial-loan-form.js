@@ -3,6 +3,8 @@ import {
   purposeOptionLabel
 } from './commercial-loan-product-metadata.js'
 import { getCommercialLoanCommercialBlocks } from './commercial-loan-commercial-blocks.js'
+import { applyCommercialLoanFieldHelpToForm } from './commercial-loan-field-help.js'
+import { parseMoneyAmount } from './money-format.js'
 
 function readCheckedNames(formData, fieldName) {
   const values = formData.getAll(fieldName)
@@ -37,7 +39,7 @@ function mapFormDataToCommercialLoanSpecInputs(formData, product) {
     productCode: product.productCode,
     productId: product.productId,
     productSpecVersion: product.specVersion,
-    principal: Number(formData.get('principal')),
+    principal: parseMoneyAmount(formData.get('principal')),
     annualInterestRatePct: Number(formData.get('annualRate')),
     termMonths: Number(formData.get('termMonths')),
     startDate: String(formData.get('startDate') || '').trim(),
@@ -234,6 +236,7 @@ function applyCommercialLoanProductSelection({
   }
 
   applyCommercialLoanProductDefaults({ form, product })
+  applyCommercialLoanFieldHelpToForm(form, product.productCode)
   renderCommercialLoanHints({
     product,
     eligibilityElement,

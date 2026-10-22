@@ -27,4 +27,4 @@ Authored against product specification schema **v2** (`specVersion: v2alpha1`, A
 
 ## Status
 
-**schedule-usable** — checks 1–2 green (ADR 0025 ACT/360 + forint); check 3 still open (3.2 vs 3.3) because fee package Δ −25 200 blocks THM match. Commercial fee/THM UX is a later §5b slice.
+**schedule-usable** — checks 1–3 green (ADR 0025 ACT/360 + forint; fee package matches §6, check 3 at 3.3). Commercial fee/THM UX is a later §5b slice.

@@ -122,7 +122,7 @@ This section defines the next iteration of instrument behavior so implementation
 - Commercial packaging (ADR 0021):
 	- Upfront fee/discount application from product-spec `fees` / `discounts` produces a credit-cost package used for `totalCreditCostFees` and fee-inclusive THM.
 	- State-subsidized products resolve the **customer** annual rate for schedule math; ügyleti / state cash-flow splits remain deferred.
-	- Dual-lane acceptance: engine schedule + fee package + engine THM are computed; Hirdetmény §6 installment/THM packaging figures may differ and stay as fixtures.
+	- Offering verification (ADR 0024): engine installment, THM from offering numbers, and THM from engine payments + fee package must match §6 for commercially-usable promotion. Vidéki §6 installment×term packaging remains quarantined.
 - Future extensions: early full repayment rules, state-interest subsidy cash-flow splits, multi-segment interest-period resets, post-subsidy rate steps, and associated on-event penalties.
 
 #### Investment (stateful by product rules, finite maturity first)

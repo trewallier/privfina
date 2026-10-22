@@ -25,8 +25,8 @@ import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../src/finance_engine/product_specs
  * 3) THM from engine payments — ADR 0022 percentRounded from engine-calculated
  *    monthly payments + engine fee package must equal stated thmPct.
  *
- * Fee-package totals may still differ from published `totalCreditCostFees`; that
- * debt is asserted separately and does not fold into check 1/3.
+ * Fee-package totals must match published `totalCreditCostFees` for non-quarantined
+ * offerings (land-registry lines in product YAML). Asserted independently of check 1/3.
  */
 
 interface EnginePins {
@@ -64,12 +64,9 @@ const CASES: ProductCase[] = [
       'docs/product-specs/products/loans/otp-1x1/examples/hirdetmeny-representative-used-home.yaml',
     enginePins: {
       monthlyPayment: 101128,
-      totalCreditCostFees: 168765,
+      totalCreditCostFees: 193965,
       thmPctRounded: 8.6,
       paymentCount: 240
-    },
-    feePackageGap: {
-      reason: 'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200).'
     }
   },
   {
@@ -79,12 +76,9 @@ const CASES: ProductCase[] = [
     activeDiscountNames: ['otp-zold-folyositasi-dij-elengedes'],
     enginePins: {
       monthlyPayment: 101128,
-      totalCreditCostFees: 78765,
+      totalCreditCostFees: 89365,
       thmPctRounded: 8.5,
       paymentCount: 240
-    },
-    feePackageGap: {
-      reason: 'Engine representative fees 78 765 Ft vs published 89 365 Ft (Δ −10 600).'
     }
   },
   {
@@ -93,12 +87,9 @@ const CASES: ProductCase[] = [
       'docs/product-specs/products/loans/vegig-fix/examples/hirdetmeny-representative-used-home.yaml',
     enginePins: {
       monthlyPayment: 104960,
-      totalCreditCostFees: 168765,
+      totalCreditCostFees: 193965,
       thmPctRounded: 9.2,
       paymentCount: 240
-    },
-    feePackageGap: {
-      reason: 'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200).'
     }
   },
   {
@@ -107,17 +98,10 @@ const CASES: ProductCase[] = [
       'docs/product-specs/products/loans/csok-plusz/examples/hirdetmeny-representative-home-purchase.yaml',
     enginePins: {
       monthlyPayment: 69362,
-      totalCreditCostFees: 168765,
-      thmPctRounded: 3.2,
+      totalCreditCostFees: 193965,
+      thmPctRounded: 3.3,
       paymentCount: 240,
       graceInterestOnlyPayment: 30416
-    },
-    feePackageGap: {
-      reason: 'Engine representative fees 168 765 Ft vs published 193 965 Ft (Δ −25 200).'
-    },
-    check3Gap: {
-      reason:
-        'Fee package Δ −25 200 alone keeps engine THM at 3.2 vs published 3.3 (installment already matches).'
     }
   },
   {
@@ -126,12 +110,9 @@ const CASES: ProductCase[] = [
       'docs/product-specs/products/loans/falusi-csok/examples/hirdetmeny-representative-used-home.yaml',
     enginePins: {
       monthlyPayment: 66802,
-      totalCreditCostFees: 198765,
+      totalCreditCostFees: 223965,
       thmPctRounded: 3.3,
       paymentCount: 240
-    },
-    feePackageGap: {
-      reason: 'Engine representative fees 198 765 Ft vs published 223 965 Ft (Δ −25 200).'
     }
   },
   {
@@ -140,13 +121,10 @@ const CASES: ProductCase[] = [
       'docs/product-specs/products/loans/otthon-start/examples/hirdetmeny-representative-home-purchase.yaml',
     enginePins: {
       monthlyPayment: 69362,
-      totalCreditCostFees: 108765,
+      totalCreditCostFees: 133965,
       thmPctRounded: 3.2,
       paymentCount: 240,
       graceInterestOnlyPayment: 30416
-    },
-    feePackageGap: {
-      reason: 'Engine representative fees 108 765 Ft vs published 133 965 Ft (Δ −25 200).'
     }
   },
   {

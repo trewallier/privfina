@@ -662,9 +662,10 @@
 
       .folder-header {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
       }
 
       .folder-toggle {
@@ -688,9 +689,10 @@
       }
 
       .folder-edit-row {
-        display: flex;
+        display: inline-flex;
+        align-items: center;
         gap: 6px;
-        margin-left: 1.5rem;
+        margin-left: 0;
       }
 
       .folder-children {

@@ -779,7 +779,17 @@ function generateLoanInstrumentBundle(input) {
       category: input.category || 'loan',
       description: input.description,
       loanPurpose: input.loanPurpose,
-      commercialProductCode: input.commercialProductCode
+      commercialProductCode: input.commercialProductCode,
+      baseAnnualInterestRatePct:
+        input.baseAnnualInterestRatePct !== undefined
+          ? Number(input.baseAnnualInterestRatePct)
+          : undefined,
+      activeDiscountNames: Array.isArray(input.activeDiscountNames)
+        ? [...input.activeDiscountNames]
+        : undefined,
+      includeOptionalFeeNames: Array.isArray(input.includeOptionalFeeNames)
+        ? [...input.includeOptionalFeeNames]
+        : undefined
     },
     preview,
     generatedFlows,

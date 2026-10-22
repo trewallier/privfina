@@ -198,6 +198,8 @@ function initController() {
   const commercialLoanTotalInterestPreviewInput = document.getElementById(
     'commercial-loan-total-interest-preview'
   )
+  const commercialLoanFeesPreviewInput = document.getElementById('commercial-loan-fees-preview')
+  const commercialLoanThmPreviewInput = document.getElementById('commercial-loan-thm-preview')
   const investmentGenericCoreRow = document.getElementById('investment-generic-core-row')
   const investmentGenericSecondaryRow = document.getElementById('investment-generic-secondary-row')
   const investmentPreviewRow = document.getElementById('investment-preview-row')
@@ -922,7 +924,24 @@ function initController() {
     syncLoanPreview()
   }
 
-  function syncCommercialLoanProductUi({ forceDefaults = false } = {}) {
+  function readCommercialLoanPackagingFromForm() {
+    if (!commercialLoanForm) {
+      return { activeDiscountNames: [], includeOptionalFeeNames: [] }
+    }
+    const activeDiscountNames = [
+      ...commercialLoanForm.querySelectorAll('input[name="activeDiscountNames"]:checked')
+    ].map((input) => input.value)
+    const includeOptionalFeeNames = [
+      ...commercialLoanForm.querySelectorAll('input[name="includeOptionalFeeNames"]:checked')
+    ].map((input) => input.value)
+    return { activeDiscountNames, includeOptionalFeeNames }
+  }
+
+  function syncCommercialLoanProductUi({
+    forceDefaults = false,
+    activeDiscountNames,
+    includeOptionalFeeNames
+  } = {}) {
     if (!commercialLoanForm || !commercialLoanProductInput) {
       return
     }
@@ -934,7 +953,9 @@ function initController() {
       discountElement: commercialLoanDiscountHint,
       postSubsidyElement: commercialLoanPostSubsidyInfo,
       commercialNoteElement: commercialLoanCommercialNote,
-      forceDefaults
+      forceDefaults,
+      activeDiscountNames,
+      includeOptionalFeeNames
     })
   }
 
@@ -994,6 +1015,9 @@ function initController() {
     monthlyPreviewInput: commercialLoanMonthlyPreviewInput,
     totalRepaymentPreviewInput: commercialLoanTotalRepaymentPreviewInput,
     totalInterestPreviewInput: commercialLoanTotalInterestPreviewInput,
+    feesPreviewInput: commercialLoanFeesPreviewInput,
+    thmPreviewInput: commercialLoanThmPreviewInput,
+    readCommercialPackaging: readCommercialLoanPackagingFromForm,
     createLoanRepaymentPreview,
     calculateFixedRateLoanFromSpecInputs: calculateCommercialLoanFromSpecInputs
   })
@@ -1048,7 +1072,11 @@ function initController() {
     commercialLoanForm.querySelector('#commercial-loan-principal').value =
       config.principal !== undefined ? String(config.principal) : ''
     commercialLoanForm.querySelector('#commercial-loan-annual-rate').value =
-      config.annualRate !== undefined ? String(Number(config.annualRate) * 100) : ''
+      config.baseAnnualInterestRatePct !== undefined
+        ? String(config.baseAnnualInterestRatePct)
+        : config.annualRate !== undefined
+          ? String(Number(config.annualRate) * 100)
+          : ''
     commercialLoanForm.querySelector('#commercial-loan-term-months').value =
       config.termValue !== undefined
         ? String(config.termValue)
@@ -1066,7 +1094,15 @@ function initController() {
     commercialLoanForm.querySelector('#commercial-loan-include-disbursement').checked =
       config.includeDisbursement !== false
 
-    syncCommercialLoanProductUi({ forceDefaults: false })
+    syncCommercialLoanProductUi({
+      forceDefaults: false,
+      activeDiscountNames: Array.isArray(config.activeDiscountNames)
+        ? config.activeDiscountNames
+        : undefined,
+      includeOptionalFeeNames: Array.isArray(config.includeOptionalFeeNames)
+        ? config.includeOptionalFeeNames
+        : undefined
+    })
     const purposeSelect = commercialLoanForm.querySelector('#commercial-loan-purpose')
     if (purposeSelect && config.loanPurpose) {
       purposeSelect.value = config.loanPurpose
@@ -1430,6 +1466,17 @@ function initController() {
     commercialLoanProductInput.addEventListener('change', () => {
       syncCommercialLoanProductUi({ forceDefaults: true })
       syncCommercialLoanPreview()
+    })
+  }
+  if (commercialLoanForm) {
+    commercialLoanForm.addEventListener('change', (event) => {
+      const target = event.target
+      if (
+        target &&
+        (target.name === 'activeDiscountNames' || target.name === 'includeOptionalFeeNames')
+      ) {
+        syncCommercialLoanPreview()
+      }
     })
   }
   investmentPreviewController.bindEvents()

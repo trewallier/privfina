@@ -79,7 +79,7 @@ Plan slices
 - [x] Close check-1 installment gaps at the stated rate (ADR 0025: shared ACT/360 equal-month day-count `r×(365/12)/360` + forint rounding via product YAML; no packaging-rate camouflage).
 - [x] Close fee-package gaps by authoring missing land-registry lines in product YAML (`tulajdoni-lap-lekeres` 9 600, `terkepmasolat-lekeres` 5 000, `fedezetvaltozasi-koltseg` 10 600; otp-zold new-home packaging adds only fedezetváltozási) so engine `totalCreditCostFees` matches published §6.
 - [x] Close remaining check-3 gap (csok-plusz) once fee package matches; Vidéki reconcile separately.
-- [ ] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
+- [x] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
 - [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after all three checks pass + composer parity tests.
 
 #### 5c) Deferred (explicitly out of scope for 5a/5b)

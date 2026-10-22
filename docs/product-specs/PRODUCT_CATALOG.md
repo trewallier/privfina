@@ -60,4 +60,4 @@ Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playb
 
 ## Planned catalog extensions
 
-Hirdetmény 2026-04-20 mortgages: promote to **schedule-usable** via the commercial loan composer (ROADMAP §5a), then to **commercially-usable** / **fully-spec-backed** only after all three ADR 0024 checks pass — including fee-package fidelity, not installment-only (ROADMAP §5b, ADR 0023). No new consumer loan codes in this epic.
+Hirdetmény 2026-04-20 mortgages: promote to **schedule-usable** via the commercial loan composer (ROADMAP §5a). Commercial fee/discount/THM composer UX is wired; promote to **commercially-usable** / **fully-spec-backed** only after composer↔YAML parity tests and catalog bump (ROADMAP §5b, ADR 0023). Vidéki remains packaging-quarantined. No new consumer loan codes in this epic.

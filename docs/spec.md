@@ -137,11 +137,11 @@ Acceptance criteria
 - [x] Subsidized products include only customer inflows/outflows in the user balance; bank↔state settlement legs are absent.
 - [x] Post-subsidy rate steps, when shown, are informational copy only (not simulated schedule resets) until a later epic.
 - [x] Public-offering products must not present dual-lane (engine vs packaging) figures in the UI.
-- [x] Representative Hirdetmény examples verify the engine with two independent checks: (1) monthly cash flow at the stated contractual rate equals the example installment; (2) ADR 0022 `percentRounded` from engine schedule + fees equals example `thmPct`. Gaps must not be hidden by adjusting an invisible packaging rate.
-- [x] ADR 0022 THM solver reproduces published `thmPct` when fed the example's own repayment vector and fees (isolates the legal calculator).
-- [ ] Public-offering products pass check 1 (stated-rate installment) without packaging-rate camouflage.
-- [ ] Public-offering products pass check 2 (engine THM) once check 1 is green and fee packaging is complete.
-- [ ] A public-offering product is not commercially-usable / fully-spec-backed until both checks pass **and** commercial composer fee/discount/THM UX is wired (ROADMAP §5b).
+- [x] Representative Hirdetmény examples verify products with three checks (ADR 0024): (1) engine installment from amount, term, and stated interest rate; (2) law-based THM from offering repayment + fee numbers; (3) law-based THM from engine-calculated monthly payments. Gaps must not be hidden by an invisible packaging-rate adjustment.
+- [x] Check 2 passes for the six non-quarantined Hirdetmény products (THM solver + offering fee totals reproduce stated `thmPct`).
+- [ ] Public-offering products pass check 1 (engine installment at stated rate) without packaging-rate camouflage.
+- [ ] Public-offering products pass check 3 (THM from engine payments + engine fees) once check 1 is green and fee packaging is complete.
+- [ ] A public-offering product is not commercially-usable / fully-spec-backed until all three checks pass **and** commercial composer fee/discount/THM UX is wired (ROADMAP §5b).
 - [ ] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
 
 How to use this file

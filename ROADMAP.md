@@ -75,11 +75,11 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until engine THM (ADR 0022) matches published `thmPct`. Simplified examples stay on annuity primitives.
 
 Plan slices
-- [x] Representative-example verification harness: (1) monthly cash flow at the stated contractual rate must match the example; (2) ADR 0022 `percentRounded` from engine schedule + fees must match `thmPct` independently — gaps must stay visible (no packaging-rate camouflage). THM solver proven against example cash-flow sets; installment gaps documented for six products; Vidéki packaging still quarantined.
-- [ ] Close installment gaps at the stated rate (shared loan primitives / product mapping) so check 1 passes per public-offering product.
-- [ ] Close fee-package gaps so check 2 passes once check 1 is green (Vidéki reconcile separately).
+- [x] Representative-example verification harness (ADR 0024): (1) engine installment from amount/term/rate; (2) law-based THM from offering numbers; (3) law-based THM from engine monthly payments — gaps stay visible (no packaging-rate camouflage). Check 2 green for six products; check 1/3 gaps documented; Vidéki packaging quarantined.
+- [ ] Close check-1 installment gaps at the stated rate (shared loan primitives / product mapping).
+- [ ] Close check-3 gaps (engine payments + fee package → stated thmPct) once check 1 is green; use check 2 to isolate THM/fee issues (Vidéki reconcile separately).
 - [ ] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
-- [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after both checks pass + composer parity tests.
+- [ ] Promote products to `commercially-usable` / `fully-spec-backed` only after all three checks pass + composer parity tests.
 
 #### 5c) Deferred (explicitly out of scope for 5a/5b)
 - [ ] Bank↔state subsidy settlement cash-flow splits (future government-cost views).

@@ -13,18 +13,20 @@ import {
 import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../src/finance_engine/product_specs/loader'
 
 /**
- * Representative Hirdetmény examples verify the engine in two independent checks:
+ * Representative Hirdetmény examples verify products with three checks (ADR 0024):
  *
- * 1) Monthly cash flow at the stated contractual rate must match the example.
- *    A mismatch means the generic schedule logic (or product rate/grace mapping)
- *    has a gap — do not hide it with an invisible packaging-rate adjustment.
+ * 1) Engine installment — principal, term, stated interest rate (and grace) must
+ *    reproduce the offering monthly payment. Checks the engine.
  *
- * 2) ADR 0022 THM (`percentRounded`) from engine schedule + fee package must
- *    match the example. A mismatch (once check 1 passes) means THM assembly or
- *    fee inclusion has a gap.
+ * 2) THM from offering numbers — ADR 0022 percentRounded from the offering’s own
+ *    repayment vector + fee total must equal stated thmPct. Checks THM logic and
+ *    fee gaps, independent of engine schedule generation.
  *
- * Separately, the THM solver is proven against the example's own published
- * repayment vector + fees (isolates the legal calculator from schedule gaps).
+ * 3) THM from engine payments — ADR 0022 percentRounded from engine-calculated
+ *    monthly payments + engine fee package must equal stated thmPct. Checks
+ *    global system wiring.
+ *
+ * Do not hide check-1 gaps with an invisible packaging-rate adjustment.
  */
 
 interface ProductCase {
@@ -32,15 +34,14 @@ interface ProductCase {
   examplePath: string
   activeDiscountNames?: string[]
   /**
-   * When set, check 1 is known to fail: engine installment at the stated rate
-   * does not yet equal the published figure. Commercially-usable stays blocked.
+   * When set, check 1 is known to fail at the stated rate. Check 3 stays
+   * documented as blocked until check 1 is green.
    */
   installmentGap?: {
     reason: string
   }
   /**
-   * §6 packaging cannot amortize stated principal (Vidéki). Skips both product
-   * integration checks until the offering example is reconciled.
+   * §6 packaging cannot amortize stated principal (Vidéki).
    */
   packagingQuarantined?: boolean
 }
@@ -123,7 +124,7 @@ function loadExample(examplePath: string): {
   }
 }
 
-function publishedMonthlyPayments(example: {
+function offeringMonthlyPayments(example: {
   inputs: MortgageLoanSpecInputs
   expected: Record<string, number | string>
 }): number[] {
@@ -138,7 +139,7 @@ function publishedMonthlyPayments(example: {
   const payments: number[] = []
   if (graceMonths > 0) {
     if (gracePayment === undefined) {
-      throw new Error('Grace products require expected.graceInterestOnlyPayment for THM isolation.')
+      throw new Error('Grace products require expected.graceInterestOnlyPayment for check 2.')
     }
     for (let i = 0; i < graceMonths; i += 1) {
       payments.push(gracePayment)
@@ -150,7 +151,7 @@ function publishedMonthlyPayments(example: {
   return payments
 }
 
-describe('Hirdetmény representative example verification (ADR 0022 / 0023)', () => {
+describe('Hirdetmény representative example verification (ADR 0024)', () => {
   const productSchema = JSON.parse(readRepoFile(DEFAULT_PRODUCT_SCHEMA_PATH))
 
   for (const productCase of CASES) {
@@ -170,18 +171,7 @@ describe('Hirdetmény representative example verification (ADR 0022 / 0023)', ()
         return
       }
 
-      it('THM solver independently reproduces published thmPct from the example cash-flow set', () => {
-        // Isolates ADR 0022 from product schedule generation: feed the example's
-        // own repayments + fees into the legal calculator.
-        const thm = calculateThmFromMonthlyRepayments({
-          principal: example.inputs.principal,
-          upfrontFees: Number(example.expected.totalCreditCostFees),
-          monthlyPayments: publishedMonthlyPayments(example)
-        })
-        expect(thm.percentRounded).toBe(Number(example.expected.thmPct))
-      })
-
-      it('check 1: monthly cash flow at the stated contractual rate matches the example', () => {
+      it('check 1: engine reproduces offering installment from amount, term, and interest rate', () => {
         const result = calculateMortgageLoanFromProductSpec(product, {
           ...example.inputs,
           activeDiscountNames: productCase.activeDiscountNames
@@ -190,9 +180,6 @@ describe('Hirdetmény representative example verification (ADR 0022 / 0023)', ()
         const published = Number(example.expected.monthlyPayment)
 
         if (productCase.installmentGap) {
-          // Gap is intentional signal: generic calc at the stated rate does not
-          // yet reproduce the offering installment. Do not paper over with a
-          // hidden packaging rate.
           expect(result.monthlyPayment).not.toBeCloseTo(published, 0)
           expect(productCase.installmentGap.reason.length).toBeGreaterThan(20)
           if (example.expected.graceInterestOnlyPayment !== undefined) {
@@ -213,21 +200,34 @@ describe('Hirdetmény representative example verification (ADR 0022 / 0023)', ()
         }
       })
 
-      it('check 2: ADR 0022 THM from engine schedule + fees matches the example', () => {
+      it('check 2: law-based THM reproduces stated thmPct from offering numbers', () => {
+        const thm = calculateThmFromMonthlyRepayments({
+          principal: example.inputs.principal,
+          upfrontFees: Number(example.expected.totalCreditCostFees),
+          monthlyPayments: offeringMonthlyPayments(example)
+        })
+        expect(thm.percentRounded).toBe(Number(example.expected.thmPct))
+      })
+
+      it('check 3: law-based THM reproduces stated thmPct from engine monthly payments', () => {
         const result = calculateMortgageLoanFromProductSpec(product, {
           ...example.inputs,
           activeDiscountNames: productCase.activeDiscountNames
         })
+        const enginePayments = expandScheduleToMonthlyPayments(result.schedule)
+        const thm = calculateThmFromMonthlyRepayments({
+          principal: example.inputs.principal,
+          upfrontFees: result.totalCreditCostFees,
+          monthlyPayments: enginePayments
+        })
+
+        // Engine output thmPct must be the same ADR 0022 rounding of those flows.
+        expect(result.thmPct).toBe(thm.percentRounded)
 
         if (productCase.installmentGap) {
-          // Until check 1 passes, engine THM cannot be required to match — the
-          // repayment vector itself is still wrong. Assert THM is computed and
-          // differs so the gap stays visible.
-          expect(Number.isFinite(result.thmPct)).toBe(true)
-          expect(result.thmPct).not.toBe(Number(example.expected.thmPct))
-          expect(expandScheduleToMonthlyPayments(result.schedule).length).toBe(
-            result.paymentCount
-          )
+          // Global path cannot match while engine installments still differ from
+          // the offering — keep the gap visible.
+          expect(thm.percentRounded).not.toBe(Number(example.expected.thmPct))
           return
         }
 
@@ -235,7 +235,7 @@ describe('Hirdetmény representative example verification (ADR 0022 / 0023)', ()
           Number(example.expected.totalCreditCostFees),
           8
         )
-        expect(result.thmPct).toBe(Number(example.expected.thmPct))
+        expect(thm.percentRounded).toBe(Number(example.expected.thmPct))
       })
     })
   }

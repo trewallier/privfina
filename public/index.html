@@ -662,9 +662,10 @@
 
       .folder-header {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
       }
 
       .folder-toggle {
@@ -688,9 +689,10 @@
       }
 
       .folder-edit-row {
-        display: flex;
+        display: inline-flex;
+        align-items: center;
         gap: 6px;
-        margin-left: 1.5rem;
+        margin-left: 0;
       }
 
       .folder-children {
@@ -717,22 +719,31 @@
         transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
       }
 
+      /* Source stays in place at reduced opacity; elevated "shadow card" is only the ghost. */
       .flow-item-row.is-dragging,
       .flow-folder-row.is-dragging,
       .flow-card.is-dragging,
-      .folder-header.is-dragging,
-      .list-drag-ghost {
+      .folder-header.is-dragging {
         cursor: grabbing;
-        opacity: 0.92;
-        transform: scale(1.03);
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+        opacity: 0.35;
       }
 
       .list-drag-ghost {
+        cursor: grabbing;
+        opacity: 0.96;
+        transform: scale(1.03);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
         border: 1px solid var(--border);
         border-radius: 12px;
         background: #fff;
-        padding: 10px 12px;
+        box-sizing: border-box;
+      }
+
+      .list-drag-ghost.flow-item-row,
+      .list-drag-ghost.flow-folder-row {
+        display: table;
+        border-collapse: collapse;
+        background: #fff;
       }
 
       .is-drop-target {
@@ -743,6 +754,11 @@
 
       body.is-list-dragging {
         user-select: none;
+        cursor: grabbing;
+      }
+
+      body.is-list-dragging-touch {
+        touch-action: none;
       }
 
       .compose-mobile-bar,

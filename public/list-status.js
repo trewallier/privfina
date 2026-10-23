@@ -312,12 +312,17 @@ function findItemLocation(listStatus, itemId) {
 /**
  * Move an item into a folder (append or insert at index) or to root at index.
  * target: { type: 'folder', folderId, index? } | { type: 'root', index? }
+ *
+ * Index is treated as "insert before this slot" in the pre-move list. When the
+ * item moves later within the same container, the destination is adjusted after
+ * removal so the visual drop target stays correct.
  */
 function moveItem(listStatus, itemId, target) {
   if (typeof itemId !== 'string' || !itemId.trim() || !target || typeof target !== 'object') {
     return normalizeListStatus(listStatus)
   }
 
+  const from = findItemLocation(listStatus, itemId)
   let status = removeItemFromStatus(listStatus, itemId)
 
   if (target.type === 'folder') {
@@ -327,10 +332,21 @@ function moveItem(listStatus, itemId, target) {
     }
 
     const items = [...(status.folderItemOrder[folderId] || [])]
-    const index =
+    let index =
       Number.isInteger(target.index) && target.index >= 0
-        ? Math.min(target.index, items.length)
+        ? Math.min(target.index, items.length + 1)
         : items.length
+
+    if (
+      from?.container === 'folder' &&
+      from.folderId === folderId &&
+      Number.isInteger(target.index) &&
+      from.index < target.index
+    ) {
+      index = target.index - 1
+    }
+
+    index = Math.max(0, Math.min(index, items.length))
     items.splice(index, 0, itemId)
 
     return {
@@ -343,10 +359,20 @@ function moveItem(listStatus, itemId, target) {
   }
 
   const rootOrder = [...status.rootOrder]
-  const index =
+  let index =
     Number.isInteger(target.index) && target.index >= 0
-      ? Math.min(target.index, rootOrder.length)
+      ? Math.min(target.index, rootOrder.length + 1)
       : rootOrder.length
+
+  if (
+    from?.container === 'root' &&
+    Number.isInteger(target.index) &&
+    from.index < target.index
+  ) {
+    index = target.index - 1
+  }
+
+  index = Math.max(0, Math.min(index, rootOrder.length))
   rootOrder.splice(index, 0, { kind: 'item', id: itemId })
 
   return {
@@ -357,6 +383,7 @@ function moveItem(listStatus, itemId, target) {
 
 /**
  * Reorder a root entry (folder or unfiled item) to a new root index.
+ * `toIndex` is the pre-move "insert before" slot.
  */
 function moveRootEntry(listStatus, entry, toIndex) {
   const status = normalizeListStatus(listStatus)
@@ -373,10 +400,16 @@ function moveRootEntry(listStatus, entry, toIndex) {
 
   const nextRootOrder = [...status.rootOrder]
   const [removed] = nextRootOrder.splice(fromIndex, 1)
-  const index =
+  let index =
     Number.isInteger(toIndex) && toIndex >= 0
-      ? Math.min(toIndex, nextRootOrder.length)
+      ? toIndex
       : nextRootOrder.length
+
+  if (Number.isInteger(toIndex) && fromIndex < toIndex) {
+    index = toIndex - 1
+  }
+
+  index = Math.max(0, Math.min(index, nextRootOrder.length))
   nextRootOrder.splice(index, 0, removed)
 
   return {

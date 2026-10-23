@@ -23,9 +23,26 @@ const PMAP_FRONTEND_FIELD_ADAPTER = {
 }
 
 const PMAP_OUTPUT_PREVIEW_ADAPTER = {
-  redemptionValue: { inputId: 'investment-maturity-preview' },
-  annualCouponRatePct: { inputId: 'investment-inflation-schedule-preview' },
-  couponPaymentFrequency: { inputId: 'investment-inflation-schedule-preview' }
+  redemptionValue: {
+    inputId: 'commercial-investment-maturity-preview',
+    legacyInputId: 'investment-maturity-preview'
+  },
+  annualCouponRatePct: {
+    inputId: 'commercial-investment-inflation-schedule-preview',
+    legacyInputId: 'investment-inflation-schedule-preview'
+  },
+  couponPaymentFrequency: {
+    inputId: 'commercial-investment-inflation-schedule-preview',
+    legacyInputId: 'investment-inflation-schedule-preview'
+  }
+}
+
+function queryFormInput(form, adapter) {
+  if (!form || !adapter) return null
+  return (
+    form.querySelector(`#${adapter.inputId}`) ||
+    (adapter.legacyInputId ? form.querySelector(`#${adapter.legacyInputId}`) : null)
+  )
 }
 
 function applyPmapSpecToForm({ investmentForm, investmentBox }) {
@@ -70,7 +87,10 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
     }
   })
 
-  const inflationPreview = investmentForm.querySelector('#investment-inflation-schedule-preview')
+  const inflationPreview = queryFormInput(
+    investmentForm,
+    PMAP_OUTPUT_PREVIEW_ADAPTER.annualCouponRatePct
+  )
   const inflationLabel = inflationPreview ? inflationPreview.closest('label') : null
   if (inflationLabel) {
     applyFieldChrome(
@@ -83,14 +103,17 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
           getPmapFieldHelp('couponPaymentFrequency'),
         required: false,
         role: 'output',
-        helpId: 'investment-inflation-schedule-preview-help',
+        helpId: `${inflationPreview.id}-help`,
         labelClassName: 'investment-field-label'
       },
       inflationPreview
     )
   }
 
-  const maturityPreview = investmentForm.querySelector('#investment-maturity-preview')
+  const maturityPreview = queryFormInput(
+    investmentForm,
+    PMAP_OUTPUT_PREVIEW_ADAPTER.redemptionValue
+  )
   const maturityLabel = maturityPreview ? maturityPreview.closest('label') : null
   if (maturityLabel) {
     applyFieldChrome(
@@ -100,7 +123,7 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
         description: getPmapFieldHelp('redemptionValue'),
         required: false,
         role: 'output',
-        helpId: 'investment-maturity-preview-help',
+        helpId: `${maturityPreview.id}-help`,
         labelClassName: 'investment-field-label'
       },
       maturityPreview

@@ -1,6 +1,6 @@
 import { formatMoneyAmount } from './controller/money-format.js'
 import { buildListOutline } from './list-status.js'
-import { bindDraggable, bindDropSurface } from './list-dnd.js'
+import { bindDraggable, bindDropSurface, cancelActiveListDrag } from './list-dnd.js'
 
 function buildConfiguredRows(
   oneTimeFlows,
@@ -286,8 +286,9 @@ function appendFolderTableRows(tbody, folderEntry, handlers, dnd, rootIndex) {
   `
 
   bindFolderActions(header, folder, handlers)
-  if (dnd?.enabled) {
-    bindDraggable(header, { kind: 'folder', id: folder.id }, dnd.onDrop, dnd.root)
+  const folderHeader = header.querySelector('.folder-header')
+  if (dnd?.enabled && folderHeader) {
+    bindDraggable(folderHeader, { kind: 'folder', id: folder.id }, dnd.onDrop, dnd.root)
   }
   tbody.appendChild(header)
 
@@ -399,8 +400,11 @@ function appendFolderCard(container, folderEntry, handlers, dnd, rootIndex) {
   `
 
   bindFolderActions(block, folder, handlers)
-  if (dnd?.enabled) {
-    bindDraggable(block, { kind: 'folder', id: folder.id }, dnd.onDrop, dnd.root)
+  const header = block.querySelector('.folder-header')
+  if (dnd?.enabled && header) {
+    // Bind the header only — nesting draggable on the section breaks child card drags
+    // and can leave ghost clones stranded after release.
+    bindDraggable(header, { kind: 'folder', id: folder.id }, dnd.onDrop, dnd.root)
   }
 
   const children = block.querySelector('.folder-children')
@@ -489,12 +493,19 @@ function renderConfiguredLists(options) {
       listStatus
     })
 
-  const dndRoot = cardsContainer?.parentElement || tableBody?.parentElement
+  const dndRoot =
+    cardsContainer?.closest('#configured-section') ||
+    tableBody?.closest('#configured-section') ||
+    cardsContainer?.parentElement ||
+    tableBody?.parentElement
   const dnd = {
     enabled: typeof onListDrop === 'function',
     onDrop: onListDrop,
     root: dndRoot
   }
+
+  // Drop handlers re-render this list; purge any prior ghost/dragging state first.
+  cancelActiveListDrag(dndRoot)
 
   if (dnd.enabled && dndRoot) {
     bindDropSurface(dndRoot, onListDrop)

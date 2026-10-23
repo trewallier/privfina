@@ -121,6 +121,7 @@ Acceptance criteria
 - [x] Import trusts stored instrument `generatedFlows` (no silent regenerate); migrations only fill lineage/product-spec metadata (ADR 0018).
 - [x] Users can create flat folders in the configured-flow list, expand/collapse them, and rename a folder when it is expanded.
 - [x] Users can drag configured flows into and out of folders (mouse drag-and-drop or touch long-press) with a visible dragging affordance; folders cannot contain other folders.
+- [x] Touch long-press reorder/membership does not scroll the list mid-drag, does not leave drag chrome/artifacts after release, and does not widen the page (no horizontal scrollbar from the drag ghost).
 - [x] Item order and folder collapsed state persist in browser `listStatus` and are saved/restored by export/import JSON (schema v5 `data.listStatus`).
 - [x] Deleting a folder moves its items back to the root list without deleting the flows.
 - [x] Evaluation-result cache covers recurring evaluate/expand and instrument range slices, with explicit invalidation on definition/bundle mutations.

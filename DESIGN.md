@@ -354,7 +354,7 @@ Current implementation includes one-time and recurring add forms on the main web
 - Default sort (when `listStatus` has no explicit order yet) is by next effective date, then creation order.
 - Users can organize configured flows into **flat** folders (folders cannot contain other folders). Each folder has a name and collapsed/expanded state; when expanded, an edit control appears under the name for renaming, and child items render beneath the folder.
 - Item order, folder membership, and folder collapsed state live in persisted `listStatus` (browser storage + export/import), not on cash-flow domain records.
-- Items can be dragged into/out of folders and reordered (mouse drag-and-drop or touch long-press) with a visible dragging affordance.
+- Items can be dragged into/out of folders and reordered (mouse drag-and-drop or touch long-press) with a visible dragging affordance. Touch drag claims the gesture after a short stillness window, locks page scroll for the drag, and renders the ghost inside a viewport-clipped layer so the page cannot grow a horizontal scrollbar.
 - Current implementation exposes include/exclude toggles, edit actions, and delete actions per row for one-time, recurring, and instrument definitions.
 - Narrow-viewport list: card rows summarizing type/name, signed amount, date range or equivalent, plus include/edit/delete actions (no horizontal table scroll as the primary mobile pattern); the same `listStatus` outline drives both the desktop table and mobile cards.
 - Changes should update persisted browser state immediately.

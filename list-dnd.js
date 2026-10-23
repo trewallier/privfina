@@ -1,29 +1,45 @@
 /**
  * Mouse HTML5 DnD + touch long-press drag for configured-list items/folders.
  *
- * Touch feedback uses a body-mounted `.list-drag-ghost`. Cleanup is global and
- * idempotent so a drop, cancel, or list re-render can never leave a shadow card.
- * Mouse HTML5 uses the browser drag image only (no custom ghost) to avoid leaks
- * when dragend/drop are skipped or synthesized incompletely.
+ * Touch feedback uses a viewport-clipped `.list-drag-layer` + `.list-drag-ghost`.
+ * Cleanup is global and idempotent so a drop, cancel, or list re-render can never
+ * leave a shadow card. Mouse HTML5 uses the browser drag image only (no custom
+ * ghost) to avoid leaks when dragend/drop are skipped or synthesized incompletely.
+ *
+ * Mobile notes:
+ * - HTML5 `draggable` is enabled only for mouse presses (avoids iOS native-drag artifacts).
+ * - Touch long-press claims the gesture after a short stillness window and locks
+ *   document scroll via non-passive `touchmove` preventDefault (Android otherwise
+ *   scrolls mid-drag and cancels the pointer before a drop can land).
  */
 
 const LONG_PRESS_MS = 400
-const MOVE_CANCEL_PX = 10
+const SCROLL_CLAIM_MS = 160
+const MOVE_CANCEL_PX = 14
 const DRAG_MIME = 'application/x-privfina-list-drag'
 const GHOST_CLASS = 'list-drag-ghost'
+const GHOST_LAYER_CLASS = 'list-drag-layer'
 
 let activeDrag = null
 let longPressTimer = null
+let scrollClaimTimer = null
 let longPressOrigin = null
+let gestureClaimed = false
 let suppressClickUntil = 0
 let documentListenersBound = false
+let scrollLock = null
 
 function clearLongPress() {
   if (longPressTimer) {
     clearTimeout(longPressTimer)
     longPressTimer = null
   }
+  if (scrollClaimTimer) {
+    clearTimeout(scrollClaimTimer)
+    scrollClaimTimer = null
+  }
   longPressOrigin = null
+  gestureClaimed = false
 }
 
 function isInteractiveDragExclusion(target) {
@@ -114,9 +130,41 @@ function removeAllGhosts() {
   if (typeof document === 'undefined') {
     return
   }
-  document.querySelectorAll(`.${GHOST_CLASS}`).forEach((node) => {
+  document.querySelectorAll(`.${GHOST_LAYER_CLASS}, .${GHOST_CLASS}`).forEach((node) => {
     node.remove()
   })
+}
+
+function lockDocumentScroll() {
+  if (scrollLock || typeof window === 'undefined' || typeof document === 'undefined') {
+    return
+  }
+
+  scrollLock = {
+    scrollX: window.scrollX || window.pageXOffset || 0,
+    scrollY: window.scrollY || window.pageYOffset || 0
+  }
+
+  const { scrollX, scrollY } = scrollLock
+  document.documentElement.classList.add('is-list-scroll-locked')
+  document.body.classList.add('is-list-scroll-locked')
+  document.body.style.top = `-${scrollY}px`
+  document.body.style.left = `-${scrollX}px`
+}
+
+function unlockDocumentScroll() {
+  if (!scrollLock || typeof window === 'undefined' || typeof document === 'undefined') {
+    scrollLock = null
+    return
+  }
+
+  const { scrollX, scrollY } = scrollLock
+  scrollLock = null
+  document.documentElement.classList.remove('is-list-scroll-locked')
+  document.body.classList.remove('is-list-scroll-locked')
+  document.body.style.top = ''
+  document.body.style.left = ''
+  window.scrollTo(scrollX, scrollY)
 }
 
 function releasePointerCapture(drag) {
@@ -138,16 +186,23 @@ function endActiveDrag(root) {
   clearLongPress()
   removeAllGhosts()
   clearDropHighlights(root)
+  unlockDocumentScroll()
 
   if (drag?.source) {
     drag.source.classList.remove('is-dragging')
+    drag.source.classList.remove('is-drag-source')
     releasePointerCapture(drag)
+    // Mouse-only HTML5 affordance: never leave touch targets draggable.
+    if (drag.mode === 'html5') {
+      drag.source.setAttribute('draggable', 'false')
+    }
   }
 
   // Also clear is-dragging from any stale nodes after a mid-drag re-render.
   if (typeof document !== 'undefined') {
-    document.querySelectorAll('.is-dragging').forEach((node) => {
+    document.querySelectorAll('.is-dragging, .is-drag-source').forEach((node) => {
       node.classList.remove('is-dragging')
+      node.classList.remove('is-drag-source')
     })
     document.body.classList.remove('is-list-dragging')
     document.body.classList.remove('is-list-dragging-touch')
@@ -161,11 +216,62 @@ function cancelActiveListDrag(root) {
   endActiveDrag(root)
 }
 
+/**
+ * Keep the floating ghost inside the visual viewport so it cannot widen the page.
+ */
+function positiveNumber(...candidates) {
+  for (const candidate of candidates) {
+    const value = Number(candidate)
+    if (Number.isFinite(value) && value > 0) {
+      return value
+    }
+  }
+  return 0
+}
+
+function clampGhostOrigin(clientX, clientY, width, height, offsetX = 24, offsetY = 16) {
+  const viewportWidth = positiveNumber(
+    globalThis.innerWidth,
+    globalThis.document?.documentElement?.clientWidth,
+    width
+  )
+  const viewportHeight = positiveNumber(
+    globalThis.innerHeight,
+    globalThis.document?.documentElement?.clientHeight,
+    height
+  )
+
+  const safeWidth = positiveNumber(width)
+  const safeHeight = positiveNumber(height)
+  const maxX = Math.max(4, viewportWidth - safeWidth - 4)
+  const maxY = Math.max(4, viewportHeight - safeHeight - 4)
+  const rawX = clientX - offsetX
+  const rawY = clientY - offsetY
+
+  return {
+    x: Math.min(Math.max(4, rawX), maxX),
+    y: Math.min(Math.max(4, rawY), maxY)
+  }
+}
+
+function ensureGhostLayer() {
+  let layer = document.querySelector(`.${GHOST_LAYER_CLASS}`)
+  if (layer) {
+    return layer
+  }
+  layer = document.createElement('div')
+  layer.className = GHOST_LAYER_CLASS
+  layer.setAttribute('aria-hidden', 'true')
+  document.body.appendChild(layer)
+  return layer
+}
+
 function createGhost(source, clientX, clientY) {
   removeAllGhosts()
 
   const rect = source.getBoundingClientRect()
-  const width = Math.min(rect.width || 280, 320)
+  const width = Math.min(rect.width || 280, Math.min(320, (window.innerWidth || 320) - 16))
+  const layer = ensureGhostLayer()
   const ghost = document.createElement('div')
   ghost.className = GHOST_CLASS
   ghost.setAttribute('aria-hidden', 'true')
@@ -186,59 +292,79 @@ function createGhost(source, clientX, clientY) {
     ghost.style.padding = '10px 12px'
   } else {
     const clone = source.cloneNode(true)
-    clone.classList.remove('is-dragging')
+    clone.classList.remove('is-dragging', 'is-drag-source')
     clone.removeAttribute('id')
     clone.removeAttribute('draggable')
     clone.querySelectorAll?.('[id]')?.forEach((node) => node.removeAttribute('id'))
+    // Strip controls from the ghost — they are visual noise and can confuse hit-testing.
+    clone.querySelectorAll?.('button, input, a, .flow-card-actions, .action-col')?.forEach((node) => {
+      node.remove()
+    })
     ghost.appendChild(clone)
   }
 
-  ghost.style.position = 'fixed'
-  ghost.style.left = `${clientX - Math.min(24, width / 3)}px`
-  ghost.style.top = `${clientY - 16}px`
   ghost.style.width = `${width}px`
   ghost.style.margin = '0'
   ghost.style.pointerEvents = 'none'
-  ghost.style.zIndex = '10000'
+  layer.appendChild(ghost)
 
-  document.body.appendChild(ghost)
-  return ghost
+  // Measure after mount so clamping uses the real ghost height.
+  const ghostHeight = positiveNumber(ghost.getBoundingClientRect().height, ghost.offsetHeight, 48)
+  ghost.dataset.ghostWidth = String(width)
+  ghost.dataset.ghostHeight = String(ghostHeight)
+  positionGhost(ghost, clientX, clientY, width, ghostHeight)
+  return { ghost, width, height: ghostHeight }
 }
 
-function positionGhost(ghost, clientX, clientY) {
+function positionGhost(ghost, clientX, clientY, width, height) {
   if (!ghost) {
     return
   }
-  ghost.style.left = `${clientX - 24}px`
-  ghost.style.top = `${clientY - 16}px`
+  // Avoid `?? Number(x)` — Number(undefined) is NaN, and NaN is not nullish.
+  const resolvedWidth = positiveNumber(
+    width,
+    ghost.dataset?.ghostWidth,
+    ghost.offsetWidth,
+    280
+  )
+  const resolvedHeight = positiveNumber(
+    height,
+    ghost.dataset?.ghostHeight,
+    ghost.offsetHeight,
+    48
+  )
+  const offsetX = Math.min(24, resolvedWidth / 3)
+  const { x, y } = clampGhostOrigin(clientX, clientY, resolvedWidth, resolvedHeight, offsetX, 16)
+  // Transform-only positioning inside an overflow-clipped layer avoids widening the document
+  // and reduces iOS Safari paint artifacts from left/top + scale combinations.
+  ghost.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
 }
 
 function elementFromPointIgnoringDragChrome(clientX, clientY, drag) {
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY) || typeof document === 'undefined') {
     return null
   }
 
-  const hidden = []
-  const hide = (node) => {
-    if (!node || !node.style) {
-      return
+  // Prefer elementsFromPoint so we never toggle visibility (iOS flicker / ghosting).
+  const stack =
+    typeof document.elementsFromPoint === 'function'
+      ? document.elementsFromPoint(clientX, clientY)
+      : [document.elementFromPoint(clientX, clientY)].filter(Boolean)
+
+  for (const node of stack) {
+    if (!node || node === drag?.ghost || node === drag?.source) {
+      continue
     }
-    hidden.push([node, node.style.visibility, node.style.pointerEvents])
-    node.style.visibility = 'hidden'
-    node.style.pointerEvents = 'none'
+    if (node.closest?.(`.${GHOST_CLASS}, .${GHOST_LAYER_CLASS}`)) {
+      continue
+    }
+    if (drag?.source && drag.source.contains?.(node)) {
+      continue
+    }
+    return node
   }
 
-  hide(drag?.ghost)
-  hide(drag?.source)
-
-  const under = document.elementFromPoint(clientX, clientY)
-
-  for (const [node, visibility, pointerEvents] of hidden) {
-    node.style.visibility = visibility
-    node.style.pointerEvents = pointerEvents
-  }
-
-  return under
+  return null
 }
 
 function finishTouchDrop(event, root, onDrop) {
@@ -261,12 +387,28 @@ function finishTouchDrop(event, root, onDrop) {
   }
 }
 
+function shouldPreventTouchScroll(event) {
+  if (activeDrag?.mode === 'touch') {
+    return activeDrag.pointerId == null || event.pointerId == null || activeDrag.pointerId === event.pointerId
+  }
+  if (!longPressOrigin) {
+    return false
+  }
+  if (longPressOrigin.pointerId != null && event.pointerId != null && longPressOrigin.pointerId !== event.pointerId) {
+    return false
+  }
+  return gestureClaimed
+}
+
 function onDocumentPointerMove(event) {
   if (longPressOrigin && longPressOrigin.pointerId === event.pointerId) {
     const dx = event.clientX - longPressOrigin.x
     const dy = event.clientY - longPressOrigin.y
     if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) {
-      clearLongPress()
+      // Finger moved before the stillness claim — release so the list can scroll.
+      if (!gestureClaimed) {
+        clearLongPress()
+      }
     }
   }
 
@@ -274,13 +416,53 @@ function onDocumentPointerMove(event) {
     return
   }
 
-  event.preventDefault()
+  if (typeof event.preventDefault === 'function') {
+    event.preventDefault()
+  }
   activeDrag.lastX = event.clientX
   activeDrag.lastY = event.clientY
-  positionGhost(activeDrag.ghost, event.clientX, event.clientY)
+  positionGhost(
+    activeDrag.ghost,
+    event.clientX,
+    event.clientY,
+    activeDrag.ghostWidth,
+    activeDrag.ghostHeight
+  )
 
   clearDropHighlights(activeDrag.root)
   const under = elementFromPointIgnoringDragChrome(event.clientX, event.clientY, activeDrag)
+  setDropHighlight(under)
+}
+
+function onDocumentTouchMove(event) {
+  // Android Chrome often ignores preventDefault on pointermove for scroll suppression;
+  // a non-passive touchmove listener is required to keep mid-drag scrolling off.
+  if (!shouldPreventTouchScroll(event)) {
+    return
+  }
+  if (typeof event.preventDefault === 'function') {
+    event.preventDefault()
+  }
+
+  if (!activeDrag || activeDrag.mode !== 'touch') {
+    return
+  }
+
+  const touch = event.changedTouches?.[0] || event.touches?.[0]
+  if (!touch) {
+    return
+  }
+  activeDrag.lastX = touch.clientX
+  activeDrag.lastY = touch.clientY
+  positionGhost(
+    activeDrag.ghost,
+    touch.clientX,
+    touch.clientY,
+    activeDrag.ghostWidth,
+    activeDrag.ghostHeight
+  )
+  clearDropHighlights(activeDrag.root)
+  const under = elementFromPointIgnoringDragChrome(touch.clientX, touch.clientY, activeDrag)
   setDropHighlight(under)
 }
 
@@ -333,12 +515,45 @@ function ensureDocumentListeners() {
   }
   documentListenersBound = true
   document.addEventListener('pointermove', onDocumentPointerMove, { passive: false })
+  document.addEventListener('touchmove', onDocumentTouchMove, { passive: false })
   document.addEventListener('pointerup', onDocumentPointerUp)
   document.addEventListener('pointercancel', onDocumentPointerCancel)
   document.addEventListener('keydown', onDocumentKeyDown)
   document.addEventListener('visibilitychange', onVisibilityChange)
   document.addEventListener('dragend', onDocumentDragEnd, true)
   window.addEventListener('blur', onVisibilityChange)
+}
+
+function beginTouchDrag(origin) {
+  clearLongPress()
+  suppressClickUntil = Date.now() + 500
+  endActiveDrag(origin.root)
+
+  lockDocumentScroll()
+  const created = createGhost(origin.element, origin.x, origin.y)
+  origin.element.classList.add('is-dragging')
+  origin.element.classList.add('is-drag-source')
+  document.body.classList.add('is-list-dragging')
+  document.body.classList.add('is-list-dragging-touch')
+  activeDrag = {
+    payload: origin.payload,
+    source: origin.element,
+    ghost: created.ghost,
+    ghostWidth: created.width,
+    ghostHeight: created.height,
+    mode: 'touch',
+    pointerId: origin.pointerId,
+    root: origin.root,
+    onDrop: origin.onDrop,
+    lastX: origin.x,
+    lastY: origin.y
+  }
+
+  try {
+    origin.element.setPointerCapture(origin.pointerId)
+  } catch {
+    // Document-level listeners still drive the gesture if capture fails.
+  }
 }
 
 function bindDraggable(element, payload, onDrop, root) {
@@ -356,21 +571,40 @@ function bindDraggable(element, payload, onDrop, root) {
   element.__privfinaListDrop = onDrop
   element.__privfinaListRoot = root
 
-  element.setAttribute('draggable', 'true')
+  // Never leave touch targets HTML5-draggable; enable only for a mouse press.
+  element.setAttribute('draggable', 'false')
   element.dataset.dragKind = payload.kind
   element.dataset.dragId = payload.id
 
   ensureDocumentListeners()
 
+  element.addEventListener('mousedown', (event) => {
+    if (event.button !== 0) {
+      return
+    }
+    if (isInteractiveDragExclusion(event.target)) {
+      return
+    }
+    element.setAttribute('draggable', 'true')
+  })
+
+  element.addEventListener('mouseup', () => {
+    if (!activeDrag || activeDrag.source !== element) {
+      element.setAttribute('draggable', 'false')
+    }
+  })
+
   element.addEventListener('dragstart', (event) => {
     if (isInteractiveDragExclusion(event.target)) {
       event.preventDefault()
+      element.setAttribute('draggable', 'false')
       return
     }
 
     // Touch long-press owns the gesture; ignore HTML5 drag from the same press.
-    if (activeDrag?.mode === 'touch') {
+    if (activeDrag?.mode === 'touch' || (event.pointerType && event.pointerType !== 'mouse')) {
       event.preventDefault()
+      element.setAttribute('draggable', 'false')
       return
     }
 
@@ -383,6 +617,7 @@ function bindDraggable(element, payload, onDrop, root) {
     suppressClickUntil = Date.now() + 500
 
     element.classList.add('is-dragging')
+    element.classList.add('is-drag-source')
     document.body.classList.add('is-list-dragging')
     // No custom ghost for HTML5 — browser drag image is the affordance.
     activeDrag = {
@@ -397,6 +632,7 @@ function bindDraggable(element, payload, onDrop, root) {
 
   element.addEventListener('dragend', () => {
     endActiveDrag(root)
+    element.setAttribute('draggable', 'false')
   })
 
   element.addEventListener('pointerdown', (event) => {
@@ -418,37 +654,21 @@ function bindDraggable(element, payload, onDrop, root) {
       onDrop
     }
 
+    // After a short stillness window, claim the gesture so Android does not start
+    // a scroll that would pointercancel the eventual long-press drag.
+    scrollClaimTimer = setTimeout(() => {
+      if (!longPressOrigin || longPressOrigin.element !== element) {
+        return
+      }
+      gestureClaimed = true
+    }, SCROLL_CLAIM_MS)
+
     longPressTimer = setTimeout(() => {
       if (!longPressOrigin || longPressOrigin.element !== element) {
         return
       }
-
-      const origin = longPressOrigin
-      clearLongPress()
-      suppressClickUntil = Date.now() + 500
-      endActiveDrag(origin.root)
-
-      const ghost = createGhost(origin.element, origin.x, origin.y)
-      origin.element.classList.add('is-dragging')
-      document.body.classList.add('is-list-dragging')
-      document.body.classList.add('is-list-dragging-touch')
-      activeDrag = {
-        payload: origin.payload,
-        source: origin.element,
-        ghost,
-        mode: 'touch',
-        pointerId: origin.pointerId,
-        root: origin.root,
-        onDrop: origin.onDrop,
-        lastX: origin.x,
-        lastY: origin.y
-      }
-
-      try {
-        origin.element.setPointerCapture(origin.pointerId)
-      } catch {
-        // Document-level listeners still drive the gesture if capture fails.
-      }
+      gestureClaimed = true
+      beginTouchDrag(longPressOrigin)
     }, LONG_PRESS_MS)
   })
 
@@ -516,7 +736,10 @@ export {
   bindDraggable,
   bindDropSurface,
   cancelActiveListDrag,
+  clampGhostOrigin,
   parseDragPayload,
   readDropTarget,
-  LONG_PRESS_MS
+  LONG_PRESS_MS,
+  MOVE_CANCEL_PX,
+  SCROLL_CLAIM_MS
 }

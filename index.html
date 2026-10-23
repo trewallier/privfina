@@ -28,8 +28,15 @@
         display: none !important;
       }
 
+      html {
+        max-width: 100%;
+        overflow-x: clip;
+      }
+
       body {
         margin: 0;
+        max-width: 100%;
+        overflow-x: clip;
         font-family: "Avenir Next", "Segoe UI", sans-serif;
         background:
           radial-gradient(circle at 0% 0%, var(--bg-mesh-1) 0%, rgba(214, 228, 247, 0) 45%),
@@ -593,6 +600,9 @@
         border-radius: 12px;
         background: #fff;
         padding: 12px 14px;
+        min-width: 0;
+        max-width: 100%;
+        overflow: clip;
       }
 
       .flow-card-top {
@@ -600,6 +610,12 @@
         justify-content: space-between;
         gap: 12px;
         align-items: flex-start;
+        min-width: 0;
+      }
+
+      .flow-card-heading {
+        min-width: 0;
+        flex: 1 1 auto;
       }
 
       .flow-card-type {
@@ -614,6 +630,8 @@
       .flow-card-title {
         margin: 2px 0 0;
         font-size: 1.05rem;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .flow-card-amount {
@@ -621,6 +639,7 @@
         font-weight: 700;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
+        flex: 0 0 auto;
       }
 
       .flow-card-amount.is-inflow {
@@ -658,6 +677,9 @@
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 10px 12px;
+        min-width: 0;
+        max-width: 100%;
+        overflow: clip;
       }
 
       .folder-header {
@@ -666,6 +688,8 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 8px 10px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .folder-toggle {
@@ -699,6 +723,8 @@
         display: grid;
         gap: 10px;
         margin-top: 10px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .flow-card.is-nested,
@@ -715,8 +741,12 @@
       .flow-card,
       .flow-folder-card .folder-header {
         cursor: grab;
-        touch-action: manipulation;
-        transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+        /* pan-y keeps normal list scrolling; JS claims the gesture after stillness. */
+        touch-action: pan-y;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-user-drag: none;
       }
 
       /* Source stays in place at reduced opacity; elevated "shadow card" is only the ghost. */
@@ -728,37 +758,66 @@
         opacity: 0.35;
       }
 
+      /* Viewport-clipped host so a translate'd ghost cannot widen the page (iOS/WebKit). */
+      .list-drag-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        overflow: hidden;
+        pointer-events: none;
+        contain: paint;
+      }
+
       .list-drag-ghost {
+        position: absolute;
+        top: 0;
+        left: 0;
         cursor: grabbing;
         opacity: 0.96;
-        transform: scale(1.03);
         box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
         border: 1px solid var(--border);
         border-radius: 12px;
         background: #fff;
         box-sizing: border-box;
+        max-width: calc(100vw - 16px);
+        pointer-events: none;
+        will-change: transform;
       }
 
-      .list-drag-ghost.flow-item-row,
-      .list-drag-ghost.flow-folder-row {
-        display: table;
-        border-collapse: collapse;
-        background: #fff;
+      .list-drag-ghost .flow-card,
+      .list-drag-ghost .folder-header {
+        box-shadow: none;
+        cursor: grabbing;
       }
 
       .is-drop-target {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
+        /* Inset ring avoids outline-offset expanding scrollWidth near edges. */
+        box-shadow: inset 0 0 0 2px var(--accent);
         background: var(--accent-soft);
       }
 
       body.is-list-dragging {
+        -webkit-user-select: none;
         user-select: none;
         cursor: grabbing;
       }
 
       body.is-list-dragging-touch {
         touch-action: none;
+        overscroll-behavior: none;
+      }
+
+      html.is-list-scroll-locked,
+      html.is-list-scroll-locked body {
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+      }
+
+      body.is-list-scroll-locked {
+        position: fixed;
+        width: 100%;
+        max-width: 100%;
       }
 
       .compose-mobile-bar,

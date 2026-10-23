@@ -219,20 +219,30 @@ function cancelActiveListDrag(root) {
 /**
  * Keep the floating ghost inside the visual viewport so it cannot widen the page.
  */
-function clampGhostOrigin(clientX, clientY, width, height, offsetX = 24, offsetY = 16) {
-  const viewportWidth =
-    Number(globalThis.innerWidth) ||
-    Number(globalThis.document?.documentElement?.clientWidth) ||
-    Number(width) ||
-    0
-  const viewportHeight =
-    Number(globalThis.innerHeight) ||
-    Number(globalThis.document?.documentElement?.clientHeight) ||
-    Number(height) ||
-    0
+function positiveNumber(...candidates) {
+  for (const candidate of candidates) {
+    const value = Number(candidate)
+    if (Number.isFinite(value) && value > 0) {
+      return value
+    }
+  }
+  return 0
+}
 
-  const safeWidth = Math.max(0, Number(width) || 0)
-  const safeHeight = Math.max(0, Number(height) || 0)
+function clampGhostOrigin(clientX, clientY, width, height, offsetX = 24, offsetY = 16) {
+  const viewportWidth = positiveNumber(
+    globalThis.innerWidth,
+    globalThis.document?.documentElement?.clientWidth,
+    width
+  )
+  const viewportHeight = positiveNumber(
+    globalThis.innerHeight,
+    globalThis.document?.documentElement?.clientHeight,
+    height
+  )
+
+  const safeWidth = positiveNumber(width)
+  const safeHeight = positiveNumber(height)
   const maxX = Math.max(4, viewportWidth - safeWidth - 4)
   const maxY = Math.max(4, viewportHeight - safeHeight - 4)
   const rawX = clientX - offsetX
@@ -299,24 +309,35 @@ function createGhost(source, clientX, clientY) {
   layer.appendChild(ghost)
 
   // Measure after mount so clamping uses the real ghost height.
-  const ghostHeight = ghost.getBoundingClientRect().height || 48
-  positionGhost(ghost, clientX, clientY, width, ghostHeight)
+  const ghostHeight = positiveNumber(ghost.getBoundingClientRect().height, ghost.offsetHeight, 48)
   ghost.dataset.ghostWidth = String(width)
   ghost.dataset.ghostHeight = String(ghostHeight)
-  return ghost
+  positionGhost(ghost, clientX, clientY, width, ghostHeight)
+  return { ghost, width, height: ghostHeight }
 }
 
 function positionGhost(ghost, clientX, clientY, width, height) {
   if (!ghost) {
     return
   }
-  const resolvedWidth = width ?? Number(ghost.dataset.ghostWidth) ?? ghost.offsetWidth ?? 280
-  const resolvedHeight = height ?? Number(ghost.dataset.ghostHeight) ?? ghost.offsetHeight ?? 48
+  // Avoid `?? Number(x)` — Number(undefined) is NaN, and NaN is not nullish.
+  const resolvedWidth = positiveNumber(
+    width,
+    ghost.dataset?.ghostWidth,
+    ghost.offsetWidth,
+    280
+  )
+  const resolvedHeight = positiveNumber(
+    height,
+    ghost.dataset?.ghostHeight,
+    ghost.offsetHeight,
+    48
+  )
   const offsetX = Math.min(24, resolvedWidth / 3)
   const { x, y } = clampGhostOrigin(clientX, clientY, resolvedWidth, resolvedHeight, offsetX, 16)
   // Transform-only positioning inside an overflow-clipped layer avoids widening the document
   // and reduces iOS Safari paint artifacts from left/top + scale combinations.
-  ghost.style.transform = `translate3d(${x}px, ${y}px, 0)`
+  ghost.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
 }
 
 function elementFromPointIgnoringDragChrome(clientX, clientY, drag) {
@@ -400,7 +421,13 @@ function onDocumentPointerMove(event) {
   }
   activeDrag.lastX = event.clientX
   activeDrag.lastY = event.clientY
-  positionGhost(activeDrag.ghost, event.clientX, event.clientY)
+  positionGhost(
+    activeDrag.ghost,
+    event.clientX,
+    event.clientY,
+    activeDrag.ghostWidth,
+    activeDrag.ghostHeight
+  )
 
   clearDropHighlights(activeDrag.root)
   const under = elementFromPointIgnoringDragChrome(event.clientX, event.clientY, activeDrag)
@@ -427,7 +454,13 @@ function onDocumentTouchMove(event) {
   }
   activeDrag.lastX = touch.clientX
   activeDrag.lastY = touch.clientY
-  positionGhost(activeDrag.ghost, touch.clientX, touch.clientY)
+  positionGhost(
+    activeDrag.ghost,
+    touch.clientX,
+    touch.clientY,
+    activeDrag.ghostWidth,
+    activeDrag.ghostHeight
+  )
   clearDropHighlights(activeDrag.root)
   const under = elementFromPointIgnoringDragChrome(touch.clientX, touch.clientY, activeDrag)
   setDropHighlight(under)
@@ -497,7 +530,7 @@ function beginTouchDrag(origin) {
   endActiveDrag(origin.root)
 
   lockDocumentScroll()
-  const ghost = createGhost(origin.element, origin.x, origin.y)
+  const created = createGhost(origin.element, origin.x, origin.y)
   origin.element.classList.add('is-dragging')
   origin.element.classList.add('is-drag-source')
   document.body.classList.add('is-list-dragging')
@@ -505,7 +538,9 @@ function beginTouchDrag(origin) {
   activeDrag = {
     payload: origin.payload,
     source: origin.element,
-    ghost,
+    ghost: created.ghost,
+    ghostWidth: created.width,
+    ghostHeight: created.height,
     mode: 'touch',
     pointerId: origin.pointerId,
     root: origin.root,

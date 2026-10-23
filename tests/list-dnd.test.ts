@@ -89,6 +89,10 @@ describe('list-dnd helpers', () => {
       y: 384
     })
 
+    // Invalid widths must not disable clamping (NaN/0 would previously push ghosts off-screen).
+    expect(clampGhostOrigin(380, 10, Number.NaN, 60, 24, 16).x).toBeLessThanOrEqual(386)
+    expect(clampGhostOrigin(380, 10, 0, 60, 24, 16).x).toBeLessThanOrEqual(386)
+
     Object.defineProperty(globalThis, 'innerWidth', { configurable: true, value: previousInnerWidth })
     Object.defineProperty(globalThis, 'innerHeight', {
       configurable: true,

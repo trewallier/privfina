@@ -1,3 +1,5 @@
+import { ensureFieldLabelTitleElement as ensureFieldLabelTitleElementChrome } from './field-chrome.js'
+
 function toInputType(field) {
   if (field.type === 'integer' || field.type === 'number') return 'number'
   if (field.type === 'string' && field.unit === 'date') return 'date'
@@ -16,14 +18,7 @@ function orderedSpecFields(productSpec) {
 }
 
 function ensureFieldLabelTitleElement(label, className) {
-  let titleElement = label.querySelector(`.${className}`)
-  if (!titleElement) {
-    titleElement = document.createElement('span')
-    titleElement.className = className
-    label.insertBefore(titleElement, label.firstChild)
-    label.insertBefore(document.createTextNode(' '), titleElement.nextSibling)
-  }
-  return titleElement
+  return ensureFieldLabelTitleElementChrome(label, className)
 }
 
 function reorderFormRowBySpec(form, fields, fieldAdapter) {

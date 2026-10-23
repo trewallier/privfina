@@ -139,8 +139,20 @@ function createInvestmentPreviewSync({
   calculateDkjFromSpecInputs,
   mapFormDataToDkjSpecInputs,
   calculatePmapFromSpecInputs,
-  mapFormDataToPmapSpecInputs
+  mapFormDataToPmapSpecInputs,
+  onPreviewError,
+  onPreviewSuccess,
+  extraInputs = []
 }) {
+  const clearPreviews = () => {
+    if (purchasePreviewInput) purchasePreviewInput.value = '—'
+    if (maturityPreviewInput) maturityPreviewInput.value = '—'
+    if (gainPreviewInput) gainPreviewInput.value = '—'
+    if (discountYieldPreviewInput) discountYieldPreviewInput.value = '—'
+    if (discountCurrentValuePreviewInput) discountCurrentValuePreviewInput.value = '—'
+    if (inflationSchedulePreviewInput) inflationSchedulePreviewInput.value = '—'
+  }
+
   const syncInvestmentPreview = () => {
     if (!purchasePreviewInput || !maturityPreviewInput || !gainPreviewInput) {
       return
@@ -165,6 +177,9 @@ function createInvestmentPreviewSync({
         if (inflationSchedulePreviewInput) {
           inflationSchedulePreviewInput.value = '—'
         }
+        if (typeof onPreviewSuccess === 'function') {
+          onPreviewSuccess()
+        }
         return
       }
 
@@ -183,6 +198,17 @@ function createInvestmentPreviewSync({
         }
         if (inflationSchedulePreviewInput) {
           inflationSchedulePreviewInput.value = `${preview.couponPaymentFrequency} coupon, ${preview.annualCouponRatePct.toFixed(4)}%`
+        }
+        if (typeof onPreviewSuccess === 'function') {
+          onPreviewSuccess()
+        }
+        return
+      }
+
+      if (subtype === 'bmap') {
+        clearPreviews()
+        if (typeof onPreviewSuccess === 'function') {
+          onPreviewSuccess()
         }
         return
       }
@@ -228,36 +254,36 @@ function createInvestmentPreviewSync({
               .join(' | ')
           : '—'
       }
-    } catch {
-      purchasePreviewInput.value = '—'
-      maturityPreviewInput.value = '—'
-      gainPreviewInput.value = '—'
-      if (discountYieldPreviewInput) {
-        discountYieldPreviewInput.value = '—'
+      if (typeof onPreviewSuccess === 'function') {
+        onPreviewSuccess()
       }
-      if (discountCurrentValuePreviewInput) {
-        discountCurrentValuePreviewInput.value = '—'
-      }
-      if (inflationSchedulePreviewInput) {
-        inflationSchedulePreviewInput.value = '—'
+    } catch (error) {
+      clearPreviews()
+      if (typeof onPreviewError === 'function') {
+        const message = error instanceof Error ? error.message : 'Investment preview failed.'
+        onPreviewError(message, error)
       }
     }
   }
 
   const bindEvents = () => {
+    const inputs = [
+      subtypeInput,
+      issueDateInput,
+      transactionDateInput,
+      dueDateInput,
+      principalInput,
+      purchasePriceInput,
+      annualRateInput,
+      spreadRateInput,
+      yearlyInflationInput,
+      saleDateInput,
+      saleValueInput,
+      couponPeriodInput,
+      ...extraInputs
+    ]
     ;['input', 'change'].forEach((eventName) => {
-      subtypeInput?.addEventListener(eventName, syncInvestmentPreview)
-      issueDateInput?.addEventListener(eventName, syncInvestmentPreview)
-      transactionDateInput?.addEventListener(eventName, syncInvestmentPreview)
-      dueDateInput?.addEventListener(eventName, syncInvestmentPreview)
-      principalInput?.addEventListener(eventName, syncInvestmentPreview)
-      purchasePriceInput?.addEventListener(eventName, syncInvestmentPreview)
-      annualRateInput?.addEventListener(eventName, syncInvestmentPreview)
-      spreadRateInput?.addEventListener(eventName, syncInvestmentPreview)
-      yearlyInflationInput?.addEventListener(eventName, syncInvestmentPreview)
-      saleDateInput?.addEventListener(eventName, syncInvestmentPreview)
-      saleValueInput?.addEventListener(eventName, syncInvestmentPreview)
-      couponPeriodInput?.addEventListener(eventName, syncInvestmentPreview)
+      inputs.forEach((input) => input?.addEventListener(eventName, syncInvestmentPreview))
     })
   }
 

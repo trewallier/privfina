@@ -1,5 +1,5 @@
 import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
-import { DKJ_PRODUCT_SPEC, DKJ_FRONTEND_FIELD_ADAPTER } from './dkj-form.js'
+import { DKJ_PRODUCT_SPEC } from './dkj-form.js'
 import { PMAP_PRODUCT_SPEC } from './pmap-form.js'
 
 const FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS = [
@@ -32,6 +32,10 @@ function inputRequired(spec, inputName) {
   return Boolean(findSpecInput(spec, inputName)?.required)
 }
 
+function inputDescription(spec, inputName, fallback = '') {
+  return findSpecInput(spec, inputName)?.description || fallback
+}
+
 function resolveOptionLabel(spec) {
   return spec.ui?.formTitle || spec.displayName || spec.variant
 }
@@ -45,52 +49,13 @@ function buildSpecBackedInvestmentSubtypeOptions() {
   }))
 }
 
-function buildDkjSubtypeUiConfig() {
+/**
+ * Spec-backed subtypes use dedicated host wraps; generic shell fields stay hidden.
+ */
+function buildDedicatedHostSubtypeUiConfig(spec, options = {}) {
   return {
-    visible: {
-      issueDate: false,
-      transactionDate: true,
-      dueDate: true,
-      spreadRate: false,
-      yearlyInflation: false,
-      couponPeriod: false,
-      saleDate: false,
-      saleValue: false,
-      discountYieldPreview: true,
-      discountCurrentValuePreview: true,
-      inflationSchedulePreview: false,
-      termMonths: Boolean(DKJ_FRONTEND_FIELD_ADAPTER.termMonths),
-      remainingDays: Boolean(DKJ_FRONTEND_FIELD_ADAPTER.remainingDays)
-    },
-    required: {
-      issueDate: false,
-      transactionDate: inputRequired(DKJ_PRODUCT_SPEC, 'settlementDate'),
-      dueDate: inputRequired(DKJ_PRODUCT_SPEC, 'maturityDate'),
-      purchasePrice: inputRequired(DKJ_PRODUCT_SPEC, 'purchasePricePct'),
-      spreadRate: false,
-      yearlyInflation: false,
-      couponPeriod: false,
-      annualRate: false,
-      termMonths: inputRequired(DKJ_PRODUCT_SPEC, 'termMonths'),
-      remainingDays: inputRequired(DKJ_PRODUCT_SPEC, 'remainingDays')
-    },
-    text: {
-      principalLabel: inputLabel(DKJ_PRODUCT_SPEC, 'faceValue', 'Face Value'),
-      principalNote: 'Nominal value repaid at maturity.',
-      purchasePriceLabel: inputLabel(
-        DKJ_PRODUCT_SPEC,
-        'purchasePricePct',
-        'Purchase Price Percent'
-      ),
-      annualRateLabel: 'Annual rate (derived)',
-      annualRateNote: 'Derived from DKJ purchase amount and redemption profile.'
-    },
-    annualRateReadOnly: true
-  }
-}
-
-function buildBmapSubtypeUiConfig() {
-  return {
+    usesDedicatedHost: true,
+    hostId: options.hostId,
     visible: {
       issueDate: false,
       transactionDate: false,
@@ -100,77 +65,77 @@ function buildBmapSubtypeUiConfig() {
       couponPeriod: false,
       saleDate: false,
       saleValue: false,
-      discountYieldPreview: false,
-      discountCurrentValuePreview: false,
-      inflationSchedulePreview: false
+      discountYieldPreview: Boolean(options.discountYieldPreview),
+      discountCurrentValuePreview: Boolean(options.discountCurrentValuePreview),
+      inflationSchedulePreview: Boolean(options.inflationSchedulePreview),
+      termMonths: false,
+      remainingDays: false,
+      annualRate: false,
+      purchasePrice: false,
+      principal: false
     },
     required: {
-      issueDate: inputRequired(BMAP_PRODUCT_SPEC, 'issueDate'),
-      transactionDate: inputRequired(BMAP_PRODUCT_SPEC, 'purchaseDate'),
+      issueDate: false,
+      transactionDate: false,
       dueDate: false,
       purchasePrice: false,
       spreadRate: false,
       yearlyInflation: false,
-      couponPeriod: inputRequired(BMAP_PRODUCT_SPEC, 'firstCouponDate'),
-      annualRate: false
+      couponPeriod: false,
+      annualRate: false,
+      termMonths: false,
+      remainingDays: false,
+      principal: false
     },
     text: {
-      principalLabel: inputLabel(BMAP_PRODUCT_SPEC, 'principal', 'Principal'),
-      principalNote: 'Principal amount used for BMAP coupon and redemption calculations.',
+      principalLabel: inputLabel(spec, options.principalField || 'principal', 'Principal'),
+      principalNote: inputDescription(spec, options.principalField || 'principal'),
       purchasePriceLabel: 'Purchase price',
       annualRateLabel: 'Annual rate',
-      annualRateNote: 'BMAP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
+      annualRateNote: options.annualRateNote || ''
     },
-    annualRateReadOnly: false
-  }
-}
-
-function buildPmapSubtypeUiConfig() {
-  return {
-    visible: {
-      issueDate: true,
-      transactionDate: true,
-      dueDate: true,
-      spreadRate: true,
-      yearlyInflation: true,
-      couponPeriod: true,
-      saleDate: false,
-      saleValue: false,
-      discountYieldPreview: false,
-      discountCurrentValuePreview: false,
-      inflationSchedulePreview: true
-    },
-    required: {
-      issueDate: inputRequired(PMAP_PRODUCT_SPEC, 'startDate'),
-      transactionDate: inputRequired(PMAP_PRODUCT_SPEC, 'purchaseDate'),
-      dueDate: inputRequired(PMAP_PRODUCT_SPEC, 'issueDate'),
-      purchasePrice: false,
-      spreadRate: inputRequired(PMAP_PRODUCT_SPEC, 'interestPremiumPct'),
-      yearlyInflation: inputRequired(PMAP_PRODUCT_SPEC, 'previousYearAverageInflationPct'),
-      couponPeriod: inputRequired(PMAP_PRODUCT_SPEC, 'firstCouponDate'),
-      annualRate: false
-    },
-    text: {
-      principalLabel: inputLabel(PMAP_PRODUCT_SPEC, 'principal', 'Principal'),
-      principalNote: 'Principal used with inflation and PMAP premium accrual assumptions.',
-      purchasePriceLabel: 'Purchase price',
-      annualRateLabel: 'Annual rate',
-      annualRateNote: 'PMAP coupon is derived from inflation base and premium inputs.'
-    },
-    annualRateReadOnly: false
+    annualRateReadOnly: Boolean(options.annualRateReadOnly),
+    fields: Object.fromEntries(
+      (spec.inputs || []).map((field) => [
+        field.name,
+        {
+          label: field.label,
+          description: field.description || '',
+          required: Boolean(field.required),
+          role: 'input'
+        }
+      ])
+    )
   }
 }
 
 function buildSpecBackedInvestmentSubtypeUiConfig() {
   return {
-    bmap: buildBmapSubtypeUiConfig(),
-    dkj: buildDkjSubtypeUiConfig(),
-    pmap: buildPmapSubtypeUiConfig()
+    bmap: buildDedicatedHostSubtypeUiConfig(BMAP_PRODUCT_SPEC, {
+      hostId: 'investment-bmap-wrap',
+      annualRateNote: 'BMAP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
+    }),
+    dkj: buildDedicatedHostSubtypeUiConfig(DKJ_PRODUCT_SPEC, {
+      hostId: 'investment-dkj-wrap',
+      principalField: 'faceValue',
+      discountYieldPreview: true,
+      discountCurrentValuePreview: true,
+      annualRateReadOnly: true,
+      annualRateNote: 'Derived from DKJ purchase amount and redemption profile.'
+    }),
+    pmap: buildDedicatedHostSubtypeUiConfig(PMAP_PRODUCT_SPEC, {
+      hostId: 'investment-pmap-wrap',
+      inflationSchedulePreview: true,
+      annualRateNote: 'PMAP coupon is derived from inflation base and premium inputs.'
+    })
   }
 }
 
 export {
   FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS,
   buildSpecBackedInvestmentSubtypeOptions,
-  buildSpecBackedInvestmentSubtypeUiConfig
+  buildSpecBackedInvestmentSubtypeUiConfig,
+  inputLabel,
+  inputRequired,
+  inputDescription
 }

@@ -106,6 +106,8 @@ Acceptance criteria
 - [x] Investment subtype selector is visually prominent and subtype changes dynamically update relevant field labels.
 - [x] Investment form dynamically toggles subtype-specific field visibility and required/editable state (for example inflation fields only for inflation-linked bonds, annual rate read-only for discount bonds).
 - [x] Investment input labels provide clickable info icons that open and close inline definition help bubbles.
+- [x] Investment composer marks required, optional, and calculated fields, and shows form-local validation when save/preview fails (not only the distant storage status).
+- [x] Catalog investment products (DKJ, PMÁP, BMÁP) render dedicated hosts whose field names/types/help match product-spec YAML (no semantic remapping onto unrelated generic controls).
 - [x] Commercial loan inputs and preview outputs provide clickable info icons with help copy aligned to product-spec field descriptions.
 - [x] Money amount boxes display large values with space-grouped thousands (for example `5 000`, `1 000 000`).
 - [x] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.

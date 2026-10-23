@@ -24,15 +24,17 @@ function createFormDataLike(entries: Record<string, string>): { get(name: string
 
 describe('dkj ui/controller integration seam', () => {
   it('maps spec-backed DKJ form values through adapter and investment bundle generation', () => {
-    const exampleYaml = readRepoFile('docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml')
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml'
+    )
     const parsed = YAML.parse(exampleYaml) as any
 
     const formData = createFormDataLike({
-      principal: String(parsed.inputs.faceValue),
-      purchasePrice: String(parsed.inputs.purchasePricePct),
+      faceValue: String(parsed.inputs.faceValue),
+      purchasePricePct: String(parsed.inputs.purchasePricePct),
       termMonths: String(parsed.inputs.termMonths),
-      transactionDate: String(parsed.inputs.settlementDate),
-      dueDate: String(parsed.inputs.maturityDate),
+      settlementDate: String(parsed.inputs.settlementDate),
+      maturityDate: String(parsed.inputs.maturityDate),
       remainingDays: String(parsed.inputs.remainingDays)
     })
 

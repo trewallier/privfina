@@ -3,6 +3,7 @@ import {
   buildSpecBackedInvestmentSubtypeOptions,
   buildSpecBackedInvestmentSubtypeUiConfig
 } from '../public/controller/investment-product-metadata.js'
+import { buildGenericBondSubtypeUiConfig } from '../public/controller/generic-bond-presentation.js'
 import { BMAP_PRODUCT_SPEC } from '../public/controller/bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from '../public/controller/dkj-form.js'
 import { PMAP_PRODUCT_SPEC } from '../public/controller/pmap-form.js'
@@ -24,53 +25,48 @@ describe('spec-backed investment metadata helper', () => {
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
   })
 
-  it('derives BMAP required and label metadata from mapped spec fields', () => {
-    const config = buildSpecBackedInvestmentSubtypeUiConfig().bmap
-
-    expect(config.text.principalLabel).toBe(inputByName(BMAP_PRODUCT_SPEC, 'principal')?.label)
-    expect(config.required.transactionDate).toBe(
-      inputByName(BMAP_PRODUCT_SPEC, 'purchaseDate')?.required
-    )
-    expect(config.required.issueDate).toBe(inputByName(BMAP_PRODUCT_SPEC, 'issueDate')?.required)
-    expect(config.required.couponPeriod).toBe(
-      inputByName(BMAP_PRODUCT_SPEC, 'firstCouponDate')?.required
-    )
+  it('marks catalog products as dedicated-host presentations', () => {
+    const config = buildSpecBackedInvestmentSubtypeUiConfig()
+    expect(config.bmap.usesDedicatedHost).toBe(true)
+    expect(config.dkj.usesDedicatedHost).toBe(true)
+    expect(config.pmap.usesDedicatedHost).toBe(true)
+    expect(config.bmap.hostId).toBe('investment-bmap-wrap')
+    expect(config.dkj.hostId).toBe('investment-dkj-wrap')
+    expect(config.pmap.hostId).toBe('investment-pmap-wrap')
   })
 
-  it('derives DKJ required and label metadata from mapped spec fields', () => {
-    const config = buildSpecBackedInvestmentSubtypeUiConfig().dkj
-
-    expect(config.text.principalLabel).toBe(inputByName(DKJ_PRODUCT_SPEC, 'faceValue')?.label)
-    expect(config.text.purchasePriceLabel).toBe(
-      inputByName(DKJ_PRODUCT_SPEC, 'purchasePricePct')?.label
+  it('keeps catalog field descriptions aligned with embedded product specs', () => {
+    const config = buildSpecBackedInvestmentSubtypeUiConfig()
+    expect(config.dkj.fields.faceValue.label).toBe(inputByName(DKJ_PRODUCT_SPEC, 'faceValue')?.label)
+    expect(config.dkj.fields.faceValue.description).toBe(
+      inputByName(DKJ_PRODUCT_SPEC, 'faceValue')?.description
     )
-    expect(config.required.transactionDate).toBe(
-      inputByName(DKJ_PRODUCT_SPEC, 'settlementDate')?.required
-    )
-    expect(config.required.dueDate).toBe(inputByName(DKJ_PRODUCT_SPEC, 'maturityDate')?.required)
-    expect(config.required.termMonths).toBe(inputByName(DKJ_PRODUCT_SPEC, 'termMonths')?.required)
-    expect(config.required.remainingDays).toBe(
-      inputByName(DKJ_PRODUCT_SPEC, 'remainingDays')?.required
-    )
-  })
-
-  it('derives PMAP required and label metadata from mapped spec fields', () => {
-    const config = buildSpecBackedInvestmentSubtypeUiConfig().pmap
-
-    expect(config.text.principalLabel).toBe(inputByName(PMAP_PRODUCT_SPEC, 'principal')?.label)
-    expect(config.required.issueDate).toBe(inputByName(PMAP_PRODUCT_SPEC, 'startDate')?.required)
-    expect(config.required.transactionDate).toBe(
-      inputByName(PMAP_PRODUCT_SPEC, 'purchaseDate')?.required
-    )
-    expect(config.required.dueDate).toBe(inputByName(PMAP_PRODUCT_SPEC, 'issueDate')?.required)
-    expect(config.required.spreadRate).toBe(
-      inputByName(PMAP_PRODUCT_SPEC, 'interestPremiumPct')?.required
-    )
-    expect(config.required.yearlyInflation).toBe(
+    expect(config.pmap.fields.previousYearAverageInflationPct.required).toBe(
       inputByName(PMAP_PRODUCT_SPEC, 'previousYearAverageInflationPct')?.required
     )
-    expect(config.required.couponPeriod).toBe(
-      inputByName(PMAP_PRODUCT_SPEC, 'firstCouponDate')?.required
+    expect(config.bmap.fields.dkjBaseYieldPct.description).toBe(
+      inputByName(BMAP_PRODUCT_SPEC, 'dkjBaseYieldPct')?.description
     )
+  })
+})
+
+describe('generic bond presentation module', () => {
+  it('exposes required/visible/help metadata for all generic subtypes', () => {
+    const config = buildGenericBondSubtypeUiConfig()
+    for (const subtype of [
+      'regular-bond',
+      'discount-bond',
+      'inflation-linked-bond',
+      'custom-bond'
+    ]) {
+      expect(config[subtype].fields.principal.description).toBeTruthy()
+      expect(config[subtype].fields.transactionDate).toBeTruthy()
+      expect(config[subtype].visible.transactionDate).toBe(true)
+      expect(config[subtype].required.transactionDate).toBe(true)
+    }
+    expect(config['discount-bond'].annualRateReadOnly).toBe(true)
+    expect(config['discount-bond'].required.purchasePrice).toBe(true)
+    expect(config['inflation-linked-bond'].required.yearlyInflation).toBe(true)
+    expect(config['custom-bond'].required.couponPeriod).toBe(true)
   })
 })

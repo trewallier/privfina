@@ -21,6 +21,7 @@ describe('pmap frontend form metadata seam', () => {
       expect(field.label).toBe(fromLoader?.label)
       expect(field.required).toBe(fromLoader?.required)
       expect(field.type).toBe(fromLoader?.type)
+      expect(field.description).toBe(fromLoader?.description)
       expect(field.constraints ?? {}).toEqual(fromLoader?.constraints ?? {})
     }
   })
@@ -38,12 +39,18 @@ describe('pmap frontend form metadata seam', () => {
     ])
   })
 
-  it('keeps adapter mapping minimal while preserving current PMAP DOM wiring', () => {
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.interestPremiumPct.formName).toBe('spreadRate')
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.previousYearAverageInflationPct.formName).toBe('yearlyInflation')
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.startDate.inputId).toBe('investment-issue-date')
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.purchaseDate.inputId).toBe('investment-transaction-date')
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.issueDate.inputId).toBe('investment-due-date')
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.firstCouponDate.inputId).toBe('investment-coupon-period')
+  it('maps PMAP fields onto dedicated host controls named like YAML', () => {
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.interestPremiumPct).toEqual({
+      inputId: 'pmap-interest-premium-pct',
+      formName: 'interestPremiumPct'
+    })
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.previousYearAverageInflationPct).toEqual({
+      inputId: 'pmap-previous-year-inflation-pct',
+      formName: 'previousYearAverageInflationPct'
+    })
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.startDate.inputId).toBe('pmap-start-date')
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.purchaseDate.inputId).toBe('pmap-purchase-date')
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.issueDate.inputId).toBe('pmap-issue-date')
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.firstCouponDate.inputId).toBe('pmap-first-coupon-date')
   })
 })

@@ -5,7 +5,8 @@ Checklist for contributors and agents. Detail stays in the linked owners; this f
 Authoritative status definitions: [`../product-specs/PRODUCT_CATALOG.md`](../product-specs/PRODUCT_CATALOG.md).  
 Ownership rules: [`../source-of-truth-ownership.md`](../source-of-truth-ownership.md).  
 Agent entry: [`../../AGENTS.md`](../../AGENTS.md).  
-Readiness policy: [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md); public-offering commercially-usable bar: [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) + [ADR 0024](../adr/0024-representative-example-three-check-verification.md).
+Readiness policy (loans): [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md); public-offering commercially-usable bar: [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) + [ADR 0024](../adr/0024-representative-example-three-check-verification.md).  
+Readiness policy (government securities): [ADR 0027](../adr/0027-government-security-readiness-and-commercial-composer.md) (same catalog ladder; no loan THM three-check).
 
 ## A. Add a product (spec-only)
 
@@ -31,26 +32,36 @@ Frontend may stay below schedule-usable.
 ## C. Promote to schedule-usable (customer schedule on UI)
 
 1. Wire the correct composer surface:
-   - Simplified examples → existing/simplified loan box (fixed-rate loan + fixed-rate mortgage as variants).
-   - Public offerings → **commercial loan** composer with product picker.
+   - Simplified loan examples → existing/simplified loan box (fixed-rate loan + fixed-rate mortgage as variants).
+   - Public-offering mortgages → **commercial loan** composer with product picker.
+   - Generic bonds → **simplified investment** composer (subtype list only).
+   - ÁKK / catalog `government-security` → **commercial investment** composer with treasury product picker (ADR 0027). Do **not** add catalog codes to the simplified investment subtype list.
 2. Confirm create/edit/preview/persist of **customer-perspective** cash flows (`productId` / `productSpecVersion` stamped).
-3. Purpose / eligibility / discount: **hints only** (no hard validation yet).
+3. Loans: purpose / eligibility / discount as **hints only** (no hard validation yet).
 4. No dual-lane figures in the UI; no bank↔state subsidy legs on the user balance.
 5. Bump catalog status → **`schedule-usable`**.
 
 ## D. Promote to commercially-usable
 
-1. Surface fees / selectable discounts / purpose / THM on the commercial composer as specified.
+### Loans
+1. Surface fees / selectable discounts / purpose / THM on the commercial loan composer as specified.
 2. For public offerings: all three [ADR 0024](../adr/0024-representative-example-three-check-verification.md) checks must be green (engine installment at stated rate; THM from offering numbers; THM from engine payments + fee package). ADR 0022 `percentRounded` ≡ published `thmPct` is necessary but not sufficient alone ([ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md)).
 3. Clear packaging quarantines (e.g. Vidéki) only after offering figures reconcile with an amortizing schedule.
 4. Bump catalog status → **`commercially-usable`**.
 
+### Government securities
+1. Ensure the offering appears on the **commercial investment** product picker with readiness hint from catalog status.
+2. Dedicated field hosts, labels/help from product YAML, and calculated previews wired for that security.
+3. Examples/adapters match published product numbers; no dual-lane display.
+4. Do **not** require ADR 0024 THM three-check unless a later ADR adds a securities verification harness.
+5. Bump catalog status → **`commercially-usable`**.
+
 ## E. Promote to fully-spec-backed
 
-1. Embedded `public/controller/*-product-spec.js` with **parity tests** against YAML.
+1. Embedded `public/controller/*-product-spec.js` (or equivalent) with **parity tests** against YAML.
 2. Form metadata and calculation adapter seams complete.
 3. Confirm end-to-end path: form → spec inputs → adapter → bundle.
-4. For public-offering loans, commercially-usable bar must already pass (ADR 0023).
+4. For public-offering loans, commercially-usable bar must already pass (ADR 0023). For government securities, commercially-usable composer bar must already pass (ADR 0027).
 5. Bump catalog status → **`fully-spec-backed`** and refresh formula-audit notes.
 
 ## F. Anti-patterns
@@ -61,7 +72,8 @@ Frontend may stay below schedule-usable.
 - Treating “examples pass” when tests only assert YAML constants and never run the engine
 - Extending frozen schema v1 for new mortgage/commercial fields (use v2 / ADR 0020)
 - Dual-lane UI (engine vs packaging) for public-offering products
-- Marking a public-offering product commercially-usable / fully-spec-backed without all three ADR 0024 checks green
+- Marking a public-offering loan commercially-usable / fully-spec-backed without all three ADR 0024 checks green
+- Reintroducing ÁKK / catalog government-security codes into the simplified investment subtype picker
 
 ## Quick links
 
@@ -70,7 +82,8 @@ Frontend may stay below schedule-usable.
 | Schema v2 | [ADR 0020](../adr/0020-product-spec-schema-v2-for-expandable-loan-products.md) |
 | Fees / subsidy rate / THM primitives | [ADR 0021](../adr/0021-commercial-mortgage-calculation-primitives.md) |
 | 83/2010 THM verification | [ADR 0022](../adr/0022-thm-calculator-for-hirdetmeny-verification.md) |
-| Readiness + offering fidelity | [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md) |
-| Three-check commercially-usable bar | [ADR 0024](../adr/0024-representative-example-three-check-verification.md) / [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) |
+| Loan readiness + offering fidelity | [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md) |
+| Three-check commercially-usable bar (loans) | [ADR 0024](../adr/0024-representative-example-three-check-verification.md) / [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) |
+| Government-security readiness + commercial investment composer | [ADR 0027](../adr/0027-government-security-readiness-and-commercial-composer.md) |
 | Spec-by-example | [ADR 0014](../adr/0014-specification-by-example-for-products.md) |
 | Data-driven variants | [ADR 0015](../adr/0015-data-driven-product-variants.md) |

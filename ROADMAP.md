@@ -20,6 +20,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [x] Refine discount bond contract: mandatory issue/due/transaction dates plus price and face value; keep yield/current_value as derived fields and reserve optional pre-maturity sale date/value for future scope.
 - [x] Refine inflation-linked bond contract: mandatory issue/due/transaction dates, annual spread, and period inflation inputs; derive annual maturity schedule and accrual factors from financial date markers.
 - [x] Investment field UX: form-local validation, required/optional/calculated markers, dedicated DKJ/PMAP hosts matching YAML, spec-sourced help (ADR 0016 presentation gap).
+- [x] Split ÁKK / government-security offerings onto a commercial investment composer (product picker + readiness hints); keep generic bonds on simplified investment (ADR 0027).
 
 ### 3) Bundle Persistence And Compatibility
 - [x] Implement pre-save bounded flow-bundle generation for instrument workflows and persist bundle lineage metadata.
@@ -92,6 +93,15 @@ Plan slices
 - [ ] Add scenario analysis for income and expense changes.
 - [ ] Add discount-rate configuration and NPV analytics.
 - [ ] Add multi-account modeling and account-scoped cumulative summaries (future extension; current model is single-account).
+
+#### 5d) Government securities — commercial investment composer + readiness (ADR 0027)
+Goal: mirror the simplified vs commercial loan split for investments. Catalog `government-security` products (ÁKK / Hungarian State Treasury) compose on a dedicated commercial investment surface; generic bonds stay on simplified investment. Track readiness with the shared catalog ladder; do not apply loan THM three-check.
+
+Plan slices
+- [x] ADR 0027: composer split + government-security readiness meanings (`schedule-usable` / `commercially-usable` / `fully-spec-backed`).
+- [x] Commercial investment box + treasury product picker (DKJ, PMÁP, BMÁP) with readiness hint; move dedicated hosts off simplified investment.
+- [x] Edit routing: catalog-backed investment bundles open commercial composer; generic subtypes open simplified.
+- [x] Catalog / lifecycle / spec / ownership docs document securities readiness beside loans for future ÁKK additions.
 
 ### 6) Platform, Data Integrations, And Operations
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)

@@ -23,6 +23,7 @@ Recent decisions
 - `0024-representative-example-three-check-verification.md` — representative examples: (1) engine installment at stated rate, (2) THM from offering numbers, (3) THM from engine payments; no packaging-rate camouflage.
 - `0025-loan-interest-day-count-act-conventions.md` — ACT/360, ACT/365, ACT/366, 30/360 equal-month formulas; OTP Hirdetmény uses ACT/360 `r×(365/12)/360` (closes ADR 0024 check 1).
 - `0026-commercially-usable-requires-three-check-verification.md` — public-offering commercially-usable requires all three ADR 0024 checks (supersedes ADR 0023’s THM-match-only bar).
+- `0027-government-security-readiness-and-commercial-composer.md` — split simplified vs commercial investment composers; government-security readiness ladder (no loan THM three-check).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` and `public/eval-cache.js` (invalidate on mutation; no new ADR — implementation of ROADMAP §3).
 

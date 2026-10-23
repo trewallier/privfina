@@ -1093,7 +1093,8 @@
             <button id="open-subscription-box" class="primary" type="button">+ Subscription Instrument</button>
             <button id="open-loan-box" class="primary" type="button">+ Simplified Loan</button>
             <button id="open-commercial-loan-box" class="primary" type="button">+ Commercial Loan</button>
-            <button id="open-investment-box" class="primary" type="button">+ Investment Instrument</button>
+            <button id="open-investment-box" class="primary" type="button">+ Simplified Investment</button>
+            <button id="open-commercial-investment-box" class="primary" type="button">+ Commercial Investment</button>
           </div>
 
           <div id="add-type-picker" class="add-type-picker" aria-label="Choose what to add">
@@ -1103,7 +1104,8 @@
             <button class="primary" type="button" data-add-type="subscription">Subscription instrument</button>
             <button class="primary" type="button" data-add-type="loan">Simplified loan</button>
             <button class="primary" type="button" data-add-type="commercial-loan">Commercial loan</button>
-            <button class="primary" type="button" data-add-type="investment">Investment instrument</button>
+            <button class="primary" type="button" data-add-type="investment">Simplified investment</button>
+            <button class="primary" type="button" data-add-type="commercial-investment">Commercial investment</button>
           </div>
 
           <section id="flow-composer" class="flow-composer" aria-label="Flow composer panels">
@@ -1668,9 +1670,9 @@
             <details id="investment-box" class="flow-box">
               <summary>
                 <span class="summary-main">
-                  <span class="summary-title">Government Security Bonds</span>
+                  <span class="summary-title">Simplified Investment</span>
                 </span>
-                <span class="summary-hint">Select an available bond subtype</span>
+                <span class="summary-hint">Generic bond subtypes</span>
               </summary>
               <div class="flow-form-wrap">
                 <form id="investment-form">
@@ -1685,7 +1687,7 @@
                       </select>
                       <div id="investment-subtype-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="investment-subtype-help" aria-label="Close">x</button>
-                        <p>Select a generic bond subtype or a catalog government-security product.</p>
+                        <p>Select a simplified generic bond subtype (not an ÁKK / treasury catalog product).</p>
                       </div>
                     </label>
                   </div>
@@ -1810,6 +1812,114 @@
                     </label>
                   </div>
 
+                  <p id="investment-calculated-heading" class="investment-calculated-heading">Calculated outputs</p>
+                  <div id="investment-preview-row" class="row">
+                    <label id="investment-maturity-preview-wrap">
+                      <span class="label-title"><span class="field-label">Maturity preview</span> <button type="button" class="info-chip" data-help-button="investment-maturity-preview-help" aria-label="Maturity preview help">i</button></span>
+                      <input id="investment-maturity-preview" class="money-amount" type="text" readonly />
+                      <div id="investment-maturity-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-maturity-preview-help" aria-label="Close">x</button>
+                        <p>Calculated maturity or redemption amount for the current inputs.</p>
+                      </div>
+                    </label>
+                    <label id="investment-purchase-preview-wrap">
+                      <span class="label-title"><span class="field-label">Purchase amount preview</span> <button type="button" class="info-chip" data-help-button="investment-purchase-preview-help" aria-label="Purchase amount preview help">i</button></span>
+                      <input id="investment-purchase-preview" class="money-amount" type="text" readonly />
+                      <div id="investment-purchase-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-purchase-preview-help" aria-label="Close">x</button>
+                        <p>Calculated amount paid at purchase/settlement for the current inputs.</p>
+                      </div>
+                    </label>
+                    <label id="investment-gain-preview-wrap">
+                      <span class="label-title"><span class="field-label">Gain preview</span> <button type="button" class="info-chip" data-help-button="investment-gain-preview-help" aria-label="Gain preview help">i</button></span>
+                      <input id="investment-gain-preview" class="money-amount" type="text" readonly />
+                      <div id="investment-gain-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-gain-preview-help" aria-label="Close">x</button>
+                        <p>Calculated difference between maturity value and purchase amount.</p>
+                      </div>
+                    </label>
+                    <label id="investment-discount-yield-wrap">
+                      <span class="label-title"><span class="field-label">Discount yield</span> <button type="button" class="info-chip" data-help-button="investment-discount-yield-preview-help" aria-label="Discount yield help">i</button></span>
+                      <input id="investment-discount-yield-preview" type="text" readonly />
+                      <div id="investment-discount-yield-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-discount-yield-preview-help" aria-label="Close">x</button>
+                        <p>Annualized discount yield derived from face value, purchase price, and days remaining.</p>
+                      </div>
+                    </label>
+                    <label id="investment-discount-current-value-wrap">
+                      <span class="label-title"><span class="field-label">Discount current value %</span> <button type="button" class="info-chip" data-help-button="investment-discount-current-value-preview-help" aria-label="Discount current value help">i</button></span>
+                      <input id="investment-discount-current-value-preview" type="text" readonly />
+                      <div id="investment-discount-current-value-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-discount-current-value-preview-help" aria-label="Close">x</button>
+                        <p>Purchase price as a percentage of face value (derived).</p>
+                      </div>
+                    </label>
+                    <label id="investment-inflation-schedule-wrap">
+                      <span class="label-title"><span class="field-label">Inflation schedule</span> <button type="button" class="info-chip" data-help-button="investment-inflation-schedule-preview-help" aria-label="Inflation schedule help">i</button></span>
+                      <input id="investment-inflation-schedule-preview" type="text" readonly />
+                      <div id="investment-inflation-schedule-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="investment-inflation-schedule-preview-help" aria-label="Close">x</button>
+                        <p>Derived annual accrual periods, effective rates, and accrual factors.</p>
+                      </div>
+                    </label>
+                  </div>
+                  <div id="investment-form-status" aria-live="polite" hidden></div>
+                  <div class="actions">
+                    <button id="investment-submit" class="primary" type="submit">Add Investment Instrument</button>
+                    <button id="investment-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="commercial-investment-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Commercial Investment</span>
+                </span>
+                <span class="summary-hint">ÁKK / Hungarian State Treasury offerings</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="commercial-investment-form">
+                  <div class="investment-subtype-hero">
+                    <label>
+                      <span class="label-title"><span class="field-label">Treasury product</span> <button type="button" class="info-chip" data-help-button="commercial-investment-product-help" aria-label="Treasury product help">i</button></span>
+                      <select id="commercial-investment-product" name="productCode" required></select>
+                      <div id="commercial-investment-product-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-product-help" aria-label="Close">x</button>
+                        <p>Catalog government-security product (ÁKK / State Treasury offering).</p>
+                      </div>
+                    </label>
+                  </div>
+                  <p id="commercial-investment-readiness-hint" class="field-help-static"></p>
+
+                  <div id="commercial-investment-shared-meta-row" class="row">
+                    <label id="commercial-investment-label-wrap">
+                      <span class="label-title"><span class="field-label">Label</span> <button type="button" class="info-chip" data-help-button="commercial-investment-label-help" aria-label="Label help">i</button></span>
+                      <input id="commercial-investment-label" name="label" type="text" value="Investment" />
+                      <div id="commercial-investment-label-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-label-help" aria-label="Close">x</button>
+                        <p>Friendly name for this instrument row in the configured list.</p>
+                      </div>
+                    </label>
+                    <label id="commercial-investment-category-wrap">
+                      <span class="label-title"><span class="field-label">Category</span> <button type="button" class="info-chip" data-help-button="commercial-investment-category-help" aria-label="Category help">i</button></span>
+                      <input id="commercial-investment-category" name="category" type="text" value="investment" />
+                      <div id="commercial-investment-category-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-category-help" aria-label="Close">x</button>
+                        <p>Optional tag for grouping this instrument in lists and reports.</p>
+                      </div>
+                    </label>
+                    <label id="commercial-investment-description-wrap">
+                      <span class="label-title"><span class="field-label">Description</span> <button type="button" class="info-chip" data-help-button="commercial-investment-description-help" aria-label="Description help">i</button></span>
+                      <input id="commercial-investment-description" name="description" type="text" placeholder="Optional notes" />
+                      <div id="commercial-investment-description-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-description-help" aria-label="Close">x</button>
+                        <p>Optional free-text notes for this investment instrument.</p>
+                      </div>
+                    </label>
+                  </div>
+
                   <div id="investment-dkj-wrap" hidden>
                     <div class="row">
                       <label id="dkj-face-value-wrap">
@@ -1913,61 +2023,61 @@
                     </div>
                   </div>
 
-                  <p id="investment-calculated-heading" class="investment-calculated-heading">Calculated outputs</p>
-                  <div id="investment-preview-row" class="row">
-                    <label id="investment-maturity-preview-wrap">
-                      <span class="label-title"><span class="field-label">Maturity preview</span> <button type="button" class="info-chip" data-help-button="investment-maturity-preview-help" aria-label="Maturity preview help">i</button></span>
-                      <input id="investment-maturity-preview" class="money-amount" type="text" readonly />
-                      <div id="investment-maturity-preview-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-maturity-preview-help" aria-label="Close">x</button>
+                  <p id="commercial-investment-calculated-heading" class="investment-calculated-heading">Calculated outputs</p>
+                  <div id="commercial-investment-preview-row" class="row">
+                    <label id="commercial-investment-maturity-preview-wrap">
+                      <span class="label-title"><span class="field-label">Maturity preview</span> <button type="button" class="info-chip" data-help-button="commercial-investment-maturity-preview-help" aria-label="Maturity preview help">i</button></span>
+                      <input id="commercial-investment-maturity-preview" class="money-amount" type="text" readonly />
+                      <div id="commercial-investment-maturity-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-maturity-preview-help" aria-label="Close">x</button>
                         <p>Calculated maturity or redemption amount for the current inputs.</p>
                       </div>
                     </label>
-                    <label id="investment-purchase-preview-wrap">
-                      <span class="label-title"><span class="field-label">Purchase amount preview</span> <button type="button" class="info-chip" data-help-button="investment-purchase-preview-help" aria-label="Purchase amount preview help">i</button></span>
-                      <input id="investment-purchase-preview" class="money-amount" type="text" readonly />
-                      <div id="investment-purchase-preview-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-purchase-preview-help" aria-label="Close">x</button>
+                    <label id="commercial-investment-purchase-preview-wrap">
+                      <span class="label-title"><span class="field-label">Purchase amount preview</span> <button type="button" class="info-chip" data-help-button="commercial-investment-purchase-preview-help" aria-label="Purchase amount preview help">i</button></span>
+                      <input id="commercial-investment-purchase-preview" class="money-amount" type="text" readonly />
+                      <div id="commercial-investment-purchase-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-purchase-preview-help" aria-label="Close">x</button>
                         <p>Calculated amount paid at purchase/settlement for the current inputs.</p>
                       </div>
                     </label>
-                    <label id="investment-gain-preview-wrap">
-                      <span class="label-title"><span class="field-label">Gain preview</span> <button type="button" class="info-chip" data-help-button="investment-gain-preview-help" aria-label="Gain preview help">i</button></span>
-                      <input id="investment-gain-preview" class="money-amount" type="text" readonly />
-                      <div id="investment-gain-preview-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-gain-preview-help" aria-label="Close">x</button>
+                    <label id="commercial-investment-gain-preview-wrap">
+                      <span class="label-title"><span class="field-label">Gain preview</span> <button type="button" class="info-chip" data-help-button="commercial-investment-gain-preview-help" aria-label="Gain preview help">i</button></span>
+                      <input id="commercial-investment-gain-preview" class="money-amount" type="text" readonly />
+                      <div id="commercial-investment-gain-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-gain-preview-help" aria-label="Close">x</button>
                         <p>Calculated difference between maturity value and purchase amount.</p>
                       </div>
                     </label>
-                    <label id="investment-discount-yield-wrap">
-                      <span class="label-title"><span class="field-label">Discount yield</span> <button type="button" class="info-chip" data-help-button="investment-discount-yield-preview-help" aria-label="Discount yield help">i</button></span>
-                      <input id="investment-discount-yield-preview" type="text" readonly />
-                      <div id="investment-discount-yield-preview-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-discount-yield-preview-help" aria-label="Close">x</button>
+                    <label id="commercial-investment-discount-yield-wrap">
+                      <span class="label-title"><span class="field-label">Discount yield</span> <button type="button" class="info-chip" data-help-button="commercial-investment-discount-yield-preview-help" aria-label="Discount yield help">i</button></span>
+                      <input id="commercial-investment-discount-yield-preview" type="text" readonly />
+                      <div id="commercial-investment-discount-yield-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-discount-yield-preview-help" aria-label="Close">x</button>
                         <p>Annualized discount yield derived from face value, purchase price, and days remaining.</p>
                       </div>
                     </label>
-                    <label id="investment-discount-current-value-wrap">
-                      <span class="label-title"><span class="field-label">Discount current value %</span> <button type="button" class="info-chip" data-help-button="investment-discount-current-value-preview-help" aria-label="Discount current value help">i</button></span>
-                      <input id="investment-discount-current-value-preview" type="text" readonly />
-                      <div id="investment-discount-current-value-preview-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-discount-current-value-preview-help" aria-label="Close">x</button>
+                    <label id="commercial-investment-discount-current-value-wrap">
+                      <span class="label-title"><span class="field-label">Discount current value %</span> <button type="button" class="info-chip" data-help-button="commercial-investment-discount-current-value-preview-help" aria-label="Discount current value help">i</button></span>
+                      <input id="commercial-investment-discount-current-value-preview" type="text" readonly />
+                      <div id="commercial-investment-discount-current-value-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-discount-current-value-preview-help" aria-label="Close">x</button>
                         <p>Purchase price as a percentage of face value (derived).</p>
                       </div>
                     </label>
-                    <label id="investment-inflation-schedule-wrap">
-                      <span class="label-title"><span class="field-label">Inflation schedule</span> <button type="button" class="info-chip" data-help-button="investment-inflation-schedule-preview-help" aria-label="Inflation schedule help">i</button></span>
-                      <input id="investment-inflation-schedule-preview" type="text" readonly />
-                      <div id="investment-inflation-schedule-preview-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="investment-inflation-schedule-preview-help" aria-label="Close">x</button>
+                    <label id="commercial-investment-inflation-schedule-wrap">
+                      <span class="label-title"><span class="field-label">Inflation schedule</span> <button type="button" class="info-chip" data-help-button="commercial-investment-inflation-schedule-preview-help" aria-label="Inflation schedule help">i</button></span>
+                      <input id="commercial-investment-inflation-schedule-preview" type="text" readonly />
+                      <div id="commercial-investment-inflation-schedule-preview-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-inflation-schedule-preview-help" aria-label="Close">x</button>
                         <p>Derived annual accrual periods, effective rates, and accrual factors.</p>
                       </div>
                     </label>
                   </div>
-                  <div id="investment-form-status" aria-live="polite" hidden></div>
+                  <div id="commercial-investment-form-status" aria-live="polite" hidden></div>
                   <div class="actions">
-                    <button id="investment-submit" class="primary" type="submit">Add Investment Instrument</button>
-                    <button id="investment-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                    <button id="commercial-investment-submit" class="primary" type="submit">Add Commercial Investment</button>
+                    <button id="commercial-investment-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
                   </div>
                 </form>
               </div>

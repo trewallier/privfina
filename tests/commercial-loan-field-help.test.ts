@@ -46,9 +46,10 @@ describe('commercial loan schema field info hints', () => {
   })
 
   it('wires commercial loan info chips through the shared floating info popup handler', () => {
-    expect(appController).toContain(
-      ';[loanForm, investmentForm, commercialLoanForm].filter(Boolean).forEach((form) => {'
-    )
+    expect(appController).toContain('commercialLoanForm')
+    expect(appController).toContain('commercialInvestmentForm')
+    expect(appController).toContain("form.querySelectorAll('[data-help-button]')")
+    expect(appController).toContain('toggleInvestmentInfoPopup(button)')
   })
 
   it('aligns otp-1x1 product.yaml descriptions with commercial field help', () => {

@@ -139,11 +139,34 @@ const DKJ_FRONTEND_FIELD_ADAPTER = {
 }
 
 const DKJ_OUTPUT_PREVIEW_ADAPTER = {
-  purchaseAmount: { inputId: 'investment-purchase-preview' },
-  redemptionValue: { inputId: 'investment-maturity-preview' },
-  grossGain: { inputId: 'investment-gain-preview' },
-  simpleReturnPct: { inputId: 'investment-discount-current-value-preview' },
-  annualizedYieldPct: { inputId: 'investment-discount-yield-preview' }
+  purchaseAmount: {
+    inputId: 'commercial-investment-purchase-preview',
+    legacyInputId: 'investment-purchase-preview'
+  },
+  redemptionValue: {
+    inputId: 'commercial-investment-maturity-preview',
+    legacyInputId: 'investment-maturity-preview'
+  },
+  grossGain: {
+    inputId: 'commercial-investment-gain-preview',
+    legacyInputId: 'investment-gain-preview'
+  },
+  simpleReturnPct: {
+    inputId: 'commercial-investment-discount-current-value-preview',
+    legacyInputId: 'investment-discount-current-value-preview'
+  },
+  annualizedYieldPct: {
+    inputId: 'commercial-investment-discount-yield-preview',
+    legacyInputId: 'investment-discount-yield-preview'
+  }
+}
+
+function queryFormInput(form, adapter) {
+  if (!form || !adapter) return null
+  return (
+    form.querySelector(`#${adapter.inputId}`) ||
+    (adapter.legacyInputId ? form.querySelector(`#${adapter.legacyInputId}`) : null)
+  )
 }
 
 function addMonthsToIsoDate(dateIso, months) {
@@ -209,9 +232,10 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
   DKJ_PRODUCT_SPEC.outputs.forEach((field) => {
     const adapter = DKJ_OUTPUT_PREVIEW_ADAPTER[field.name]
     if (!adapter) return
-    const input = investmentForm.querySelector(`#${adapter.inputId}`)
+    const input = queryFormInput(investmentForm, adapter)
     const label = input ? input.closest('label') : null
     if (!label) return
+    const helpId = `${input.id}-help`
     applyFieldChrome(
       label,
       {
@@ -219,7 +243,7 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
         description: field.description || getDkjFieldHelp(field.name),
         required: false,
         role: 'output',
-        helpId: `${adapter.inputId}-help`,
+        helpId,
         labelClassName: 'investment-field-label'
       },
       input

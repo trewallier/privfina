@@ -4,14 +4,16 @@ This catalog tracks product specs across supported families. The active schema i
 
 ## Migration Statuses
 
-These statuses track the rollout of the spec-driven product model (ADR 0013–0016, ADR 0023):
+These statuses track the rollout of the spec-driven product model (ADR 0013–0016, ADR 0023, ADR 0027):
 
 - **spec-only**: Product spec exists, but frontend and calculations are not yet driven from it.
 - **inputs-driven**: Frontend inputs are driven from spec, but calculations are not fully aligned yet. (Live intermediate ladder step; no current catalog row uses it.)
 - **calc-aligned**: Calculations are aligned to the product spec, but the product is not yet usable end-to-end on the UI.
-- **schedule-usable**: Composer can create/edit/preview/persist a **customer-perspective** repayment schedule on the chart. Purpose / eligibility / discount conditions are hints only. Bank↔state subsidy legs and simulated post-subsidy rate resets are out of scope.
-- **commercially-usable**: Commercial UX (fees, discounts, purpose, THM) is wired **and**, for public-offering products, all three ADR 0024 checks are green (engine installment; THM from offering numbers; THM from engine payments + fee package — equivalent to engine `percentRounded` matching published `thmPct` with offering-faithful schedule and fees). Dual-lane display is forbidden. (Public-offering bar clarified in ADR 0026; supersedes ADR 0023’s THM-match-only wording.)
-- **fully-spec-backed**: Product spec, frontend inputs, calculations, and examples are aligned end-to-end. For public-offering loans this requires the commercially-usable bar (ADR 0023).
+- **schedule-usable**: Composer can create/edit/preview/persist a **customer-perspective** cash-flow schedule on the chart. For loans: purpose / eligibility / discount conditions are hints only; bank↔state subsidy legs and simulated post-subsidy rate resets are out of scope. For government securities: commercial (or simplified) composer path stamps `productId` / `productSpecVersion` where catalog-backed (ADR 0027).
+- **commercially-usable**:
+  - **Loans (public offerings):** commercial UX (fees, discounts, purpose, THM) is wired **and** all three ADR 0024 checks are green. Dual-lane display is forbidden (ADR 0026).
+  - **Government securities:** commercial investment composer UX (treasury product picker, labels/help from spec, calculated outputs) is wired and examples/adapters match published product numbers; dual-lane display is forbidden. Loan THM three-check does **not** apply (ADR 0027).
+- **fully-spec-backed**: Product spec, frontend inputs, calculations, and examples are aligned end-to-end. For public-offering loans this requires the commercially-usable bar (ADR 0023). For government securities this is the current DKJ/PMÁP/BMÁP bar (embedded form/adapter parity).
 
 Statuses are transitional rollout markers reflecting current integration state, not completion guarantees.
 
@@ -19,8 +21,9 @@ Statuses are transitional rollout markers reflecting current integration state, 
 
 | Class | Product IDs | Math / numbers |
 | --- | --- | --- |
-| Simplified examples | `loan.fixed-rate.standard`, `loan.fixed-rate.mortgage` | `30/360` equal-month (`r/12`); shared annuity / grace primitives |
-| Public offerings | Seven Hirdetmény `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
+| Simplified examples | `loan.fixed-rate.standard`, `loan.fixed-rate.mortgage`; generic bond subtypes (not catalog rows) | Loans: `30/360` equal-month (`r/12`). Bonds: instrument-mode presentation on simplified investment composer |
+| Public offerings (loans) | Seven Hirdetmény `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
+| Public offerings (securities) | `government-security.{dkj,pmap,bmap}.standard` | ÁKK / State Treasury; commercial investment composer (ADR 0027) |
 
 **What `calc-aligned` requires in this repo** (engine bar; UI may still be below schedule-usable):
 
@@ -28,16 +31,17 @@ Statuses are transitional rollout markers reflecting current integration state, 
 - Executable tests that assert engine-computed outputs from example inputs (not only YAML constant lock-in).
 - Catalog row, [`formula-ownership-audit.md`](../formula-ownership-audit.md), and product README updated to `calc-aligned`.
 
-**What `schedule-usable` requires** (ADR 0023):
+**What `schedule-usable` requires** (ADR 0023 loans; ADR 0027 securities):
 
-- Composer path for customer inflows/outflows (simplified loan surface or commercial loan picker).
-- Soft hints only for purpose / eligibility / discounts.
+- Composer path for customer inflows/outflows (simplified or commercial loan/investment surface as appropriate).
+- Loans: soft hints only for purpose / eligibility / discounts.
+- Securities: commercial investment picker for catalog treasury products (not the simplified bond subtype list).
 - No dual-lane packaging display.
 
-**What `commercially-usable` requires** (ADR 0023 + ADR 0024 + ADR 0026):
+**What `commercially-usable` requires**:
 
-- Fees / discounts / purpose / THM on the commercial composer (as applicable).
-- For public offerings: all three ADR 0024 checks green — schedule fidelity **and** fee-package fidelity (not installment-only); offering figures are the single displayed truth.
+- **Loans** (ADR 0023 + ADR 0024 + ADR 0026): fees / discounts / purpose / THM on the commercial loan composer; for public offerings all three ADR 0024 checks green — schedule fidelity **and** fee-package fidelity; offering figures are the single displayed truth.
+- **Government securities** (ADR 0027): commercial investment composer UX wired for the offering; examples/adapters match published numbers; dual-lane forbidden. Loan THM three-check does not apply.
 
 Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playbooks/product-lifecycle.md).
 
@@ -54,9 +58,9 @@ Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playb
 | mortgage-loan.falusi-csok.standard | mortgage-loan | falusi-csok | falusi-csok | v2alpha1 | commercially-usable | docs/product-specs/products/loans/falusi-csok/product.yaml | docs/product-specs/products/loans/falusi-csok/examples/hirdetmeny-representative-used-home.yaml | Checks 1–3 OK; composer fee/discount/THM UX + parity |
 | mortgage-loan.otthon-start.standard | mortgage-loan | otthon-start | otthon-start | v2alpha1 | commercially-usable | docs/product-specs/products/loans/otthon-start/product.yaml | docs/product-specs/products/loans/otthon-start/examples/hirdetmeny-representative-home-purchase.yaml | Checks 1–3 OK; composer fee/discount/THM UX + parity |
 | mortgage-loan.videki-otthonfelujitasi.standard | mortgage-loan | videki-otthonfelujitasi | videki-otthonfelujitasi | v2alpha1 | schedule-usable | docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml | docs/product-specs/products/loans/videki-otthonfelujitasi/examples/hirdetmeny-representative-renovation.yaml | §6 packaging quarantined; commercially-usable blocked |
-| government-security.dkj.standard | government-security | dkj | dkj | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/dkj/product.yaml | docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml | DKJ form metadata, controller mapping, and adapter-calculation seam are spec-backed end-to-end |
-| government-security.pmap.standard | government-security | pmap | pmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/pmap/product.yaml | docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml | PMAP form metadata, controller mapping, preview/adapter seam, and examples are spec-backed |
-| government-security.bmap.standard | government-security | bmap | bmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/bmap/product.yaml | docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml | BMAP form metadata, subtype metadata, controller mapping, and adapter-calculation seam are spec-backed; accrued/coupon primitives in `src/finance_engine/instruments/bmap.ts` (browser dual-surface until ADR 0017 bundler) |
+| government-security.dkj.standard | government-security | dkj | dkj | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/dkj/product.yaml | docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed end-to-end (ADR 0027) |
+| government-security.pmap.standard | government-security | pmap | pmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/pmap/product.yaml | docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, preview/adapter seam, and examples are spec-backed (ADR 0027) |
+| government-security.bmap.standard | government-security | bmap | bmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/bmap/product.yaml | docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed; accrued/coupon primitives in `src/finance_engine/instruments/bmap.ts` (browser dual-surface until ADR 0017 bundler) |
 
 ## Planned catalog extensions
 

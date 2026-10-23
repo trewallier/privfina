@@ -115,8 +115,9 @@ import {
 } from './controller/pmap-form.js'
 import { calculatePmapFromSpecInputs } from './controller/pmap-calculation-adapter.js'
 import {
-  buildSpecBackedInvestmentSubtypeOptions,
-  buildSpecBackedInvestmentSubtypeUiConfig
+  buildCommercialInvestmentProductOptions,
+  resolveCommercialInvestmentReadinessHint,
+  findCommercialInvestmentProduct
 } from './controller/investment-product-metadata.js'
 import { buildGenericBondSubtypeUiConfig } from './controller/generic-bond-presentation.js'
 import {
@@ -131,7 +132,8 @@ import {
   bindMoneyAmountInputs
 } from './controller/money-format.js'
 
-const INVESTMENT_FAMILY_TITLE = 'Government Security Bonds'
+const INVESTMENT_FAMILY_TITLE = 'Simplified Investment'
+const COMMERCIAL_INVESTMENT_FAMILY_TITLE = 'Commercial Investment'
 
 function saveCashFlowList(key, value) {
   saveList(key, value)
@@ -146,11 +148,7 @@ const GENERIC_BOND_SUBTYPE_OPTIONS = [
   { value: 'custom-bond', label: 'Custom bond' }
 ]
 
-const SPEC_BACKED_BOND_SUBTYPE_OPTIONS = buildSpecBackedInvestmentSubtypeOptions()
-
-const PRODUCT_BOND_SUBTYPE_OPTIONS = [
-  ...SPEC_BACKED_BOND_SUBTYPE_OPTIONS
-]
+const COMMERCIAL_INVESTMENT_PRODUCT_OPTIONS = buildCommercialInvestmentProductOptions()
 
 function createFlowId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -168,6 +166,7 @@ function initController() {
   const loanForm = document.getElementById('loan-form')
   const commercialLoanForm = document.getElementById('commercial-loan-form')
   const investmentForm = document.getElementById('investment-form')
+  const commercialInvestmentForm = document.getElementById('commercial-investment-form')
   const oneTimeSubmitButton = document.getElementById('one-time-submit')
   const recurringSubmitButton = document.getElementById('recurring-submit')
   const salarySubmitButton = document.getElementById('salary-submit')
@@ -175,6 +174,7 @@ function initController() {
   const loanSubmitButton = document.getElementById('loan-submit')
   const commercialLoanSubmitButton = document.getElementById('commercial-loan-submit')
   const investmentSubmitButton = document.getElementById('investment-submit')
+  const commercialInvestmentSubmitButton = document.getElementById('commercial-investment-submit')
   const oneTimeCancelButton = document.getElementById('one-time-cancel-edit')
   const recurringCancelButton = document.getElementById('recurring-cancel-edit')
   const salaryCancelButton = document.getElementById('salary-cancel-edit')
@@ -182,6 +182,9 @@ function initController() {
   const loanCancelButton = document.getElementById('loan-cancel-edit')
   const commercialLoanCancelButton = document.getElementById('commercial-loan-cancel-edit')
   const investmentCancelButton = document.getElementById('investment-cancel-edit')
+  const commercialInvestmentCancelButton = document.getElementById(
+    'commercial-investment-cancel-edit'
+  )
   const schemaWarning = document.getElementById('schema-warning')
   const storageStatus = document.getElementById('storage-status')
   const exportButton = document.getElementById('export-json-button')
@@ -208,6 +211,9 @@ function initController() {
   const openLoanBoxButton = document.getElementById('open-loan-box')
   const openCommercialLoanBoxButton = document.getElementById('open-commercial-loan-box')
   const openInvestmentBoxButton = document.getElementById('open-investment-box')
+  const openCommercialInvestmentBoxButton = document.getElementById(
+    'open-commercial-investment-box'
+  )
   const oneTimeBox = document.getElementById('one-time-box')
   const recurringBox = document.getElementById('recurring-box')
   const salaryBox = document.getElementById('salary-box')
@@ -215,6 +221,43 @@ function initController() {
   const loanBox = document.getElementById('loan-box')
   const commercialLoanBox = document.getElementById('commercial-loan-box')
   const investmentBox = document.getElementById('investment-box')
+  const commercialInvestmentBox = document.getElementById('commercial-investment-box')
+  const commercialInvestmentProductInput = document.getElementById(
+    'commercial-investment-product'
+  )
+  const commercialInvestmentReadinessHint = document.getElementById(
+    'commercial-investment-readiness-hint'
+  )
+  const commercialInvestmentFormStatus = document.getElementById(
+    'commercial-investment-form-status'
+  )
+  const commercialInvestmentDiscountYieldWrap = document.getElementById(
+    'commercial-investment-discount-yield-wrap'
+  )
+  const commercialInvestmentDiscountCurrentValueWrap = document.getElementById(
+    'commercial-investment-discount-current-value-wrap'
+  )
+  const commercialInvestmentInflationScheduleWrap = document.getElementById(
+    'commercial-investment-inflation-schedule-wrap'
+  )
+  const commercialInvestmentPurchasePreviewInput = document.getElementById(
+    'commercial-investment-purchase-preview'
+  )
+  const commercialInvestmentMaturityPreviewInput = document.getElementById(
+    'commercial-investment-maturity-preview'
+  )
+  const commercialInvestmentGainPreviewInput = document.getElementById(
+    'commercial-investment-gain-preview'
+  )
+  const commercialInvestmentDiscountYieldPreviewInput = document.getElementById(
+    'commercial-investment-discount-yield-preview'
+  )
+  const commercialInvestmentDiscountCurrentValuePreviewInput = document.getElementById(
+    'commercial-investment-discount-current-value-preview'
+  )
+  const commercialInvestmentInflationSchedulePreviewInput = document.getElementById(
+    'commercial-investment-inflation-schedule-preview'
+  )
   const loanVariantInput = document.getElementById('loan-variant')
   const commercialLoanProductInput = document.getElementById('commercial-loan-product')
   const commercialLoanEligibilityHint = document.getElementById('commercial-loan-eligibility-hint')
@@ -239,9 +282,6 @@ function initController() {
   const investmentGenericCoreRow = document.getElementById('investment-generic-core-row')
   const investmentGenericSecondaryRow = document.getElementById('investment-generic-secondary-row')
   const investmentPreviewRow = document.getElementById('investment-preview-row')
-  const investmentBmapWrap = document.getElementById('investment-bmap-wrap')
-  const investmentDkjWrap = document.getElementById('investment-dkj-wrap')
-  const investmentPmapWrap = document.getElementById('investment-pmap-wrap')
   const investmentFormStatus = document.getElementById('investment-form-status')
   const investmentPrincipalWrap = document.getElementById('investment-principal-wrap')
   const investmentPurchasePriceWrap = document.getElementById('investment-purchase-price-wrap')
@@ -315,8 +355,7 @@ function initController() {
   const investmentInfoPopupClose = document.getElementById('investment-info-popup-close')
 
   const investmentSubtypeUiConfig = {
-    ...buildGenericBondSubtypeUiConfig(),
-    ...buildSpecBackedInvestmentSubtypeUiConfig()
+    ...buildGenericBondSubtypeUiConfig()
   }
 
   function setInvestmentFormStatus(message, level = 'info') {
@@ -374,18 +413,21 @@ function initController() {
     !subscriptionForm ||
     !loanForm ||
     !investmentForm ||
+    !commercialInvestmentForm ||
     !oneTimeSubmitButton ||
     !recurringSubmitButton ||
     !salarySubmitButton ||
     !subscriptionSubmitButton ||
     !loanSubmitButton ||
     !investmentSubmitButton ||
+    !commercialInvestmentSubmitButton ||
     !oneTimeCancelButton ||
     !recurringCancelButton ||
     !salaryCancelButton ||
     !subscriptionCancelButton ||
     !loanCancelButton ||
     !investmentCancelButton ||
+    !commercialInvestmentCancelButton ||
     !rows ||
     !chart ||
     !startInput ||
@@ -428,6 +470,7 @@ function initController() {
   let editingLoanId = null
   let editingCommercialLoanId = null
   let editingInvestmentId = null
+  let editingCommercialInvestmentId = null
   let activeInfoTrigger = null
   const excludedFlowIds = new Set()
 
@@ -491,7 +534,8 @@ function initController() {
     subscription: 'Subscription instrument',
     loan: 'Simplified loan',
     'commercial-loan': 'Commercial loan',
-    investment: 'Investment instrument'
+    investment: 'Simplified investment',
+    'commercial-investment': 'Commercial investment'
   }
 
   function updateComposeTitle(type, pickingType) {
@@ -530,7 +574,8 @@ function initController() {
       subscription: subscriptionBox,
       loan: loanBox,
       'commercial-loan': commercialLoanBox,
-      investment: investmentBox
+      investment: investmentBox,
+      'commercial-investment': commercialInvestmentBox
     },
     openButtons: {
       'one-time': openOneTimeBoxButton,
@@ -539,7 +584,8 @@ function initController() {
       subscription: openSubscriptionBoxButton,
       loan: openLoanBoxButton,
       'commercial-loan': openCommercialLoanBoxButton,
-      investment: openInvestmentBoxButton
+      investment: openInvestmentBoxButton,
+      'commercial-investment': openCommercialInvestmentBoxButton
     },
     onOpenBox: (type) => {
       shell.enterCompose(type)
@@ -563,9 +609,9 @@ function initController() {
   }
 
   applyFixedRateLoanSpecToForm({ loanForm, loanBox })
-  applyBmapSpecToForm({ bmapForm: investmentForm, bmapBox: investmentBox })
-  applyDkjSpecToForm({ investmentForm, investmentBox })
-  applyPmapSpecToForm({ investmentForm, investmentBox })
+  applyBmapSpecToForm({ bmapForm: commercialInvestmentForm, bmapBox: commercialInvestmentBox })
+  applyDkjSpecToForm({ investmentForm: commercialInvestmentForm, investmentBox: commercialInvestmentBox })
+  applyPmapSpecToForm({ investmentForm: commercialInvestmentForm, investmentBox: commercialInvestmentBox })
 
   function setInvestmentFamilyTitle() {
     if (!investmentBox) return
@@ -575,14 +621,19 @@ function initController() {
     }
   }
 
+  function setCommercialInvestmentFamilyTitle() {
+    if (!commercialInvestmentBox) return
+    const summaryTitle = commercialInvestmentBox.querySelector('.summary-title')
+    if (summaryTitle) {
+      summaryTitle.textContent = COMMERCIAL_INVESTMENT_FAMILY_TITLE
+    }
+  }
+
   function rebuildInvestmentSubtypeOptions() {
     if (!investmentSubtypeInput) return
 
     const previousValue = investmentSubtypeInput.value || 'regular-bond'
-    const options = [
-      ...GENERIC_BOND_SUBTYPE_OPTIONS,
-      ...PRODUCT_BOND_SUBTYPE_OPTIONS.filter((entry) => entry.available)
-    ]
+    const options = [...GENERIC_BOND_SUBTYPE_OPTIONS]
 
     investmentSubtypeInput.innerHTML = ''
     options.forEach((entry) => {
@@ -598,8 +649,28 @@ function initController() {
       : 'regular-bond'
   }
 
+  function rebuildCommercialInvestmentProductOptions() {
+    if (!commercialInvestmentProductInput) return
+    const previousValue = commercialInvestmentProductInput.value || 'dkj'
+    commercialInvestmentProductInput.innerHTML = ''
+    COMMERCIAL_INVESTMENT_PRODUCT_OPTIONS.filter((entry) => entry.available).forEach((entry) => {
+      const option = document.createElement('option')
+      option.value = entry.value
+      option.textContent = entry.label
+      commercialInvestmentProductInput.appendChild(option)
+    })
+    const availableValues = new Set(
+      COMMERCIAL_INVESTMENT_PRODUCT_OPTIONS.map((entry) => entry.value)
+    )
+    commercialInvestmentProductInput.value = availableValues.has(previousValue)
+      ? previousValue
+      : COMMERCIAL_INVESTMENT_PRODUCT_OPTIONS[0]?.value || 'dkj'
+  }
+
   setInvestmentFamilyTitle()
+  setCommercialInvestmentFamilyTitle()
   rebuildInvestmentSubtypeOptions()
+  rebuildCommercialInvestmentProductOptions()
 
   function resetOneTimeForm() {
     editingOneTimeId = null
@@ -724,17 +795,9 @@ function initController() {
 
     const ui =
       investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
-    const dedicated = Boolean(ui.usesDedicatedHost)
-    const isBmap = subtype === 'bmap'
-    const isDkj = subtype === 'dkj'
-    const isPmap = subtype === 'pmap'
 
-    setBmapFieldVisibility(investmentForm, isBmap)
-    setDkjFieldVisibility(investmentForm, isDkj)
-    setPmapFieldVisibility(investmentForm, isPmap)
-
-    setElementVisible(investmentGenericCoreRow, !dedicated)
-    setElementVisible(investmentGenericSecondaryRow, !dedicated)
+    setElementVisible(investmentGenericCoreRow, true)
+    setElementVisible(investmentGenericSecondaryRow, true)
     setElementVisible(investmentPreviewRow, true)
 
     const genericInputs = [
@@ -750,76 +813,6 @@ function initController() {
       investmentSaleDateInput,
       investmentSaleValueInput
     ]
-    const bmapInputs = [
-      bmapPrincipalInput,
-      bmapDkjBaseYieldPctInput,
-      bmapInterestPremiumPctInput,
-      bmapStartDateInput,
-      bmapPurchaseDateInput,
-      bmapIssueDateInput,
-      bmapFirstCouponDateInput
-    ]
-    const dkjInputs = [
-      dkjFaceValueInput,
-      dkjPurchasePricePctInput,
-      dkjTermMonthsInput,
-      dkjSettlementDateInput,
-      dkjMaturityDateInput,
-      dkjRemainingDaysInput
-    ]
-    const pmapInputs = [
-      pmapPrincipalInput,
-      pmapInterestPremiumPctInput,
-      pmapPreviousYearInflationPctInput,
-      pmapStartDateInput,
-      pmapPurchaseDateInput,
-      pmapIssueDateInput,
-      pmapFirstCouponDateInput
-    ]
-
-    ;[...genericInputs, ...bmapInputs, ...dkjInputs, ...pmapInputs].forEach((input) => {
-      if (!input) return
-      input.disabled = true
-      if (!dedicated) {
-        // leave required to chrome below for generics
-      } else {
-        input.required = false
-      }
-    })
-
-    if (isBmap) {
-      bmapInputs.forEach((input) => {
-        if (input) input.disabled = false
-      })
-      applyBmapSpecToForm({ bmapForm: investmentForm, bmapBox: investmentBox })
-      setElementVisible(investmentDiscountYieldWrap, false)
-      setElementVisible(investmentDiscountCurrentValueWrap, false)
-      setElementVisible(investmentInflationScheduleWrap, false)
-      return
-    }
-
-    if (isDkj) {
-      dkjInputs.forEach((input) => {
-        if (input) input.disabled = false
-      })
-      applyDkjSpecToForm({ investmentForm, investmentBox })
-      setElementVisible(investmentDiscountYieldWrap, true)
-      setElementVisible(investmentDiscountCurrentValueWrap, true)
-      setElementVisible(investmentInflationScheduleWrap, false)
-      return
-    }
-
-    if (isPmap) {
-      pmapInputs.forEach((input) => {
-        if (input) input.disabled = false
-      })
-      applyPmapSpecToForm({ investmentForm, investmentBox })
-      setElementVisible(investmentDiscountYieldWrap, false)
-      setElementVisible(investmentDiscountCurrentValueWrap, false)
-      setElementVisible(investmentInflationScheduleWrap, true)
-      return
-    }
-
     genericInputs.forEach((input) => {
       if (input) input.disabled = false
     })
@@ -853,6 +846,116 @@ function initController() {
     }
 
     applyGenericFieldChrome(subtype)
+  }
+
+  function setCommercialInvestmentFormStatus(message, level = 'info') {
+    setFormStatus(commercialInvestmentFormStatus, message, level)
+  }
+
+  function clearCommercialInvestmentFormErrors() {
+    clearFieldValidity(commercialInvestmentForm)
+    setCommercialInvestmentFormStatus('', 'info')
+  }
+
+  function reportCommercialInvestmentFormError(message) {
+    const textMessage = String(message || 'Failed to save commercial investment.')
+    applyInvestmentFieldValidity(commercialInvestmentForm, textMessage)
+    setCommercialInvestmentFormStatus(textMessage, 'error')
+  }
+
+  function applyCommercialInvestmentProductUi(productCode) {
+    setCommercialInvestmentFamilyTitle()
+    clearCommercialInvestmentFormErrors()
+
+    const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
+    const product = findCommercialInvestmentProduct(code)
+    if (commercialInvestmentReadinessHint) {
+      commercialInvestmentReadinessHint.textContent = resolveCommercialInvestmentReadinessHint(
+        product?.migrationStatus
+      )
+    }
+
+    const isBmap = code === 'bmap'
+    const isDkj = code === 'dkj'
+    const isPmap = code === 'pmap'
+
+    setBmapFieldVisibility(commercialInvestmentForm, isBmap)
+    setDkjFieldVisibility(commercialInvestmentForm, isDkj)
+    setPmapFieldVisibility(commercialInvestmentForm, isPmap)
+
+    const bmapInputs = [
+      bmapPrincipalInput,
+      bmapDkjBaseYieldPctInput,
+      bmapInterestPremiumPctInput,
+      bmapStartDateInput,
+      bmapPurchaseDateInput,
+      bmapIssueDateInput,
+      bmapFirstCouponDateInput
+    ]
+    const dkjInputs = [
+      dkjFaceValueInput,
+      dkjPurchasePricePctInput,
+      dkjTermMonthsInput,
+      dkjSettlementDateInput,
+      dkjMaturityDateInput,
+      dkjRemainingDaysInput
+    ]
+    const pmapInputs = [
+      pmapPrincipalInput,
+      pmapInterestPremiumPctInput,
+      pmapPreviousYearInflationPctInput,
+      pmapStartDateInput,
+      pmapPurchaseDateInput,
+      pmapIssueDateInput,
+      pmapFirstCouponDateInput
+    ]
+
+    ;[...bmapInputs, ...dkjInputs, ...pmapInputs].forEach((input) => {
+      if (!input) return
+      input.disabled = true
+      input.required = false
+    })
+
+    if (isBmap) {
+      bmapInputs.forEach((input) => {
+        if (input) input.disabled = false
+      })
+      applyBmapSpecToForm({
+        bmapForm: commercialInvestmentForm,
+        bmapBox: commercialInvestmentBox
+      })
+      setElementVisible(commercialInvestmentDiscountYieldWrap, false)
+      setElementVisible(commercialInvestmentDiscountCurrentValueWrap, false)
+      setElementVisible(commercialInvestmentInflationScheduleWrap, false)
+      return
+    }
+
+    if (isDkj) {
+      dkjInputs.forEach((input) => {
+        if (input) input.disabled = false
+      })
+      applyDkjSpecToForm({
+        investmentForm: commercialInvestmentForm,
+        investmentBox: commercialInvestmentBox
+      })
+      setElementVisible(commercialInvestmentDiscountYieldWrap, true)
+      setElementVisible(commercialInvestmentDiscountCurrentValueWrap, true)
+      setElementVisible(commercialInvestmentInflationScheduleWrap, false)
+      return
+    }
+
+    if (isPmap) {
+      pmapInputs.forEach((input) => {
+        if (input) input.disabled = false
+      })
+      applyPmapSpecToForm({
+        investmentForm: commercialInvestmentForm,
+        investmentBox: commercialInvestmentBox
+      })
+      setElementVisible(commercialInvestmentDiscountYieldWrap, false)
+      setElementVisible(commercialInvestmentDiscountCurrentValueWrap, false)
+      setElementVisible(commercialInvestmentInflationScheduleWrap, true)
+    }
   }
 
   function resetSalaryForm() {
@@ -951,6 +1054,36 @@ function initController() {
     syncInvestmentPreview()
   }
 
+  function resetCommercialInvestmentForm() {
+    editingCommercialInvestmentId = null
+    if (commercialInvestmentForm) {
+      commercialInvestmentForm.reset()
+    }
+    clearCommercialInvestmentFormErrors()
+    if (commercialInvestmentProductInput && commercialInvestmentProductInput.options.length > 0) {
+      commercialInvestmentProductInput.value = commercialInvestmentProductInput.options[0].value
+    }
+    applyCommercialInvestmentProductUi()
+    closeInvestmentInfoPopup()
+    if (commercialInvestmentSubmitButton) {
+      commercialInvestmentSubmitButton.textContent = 'Add Commercial Investment'
+    }
+    if (commercialInvestmentCancelButton) {
+      commercialInvestmentCancelButton.hidden = true
+    }
+    syncCommercialInvestmentPreview()
+  }
+
+  function resolveCommercialInvestmentProductCode(bundle) {
+    if (!bundle) return null
+    const config = bundle.config || {}
+    const productId = bundle.productId || config.productId
+    if (productId === BMAP_PRODUCT_SPEC.id || config.subtype === 'bmap') return 'bmap'
+    if (productId === DKJ_PRODUCT_SPEC.id || config.subtype === 'dkj') return 'dkj'
+    if (productId === PMAP_PRODUCT_SPEC.id || config.subtype === 'pmap') return 'pmap'
+    return null
+  }
+
   const syncLoanPreview = createLoanPreviewSync({
     principalInput: loanPrincipalInput,
     annualRateInput: loanAnnualRateInput,
@@ -1004,10 +1137,6 @@ function initController() {
     discountCurrentValuePreviewInput: investmentDiscountCurrentValuePreviewInput,
     inflationSchedulePreviewInput: investmentInflationSchedulePreviewInput,
     createInvestmentMaturityPreview,
-    calculateDkjFromSpecInputs,
-    mapFormDataToDkjSpecInputs,
-    calculatePmapFromSpecInputs,
-    mapFormDataToPmapSpecInputs,
     onPreviewError: (message) => {
       applyInvestmentFieldValidity(investmentForm, message)
       setInvestmentFormStatus(message, 'warning')
@@ -1016,6 +1145,33 @@ function initController() {
       clearFieldValidity(investmentForm)
       if (investmentFormStatus?.dataset.level === 'warning') {
         setInvestmentFormStatus('', 'info')
+      }
+    }
+  })
+  const { syncInvestmentPreview } = investmentPreviewController
+
+  const commercialInvestmentPreviewController = createInvestmentPreviewSync({
+    form: commercialInvestmentForm,
+    subtypeInput: commercialInvestmentProductInput,
+    purchasePreviewInput: commercialInvestmentPurchasePreviewInput,
+    maturityPreviewInput: commercialInvestmentMaturityPreviewInput,
+    gainPreviewInput: commercialInvestmentGainPreviewInput,
+    discountYieldPreviewInput: commercialInvestmentDiscountYieldPreviewInput,
+    discountCurrentValuePreviewInput: commercialInvestmentDiscountCurrentValuePreviewInput,
+    inflationSchedulePreviewInput: commercialInvestmentInflationSchedulePreviewInput,
+    createInvestmentMaturityPreview,
+    calculateDkjFromSpecInputs,
+    mapFormDataToDkjSpecInputs,
+    calculatePmapFromSpecInputs,
+    mapFormDataToPmapSpecInputs,
+    onPreviewError: (message) => {
+      applyInvestmentFieldValidity(commercialInvestmentForm, message)
+      setCommercialInvestmentFormStatus(message, 'warning')
+    },
+    onPreviewSuccess: () => {
+      clearFieldValidity(commercialInvestmentForm)
+      if (commercialInvestmentFormStatus?.dataset.level === 'warning') {
+        setCommercialInvestmentFormStatus('', 'info')
       }
     },
     extraInputs: [
@@ -1041,7 +1197,8 @@ function initController() {
       bmapFirstCouponDateInput
     ]
   })
-  const { syncInvestmentPreview } = investmentPreviewController
+  const { syncInvestmentPreview: syncCommercialInvestmentPreview } =
+    commercialInvestmentPreviewController
 
   function startCommercialLoanEdit(id) {
     const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'loan')
@@ -1158,100 +1315,132 @@ function initController() {
     openComposerBox('loan')
   }
 
-  function startInvestmentEdit(id) {
-    const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'investment')
-    if (!bundle) {
+  function startCommercialInvestmentEdit(id) {
+    const bundle = instrumentBundles.find(
+      (entry) => entry.id === id && entry.instrumentType === 'investment'
+    )
+    if (!bundle || !commercialInvestmentForm) {
+      return
+    }
+
+    const productCode = resolveCommercialInvestmentProductCode(bundle)
+    if (!productCode) {
       return
     }
 
     const config = bundle.config || {}
-    const productId = bundle.productId || config.productId
-    const subtypeFromConfig =
-      productId === BMAP_PRODUCT_SPEC.id || config.subtype === 'bmap'
-        ? 'bmap'
-        : productId === DKJ_PRODUCT_SPEC.id || config.subtype === 'dkj'
-          ? 'dkj'
-          : productId === PMAP_PRODUCT_SPEC.id
-            ? 'pmap'
-            : config.subtype || 'regular-bond'
+    const product = findCommercialInvestmentProduct(productCode)
+    editingCommercialInvestmentId = id
+    commercialInvestmentProductInput.value = productCode
+    commercialInvestmentForm.querySelector('#commercial-investment-label').value =
+      bundle.label || product?.spec?.ui?.formTitle || product?.spec?.displayName || 'Investment'
+    commercialInvestmentForm.querySelector('#commercial-investment-category').value =
+      config.category || 'investment'
+    commercialInvestmentForm.querySelector('#commercial-investment-description').value =
+      config.description || ''
+
+    applyCommercialInvestmentProductUi(productCode)
+
+    if (productCode === 'bmap') {
+      commercialInvestmentForm.querySelector('#bmap-principal').value =
+        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+      commercialInvestmentForm.querySelector('#bmap-dkj-base-yield-pct').value =
+        config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
+      commercialInvestmentForm.querySelector('#bmap-interest-premium-pct').value =
+        config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
+      commercialInvestmentForm.querySelector('#bmap-start-date').value = config.startDate || ''
+      commercialInvestmentForm.querySelector('#bmap-purchase-date').value = config.purchaseDate || ''
+      commercialInvestmentForm.querySelector('#bmap-issue-date').value = config.issueDate || ''
+      commercialInvestmentForm.querySelector('#bmap-first-coupon-date').value =
+        config.firstCouponDate || ''
+    } else if (productCode === 'dkj') {
+      commercialInvestmentForm.querySelector('#dkj-face-value').value =
+        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+      commercialInvestmentForm.querySelector('#dkj-purchase-price-pct').value =
+        config.purchasePricePct !== undefined
+          ? String(config.purchasePricePct)
+          : config.purchasePrice !== undefined && config.principal
+            ? String((Number(config.purchasePrice) / Number(config.principal)) * 100)
+            : ''
+      commercialInvestmentForm.querySelector('#dkj-term-months').value =
+        config.termMonths !== undefined ? String(config.termMonths) : '12'
+      commercialInvestmentForm.querySelector('#dkj-settlement-date').value =
+        config.transactionDate || config.purchaseDate || config.settlementDate || ''
+      commercialInvestmentForm.querySelector('#dkj-maturity-date').value =
+        config.dueDate || config.maturityDate || ''
+      commercialInvestmentForm.querySelector('#dkj-remaining-days').value =
+        config.remainingDays !== undefined ? String(config.remainingDays) : ''
+    } else if (productCode === 'pmap') {
+      commercialInvestmentForm.querySelector('#pmap-principal').value =
+        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+      commercialInvestmentForm.querySelector('#pmap-interest-premium-pct').value =
+        config.interestPremiumPct !== undefined
+          ? String(config.interestPremiumPct)
+          : config.spreadRate !== undefined
+            ? String(Number(config.spreadRate) * 100)
+            : ''
+      commercialInvestmentForm.querySelector('#pmap-previous-year-inflation-pct').value =
+        config.previousYearAverageInflationPct !== undefined
+          ? String(config.previousYearAverageInflationPct)
+          : ''
+      commercialInvestmentForm.querySelector('#pmap-start-date').value =
+        config.startDate || config.issueDate || ''
+      commercialInvestmentForm.querySelector('#pmap-purchase-date').value =
+        config.purchaseDate || config.transactionDate || ''
+      commercialInvestmentForm.querySelector('#pmap-issue-date').value = config.issueDate || ''
+      commercialInvestmentForm.querySelector('#pmap-first-coupon-date').value =
+        config.firstCouponDate || config.couponPeriod || ''
+    }
+
+    commercialInvestmentSubmitButton.textContent = 'Save Commercial Investment'
+    commercialInvestmentCancelButton.hidden = false
+    syncCommercialInvestmentPreview()
+    openComposerBox('commercial-investment')
+  }
+
+  function startInvestmentEdit(id) {
+    const bundle = instrumentBundles.find(
+      (entry) => entry.id === id && entry.instrumentType === 'investment'
+    )
+    if (!bundle) {
+      return
+    }
+
+    if (resolveCommercialInvestmentProductCode(bundle)) {
+      startCommercialInvestmentEdit(id)
+      return
+    }
+
+    const config = bundle.config || {}
+    const subtypeFromConfig = config.subtype || 'regular-bond'
     editingInvestmentId = id
     investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
     investmentForm.querySelector('#investment-subtype').value = subtypeFromConfig
     investmentForm.querySelector('#investment-category').value = config.category || 'investment'
     investmentForm.querySelector('#investment-description').value = config.description || ''
 
-    if (subtypeFromConfig === 'bmap') {
-      investmentForm.querySelector('#bmap-principal').value =
-        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-      investmentForm.querySelector('#bmap-dkj-base-yield-pct').value =
-        config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
-      investmentForm.querySelector('#bmap-interest-premium-pct').value =
-        config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
-      investmentForm.querySelector('#bmap-start-date').value = config.startDate || ''
-      investmentForm.querySelector('#bmap-purchase-date').value = config.purchaseDate || ''
-      investmentForm.querySelector('#bmap-issue-date').value = config.issueDate || ''
-      investmentForm.querySelector('#bmap-first-coupon-date').value = config.firstCouponDate || ''
-    } else if (subtypeFromConfig === 'dkj') {
-      investmentForm.querySelector('#dkj-face-value').value =
-        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-      investmentForm.querySelector('#dkj-purchase-price-pct').value =
-        config.purchasePricePct !== undefined
-          ? String(config.purchasePricePct)
-          : config.purchasePrice !== undefined && config.principal
-            ? String((Number(config.purchasePrice) / Number(config.principal)) * 100)
-            : ''
-      investmentForm.querySelector('#dkj-term-months').value =
-        config.termMonths !== undefined ? String(config.termMonths) : '12'
-      investmentForm.querySelector('#dkj-settlement-date').value =
-        config.transactionDate || config.purchaseDate || config.settlementDate || ''
-      investmentForm.querySelector('#dkj-maturity-date').value =
-        config.dueDate || config.maturityDate || ''
-      investmentForm.querySelector('#dkj-remaining-days').value =
-        config.remainingDays !== undefined ? String(config.remainingDays) : ''
-    } else if (subtypeFromConfig === 'pmap') {
-      investmentForm.querySelector('#pmap-principal').value =
-        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-      investmentForm.querySelector('#pmap-interest-premium-pct').value =
-        config.interestPremiumPct !== undefined
-          ? String(config.interestPremiumPct)
-          : config.spreadRate !== undefined
-            ? String(Number(config.spreadRate) * 100)
-            : ''
-      investmentForm.querySelector('#pmap-previous-year-inflation-pct').value =
-        config.previousYearAverageInflationPct !== undefined
-          ? String(config.previousYearAverageInflationPct)
-          : ''
-      investmentForm.querySelector('#pmap-start-date').value =
-        config.startDate || config.issueDate || ''
-      investmentForm.querySelector('#pmap-purchase-date').value =
-        config.purchaseDate || config.transactionDate || ''
-      investmentForm.querySelector('#pmap-issue-date').value = config.issueDate || ''
-      investmentForm.querySelector('#pmap-first-coupon-date').value =
-        config.firstCouponDate || config.couponPeriod || ''
-    } else {
-      investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
-      investmentForm.querySelector('#investment-transaction-date').value =
-        config.transactionDate || config.purchaseDate || ''
-      investmentForm.querySelector('#investment-due-date').value =
-        config.dueDate || config.maturityDate || ''
-      investmentForm.querySelector('#investment-principal').value =
-        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-      investmentForm.querySelector('#investment-purchase-price').value =
-        config.purchasePrice !== undefined ? formatMoneyAmount(config.purchasePrice) : ''
-      investmentForm.querySelector('#investment-annual-rate').value =
-        config.annualRate !== undefined ? String(config.annualRate) : ''
-      investmentForm.querySelector('#investment-spread-rate').value =
-        config.spreadRate !== undefined ? String(config.spreadRate) : ''
-      investmentForm.querySelector('#investment-yearly-inflation').value =
-        config.yearlyInflationRaw ||
-        (Array.isArray(config.yearlyInflation)
-          ? config.yearlyInflation.map((entry) => `${entry.year}:${entry.rate}`).join(', ')
-          : '')
-      investmentForm.querySelector('#investment-coupon-period').value = config.couponPeriod || ''
-      investmentForm.querySelector('#investment-sale-date').value = config.saleDate || ''
-      investmentForm.querySelector('#investment-sale-value').value =
-        config.saleValue !== undefined ? formatMoneyAmount(config.saleValue) : ''
-    }
+    investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
+    investmentForm.querySelector('#investment-transaction-date').value =
+      config.transactionDate || config.purchaseDate || ''
+    investmentForm.querySelector('#investment-due-date').value =
+      config.dueDate || config.maturityDate || ''
+    investmentForm.querySelector('#investment-principal').value =
+      config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+    investmentForm.querySelector('#investment-purchase-price').value =
+      config.purchasePrice !== undefined ? formatMoneyAmount(config.purchasePrice) : ''
+    investmentForm.querySelector('#investment-annual-rate').value =
+      config.annualRate !== undefined ? String(config.annualRate) : ''
+    investmentForm.querySelector('#investment-spread-rate').value =
+      config.spreadRate !== undefined ? String(config.spreadRate) : ''
+    investmentForm.querySelector('#investment-yearly-inflation').value =
+      config.yearlyInflationRaw ||
+      (Array.isArray(config.yearlyInflation)
+        ? config.yearlyInflation.map((entry) => `${entry.year}:${entry.rate}`).join(', ')
+        : '')
+    investmentForm.querySelector('#investment-coupon-period').value = config.couponPeriod || ''
+    investmentForm.querySelector('#investment-sale-date').value = config.saleDate || ''
+    investmentForm.querySelector('#investment-sale-value').value =
+      config.saleValue !== undefined ? formatMoneyAmount(config.saleValue) : ''
 
     investmentSubmitButton.textContent = 'Save Investment Instrument'
     investmentCancelButton.hidden = false
@@ -1409,6 +1598,7 @@ function initController() {
         resetLoanForm()
         resetCommercialLoanForm()
         resetInvestmentForm()
+        resetCommercialInvestmentForm()
         collapseComposerBoxes({ notify: false })
         shell.enterTypePicker()
         updateComposeTitle(null, true)
@@ -1422,6 +1612,7 @@ function initController() {
       resetLoanForm()
       resetCommercialLoanForm()
       resetInvestmentForm()
+      resetCommercialInvestmentForm()
       collapseComposerBoxes({ notify: false })
       shell.exitCompose()
     })
@@ -1433,23 +1624,25 @@ function initController() {
     })
   }
 
-  ;[loanForm, investmentForm, commercialLoanForm].filter(Boolean).forEach((form) => {
-    form.querySelectorAll('[data-help-button]').forEach((button) => {
-      button.addEventListener('click', () => {
-        toggleInvestmentInfoPopup(button)
+  ;[loanForm, investmentForm, commercialLoanForm, commercialInvestmentForm]
+    .filter(Boolean)
+    .forEach((form) => {
+      form.querySelectorAll('[data-help-button]').forEach((button) => {
+        button.addEventListener('click', () => {
+          toggleInvestmentInfoPopup(button)
+        })
+      })
+      form.querySelectorAll('[data-help-close]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const helpId = button.getAttribute('data-help-close')
+          const helpNode = helpId ? document.getElementById(helpId) : null
+          if (helpNode) {
+            helpNode.hidden = true
+          }
+          closeInvestmentInfoPopup()
+        })
       })
     })
-    form.querySelectorAll('[data-help-close]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const helpId = button.getAttribute('data-help-close')
-        const helpNode = helpId ? document.getElementById(helpId) : null
-        if (helpNode) {
-          helpNode.hidden = true
-        }
-        closeInvestmentInfoPopup()
-      })
-    })
-  })
 
   bindMoneyAmountInputs(document)
 
@@ -1494,6 +1687,12 @@ function initController() {
       syncInvestmentPreview()
     })
   }
+  if (commercialInvestmentProductInput) {
+    commercialInvestmentProductInput.addEventListener('change', () => {
+      applyCommercialInvestmentProductUi(commercialInvestmentProductInput.value)
+      syncCommercialInvestmentPreview()
+    })
+  }
 
   bindLoanPreviewEvents({
     principalInput: loanPrincipalInput,
@@ -1531,15 +1730,18 @@ function initController() {
     })
   }
   investmentPreviewController.bindEvents()
+  commercialInvestmentPreviewController.bindEvents()
 
   applySalaryModeVisibility(
     salaryScheduleModeInput ? salaryScheduleModeInput.value : 'custom-monthly-working-day'
   )
   applyInvestmentSubtypeUi(investmentSubtypeInput ? investmentSubtypeInput.value : 'regular-bond')
+  applyCommercialInvestmentProductUi()
   syncCommercialLoanProductUi({ forceDefaults: true })
   syncLoanPreview()
   syncCommercialLoanPreview()
   syncInvestmentPreview()
+  syncCommercialInvestmentPreview()
 
   const defaultRange = suggestRange([
     ...oneTimeFlows.map((entry) => ({ date: entry.date })),
@@ -1704,6 +1906,10 @@ function initController() {
 
         if (editingInvestmentId === id) {
           resetInvestmentForm()
+        }
+
+        if (editingCommercialInvestmentId === id) {
+          resetCommercialInvestmentForm()
         }
 
         resetRangeIfEmpty()
@@ -1978,6 +2184,13 @@ function initController() {
     collapseComposerBoxes()
   })
 
+  if (commercialInvestmentCancelButton) {
+    commercialInvestmentCancelButton.addEventListener('click', () => {
+      resetCommercialInvestmentForm()
+      collapseComposerBoxes()
+    })
+  }
+
   loanForm.addEventListener('submit', (event) => {
     event.preventDefault()
 
@@ -2114,7 +2327,7 @@ function initController() {
     })
   }
 
-  function persistInvestmentBundle(bundle) {
+  function persistInvestmentBundle(bundle, { commercial = false } = {}) {
     if (!bundle || !bundle.generatedFlows || !bundle.generatedFlows.length) {
       throw new Error('Investment inputs did not produce any cash flows. Check required dates and amounts.')
     }
@@ -2128,10 +2341,16 @@ function initController() {
     startInput.value = updatedRange.startDate
     endInput.value = updatedRange.endDate
 
-    clearInvestmentFormErrors()
-    resetInvestmentForm()
+    if (commercial) {
+      clearCommercialInvestmentFormErrors()
+      resetCommercialInvestmentForm()
+      notifySaved('Commercial investment saved.')
+    } else {
+      clearInvestmentFormErrors()
+      resetInvestmentForm()
+      notifySaved('Investment instrument saved.')
+    }
     collapseComposerBoxes()
-    notifySaved('Investment instrument saved.')
     rerender()
   }
 
@@ -2150,46 +2369,6 @@ function initController() {
         createdAt: editingInvestmentId
           ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
           : undefined
-      }
-
-      if (subtype === 'bmap') {
-        const specInputs = mapFormDataToBmapSpecInputs(formData)
-        const bundle = generateBmapInstrumentBundleFromSpecInputs(
-          specInputs,
-          {
-            ...meta,
-            label: meta.label || BMAP_PRODUCT_SPEC.ui.formTitle
-          },
-          { createInvestmentMaturityPreview }
-        )
-        persistInvestmentBundle(bundle)
-        return
-      }
-
-      if (subtype === 'dkj') {
-        const specInputs = mapFormDataToDkjSpecInputs(formData)
-        calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
-        const bundle = generateInvestmentInstrumentBundle(
-          mapDkjSpecInputsToInvestmentBundleInput(specInputs, {
-            ...meta,
-            label: meta.label || DKJ_PRODUCT_SPEC.ui.formTitle
-          })
-        )
-        persistInvestmentBundle(bundle)
-        return
-      }
-
-      if (subtype === 'pmap') {
-        const specInputs = mapFormDataToPmapSpecInputs(formData)
-        calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
-        const bundle = generateInvestmentInstrumentBundle(
-          mapPmapSpecInputsToInvestmentBundleInput(specInputs, {
-            ...meta,
-            label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
-          })
-        )
-        persistInvestmentBundle(bundle)
-        return
       }
 
       const rawTransactionDate = String(formData.get('transactionDate') || '').trim()
@@ -2223,6 +2402,72 @@ function initController() {
       reportInvestmentFormError(message)
     }
   })
+
+  if (commercialInvestmentForm) {
+    commercialInvestmentForm.addEventListener('submit', (event) => {
+      event.preventDefault()
+      clearCommercialInvestmentFormErrors()
+
+      try {
+        const formData = new FormData(commercialInvestmentForm)
+        const productCode = String(formData.get('productCode') || '').trim()
+        const product = findCommercialInvestmentProduct(productCode)
+        if (!product) {
+          throw new Error('Select a commercial treasury investment product.')
+        }
+
+        const meta = {
+          id: editingCommercialInvestmentId || undefined,
+          label: String(formData.get('label') || '').trim(),
+          category: String(formData.get('category') || '').trim() || 'investment',
+          description: String(formData.get('description') || '').trim() || undefined,
+          createdAt: editingCommercialInvestmentId
+            ? instrumentBundles.find((entry) => entry.id === editingCommercialInvestmentId)
+                ?.createdAt
+            : undefined
+        }
+
+        let bundle
+        if (productCode === 'bmap') {
+          const specInputs = mapFormDataToBmapSpecInputs(formData)
+          bundle = generateBmapInstrumentBundleFromSpecInputs(
+            specInputs,
+            {
+              ...meta,
+              label: meta.label || BMAP_PRODUCT_SPEC.ui.formTitle
+            },
+            { createInvestmentMaturityPreview }
+          )
+        } else if (productCode === 'dkj') {
+          const specInputs = mapFormDataToDkjSpecInputs(formData)
+          calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+          bundle = generateInvestmentInstrumentBundle(
+            mapDkjSpecInputsToInvestmentBundleInput(specInputs, {
+              ...meta,
+              label: meta.label || DKJ_PRODUCT_SPEC.ui.formTitle
+            })
+          )
+        } else if (productCode === 'pmap') {
+          const specInputs = mapFormDataToPmapSpecInputs(formData)
+          calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+          bundle = generateInvestmentInstrumentBundle(
+            mapPmapSpecInputsToInvestmentBundleInput(specInputs, {
+              ...meta,
+              label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
+            })
+          )
+        } else {
+          throw new Error(`Unsupported commercial investment product: ${productCode}`)
+        }
+
+        persistInvestmentBundle(bundle, { commercial: true })
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to save commercial investment.'
+        reportCommercialInvestmentFormError(message)
+      }
+    })
+  }
 
   startInput.addEventListener('change', rerender)
   endInput.addEventListener('change', rerender)

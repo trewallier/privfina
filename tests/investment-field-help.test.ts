@@ -15,17 +15,18 @@ function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
 }
 
-function extractInvestmentFormHtml(indexHtml: string): string {
-  const match = indexHtml.match(/<form id="investment-form">[\s\S]*?<\/form>/)
+function extractFormHtml(indexHtml: string, formId: string): string {
+  const match = indexHtml.match(new RegExp(`<form id="${formId}">[\\s\\S]*?<\\/form>`))
   if (!match) {
-    throw new Error('investment-form not found in index.html')
+    throw new Error(`${formId} not found in index.html`)
   }
   return match[0]
 }
 
 describe('investment field help and dedicated hosts', () => {
   const indexHtml = readRepoFile('public/index.html')
-  const formHtml = extractInvestmentFormHtml(indexHtml)
+  const simplifiedFormHtml = extractFormHtml(indexHtml, 'investment-form')
+  const commercialFormHtml = extractFormHtml(indexHtml, 'commercial-investment-form')
 
   it('keeps DKJ/BMAP/PMAP help copy aligned with YAML descriptions', () => {
     const dkj = YAML.parse(
@@ -49,26 +50,48 @@ describe('investment field help and dedicated hosts', () => {
     }
   })
 
-  it('exposes dedicated DKJ/PMAP/BMAP hosts and form-local status in the investment form', () => {
-    expect(formHtml).toContain('id="investment-dkj-wrap"')
-    expect(formHtml).toContain('id="investment-pmap-wrap"')
-    expect(formHtml).toContain('id="investment-bmap-wrap"')
-    expect(formHtml).toContain('id="investment-form-status"')
-    expect(formHtml).toContain('id="dkj-face-value"')
-    expect(formHtml).toContain('id="pmap-previous-year-inflation-pct"')
-    expect(formHtml).toContain('id="investment-maturity-preview-help"')
-    expect(formHtml).toContain('data-help-button="investment-category-help"')
+  it('keeps generic bond subtypes on the simplified investment form', () => {
+    expect(simplifiedFormHtml).toContain('id="investment-subtype"')
+    expect(simplifiedFormHtml).toContain('value="regular-bond"')
+    expect(simplifiedFormHtml).toContain('value="discount-bond"')
+    expect(simplifiedFormHtml).toContain('value="inflation-linked-bond"')
+    expect(simplifiedFormHtml).toContain('value="custom-bond"')
+    expect(simplifiedFormHtml).not.toContain('id="investment-dkj-wrap"')
+    expect(simplifiedFormHtml).not.toContain('id="investment-pmap-wrap"')
+    expect(simplifiedFormHtml).not.toContain('id="investment-bmap-wrap"')
+    expect(simplifiedFormHtml).toContain('id="investment-form-status"')
+    expect(simplifiedFormHtml).toContain('data-help-button="investment-category-help"')
   })
 
-  it('keeps adapter input ids present in the investment form markup', () => {
+  it('hosts DKJ/PMAP/BMAP on the commercial investment form', () => {
+    expect(commercialFormHtml).toContain('id="commercial-investment-product"')
+    expect(commercialFormHtml).toContain('id="commercial-investment-readiness-hint"')
+    expect(commercialFormHtml).toContain('id="investment-dkj-wrap"')
+    expect(commercialFormHtml).toContain('id="investment-pmap-wrap"')
+    expect(commercialFormHtml).toContain('id="investment-bmap-wrap"')
+    expect(commercialFormHtml).toContain('id="commercial-investment-form-status"')
+    expect(commercialFormHtml).toContain('id="dkj-face-value"')
+    expect(commercialFormHtml).toContain('id="pmap-previous-year-inflation-pct"')
+    expect(commercialFormHtml).toContain('id="commercial-investment-maturity-preview-help"')
+  })
+
+  it('keeps adapter input ids present in the commercial investment form markup', () => {
     for (const adapter of Object.values(DKJ_FRONTEND_FIELD_ADAPTER)) {
-      expect(formHtml).toContain(`id="${adapter.inputId}"`)
+      expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
     }
     for (const adapter of Object.values(PMAP_FRONTEND_FIELD_ADAPTER)) {
-      expect(formHtml).toContain(`id="${adapter.inputId}"`)
+      expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
     }
     for (const adapter of Object.values(BMAP_FRONTEND_FIELD_ADAPTER)) {
-      expect(formHtml).toContain(`id="${adapter.inputId}"`)
+      expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
     }
+  })
+
+  it('exposes both simplified and commercial investment entry points in the shell', () => {
+    expect(indexHtml).toContain('id="open-investment-box"')
+    expect(indexHtml).toContain('id="open-commercial-investment-box"')
+    expect(indexHtml).toContain('data-add-type="investment"')
+    expect(indexHtml).toContain('data-add-type="commercial-investment"')
+    expect(indexHtml).toContain('id="commercial-investment-box"')
   })
 })

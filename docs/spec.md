@@ -32,8 +32,10 @@ Scenarios / Use-cases
 - Simplified loan variants: users can choose between the example fixed-rate loan and the example fixed-rate mortgage on one simplified loan composer (shared annuity math).
 - Commercial loan composer: users open a separate commercial-loan box, pick a public-offering mortgage product (investment-style picker), and configure a customer-perspective repayment schedule.
 - Loan product readiness (ADR 0023 / 0026): schedule-usable means customer cash flows on the chart; commercially-usable additionally requires fees/THM/purpose UX and, for public offerings, all three ADR 0024 checks green (no dual-lane display).
-- Investment instrument setup: users can configure regular bond, discount bond, and inflation-linked bond variants with finite maturity outputs.
-- Investment subtype UX: users can clearly see and switch a prominent investment subtype selector, and the form adapts visible and editable fields to the selected subtype.
+- Simplified investment instrument setup: users can configure regular bond, discount bond, inflation-linked bond, and custom bond variants with finite maturity outputs (pedagogical / instrument-mode; not ÁKK catalog products).
+- Commercial investment composer: users open a separate commercial-investment box, pick an ÁKK / Hungarian State Treasury `government-security` product (DKJ, PMÁP, BMÁP), and configure catalog-backed cash flows with readiness status visible for the selected offering (ADR 0027).
+- Government-security product readiness (ADR 0027): same catalog ladder as loans; commercially-usable means commercial composer UX + offering-faithful numbers (no loan THM three-check). New treasury products land on the commercial picker, not the simplified subtype list.
+- Investment subtype UX: users can clearly see and switch a prominent simplified-bond subtype selector, and the form adapts visible and editable fields to the selected subtype.
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
 - Inflation-linked bond setup: users must provide issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period; payment schedule and accrual rates are derived fields.
 - Investment field guidance UX: users can open and close inline definition bubbles from input-title info icons.
@@ -108,6 +110,10 @@ Acceptance criteria
 - [x] Investment input labels provide clickable info icons that open and close inline definition help bubbles.
 - [x] Investment composer marks required, optional, and calculated fields, and shows form-local validation when save/preview fails (not only the distant storage status).
 - [x] Catalog investment products (DKJ, PMÁP, BMÁP) render dedicated hosts whose field names/types/help match product-spec YAML (no semantic remapping onto unrelated generic controls).
+- [x] Simplified investment composer lists only generic bond subtypes; ÁKK / government-security products are absent from that subtype picker (ADR 0027 / ROADMAP §5d).
+- [x] Commercial investment composer box exists with a treasury product picker over catalog `government-security` codes (DKJ, PMÁP, BMÁP) and shows a readiness hint for the selected product.
+- [x] Editing a catalog-backed investment bundle opens the commercial investment composer; editing a generic bond opens the simplified investment composer.
+- [x] ADR 0027 records government-security readiness meanings and the commercial vs simplified investment composer split (loan THM three-check does not apply).
 - [x] Commercial loan inputs and preview outputs provide clickable info icons with help copy aligned to product-spec field descriptions.
 - [x] Money amount boxes display large values with space-grouped thousands (for example `5 000`, `1 000 000`).
 - [x] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.

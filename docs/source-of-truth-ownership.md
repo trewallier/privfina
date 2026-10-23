@@ -64,11 +64,11 @@
 
 Catalog statuses in [`PRODUCT_CATALOG.md`](product-specs/PRODUCT_CATALOG.md) are authoritative. Snapshot after ROADMAP §5a/§5b:
 
-- **fully-spec-backed**: fixed-rate loan, DKJ, PMÁP, BMÁP (embedded form/adapter parity; dual TS/JS formula copies remain until ADR 0017 bundler).
-- **commercially-usable**: six Hirdetmény mortgage-loan products (checks 1–3 green + commercial composer UX; embedded `*-product-spec.js` modules still deferred → not yet fully-spec-backed).
+- **fully-spec-backed**: fixed-rate loan; DKJ, PMÁP, BMÁP on the **commercial investment** composer (embedded form/adapter parity; dual TS/JS formula copies remain until ADR 0017 bundler).
+- **commercially-usable**: six Hirdetmény mortgage-loan products (checks 1–3 green + commercial loan composer UX; embedded `*-product-spec.js` modules still deferred → not yet fully-spec-backed).
 - **schedule-usable**: fixed-rate mortgage (simplified loan composer); Vidéki Otthonfelújítási (packaging-quarantined; commercially-usable blocked until §6 reconciles).
 - **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion`.
-- **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders; generic bonds use a declarative presentation module (`public/controller/generic-bond-presentation.js`) instead of product YAML. Catalog government securities (DKJ/PMÁP/BMÁP) use dedicated form hosts + mirrored help (`investment-field-help.js`) aligned to YAML descriptions. Commercial loan UI metadata/fee blocks are hand-mirrored from YAML (migration scaffolding until fully-spec-backed).
+- **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders; generic bonds use a declarative presentation module (`public/controller/generic-bond-presentation.js`) on the **simplified investment** composer. Catalog government securities (DKJ/PMÁP/BMÁP) live on the **commercial investment** composer with dedicated hosts + mirrored help (`investment-field-help.js`) aligned to YAML (ADR 0027). Commercial loan UI metadata/fee blocks are hand-mirrored from YAML (migration scaffolding until fully-spec-backed).
 - **Known dual surface**: TypeScript engine primitives and `public/instruments.js` (plus `loan-fees.js` / `thm.js` / `eval-cache.js`) both host calculation code until a bundler lands (ADR 0017).
 - **Roadmap §3–§4 complete**. Open follow-ons: remaining §5 analytics / §5c deferred subsidy splits, §6 platform/bundler, §7 storage port—see [`ROADMAP.md`](../ROADMAP.md).
 - **Target state**: All products have explicit specs; code implements reusable primitives; UI derives metadata from specs; one browser calculation surface.
@@ -87,6 +87,7 @@ Catalog statuses in [`PRODUCT_CATALOG.md`](product-specs/PRODUCT_CATALOG.md) are
 - **ADR 0020**: Product Spec Schema v2—freezes v1; active contract is `v2alpha1` with expandable loan/mortgage identity and commercial constructs.
 - **ADR 0021**: Commercial mortgage calculation primitives (fees, subsidy customer-rate, monthly THM helper). Dual-lane *readiness/UI* posture for public offerings is superseded by ADR 0023 / 0025 / 0026.
 - **ADR 0023 / 0024 / 0026**: Loan readiness levels; commercially-usable for public offerings requires all three ADR 0024 checks.
+- **ADR 0027**: Government-security readiness + commercial investment composer (simplified vs treasury split; no loan THM three-check).
 - **docs/spec.md**: Living functional specification; describes v1 scenarios and assumptions.
 - **DESIGN.md**: Architectural rationale and domain concepts; does not enumerate all product details (those live in specs).
 - **docs/product-specs/README.md**: Folder conventions and usage.

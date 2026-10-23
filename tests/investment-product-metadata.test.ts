@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildSpecBackedInvestmentSubtypeOptions,
-  buildSpecBackedInvestmentSubtypeUiConfig
+  buildCommercialInvestmentProductOptions,
+  buildSpecBackedInvestmentSubtypeUiConfig,
+  resolveCommercialInvestmentReadinessHint,
+  findCommercialInvestmentProduct
 } from '../public/controller/investment-product-metadata.js'
 import { buildGenericBondSubtypeUiConfig } from '../public/controller/generic-bond-presentation.js'
 import { BMAP_PRODUCT_SPEC } from '../public/controller/bmap-form.js'
@@ -12,9 +14,9 @@ function inputByName(spec: any, inputName: string) {
   return spec.inputs.find((entry: any) => entry.name === inputName)
 }
 
-describe('spec-backed investment metadata helper', () => {
-  it('builds BMAP, DKJ, and PMAP subtype option labels from spec metadata', () => {
-    const options = buildSpecBackedInvestmentSubtypeOptions()
+describe('commercial investment product metadata (ADR 0027)', () => {
+  it('builds BMAP, DKJ, and PMAP commercial product options from spec metadata', () => {
+    const options = buildCommercialInvestmentProductOptions()
     const optionByValue = new Map(options.map((entry) => [entry.value, entry]))
 
     expect(optionByValue.get('bmap')?.label).toBe(BMAP_PRODUCT_SPEC.ui.formTitle)
@@ -23,6 +25,23 @@ describe('spec-backed investment metadata helper', () => {
     expect(optionByValue.get('bmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('dkj')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
+    expect(options.every((entry) => entry.available)).toBe(true)
+  })
+
+  it('resolves readiness hints for government-security ladder statuses', () => {
+    expect(resolveCommercialInvestmentReadinessHint('fully-spec-backed')).toMatch(/fully-spec-backed/)
+    expect(resolveCommercialInvestmentReadinessHint('commercially-usable')).toMatch(
+      /commercially-usable/
+    )
+    expect(resolveCommercialInvestmentReadinessHint('schedule-usable')).toMatch(/schedule-usable/)
+    expect(resolveCommercialInvestmentReadinessHint('spec-only')).toMatch(/spec-only/)
+  })
+
+  it('finds commercial products by treasury product code', () => {
+    expect(findCommercialInvestmentProduct('dkj')?.spec.id).toBe(DKJ_PRODUCT_SPEC.id)
+    expect(findCommercialInvestmentProduct('pmap')?.spec.id).toBe(PMAP_PRODUCT_SPEC.id)
+    expect(findCommercialInvestmentProduct('bmap')?.spec.id).toBe(BMAP_PRODUCT_SPEC.id)
+    expect(findCommercialInvestmentProduct('regular-bond')).toBeNull()
   })
 
   it('marks catalog products as dedicated-host presentations', () => {

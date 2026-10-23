@@ -25,6 +25,70 @@ const FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER = {
   }
 }
 
+const FIXED_RATE_LOAN_OUTPUT_FIELD_ADAPTER = {
+  monthlyPayment: {
+    inputId: 'loan-monthly-preview',
+    label: 'Monthly repayment preview',
+    description: 'Estimated constant monthly payment after any grace period.'
+  },
+  totalPaid: {
+    inputId: 'loan-total-repayment-preview',
+    label: 'Total repayment preview',
+    description: 'Estimated sum of all scheduled payments over the full term.'
+  },
+  totalInterest: {
+    inputId: 'loan-total-interest-preview',
+    label: 'Total interest preview',
+    description: 'Estimated total interest cost over the full term.'
+  }
+}
+
+/** UI-only shell fields (not product-spec inputs) that still need required/optional chrome. */
+const FIXED_RATE_LOAN_UI_FIELD_CHROME = [
+  {
+    inputId: 'loan-label',
+    label: 'Label',
+    required: false,
+    role: 'input',
+    description: 'Display name for this loan in the configured instruments list.'
+  },
+  {
+    inputId: 'loan-term-unit',
+    label: 'Term unit',
+    required: false,
+    role: 'input',
+    description: 'Whether the term value is measured in months or years.'
+  },
+  {
+    inputId: 'loan-repayment-day',
+    label: 'Repayment day of month',
+    required: false,
+    role: 'input',
+    description: 'Calendar day used for each scheduled monthly repayment.'
+  },
+  {
+    inputId: 'loan-category',
+    label: 'Category',
+    required: false,
+    role: 'input',
+    description: 'Optional tag for grouping this instrument in lists and reports.'
+  },
+  {
+    inputId: 'loan-description',
+    label: 'Description',
+    required: false,
+    role: 'input',
+    description: 'Optional free-text notes for this loan.'
+  },
+  {
+    inputId: 'loan-include-disbursement',
+    label: 'Account loan disbursement inflow',
+    required: false,
+    role: 'input',
+    description: 'When enabled, records the principal as an inflow on the start date.'
+  }
+]
+
 const FIXED_RATE_LOAN_CORE_FIELD_NAMES = [
   'principal',
   'annualInterestRatePct',
@@ -37,9 +101,9 @@ import {
   toInputType,
   applyNumericConstraints,
   orderedSpecFields,
-  ensureFieldLabelTitleElement,
   reorderFormRowBySpec
 } from './spec-form-utils.js'
+import { applyFieldChrome } from './field-chrome.js'
 import { parseMoneyAmount } from './money-format.js'
 
 function mapLoanTermValueToMonths(termValue, termUnit) {
@@ -99,13 +163,59 @@ function applyFixedRateLoanSpecToForm({ loanForm, loanBox }) {
 
     const label = input.closest('label')
     if (label) {
-      const titleElement = ensureFieldLabelTitleElement(label, 'loan-field-label')
-      titleElement.textContent = field.label
-      const infoChip = label.querySelector('[data-help-button]')
-      if (infoChip) {
-        infoChip.setAttribute('aria-label', `${field.label} help`)
-      }
+      applyFieldChrome(
+        label,
+        {
+          label: field.label,
+          description: field.description || '',
+          required: Boolean(field.required),
+          role: 'input',
+          helpId: `${adapter.inputId}-help`,
+          labelClassName: 'loan-field-label'
+        },
+        input
+      )
     }
+  })
+
+  FIXED_RATE_LOAN_UI_FIELD_CHROME.forEach((meta) => {
+    const input = loanForm.querySelector(`#${meta.inputId}`)
+    const label = input ? input.closest('label') : null
+    if (!label) {
+      return
+    }
+    applyFieldChrome(
+      label,
+      {
+        label: meta.label,
+        description: meta.description || '',
+        required: Boolean(meta.required),
+        role: meta.role || 'input',
+        helpId: `${meta.inputId}-help`,
+        labelClassName: 'loan-field-label'
+      },
+      input
+    )
+  })
+
+  Object.values(FIXED_RATE_LOAN_OUTPUT_FIELD_ADAPTER).forEach((meta) => {
+    const input = loanForm.querySelector(`#${meta.inputId}`)
+    const label = input ? input.closest('label') : null
+    if (!label) {
+      return
+    }
+    applyFieldChrome(
+      label,
+      {
+        label: meta.label,
+        description: meta.description || '',
+        required: false,
+        role: 'output',
+        helpId: `${meta.inputId}-help`,
+        labelClassName: 'loan-field-label'
+      },
+      input
+    )
   })
 
   if (loanBox) {
@@ -142,6 +252,8 @@ function mapFormDataToFixedRateLoanSpecInputs(formData) {
 export {
   FIXED_RATE_LOAN_PRODUCT_SPEC,
   FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER,
+  FIXED_RATE_LOAN_OUTPUT_FIELD_ADAPTER,
+  FIXED_RATE_LOAN_UI_FIELD_CHROME,
   FIXED_RATE_LOAN_CORE_FIELD_NAMES,
   applyFixedRateLoanSpecToForm,
   mapFormDataToFixedRateLoanSpecInputs,

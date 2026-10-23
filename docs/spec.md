@@ -40,6 +40,7 @@ Scenarios / Use-cases
 - Inflation-linked bond setup: users must provide issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period; payment schedule and accrual rates are derived fields.
 - Investment field guidance UX: users can open and close inline definition bubbles from input-title info icons.
 - Commercial loan field guidance UX: commercial loan inputs and preview outputs expose the same info-icon pattern, with help copy aligned to product-spec field descriptions.
+- Field chrome consistency UX: info icons over input/output labels share one fixed size site-wide; simplified and commercial loan composers mark required / optional / calculated fields the same way as investments.
 - Money amount display UX: money amount inputs, previews, configured-list amounts, and chart axis labels group thousands with spaces (for example `5 000`, `1 000 000`).
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
@@ -115,6 +116,8 @@ Acceptance criteria
 - [x] Editing a catalog-backed investment bundle opens the commercial investment composer; editing a generic bond opens the simplified investment composer.
 - [x] ADR 0027 records government-security readiness meanings and the commercial vs simplified investment composer split (loan THM three-check does not apply).
 - [x] Commercial loan inputs and preview outputs provide clickable info icons with help copy aligned to product-spec field descriptions.
+- [x] Info icons over field labels use one fixed chip size (`--info-chip-size` / `INFO_CHIP_SIZE_PX`) that overrides generic button padding so chips cannot render narrower than peers (verified in `tests/field-chrome-consistency.test.ts`).
+- [x] Simplified and commercial loan composers mark required, optional, and calculated fields with the same shared field-chrome markers as investments.
 - [x] Money amount boxes display large values with space-grouped thousands (for example `5 000`, `1 000 000`).
 - [x] Inflation-linked bond instrument requires issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period.
 - [x] Inflation-linked bond instrument derives annual maturity payment dates, effective annual rate, and accrual date markers using the canonical definitions in `DESIGN.md`.

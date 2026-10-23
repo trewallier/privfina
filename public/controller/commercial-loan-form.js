@@ -3,7 +3,10 @@ import {
   purposeOptionLabel
 } from './commercial-loan-product-metadata.js'
 import { getCommercialLoanCommercialBlocks } from './commercial-loan-commercial-blocks.js'
-import { applyCommercialLoanFieldHelpToForm } from './commercial-loan-field-help.js'
+import {
+  applyCommercialLoanFieldChrome,
+  applyCommercialLoanFieldHelpToForm
+} from './commercial-loan-field-help.js'
 import { parseMoneyAmount } from './money-format.js'
 
 function readCheckedNames(formData, fieldName) {
@@ -237,6 +240,7 @@ function applyCommercialLoanProductSelection({
 
   applyCommercialLoanProductDefaults({ form, product })
   applyCommercialLoanFieldHelpToForm(form, product.productCode)
+  applyCommercialLoanFieldChrome(form, product)
   renderCommercialLoanHints({
     product,
     eligibilityElement,

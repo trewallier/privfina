@@ -75,6 +75,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Commercial loan composer box + investment-style product picker for the seven Hirdetmény `mortgage-loan` codes.
 - [x] Schedule-usable wiring per commercial product: form → customer-rate schedule → preview → persist bundle with `productId` / `productSpecVersion`; purpose/eligibility/discount as hints.
 - [x] Promote catalog rows to `schedule-usable` when the above path works (Vidéki schedule-usable with commercially-usable still blocked until offering reconciliation + THM match).
+- [x] Loan field chrome parity: simplified + commercial loan composers mark required/optional/calculated like investments; site-wide info-chip size locked (`--info-chip-size` / `INFO_CHIP_SIZE_PX`).
 
 #### 5b) Loan products — commercially-usable (offering fidelity)
 Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until **all three ADR 0024 checks** are green (engine installment at stated rate; THM from offering numbers; THM from engine payments + fee package). Closing check 1 alone does not always close check 3 — fee-package fidelity remains an independent gate (csok-plusz). Simplified examples stay on annuity primitives.

@@ -2,7 +2,10 @@
  * Input/output field help copy for the commercial loan composer.
  * Descriptions are mirrored from docs/product-specs/products/loans/<code>/product.yaml
  * (inputs[].description / outputs[].description). Fee-package preview is UI-only.
+ * Also applies shared required/optional/calculated field chrome (same as investments).
  */
+
+import { applyFieldChrome } from './field-chrome.js'
 
 const SHARED_UI_FIELD_HELP = {
   label: 'Display name for this commercial loan in the configured instruments list.',
@@ -105,12 +108,172 @@ const COMMERCIAL_LOAN_HELP_FIELD_BY_ID = {
   'commercial-loan-thm-preview-help': 'thmPct'
 }
 
+/**
+ * Presentation chrome for commercial loan controls.
+ * `required` may be a boolean or a function(product) → boolean.
+ */
+const COMMERCIAL_LOAN_FIELD_CHROME = [
+  {
+    inputId: 'commercial-loan-product',
+    fieldName: 'productCode',
+    label: 'Mortgage product',
+    required: true,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-label',
+    fieldName: 'label',
+    label: 'Label',
+    required: false,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-start-date',
+    fieldName: 'startDate',
+    label: 'Start date',
+    required: true,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-principal',
+    fieldName: 'principal',
+    label: 'Principal',
+    required: true,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-annual-rate',
+    fieldName: 'annualInterestRatePct',
+    label: 'Customer annual rate (%)',
+    required: true,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-term-months',
+    fieldName: 'termMonths',
+    label: 'Term (months)',
+    required: true,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-grace-period-months',
+    fieldName: 'gracePeriodMonths',
+    label: 'Grace period (months)',
+    required: (product) => Boolean(product?.graceRequired),
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-purpose',
+    fieldName: 'loanPurpose',
+    label: 'Loan purpose',
+    required: false,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-repayment-day',
+    fieldName: 'repaymentDayOfMonth',
+    label: 'Repayment day of month',
+    required: false,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-category',
+    fieldName: 'category',
+    label: 'Category',
+    required: false,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-description',
+    fieldName: 'description',
+    label: 'Description',
+    required: false,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-include-disbursement',
+    fieldName: 'includeDisbursement',
+    label: 'Account loan disbursement inflow',
+    required: false,
+    role: 'input'
+  },
+  {
+    inputId: 'commercial-loan-monthly-preview',
+    fieldName: 'monthlyPayment',
+    label: 'Monthly repayment preview',
+    required: false,
+    role: 'output'
+  },
+  {
+    inputId: 'commercial-loan-total-repayment-preview',
+    fieldName: 'totalPaid',
+    label: 'Total repayment preview',
+    required: false,
+    role: 'output'
+  },
+  {
+    inputId: 'commercial-loan-total-interest-preview',
+    fieldName: 'totalInterest',
+    label: 'Total interest preview',
+    required: false,
+    role: 'output'
+  },
+  {
+    inputId: 'commercial-loan-fees-preview',
+    fieldName: 'totalCreditCostFees',
+    label: 'Fee package preview',
+    required: false,
+    role: 'output'
+  },
+  {
+    inputId: 'commercial-loan-thm-preview',
+    fieldName: 'thmPct',
+    label: 'THM preview',
+    required: false,
+    role: 'output'
+  }
+]
+
 function getCommercialLoanFieldHelp(productCode) {
   const specHelp = PRODUCT_SPEC_FIELD_HELP[productCode] || DEFAULT_SPEC_FIELD_HELP
   return {
     ...SHARED_UI_FIELD_HELP,
     ...specHelp
   }
+}
+
+function resolveCommercialLoanFieldRequired(meta, product) {
+  if (typeof meta.required === 'function') {
+    return Boolean(meta.required(product))
+  }
+  return Boolean(meta.required)
+}
+
+function applyCommercialLoanFieldChrome(form, product) {
+  if (!form) {
+    return
+  }
+
+  const helpByField = getCommercialLoanFieldHelp(product?.productCode)
+  COMMERCIAL_LOAN_FIELD_CHROME.forEach((meta) => {
+    const input = form.querySelector(`#${meta.inputId}`)
+    const label = input ? input.closest('label') : null
+    if (!label) {
+      return
+    }
+    applyFieldChrome(
+      label,
+      {
+        label: meta.label,
+        description: helpByField[meta.fieldName] || '',
+        required: resolveCommercialLoanFieldRequired(meta, product),
+        role: meta.role || 'input',
+        helpId: `${meta.inputId}-help`,
+        labelClassName: 'commercial-loan-field-label'
+      },
+      input
+    )
+  })
 }
 
 function applyCommercialLoanFieldHelpToForm(form, productCode) {
@@ -134,6 +297,9 @@ export {
   DEFAULT_SPEC_FIELD_HELP,
   PRODUCT_SPEC_FIELD_HELP,
   COMMERCIAL_LOAN_HELP_FIELD_BY_ID,
+  COMMERCIAL_LOAN_FIELD_CHROME,
   getCommercialLoanFieldHelp,
+  resolveCommercialLoanFieldRequired,
+  applyCommercialLoanFieldChrome,
   applyCommercialLoanFieldHelpToForm
 }

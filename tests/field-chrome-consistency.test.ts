@@ -1,0 +1,147 @@
+import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { INFO_CHIP_SIZE_PX } from '../public/controller/field-chrome.js'
+import {
+  FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER,
+  FIXED_RATE_LOAN_OUTPUT_FIELD_ADAPTER,
+  FIXED_RATE_LOAN_PRODUCT_SPEC,
+  FIXED_RATE_LOAN_UI_FIELD_CHROME
+} from '../public/controller/fixed-rate-loan-form.js'
+import {
+  COMMERCIAL_LOAN_FIELD_CHROME,
+  resolveCommercialLoanFieldRequired
+} from '../public/controller/commercial-loan-field-help.js'
+
+function readRepoFile(relativePath: string): string {
+  return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
+}
+
+function extractStyleBlock(indexHtml: string): string {
+  const match = indexHtml.match(/<style>([\s\S]*?)<\/style>/)
+  if (!match) {
+    throw new Error('style block not found in index.html')
+  }
+  return match[1]
+}
+
+function extractCssRuleBody(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = css.match(new RegExp(`${escaped}\\s*\\{([^}]+)\\}`))
+  if (!match) {
+    throw new Error(`CSS rule not found for selector: ${selector}`)
+  }
+  return match[1]
+}
+
+describe('info-chip size consistency', () => {
+  const indexHtml = readRepoFile('public/index.html')
+  const css = extractStyleBlock(indexHtml)
+
+  it('keeps INFO_CHIP_SIZE_PX aligned with the CSS custom property', () => {
+    expect(INFO_CHIP_SIZE_PX).toBe(18)
+    expect(css).toMatch(/--info-chip-size:\s*18px/)
+  })
+
+  it('defines button.info-chip after generic button padding so chips cannot collapse', () => {
+    const buttonPaddingIdx = css.search(/button\s*\{[\s\S]*?padding:\s*9px\s+12px/)
+    const infoChipIdx = css.search(/button\.info-chip\s*\{/)
+    expect(buttonPaddingIdx).toBeGreaterThanOrEqual(0)
+    expect(infoChipIdx).toBeGreaterThan(buttonPaddingIdx)
+
+    const body = extractCssRuleBody(css, 'button.info-chip')
+    expect(body).toMatch(/min-width:\s*var\(--info-chip-size\)/)
+    expect(body).toMatch(/min-height:\s*var\(--info-chip-size\)/)
+    expect(body).toMatch(/max-width:\s*var\(--info-chip-size\)/)
+    expect(body).toMatch(/max-height:\s*var\(--info-chip-size\)/)
+    expect(body).toMatch(/flex(?:-shrink)?:\s*0/)
+    expect(body).toMatch(/padding:\s*0/)
+    expect(body).toMatch(/box-sizing:\s*border-box/)
+  })
+
+  it('keeps info-chip hover soft after generic button:hover', () => {
+    const buttonHoverIdx = css.search(/button:hover\s*\{/)
+    const infoChipHoverIdx = css.search(/button\.info-chip:hover\s*\{/)
+    expect(buttonHoverIdx).toBeGreaterThanOrEqual(0)
+    expect(infoChipHoverIdx).toBeGreaterThan(buttonHoverIdx)
+    expect(extractCssRuleBody(css, 'button.info-chip:hover')).toMatch(
+      /background:\s*var\(--accent-soft\)/
+    )
+  })
+
+  it('prevents role markers from shrinking in the label row', () => {
+    expect(extractCssRuleBody(css, '.field-role-marker')).toMatch(/flex-shrink:\s*0/)
+  })
+})
+
+describe('loan composer required/optional/calculated chrome', () => {
+  const fixedRateLoanFormSrc = readRepoFile('public/controller/fixed-rate-loan-form.js')
+  const commercialLoanFieldHelpSrc = readRepoFile('public/controller/commercial-loan-field-help.js')
+  const commercialLoanFormSrc = readRepoFile('public/controller/commercial-loan-form.js')
+
+  it('applies shared applyFieldChrome in the simplified loan composer', () => {
+    expect(fixedRateLoanFormSrc).toContain("from './field-chrome.js'")
+    expect(fixedRateLoanFormSrc).toContain('applyFieldChrome(')
+    expect(fixedRateLoanFormSrc).toMatch(/role:\s*'output'/)
+    expect(fixedRateLoanFormSrc).toMatch(/labelClassName:\s*'loan-field-label'/)
+  })
+
+  it('covers every simplified loan input/output with chrome metadata', () => {
+    const specInputIds = Object.values(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER).map(
+      (entry) => entry.inputId
+    )
+    const uiInputIds = FIXED_RATE_LOAN_UI_FIELD_CHROME.map((entry) => entry.inputId)
+    const outputInputIds = Object.values(FIXED_RATE_LOAN_OUTPUT_FIELD_ADAPTER).map(
+      (entry) => entry.inputId
+    )
+
+    for (const field of FIXED_RATE_LOAN_PRODUCT_SPEC.inputs) {
+      expect(FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER[field.name]).toBeTruthy()
+    }
+
+    expect(new Set([...specInputIds, ...uiInputIds, ...outputInputIds]).size).toBe(
+      specInputIds.length + uiInputIds.length + outputInputIds.length
+    )
+
+    const requiredSpec = FIXED_RATE_LOAN_PRODUCT_SPEC.inputs.filter((field) => field.required)
+    const optionalSpec = FIXED_RATE_LOAN_PRODUCT_SPEC.inputs.filter((field) => !field.required)
+    expect(requiredSpec.map((field) => field.name)).toEqual(
+      expect.arrayContaining(['principal', 'annualInterestRatePct', 'termMonths', 'startDate'])
+    )
+    expect(optionalSpec.map((field) => field.name)).toEqual(
+      expect.arrayContaining(['gracePeriodMonths', 'capitalizeInterestAtGraceEnd'])
+    )
+    expect(FIXED_RATE_LOAN_UI_FIELD_CHROME.every((field) => field.required === false)).toBe(true)
+    expect(Object.keys(FIXED_RATE_LOAN_OUTPUT_FIELD_ADAPTER)).toEqual(
+      expect.arrayContaining(['monthlyPayment', 'totalPaid', 'totalInterest'])
+    )
+  })
+
+  it('applies shared applyFieldChrome in the commercial loan composer', () => {
+    expect(commercialLoanFieldHelpSrc).toContain("from './field-chrome.js'")
+    expect(commercialLoanFieldHelpSrc).toContain('applyFieldChrome(')
+    expect(commercialLoanFormSrc).toContain('applyCommercialLoanFieldChrome(form, product)')
+  })
+
+  it('marks commercial loan fields required/optional/calculated consistently', () => {
+    const byId = Object.fromEntries(
+      COMMERCIAL_LOAN_FIELD_CHROME.map((entry) => [entry.inputId, entry])
+    )
+
+    expect(byId['commercial-loan-principal'].required).toBe(true)
+    expect(byId['commercial-loan-label'].required).toBe(false)
+    expect(byId['commercial-loan-monthly-preview'].role).toBe('output')
+    expect(byId['commercial-loan-thm-preview'].role).toBe('output')
+
+    expect(
+      resolveCommercialLoanFieldRequired(byId['commercial-loan-grace-period-months'], {
+        graceRequired: true
+      })
+    ).toBe(true)
+    expect(
+      resolveCommercialLoanFieldRequired(byId['commercial-loan-grace-period-months'], {
+        graceRequired: false
+      })
+    ).toBe(false)
+  })
+})

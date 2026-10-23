@@ -2,6 +2,9 @@
  * Shared field presentation chrome: label, info bubble, required/optional/calculated roles.
  */
 
+/** Canonical info-chip edge length in px; keep in sync with `--info-chip-size` in `public/index.html`. */
+const INFO_CHIP_SIZE_PX = 18
+
 function escapeCssIdent(value) {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
     return CSS.escape(value)
@@ -34,6 +37,12 @@ function ensureRoleMarker(title) {
   if (!marker) {
     marker = document.createElement('span')
     marker.className = 'field-role-marker'
+  }
+  // Keep title chrome order: label text → role marker → info chip.
+  const chip = title.querySelector('.info-chip, [data-help-button]')
+  if (chip) {
+    title.insertBefore(marker, chip)
+  } else if (marker.parentNode !== title) {
     title.appendChild(marker)
   }
   return marker
@@ -48,11 +57,14 @@ function ensureInfoChip(title, helpId, ariaLabel) {
     chip = document.createElement('button')
     chip.type = 'button'
     chip.className = 'info-chip'
-    title.appendChild(chip)
   }
+  chip.classList.add('info-chip')
+  chip.type = 'button'
   chip.setAttribute('data-help-button', helpId)
   chip.setAttribute('aria-label', ariaLabel || 'Field help')
   chip.textContent = 'i'
+  // Info chip stays last in the title row so size/order stay consistent.
+  title.appendChild(chip)
   return chip
 }
 
@@ -227,6 +239,7 @@ function applyInvestmentFieldValidity(form, message) {
 }
 
 export {
+  INFO_CHIP_SIZE_PX,
   applyFieldChrome,
   ensureFieldLabelTitleElement,
   ensureLabelTitle,

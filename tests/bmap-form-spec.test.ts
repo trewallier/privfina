@@ -21,6 +21,7 @@ describe('bmap frontend form metadata seam', () => {
       expect(field.label).toBe(fromLoader?.label)
       expect(field.required).toBe(fromLoader?.required)
       expect(field.type).toBe(fromLoader?.type)
+      expect(field.description).toBe(fromLoader?.description)
       expect(field.constraints ?? {}).toEqual(fromLoader?.constraints ?? {})
     }
   })

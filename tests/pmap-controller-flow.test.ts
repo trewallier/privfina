@@ -24,13 +24,15 @@ function createFormDataLike(entries: Record<string, string>): { get(name: string
 
 describe('pmap ui/controller integration seam', () => {
   it('maps spec-backed PMAP form values through adapter and investment bundle generation', () => {
-    const exampleYaml = readRepoFile('docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml')
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml'
+    )
     const parsed = YAML.parse(exampleYaml) as any
 
     const formData = createFormDataLike({
       principal: String(parsed.inputs.principal),
-      spreadRate: String(parsed.inputs.interestPremiumPct),
-      yearlyInflation: String(parsed.inputs.previousYearAverageInflationPct),
+      interestPremiumPct: String(parsed.inputs.interestPremiumPct),
+      previousYearAverageInflationPct: String(parsed.inputs.previousYearAverageInflationPct),
       startDate: String(parsed.inputs.startDate),
       purchaseDate: String(parsed.inputs.purchaseDate)
     })

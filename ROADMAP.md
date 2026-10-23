@@ -19,6 +19,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [x] Improve investment composer UX with prominent subtype selector, subtype-driven field behavior, and inline info bubbles.
 - [x] Refine discount bond contract: mandatory issue/due/transaction dates plus price and face value; keep yield/current_value as derived fields and reserve optional pre-maturity sale date/value for future scope.
 - [x] Refine inflation-linked bond contract: mandatory issue/due/transaction dates, annual spread, and period inflation inputs; derive annual maturity schedule and accrual factors from financial date markers.
+- [x] Investment field UX: form-local validation, required/optional/calculated markers, dedicated DKJ/PMAP hosts matching YAML, spec-sourced help (ADR 0016 presentation gap).
 
 ### 3) Bundle Persistence And Compatibility
 - [x] Implement pre-save bounded flow-bundle generation for instrument workflows and persist bundle lineage metadata.

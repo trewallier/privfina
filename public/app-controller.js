@@ -91,7 +91,12 @@ import {
   calculateCommercialLoanFromSpecInputs,
   mapCommercialLoanSpecInputsToLegacyLoanBundleInput
 } from './controller/commercial-loan-calculation-adapter.js'
-import { BMAP_PRODUCT_SPEC, applyBmapSpecToForm, mapFormDataToBmapSpecInputs } from './controller/bmap-form.js'
+import {
+  BMAP_PRODUCT_SPEC,
+  applyBmapSpecToForm,
+  setBmapFieldVisibility,
+  mapFormDataToBmapSpecInputs
+} from './controller/bmap-form.js'
 import { generateBmapInstrumentBundleFromSpecInputs } from './controller/bmap-calculation-adapter.js'
 import {
   DKJ_PRODUCT_SPEC,
@@ -104,6 +109,7 @@ import { calculateDkjFromSpecInputs } from './controller/dkj-calculation-adapter
 import {
   PMAP_PRODUCT_SPEC,
   applyPmapSpecToForm,
+  setPmapFieldVisibility,
   mapFormDataToPmapSpecInputs,
   mapPmapSpecInputsToInvestmentBundleInput
 } from './controller/pmap-form.js'
@@ -112,6 +118,13 @@ import {
   buildSpecBackedInvestmentSubtypeOptions,
   buildSpecBackedInvestmentSubtypeUiConfig
 } from './controller/investment-product-metadata.js'
+import { buildGenericBondSubtypeUiConfig } from './controller/generic-bond-presentation.js'
+import {
+  applyFieldChrome,
+  setFormStatus,
+  clearFieldValidity,
+  applyInvestmentFieldValidity
+} from './controller/field-chrome.js'
 import {
   formatMoneyAmount,
   parseMoneyAmount,
@@ -227,6 +240,12 @@ function initController() {
   const investmentGenericSecondaryRow = document.getElementById('investment-generic-secondary-row')
   const investmentPreviewRow = document.getElementById('investment-preview-row')
   const investmentBmapWrap = document.getElementById('investment-bmap-wrap')
+  const investmentDkjWrap = document.getElementById('investment-dkj-wrap')
+  const investmentPmapWrap = document.getElementById('investment-pmap-wrap')
+  const investmentFormStatus = document.getElementById('investment-form-status')
+  const investmentPrincipalWrap = document.getElementById('investment-principal-wrap')
+  const investmentPurchasePriceWrap = document.getElementById('investment-purchase-price-wrap')
+  const investmentAnnualRateWrap = document.getElementById('investment-annual-rate-wrap')
   const bmapPrincipalInput = document.getElementById('bmap-principal')
   const bmapDkjBaseYieldPctInput = document.getElementById('bmap-dkj-base-yield-pct')
   const bmapInterestPremiumPctInput = document.getElementById('bmap-interest-premium-pct')
@@ -234,6 +253,19 @@ function initController() {
   const bmapPurchaseDateInput = document.getElementById('bmap-purchase-date')
   const bmapIssueDateInput = document.getElementById('bmap-issue-date')
   const bmapFirstCouponDateInput = document.getElementById('bmap-first-coupon-date')
+  const dkjFaceValueInput = document.getElementById('dkj-face-value')
+  const dkjPurchasePricePctInput = document.getElementById('dkj-purchase-price-pct')
+  const dkjTermMonthsInput = document.getElementById('dkj-term-months')
+  const dkjSettlementDateInput = document.getElementById('dkj-settlement-date')
+  const dkjMaturityDateInput = document.getElementById('dkj-maturity-date')
+  const dkjRemainingDaysInput = document.getElementById('dkj-remaining-days')
+  const pmapPrincipalInput = document.getElementById('pmap-principal')
+  const pmapInterestPremiumPctInput = document.getElementById('pmap-interest-premium-pct')
+  const pmapPreviousYearInflationPctInput = document.getElementById('pmap-previous-year-inflation-pct')
+  const pmapStartDateInput = document.getElementById('pmap-start-date')
+  const pmapPurchaseDateInput = document.getElementById('pmap-purchase-date')
+  const pmapIssueDateInput = document.getElementById('pmap-issue-date')
+  const pmapFirstCouponDateInput = document.getElementById('pmap-first-coupon-date')
   const salaryScheduleModeInput = document.getElementById('salary-schedule-mode')
   const salaryCronWrap = document.getElementById('salary-cron-wrap')
   const salaryCustomWrap = document.getElementById('salary-custom-wrap')
@@ -260,8 +292,6 @@ function initController() {
   const investmentSaleDateInput = document.getElementById('investment-sale-date')
   const investmentSaleValueInput = document.getElementById('investment-sale-value')
   const investmentCouponPeriodInput = document.getElementById('investment-coupon-period')
-  const investmentTermMonthsInput = document.getElementById('investment-term-months')
-  const investmentRemainingDaysInput = document.getElementById('investment-remaining-days')
   const investmentPurchasePreviewInput = document.getElementById('investment-purchase-preview')
   const investmentMaturityPreviewInput = document.getElementById('investment-maturity-preview')
   const investmentGainPreviewInput = document.getElementById('investment-gain-preview')
@@ -276,153 +306,65 @@ function initController() {
   const investmentCouponPeriodWrap = document.getElementById('investment-coupon-period-wrap')
   const investmentSaleDateWrap = document.getElementById('investment-sale-date-wrap')
   const investmentSaleValueWrap = document.getElementById('investment-sale-value-wrap')
-  const investmentTermMonthsWrap = document.getElementById('investment-term-months-wrap')
-  const investmentRemainingDaysWrap = document.getElementById('investment-remaining-days-wrap')
   const investmentDiscountYieldWrap = document.getElementById('investment-discount-yield-wrap')
   const investmentDiscountCurrentValueWrap = document.getElementById('investment-discount-current-value-wrap')
   const investmentInflationScheduleWrap = document.getElementById('investment-inflation-schedule-wrap')
-  const investmentPrincipalLabel = document.getElementById('investment-principal-label')
-  const investmentPurchasePriceLabel = document.getElementById('investment-purchase-price-label')
-  const investmentAnnualRateLabel = document.getElementById('investment-annual-rate-label')
   const investmentInfoPopup = document.getElementById('investment-info-popup')
   const investmentInfoPopupTitle = document.getElementById('investment-info-popup-title')
   const investmentInfoPopupText = document.getElementById('investment-info-popup-text')
   const investmentInfoPopupClose = document.getElementById('investment-info-popup-close')
 
   const investmentSubtypeUiConfig = {
-    'regular-bond': {
-      visible: {
-        issueDate: false,
-        transactionDate: true,
-        dueDate: true,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        saleDate: false,
-        saleValue: false,
-        discountYieldPreview: false,
-        discountCurrentValuePreview: false,
-        inflationSchedulePreview: false
-      },
-      required: {
-        issueDate: false,
-        transactionDate: true,
-        dueDate: true,
-        purchasePrice: false,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        annualRate: true
-      },
-      text: {
-        principalLabel: 'Principal',
-        principalNote: 'Principal amount used for maturity payout calculations.',
-        purchasePriceLabel: 'Purchase price',
-        annualRateLabel: 'Annual rate',
-        annualRateNote: 'Provide annual nominal rate as a decimal (example: 0.05 for 5%).'
-      },
-      annualRateReadOnly: false
-    },
-    'discount-bond': {
-      visible: {
-        issueDate: true,
-        transactionDate: true,
-        dueDate: true,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        saleDate: false,
-        saleValue: false,
-        discountYieldPreview: true,
-        discountCurrentValuePreview: true,
-        inflationSchedulePreview: false
-      },
-      required: {
-        issueDate: true,
-        transactionDate: true,
-        dueDate: true,
-        purchasePrice: true,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: false,
-        annualRate: false
-      },
-      text: {
-        principalLabel: 'Face value',
-        principalNote: 'Face value paid at due date.',
-        purchasePriceLabel: 'Purchase price (required)',
-        annualRateLabel: 'Annual rate (derived from discount)',
-        annualRateNote: 'This value is derived from face value, purchase price, and days remaining.'
-      },
-      annualRateReadOnly: true
-    },
-    'inflation-linked-bond': {
-      visible: {
-        issueDate: true,
-        transactionDate: true,
-        dueDate: true,
-        spreadRate: true,
-        yearlyInflation: true,
-        couponPeriod: false,
-        saleDate: false,
-        saleValue: false,
-        discountYieldPreview: false,
-        discountCurrentValuePreview: false,
-        inflationSchedulePreview: true
-      },
-      required: {
-        issueDate: true,
-        transactionDate: true,
-        dueDate: true,
-        purchasePrice: false,
-        spreadRate: true,
-        yearlyInflation: true,
-        couponPeriod: false,
-        annualRate: false
-      },
-      text: {
-        principalLabel: 'Principal',
-        principalNote: 'Principal used with inflation and spread accrual factors.',
-        purchasePriceLabel: 'Purchase price',
-        annualRateLabel: 'Annual rate',
-        annualRateNote: 'Not used for inflation-linked accrual in v1. Leave empty.'
-      },
-      annualRateReadOnly: false
-    },
-    'custom-bond': {
-      visible: {
-        issueDate: false,
-        transactionDate: true,
-        dueDate: true,
-        spreadRate: true,
-        yearlyInflation: true,
-        couponPeriod: true,
-        saleDate: false,
-        saleValue: false,
-        discountYieldPreview: false,
-        discountCurrentValuePreview: false,
-        inflationSchedulePreview: false
-      },
-      required: {
-        issueDate: false,
-        transactionDate: true,
-        dueDate: true,
-        purchasePrice: false,
-        spreadRate: false,
-        yearlyInflation: false,
-        couponPeriod: true,
-        annualRate: true
-      },
-      text: {
-        principalLabel: 'Principal',
-        principalNote: 'Principal is repaid at maturity while coupons are generated by schedule.',
-        purchasePriceLabel: 'Purchase price',
-        annualRateLabel: 'Annual rate',
-        annualRateNote: 'Used to compute coupon amounts for the selected coupon schedule.'
-      },
-      annualRateReadOnly: false
-    },
+    ...buildGenericBondSubtypeUiConfig(),
     ...buildSpecBackedInvestmentSubtypeUiConfig()
+  }
+
+  function setInvestmentFormStatus(message, level = 'info') {
+    setFormStatus(investmentFormStatus, message, level)
+  }
+
+  function clearInvestmentFormErrors() {
+    clearFieldValidity(investmentForm)
+    setInvestmentFormStatus('', 'info')
+  }
+
+  function reportInvestmentFormError(message) {
+    const text = String(message || 'Failed to save investment instrument.')
+    applyInvestmentFieldValidity(investmentForm, text)
+    setInvestmentFormStatus(text, 'error')
+  }
+
+  function applyGenericFieldChrome(subtype) {
+    const ui = investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
+    const fields = ui.fields || {}
+    const roleFor = (name) => {
+      if (['maturityPreview', 'purchasePreview', 'gainPreview', 'discountYieldPreview', 'discountCurrentValuePreview', 'inflationSchedulePreview'].includes(name)) {
+        return 'output'
+      }
+      if (name === 'annualRate' && ui.annualRateReadOnly) {
+        return 'derived'
+      }
+      return 'input'
+    }
+    Object.entries(fields).forEach(([name, fieldMeta]) => {
+      if (!fieldMeta?.inputId) return
+      const input = investmentForm.querySelector(`#${fieldMeta.inputId}`)
+      const label = input ? input.closest('label') : null
+      if (!label) return
+      const required = Boolean(ui.required?.[name] ?? fieldMeta.required)
+      applyFieldChrome(
+        label,
+        {
+          label: fieldMeta.label,
+          description: fieldMeta.description || '',
+          required,
+          role: roleFor(name),
+          helpId: `${fieldMeta.inputId}-help`,
+          labelClassName: 'field-label'
+        },
+        input
+      )
+    })
   }
 
   if (
@@ -721,19 +663,7 @@ function initController() {
   }
 
   function buildHelpText(helpId) {
-    const subtype = getActiveInvestmentSubtype()
-    const ui = investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
-    const staticText = getHelpTextById(helpId)
-
-    if (helpId === 'investment-principal-help') {
-      return `${staticText} ${ui.text.principalNote}`.trim()
-    }
-
-    if (helpId === 'investment-annual-rate-help') {
-      return `${staticText} ${ui.text.annualRateNote}`.trim()
-    }
-
-    return staticText
+    return getHelpTextById(helpId)
   }
 
   function getHelpTitle(button) {
@@ -790,109 +720,37 @@ function initController() {
 
   function applyInvestmentSubtypeUi(subtype) {
     setInvestmentFamilyTitle()
-
-    if (subtype === 'bmap') {
-      setDkjFieldVisibility(investmentForm, [])
-      setElementVisible(investmentGenericCoreRow, false)
-      setElementVisible(investmentGenericSecondaryRow, false)
-      setElementVisible(investmentPreviewRow, false)
-      setElementVisible(investmentBmapWrap, true)
-
-      ;[
-        investmentIssueDateInput,
-        investmentTransactionDateInput,
-        investmentDueDateInput,
-        investmentPurchasePriceInput,
-        investmentAnnualRateInput,
-        investmentSpreadRateInput,
-        investmentYearlyInflationInput,
-        investmentCouponPeriodInput,
-        investmentTermMonthsInput,
-        investmentRemainingDaysInput,
-        investmentSaleDateInput,
-        investmentSaleValueInput
-      ].forEach((input) => {
-        if (input) {
-          input.disabled = true
-          input.required = false
-        }
-      })
-
-      ;[
-        bmapPrincipalInput,
-        bmapDkjBaseYieldPctInput,
-        bmapInterestPremiumPctInput,
-        bmapStartDateInput,
-        bmapPurchaseDateInput,
-        bmapIssueDateInput,
-        bmapFirstCouponDateInput
-      ].forEach((input) => {
-        if (input) {
-          input.disabled = false
-        }
-      })
-
-      return
-    }
-
-    if (subtype === 'dkj') {
-      const dkjFieldNames = DKJ_PRODUCT_SPEC.ui.sections.flatMap((section) => section.fieldNames)
-      setDkjFieldVisibility(investmentForm, dkjFieldNames)
-      applyDkjSpecToForm({ investmentForm, investmentBox })
-    } else if (subtype === 'pmap') {
-      setDkjFieldVisibility(investmentForm, [])
-      applyPmapSpecToForm({ investmentForm, investmentBox })
-    } else {
-      setDkjFieldVisibility(investmentForm, [])
-    }
+    clearInvestmentFormErrors()
 
     const ui =
       investmentSubtypeUiConfig[subtype] || investmentSubtypeUiConfig['regular-bond']
-    const showInflationControls =
-      subtype === 'inflation-linked-bond' || subtype === 'custom-bond' || subtype === 'pmap'
+    const dedicated = Boolean(ui.usesDedicatedHost)
+    const isBmap = subtype === 'bmap'
+    const isDkj = subtype === 'dkj'
+    const isPmap = subtype === 'pmap'
 
-    setElementVisible(investmentIssueDateWrap, ui.visible.issueDate)
-    setElementVisible(investmentTransactionDateWrap, ui.visible.transactionDate)
-    setElementVisible(investmentDueDateWrap, ui.visible.dueDate)
-    // Explicitly lock these controls to inflation-linked and custom bonds only.
-    setElementVisible(investmentSpreadRateWrap, showInflationControls)
-    setElementVisible(investmentYearlyInflationWrap, showInflationControls)
-    setElementVisible(investmentCouponPeriodWrap, ui.visible.couponPeriod)
-    setElementVisible(investmentSaleDateWrap, ui.visible.saleDate)
-    setElementVisible(investmentSaleValueWrap, ui.visible.saleValue)
-    setElementVisible(investmentTermMonthsWrap, Boolean(ui.visible.termMonths))
-    setElementVisible(investmentRemainingDaysWrap, Boolean(ui.visible.remainingDays))
-    setElementVisible(investmentDiscountYieldWrap, ui.visible.discountYieldPreview)
-    setElementVisible(
-      investmentDiscountCurrentValueWrap,
-      ui.visible.discountCurrentValuePreview
-    )
-    setElementVisible(investmentInflationScheduleWrap, ui.visible.inflationSchedulePreview)
-    setElementVisible(investmentGenericCoreRow, true)
-    setElementVisible(investmentGenericSecondaryRow, true)
+    setBmapFieldVisibility(investmentForm, isBmap)
+    setDkjFieldVisibility(investmentForm, isDkj)
+    setPmapFieldVisibility(investmentForm, isPmap)
+
+    setElementVisible(investmentGenericCoreRow, !dedicated)
+    setElementVisible(investmentGenericSecondaryRow, !dedicated)
     setElementVisible(investmentPreviewRow, true)
-    setElementVisible(investmentBmapWrap, false)
 
-    ;[
+    const genericInputs = [
       investmentIssueDateInput,
       investmentTransactionDateInput,
       investmentDueDateInput,
+      investmentPrincipalInput,
       investmentPurchasePriceInput,
       investmentAnnualRateInput,
       investmentSpreadRateInput,
       investmentYearlyInflationInput,
       investmentCouponPeriodInput,
-      investmentTermMonthsInput,
-      investmentRemainingDaysInput,
       investmentSaleDateInput,
       investmentSaleValueInput
-    ].forEach((input) => {
-      if (input) {
-        input.disabled = false
-      }
-    })
-
-    ;[
+    ]
+    const bmapInputs = [
       bmapPrincipalInput,
       bmapDkjBaseYieldPctInput,
       bmapInterestPremiumPctInput,
@@ -900,50 +758,101 @@ function initController() {
       bmapPurchaseDateInput,
       bmapIssueDateInput,
       bmapFirstCouponDateInput
-    ].forEach((input) => {
-      if (input) {
-        input.disabled = true
+    ]
+    const dkjInputs = [
+      dkjFaceValueInput,
+      dkjPurchasePricePctInput,
+      dkjTermMonthsInput,
+      dkjSettlementDateInput,
+      dkjMaturityDateInput,
+      dkjRemainingDaysInput
+    ]
+    const pmapInputs = [
+      pmapPrincipalInput,
+      pmapInterestPremiumPctInput,
+      pmapPreviousYearInflationPctInput,
+      pmapStartDateInput,
+      pmapPurchaseDateInput,
+      pmapIssueDateInput,
+      pmapFirstCouponDateInput
+    ]
+
+    ;[...genericInputs, ...bmapInputs, ...dkjInputs, ...pmapInputs].forEach((input) => {
+      if (!input) return
+      input.disabled = true
+      if (!dedicated) {
+        // leave required to chrome below for generics
+      } else {
+        input.required = false
       }
     })
 
-    setElementText(investmentPrincipalLabel, ui.text.principalLabel)
-    setElementText(investmentPurchasePriceLabel, ui.text.purchasePriceLabel)
-    setElementText(investmentAnnualRateLabel, ui.text.annualRateLabel)
+    if (isBmap) {
+      bmapInputs.forEach((input) => {
+        if (input) input.disabled = false
+      })
+      applyBmapSpecToForm({ bmapForm: investmentForm, bmapBox: investmentBox })
+      setElementVisible(investmentDiscountYieldWrap, false)
+      setElementVisible(investmentDiscountCurrentValueWrap, false)
+      setElementVisible(investmentInflationScheduleWrap, false)
+      return
+    }
 
-    if (investmentIssueDateInput) {
-      investmentIssueDateInput.required = ui.required.issueDate
+    if (isDkj) {
+      dkjInputs.forEach((input) => {
+        if (input) input.disabled = false
+      })
+      applyDkjSpecToForm({ investmentForm, investmentBox })
+      setElementVisible(investmentDiscountYieldWrap, true)
+      setElementVisible(investmentDiscountCurrentValueWrap, true)
+      setElementVisible(investmentInflationScheduleWrap, false)
+      return
     }
-    if (investmentTransactionDateInput) {
-      investmentTransactionDateInput.required = ui.required.transactionDate
+
+    if (isPmap) {
+      pmapInputs.forEach((input) => {
+        if (input) input.disabled = false
+      })
+      applyPmapSpecToForm({ investmentForm, investmentBox })
+      setElementVisible(investmentDiscountYieldWrap, false)
+      setElementVisible(investmentDiscountCurrentValueWrap, false)
+      setElementVisible(investmentInflationScheduleWrap, true)
+      return
     }
-    if (investmentDueDateInput) {
-      investmentDueDateInput.required = ui.required.dueDate
-    }
-    if (investmentPurchasePriceInput) {
-      investmentPurchasePriceInput.required = ui.required.purchasePrice
-    }
-    if (investmentSpreadRateInput) {
-      investmentSpreadRateInput.required = ui.required.spreadRate
-    }
-    if (investmentYearlyInflationInput) {
-      investmentYearlyInflationInput.required = ui.required.yearlyInflation
-    }
-    if (investmentCouponPeriodInput) {
-      investmentCouponPeriodInput.required = ui.required.couponPeriod
-    }
+
+    genericInputs.forEach((input) => {
+      if (input) input.disabled = false
+    })
+
+    const showInflationControls =
+      subtype === 'inflation-linked-bond' || subtype === 'custom-bond'
+
+    setElementVisible(investmentIssueDateWrap, ui.visible.issueDate)
+    setElementVisible(investmentTransactionDateWrap, ui.visible.transactionDate)
+    setElementVisible(investmentDueDateWrap, ui.visible.dueDate)
+    setElementVisible(investmentPrincipalWrap, ui.visible.principal !== false)
+    setElementVisible(investmentPurchasePriceWrap, ui.visible.purchasePrice !== false)
+    setElementVisible(investmentAnnualRateWrap, ui.visible.annualRate !== false)
+    setElementVisible(investmentSpreadRateWrap, showInflationControls && ui.visible.spreadRate)
+    setElementVisible(investmentYearlyInflationWrap, showInflationControls && ui.visible.yearlyInflation)
+    setElementVisible(investmentCouponPeriodWrap, ui.visible.couponPeriod)
+    setElementVisible(investmentSaleDateWrap, ui.visible.saleDate)
+    setElementVisible(investmentSaleValueWrap, ui.visible.saleValue)
+    setElementVisible(investmentDiscountYieldWrap, ui.visible.discountYieldPreview)
+    setElementVisible(
+      investmentDiscountCurrentValueWrap,
+      ui.visible.discountCurrentValuePreview
+    )
+    setElementVisible(investmentInflationScheduleWrap, ui.visible.inflationSchedulePreview)
+
     if (investmentAnnualRateInput) {
-      investmentAnnualRateInput.readOnly = ui.annualRateReadOnly
-      investmentAnnualRateInput.required = ui.required.annualRate
+      investmentAnnualRateInput.readOnly = Boolean(ui.annualRateReadOnly)
       if (ui.annualRateReadOnly) {
         investmentAnnualRateInput.value = ''
       }
     }
-    if (investmentTermMonthsInput) {
-      investmentTermMonthsInput.required = Boolean(ui.required.termMonths)
-    }
-    if (investmentRemainingDaysInput) {
-      investmentRemainingDaysInput.required = Boolean(ui.required.remainingDays)
-    }
+
+    applyGenericFieldChrome(subtype)
   }
 
   function resetSalaryForm() {
@@ -1031,6 +940,7 @@ function initController() {
   function resetInvestmentForm() {
     editingInvestmentId = null
     investmentForm.reset()
+    clearInvestmentFormErrors()
     if (investmentSubtypeInput) {
       investmentSubtypeInput.value = 'regular-bond'
       applyInvestmentSubtypeUi('regular-bond')
@@ -1097,7 +1007,39 @@ function initController() {
     calculateDkjFromSpecInputs,
     mapFormDataToDkjSpecInputs,
     calculatePmapFromSpecInputs,
-    mapFormDataToPmapSpecInputs
+    mapFormDataToPmapSpecInputs,
+    onPreviewError: (message) => {
+      applyInvestmentFieldValidity(investmentForm, message)
+      setInvestmentFormStatus(message, 'warning')
+    },
+    onPreviewSuccess: () => {
+      clearFieldValidity(investmentForm)
+      if (investmentFormStatus?.dataset.level === 'warning') {
+        setInvestmentFormStatus('', 'info')
+      }
+    },
+    extraInputs: [
+      dkjFaceValueInput,
+      dkjPurchasePricePctInput,
+      dkjTermMonthsInput,
+      dkjSettlementDateInput,
+      dkjMaturityDateInput,
+      dkjRemainingDaysInput,
+      pmapPrincipalInput,
+      pmapInterestPremiumPctInput,
+      pmapPreviousYearInflationPctInput,
+      pmapStartDateInput,
+      pmapPurchaseDateInput,
+      pmapIssueDateInput,
+      pmapFirstCouponDateInput,
+      bmapPrincipalInput,
+      bmapDkjBaseYieldPctInput,
+      bmapInterestPremiumPctInput,
+      bmapStartDateInput,
+      bmapPurchaseDateInput,
+      bmapIssueDateInput,
+      bmapFirstCouponDateInput
+    ]
   })
   const { syncInvestmentPreview } = investmentPreviewController
 
@@ -1223,52 +1165,93 @@ function initController() {
     }
 
     const config = bundle.config || {}
-    const subtypeFromConfig = config.productId === PMAP_PRODUCT_SPEC.id
-      ? 'pmap'
-      : (config.subtype || 'regular-bond')
+    const productId = bundle.productId || config.productId
+    const subtypeFromConfig =
+      productId === BMAP_PRODUCT_SPEC.id || config.subtype === 'bmap'
+        ? 'bmap'
+        : productId === DKJ_PRODUCT_SPEC.id || config.subtype === 'dkj'
+          ? 'dkj'
+          : productId === PMAP_PRODUCT_SPEC.id
+            ? 'pmap'
+            : config.subtype || 'regular-bond'
     editingInvestmentId = id
     investmentForm.querySelector('#investment-label').value = bundle.label || 'Investment'
     investmentForm.querySelector('#investment-subtype').value = subtypeFromConfig
+    investmentForm.querySelector('#investment-category').value = config.category || 'investment'
+    investmentForm.querySelector('#investment-description').value = config.description || ''
+
     if (subtypeFromConfig === 'bmap') {
       investmentForm.querySelector('#bmap-principal').value =
         config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-      investmentForm.querySelector('#bmap-dkj-base-yield-pct').value = config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
-      investmentForm.querySelector('#bmap-interest-premium-pct').value = config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
+      investmentForm.querySelector('#bmap-dkj-base-yield-pct').value =
+        config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
+      investmentForm.querySelector('#bmap-interest-premium-pct').value =
+        config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
       investmentForm.querySelector('#bmap-start-date').value = config.startDate || ''
       investmentForm.querySelector('#bmap-purchase-date').value = config.purchaseDate || ''
       investmentForm.querySelector('#bmap-issue-date').value = config.issueDate || ''
       investmentForm.querySelector('#bmap-first-coupon-date').value = config.firstCouponDate || ''
-    }
-    if (subtypeFromConfig === 'dkj') {
-      investmentForm.querySelector('#investment-term-months').value = config.termMonths !== undefined ? String(config.termMonths) : '12'
-      investmentForm.querySelector('#investment-remaining-days').value = config.remainingDays !== undefined ? String(config.remainingDays) : ''
-      investmentForm.querySelector('#investment-purchase-price').value =
+    } else if (subtypeFromConfig === 'dkj') {
+      investmentForm.querySelector('#dkj-face-value').value =
+        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+      investmentForm.querySelector('#dkj-purchase-price-pct').value =
         config.purchasePricePct !== undefined
           ? String(config.purchasePricePct)
           : config.purchasePrice !== undefined && config.principal
             ? String((Number(config.purchasePrice) / Number(config.principal)) * 100)
             : ''
+      investmentForm.querySelector('#dkj-term-months').value =
+        config.termMonths !== undefined ? String(config.termMonths) : '12'
+      investmentForm.querySelector('#dkj-settlement-date').value =
+        config.transactionDate || config.purchaseDate || config.settlementDate || ''
+      investmentForm.querySelector('#dkj-maturity-date').value =
+        config.dueDate || config.maturityDate || ''
+      investmentForm.querySelector('#dkj-remaining-days').value =
+        config.remainingDays !== undefined ? String(config.remainingDays) : ''
+    } else if (subtypeFromConfig === 'pmap') {
+      investmentForm.querySelector('#pmap-principal').value =
+        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+      investmentForm.querySelector('#pmap-interest-premium-pct').value =
+        config.interestPremiumPct !== undefined
+          ? String(config.interestPremiumPct)
+          : config.spreadRate !== undefined
+            ? String(Number(config.spreadRate) * 100)
+            : ''
+      investmentForm.querySelector('#pmap-previous-year-inflation-pct').value =
+        config.previousYearAverageInflationPct !== undefined
+          ? String(config.previousYearAverageInflationPct)
+          : ''
+      investmentForm.querySelector('#pmap-start-date').value =
+        config.startDate || config.issueDate || ''
+      investmentForm.querySelector('#pmap-purchase-date').value =
+        config.purchaseDate || config.transactionDate || ''
+      investmentForm.querySelector('#pmap-issue-date').value = config.issueDate || ''
+      investmentForm.querySelector('#pmap-first-coupon-date').value =
+        config.firstCouponDate || config.couponPeriod || ''
+    } else {
+      investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
+      investmentForm.querySelector('#investment-transaction-date').value =
+        config.transactionDate || config.purchaseDate || ''
+      investmentForm.querySelector('#investment-due-date').value =
+        config.dueDate || config.maturityDate || ''
+      investmentForm.querySelector('#investment-principal').value =
+        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+      investmentForm.querySelector('#investment-purchase-price').value =
+        config.purchasePrice !== undefined ? formatMoneyAmount(config.purchasePrice) : ''
+      investmentForm.querySelector('#investment-annual-rate').value =
+        config.annualRate !== undefined ? String(config.annualRate) : ''
+      investmentForm.querySelector('#investment-spread-rate').value =
+        config.spreadRate !== undefined ? String(config.spreadRate) : ''
+      investmentForm.querySelector('#investment-yearly-inflation').value =
+        config.yearlyInflationRaw ||
+        (Array.isArray(config.yearlyInflation)
+          ? config.yearlyInflation.map((entry) => `${entry.year}:${entry.rate}`).join(', ')
+          : '')
+      investmentForm.querySelector('#investment-coupon-period').value = config.couponPeriod || ''
+      investmentForm.querySelector('#investment-sale-date').value = config.saleDate || ''
+      investmentForm.querySelector('#investment-sale-value').value =
+        config.saleValue !== undefined ? formatMoneyAmount(config.saleValue) : ''
     }
-    investmentForm.querySelector('#investment-issue-date').value = config.issueDate || ''
-    investmentForm.querySelector('#investment-transaction-date').value =
-      config.transactionDate || config.purchaseDate || ''
-    investmentForm.querySelector('#investment-due-date').value = config.dueDate || config.maturityDate || ''
-    investmentForm.querySelector('#investment-principal').value =
-      config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-    investmentForm.querySelector('#investment-purchase-price').value =
-      config.purchasePrice !== undefined ? formatMoneyAmount(config.purchasePrice) : ''
-    investmentForm.querySelector('#investment-annual-rate').value = config.annualRate !== undefined ? String(config.annualRate) : ''
-    investmentForm.querySelector('#investment-spread-rate').value = config.spreadRate !== undefined ? String(config.spreadRate) : ''
-    investmentForm.querySelector('#investment-yearly-inflation').value = config.yearlyInflationRaw
-      || (Array.isArray(config.yearlyInflation)
-        ? config.yearlyInflation.map((entry) => `${entry.year}:${entry.rate}`).join(', ')
-        : '')
-    investmentForm.querySelector('#investment-coupon-period').value = config.couponPeriod || ''
-    investmentForm.querySelector('#investment-sale-date').value = config.saleDate || ''
-    investmentForm.querySelector('#investment-sale-value').value =
-      config.saleValue !== undefined ? formatMoneyAmount(config.saleValue) : ''
-    investmentForm.querySelector('#investment-category').value = config.category || 'investment'
-    investmentForm.querySelector('#investment-description').value = config.description || ''
 
     investmentSubmitButton.textContent = 'Save Investment Instrument'
     investmentCancelButton.hidden = false
@@ -1454,6 +1437,16 @@ function initController() {
     form.querySelectorAll('[data-help-button]').forEach((button) => {
       button.addEventListener('click', () => {
         toggleInvestmentInfoPopup(button)
+      })
+    })
+    form.querySelectorAll('[data-help-close]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const helpId = button.getAttribute('data-help-close')
+        const helpNode = helpId ? document.getElementById(helpId) : null
+        if (helpNode) {
+          helpNode.hidden = true
+        }
+        closeInvestmentInfoPopup()
       })
     })
   })
@@ -2121,132 +2114,93 @@ function initController() {
     })
   }
 
+  function persistInvestmentBundle(bundle) {
+    if (!bundle || !bundle.generatedFlows || !bundle.generatedFlows.length) {
+      throw new Error('Investment inputs did not produce any cash flows. Check required dates and amounts.')
+    }
+
+    instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+    saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+
+    const firstDate = bundle.generatedFlows[0].date
+    const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
+    const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+    startInput.value = updatedRange.startDate
+    endInput.value = updatedRange.endDate
+
+    clearInvestmentFormErrors()
+    resetInvestmentForm()
+    collapseComposerBoxes()
+    notifySaved('Investment instrument saved.')
+    rerender()
+  }
+
   investmentForm.addEventListener('submit', (event) => {
     event.preventDefault()
+    clearInvestmentFormErrors()
 
     try {
       const formData = new FormData(investmentForm)
       const subtype = String(formData.get('subtype') || 'regular-bond')
+      const meta = {
+        id: editingInvestmentId || undefined,
+        label: String(formData.get('label') || '').trim(),
+        category: String(formData.get('category') || '').trim() || 'investment',
+        description: String(formData.get('description') || '').trim() || undefined,
+        createdAt: editingInvestmentId
+          ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
+          : undefined
+      }
 
       if (subtype === 'bmap') {
         const specInputs = mapFormDataToBmapSpecInputs(formData)
         const bundle = generateBmapInstrumentBundleFromSpecInputs(
           specInputs,
           {
-            id: editingInvestmentId || undefined,
-            label: String(formData.get('label') || '').trim() || BMAP_PRODUCT_SPEC.ui.formTitle,
-            category: String(formData.get('category') || '').trim() || 'investment',
-            description: String(formData.get('description') || '').trim() || undefined,
-            createdAt: editingInvestmentId
-              ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
-              : undefined
+            ...meta,
+            label: meta.label || BMAP_PRODUCT_SPEC.ui.formTitle
           },
           { createInvestmentMaturityPreview }
         )
-
-        if (!bundle || !bundle.generatedFlows.length) {
-          return
-        }
-
-        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
-
-        const firstDate = bundle.generatedFlows[0].date
-        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
-        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
-        startInput.value = updatedRange.startDate
-        endInput.value = updatedRange.endDate
-
-        resetInvestmentForm()
-        collapseComposerBoxes()
-        notifySaved('Investment instrument saved.')
-        rerender()
+        persistInvestmentBundle(bundle)
         return
       }
 
       if (subtype === 'dkj') {
         const specInputs = mapFormDataToDkjSpecInputs(formData)
         calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
-
         const bundle = generateInvestmentInstrumentBundle(
           mapDkjSpecInputsToInvestmentBundleInput(specInputs, {
-            id: editingInvestmentId || undefined,
-            label: String(formData.get('label') || '').trim() || DKJ_PRODUCT_SPEC.ui.formTitle,
-            category: String(formData.get('category') || '').trim() || 'investment',
-            description: String(formData.get('description') || '').trim() || undefined,
-            createdAt: editingInvestmentId
-              ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
-              : undefined
+            ...meta,
+            label: meta.label || DKJ_PRODUCT_SPEC.ui.formTitle
           })
         )
-
-        if (!bundle || !bundle.generatedFlows.length) {
-          return
-        }
-
-        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
-
-        const firstDate = bundle.generatedFlows[0].date
-        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
-        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
-        startInput.value = updatedRange.startDate
-        endInput.value = updatedRange.endDate
-
-        resetInvestmentForm()
-        collapseComposerBoxes()
-        notifySaved('Investment instrument saved.')
-        rerender()
+        persistInvestmentBundle(bundle)
         return
       }
 
       if (subtype === 'pmap') {
         const specInputs = mapFormDataToPmapSpecInputs(formData)
         calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
-
         const bundle = generateInvestmentInstrumentBundle(
           mapPmapSpecInputsToInvestmentBundleInput(specInputs, {
-            id: editingInvestmentId || undefined,
-            label: String(formData.get('label') || '').trim() || PMAP_PRODUCT_SPEC.ui.formTitle,
-            category: String(formData.get('category') || '').trim() || 'investment',
-            description: String(formData.get('description') || '').trim() || undefined,
-            createdAt: editingInvestmentId
-              ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
-              : undefined
+            ...meta,
+            label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
           })
         )
-
-        if (!bundle || !bundle.generatedFlows.length) {
-          return
-        }
-
-        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
-
-        const firstDate = bundle.generatedFlows[0].date
-        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
-        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
-        startInput.value = updatedRange.startDate
-        endInput.value = updatedRange.endDate
-
-        resetInvestmentForm()
-        collapseComposerBoxes()
-        notifySaved('Investment instrument saved.')
-        rerender()
+        persistInvestmentBundle(bundle)
         return
       }
 
       const rawTransactionDate = String(formData.get('transactionDate') || '').trim()
       const rawDueDate = String(formData.get('dueDate') || '').trim()
-      const normalizedPurchaseDate = rawTransactionDate
-      const normalizedMaturityDate = rawDueDate
 
       const bundle = generateInvestmentInstrumentBundle({
-        id: editingInvestmentId || undefined,
-        label: String(formData.get('label') || '').trim() || 'Investment',
+        id: meta.id,
+        label: meta.label || 'Investment',
         subtype,
-        purchaseDate: normalizedPurchaseDate,
-        maturityDate: normalizedMaturityDate,
+        purchaseDate: rawTransactionDate,
+        maturityDate: rawDueDate,
         issueDate: String(formData.get('issueDate') || '').trim(),
         transactionDate: rawTransactionDate,
         dueDate: rawDueDate,
@@ -2258,33 +2212,15 @@ function initController() {
         saleDate: String(formData.get('saleDate') || '').trim(),
         saleValue: parseMoneyAmount(formData.get('saleValue')),
         couponPeriod: String(formData.get('couponPeriod') || '').trim(),
-        category: String(formData.get('category') || '').trim() || 'investment',
-        description: String(formData.get('description') || '').trim() || undefined,
-        createdAt: editingInvestmentId
-          ? instrumentBundles.find((entry) => entry.id === editingInvestmentId)?.createdAt
-          : undefined
+        category: meta.category,
+        description: meta.description,
+        createdAt: meta.createdAt
       })
 
-      if (!bundle || !bundle.generatedFlows.length) {
-        return
-      }
-
-      instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-      saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
-
-      const firstDate = bundle.generatedFlows[0].date
-      const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
-      const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
-      startInput.value = updatedRange.startDate
-      endInput.value = updatedRange.endDate
-
-      resetInvestmentForm()
-      collapseComposerBoxes()
-      notifySaved('Investment instrument saved.')
-      rerender()
+      persistInvestmentBundle(bundle)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save investment instrument.'
-      setStorageStatus(message, 'error')
+      reportInvestmentFormError(message)
     }
   })
 

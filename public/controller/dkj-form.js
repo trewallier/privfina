@@ -1,6 +1,19 @@
+import {
+  toInputType,
+  applyNumericConstraints,
+  orderedSpecFields
+} from './spec-form-utils.js'
+import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
+import { getDkjFieldHelp } from './investment-field-help.js'
+import { parseMoneyAmount } from './money-format.js'
+
 const DKJ_PRODUCT_SPEC = {
   specVersion: 'v2alpha1',
   id: 'government-security.dkj.standard',
+  family: 'government-security',
+  variant: 'dkj',
+  productCode: 'dkj',
+  displayName: 'Discount Treasury Bond',
   inputs: [
     {
       name: 'faceValue',
@@ -8,6 +21,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Face Value',
       required: true,
       unit: 'currency',
+      description: 'Nominal value repaid at maturity.',
       constraints: { minimum: 10000 }
     },
     {
@@ -16,6 +30,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Purchase Price Percent',
       required: true,
       unit: 'percent',
+      description: 'Purchase price as percentage of face value.',
       constraints: { minimum: 0, maximum: 200 }
     },
     {
@@ -24,6 +39,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Term Bucket in Months',
       required: true,
       unit: 'months',
+      description: 'Product-type maturity bucket for DKJ.',
       constraints: { enum: [3, 6, 12] }
     },
     {
@@ -31,14 +47,16 @@ const DKJ_PRODUCT_SPEC = {
       type: 'string',
       label: 'Settlement Date',
       required: true,
-      unit: 'date'
+      unit: 'date',
+      description: 'Settlement date in ISO format.'
     },
     {
       name: 'maturityDate',
       type: 'string',
       label: 'Maturity Date',
       required: false,
-      unit: 'date'
+      unit: 'date',
+      description: 'Maturity date in ISO format, if known.'
     },
     {
       name: 'remainingDays',
@@ -46,7 +64,50 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Remaining Days',
       required: false,
       unit: 'days',
+      description: 'Days remaining from settlement to maturity, used for annualized yield calculation.',
       constraints: { minimum: 1 }
+    }
+  ],
+  outputs: [
+    {
+      name: 'purchaseAmount',
+      type: 'number',
+      label: 'Purchase Amount',
+      required: true,
+      unit: 'currency',
+      description: 'Amount paid for the security at purchase.'
+    },
+    {
+      name: 'redemptionValue',
+      type: 'number',
+      label: 'Redemption Value',
+      required: true,
+      unit: 'currency',
+      description: 'Face value repaid at maturity.'
+    },
+    {
+      name: 'grossGain',
+      type: 'number',
+      label: 'Gross Gain',
+      required: true,
+      unit: 'currency',
+      description: 'Difference between redemption value and purchase amount.'
+    },
+    {
+      name: 'simpleReturnPct',
+      type: 'number',
+      label: 'Simple Return',
+      required: false,
+      unit: 'percent',
+      description: 'Gross gain relative to purchase amount.'
+    },
+    {
+      name: 'annualizedYieldPct',
+      type: 'number',
+      label: 'Annualized Yield',
+      required: true,
+      unit: 'percent',
+      description: 'Annualized yield calculated using remaining days and the official discount-bill convention.'
     }
   ],
   ui: {
@@ -55,34 +116,42 @@ const DKJ_PRODUCT_SPEC = {
       {
         id: 'dkj-core',
         title: 'DKJ Inputs',
-        fieldNames: ['faceValue', 'purchasePricePct', 'termMonths', 'settlementDate', 'maturityDate', 'remainingDays']
+        fieldNames: [
+          'faceValue',
+          'purchasePricePct',
+          'termMonths',
+          'settlementDate',
+          'maturityDate',
+          'remainingDays'
+        ]
       }
     ]
   }
 }
 
 const DKJ_FRONTEND_FIELD_ADAPTER = {
-  faceValue: { inputId: 'investment-principal', formName: 'principal' },
-  purchasePricePct: { inputId: 'investment-purchase-price', formName: 'purchasePrice' },
-  termMonths: { inputId: 'investment-term-months', formName: 'termMonths' },
-  settlementDate: { inputId: 'investment-transaction-date', formName: 'transactionDate' },
-  maturityDate: { inputId: 'investment-due-date', formName: 'dueDate' },
-  remainingDays: { inputId: 'investment-remaining-days', formName: 'remainingDays' }
+  faceValue: { inputId: 'dkj-face-value', formName: 'faceValue' },
+  purchasePricePct: { inputId: 'dkj-purchase-price-pct', formName: 'purchasePricePct' },
+  termMonths: { inputId: 'dkj-term-months', formName: 'termMonths' },
+  settlementDate: { inputId: 'dkj-settlement-date', formName: 'settlementDate' },
+  maturityDate: { inputId: 'dkj-maturity-date', formName: 'maturityDate' },
+  remainingDays: { inputId: 'dkj-remaining-days', formName: 'remainingDays' }
 }
 
-import {
-  toInputType,
-  applyNumericConstraints,
-  orderedSpecFields,
-  ensureFieldLabelTitleElement,
-  reorderFormRowBySpec
-} from './spec-form-utils.js'
-import { parseMoneyAmount } from './money-format.js'
+const DKJ_OUTPUT_PREVIEW_ADAPTER = {
+  purchaseAmount: { inputId: 'investment-purchase-preview' },
+  redemptionValue: { inputId: 'investment-maturity-preview' },
+  grossGain: { inputId: 'investment-gain-preview' },
+  simpleReturnPct: { inputId: 'investment-discount-current-value-preview' },
+  annualizedYieldPct: { inputId: 'investment-discount-yield-preview' }
+}
 
 function addMonthsToIsoDate(dateIso, months) {
   const source = new Date(`${dateIso}T00:00:00Z`)
   if (Number.isNaN(source.getTime())) return ''
-  const target = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + months, source.getUTCDate()))
+  const target = new Date(
+    Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + months, source.getUTCDate())
+  )
   return target.toISOString().slice(0, 10)
 }
 
@@ -115,7 +184,6 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
       input.type = toInputType(field)
       input.classList.remove('money-amount')
     }
-    input.required = Boolean(field.required)
     if (input.type === 'number') {
       applyNumericConstraints(input, field.constraints)
       if (field.type === 'integer') input.step = '1'
@@ -123,36 +191,61 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
 
     const label = input.closest('label')
     if (label) {
-      ensureFieldLabelTitleElement(label, 'investment-field-label').textContent = field.label
+      applyFieldChrome(
+        label,
+        {
+          label: field.label,
+          description: field.description || getDkjFieldHelp(field.name),
+          required: Boolean(field.required),
+          role: 'input',
+          helpId: `${adapter.inputId}-help`,
+          labelClassName: 'dkj-field-label'
+        },
+        input
+      )
     }
   })
 
-  reorderFormRowBySpec(investmentForm, fields, DKJ_FRONTEND_FIELD_ADAPTER)
-}
-
-function setDkjFieldVisibility(investmentForm, visibleFieldNames) {
-  if (!investmentForm) return
-
-  const dkjOnlyFields = ['termMonths', 'remainingDays']
-
-  dkjOnlyFields.forEach((fieldName) => {
-    const adapter = DKJ_FRONTEND_FIELD_ADAPTER[fieldName]
+  DKJ_PRODUCT_SPEC.outputs.forEach((field) => {
+    const adapter = DKJ_OUTPUT_PREVIEW_ADAPTER[field.name]
     if (!adapter) return
     const input = investmentForm.querySelector(`#${adapter.inputId}`)
     const label = input ? input.closest('label') : null
-    if (label) {
-      label.hidden = !visibleFieldNames.includes(fieldName)
-    }
+    if (!label) return
+    applyFieldChrome(
+      label,
+      {
+        label: field.label,
+        description: field.description || getDkjFieldHelp(field.name),
+        required: false,
+        role: 'output',
+        helpId: `${adapter.inputId}-help`,
+        labelClassName: 'investment-field-label'
+      },
+      input
+    )
   })
+}
+
+function setDkjFieldVisibility(investmentForm, visible) {
+  if (!investmentForm) return
+  const wrap = investmentForm.querySelector('#investment-dkj-wrap')
+  if (wrap) {
+    wrap.hidden = !visible
+  }
 }
 
 function mapFormDataToDkjSpecInputs(formData) {
   return {
-    faceValue: parseMoneyAmount(formData.get('principal')),
-    purchasePricePct: parseMoneyAmount(formData.get('purchasePrice')),
+    faceValue: parseMoneyAmount(formData.get('faceValue') ?? formData.get('principal')),
+    purchasePricePct: parseMoneyAmount(
+      formData.get('purchasePricePct') ?? formData.get('purchasePrice')
+    ),
     termMonths: Number(formData.get('termMonths')),
-    settlementDate: String(formData.get('transactionDate') || '').trim(),
-    maturityDate: String(formData.get('dueDate') || '').trim() || undefined,
+    settlementDate: String(
+      formData.get('settlementDate') || formData.get('transactionDate') || ''
+    ).trim(),
+    maturityDate: String(formData.get('maturityDate') || formData.get('dueDate') || '').trim() || undefined,
     remainingDays: String(formData.get('remainingDays') || '').trim()
       ? Number(formData.get('remainingDays'))
       : undefined
@@ -162,7 +255,9 @@ function mapFormDataToDkjSpecInputs(formData) {
 function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
   const purchasePrice = (specInputs.faceValue * specInputs.purchasePricePct) / 100
   const settlementDate = String(specInputs.settlementDate || '').trim()
-  const maturityDate = String(specInputs.maturityDate || '').trim() || addMonthsToIsoDate(settlementDate, specInputs.termMonths)
+  const maturityDate =
+    String(specInputs.maturityDate || '').trim() ||
+    addMonthsToIsoDate(settlementDate, specInputs.termMonths)
 
   return {
     id: meta.id,
@@ -195,9 +290,11 @@ function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
 export {
   DKJ_PRODUCT_SPEC,
   DKJ_FRONTEND_FIELD_ADAPTER,
+  DKJ_OUTPUT_PREVIEW_ADAPTER,
   applyDkjSpecToForm,
   setDkjFieldVisibility,
   mapFormDataToDkjSpecInputs,
   mapDkjSpecInputsToInvestmentBundleInput,
-  orderedSpecFields
+  orderedSpecFields,
+  ensureFieldLabelTitleElement
 }

@@ -3,55 +3,29 @@ import { mapPmapSpecInputsToLegacyInvestmentInput } from './pmap-calculation-ada
 import {
   toInputType,
   applyNumericConstraints,
-  orderedSpecFields,
-  ensureFieldLabelTitleElement
+  orderedSpecFields
 } from './spec-form-utils.js'
+import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
+import { getPmapFieldHelp } from './investment-field-help.js'
 import { parseMoneyAmount } from './money-format.js'
 
 const PMAP_FRONTEND_FIELD_ADAPTER = {
-  principal: { inputId: 'investment-principal', formName: 'principal' },
-  interestPremiumPct: { inputId: 'investment-spread-rate', formName: 'spreadRate' },
-  previousYearAverageInflationPct: { inputId: 'investment-yearly-inflation', formName: 'yearlyInflation' },
-  startDate: { inputId: 'investment-issue-date', formName: 'startDate' },
-  purchaseDate: { inputId: 'investment-transaction-date', formName: 'purchaseDate' },
-  issueDate: { inputId: 'investment-due-date', formName: 'issueDate' },
-  firstCouponDate: { inputId: 'investment-coupon-period', formName: 'firstCouponDate' }
+  principal: { inputId: 'pmap-principal', formName: 'principal' },
+  interestPremiumPct: { inputId: 'pmap-interest-premium-pct', formName: 'interestPremiumPct' },
+  previousYearAverageInflationPct: {
+    inputId: 'pmap-previous-year-inflation-pct',
+    formName: 'previousYearAverageInflationPct'
+  },
+  startDate: { inputId: 'pmap-start-date', formName: 'startDate' },
+  purchaseDate: { inputId: 'pmap-purchase-date', formName: 'purchaseDate' },
+  issueDate: { inputId: 'pmap-issue-date', formName: 'issueDate' },
+  firstCouponDate: { inputId: 'pmap-first-coupon-date', formName: 'firstCouponDate' }
 }
 
-function reorderInvestmentRowsBySpec(investmentForm, fields) {
-  const rows = Array.from(investmentForm.querySelectorAll('.row'))
-  if (rows.length === 0) return
-
-  const mappedLabelsInOrder = fields
-    .map((field) => {
-      const adapter = PMAP_FRONTEND_FIELD_ADAPTER[field.name]
-      if (!adapter) return null
-      const input = investmentForm.querySelector(`#${adapter.inputId}`)
-      return input ? input.closest('label') : null
-    })
-    .filter(Boolean)
-
-  const placed = new Set()
-  mappedLabelsInOrder.forEach((label) => placed.add(label))
-
-  const firstRow = rows[0]
-  const secondRow = rows.length > 1 ? rows[1] : null
-
-  if (firstRow) {
-    const firstRowLabels = mappedLabelsInOrder.slice(0, 3)
-    const remaining = Array.from(firstRow.children).filter((node) => !placed.has(node))
-    ;[...firstRowLabels, ...remaining].forEach((label) => {
-      firstRow.appendChild(label)
-    })
-  }
-
-  if (secondRow) {
-    const secondRowLabels = mappedLabelsInOrder.slice(3)
-    const remaining = Array.from(secondRow.children).filter((node) => !placed.has(node))
-    ;[...secondRowLabels, ...remaining].forEach((label) => {
-      secondRow.appendChild(label)
-    })
-  }
+const PMAP_OUTPUT_PREVIEW_ADAPTER = {
+  redemptionValue: { inputId: 'investment-maturity-preview' },
+  annualCouponRatePct: { inputId: 'investment-inflation-schedule-preview' },
+  couponPaymentFrequency: { inputId: 'investment-inflation-schedule-preview' }
 }
 
 function applyPmapSpecToForm({ investmentForm, investmentBox }) {
@@ -74,7 +48,6 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
     } else {
       input.type = toInputType(field)
     }
-    input.required = Boolean(field.required)
     if (input.type === 'number') {
       applyNumericConstraints(input, field.constraints)
       if (field.type === 'integer') input.step = '1'
@@ -82,18 +55,76 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
 
     const label = input.closest('label')
     if (label) {
-      ensureFieldLabelTitleElement(label, 'pmap-field-label').textContent = field.label
+      applyFieldChrome(
+        label,
+        {
+          label: field.label,
+          description: field.description || getPmapFieldHelp(field.name),
+          required: Boolean(field.required),
+          role: 'input',
+          helpId: `${adapter.inputId}-help`,
+          labelClassName: 'pmap-field-label'
+        },
+        input
+      )
     }
   })
 
-  reorderInvestmentRowsBySpec(investmentForm, fields)
+  const inflationPreview = investmentForm.querySelector('#investment-inflation-schedule-preview')
+  const inflationLabel = inflationPreview ? inflationPreview.closest('label') : null
+  if (inflationLabel) {
+    applyFieldChrome(
+      inflationLabel,
+      {
+        label: 'Coupon preview',
+        description:
+          getPmapFieldHelp('annualCouponRatePct') +
+          ' ' +
+          getPmapFieldHelp('couponPaymentFrequency'),
+        required: false,
+        role: 'output',
+        helpId: 'investment-inflation-schedule-preview-help',
+        labelClassName: 'investment-field-label'
+      },
+      inflationPreview
+    )
+  }
+
+  const maturityPreview = investmentForm.querySelector('#investment-maturity-preview')
+  const maturityLabel = maturityPreview ? maturityPreview.closest('label') : null
+  if (maturityLabel) {
+    applyFieldChrome(
+      maturityLabel,
+      {
+        label: 'Redemption Value',
+        description: getPmapFieldHelp('redemptionValue'),
+        required: false,
+        role: 'output',
+        helpId: 'investment-maturity-preview-help',
+        labelClassName: 'investment-field-label'
+      },
+      maturityPreview
+    )
+  }
+}
+
+function setPmapFieldVisibility(investmentForm, visible) {
+  if (!investmentForm) return
+  const wrap = investmentForm.querySelector('#investment-pmap-wrap')
+  if (wrap) {
+    wrap.hidden = !visible
+  }
 }
 
 function mapFormDataToPmapSpecInputs(formData) {
   return {
     principal: parseMoneyAmount(formData.get('principal')),
-    interestPremiumPct: Number(formData.get('spreadRate')),
-    previousYearAverageInflationPct: Number(formData.get('yearlyInflation')),
+    interestPremiumPct: Number(
+      formData.get('interestPremiumPct') ?? formData.get('spreadRate')
+    ),
+    previousYearAverageInflationPct: Number(
+      formData.get('previousYearAverageInflationPct') ?? formData.get('yearlyInflation')
+    ),
     startDate: String(formData.get('startDate') || '').trim(),
     purchaseDate: String(formData.get('purchaseDate') || '').trim() || undefined,
     issueDate: String(formData.get('issueDate') || '').trim() || undefined,
@@ -125,15 +156,22 @@ function mapPmapSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     couponPeriod: specInputs.firstCouponDate || '',
     category: meta.category || 'investment',
     description: meta.description,
-    createdAt: meta.createdAt
+    createdAt: meta.createdAt,
+    interestPremiumPct: specInputs.interestPremiumPct,
+    previousYearAverageInflationPct: specInputs.previousYearAverageInflationPct,
+    startDate: specInputs.startDate,
+    firstCouponDate: specInputs.firstCouponDate
   }
 }
 
 export {
   PMAP_PRODUCT_SPEC,
   PMAP_FRONTEND_FIELD_ADAPTER,
+  PMAP_OUTPUT_PREVIEW_ADAPTER,
   applyPmapSpecToForm,
+  setPmapFieldVisibility,
   mapFormDataToPmapSpecInputs,
   mapPmapSpecInputsToInvestmentBundleInput,
-  orderedSpecFields
+  orderedSpecFields,
+  ensureFieldLabelTitleElement
 }

@@ -1208,6 +1208,11 @@ const DEFAULT_HOME_SAVINGS_PREMIUM_TIERS = {
   maturityFrom120: 30
 }
 
+/** USZ Melléklet 2026-08-03 — PRÉMIUM PLUSZ 10x30. Dual-surface until ADR 0017. */
+const DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE = 3.846
+const DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT = 2_600_000
+const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
+
 function addMonthsUtc(date, months) {
   const year = date.getUTCFullYear()
   const month = date.getUTCMonth() + months
@@ -1256,6 +1261,74 @@ function resolveHomeSavingsPremiumRatePct(input) {
   if (holdingMonths >= 97) return tiers.months97to120
   if (holdingMonths >= 49) return tiers.months49to96
   return 0
+}
+
+function ceilToTenForint(amount) {
+  return Math.ceil(amount / 10) * 10
+}
+
+/**
+ * Havi betét = szerződéses összeg × ‰ / 1000, rounded up to 10 Ft (USZ/ÁSZF).
+ * Dual-surface mirror of src/finance_engine/instruments/home_savings.ts (ADR 0017).
+ */
+function resolveMonthlyDepositFromContractAmount(input) {
+  const contractAmount = Number(input.contractAmount)
+  if (!Number.isFinite(contractAmount) || contractAmount <= 0) {
+    throw new Error('contractAmount must be a positive finite number.')
+  }
+  const permille = Number(
+    input.savingsRatePermille ?? DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE
+  )
+  if (!Number.isFinite(permille) || permille <= 0) {
+    throw new Error('savingsRatePermille must be a positive finite number.')
+  }
+  return ceilToTenForint((contractAmount * permille) / 1000)
+}
+
+/**
+ * Invert the ‰ rule to a 10 000 Ft multiple in the módozat contract bounds.
+ * Dual-surface mirror of src/finance_engine/instruments/home_savings.ts (ADR 0017).
+ */
+function resolveContractAmountFromMonthlyDeposit(input) {
+  const monthlyDeposit = Number(input.monthlyDeposit)
+  if (!Number.isFinite(monthlyDeposit) || monthlyDeposit <= 0) {
+    throw new Error('monthlyDeposit must be a positive finite number.')
+  }
+  const permille = Number(
+    input.savingsRatePermille ?? DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE
+  )
+  const minContract = Number(
+    input.minContractAmount ?? DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT
+  )
+  const maxContract = Number(
+    input.maxContractAmount ?? DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT
+  )
+
+  if (!Number.isFinite(permille) || permille <= 0) {
+    throw new Error('savingsRatePermille must be a positive finite number.')
+  }
+
+  const approx = (monthlyDeposit * 1000) / permille
+  const start = Math.round(approx / 10_000) * 10_000
+  for (let delta = 0; delta <= 50; delta += 1) {
+    for (const candidate of delta === 0
+      ? [start]
+      : [start - delta * 10_000, start + delta * 10_000]) {
+      if (candidate < minContract || candidate > maxContract) continue
+      if (
+        resolveMonthlyDepositFromContractAmount({
+          contractAmount: candidate,
+          savingsRatePermille: permille
+        }) === monthlyDeposit
+      ) {
+        return candidate
+      }
+    }
+  }
+
+  throw new Error(
+    `No contract amount in [${minContract}, ${maxContract}] maps to monthlyDeposit ${monthlyDeposit} at ${permille}‰.`
+  )
 }
 
 /**
@@ -1535,6 +1608,9 @@ export {
   generateLoanInstrumentBundle,
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentBundle,
+  ceilToTenForint,
+  resolveMonthlyDepositFromContractAmount,
+  resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
   calculateHomeSavingsDepositInterest,
   resolveHomeSavingsSchedule,

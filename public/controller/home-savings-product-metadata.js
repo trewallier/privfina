@@ -35,7 +35,7 @@ const HOME_SAVINGS_PRODUCTS = [
       'promo-fixed-65000': { min: 50_000, max: 100_000 }
     },
     premiumTiers: { ...HOME_SAVINGS_PREMIUM_TIERS },
-    // TODO(§5e commercially-usable): assert this map against product.yaml (rates, fees, bands, migrationStatus).
+    // Keep in sync with product.yaml — asserted by tests/home-savings-composer-parity.test.ts.
     eligibilityHints: [
       'Natural person or condominium/cooperative saver; Hungarian residential or stay address for natural persons.',
       'Housing-purpose use is required for OTP Lakástakarék Prémium (soft hint in v1).',

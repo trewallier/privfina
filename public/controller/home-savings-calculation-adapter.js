@@ -1,50 +1,21 @@
 /**
- * Browser commercial home-savings mapper.
+ * Browser commercial home-savings mapper (loan-bridge style).
  *
- * TODO(§5e commercially-usable / ADR 0017): this re-implements contract-amount /
- * opening-fee rules already owned by `src/finance_engine/product_specs/home_savings.ts`.
- * Prefer collapsing onto shared browser primitives (or a single imported mapper) and
- * keep engine↔browser locked-example parity tests green before commercially-usable.
+ * Contract-amount ‰ helpers live in `public/instruments.js` (ADR 0017 dual
+ * surface with `src/finance_engine/instruments/home_savings.ts`). This module
+ * only maps composer/spec inputs onto those primitives + the schedule/bundle
+ * generators — no third formula surface.
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
+import {
+  resolveMonthlyDepositFromContractAmount,
+  resolveContractAmountFromMonthlyDeposit
+} from '../instruments.js'
 
-function ceilToTenForint(amount) {
-  return Math.ceil(amount / 10) * 10
-}
-
-function resolveMonthlyDepositFromContractAmount({ contractAmount, savingsRatePermille }) {
-  return ceilToTenForint((contractAmount * savingsRatePermille) / 1000)
-}
-
-function resolveContractAmountFromMonthlyDeposit({
-  monthlyDeposit,
-  savingsRatePermille,
-  minContractAmount,
-  maxContractAmount
-}) {
-  const approx = (monthlyDeposit * 1000) / savingsRatePermille
-  const start = Math.round(approx / 10_000) * 10_000
-  for (let delta = 0; delta <= 50; delta += 1) {
-    for (const candidate of delta === 0
-      ? [start]
-      : [start - delta * 10_000, start + delta * 10_000]) {
-      if (candidate < minContractAmount || candidate > maxContractAmount) continue
-      if (
-        resolveMonthlyDepositFromContractAmount({
-          contractAmount: candidate,
-          savingsRatePermille
-        }) === monthlyDeposit
-      ) {
-        return candidate
-      }
-    }
-  }
-
-  throw new Error(
-    `No contract amount in [${minContractAmount}, ${maxContractAmount}] maps to monthlyDeposit ${monthlyDeposit}.`
-  )
-}
-
+/**
+ * Resolve szerződéses összeg from explicit input or monthly deposit via ‰.
+ * Rejects an explicit contractAmount that does not map back to monthlyDeposit.
+ */
 function resolveHomeSavingsContractAmount(product, specInputs) {
   if (specInputs.contractAmount !== undefined && specInputs.contractAmount !== null) {
     const explicit = Number(specInputs.contractAmount)
@@ -177,8 +148,6 @@ function calculateHomeSavingsFromSpecInputs(specInputs, options = {}) {
 }
 
 export {
-  resolveMonthlyDepositFromContractAmount,
-  resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsContractAmount,
   resolveHomeSavingsOpeningFee,
   mapHomeSavingsSpecInputsToBundleInput,

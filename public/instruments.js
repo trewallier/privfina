@@ -1201,6 +1201,325 @@ function flattenInstrumentFlows(instrumentBundles) {
   })
 }
 
+/** Default OTP Lakástakarék Prémium tiers (PRÉMIUM PLUSZ 10x30). Dual-surface until ADR 0017. */
+const DEFAULT_HOME_SAVINGS_PREMIUM_TIERS = {
+  months49to96: 10,
+  months97to120: 20,
+  maturityFrom120: 30
+}
+
+function addMonthsUtc(date, months) {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth() + months
+  const targetYear = year + Math.floor(month / 12)
+  const targetMonth = ((month % 12) + 12) % 12
+  const day = Math.min(date.getUTCDate(), daysInMonthUtc(targetYear, targetMonth))
+  return new Date(Date.UTC(targetYear, targetMonth, day))
+}
+
+function shiftUtcDays(date, days) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days))
+}
+
+function ensureNonNegativeHomeSavingsAmount(amount, label) {
+  const parsed = Number(amount)
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${label} must be a non-negative finite number.`)
+  }
+  return parsed
+}
+
+function deriveHomeSavingsDepositDayOfMonth(startDate) {
+  const day = Number(String(startDate).split('-')[2])
+  if (!Number.isInteger(day) || day < 1 || day > 31) {
+    throw new Error('Home-savings startDate must be in YYYY-MM-DD format.')
+  }
+  return day
+}
+
+function resolveHomeSavingsPremiumRatePct(input) {
+  if (!input.housingPurpose) {
+    return 0
+  }
+
+  const tiers = input.tiers || DEFAULT_HOME_SAVINGS_PREMIUM_TIERS
+  const holdingMonths =
+    input.earlyExitMonth !== undefined && input.earlyExitMonth !== null
+      ? Number(input.earlyExitMonth)
+      : Number(input.termMonths)
+
+  if (!Number.isInteger(holdingMonths) || holdingMonths <= 0) {
+    throw new Error('Holding months for Premium resolution must be a positive integer.')
+  }
+
+  if (holdingMonths >= 120) return tiers.maturityFrom120
+  if (holdingMonths >= 97) return tiers.months97to120
+  if (holdingMonths >= 49) return tiers.months49to96
+  return 0
+}
+
+/**
+ * ÁSZF/USZ deposit interest: ACT/360 daily with yearly capitalization.
+ * Dual-surface mirror of src/finance_engine/instruments/home_savings.ts (ADR 0017).
+ */
+function calculateHomeSavingsDepositInterest(input) {
+  const monthlyDeposit = ensureNonNegativeHomeSavingsAmount(input.monthlyDeposit, 'monthlyDeposit')
+  if (monthlyDeposit <= 0) {
+    throw new Error('monthlyDeposit must be a positive finite number.')
+  }
+  const termMonths = Number(input.termMonths)
+  if (!Number.isInteger(termMonths) || termMonths <= 0) {
+    throw new Error('termMonths must be a positive integer.')
+  }
+
+  if (input.annualRatePct === undefined || input.annualRatePct === null) {
+    return 0
+  }
+
+  const annualRatePct = Number(input.annualRatePct)
+  if (!Number.isFinite(annualRatePct) || annualRatePct < 0) {
+    throw new Error('depositInterestAnnualRatePct must be a non-negative finite number.')
+  }
+  if (annualRatePct === 0) {
+    return 0
+  }
+
+  const start = parseIsoDate(input.startDate)
+  const depositDates = new Map()
+  for (let i = 0; i < termMonths; i += 1) {
+    const depositDate = addMonthsUtc(start, i)
+    const key = formatIsoDate(depositDate)
+    depositDates.set(key, (depositDates.get(key) || 0) + monthlyDeposit)
+  }
+
+  const yearStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1))
+  const capDates = new Set()
+  for (let yearIndex = 1; yearIndex <= Math.ceil(termMonths / 12) + 1; yearIndex += 1) {
+    capDates.add(formatIsoDate(addMonthsUtc(yearStart, yearIndex * 12)))
+  }
+
+  const payoutDate = addMonthsUtc(start, termMonths - 1)
+  let balance = 0
+  let pendingInterest = 0
+  let totalInterest = 0
+  let cursor = new Date(start.getTime())
+
+  while (cursor.getTime() <= payoutDate.getTime()) {
+    const key = formatIsoDate(cursor)
+
+    if (capDates.has(key) && pendingInterest > 0) {
+      const capitalized = Math.round(pendingInterest)
+      balance += capitalized
+      totalInterest += capitalized
+      pendingInterest = 0
+    }
+
+    const deposit = depositDates.get(key)
+    if (deposit) {
+      balance += deposit
+    }
+
+    if (cursor.getTime() < payoutDate.getTime()) {
+      pendingInterest += (balance * annualRatePct) / (360 * 100)
+    }
+
+    cursor = shiftUtcDays(cursor, 1)
+  }
+
+  if (pendingInterest > 0) {
+    totalInterest += Math.round(pendingInterest)
+  }
+
+  return totalInterest
+}
+
+function resolveHomeSavingsSchedule(input) {
+  const monthlyDeposit = ensureNonNegativeHomeSavingsAmount(input.monthlyDeposit, 'monthlyDeposit')
+  if (monthlyDeposit <= 0) {
+    throw new Error('monthlyDeposit must be a positive finite number.')
+  }
+  const accountFeeMonthly = ensureNonNegativeHomeSavingsAmount(
+    input.accountFeeMonthly,
+    'accountFeeMonthly'
+  )
+  const accountOpeningFee = ensureNonNegativeHomeSavingsAmount(
+    input.accountOpeningFee,
+    'accountOpeningFee'
+  )
+  const termMonths = Number(input.termMonths)
+  if (!Number.isInteger(termMonths) || termMonths <= 0) {
+    throw new Error('termMonths must be a positive integer.')
+  }
+
+  const totalDeposits = monthlyDeposit * termMonths
+  const totalAccountFees = accountFeeMonthly * termMonths
+  const depositInterest = calculateHomeSavingsDepositInterest({
+    monthlyDeposit,
+    termMonths,
+    startDate: input.startDate,
+    annualRatePct: input.depositInterestAnnualRatePct
+  })
+  const premiumBase = totalDeposits
+  const premiumRatePct =
+    input.premiumRatePct !== undefined && input.premiumRatePct !== null
+      ? Number(input.premiumRatePct)
+      : resolveHomeSavingsPremiumRatePct({
+          termMonths,
+          housingPurpose: input.housingPurpose,
+          earlyExitMonth: input.earlyExitMonth,
+          tiers: input.premiumTiers
+        })
+
+  if (!Number.isFinite(premiumRatePct) || premiumRatePct < 0) {
+    throw new Error('premiumRatePct must be a non-negative finite number.')
+  }
+
+  const premiumAmount = (premiumBase * premiumRatePct) / 100
+  const terminalPayout = totalDeposits + depositInterest + premiumAmount
+
+  return {
+    totalDeposits,
+    totalAccountFees,
+    accountOpeningFee,
+    accountFeeMonthly,
+    premiumRatePct,
+    premiumBase,
+    premiumAmount,
+    terminalPayout,
+    depositInterest,
+    paymentCount: termMonths,
+    termMonths,
+    housingPurpose: Boolean(input.housingPurpose)
+  }
+}
+
+function generateHomeSavingsInstrumentFlows(input) {
+  const monthlyDeposit = ensureNonNegativeHomeSavingsAmount(input.monthlyDeposit, 'monthlyDeposit')
+  if (monthlyDeposit <= 0) {
+    throw new Error('monthlyDeposit must be a positive finite number.')
+  }
+  const accountFeeMonthly = ensureNonNegativeHomeSavingsAmount(
+    input.accountFeeMonthly,
+    'accountFeeMonthly'
+  )
+  const accountOpeningFee = ensureNonNegativeHomeSavingsAmount(
+    input.accountOpeningFee,
+    'accountOpeningFee'
+  )
+  const termMonths = Number(input.termMonths)
+  assertBoundedHorizon(undefined, termMonths)
+
+  const dayOfMonth = input.depositDayOfMonth ?? deriveHomeSavingsDepositDayOfMonth(input.startDate)
+  const period = `0 0 ${dayOfMonth} * *`
+  const category = input.category || 'home-savings'
+  // Fixed flow label — `input.description` is free-text notes on the bundle/config only.
+  const depositDescription = 'Monthly deposit'
+  const schedule = resolveHomeSavingsSchedule(input)
+  const flows = []
+
+  if (accountOpeningFee > 0) {
+    flows.push({
+      date: input.startDate,
+      amount: accountOpeningFee,
+      direction: 'outflow',
+      category,
+      description: 'Account opening fee'
+    })
+  }
+
+  const depositDefinition = normalizeRecurringDefinition({
+    period,
+    startDate: input.startDate,
+    occurrences: termMonths,
+    amount: monthlyDeposit,
+    direction: 'outflow',
+    category
+  })
+  if (!depositDefinition) {
+    throw new Error('Invalid home-savings deposit schedule.')
+  }
+  flows.push(
+    ...expandRecurringFlows(depositDefinition, input.startDate, '9999-12-31').map((flow) => ({
+      ...flow,
+      description: depositDescription
+    }))
+  )
+
+  if (accountFeeMonthly > 0) {
+    const feeDefinition = normalizeRecurringDefinition({
+      period,
+      startDate: input.startDate,
+      occurrences: termMonths,
+      amount: accountFeeMonthly,
+      direction: 'outflow',
+      category
+    })
+    if (!feeDefinition) {
+      throw new Error('Invalid home-savings account-fee schedule.')
+    }
+    flows.push(
+      ...expandRecurringFlows(feeDefinition, input.startDate, '9999-12-31').map((flow) => ({
+        ...flow,
+        description: 'Account management fee'
+      }))
+    )
+  }
+
+  const depositFlows = flows.filter((flow) => flow.description === depositDescription)
+  const lastDepositDate =
+    depositFlows.length > 0 ? depositFlows[depositFlows.length - 1].date : input.startDate
+
+  if (schedule.terminalPayout > 0) {
+    flows.push({
+      date: lastDepositDate,
+      amount: schedule.terminalPayout,
+      direction: 'inflow',
+      category,
+      description: 'Home-savings terminal payout'
+    })
+  }
+
+  return flows.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function createHomeSavingsInstrumentBundle(input) {
+  const schedule = resolveHomeSavingsSchedule(input)
+  const generatedFlows = generateHomeSavingsInstrumentFlows(input)
+  const depositDayOfMonth =
+    input.depositDayOfMonth ?? deriveHomeSavingsDepositDayOfMonth(input.startDate)
+
+  return normalizeInstrumentBundle({
+    id: input.id || createId('home-savings'),
+    instrumentType: 'home-savings',
+    label: input.label || 'Home savings',
+    productId: input.productId,
+    productSpecVersion: input.productSpecVersion,
+    config: {
+      productId: input.productId,
+      productCode: input.productCode,
+      productSpecVersion: input.productSpecVersion,
+      monthlyDeposit: Number(input.monthlyDeposit),
+      termMonths: Number(input.termMonths),
+      startDate: input.startDate,
+      depositDayOfMonth,
+      accountFeeMonthly: Number(input.accountFeeMonthly),
+      accountOpeningFee: Number(input.accountOpeningFee),
+      housingPurpose: Boolean(input.housingPurpose),
+      depositInterestAnnualRatePct: input.depositInterestAnnualRatePct,
+      premiumRatePct: schedule.premiumRatePct,
+      earlyExitMonth: input.earlyExitMonth,
+      openingFeeMode: input.openingFeeMode,
+      contractAmount: input.contractAmount,
+      category: input.category || 'home-savings',
+      description: input.description
+    },
+    preview: schedule,
+    generatedFlows,
+    createdAt: input.createdAt,
+    updatedAt: new Date().toISOString()
+  })
+}
+
 export {
   normalizeInstrumentBundle,
   normalizeInstrumentBundles,
@@ -1216,5 +1535,9 @@ export {
   generateLoanInstrumentBundle,
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentBundle,
+  resolveHomeSavingsPremiumRatePct,
+  calculateHomeSavingsDepositInterest,
+  resolveHomeSavingsSchedule,
+  createHomeSavingsInstrumentBundle,
   flattenInstrumentFlows
 }

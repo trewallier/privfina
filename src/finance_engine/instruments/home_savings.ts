@@ -73,7 +73,12 @@ export interface HomeSavingsBundleInput extends HomeSavingsInstrumentInput {
   id?: string
   label?: string
   productId?: string
+  productCode?: string
   productSpecVersion?: string
+  /** Opening-fee mode for edit round-trips (commercial composer). */
+  openingFeeMode?: string
+  /** Resolved or explicit szerződéses összeg for edit round-trips. */
+  contractAmount?: number
   createdAt?: string
   updatedAt?: string
 }
@@ -348,6 +353,8 @@ export function generateHomeSavingsInstrumentCashFlows(
   const dayOfMonth = input.depositDayOfMonth ?? deriveDepositDayOfMonth(input.startDate)
   const period = monthlyPeriod(dayOfMonth)
   const category = input.category ?? 'home-savings'
+  // Fixed flow label — `input.description` is free-text notes on the bundle/config only.
+  const depositDescription = 'Monthly deposit'
   const schedule = resolveHomeSavingsSchedule(input)
 
   const flows: CashFlow[] = []
@@ -372,7 +379,7 @@ export function generateHomeSavingsInstrumentCashFlows(
       amount: monthlyDeposit,
       direction: CashFlowDirection.Outflow,
       category,
-      description: input.description ?? 'Monthly deposit'
+      description: depositDescription
     })
   )
 
@@ -390,7 +397,7 @@ export function generateHomeSavingsInstrumentCashFlows(
     )
   }
 
-  const depositFlows = flows.filter((flow) => flow.description === (input.description ?? 'Monthly deposit'))
+  const depositFlows = flows.filter((flow) => flow.description === depositDescription)
   const lastDepositDate =
     depositFlows.length > 0 ? depositFlows[depositFlows.length - 1].date : input.startDate
 
@@ -433,6 +440,7 @@ export function createHomeSavingsInstrumentBundle(
     productSpecVersion: input.productSpecVersion,
     config: {
       productId: input.productId,
+      productCode: input.productCode,
       productSpecVersion: input.productSpecVersion,
       monthlyDeposit: input.monthlyDeposit,
       termMonths: input.termMonths,
@@ -444,6 +452,8 @@ export function createHomeSavingsInstrumentBundle(
       depositInterestAnnualRatePct: input.depositInterestAnnualRatePct,
       premiumRatePct: schedule.premiumRatePct,
       earlyExitMonth: input.earlyExitMonth,
+      openingFeeMode: input.openingFeeMode,
+      contractAmount: input.contractAmount,
       category: input.category ?? 'home-savings',
       description: input.description
     },

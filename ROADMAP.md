@@ -124,9 +124,9 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
 
 Schedule-usable review follow-ups (before / with commercially-usable; from PR #83)
-- [ ] Collapse browser home-savings product-spec mapper (`home-savings-calculation-adapter.js`) onto shared primitives — avoid a third formula surface beyond ADR 0017 TS↔`instruments.js`; keep locked-example engine↔browser parity green.
-- [ ] Assert hand-authored `HOME_SAVINGS_PRODUCTS` metadata against product YAML (rates, fees, promo bands, migrationStatus).
-- [ ] Extract commercial home-savings composer host from `app-controller.js` (god-controller; securities partially did this).
+- [x] Collapse browser home-savings product-spec mapper (`home-savings-calculation-adapter.js`) onto shared primitives — avoid a third formula surface beyond ADR 0017 TS↔`instruments.js`; keep locked-example engine↔browser parity green.
+- [x] Assert hand-authored `HOME_SAVINGS_PRODUCTS` metadata against product YAML (rates, fees, promo bands, migrationStatus).
+- [x] Extract commercial home-savings composer host from `app-controller.js` (god-controller; securities partially did this).
 
 Deferred (explicitly out of scope for §5e)
 - [ ] OTP Lakástakarék *lakáskölcsön* / *áthidaló kölcsön* (díjtáblázat THM representative examples for PRÉMIUM PLUSZ 10x30). Prefer reuse of `mortgage-loan` + ADR 0024 patterns in a later epic; new ADR only if that reuse fails.

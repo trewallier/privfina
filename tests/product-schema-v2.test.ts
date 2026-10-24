@@ -11,7 +11,8 @@ function readRepoFile(relativePath: string): string {
 function collectProductYamlPaths(): string[] {
   const roots = [
     'docs/product-specs/products/loans',
-    'docs/product-specs/products/government-securities'
+    'docs/product-specs/products/government-securities',
+    'docs/product-specs/products/home-savings'
   ]
   const paths: string[] = []
 
@@ -63,6 +64,19 @@ describe('product specification schema v2', () => {
     expect(spec.family).toBe('mortgage-loan')
     expect(spec.engine.instrumentType).toBe('loan')
     expect(spec.loanPurposes).toContain('used-home-purchase')
+  })
+
+  it('validates home-savings PRÉMIUM PLUSZ 10x30 under home-savings family', () => {
+    const spec = YAML.parse(
+      readRepoFile(
+        'docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml'
+      )
+    )
+
+    expect(validateProduct(spec), JSON.stringify(validateProduct.errors)).toBe(true)
+    expect(spec.family).toBe('home-savings')
+    expect(spec.productCode).toBe('premium-plusz-10x30')
+    expect(spec.engine.instrumentType).toBe('home-savings')
   })
 
   it('accepts expandable mortgage commercial constructs used by future products', () => {

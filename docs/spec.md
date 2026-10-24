@@ -4,7 +4,7 @@ Glossary
 - Cash Flow: dated amount with direction and category.
 - One-time cash flow: a single inflow or outflow with one date and amount.
 - Recurring cash flow: repeated inflow or outflow generated from a schedule.
-- Instrument: a source of cash flows (salary, subscription, loan, investment).
+- Instrument: a source of cash flows (salary, subscription, loan, investment, home-savings).
 - Browser storage: local browser persistence such as IndexedDB or localStorage.
 - Export/import: manual JSON backup and restore mechanism for user data.
 - Adapter layer: browser-side normalization layer that converts external macro data into a shape the calculation engine consumes.
@@ -35,6 +35,10 @@ Scenarios / Use-cases
 - Simplified investment instrument setup: users can configure regular bond, discount bond, inflation-linked bond, and custom bond variants with finite maturity outputs (pedagogical / instrument-mode; not ÁKK catalog products).
 - Commercial investment composer: users open a separate commercial-investment box, pick an ÁKK / Hungarian State Treasury `government-security` product (DKJ, PMÁP, BMÁP), and configure catalog-backed cash flows with readiness status visible for the selected offering (ADR 0027).
 - Government-security product readiness (ADR 0027): same catalog ladder as loans; commercially-usable means commercial composer UX + offering-faithful numbers (no loan THM three-check). New treasury products land on the commercial picker, not the simplified subtype list.
+- Commercial home-savings composer (ADR 0028–0030 / ROADMAP §5e): users open a dedicated Lakástakarék box, pick a catalog `home-savings` product (PRÉMIUM PLUSZ 10x30), and configure monthly deposit, term, opening-fee mode, and housing-purpose assumption for customer cash flows.
+- Home-savings product readiness (ADR 0030 / 0031): same catalog ladder; schedule-usable means deposit/fee/Premium schedule on the chart; commercially-usable additionally requires fee/Premium/loyalty UX and engine EBKM ≡ published Hirdetmény EBKM (no loan THM three-check).
+- Home-savings Premium path: at ≥120 months with housing purpose, OTP Prémium is 30%; early-exit housing-purpose bands are 10% (months 49–96) and 20% (months 97–120).
+- Home-savings fee path: account fee 500 Ft/hó (from 2026-08-03); opening fee standard 1% of contract amount or promo 0.5% / fixed 65 000 Ft with 48-month loyalty; loyalty unlock is an optional scenario mode.
 - Investment subtype UX: users can clearly see and switch a prominent simplified-bond subtype selector, and the form adapts visible and editable fields to the selected subtype.
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
 - Inflation-linked bond setup: users must provide issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period; payment schedule and accrual rates are derived fields.
@@ -136,7 +140,16 @@ Acceptance criteria
 - [x] Item order and folder collapsed state persist in browser `listStatus` and are saved/restored by export/import JSON (schema v5 `data.listStatus`).
 - [x] Deleting a folder moves its items back to the root list without deleting the flows.
 - [x] Evaluation-result cache covers recurring evaluate/expand and instrument range slices, with explicit invalidation on definition/bundle mutations.
-- [x] Product specifications validate against schema v2 (`specVersion: v2alpha1`) with families `loan`, `mortgage-loan`, and `government-security` (ADR 0020).
+- [x] Product specifications validate against schema v2 (`specVersion: v2alpha1`) with families `loan`, `mortgage-loan`, `government-security`, and `home-savings` (ADR 0020 / 0028).
+- [x] ADR 0028–0031 record home-savings family/schema, `InstrumentType: 'home-savings'`, commercial composer readiness, and EBKM verification bar (ROADMAP §5e).
+- [x] OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`productCode: premium-plusz-10x30`) is authored under schema v2 at **spec-only** with Hirdetmény EBKM and Premium-tier examples locked (sales Hirdetmény 2026-10-10; díjtáblázat account fee 2026-08-03).
+- [ ] Home-savings calc-aligned engine mapper produces customer deposit/fee/Premium schedules from product YAML without product-specific generator forks (ÁSZF deposit rate required before interest fidelity).
+- [ ] Commercial home-savings composer box exists with a product picker over catalog `home-savings` codes and shows a readiness hint for the selected product.
+- [ ] Progressive type picker / toolbar exposes home-savings; editing a catalog-backed home-savings bundle opens the commercial home-savings composer.
+- [ ] Schedule-usable home-savings path create/edit/preview/persist stamps `productId` / `productSpecVersion` and charts customer outflows (opening fee, deposits, account fees) plus terminal Premium inflow when housing purpose is assumed.
+- [ ] Commercial home-savings UX surfaces opening-fee mode, account fee, Premium tier summary, loyalty hints, and a single EBKM preview (ADR 0031; no dual-lane UI).
+- [ ] Published EBKM goldens (20 000 and 100 000 Ft/hó; promo and 1% opening-fee tables; with/without Premium) pass engine verification before commercially-usable promotion.
+- [ ] LTP lakáskölcsön / áthidaló kölcsön remains out of scope for ROADMAP §5e (deferred).
 - [x] Product identity uses free-form `variant` plus required `productCode`; schema v1 remains frozen and is not extended for new loan/mortgage constructs.
 - [x] Product schema v2 accepts structured optional `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing` blocks so future retail mortgage products can be authored as data.
 - [x] OTP 1x1 (`productCode: otp-1x1`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% / 101.128 Ft installment) locked in unit tests.

@@ -104,6 +104,28 @@ Plan slices
 - [x] Edit routing: catalog-backed investment bundles open commercial composer; generic subtypes open simplified.
 - [x] Catalog / lifecycle / spec / ownership docs document securities readiness beside loans for future ÁKK additions.
 
+#### 5e) Home savings — OTP Lakástakarék (ADR 0028–0031)
+Goal: catalog OTP Lakástakarék *lakás-előtakarékossági* savings (first product **PRÉMIUM PLUSZ 10x30**) on a dedicated commercial home-savings surface. Customer-perspective deposits, account fees, opening fee, and OTP Prémium; EBKM verification for commercially-usable (not loan THM). Architecture: ADR 0028 (family/schema), 0029 (instrument), 0030 (composer/readiness), 0031 (EBKM).
+
+Constraints
+- Do **not** overload `government-security`, simplified investment subtypes, or loan composers.
+- No `if (productCode === …)` in core generators (ADR 0015); math in `src/finance_engine/` first (ADR 0017).
+- Do **not** invent deposit interest — ÁSZF / módozat annex is a calc-aligned fidelity blocker (product README).
+- LTP *lakáskölcsön* / *áthidaló kölcsön* is out of scope for this epic (deferred below).
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] Accept ADRs 0028–0031 (family/schema, instrument type, commercial composer + readiness, EBKM verification bar).
+- [x] Schema v2: add `home-savings` family + `engine.instrumentType: home-savings` + account fee types; validation fixtures cover the new product folder.
+- [x] Author `product.yaml` + Hirdetmény worked examples; register catalog row **`spec-only`** (`home-savings.premium-plusz-10x30.standard`).
+- [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
+- [ ] Engine primitives + family mapper → promote to **`calc-aligned`** (requires ÁSZF deposit rate / contract-amount formula before interest and percent-fee fidelity claims).
+- [ ] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
+- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`**.
+- [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
+
+Deferred (explicitly out of scope for §5e)
+- [ ] OTP Lakástakarék *lakáskölcsön* / *áthidaló kölcsön* (díjtáblázat THM representative examples for PRÉMIUM PLUSZ 10x30). Prefer reuse of `mortgage-loan` + ADR 0024 patterns in a later epic; new ADR only if that reuse fails.
+
 ### 6) Platform, Data Integrations, And Operations
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.

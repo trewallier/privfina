@@ -9,11 +9,12 @@ These statuses track the rollout of the spec-driven product model (ADR 0013–00
 - **spec-only**: Product spec exists, but frontend and calculations are not yet driven from it.
 - **inputs-driven**: Frontend inputs are driven from spec, but calculations are not fully aligned yet. (Live intermediate ladder step; no current catalog row uses it.)
 - **calc-aligned**: Calculations are aligned to the product spec, but the product is not yet usable end-to-end on the UI.
-- **schedule-usable**: Composer can create/edit/preview/persist a **customer-perspective** cash-flow schedule on the chart. For loans: purpose / eligibility / discount conditions are hints only; bank↔state subsidy legs and simulated post-subsidy rate resets are out of scope. For government securities: commercial (or simplified) composer path stamps `productId` / `productSpecVersion` where catalog-backed (ADR 0027).
+- **schedule-usable**: Composer can create/edit/preview/persist a **customer-perspective** cash-flow schedule on the chart. For loans: purpose / eligibility / discount conditions are hints only; bank↔state subsidy legs and simulated post-subsidy rate resets are out of scope. For government securities: commercial (or simplified) composer path stamps `productId` / `productSpecVersion` where catalog-backed (ADR 0027). For home-savings: commercial home-savings composer stamps lineage and charts deposits / fees / Premium path (ADR 0030).
 - **commercially-usable**:
   - **Loans (public offerings):** commercial UX (fees, discounts, purpose, THM) is wired **and** all three ADR 0024 checks are green. Dual-lane display is forbidden (ADR 0026).
   - **Government securities:** commercial investment composer UX (treasury product picker, labels/help from spec, calculated outputs) is wired and examples/adapters match published product numbers; dual-lane display is forbidden. Loan THM three-check does **not** apply (ADR 0027).
-- **fully-spec-backed**: Product spec, frontend inputs, calculations, and examples are aligned end-to-end. For public-offering loans this requires the commercially-usable bar (ADR 0023). For government securities this is the current DKJ/PMÁP/BMÁP bar (embedded form/adapter parity).
+  - **Home-savings:** commercial home-savings composer UX (product picker, fees / Premium / loyalty hints, EBKM preview) is wired and engine EBKM matches published Hirdetmény figures for locked examples (ADR 0031). Loan THM three-check does **not** apply.
+- **fully-spec-backed**: Product spec, frontend inputs, calculations, and examples are aligned end-to-end. For public-offering loans this requires the commercially-usable bar (ADR 0023). For government securities this is the current DKJ/PMÁP/BMÁP bar (embedded form/adapter parity). For home-savings this requires the commercially-usable EBKM bar (ADR 0030 / 0031) plus embedded frontend parity.
 
 Statuses are transitional rollout markers reflecting current integration state, not completion guarantees.
 
@@ -24,6 +25,7 @@ Statuses are transitional rollout markers reflecting current integration state, 
 | Simplified examples | `loan.fixed-rate.standard`, `loan.fixed-rate.mortgage`; generic bond subtypes (not catalog rows) | Loans: `30/360` equal-month (`r/12`). Bonds: instrument-mode presentation on simplified investment composer |
 | Public offerings (loans) | Seven Hirdetmény `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
 | Public offerings (securities) | `government-security.{dkj,pmap,bmap}.standard` | ÁKK / State Treasury; commercial investment composer (ADR 0027) |
+| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Lakástakarék; commercial home-savings composer (ADR 0028–0031); ÁSZF deposit rate needed for calc-aligned interest fidelity |
 
 **What `calc-aligned` requires in this repo** (engine bar; UI may still be below schedule-usable):
 
@@ -31,17 +33,19 @@ Statuses are transitional rollout markers reflecting current integration state, 
 - Executable tests that assert engine-computed outputs from example inputs (not only YAML constant lock-in).
 - Catalog row, [`formula-ownership-audit.md`](../formula-ownership-audit.md), and product README updated to `calc-aligned`.
 
-**What `schedule-usable` requires** (ADR 0023 loans; ADR 0027 securities):
+**What `schedule-usable` requires** (ADR 0023 loans; ADR 0027 securities; ADR 0030 home-savings):
 
-- Composer path for customer inflows/outflows (simplified or commercial loan/investment surface as appropriate).
+- Composer path for customer inflows/outflows (simplified or commercial loan/investment/home-savings surface as appropriate).
 - Loans: soft hints only for purpose / eligibility / discounts.
 - Securities: commercial investment picker for catalog treasury products (not the simplified bond subtype list).
+- Home-savings: commercial home-savings picker for catalog LTP savings products (not investment or loan composers).
 - No dual-lane packaging display.
 
 **What `commercially-usable` requires**:
 
 - **Loans** (ADR 0023 + ADR 0024 + ADR 0026): fees / discounts / purpose / THM on the commercial loan composer; for public offerings all three ADR 0024 checks green — schedule fidelity **and** fee-package fidelity; offering figures are the single displayed truth.
 - **Government securities** (ADR 0027): commercial investment composer UX wired for the offering; examples/adapters match published numbers; dual-lane forbidden. Loan THM three-check does not apply.
+- **Home-savings** (ADR 0030 + ADR 0031): commercial home-savings composer UX wired; engine EBKM ≡ published Hirdetmény EBKM for locked examples; dual-lane forbidden. Loan THM three-check does not apply.
 
 Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playbooks/product-lifecycle.md).
 
@@ -61,7 +65,10 @@ Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playb
 | government-security.dkj.standard | government-security | dkj | dkj | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/dkj/product.yaml | docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed end-to-end (ADR 0027) |
 | government-security.pmap.standard | government-security | pmap | pmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/pmap/product.yaml | docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, preview/adapter seam, and examples are spec-backed (ADR 0027) |
 | government-security.bmap.standard | government-security | bmap | bmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/bmap/product.yaml | docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed; accrued/coupon primitives in `src/finance_engine/instruments/bmap.ts` (browser dual-surface until ADR 0017 bundler) |
+| home-savings.premium-plusz-10x30.standard | home-savings | premium-plusz-10x30 | premium-plusz-10x30 | v2alpha1 | spec-only | docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml | docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ | OTP Lakástakarék PRÉMIUM PLUSZ 10x30 savings; EBKM + Premium tiers locked from Hirdetmény; ÁSZF deposit rate blocker for calc-aligned interest; LTP loan deferred (ADR 0028–0031 / ROADMAP §5e) |
 
 ## Planned catalog extensions
 
 Hirdetmény 2026-04-20 mortgages: six products are **commercially-usable** (checks 1–3 + commercial composer UX + composer parity). Vidéki remains **schedule-usable** / packaging-quarantined until §6 installment reconciles. Full embedded `*-product-spec.js` parity (**fully-spec-backed**) is a later lifecycle step. No new consumer loan codes in this epic.
+
+Home savings (ROADMAP §5e): PRÉMIUM PLUSZ 10x30 is **spec-only**. Promote via lifecycle after ÁSZF módozat deposit rate / contract-amount formula are authored; commercially-usable requires ADR 0031 EBKM checks. LTP lakáskölcsön / áthidaló is a separate catalog/epic item.

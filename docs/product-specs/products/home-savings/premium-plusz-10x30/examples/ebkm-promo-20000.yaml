@@ -1,0 +1,25 @@
+specVersion: v2alpha1
+productId: home-savings.premium-plusz-10x30.standard
+exampleId: ebkm-promo-20000
+title: EBKM lock — promo opening fee, 20 000 Ft/hó
+description: >
+  Published EBKM from OTP Lakástakarék értékesített termékek Hirdetmény A
+  (effective 2026-10-10): continuous monthly deposit 20.000 Ft, account fee
+  500 Ft/hó, számlanyitási díjkedvezmény (promo 0.5% path for deposits
+  10.000–49.990 Ft).
+
+inputs:
+  monthlyDeposit: 20000
+  termMonths: 120
+  startDate: 2026-10-10
+  housingPurpose: true
+  openingFeeMode: promo-half-percent
+
+expected:
+  accountFeeMonthly: 500
+  ebkmPctWithPremium: 4.35
+  ebkmPctWithoutPremium: -0.58
+
+notes:
+  - Hirdetmény A EBKM pair with Premium / without Premium.
+  - Percent opening fee needs szerződéses összeg from ÁSZF/calculator before engine fee amount assertion.

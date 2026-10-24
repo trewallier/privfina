@@ -22,11 +22,11 @@ import {
   type ResolvedLoanSchedule
 } from '../instruments/loan'
 import {
-  buildThmFlowsFromMonthly,
-  calculateThm,
-  expandScheduleToMonthlyPayments,
-  type ThmCalculationResult
+  calculateThmFromMonthlyRepayments,
+  expandScheduleToMonthlyPayments
 } from '../instruments/thm'
+
+export { calculateThmFromMonthlyRepayments } from '../instruments/thm'
 
 export interface MortgageLoanProductSpec {
   specVersion: 'v2alpha1'
@@ -232,26 +232,6 @@ export function mapMortgageLoanSpecInputsToLoanInstrumentInput(
     category: specInputs.category ?? 'mortgage-loan',
     description: specInputs.description ?? productSpec.displayName
   }
-}
-
-/**
- * ADR 0022 THM from an explicit monthly repayment vector + upfront fees.
- * Used to verify the legal THM solver independently of product schedule generation.
- */
-export function calculateThmFromMonthlyRepayments(input: {
-  principal: number
-  upfrontFees: number
-  monthlyPayments: readonly number[]
-}): ThmCalculationResult {
-  const flows = buildThmFlowsFromMonthly({
-    principal: input.principal,
-    upfrontFees: input.upfrontFees,
-    monthlyOutflows: input.monthlyPayments.map((amount, index) => ({
-      monthIndex: index + 1,
-      amount
-    }))
-  })
-  return calculateThm(flows)
 }
 
 /**

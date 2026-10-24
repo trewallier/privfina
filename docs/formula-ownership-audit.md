@@ -56,7 +56,7 @@ Inventory (by product)
 
 - OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **schedule-usable**
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
-  - Browser path: `public/instruments.js` (‰ helpers + `createHomeSavingsInstrumentBundle`) via thin `public/controller/home-savings-calculation-adapter.js` + commercial composer (ADR 0030); dual-surface until ADR 0017
+  - Browser path: Vite SPA imports `@finance_engine` via thin `public/instruments.js` wrappers + `home-savings-calculation-adapter.js` + commercial composer (ADR 0030 / 0032)
   - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers)
   - Family mapper: `src/finance_engine/product_specs/home_savings.ts`
   - Metadata: hand-mirrored `HOME_SAVINGS_PRODUCTS` parity-tested against YAML (`tests/home-savings-composer-parity.test.ts`)
@@ -67,14 +67,14 @@ Current cleanup priority
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
 2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
 3. ROADMAP §5e home-savings: schedule-usable follow-ups done (collapse + YAML parity + host extract); EBKM harness (ADR 0031) for commercially-usable.
-4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count, fees, THM, BMAP helpers, and eval cache are dual-surfaced until then).
+4. ROADMAP §6a / ADR 0032 Vite single calculation surface (done): browser imports `@finance_engine`; Pages deploys `dist-web`.
 5. ROADMAP §7 storage port (replace raw `localStorage` helpers).
 6. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets. LTP loan deferred under §5e.
 
 Notes
 -----
 - Catalog statuses in `docs/product-specs/PRODUCT_CATALOG.md` are authoritative for migration state.
-- Dual TS (`src/finance_engine/`) and JS (`public/instruments.js`) calculation surfaces are an accepted interim state (ADR 0017), not product-spec incompleteness.
+- Dual TS/JS formula copies are retired under ADR 0032 / ROADMAP §6a; `public/instruments.js` retains UI normalize/adapters only.
 - Status `inputs-driven` remains a live intermediate ladder step (catalog glossary) even though no current row uses it.
 - Investment `regular-bond` / `discount-bond` / `inflation-linked-bond` / `custom-bond` if-chains are approved calculation-strategy profiles (ADR 0015), not Hirdetmény productCode forks.
 
@@ -83,6 +83,7 @@ Files referenced
 - `DESIGN.md`
 - `docs/source-of-truth-ownership.md`
 - `docs/adr/0017-converge-on-single-browser-calculation-surface.md`
+- `docs/adr/0032-vite-browser-bundler-and-single-calculation-surface.md`
 - `docs/adr/0026-commercially-usable-requires-three-check-verification.md`
 - `docs/product-specs/PRODUCT_CATALOG.md`
 - `docs/product-specs/products/loans/fixed-rate-loan/product.yaml`

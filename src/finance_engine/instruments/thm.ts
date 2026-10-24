@@ -337,3 +337,23 @@ export function buildThmFlowsFromMonthly(input: {
 
   return flows
 }
+
+/**
+ * ADR 0022 THM from an explicit monthly repayment vector + upfront fees.
+ * Convenience wrapper over {@link buildThmFlowsFromMonthly} + {@link calculateThm}.
+ */
+export function calculateThmFromMonthlyRepayments(input: {
+  principal: number
+  upfrontFees: number
+  monthlyPayments: readonly number[]
+}): ThmCalculationResult {
+  const flows = buildThmFlowsFromMonthly({
+    principal: input.principal,
+    upfrontFees: input.upfrontFees,
+    monthlyOutflows: input.monthlyPayments.map((amount, index) => ({
+      monthIndex: index + 1,
+      amount
+    }))
+  })
+  return calculateThm(flows)
+}

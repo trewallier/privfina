@@ -8,10 +8,8 @@ import {
   mapCommercialLoanSpecInputsToLegacyLoanBundleInput
 } from '../public/controller/commercial-loan-calculation-adapter.js'
 import { getCommercialLoanCommercialBlocks } from '../public/controller/commercial-loan-commercial-blocks.js'
-import { applyFeesAndDiscounts as applyFeesBrowser } from '../public/controller/loan-fees.js'
-import { applyFeesAndDiscounts as applyFeesEngine } from '../src/finance_engine/instruments/loan_fees'
-import { calculateThmFromMonthlyRepayments as thmBrowser } from '../public/controller/thm.js'
-import { calculateThmFromMonthlyRepayments as thmEngine } from '../src/finance_engine/product_specs/mortgage_loan'
+import { applyFeesAndDiscounts } from '../public/controller/loan-fees.js'
+import { calculateThmFromMonthlyRepayments } from '../public/controller/thm.js'
 import { createLoanRepaymentPreview } from '../public/instruments.js'
 import { createLoanPreviewSync } from '../public/controller/previews.js'
 
@@ -20,24 +18,21 @@ function fakeInput(value: string | number | boolean) {
 }
 
 describe('commercial loan composer UX (§5b)', () => {
-  it('dual-surfaces fee application with the TypeScript primitive', () => {
+  it('applies fees via the shared finance_engine primitive (Vite browser entry)', () => {
     const blocks = getCommercialLoanCommercialBlocks('otp-1x1')
     const options = { principal: 12_000_000, activeDiscountNames: [] as string[] }
-    const browser = applyFeesBrowser(blocks.fees, blocks.discounts, options)
-    const engine = applyFeesEngine(blocks.fees, blocks.discounts, options)
-    expect(browser.totalCreditCostFees).toBe(engine.totalCreditCostFees)
-    expect(browser.totalCreditCostFees).toBe(193_965)
+    const fees = applyFeesAndDiscounts(blocks.fees, blocks.discounts, options)
+    expect(fees.totalCreditCostFees).toBe(193_965)
   })
 
-  it('dual-surfaces Annex THM percentRounded with the TypeScript primitive', () => {
+  it('computes Annex THM percentRounded via the shared finance_engine primitive', () => {
     const monthlyPayments = Array.from({ length: 240 }, () => 101_128)
     const input = {
       principal: 12_000_000,
       upfrontFees: 193_965,
       monthlyPayments
     }
-    expect(thmBrowser(input).percentRounded).toBe(thmEngine(input).percentRounded)
-    expect(thmBrowser(input).percentRounded).toBe(8.6)
+    expect(calculateThmFromMonthlyRepayments(input).percentRounded).toBe(8.6)
   })
 
   it('computes fee package + single THM for otp-1x1 representative inputs', () => {

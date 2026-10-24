@@ -41,7 +41,10 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build project
+      - name: Build library (tsc)
+        run: npm run build:lib
+
+      - name: Build SPA (Vite)
         run: npm run build
 
       - name: Deploy to GitHub Pages
@@ -49,4 +52,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./dist-web

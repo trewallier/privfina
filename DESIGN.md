@@ -52,7 +52,7 @@ An instrument is a source of one or more cash flows.
 - `Investment`: contributions, distributions, and valuation-related flows
 - `HomeSavings`: recurring deposits, account fees, opening fee, and terminal Premium (ADR 0029; engine under ROADMAP §5e)
 
-The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, and investment subtypes (see `src/finance_engine/instruments/` and the browser path in `public/instruments.js`). Product-specific contracts for cataloged loans, mortgage loans, government securities, and home-savings (OTP Lakástakarék) live under `docs/product-specs/` (ADR 0013–0016, schema v2 / ADR 0020 / ADR 0028). Runtime `home-savings` instrument generation is roadmap §5e (ADR 0029–0031); product detail stays in YAML, not in this file.
+The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, investment, and home-savings subtypes under `src/finance_engine/instruments/` (browser SPA imports them via Vite / `@finance_engine`, ADR 0032). Product-specific contracts for cataloged loans, mortgage loans, government securities, and home-savings (OTP Lakástakarék) live under `docs/product-specs/` (ADR 0013–0016, schema v2 / ADR 0020 / ADR 0028). Product detail stays in YAML, not in this file.
 
 ### Product Specification Schema (v2)
 
@@ -241,7 +241,7 @@ Status:
 
 - implemented for one-time and recurring flow generation (monthly, weekly, annual)
 - instrument expansion paths exist for salary, subscription, loan amortization, and investment subtypes
-- browser UI still executes through `public/instruments.js` while TypeScript primitives live under `src/finance_engine/` (convergence goal: ADR 0017)
+- browser SPA is built with Vite (`dist-web`) and imports TypeScript primitives from `src/finance_engine/` via `@finance_engine` (ADR 0032; ADR 0017 convergence complete for formulas)
 
 Current modules:
 
@@ -269,7 +269,7 @@ Current modules:
 
 ## Implementation Blueprint By Repository Structure
 
-Module ownership for contributors. Open follow-ons (bundler ADR 0017, storage port §7, analytics) stay in [`ROADMAP.md`](ROADMAP.md).
+Module ownership for contributors. Open follow-ons (storage port §7, analytics, remaining §6) stay in [`ROADMAP.md`](ROADMAP.md).
 
 ### Engine and Domain (`src/finance_engine/`)
 
@@ -285,8 +285,8 @@ Module ownership for contributors. Open follow-ons (bundler ADR 0017, storage po
 
 ### Browser App (`public/`)
 
-- `index.html` / `app-controller.js` / `render.js` / `flows.js`
-	- composers, preview, persist/edit, chart-consumable flows (dual-surface formulas until ADR 0017 bundler)
+- `index.html` / `app-controller.js` / `render.js` / `flows.js` / thin `instruments.js` adapters
+	- composers, preview, persist/edit, chart-consumable flows; formula math from `@finance_engine` (Vite / ADR 0032)
 - `storage.js`
 	- interim `localStorage` helpers; replace behind the §7 storage port
 - `storage.js`, `list-status.js`, and `import-export.js`

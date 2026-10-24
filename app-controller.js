@@ -121,19 +121,7 @@ import {
   resolveCommercialInvestmentReadinessHint,
   findCommercialInvestmentProduct
 } from './controller/investment-product-metadata.js'
-import {
-  buildHomeSavingsProductOptions,
-  findHomeSavingsProduct,
-  findHomeSavingsProductById
-} from './controller/home-savings-product-metadata.js'
-import {
-  applyHomeSavingsProductSelection,
-  mapFormDataToHomeSavingsSpecInputs
-} from './controller/home-savings-form.js'
-import {
-  calculateHomeSavingsFromSpecInputs,
-  calculateHomeSavingsScheduleFromSpecInputs
-} from './controller/home-savings-calculation-adapter.js'
+import { createHomeSavingsComposerHost } from './controller/home-savings-composer-host.js'
 import { buildGenericBondSubtypeUiConfig } from './controller/generic-bond-presentation.js'
 import {
   applyFieldChrome,
@@ -182,7 +170,6 @@ function initController() {
   const commercialLoanForm = document.getElementById('commercial-loan-form')
   const investmentForm = document.getElementById('investment-form')
   const commercialInvestmentForm = document.getElementById('commercial-investment-form')
-  const homeSavingsForm = document.getElementById('home-savings-form')
   const oneTimeSubmitButton = document.getElementById('one-time-submit')
   const recurringSubmitButton = document.getElementById('recurring-submit')
   const salarySubmitButton = document.getElementById('salary-submit')
@@ -191,7 +178,6 @@ function initController() {
   const commercialLoanSubmitButton = document.getElementById('commercial-loan-submit')
   const investmentSubmitButton = document.getElementById('investment-submit')
   const commercialInvestmentSubmitButton = document.getElementById('commercial-investment-submit')
-  const homeSavingsSubmitButton = document.getElementById('home-savings-submit')
   const oneTimeCancelButton = document.getElementById('one-time-cancel-edit')
   const recurringCancelButton = document.getElementById('recurring-cancel-edit')
   const salaryCancelButton = document.getElementById('salary-cancel-edit')
@@ -202,7 +188,6 @@ function initController() {
   const commercialInvestmentCancelButton = document.getElementById(
     'commercial-investment-cancel-edit'
   )
-  const homeSavingsCancelButton = document.getElementById('home-savings-cancel-edit')
   const schemaWarning = document.getElementById('schema-warning')
   const storageStatus = document.getElementById('storage-status')
   const exportButton = document.getElementById('export-json-button')
@@ -299,29 +284,6 @@ function initController() {
   )
   const commercialLoanFeesPreviewInput = document.getElementById('commercial-loan-fees-preview')
   const commercialLoanThmPreviewInput = document.getElementById('commercial-loan-thm-preview')
-  const homeSavingsProductInput = document.getElementById('home-savings-product')
-  const homeSavingsReadinessHint = document.getElementById('home-savings-readiness-hint')
-  const homeSavingsEligibilityHint = document.getElementById('home-savings-eligibility-hint')
-  const homeSavingsDiscountHint = document.getElementById('home-savings-discount-hint')
-  const homeSavingsPremiumHint = document.getElementById('home-savings-premium-hint')
-  const homeSavingsOpeningFeePreviewInput = document.getElementById(
-    'home-savings-opening-fee-preview'
-  )
-  const homeSavingsTotalDepositsPreviewInput = document.getElementById(
-    'home-savings-total-deposits-preview'
-  )
-  const homeSavingsTotalAccountFeesPreviewInput = document.getElementById(
-    'home-savings-total-account-fees-preview'
-  )
-  const homeSavingsPremiumRatePreviewInput = document.getElementById(
-    'home-savings-premium-rate-preview'
-  )
-  const homeSavingsPremiumAmountPreviewInput = document.getElementById(
-    'home-savings-premium-amount-preview'
-  )
-  const homeSavingsTerminalPayoutPreviewInput = document.getElementById(
-    'home-savings-terminal-payout-preview'
-  )
   const investmentGenericCoreRow = document.getElementById('investment-generic-core-row')
   const investmentGenericSecondaryRow = document.getElementById('investment-generic-secondary-row')
   const investmentPreviewRow = document.getElementById('investment-preview-row')
@@ -514,7 +476,6 @@ function initController() {
   let editingCommercialLoanId = null
   let editingInvestmentId = null
   let editingCommercialInvestmentId = null
-  let editingHomeSavingsId = null
   let activeInfoTrigger = null
   const excludedFlowIds = new Set()
 
@@ -554,18 +515,6 @@ function initController() {
     })
     if (!commercialLoanProductInput.value && commercialLoanProductInput.options.length > 0) {
       commercialLoanProductInput.value = commercialLoanProductInput.options[0].value
-    }
-  }
-
-  if (homeSavingsProductInput) {
-    buildHomeSavingsProductOptions().forEach((option) => {
-      const element = document.createElement('option')
-      element.value = option.value
-      element.textContent = option.label
-      homeSavingsProductInput.appendChild(element)
-    })
-    if (!homeSavingsProductInput.value && homeSavingsProductInput.options.length > 0) {
-      homeSavingsProductInput.value = homeSavingsProductInput.options[0].value
     }
   }
 
@@ -1133,98 +1082,26 @@ function initController() {
     syncCommercialInvestmentPreview()
   }
 
-  function syncHomeSavingsProductUi({ forceDefaults = false } = {}) {
-    if (!homeSavingsForm || !homeSavingsProductInput) {
-      return
-    }
-
-    applyHomeSavingsProductSelection({
-      form: homeSavingsForm,
-      productCode: homeSavingsProductInput.value,
-      readinessElement: homeSavingsReadinessHint,
-      eligibilityElement: homeSavingsEligibilityHint,
-      discountElement: homeSavingsDiscountHint,
-      premiumElement: homeSavingsPremiumHint,
-      forceDefaults
-    })
-  }
-
-  function clearHomeSavingsPreview() {
-    if (homeSavingsOpeningFeePreviewInput) homeSavingsOpeningFeePreviewInput.value = '—'
-    if (homeSavingsTotalDepositsPreviewInput) homeSavingsTotalDepositsPreviewInput.value = '—'
-    if (homeSavingsTotalAccountFeesPreviewInput) homeSavingsTotalAccountFeesPreviewInput.value = '—'
-    if (homeSavingsPremiumRatePreviewInput) homeSavingsPremiumRatePreviewInput.value = '—'
-    if (homeSavingsPremiumAmountPreviewInput) homeSavingsPremiumAmountPreviewInput.value = '—'
-    if (homeSavingsTerminalPayoutPreviewInput) homeSavingsTerminalPayoutPreviewInput.value = '—'
-  }
-
-  function syncHomeSavingsPreview() {
-    if (!homeSavingsForm || !homeSavingsProductInput) {
-      return
-    }
-
-    try {
-      const formData = new FormData(homeSavingsForm)
-      const product = findHomeSavingsProduct(homeSavingsProductInput.value)
-      if (!product) {
-        clearHomeSavingsPreview()
-        return
-      }
-
-      const monthlyDepositRaw = String(formData.get('monthlyDeposit') || '').trim()
-      const termRaw = String(formData.get('termMonths') || '').trim()
-      const startDate = String(formData.get('startDate') || '').trim()
-      if (!monthlyDepositRaw || !termRaw || !startDate) {
-        clearHomeSavingsPreview()
-        return
-      }
-
-      const specInputs = mapFormDataToHomeSavingsSpecInputs(formData, product)
-      const outputs = calculateHomeSavingsScheduleFromSpecInputs(specInputs, {
-        resolveHomeSavingsSchedule
-      })
-
-      if (homeSavingsOpeningFeePreviewInput) {
-        homeSavingsOpeningFeePreviewInput.value = formatMoneyAmount(outputs.accountOpeningFee)
-      }
-      if (homeSavingsTotalDepositsPreviewInput) {
-        homeSavingsTotalDepositsPreviewInput.value = formatMoneyAmount(outputs.totalDeposits)
-      }
-      if (homeSavingsTotalAccountFeesPreviewInput) {
-        homeSavingsTotalAccountFeesPreviewInput.value = formatMoneyAmount(outputs.totalAccountFees)
-      }
-      if (homeSavingsPremiumRatePreviewInput) {
-        homeSavingsPremiumRatePreviewInput.value = `${Number(outputs.premiumRatePct).toFixed(0)}%`
-      }
-      if (homeSavingsPremiumAmountPreviewInput) {
-        homeSavingsPremiumAmountPreviewInput.value = formatMoneyAmount(outputs.premiumAmount)
-      }
-      if (homeSavingsTerminalPayoutPreviewInput) {
-        homeSavingsTerminalPayoutPreviewInput.value = formatMoneyAmount(outputs.terminalPayout)
-      }
-    } catch {
-      clearHomeSavingsPreview()
-    }
-  }
-
-  function resetHomeSavingsForm() {
-    editingHomeSavingsId = null
-    if (homeSavingsForm) {
-      homeSavingsForm.reset()
-      delete homeSavingsForm.dataset.housingTouched
-    }
-    if (homeSavingsProductInput && homeSavingsProductInput.options.length > 0) {
-      homeSavingsProductInput.value = homeSavingsProductInput.options[0].value
-    }
-    if (homeSavingsSubmitButton) {
-      homeSavingsSubmitButton.textContent = 'Add Home Savings'
-    }
-    if (homeSavingsCancelButton) {
-      homeSavingsCancelButton.hidden = true
-    }
-    syncHomeSavingsProductUi({ forceDefaults: true })
-    syncHomeSavingsPreview()
-  }
+  const homeSavingsHost = createHomeSavingsComposerHost({
+    resolveHomeSavingsSchedule,
+    createHomeSavingsInstrumentBundle,
+    formatMoneyAmount,
+    getInstrumentBundles: () => instrumentBundles,
+    upsertInstrumentBundle: (bundle) => {
+      instrumentBundles = upsertFlowById(instrumentBundles, bundle)
+      saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
+    },
+    openComposerBox,
+    collapseComposerBoxes,
+    notifySaved,
+    rerender: () => rerender(),
+    extendDateRange: (firstDate, lastDate) => {
+      const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
+      startInput.value = updatedRange.startDate
+      endInput.value = updatedRange.endDate
+    },
+    reportError: (message) => setStorageStatus(message, 'error')
+  })
 
   function resolveCommercialInvestmentProductCode(bundle) {
     if (!bundle) return null
@@ -1351,57 +1228,6 @@ function initController() {
   })
   const { syncInvestmentPreview: syncCommercialInvestmentPreview } =
     commercialInvestmentPreviewController
-
-  function startHomeSavingsEdit(id) {
-    const bundle = instrumentBundles.find(
-      (entry) => entry.id === id && entry.instrumentType === 'home-savings'
-    )
-    if (!bundle || !homeSavingsForm) {
-      return
-    }
-
-    const config = bundle.config || {}
-    const product =
-      findHomeSavingsProductById(bundle.productId) ||
-      findHomeSavingsProduct(config.productCode) ||
-      findHomeSavingsProductById(config.productId)
-    if (!product) {
-      return
-    }
-
-    editingHomeSavingsId = id
-    homeSavingsProductInput.value = product.productCode
-    homeSavingsForm.querySelector('#home-savings-label').value =
-      bundle.label || product.displayName
-    homeSavingsForm.querySelector('#home-savings-start-date').value = config.startDate || ''
-    homeSavingsForm.querySelector('#home-savings-monthly-deposit').value =
-      config.monthlyDeposit !== undefined ? formatMoneyAmount(config.monthlyDeposit) : ''
-    homeSavingsForm.querySelector('#home-savings-term-months').value =
-      config.termMonths !== undefined ? String(config.termMonths) : String(product.defaultTermMonths)
-    homeSavingsForm.querySelector('#home-savings-contract-amount').value =
-      config.contractAmount !== undefined ? formatMoneyAmount(config.contractAmount) : ''
-    homeSavingsForm.querySelector('#home-savings-category').value =
-      config.category || 'home-savings'
-    homeSavingsForm.querySelector('#home-savings-description').value = config.description || ''
-    homeSavingsForm.querySelector('#home-savings-housing-purpose').checked =
-      config.housingPurpose !== false
-    homeSavingsForm.dataset.housingTouched = '1'
-
-    syncHomeSavingsProductUi({ forceDefaults: false })
-    const openingFeeSelect = homeSavingsForm.querySelector('#home-savings-opening-fee-mode')
-    if (openingFeeSelect) {
-      openingFeeSelect.value = config.openingFeeMode || product.defaultOpeningFeeMode
-    }
-
-    if (homeSavingsSubmitButton) {
-      homeSavingsSubmitButton.textContent = 'Save Home Savings'
-    }
-    if (homeSavingsCancelButton) {
-      homeSavingsCancelButton.hidden = false
-    }
-    syncHomeSavingsPreview()
-    openComposerBox('home-savings')
-  }
 
   function startCommercialLoanEdit(id) {
     const bundle = instrumentBundles.find((entry) => entry.id === id && entry.instrumentType === 'loan')
@@ -1802,6 +1628,7 @@ function initController() {
         resetCommercialLoanForm()
         resetInvestmentForm()
         resetCommercialInvestmentForm()
+        homeSavingsHost.resetForm()
         collapseComposerBoxes({ notify: false })
         shell.enterTypePicker()
         updateComposeTitle(null, true)
@@ -1816,6 +1643,7 @@ function initController() {
       resetCommercialLoanForm()
       resetInvestmentForm()
       resetCommercialInvestmentForm()
+      homeSavingsHost.resetForm()
       collapseComposerBoxes({ notify: false })
       shell.exitCompose()
     })
@@ -1827,7 +1655,13 @@ function initController() {
     })
   }
 
-  ;[loanForm, investmentForm, commercialLoanForm, commercialInvestmentForm]
+  ;[
+    loanForm,
+    investmentForm,
+    commercialLoanForm,
+    commercialInvestmentForm,
+    document.getElementById('home-savings-form')
+  ]
     .filter(Boolean)
     .forEach((form) => {
       form.querySelectorAll('[data-help-button]').forEach((button) => {
@@ -1932,25 +1766,9 @@ function initController() {
       }
     })
   }
-  if (homeSavingsProductInput) {
-    homeSavingsProductInput.addEventListener('change', () => {
-      syncHomeSavingsProductUi({ forceDefaults: true })
-      syncHomeSavingsPreview()
-    })
-  }
-  if (homeSavingsForm) {
-    homeSavingsForm.addEventListener('input', () => {
-      syncHomeSavingsPreview()
-    })
-    homeSavingsForm.addEventListener('change', (event) => {
-      if (event.target && event.target.name === 'housingPurpose') {
-        homeSavingsForm.dataset.housingTouched = '1'
-      }
-      syncHomeSavingsPreview()
-    })
-  }
   investmentPreviewController.bindEvents()
   commercialInvestmentPreviewController.bindEvents()
+  homeSavingsHost.initialize()
 
   applySalaryModeVisibility(
     salaryScheduleModeInput ? salaryScheduleModeInput.value : 'custom-monthly-working-day'
@@ -1958,12 +1776,10 @@ function initController() {
   applyInvestmentSubtypeUi(investmentSubtypeInput ? investmentSubtypeInput.value : 'regular-bond')
   applyCommercialInvestmentProductUi()
   syncCommercialLoanProductUi({ forceDefaults: true })
-  syncHomeSavingsProductUi({ forceDefaults: true })
   syncLoanPreview()
   syncCommercialLoanPreview()
   syncInvestmentPreview()
   syncCommercialInvestmentPreview()
-  syncHomeSavingsPreview()
 
   const defaultRange = suggestRange([
     ...oneTimeFlows.map((entry) => ({ date: entry.date })),
@@ -2099,7 +1915,7 @@ function initController() {
         } else if (target.instrumentType === 'investment') {
           startInvestmentEdit(id)
         } else if (target.instrumentType === 'home-savings') {
-          startHomeSavingsEdit(id)
+          homeSavingsHost.startEdit(id)
         }
       },
       onDeleteInstrument: (id) => {
@@ -2136,8 +1952,8 @@ function initController() {
           resetCommercialInvestmentForm()
         }
 
-        if (editingHomeSavingsId === id) {
-          resetHomeSavingsForm()
+        if (homeSavingsHost.isEditing(id)) {
+          homeSavingsHost.resetForm()
         }
 
         resetRangeIfEmpty()
@@ -2419,13 +2235,6 @@ function initController() {
     })
   }
 
-  if (homeSavingsCancelButton) {
-    homeSavingsCancelButton.addEventListener('click', () => {
-      resetHomeSavingsForm()
-      collapseComposerBoxes()
-    })
-  }
-
   loanForm.addEventListener('submit', (event) => {
     event.preventDefault()
 
@@ -2700,56 +2509,6 @@ function initController() {
         const message =
           error instanceof Error ? error.message : 'Failed to save commercial investment.'
         reportCommercialInvestmentFormError(message)
-      }
-    })
-  }
-
-  if (homeSavingsForm) {
-    homeSavingsForm.addEventListener('submit', (event) => {
-      event.preventDefault()
-
-      try {
-        const formData = new FormData(homeSavingsForm)
-        const productCode = String(formData.get('productCode') || '').trim()
-        const product = findHomeSavingsProduct(productCode)
-        if (!product) {
-          throw new Error('Select a home-savings product.')
-        }
-
-        const specInputs = mapFormDataToHomeSavingsSpecInputs(formData, product)
-        const outputs = calculateHomeSavingsFromSpecInputs(specInputs, {
-          createHomeSavingsInstrumentBundle,
-          id: editingHomeSavingsId || undefined,
-          label: String(formData.get('label') || '').trim() || product.displayName,
-          category: String(formData.get('category') || '').trim() || 'home-savings',
-          description: String(formData.get('description') || '').trim() || undefined,
-          createdAt: editingHomeSavingsId
-            ? instrumentBundles.find((entry) => entry.id === editingHomeSavingsId)?.createdAt
-            : undefined
-        })
-
-        const bundle = outputs.bundle
-        if (!bundle || !bundle.generatedFlows.length) {
-          throw new Error('Home-savings inputs did not produce any cash flows.')
-        }
-
-        instrumentBundles = upsertFlowById(instrumentBundles, bundle)
-        saveCashFlowList(INSTRUMENT_BUNDLES_STORAGE_KEY, instrumentBundles)
-
-        const firstDate = bundle.generatedFlows[0].date
-        const lastDate = bundle.generatedFlows[bundle.generatedFlows.length - 1].date
-        const updatedRange = extendRange(startInput.value, endInput.value, firstDate, lastDate)
-        startInput.value = updatedRange.startDate
-        endInput.value = updatedRange.endDate
-
-        resetHomeSavingsForm()
-        collapseComposerBoxes()
-        notifySaved('Home savings saved.')
-        rerender()
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to save home-savings instrument.'
-        setStorageStatus(message, 'error')
       }
     })
   }

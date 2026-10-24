@@ -2,6 +2,10 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { loadFixedRateLoanProductSpec } from './fixed_rate_loan'
 import {
+  loadHomeSavingsProductSpec,
+  type HomeSavingsProductSpec
+} from './home_savings'
+import {
   loadMortgageLoanProductSpec,
   type MortgageLoanProductSpec
 } from './mortgage_loan'
@@ -23,6 +27,13 @@ export const MORTGAGE_LOAN_PRODUCT_SPEC_PATHS = {
 } as const
 
 export type MortgageLoanProductCode = keyof typeof MORTGAGE_LOAN_PRODUCT_SPEC_PATHS
+
+export const HOME_SAVINGS_PRODUCT_SPEC_PATHS = {
+  'premium-plusz-10x30':
+    'docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml'
+} as const
+
+export type HomeSavingsProductCode = keyof typeof HOME_SAVINGS_PRODUCT_SPEC_PATHS
 
 export interface ProductSpecFieldDefinition {
   name: string
@@ -229,6 +240,35 @@ export function loadMortgageLoanProductSpecFromFiles(
     const details = error instanceof Error ? error.message : String(error)
     throw new Error(
       `Failed to load mortgage-loan product spec from ${productSpecPath} using schema ${productSchemaPath}: ${details}`
+    )
+  }
+}
+
+export interface HomeSavingsProductSpecLoaderOptions {
+  rootDir?: string
+  productSpecPath?: string
+  productSchemaPath?: string
+  productCode?: HomeSavingsProductCode
+}
+
+export function loadHomeSavingsProductSpecFromFiles(
+  options: HomeSavingsProductSpecLoaderOptions = {}
+): HomeSavingsProductSpec {
+  const rootDir = options.rootDir ?? '.'
+  const productCode = options.productCode ?? 'premium-plusz-10x30'
+  const defaultPath = HOME_SAVINGS_PRODUCT_SPEC_PATHS[productCode]
+  const productSpecPath = resolve(rootDir, options.productSpecPath ?? defaultPath)
+  const productSchemaPath = resolve(rootDir, options.productSchemaPath ?? DEFAULT_PRODUCT_SCHEMA_PATH)
+
+  const productYamlText = readUtf8File(productSpecPath)
+  const productSchema = readJsonFile(productSchemaPath)
+
+  try {
+    return loadHomeSavingsProductSpec(productYamlText, productSchema)
+  } catch (error) {
+    const details = error instanceof Error ? error.message : String(error)
+    throw new Error(
+      `Failed to load home-savings product spec from ${productSpecPath} using schema ${productSchemaPath}: ${details}`
     )
   }
 }

@@ -70,3 +70,17 @@ export {
   deriveBmapAccruedInterestAmount,
   generateBmapQuarterlyCouponFlows
 } from './instruments/bmap'
+export type {
+  HomeSavingsBundleInput,
+  HomeSavingsInstrumentInput,
+  HomeSavingsPremiumTiers,
+  HomeSavingsScheduleSummary
+} from './instruments/home_savings'
+export {
+  DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
+  calculateHomeSavingsDepositInterest,
+  createHomeSavingsInstrumentBundle,
+  generateHomeSavingsInstrumentCashFlows,
+  resolveHomeSavingsPremiumRatePct,
+  resolveHomeSavingsSchedule
+} from './instruments/home_savings'

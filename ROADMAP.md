@@ -118,7 +118,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Schema v2: add `home-savings` family + `engine.instrumentType: home-savings` + account fee types; validation fixtures cover the new product folder.
 - [x] Author `product.yaml` + Hirdetmény worked examples; register catalog row **`spec-only`** (`home-savings.premium-plusz-10x30.standard`).
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
-- [ ] Engine primitives + family mapper → promote to **`calc-aligned`** (requires ÁSZF deposit rate / contract-amount formula before interest and percent-fee fidelity claims).
+- [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium; interest and percent-opening-fee fidelity still gated on ÁSZF numbers — omitted/require `contractAmount`, not invented).
 - [ ] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
 - [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`**.
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.

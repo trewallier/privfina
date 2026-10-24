@@ -181,7 +181,9 @@ function normalizeInstrumentBundle(bundle) {
           ? 'loan'
           : bundle.instrumentType === 'investment'
             ? 'investment'
-            : null
+            : bundle.instrumentType === 'home-savings'
+              ? 'home-savings'
+              : null
 
   if (!instrumentType) {
     return null
@@ -211,7 +213,9 @@ function normalizeInstrumentBundle(bundle) {
         ? 'loan'
         : instrumentType === 'investment'
           ? 'investment'
-          : 'subscription'
+          : instrumentType === 'home-savings'
+            ? 'home-savings'
+            : 'subscription'
   const lineageContext = { sourceInstrumentId: id, sourceInstrumentType: instrumentType }
   const generatedFlows = stampGeneratedFlowLineage(
     Array.isArray(bundle.generatedFlows)

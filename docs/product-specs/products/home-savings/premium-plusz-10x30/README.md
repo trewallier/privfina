@@ -2,7 +2,7 @@
 
 Home-savings (lakás-előtakarékossági) product specification for the currently sold OTP Lakástakarék módozat.
 
-**Catalog status:** `spec-only` (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
+**Catalog status:** `calc-aligned` (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
 
 **Architecture:** ADR 0028 (family/schema), ADR 0029 (instrument), ADR 0030 (commercial composer / readiness), ADR 0031 (EBKM verification).
 
@@ -32,9 +32,10 @@ Contractual **deposit interest** and the precise **szerződéses összeg** formu
 
 Until those numbers are authored into this product YAML (and examples updated):
 
-- Keep status at **`spec-only`** (or advance inputs/UI without claiming interest fidelity).
+- **`calc-aligned`** engine path models deposits, account fees, resolved opening fees, and Premium with **deposit interest omitted** (`depositInterest = 0`).
+- Percent opening-fee modes require an explicit `contractAmount` input; do not invent szerződéses összeg.
 - Do **not** invent a deposit rate for engine goldens.
-- EBKM published figures may stay locked as documentation goldens; engine EBKM ≡ published (ADR 0031) for commercially-usable still requires a coherent cash-flow model once ÁSZF inputs exist.
+- EBKM published figures stay locked as documentation goldens until ADR 0031 commercially-usable.
 
 ## Worked examples
 

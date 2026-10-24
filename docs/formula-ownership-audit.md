@@ -54,16 +54,17 @@ Inventory (by product)
   - Browser path: `public/controller/bmap-calculation-adapter.js` accepts user-supplied `dkjBaseYieldPct`
   - Status: coupon composition from base yield + premium is spec-backed; weighted auction DKJ base derivation remains future external-data work
 
-- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **spec-only**
+- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **calc-aligned**
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
-  - Engine / browser: not implemented yet (ROADMAP §5e; ADR 0029–0031)
-  - Status: Hirdetmény EBKM + Premium tiers locked in examples; deposit interest / contract-amount formula blocked on ÁSZF módozat annex before calc-aligned fidelity
+  - Engine primitives: `src/finance_engine/instruments/home_savings.ts`
+  - Family mapper: `src/finance_engine/product_specs/home_savings.ts`
+  - Status: deposits / account fees / Premium schedule + promo fixed opening fee executable; deposit interest omitted until ÁSZF rate; percent opening fees need `contractAmount`; UI/composer and EBKM harness still ROADMAP §5e
 
 Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
 2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
-3. ROADMAP §5e home-savings: engine mapper + commercial composer after ÁSZF rate is authored; EBKM harness (ADR 0031) for commercially-usable.
+3. ROADMAP §5e home-savings: commercial composer → schedule-usable; EBKM harness (ADR 0031) for commercially-usable; author ÁSZF deposit rate when available.
 4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count, fees, THM, BMAP helpers, and eval cache are dual-surfaced until then).
 5. ROADMAP §7 storage port (replace raw `localStorage` helpers).
 6. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets. LTP loan deferred under §5e.
@@ -87,6 +88,9 @@ Files referenced
 - `docs/product-specs/products/government-securities/dkj/product.yaml`
 - `docs/product-specs/products/government-securities/pmap/product.yaml`
 - `docs/product-specs/products/government-securities/bmap/product.yaml`
+- `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
+- `src/finance_engine/instruments/home_savings.ts`
+- `src/finance_engine/product_specs/home_savings.ts`
 - `public/controller/loan-legacy-bridges.js`
 - `src/finance_engine/instruments/loan.ts`
 - `src/finance_engine/instruments/loan_fees.ts`

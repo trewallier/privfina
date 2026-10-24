@@ -7,7 +7,7 @@ Date: 2026-10-16
 Context
 - After the product-spec migration (ADR 0013–0016), catalog products are calc-aligned or fully-spec-backed through browser adapters.
 - Reusable calculation primitives live in TypeScript under `src/finance_engine/`, while the GitHub Pages app still executes formulas from `public/instruments.js`.
-- ROADMAP section 5 still requires an ADR for build tooling and bundling before the browser can consume compiled engine code.
+- ROADMAP §6 / §6a requires an ADR for build tooling and bundling before the browser can consume compiled engine code (fulfilled by ADR 0032).
 - Duplicating formulas across both surfaces raises drift risk as roadmap section 3 (flow bundles, import/export, eval caching) proceeds.
 
 Decision
@@ -18,7 +18,7 @@ Decision
 
 Consequences
 - New product math should land in `src/finance_engine/` first, with browser adapters delegating to existing public helpers only as transitional scaffolding.
-- A follow-up ADR (ROADMAP §5 “Choose build tooling and bundler”) must select the packaging path that retires duplicated browser formulas.
+- A follow-up ADR (ROADMAP §6a / ADR 0032 Vite bundler) must select the packaging path that retires duplicated browser formulas.
 - Until that bundler lands, parity tests and product-spec examples remain the guardrail against TS/JS drift.
 - Bundle persistence and caching work (ROADMAP §3) should assume one logical calculation contract even while two implementations temporarily coexist.
 

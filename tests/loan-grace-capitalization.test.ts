@@ -92,7 +92,7 @@ describe('loan grace period and end-of-grace interest capitalization', () => {
     ).toThrow(/less than the loan term/i)
   })
 
-  it('keeps browser loan path in parity with the TypeScript engine for capitalization', () => {
+  it('browser loan bundle wrapper uses the TypeScript engine for capitalization', () => {
     const enginePreview = createLoanRepaymentPreview({
       ...baseInput,
       gracePeriodMonths: 3,

@@ -56,7 +56,8 @@ export {
   calculateThm,
   buildThmFlowsFromMonthly,
   computeThmPct,
-  expandScheduleToMonthlyPayments
+  expandScheduleToMonthlyPayments,
+  calculateThmFromMonthlyRepayments
 } from './instruments/thm'
 export {
   createInvestmentMaturityPreview,

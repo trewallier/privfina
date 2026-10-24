@@ -46,6 +46,7 @@ env/
 # Build / dependencies
 node_modules/
 dist/
+dist-web/
 
 # OS
 .DS_Store

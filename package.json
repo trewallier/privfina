@@ -6,9 +6,13 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "dev": "vite",
+    "build": "vite build",
+    "build:lib": "tsc -p tsconfig.json",
+    "build:web": "vite build",
+    "preview": "vite preview",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist dist-web"
   },
   "dependencies": {
     "ajv": "^8.20.0",
@@ -17,6 +21,7 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2",
+    "vite": "^7.1.12",
     "vitest": "^5.0.5"
   }
 }

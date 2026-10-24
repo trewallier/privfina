@@ -135,10 +135,31 @@ Deferred (explicitly out of scope for §5e)
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.
 - [ ] Define Node package management and update strategy (ADR required)
-- [ ] Choose build tooling and bundler (ADR required; see ADR 0017 for single calculation-surface goal — retires dual-surface `public/instruments.js` / `loan-fees.js` / `thm.js` / `eval-cache.js` / BMAP adapter math)
 - [x] Add GitHub Actions CI/CD workflows for build, test, and deploy
 - [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
 - [ ] Document update strategy and release process (patch/minor/major cadence)
+
+#### 6a) Vite bundler — single browser calculation surface (ADR 0017 → 0032)
+Goal: ship one calculation surface so the GitHub Pages SPA imports TypeScript from `src/finance_engine/` via Vite and dual-surface formula copies under `public/` can be deleted (`instruments.js`, `loan-fees.js`, `thm.js`, `eval-cache.js`, BMAP helper mirrors). Static Pages hosting unchanged (ADR 0003). WASM remains §8.
+
+Constraints
+- Vite only (no Webpack/Turbopack for this epic).
+- Vite `root: 'public'`, `build.outDir: '../dist-web'`; Pages publishes `dist-web` after cutover.
+- Keep `tsc` → `dist/` as library/`build:lib`; do not treat `dist/` as the SPA deploy root.
+- Browser import graph must not pull Node product-spec loaders (`fs` / `path` YAML readers under `product_specs/`).
+- Embedded `*-product-spec.js` / UI metadata stay as-is; build-time YAML embed is out of scope for §6a.
+- After each merged slice, CI must still deploy a loadable SPA.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0032: Vite as Pages bundler + browser-safe engine graph; ownership / ADR index; fix ADR 0017’s stale ROADMAP §5 pointer to §6a (do not rewrite 0017 Decision text).
+- [x] Scaffold Vite (`vite.config`, scripts `dev` / `build` / `build:lib` / `preview`, `@finance_engine` alias) without changing runtime math; prove `dist-web/` builds while deploy still publishes `./public`.
+- [x] CI / Pages cutover: `deploy.yml` runs Vite build and sets `publish_dir: ./dist-web` (keep dual JS math temporarily).
+- [x] Browser-safe engine entry + retire thin mirrors: wire `loan-fees` / `thm` / `eval-cache` / BMAP rate helpers to TS; delete JS formula copies; share Vitest alias.
+- [x] Retire `public/instruments.js` calculation surface: generators/day-count call engine; keep UI-only normalize helpers; update adapters/tests.
+- [x] Recurrence alignment + docs closure: delegate `recurrence.js` date/schedule overlap to engine; mark dual-surface retired in formula-ownership / ownership / DESIGN/spec as needed; check off §6a.
+
+Out of scope for §6a
+- WASM / Rust/Go rewrite (§8); storage port (§7); React rewrite; full YAML-in-browser product loading; blocking on §5e commercially-usable.
 
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).

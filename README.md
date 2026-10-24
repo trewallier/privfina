@@ -41,10 +41,11 @@ Browser-hosted personal finance planning for static deployment on GitHub Pages: 
 ```bash
 npm install
 npm test
-npm run build
+npm run build        # Vite SPA → dist-web/ (GitHub Pages artifact)
+npm run build:lib    # tsc library/types → dist/
 ```
 
-Default branch: `master`.
+Default branch: `master`. Local SPA: `npm run dev` (Vite; project base `/privfina/`).
 
 ## Documentation & Decision Workflow
 

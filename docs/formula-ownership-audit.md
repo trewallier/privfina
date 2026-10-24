@@ -83,6 +83,7 @@ Files referenced
 - `DESIGN.md`
 - `docs/source-of-truth-ownership.md`
 - `docs/adr/0017-converge-on-single-browser-calculation-surface.md`
+- `docs/adr/0032-vite-browser-bundler-and-single-calculation-surface.md`
 - `docs/adr/0026-commercially-usable-requires-three-check-verification.md`
 - `docs/product-specs/PRODUCT_CATALOG.md`
 - `docs/product-specs/products/loans/fixed-rate-loan/product.yaml`

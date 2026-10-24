@@ -18,8 +18,8 @@ Related: 0003 (static GitHub Pages), 0005 (WASM deferred), 0017 (single calculat
 ## Decision
 
 - Adopt **Vite** as the browser bundler for the static SPA.
-- Layout: Vite `root: 'public'`, alias `@finance_engine` → `src/finance_engine`, `server.fs.allow` includes the repo root, `build.outDir: '../dist-web'`. GitHub Pages publishes **`dist-web`** after the CI cutover slice.
-- Keep **`tsc` → `dist/`** as `build:lib` for the package/types contract; SPA production build is `vite build` (`build` / equivalent).
+- Layout: Vite `root: 'public'`, `base: '/privfina/'` (project Pages URL), alias `@finance_engine` → `src/finance_engine`, narrowed `server.fs.allow` to the SPA root + engine tree, `build.outDir: '../dist-web'`. GitHub Pages publishes **`dist-web`** after the CI cutover slice.
+- Keep **`tsc` → `dist/`** as `build:lib` for the package/types contract; SPA production build is `npm run build` → `vite build` (Vite 8.x).
 - Browser code imports instrument/eval/date primitives from `@finance_engine/...` (or a thin `browser.ts` barrel). **Do not** pull Node-only product-spec loaders (`fs` / `path` YAML readers) into the browser graph.
 - Retire dual-surface formula modules in order: thin mirrors (`loan-fees`, `thm`, `eval-cache`, BMAP helpers) → `instruments.js` generators → recurrence date/schedule overlap. UI-only normalize/persist helpers may remain under `public/`.
 - Embedded frontend `*-product-spec.js` metadata and build-time YAML embed are out of scope for this ADR; they are not required to kill dual-surface math.

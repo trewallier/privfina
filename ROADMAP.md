@@ -152,7 +152,7 @@ Constraints
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0032: Vite as Pages bundler + browser-safe engine graph; ownership / ADR index; fix ADR 0017’s stale ROADMAP §5 pointer to §6a (do not rewrite 0017 Decision text).
-- [x] Scaffold Vite (`vite.config`, scripts `dev` / `build` / `build:lib` / `preview`, `@finance_engine` alias) without changing runtime math; prove `dist-web/` builds while deploy still publishes `./public`.
+- [x] Scaffold Vite (`vite.config`, scripts `dev` / `build` / `build:lib` / `preview`, `@finance_engine` alias, Pages `base: '/privfina/'`) without changing runtime math; prove `dist-web/` builds while deploy still publishes `./public`.
 - [x] CI / Pages cutover: `deploy.yml` runs Vite build and sets `publish_dir: ./dist-web` (keep dual JS math temporarily).
 - [x] Browser-safe engine entry + retire thin mirrors: wire `loan-fees` / `thm` / `eval-cache` / BMAP rate helpers to TS; delete JS formula copies; share Vitest alias.
 - [x] Retire `public/instruments.js` calculation surface: generators/day-count call engine; keep UI-only normalize helpers; update adapters/tests.

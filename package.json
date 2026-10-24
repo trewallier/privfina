@@ -9,7 +9,6 @@
     "dev": "vite",
     "build": "vite build",
     "build:lib": "tsc -p tsconfig.json",
-    "build:web": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "clean": "rm -rf dist dist-web"
@@ -21,7 +20,7 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2",
-    "vite": "^7.1.12",
+    "vite": "^8.3.3",
     "vitest": "^5.0.5"
   }
 }

@@ -38,7 +38,8 @@ Human-oriented hubs: [`README.md`](README.md), [`docs/README.md`](docs/README.md
 ```bash
 npm install
 npm test
-npm run build
+npm run build        # Vite SPA → dist-web/
+npm run build:lib    # tsc → dist/
 ```
 
 More process detail for humans: [`README.md`](README.md). Docs index: [`docs/README.md`](docs/README.md).

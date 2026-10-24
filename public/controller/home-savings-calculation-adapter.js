@@ -1,3 +1,11 @@
+/**
+ * Browser commercial home-savings mapper.
+ *
+ * TODO(§5e commercially-usable / ADR 0017): this re-implements contract-amount /
+ * opening-fee rules already owned by `src/finance_engine/product_specs/home_savings.ts`.
+ * Prefer collapsing onto shared browser primitives (or a single imported mapper) and
+ * keep engine↔browser locked-example parity tests green before commercially-usable.
+ */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
 
 function ceilToTenForint(amount) {
@@ -42,6 +50,16 @@ function resolveHomeSavingsContractAmount(product, specInputs) {
     const explicit = Number(specInputs.contractAmount)
     if (!Number.isFinite(explicit) || explicit <= 0) {
       throw new Error('contractAmount must be a positive finite number when provided.')
+    }
+
+    const impliedDeposit = resolveMonthlyDepositFromContractAmount({
+      contractAmount: explicit,
+      savingsRatePermille: product.savingsRatePermille
+    })
+    if (impliedDeposit !== Number(specInputs.monthlyDeposit)) {
+      throw new Error(
+        `Contract amount ${explicit} maps to monthly deposit ${impliedDeposit} Ft, not ${specInputs.monthlyDeposit} Ft.`
+      )
     }
     return explicit
   }
@@ -90,6 +108,7 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
     id: options.id,
     label: options.label || product.displayName,
     productId: product.productId,
+    productCode: product.productCode,
     productSpecVersion: product.specVersion,
     monthlyDeposit: Number(specInputs.monthlyDeposit),
     termMonths: Number(specInputs.termMonths),
@@ -102,12 +121,43 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
     premiumTiers: product.premiumTiers,
     earlyExitMonth: specInputs.earlyExitMonth,
     category: options.category || 'home-savings',
-    description: options.description || product.displayName,
+    // Free-text notes only — deposit cash-flow description is fixed in the generator.
+    description: options.description,
     createdAt: options.createdAt,
-    // Stamped on config for edit round-trips
     openingFeeMode: specInputs.openingFeeMode,
     contractAmount
   }
+}
+
+function scheduleOutputsFromBundleInput(bundleInput, schedule) {
+  return {
+    productId: bundleInput.productId,
+    productCode: bundleInput.productCode,
+    productSpecVersion: bundleInput.productSpecVersion,
+    accountOpeningFee: schedule.accountOpeningFee,
+    accountFeeMonthly: schedule.accountFeeMonthly,
+    totalDeposits: schedule.totalDeposits,
+    totalAccountFees: schedule.totalAccountFees,
+    premiumRatePct: schedule.premiumRatePct,
+    premiumBase: schedule.premiumBase,
+    premiumAmount: schedule.premiumAmount,
+    terminalPayout: schedule.terminalPayout,
+    depositInterest: schedule.depositInterest,
+    contractAmount: bundleInput.contractAmount,
+    schedule
+  }
+}
+
+/** Live preview: schedule scalars only (no recurring flow expansion). */
+function calculateHomeSavingsScheduleFromSpecInputs(specInputs, options = {}) {
+  const resolveHomeSavingsSchedule = options.resolveHomeSavingsSchedule
+  if (typeof resolveHomeSavingsSchedule !== 'function') {
+    throw new Error('resolveHomeSavingsSchedule function is required.')
+  }
+
+  const bundleInput = mapHomeSavingsSpecInputsToBundleInput(specInputs, options)
+  const schedule = resolveHomeSavingsSchedule(bundleInput)
+  return scheduleOutputsFromBundleInput(bundleInput, schedule)
 }
 
 function calculateHomeSavingsFromSpecInputs(specInputs, options = {}) {
@@ -121,28 +171,17 @@ function calculateHomeSavingsFromSpecInputs(specInputs, options = {}) {
   const preview = bundle.preview || {}
 
   return {
-    productId: bundle.productId,
-    productCode: specInputs.productCode,
-    productSpecVersion: bundle.productSpecVersion,
-    accountOpeningFee: preview.accountOpeningFee,
-    accountFeeMonthly: preview.accountFeeMonthly,
-    totalDeposits: preview.totalDeposits,
-    totalAccountFees: preview.totalAccountFees,
-    premiumRatePct: preview.premiumRatePct,
-    premiumBase: preview.premiumBase,
-    premiumAmount: preview.premiumAmount,
-    terminalPayout: preview.terminalPayout,
-    depositInterest: preview.depositInterest,
-    contractAmount: bundleInput.contractAmount,
-    schedule: preview,
+    ...scheduleOutputsFromBundleInput(bundleInput, preview),
     bundle
   }
 }
 
 export {
+  resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsContractAmount,
   resolveHomeSavingsOpeningFee,
   mapHomeSavingsSpecInputsToBundleInput,
+  calculateHomeSavingsScheduleFromSpecInputs,
   calculateHomeSavingsFromSpecInputs
 }

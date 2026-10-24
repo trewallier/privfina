@@ -21,13 +21,21 @@ const HOME_SAVINGS_PRODUCTS = [
     savingsRatePermille: 3.846,
     minContractAmount: 2_600_000,
     maxContractAmount: 26_000_000,
+    minMonthlyDeposit: 10_000,
+    maxMonthlyDeposit: 100_000,
     accountFeeMonthly: 500,
     defaultMonthlyDeposit: 50_000,
     defaultTermMonths: 120,
     defaultHousingPurpose: true,
     defaultOpeningFeeMode: 'promo-fixed-65000',
     openingFeeModes: ['standard-1pct', 'promo-half-percent', 'promo-fixed-65000'],
+    /** Hirdetmény A deposit bands for promo opening-fee modes (inclusive). */
+    openingFeeModeDepositBands: {
+      'promo-half-percent': { min: 10_000, max: 49_990 },
+      'promo-fixed-65000': { min: 50_000, max: 100_000 }
+    },
     premiumTiers: { ...HOME_SAVINGS_PREMIUM_TIERS },
+    // TODO(§5e commercially-usable): assert this map against product.yaml (rates, fees, bands, migrationStatus).
     eligibilityHints: [
       'Natural person or condominium/cooperative saver; Hungarian residential or stay address for natural persons.',
       'Housing-purpose use is required for OTP Lakástakarék Prémium (soft hint in v1).',

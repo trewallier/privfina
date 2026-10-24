@@ -5,6 +5,19 @@ import {
 } from './home-savings-product-metadata.js'
 import { parseMoneyAmount } from './money-format.js'
 
+function assertOpeningFeeModeForDeposit(product, openingFeeMode, monthlyDeposit) {
+  const bands = product.openingFeeModeDepositBands || {}
+  const band = bands[openingFeeMode]
+  if (!band) {
+    return
+  }
+  if (monthlyDeposit < band.min || monthlyDeposit > band.max) {
+    throw new Error(
+      `${openingFeeModeLabel(openingFeeMode)} requires monthly deposit between ${band.min} and ${band.max} Ft.`
+    )
+  }
+}
+
 function mapFormDataToHomeSavingsSpecInputs(formData, product) {
   const monthlyDeposit = parseMoneyAmount(formData.get('monthlyDeposit'))
   const termMonths = Number(formData.get('termMonths'))
@@ -12,9 +25,11 @@ function mapFormDataToHomeSavingsSpecInputs(formData, product) {
   const housingPurpose = formData.get('housingPurpose') === 'on'
   const openingFeeMode = String(formData.get('openingFeeMode') || '').trim()
   const contractAmountRaw = String(formData.get('contractAmount') || '').trim()
+  const minDeposit = Number(product.minMonthlyDeposit ?? 10_000)
+  const maxDeposit = Number(product.maxMonthlyDeposit ?? 100_000)
 
-  if (!Number.isFinite(monthlyDeposit) || monthlyDeposit < 10_000 || monthlyDeposit > 100_000) {
-    throw new Error('Monthly deposit must be between 10 000 and 100 000 Ft.')
+  if (!Number.isFinite(monthlyDeposit) || monthlyDeposit < minDeposit || monthlyDeposit > maxDeposit) {
+    throw new Error(`Monthly deposit must be between ${minDeposit} and ${maxDeposit} Ft.`)
   }
   if (!Number.isInteger(termMonths) || termMonths < 1 || termMonths > 120) {
     throw new Error('Savings term must be an integer between 1 and 120 months.')
@@ -25,6 +40,7 @@ function mapFormDataToHomeSavingsSpecInputs(formData, product) {
   if (!(product.openingFeeModes || []).includes(openingFeeMode)) {
     throw new Error('Select a valid opening fee mode.')
   }
+  assertOpeningFeeModeForDeposit(product, openingFeeMode, monthlyDeposit)
 
   const specInputs = {
     productCode: product.productCode,
@@ -92,7 +108,7 @@ function renderHomeSavingsHints({
   }
 }
 
-function applyHomeSavingsProductDefaults({ form, product }) {
+function applyHomeSavingsProductDefaults({ form, product, force = false }) {
   if (!form || !product) {
     return
   }
@@ -102,17 +118,23 @@ function applyHomeSavingsProductDefaults({ form, product }) {
   const housingInput = form.querySelector('#home-savings-housing-purpose')
   const openingFeeSelect = form.querySelector('#home-savings-opening-fee-mode')
 
-  if (depositInput && !depositInput.value) {
+  if (depositInput && (force || !depositInput.value)) {
     depositInput.value = String(product.defaultMonthlyDeposit)
   }
-  if (termInput && !termInput.value) {
+  if (termInput && (force || !termInput.value)) {
     termInput.value = String(product.defaultTermMonths)
   }
-  if (housingInput && !form.dataset.housingTouched) {
+  if (housingInput && (force || !form.dataset.housingTouched)) {
     housingInput.checked = Boolean(product.defaultHousingPurpose)
+  }
+  if (force) {
+    delete form.dataset.housingTouched
   }
 
   populateHomeSavingsOpeningFeeModes(openingFeeSelect, product)
+  if (force && openingFeeSelect) {
+    openingFeeSelect.value = product.defaultOpeningFeeMode
+  }
 }
 
 function applyHomeSavingsProductSelection({
@@ -129,19 +151,7 @@ function applyHomeSavingsProductSelection({
     return null
   }
 
-  if (forceDefaults) {
-    const depositInput = form.querySelector('#home-savings-monthly-deposit')
-    const termInput = form.querySelector('#home-savings-term-months')
-    const housingInput = form.querySelector('#home-savings-housing-purpose')
-    const openingFeeSelect = form.querySelector('#home-savings-opening-fee-mode')
-    if (depositInput) depositInput.value = String(product.defaultMonthlyDeposit)
-    if (termInput) termInput.value = String(product.defaultTermMonths)
-    if (housingInput) housingInput.checked = Boolean(product.defaultHousingPurpose)
-    if (openingFeeSelect) openingFeeSelect.value = product.defaultOpeningFeeMode
-    delete form.dataset.housingTouched
-  }
-
-  applyHomeSavingsProductDefaults({ form, product })
+  applyHomeSavingsProductDefaults({ form, product, force: forceDefaults })
   renderHomeSavingsHints({
     product,
     readinessElement,
@@ -154,6 +164,7 @@ function applyHomeSavingsProductSelection({
 }
 
 export {
+  assertOpeningFeeModeForDeposit,
   mapFormDataToHomeSavingsSpecInputs,
   populateHomeSavingsOpeningFeeModes,
   renderHomeSavingsHints,

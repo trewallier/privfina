@@ -38,7 +38,8 @@ import {
   generateLoanInstrumentBundle,
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentBundle,
-  createHomeSavingsInstrumentBundle
+  createHomeSavingsInstrumentBundle,
+  resolveHomeSavingsSchedule
 } from './instruments.js'
 import {
   normalizeRecurringDefinitions,
@@ -129,7 +130,10 @@ import {
   applyHomeSavingsProductSelection,
   mapFormDataToHomeSavingsSpecInputs
 } from './controller/home-savings-form.js'
-import { calculateHomeSavingsFromSpecInputs } from './controller/home-savings-calculation-adapter.js'
+import {
+  calculateHomeSavingsFromSpecInputs,
+  calculateHomeSavingsScheduleFromSpecInputs
+} from './controller/home-savings-calculation-adapter.js'
 import { buildGenericBondSubtypeUiConfig } from './controller/generic-bond-presentation.js'
 import {
   applyFieldChrome,
@@ -1176,8 +1180,8 @@ function initController() {
       }
 
       const specInputs = mapFormDataToHomeSavingsSpecInputs(formData, product)
-      const outputs = calculateHomeSavingsFromSpecInputs(specInputs, {
-        createHomeSavingsInstrumentBundle
+      const outputs = calculateHomeSavingsScheduleFromSpecInputs(specInputs, {
+        resolveHomeSavingsSchedule
       })
 
       if (homeSavingsOpeningFeePreviewInput) {

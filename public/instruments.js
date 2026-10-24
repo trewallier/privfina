@@ -1412,7 +1412,8 @@ function generateHomeSavingsInstrumentFlows(input) {
   const dayOfMonth = input.depositDayOfMonth ?? deriveHomeSavingsDepositDayOfMonth(input.startDate)
   const period = `0 0 ${dayOfMonth} * *`
   const category = input.category || 'home-savings'
-  const depositDescription = input.description || 'Monthly deposit'
+  // Fixed flow label — `input.description` is free-text notes on the bundle/config only.
+  const depositDescription = 'Monthly deposit'
   const schedule = resolveHomeSavingsSchedule(input)
   const flows = []
 
@@ -1495,6 +1496,7 @@ function createHomeSavingsInstrumentBundle(input) {
     productSpecVersion: input.productSpecVersion,
     config: {
       productId: input.productId,
+      productCode: input.productCode,
       productSpecVersion: input.productSpecVersion,
       monthlyDeposit: Number(input.monthlyDeposit),
       termMonths: Number(input.termMonths),

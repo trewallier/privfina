@@ -7,6 +7,10 @@ import {
   findHomeSavingsProduct
 } from '../public/controller/home-savings-product-metadata.js'
 import {
+  resolveHomeSavingsOpeningFee,
+  mapHomeSavingsSpecInputsToBundleInput
+} from '../public/controller/home-savings-calculation-adapter.js'
+import {
   ceilToTenForint,
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit
@@ -19,6 +23,8 @@ import {
 
 const PRODUCT_YAML_PATH =
   'docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml'
+const MATURITY_EXAMPLE_PATH =
+  'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
 const CATALOG_PATH = 'docs/product-specs/PRODUCT_CATALOG.md'
 
 function readRepoFile(relativePath: string): string {
@@ -99,6 +105,67 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
 
     expect(halfBand).toEqual(entry.openingFeeModeDepositBands['promo-half-percent'])
     expect(fixedBand).toEqual(entry.openingFeeModeDepositBands['promo-fixed-65000'])
+  })
+
+  it('keeps premium tiers and composer defaults aligned with locked maturity example', () => {
+    const example = loadYaml(MATURITY_EXAMPLE_PATH) as {
+      inputs: {
+        monthlyDeposit: number
+        termMonths: number
+        openingFeeMode: string
+      }
+      expected: {
+        earlyExitPremiumRatePctByMonthBand: {
+          months49to96: number
+          months97to120: number
+        }
+        maturityPremiumRatePctFromMonth120: number
+      }
+    }
+    const entry = findHomeSavingsProduct('premium-plusz-10x30')
+    expect(entry).not.toBeNull()
+    if (!entry) return
+
+    expect(entry.premiumTiers).toEqual({
+      months49to96: example.expected.earlyExitPremiumRatePctByMonthBand.months49to96,
+      months97to120: example.expected.earlyExitPremiumRatePctByMonthBand.months97to120,
+      maturityFrom120: example.expected.maturityPremiumRatePctFromMonth120
+    })
+    expect(entry.defaultMonthlyDeposit).toBe(example.inputs.monthlyDeposit)
+    expect(entry.defaultTermMonths).toBe(example.inputs.termMonths)
+    expect(entry.defaultOpeningFeeMode).toBe(example.inputs.openingFeeMode)
+    expect(entry.defaultHousingPurpose).toBe(true)
+  })
+
+  it('rejects promo opening-fee modes outside deposit bands at the adapter seam', () => {
+    const product = findHomeSavingsProduct('premium-plusz-10x30')
+    expect(product).not.toBeNull()
+    if (!product) return
+
+    expect(() =>
+      resolveHomeSavingsOpeningFee(product, {
+        monthlyDeposit: 20_000,
+        openingFeeMode: 'promo-fixed-65000'
+      })
+    ).toThrow(/between 50000 and 100000/i)
+
+    expect(() =>
+      mapHomeSavingsSpecInputsToBundleInput({
+        productCode: 'premium-plusz-10x30',
+        monthlyDeposit: 80_000,
+        termMonths: 120,
+        startDate: '2026-10-10',
+        housingPurpose: true,
+        openingFeeMode: 'promo-half-percent'
+      })
+    ).toThrow(/between 10000 and 49990/i)
+
+    expect(
+      resolveHomeSavingsOpeningFee(product, {
+        monthlyDeposit: 50_000,
+        openingFeeMode: 'promo-fixed-65000'
+      })
+    ).toBe(65_000)
   })
 
   it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG', () => {

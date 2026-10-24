@@ -7,6 +7,7 @@
  * generators — no third formula surface.
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
+import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
 import {
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit
@@ -45,6 +46,8 @@ function resolveHomeSavingsContractAmount(product, specInputs) {
 
 function resolveHomeSavingsOpeningFee(product, specInputs) {
   const mode = specInputs.openingFeeMode
+  assertOpeningFeeModeForDeposit(product, mode, Number(specInputs.monthlyDeposit))
+
   if (mode === 'promo-fixed-65000') {
     return 65_000
   }

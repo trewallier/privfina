@@ -1,0 +1,23 @@
+specVersion: v2alpha1
+productId: home-savings.premium-plusz-10x30.standard
+exampleId: ebkm-standard-20000
+title: EBKM lock — standard 1% opening fee, 20 000 Ft/hó
+description: >
+  Published EBKM from OTP Lakástakarék értékesített termékek Hirdetmény B
+  (effective 2026-10-10): continuous monthly deposit 20.000 Ft, account fee
+  500 Ft/hó, 1% számlanyitási díj.
+
+inputs:
+  monthlyDeposit: 20000
+  termMonths: 120
+  startDate: 2026-10-10
+  housingPurpose: true
+  openingFeeMode: standard-1pct
+
+expected:
+  accountFeeMonthly: 500
+  ebkmPctWithPremium: 4.12
+  ebkmPctWithoutPremium: -0.77
+
+notes:
+  - Hirdetmény B EBKM pair with Premium / without Premium.

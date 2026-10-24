@@ -1,0 +1,225 @@
+specVersion: v2alpha1
+kind: financial-product
+id: home-savings.premium-plusz-10x30.standard
+family: home-savings
+variant: premium-plusz-10x30
+productCode: premium-plusz-10x30
+displayName: OTP Lakástakarék PRÉMIUM PLUSZ 10x30
+description: >
+  OTP Lakástakarék Zrt. lakás-előtakarékossági megtakarítási szerződés,
+  PRÉMIUM PLUSZ 10x30 módozat. Customer-perspective savings schedule only
+  (deposits, account fees, opening fee, OTP Lakástakarék Prémium). No state
+  support for contracts from 2018-10-17. LTP lakáskölcsön / áthidaló kölcsön
+  is out of scope for this product folder (ROADMAP §5e deferred).
+
+engine:
+  instrumentType: home-savings
+  paymentFrequency: monthly
+
+eligibilityRules:
+  - natural-person-or-condominium-cooperative-saver
+  - hungarian-residential-or-stay-address-for-natural-person
+  - housing-purpose-required-for-premium
+  - no-state-support-post-2018-10-17
+  - loyalty-commitment-required-for-promo-opening-fee
+
+pricing:
+  rateSettingRule: modus-aszf-deposit-rate-plus-otp-premium-tiers
+  notes:
+    - >
+      Sources: Hirdetmény értékesített termékekről (effective 2026-10-10);
+      Díjtáblázat kamat/díj/költség (effective 2026-08-03). Europe/Budapest dates.
+    - >
+      OTP Lakástakarék Prémium (not state aid): 30% after month 120 with
+      allotment/termination and housing-purpose use; early exit with housing
+      purpose 10% (months 49–96) / 20% (months 97–120).
+    - >
+      Hűség period for promo opening-fee contracts: from savings start through
+      the last day of month 48. Loyalty unlock fee (current cohort from
+      2026-08-03): 100% of waived opening fee through month 48.
+    - >
+      CALC-ALIGNED BLOCKER: contractual deposit interest for the módozat lives
+      in the ÁSZF / módozat annex (not fully published in the two Hirdetmény
+      PDFs used for this spec). Do not invent a deposit rate. Spec-only and
+      EBKM lock-in may proceed; interest accrual fidelity waits on ÁSZF numbers
+      (ADR 0029, ROADMAP §5e).
+
+discounts:
+  - name: promo-opening-fee-half-percent
+    type: fee-waiver
+    value: 50
+    unit: percent
+    conditions:
+      - monthly-deposit-10000-to-49990
+      - loyalty-commitment-48-months
+      - promo-hirdetmeny-active
+    appliesToFeeNames:
+      - szamlanyitasi-dij
+  - name: promo-opening-fee-fixed-65000
+    type: fee-waiver
+    value: 0
+    unit: amount
+    conditions:
+      - monthly-deposit-50000-to-100000
+      - loyalty-commitment-48-months
+      - promo-hirdetmeny-active
+      - opening-fee-fixed-65000-ft
+    appliesToFeeNames:
+      - szamlanyitasi-dij
+
+fees:
+  - name: szamlanyitasi-dij
+    type: account-opening
+    value: 1
+    unit: percent
+    timing: upfront
+    description: >
+      Standard account opening fee is 1% of szerződéses összeg. Promo tables
+      (Hirdetmény A): 0.5% of contract amount when monthly deposit is
+      10.000–49.990 Ft; fixed 65.000 Ft when monthly deposit is 50.000–100.000 Ft,
+      both requiring 48-month loyalty commitment.
+  - name: szamlavezetesi-dij
+    type: account-management
+    value: 500
+    unit: amount
+    timing: periodic
+    description: Monthly account management fee for contracts from 2026-08-03 (500 Ft/hó).
+  - name: huseg-feloldas-dij
+    type: other
+    value: 100
+    unit: percent
+    timing: on-event
+    description: >
+      Loyalty unlock fee for contracts from 2026-08-03: 100% of the waived
+      opening fee through the last day of savings month 48 (scenario mode only).
+
+inputs:
+  - name: monthlyDeposit
+    type: number
+    label: Monthly Deposit
+    required: true
+    unit: currency
+    description: Contractual monthly betét (10.000–100.000 Ft).
+    constraints:
+      minimum: 10000
+      maximum: 100000
+  - name: termMonths
+    type: integer
+    label: Savings Term (Months)
+    required: true
+    unit: months
+    description: Savings horizon; módozat full Premium path uses 120 months.
+    constraints:
+      minimum: 1
+      maximum: 120
+  - name: startDate
+    type: string
+    label: Savings Start Date
+    required: true
+    unit: date
+    description: First savings month start (ISO date).
+  - name: housingPurpose
+    type: boolean
+    label: Housing Purpose Assumed
+    required: true
+    description: When true, Premium tiers apply at exit/allotment (hint for v1; not hard validation).
+  - name: openingFeeMode
+    type: string
+    label: Opening Fee Mode
+    required: true
+    description: standard-1pct | promo-half-percent | promo-fixed-65000
+    constraints:
+      enum:
+        - standard-1pct
+        - promo-half-percent
+        - promo-fixed-65000
+  - name: contractAmount
+    type: number
+    label: Contract Amount
+    required: false
+    unit: currency
+    description: >
+      Szerződéses összeg when known from the offering calculator / ÁSZF.
+      Required to evaluate percent-based opening fees once sourced; optional
+      until contract-amount formula is locked.
+
+derivedVariables:
+  - name: accountOpeningFee
+    type: number
+    label: Account Opening Fee
+    required: true
+    unit: currency
+    description: Resolved opening fee from mode + monthly deposit + contract amount.
+  - name: premiumRatePct
+    type: number
+    label: Premium Rate Percent
+    required: true
+    unit: percent
+    description: OTP Prémium percent from term and housing-purpose path.
+
+outputs:
+  - name: totalDeposits
+    type: number
+    label: Total Deposits
+    required: true
+    unit: currency
+    description: Sum of monthly deposits over the modeled term.
+  - name: totalAccountFees
+    type: number
+    label: Total Account Fees
+    required: true
+    unit: currency
+    description: Sum of monthly account management fees.
+  - name: premiumAmount
+    type: number
+    label: Premium Amount
+    required: true
+    unit: currency
+    description: OTP Lakástakarék Prémium credited under the assumed exit path.
+  - name: terminalPayout
+    type: number
+    label: Terminal Payout
+    required: true
+    unit: currency
+    description: Customer inflow at allotment/termination (deposits + interest if modeled + Premium).
+  - name: ebkmPct
+    type: number
+    label: EBKM Percent
+    required: true
+    unit: percent
+    description: Engine EBKM for verification against Hirdetmény (ADR 0031).
+
+assumptions:
+  - Customer-perspective cash flows only; no bank internal legs.
+  - Default path is continuous monthly saving with housing-purpose Premium at exit.
+  - State support is absent for this offering cohort.
+  - Deposit interest rate must come from ÁSZF / módozat annex before calc-aligned interest fidelity.
+  - Contract amount formula for percent opening fees must be locked from ÁSZF or offering calculator before percent-fee engine evaluation.
+
+ui:
+  formTitle: OTP Lakástakarék PRÉMIUM PLUSZ 10x30
+  sections:
+    - id: contract
+      title: Contract
+      fieldNames:
+        - monthlyDeposit
+        - termMonths
+        - startDate
+        - housingPurpose
+        - openingFeeMode
+        - contractAmount
+    - id: results
+      title: Results
+      fieldNames:
+        - totalDeposits
+        - totalAccountFees
+        - premiumAmount
+        - terminalPayout
+        - ebkmPct
+
+exampleRefs:
+  - examples/ebkm-promo-100000.yaml
+  - examples/ebkm-promo-20000.yaml
+  - examples/ebkm-standard-100000.yaml
+  - examples/ebkm-standard-20000.yaml
+  - examples/maturity-premium-120.yaml

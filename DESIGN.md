@@ -2,7 +2,7 @@
 
 ## Vision
 
-The engine models personal finance as a timeline of dated cash flows. Every higher-level concept, such as a salary, loan, subscription, or investment, should eventually produce one or more cash flows. Analytics, forecasting, and valuation should operate on those generated cash flows rather than on special-case instrument logic.
+The engine models personal finance as a timeline of dated cash flows. Every higher-level concept, such as a salary, loan, subscription, investment, or home-savings contract, should eventually produce one or more cash flows. Analytics, forecasting, and valuation should operate on those generated cash flows rather than on special-case instrument logic.
 
 ## Core Concepts
 
@@ -50,22 +50,23 @@ An instrument is a source of one or more cash flows.
 - `Subscription`: recurring outflows with recurrence rules and optional inflation handling
 - `Loan`: principal flows, scheduled repayments, and interest rules
 - `Investment`: contributions, distributions, and valuation-related flows
+- `HomeSavings`: recurring deposits, account fees, opening fee, and terminal Premium (ADR 0029; engine under ROADMAP §5e)
 
-The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, and investment subtypes (see `src/finance_engine/instruments/` and the browser path in `public/instruments.js`). Product-specific contracts for cataloged loans, mortgage loans, and government securities live under `docs/product-specs/` (ADR 0013–0016, schema v2 / ADR 0020).
+The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, and investment subtypes (see `src/finance_engine/instruments/` and the browser path in `public/instruments.js`). Product-specific contracts for cataloged loans, mortgage loans, government securities, and home-savings (OTP Lakástakarék) live under `docs/product-specs/` (ADR 0013–0016, schema v2 / ADR 0020 / ADR 0028). Runtime `home-savings` instrument generation is roadmap §5e (ADR 0029–0031); product detail stays in YAML, not in this file.
 
 ### Product Specification Schema (v2)
 
 - Active validation contract: `docs/product-specs/schema/v2/` with `specVersion: v2alpha1`.
 - Schema v1 is frozen; do not add new loan/mortgage commercial fields there.
 - Product identity: free-form `variant` (label) plus required `productCode` (stable id such as `csok-plusz` or `dkj`).
-- Families: `loan`, `mortgage-loan`, `government-security`. Mortgage products keep `engine.instrumentType: loan` so they reuse loan amortization primitives.
+- Families: `loan`, `mortgage-loan`, `government-security`, `home-savings`. Mortgage products keep `engine.instrumentType: loan` so they reuse loan amortization primitives. Home-savings products use `engine.instrumentType: home-savings` (ADR 0028 / 0029).
 - Commercial constructs (optional on a product): `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing`. Prefer these over new top-level one-off fields.
 - Legacy government-security top-level fields (`issuanceModel`, `rateSettingRule`, …) remain valid in v2alpha1; full relocation into `pricing` alone is deferred.
 - Engine code stays primitive-focused (ADR 0015); schema readiness does not by itself implement subsidized cash-flow math.
 
 ### Instrument Design
 
-Baseline instrument behavior for salary, subscription, loan, and investment (implemented; see ROADMAP §1–§2). Product-specific commercial detail lives in YAML product specs once cataloged.
+Baseline instrument behavior for salary, subscription, loan, and investment (implemented; see ROADMAP §1–§2). Home-savings instrument type is accepted in ADR 0029; engine/UI land under ROADMAP §5e. Product-specific commercial detail lives in YAML product specs once cataloged.
 
 #### Salary (stateless, recurring inflow)
 

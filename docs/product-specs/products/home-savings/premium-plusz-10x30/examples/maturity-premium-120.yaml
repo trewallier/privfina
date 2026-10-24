@@ -1,0 +1,32 @@
+specVersion: v2alpha1
+productId: home-savings.premium-plusz-10x30.standard
+exampleId: maturity-premium-120
+title: Maturity Premium tier — 120 months housing purpose
+description: >
+  Continuous saving through month 120 with housing-purpose allotment/termination
+  credits OTP Lakástakarék Prémium at 30%. Deposit interest omitted until ÁSZF
+  rate is sourced (ADR 0029).
+
+inputs:
+  monthlyDeposit: 50000
+  termMonths: 120
+  startDate: 2026-10-10
+  housingPurpose: true
+  openingFeeMode: promo-fixed-65000
+
+expected:
+  accountFeeMonthly: 500
+  accountOpeningFee: 65000
+  totalDeposits: 6000000
+  totalAccountFees: 60000
+  premiumRatePct: 30
+  premiumBase: deposits-only-until-aszf-interest
+  earlyExitPremiumRatePctByMonthBand:
+    months49to96: 10
+    months97to120: 20
+  maturityPremiumRatePctFromMonth120: 30
+
+notes:
+  - Premium percents from Hirdetmény B (natural person and társasház tables).
+  - premiumAmount and terminalPayout engine assertions wait for calc-aligned mapper + ÁSZF interest policy.
+  - Loyalty unlock is out of scope for this default continuous path.

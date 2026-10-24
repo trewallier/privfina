@@ -31,7 +31,7 @@
     },
     "family": {
       "type": "string",
-      "enum": ["loan", "government-security", "mortgage-loan"]
+      "enum": ["loan", "government-security", "mortgage-loan", "home-savings"]
     },
     "variant": {
       "type": "string",
@@ -96,7 +96,7 @@
       "properties": {
         "instrumentType": {
           "type": "string",
-          "enum": ["loan", "government-security"]
+          "enum": ["loan", "government-security", "home-savings"]
         },
         "rateType": {
           "type": "string",
@@ -334,6 +334,28 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "home-savings"
+          }
+        }
+      },
+      "then": {
+        "required": ["engine"],
+        "properties": {
+          "engine": {
+            "required": ["instrumentType", "paymentFrequency"],
+            "properties": {
+              "instrumentType": {
+                "const": "home-savings"
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -480,6 +502,8 @@
             "contract-modification",
             "property-management",
             "land-registry",
+            "account-opening",
+            "account-management",
             "other"
           ]
         },

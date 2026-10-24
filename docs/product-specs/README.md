@@ -15,4 +15,4 @@ Folder conventions:
 
 To add a new product, create a new product folder, write the spec in `product.yaml` against schema v2, add at least one worked example, and register the product in `PRODUCT_CATALOG.md`. For the full lifecycle (spec-only → … → schedule-usable → commercially-usable → fully-spec-backed), follow the [product lifecycle playbook](../dev-playbooks/product-lifecycle.md).
 
-Supported families in schema v2: `loan`, `mortgage-loan`, and `government-security`. Use free-form `variant` plus required `productCode` for product identity so new offerings (for example `csok-plusz`, `otp-zold`) do not require schema enum edits.
+Supported families in schema v2: `loan`, `mortgage-loan`, `government-security`, and `home-savings` (ADR 0028). Use free-form `variant` plus required `productCode` for product identity so new offerings (for example `csok-plusz`, `otp-zold`, `premium-plusz-10x30`) do not require schema enum edits.

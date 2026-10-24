@@ -110,7 +110,7 @@ Goal: catalog OTP Lakástakarék *lakás-előtakarékossági* savings (first pro
 Constraints
 - Do **not** overload `government-security`, simplified investment subtypes, or loan composers.
 - No `if (productCode === …)` in core generators (ADR 0015); math in `src/finance_engine/` first (ADR 0017).
-- Do **not** invent deposit interest — ÁSZF / módozat annex is a calc-aligned fidelity blocker (product README).
+- Deposit rate **0.10%**, savings ‰ **3.846**, and contract bounds come from USZ Melléklet 2026-08-03 (product YAML); do not invent alternate rates.
 - LTP *lakáskölcsön* / *áthidaló kölcsön* is out of scope for this epic (deferred below).
 
 Plan slices (implement in order; each slice should stay PR-sized)
@@ -118,7 +118,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Schema v2: add `home-savings` family + `engine.instrumentType: home-savings` + account fee types; validation fixtures cover the new product folder.
 - [x] Author `product.yaml` + Hirdetmény worked examples; register catalog row **`spec-only`** (`home-savings.premium-plusz-10x30.standard`).
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
-- [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium; interest and percent-opening-fee fidelity still gated on ÁSZF numbers — omitted/require `contractAmount`, not invented).
+- [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium; ACT/360 interest at 0.10%; contract amount via 3.846‰ from USZ Melléklet / ÁSZF).
 - [ ] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
 - [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`**.
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.

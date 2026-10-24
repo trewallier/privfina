@@ -1,3 +1,4 @@
+import { daysInMonthUtc, formatIsoDate, parseIsoDate } from '../date_utils'
 import type { CashFlow, InstrumentBundle } from '../models'
 import { CashFlowDirection } from '../models'
 import { generateRecurringCashFlows } from '../recurring'
@@ -8,12 +9,18 @@ import {
   sortCashFlowsByDate
 } from './common'
 
-/** Default OTP Lakástakarék Prémium tiers (PRÉMIUM PLUSZ 10x30 Hirdetmény). */
+/** Default OTP Lakástakarék Prémium tiers (PRÉMIUM PLUSZ 10x30 Hirdetmény / USZ). */
 export const DEFAULT_HOME_SAVINGS_PREMIUM_TIERS = {
   months49to96: 10,
   months97to120: 20,
   maturityFrom120: 30
 } as const
+
+/** USZ Melléklet 2026-08-03 — PRÉMIUM PLUSZ 10x30. */
+export const DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT = 0.1
+export const DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE = 3.846
+export const DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT = 2_600_000
+export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
 
 export interface HomeSavingsPremiumTiers {
   months49to96: number
@@ -31,8 +38,8 @@ export interface HomeSavingsInstrumentInput {
   accountOpeningFee: number
   housingPurpose: boolean
   /**
-   * Optional ÁSZF annual deposit rate (percent). When omitted, interest is not
-   * accrued (ADR 0029 — do not invent rates).
+   * Annual deposit rate (percent). Defaults to USZ Melléklet 0.10% when omitted
+   * on the product-spec path; pass explicitly `0` to disable interest.
    */
   depositInterestAnnualRatePct?: number
   /** Override Premium percent; when omitted, resolve from term + tiers. */
@@ -119,13 +126,85 @@ export function resolveHomeSavingsPremiumRatePct(input: {
   return 0
 }
 
+function addMonthsUtc(date: Date, months: number): Date {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth() + months
+  const targetYear = year + Math.floor(month / 12)
+  const targetMonth = ((month % 12) + 12) % 12
+  const day = Math.min(date.getUTCDate(), daysInMonthUtc(targetYear, targetMonth))
+  return new Date(Date.UTC(targetYear, targetMonth, day))
+}
+
+function shiftUtcDays(date: Date, days: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days))
+}
+
+export function ceilToTenForint(amount: number): number {
+  return Math.ceil(amount / 10) * 10
+}
+
 /**
- * Simple equal-month compound interest on cumulative deposits when an ÁSZF rate
- * is provided. When rate is omitted, returns 0 (interest not modeled).
+ * Havi betét = szerződéses összeg × ‰ / 1000, rounded up to 10 Ft (USZ/ÁSZF).
+ */
+export function resolveMonthlyDepositFromContractAmount(input: {
+  contractAmount: number
+  savingsRatePermille?: number
+}): number {
+  const contractAmount = Number(input.contractAmount)
+  if (!Number.isFinite(contractAmount) || contractAmount <= 0) {
+    throw new Error('contractAmount must be a positive finite number.')
+  }
+  const permille = Number(input.savingsRatePermille ?? DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE)
+  if (!Number.isFinite(permille) || permille <= 0) {
+    throw new Error('savingsRatePermille must be a positive finite number.')
+  }
+  return ceilToTenForint((contractAmount * permille) / 1000)
+}
+
+/**
+ * Invert the ‰ rule to a 10 000 Ft multiple in the módozat contract bounds.
+ */
+export function resolveContractAmountFromMonthlyDeposit(input: {
+  monthlyDeposit: number
+  savingsRatePermille?: number
+  minContractAmount?: number
+  maxContractAmount?: number
+}): number {
+  const monthlyDeposit = ensurePositiveAmount(input.monthlyDeposit)
+  const permille = Number(input.savingsRatePermille ?? DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE)
+  const minContract = Number(input.minContractAmount ?? DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT)
+  const maxContract = Number(input.maxContractAmount ?? DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT)
+
+  if (!Number.isFinite(permille) || permille <= 0) {
+    throw new Error('savingsRatePermille must be a positive finite number.')
+  }
+
+  const approx = (monthlyDeposit * 1000) / permille
+  const start = Math.round(approx / 10_000) * 10_000
+  for (let delta = 0; delta <= 50; delta += 1) {
+    for (const candidate of delta === 0 ? [start] : [start - delta * 10_000, start + delta * 10_000]) {
+      if (candidate < minContract || candidate > maxContract) continue
+      if (resolveMonthlyDepositFromContractAmount({ contractAmount: candidate, savingsRatePermille: permille }) === monthlyDeposit) {
+        return candidate
+      }
+    }
+  }
+
+  throw new Error(
+    `No contract amount in [${minContract}, ${maxContract}] maps to monthlyDeposit ${monthlyDeposit} at ${permille}‰.`
+  )
+}
+
+/**
+ * ÁSZF/USZ deposit interest: ACT/360 daily
+ * (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization on the first
+ * day after each megtakarítási év, accrual from credit day through the day
+ * before payout. Returns whole-forint interest (nearest).
  */
 export function calculateHomeSavingsDepositInterest(input: {
   monthlyDeposit: number
   termMonths: number
+  startDate: string
   annualRatePct?: number
 }): number {
   const monthlyDeposit = ensurePositiveAmount(input.monthlyDeposit)
@@ -147,13 +226,55 @@ export function calculateHomeSavingsDepositInterest(input: {
     return 0
   }
 
-  const monthlyRate = annualRatePct / 100 / 12
-  let balance = 0
+  const start = parseIsoDate(input.startDate)
+  const depositDates = new Map<string, number>()
   for (let i = 0; i < termMonths; i += 1) {
-    balance = balance * (1 + monthlyRate) + monthlyDeposit
+    const depositDate = addMonthsUtc(start, i)
+    const key = formatIsoDate(depositDate)
+    depositDates.set(key, (depositDates.get(key) ?? 0) + monthlyDeposit)
   }
-  const totalDeposits = monthlyDeposit * termMonths
-  return balance - totalDeposits
+
+  const yearStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1))
+  const capDates = new Set<string>()
+  for (let yearIndex = 1; yearIndex <= Math.ceil(termMonths / 12) + 1; yearIndex += 1) {
+    capDates.add(formatIsoDate(addMonthsUtc(yearStart, yearIndex * 12)))
+  }
+
+  const lastDeposit = addMonthsUtc(start, termMonths - 1)
+  const payoutDate = lastDeposit
+  let balance = 0
+  let pendingInterest = 0
+  let totalInterest = 0
+  let cursor = new Date(start.getTime())
+
+  while (cursor.getTime() <= payoutDate.getTime()) {
+    const key = formatIsoDate(cursor)
+
+    if (capDates.has(key) && pendingInterest > 0) {
+      const capitalized = Math.round(pendingInterest)
+      balance += capitalized
+      totalInterest += capitalized
+      pendingInterest = 0
+    }
+
+    const deposit = depositDates.get(key)
+    if (deposit) {
+      balance += deposit
+    }
+
+    // Interest ends on the day before payout (ÁSZF/USZ).
+    if (cursor.getTime() < payoutDate.getTime()) {
+      pendingInterest += (balance * annualRatePct) / (360 * 100)
+    }
+
+    cursor = shiftUtcDays(cursor, 1)
+  }
+
+  if (pendingInterest > 0) {
+    totalInterest += Math.round(pendingInterest)
+  }
+
+  return totalInterest
 }
 
 export function resolveHomeSavingsSchedule(
@@ -173,9 +294,11 @@ export function resolveHomeSavingsSchedule(
   const depositInterest = calculateHomeSavingsDepositInterest({
     monthlyDeposit,
     termMonths,
+    startDate: input.startDate,
     annualRatePct: input.depositInterestAnnualRatePct
   })
-  const premiumBase = totalDeposits + depositInterest
+  // Premium % applies to contractual deposits only (USZ §10); interest is additive.
+  const premiumBase = totalDeposits
   const premiumRatePct =
     input.premiumRatePct !== undefined && input.premiumRatePct !== null
       ? Number(input.premiumRatePct)
@@ -191,7 +314,7 @@ export function resolveHomeSavingsSchedule(
   }
 
   const premiumAmount = (premiumBase * premiumRatePct) / 100
-  const terminalPayout = premiumBase + premiumAmount
+  const terminalPayout = totalDeposits + depositInterest + premiumAmount
 
   return {
     totalDeposits,

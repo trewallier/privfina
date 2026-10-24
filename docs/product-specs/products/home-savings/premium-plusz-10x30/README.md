@@ -10,33 +10,39 @@ Home-savings (lakás-előtakarékossági) product specification for the currentl
 
 - Hirdetmény — értékesített termékek, akciók és feltételek — **2026-10-10**
 - Hirdetmény — kamat, díj és költség tételek (Díjtáblázat) — **2026-08-03**
+- ÁSZF — Általános Szerződési Feltételei — közzététel **2026-03-24** (interest / contract mechanics)
+- Üzletszabályzat (2023-03-01+ contracts) Melléklet — hatály **2026-08-03** — módozat table
+
+## Módozat lock-ins (USZ Melléklet)
+
+| Field | Value |
+| --- | --- |
+| Betéti kamat | **0.10%** p.a. |
+| Megtakarítási ráta | **3.846‰ /hó** of szerződéses összeg (round up to 10 Ft) |
+| Szerződéses összeg | 2 600 000–26 000 000 Ft |
+| Havi betét | 10 000–100 000 Ft |
+| Prémium | 30% (maturity); early-exit bands 10% / 20% |
+
+Interest day-count: ACT/360 daily (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization, accrual from credit day through day before payout (ÁSZF/USZ).
+
+Premium applies to **contractual deposits only** (no compound on Premium; USZ §10).
 
 ## In scope
 
-- Monthly deposit bounds 10 000–100 000 Ft
+- Monthly deposit bounds and contract-amount derivation via 3.846‰
 - Account opening fee (standard 1% / promo 0.5% or fixed 65 000 Ft) and 500 Ft/hó account fee
-- OTP Lakástakarék Prémium tiers (10% / 20% / 30%) with housing-purpose assumption
+- OTP Lakástakarék Prémium tiers with housing-purpose assumption
 - 48-month loyalty commitment for promo opening fee; unlock fee as scenario mode
 - Published EBKM goldens (20k and 100k monthly deposit; promo and 1% tables; with/without Premium)
 - Explicit absence of state support for this cohort
+- ACT/360 deposit interest at 0.10%
 
 ## Out of scope
 
 - LTP *lakáskölcsön* and *áthidaló kölcsön* (including díjtáblázat THM representative examples) — ROADMAP §5e deferred
 - Hard validation of housing purpose / eligibility (hints only through schedule-usable)
-- Invented deposit interest rates
-
-## ÁSZF / módozat dependency (calc-aligned blocker)
-
-Contractual **deposit interest** and the precise **szerződéses összeg** formula for percent-based opening fees are defined in the OTP Lakástakarék Üzletszabályzat / Általános Szerződési Feltételek módozat annex (from 2023-03-01 contracts), not fully in the two Hirdetmény PDFs above.
-
-Until those numbers are authored into this product YAML (and examples updated):
-
-- **`calc-aligned`** engine path models deposits, account fees, resolved opening fees, and Premium with **deposit interest omitted** (`depositInterest = 0`).
-- Percent opening-fee modes require an explicit `contractAmount` input; do not invent szerződéses összeg.
-- Do **not** invent a deposit rate for engine goldens.
-- EBKM published figures stay locked as documentation goldens until ADR 0031 commercially-usable.
+- Irregular-payment Premium quarterly 25% caps (USZ §10 (4)) — continuous contractual path only for v1
 
 ## Worked examples
 
-Examples in this folder are acceptance criteria. EBKM examples lock Hirdetmény published percentages; maturity example locks Premium tier bands. Engine-computed assertions land with calc-aligned / commercially-usable promotions.
+Examples in this folder are acceptance criteria. EBKM examples lock Hirdetmény published percentages; maturity example locks Premium tiers, ACT/360 interest, and terminal payout. EBKM engine verification lands with commercially-usable (ADR 0031).

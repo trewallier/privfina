@@ -6,6 +6,9 @@ import {
   calculateHomeSavingsFromProductSpec,
   generateCashFlowsFromHomeSavingsProductSpec,
   loadHomeSavingsProductSpec,
+  resolveContractAmountFromMonthlyDeposit,
+  resolveHomeSavingsContractAmount,
+  resolveMonthlyDepositFromContractAmount,
   resolvePremiumRateForTerm,
   type HomeSavingsSpecInputs
 } from '../src/finance_engine/engine'
@@ -38,13 +41,26 @@ function loadExample(relativePath: string): {
 describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
   const product = loadProduct()
 
-  it('loads product under home-savings family', () => {
+  it('loads product under home-savings family with USZ Melléklet rate locks', () => {
     expect(product.family).toBe('home-savings')
     expect(product.productCode).toBe('premium-plusz-10x30')
     expect(product.engine.instrumentType).toBe('home-savings')
+    expect(product.engine.depositInterestAnnualRatePct).toBe(0.1)
+    expect(product.engine.savingsRatePermille).toBe(3.846)
+    expect(product.engine.minContractAmount).toBe(2_600_000)
+    expect(product.engine.maxContractAmount).toBe(26_000_000)
   })
 
-  it('computes maturity-premium-120 schedule from example inputs (interest omitted)', () => {
+  it('derives contract amount from monthly deposit via 3.846‰', () => {
+    expect(resolveMonthlyDepositFromContractAmount({ contractAmount: 26_000_000 })).toBe(100_000)
+    expect(resolveMonthlyDepositFromContractAmount({ contractAmount: 13_000_000 })).toBe(50_000)
+    expect(resolveMonthlyDepositFromContractAmount({ contractAmount: 5_200_000 })).toBe(20_000)
+    expect(resolveContractAmountFromMonthlyDeposit({ monthlyDeposit: 100_000 })).toBe(26_000_000)
+    expect(resolveContractAmountFromMonthlyDeposit({ monthlyDeposit: 50_000 })).toBe(13_000_000)
+    expect(resolveContractAmountFromMonthlyDeposit({ monthlyDeposit: 20_000 })).toBe(5_200_000)
+  })
+
+  it('computes maturity-premium-120 schedule with ACT/360 interest from example inputs', () => {
     const { inputs, expected } = loadExample(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
     )
@@ -56,22 +72,24 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     expect(outputs.totalDeposits).toBe(expected.totalDeposits)
     expect(outputs.totalAccountFees).toBe(expected.totalAccountFees)
     expect(outputs.premiumRatePct).toBe(expected.premiumRatePct)
-    expect(outputs.depositInterest).toBe(0)
-    expect(outputs.premiumBase).toBe(outputs.totalDeposits)
-    expect(outputs.premiumAmount).toBe(1_800_000)
-    expect(outputs.terminalPayout).toBe(7_800_000)
+    expect(outputs.depositInterest).toBe(expected.depositInterest)
+    expect(outputs.premiumBase).toBe(expected.premiumBase)
+    expect(outputs.premiumAmount).toBe(expected.premiumAmount)
+    expect(outputs.terminalPayout).toBe(expected.terminalPayout)
     expect(outputs.productId).toBe('home-savings.premium-plusz-10x30.standard')
     expect(outputs.productSpecVersion).toBe('v2alpha1')
   })
 
   it('generates customer cash flows: opening fee, deposits, account fees, terminal inflow', () => {
-    const { inputs } = loadExample(
+    const { inputs, expected } = loadExample(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
     )
 
     const flows = generateCashFlowsFromHomeSavingsProductSpec(product, inputs)
     const opening = flows.filter((flow) => flow.description === 'Account opening fee')
-    const deposits = flows.filter((flow) => flow.direction === CashFlowDirection.Outflow && flow.amount === 50000)
+    const deposits = flows.filter(
+      (flow) => flow.direction === CashFlowDirection.Outflow && flow.amount === 50000
+    )
     const fees = flows.filter((flow) => flow.description === 'Account management fee')
     const terminal = flows.filter((flow) => flow.description === 'Home-savings terminal payout')
 
@@ -84,7 +102,7 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     expect(fees).toHaveLength(120)
     expect(terminal).toHaveLength(1)
     expect(terminal[0].direction).toBe(CashFlowDirection.Inflow)
-    expect(terminal[0].amount).toBe(7_800_000)
+    expect(terminal[0].amount).toBe(expected.terminalPayout)
     expect(terminal[0].date).toBe(deposits[deposits.length - 1].date)
   })
 
@@ -100,37 +118,47 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     expect(resolvePremiumRateForTerm(120, true, 100)).toBe(20)
   })
 
-  it('requires contractAmount for percent opening-fee modes', () => {
-    expect(() =>
-      calculateHomeSavingsFromProductSpec(product, {
-        monthlyDeposit: 20000,
-        termMonths: 120,
-        startDate: '2026-10-10',
-        housingPurpose: true,
-        openingFeeMode: 'standard-1pct'
-      })
-    ).toThrow(/contractAmount/)
+  it('derives percent opening fees from monthly deposit when contractAmount omitted', () => {
+    const derived = resolveHomeSavingsContractAmount(product, {
+      monthlyDeposit: 20_000,
+      termMonths: 120,
+      startDate: '2026-10-10',
+      housingPurpose: true,
+      openingFeeMode: 'standard-1pct'
+    })
+    expect(derived).toBe(5_200_000)
 
-    const withContract = calculateHomeSavingsFromProductSpec(product, {
-      monthlyDeposit: 20000,
+    const withDerived = calculateHomeSavingsFromProductSpec(product, {
+      monthlyDeposit: 20_000,
+      termMonths: 120,
+      startDate: '2026-10-10',
+      housingPurpose: true,
+      openingFeeMode: 'standard-1pct'
+    })
+    expect(withDerived.accountOpeningFee).toBe(52_000)
+
+    const withExplicit = calculateHomeSavingsFromProductSpec(product, {
+      monthlyDeposit: 20_000,
       termMonths: 120,
       startDate: '2026-10-10',
       housingPurpose: true,
       openingFeeMode: 'standard-1pct',
       contractAmount: 2_600_000
     })
-    expect(withContract.accountOpeningFee).toBe(26000)
+    expect(withExplicit.accountOpeningFee).toBe(26_000)
   })
 
-  it('leaves deposit interest at zero when ÁSZF rate is omitted', () => {
+  it('disables deposit interest when annual rate is explicitly 0', () => {
     const outputs = calculateHomeSavingsFromProductSpec(product, {
-      monthlyDeposit: 50000,
+      monthlyDeposit: 50_000,
       termMonths: 120,
       startDate: '2026-10-10',
       housingPurpose: true,
-      openingFeeMode: 'promo-fixed-65000'
+      openingFeeMode: 'promo-fixed-65000',
+      depositInterestAnnualRatePct: 0
     })
     expect(outputs.depositInterest).toBe(0)
     expect(outputs.premiumBase).toBe(outputs.totalDeposits)
+    expect(outputs.terminalPayout).toBe(outputs.totalDeposits + outputs.premiumAmount)
   })
 })

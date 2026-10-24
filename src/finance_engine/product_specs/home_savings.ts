@@ -2,8 +2,13 @@ import Ajv2020 from 'ajv/dist/2020'
 import YAML from 'yaml'
 import type { CashFlow } from '../models'
 import {
+  DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT,
+  DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT,
+  DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
+  DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
   generateHomeSavingsInstrumentCashFlows,
+  resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
   type HomeSavingsInstrumentInput,
@@ -46,6 +51,12 @@ export interface HomeSavingsProductSpec {
   engine: {
     instrumentType: 'home-savings'
     paymentFrequency?: string
+    /** Annual deposit rate percent from USZ Melléklet (e.g. 0.1). */
+    depositInterestAnnualRatePct?: number
+    /** Monthly savings rate in ‰ of contract amount (e.g. 3.846). */
+    savingsRatePermille?: number
+    minContractAmount?: number
+    maxContractAmount?: number
   }
   fees?: HomeSavingsProductFeeDefinition[]
   discounts?: HomeSavingsProductDiscountDefinition[]
@@ -169,9 +180,30 @@ export function resolveHomeSavingsAccountFeeMonthly(
   return value
 }
 
+export function resolveHomeSavingsContractAmount(
+  productSpec: HomeSavingsProductSpec,
+  specInputs: HomeSavingsSpecInputs
+): number {
+  if (specInputs.contractAmount !== undefined && specInputs.contractAmount !== null) {
+    const explicit = Number(specInputs.contractAmount)
+    if (!Number.isFinite(explicit) || explicit <= 0) {
+      throw new Error('contractAmount must be a positive finite number when provided.')
+    }
+    return explicit
+  }
+
+  return resolveContractAmountFromMonthlyDeposit({
+    monthlyDeposit: specInputs.monthlyDeposit,
+    savingsRatePermille:
+      productSpec.engine.savingsRatePermille ?? DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
+    minContractAmount: productSpec.engine.minContractAmount ?? DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
+    maxContractAmount: productSpec.engine.maxContractAmount ?? DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT
+  })
+}
+
 /**
  * Resolve account opening fee from mode + product rules.
- * Percent modes require `contractAmount` (ÁSZF/contract formula still open).
+ * Percent modes derive szerződéses összeg from monthly deposit via módozat ‰ when omitted.
  */
 export function resolveHomeSavingsOpeningFee(
   productSpec: HomeSavingsProductSpec,
@@ -184,12 +216,7 @@ export function resolveHomeSavingsOpeningFee(
     return 65000
   }
 
-  const contractAmount = Number(specInputs.contractAmount)
-  if (!Number.isFinite(contractAmount) || contractAmount <= 0) {
-    throw new Error(
-      `openingFeeMode ${mode} requires a positive contractAmount until the ÁSZF szerződéses összeg formula is locked in the product spec.`
-    )
-  }
+  const contractAmount = resolveHomeSavingsContractAmount(productSpec, specInputs)
 
   if (mode === 'standard-1pct') {
     return (contractAmount * 1) / 100
@@ -211,6 +238,14 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
   const accountFeeMonthly = resolveHomeSavingsAccountFeeMonthly(productSpec)
   const accountOpeningFee = resolveHomeSavingsOpeningFee(productSpec, specInputs)
   const premiumTiers = specInputs.premiumTiers ?? DEFAULT_HOME_SAVINGS_PREMIUM_TIERS
+  const depositInterestAnnualRatePct =
+    specInputs.depositInterestAnnualRatePct !== undefined &&
+    specInputs.depositInterestAnnualRatePct !== null
+      ? Number(specInputs.depositInterestAnnualRatePct)
+      : Number(
+          productSpec.engine.depositInterestAnnualRatePct ??
+            DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT
+        )
 
   return {
     monthlyDeposit: specInputs.monthlyDeposit,
@@ -220,7 +255,7 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
     accountFeeMonthly,
     accountOpeningFee,
     housingPurpose: specInputs.housingPurpose,
-    depositInterestAnnualRatePct: specInputs.depositInterestAnnualRatePct,
+    depositInterestAnnualRatePct,
     premiumTiers,
     earlyExitMonth: specInputs.earlyExitMonth,
     category: specInputs.category ?? 'home-savings',

@@ -127,6 +127,26 @@
           "type": "string",
           "enum": ["none", "forint"],
           "description": "Whole-forint rounding for level installment (nearest) and grace interest-only (floor). Default none when omitted (ADR 0025)."
+        },
+        "depositInterestAnnualRatePct": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Home-savings annual deposit interest rate percent from USZ Melléklet (e.g. 0.1 for PRÉMIUM PLUSZ 10x30)."
+        },
+        "savingsRatePermille": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Home-savings monthly deposit as ‰ of contract amount (e.g. 3.846); round up to 10 Ft per ÁSZF/USZ."
+        },
+        "minContractAmount": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Home-savings minimum szerződéses összeg (Ft)."
+        },
+        "maxContractAmount": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Home-savings maximum szerződéses összeg (Ft)."
         }
       }
     },

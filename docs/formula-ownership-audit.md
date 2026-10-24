@@ -56,15 +56,15 @@ Inventory (by product)
 
 - OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **calc-aligned**
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
-  - Engine primitives: `src/finance_engine/instruments/home_savings.ts`
+  - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers)
   - Family mapper: `src/finance_engine/product_specs/home_savings.ts`
-  - Status: deposits / account fees / Premium schedule + promo fixed opening fee executable; deposit interest omitted until ÁSZF rate; percent opening fees need `contractAmount`; UI/composer and EBKM harness still ROADMAP §5e
+  - Status: deposits / fees / Premium / 0.10% ACT/360 interest / 3.846‰ contract amount from USZ Melléklet; UI/composer and EBKM harness still ROADMAP §5e
 
 Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
 2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
-3. ROADMAP §5e home-savings: commercial composer → schedule-usable; EBKM harness (ADR 0031) for commercially-usable; author ÁSZF deposit rate when available.
+3. ROADMAP §5e home-savings: commercial composer → schedule-usable; EBKM harness (ADR 0031) for commercially-usable.
 4. Retire duplicated browser formulas via the bundler ADR called out in ROADMAP §6 / ADR 0017 (day-count, fees, THM, BMAP helpers, and eval cache are dual-surfaced until then).
 5. ROADMAP §7 storage port (replace raw `localStorage` helpers).
 6. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets. LTP loan deferred under §5e.

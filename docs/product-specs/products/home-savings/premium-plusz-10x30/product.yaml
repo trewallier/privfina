@@ -15,6 +15,11 @@ description: >
 engine:
   instrumentType: home-savings
   paymentFrequency: monthly
+  # USZ Melléklet 2026-08-03 — PRÉMIUM PLUSZ 10x30
+  depositInterestAnnualRatePct: 0.1
+  savingsRatePermille: 3.846
+  minContractAmount: 2600000
+  maxContractAmount: 26000000
 
 eligibilityRules:
   - natural-person-or-condominium-cooperative-saver
@@ -24,25 +29,28 @@ eligibilityRules:
   - loyalty-commitment-required-for-promo-opening-fee
 
 pricing:
-  rateSettingRule: modus-aszf-deposit-rate-plus-otp-premium-tiers
+  rateSettingRule: usz-melleklet-0.1pct-act360-plus-otp-premium-tiers
   notes:
     - >
       Sources: Hirdetmény értékesített termékekről (effective 2026-10-10);
-      Díjtáblázat kamat/díj/költség (effective 2026-08-03). Europe/Budapest dates.
+      Díjtáblázat kamat/díj/költség (effective 2026-08-03);
+      ÁSZF közzététel 2026-03-24; Üzletszabályzat Melléklet hatály 2026-08-03.
+      Europe/Budapest dates.
     - >
-      OTP Lakástakarék Prémium (not state aid): 30% after month 120 with
-      allotment/termination and housing-purpose use; early exit with housing
-      purpose 10% (months 49–96) / 20% (months 97–120).
+      Módozat lock-ins (USZ Melléklet): betéti kamat 0,10% p.a.; megtakarítási
+      ráta 3,846‰/hó; szerződéses összeg 2 600 000–26 000 000 Ft; havi betét =
+      ceil10(szerződéses összeg × 3,846 / 1000).
+    - >
+      Interest: ACT/360 daily (tőke × kamatláb × napok / (360 × 100)); yearly
+      capitalization; accrues from credit day through day before payout (ÁSZF/USZ).
+    - >
+      OTP Lakástakarék Prémium (not state aid): % of contractual deposits only
+      (no compound on Premium); 30% after month 120 with housing-purpose use;
+      early exit 10% (49–96) / 20% (97–120) (USZ §10 / Hirdetmény).
     - >
       Hűség period for promo opening-fee contracts: from savings start through
       the last day of month 48. Loyalty unlock fee (current cohort from
       2026-08-03): 100% of waived opening fee through month 48.
-    - >
-      CALC-ALIGNED BLOCKER: contractual deposit interest for the módozat lives
-      in the ÁSZF / módozat annex (not fully published in the two Hirdetmény
-      PDFs used for this spec). Do not invent a deposit rate. Spec-only and
-      EBKM lock-in may proceed; interest accrual fidelity waits on ÁSZF numbers
-      (ADR 0029, ROADMAP §5e).
 
 discounts:
   - name: promo-opening-fee-half-percent
@@ -193,8 +201,9 @@ assumptions:
   - Customer-perspective cash flows only; no bank internal legs.
   - Default path is continuous monthly saving with housing-purpose Premium at exit.
   - State support is absent for this offering cohort.
-  - Deposit interest rate must come from ÁSZF / módozat annex before calc-aligned interest fidelity.
-  - Contract amount formula for percent opening fees must be locked from ÁSZF or offering calculator before percent-fee engine evaluation.
+  - Deposit interest uses engine.depositInterestAnnualRatePct (0.10) with ACT/360 + yearly capitalization.
+  - Contract amount derives from monthly deposit via engine.savingsRatePermille (3.846) when not supplied.
+  - Irregular-payment Premium quarterly caps (USZ §10 (4)) are out of scope for the continuous contractual path.
 
 ui:
   formTitle: OTP Lakástakarék PRÉMIUM PLUSZ 10x30

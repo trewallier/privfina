@@ -77,10 +77,17 @@ export type {
   HomeSavingsScheduleSummary
 } from './instruments/home_savings'
 export {
+  DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT,
+  DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT,
+  DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
+  DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
   calculateHomeSavingsDepositInterest,
+  ceilToTenForint,
   createHomeSavingsInstrumentBundle,
   generateHomeSavingsInstrumentCashFlows,
+  resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
-  resolveHomeSavingsSchedule
+  resolveHomeSavingsSchedule,
+  resolveMonthlyDepositFromContractAmount
 } from './instruments/home_savings'

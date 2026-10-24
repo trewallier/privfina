@@ -22,14 +22,17 @@ expected:
   premiumRatePct: 30
   premiumBase: 6000000
   premiumAmount: 1800000
-  terminalPayout: 7800000
-  depositInterest: 0
+  depositInterest: 30286
+  terminalPayout: 7830286
+  contractAmount: 13000000
   earlyExitPremiumRatePctByMonthBand:
     months49to96: 10
     months97to120: 20
   maturityPremiumRatePctFromMonth120: 30
 
 notes:
-  - Premium percents from Hirdetmény B (natural person and társasház tables).
-  - depositInterest is 0 until ÁSZF módozat rate is authored (ADR 0029); premiumBase = totalDeposits.
+  - Premium percents from Hirdetmény B / USZ §10 (natural person and társasház tables).
+  - premiumBase = contractual deposits only; Premium has no compound interest (USZ §10).
+  - depositInterest uses ACT/360 + yearly capitalization at 0.10% (USZ Melléklet / ÁSZF).
+  - contractAmount 13 000 000 Ft = monthly 50 000 via 3.846‰ (ceil10).
   - Loyalty unlock is out of scope for this default continuous path.

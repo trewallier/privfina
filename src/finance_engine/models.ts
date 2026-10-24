@@ -3,7 +3,7 @@ export enum CashFlowDirection {
   Outflow = 'outflow'
 }
 
-export type InstrumentType = 'salary' | 'subscription' | 'loan' | 'investment'
+export type InstrumentType = 'salary' | 'subscription' | 'loan' | 'investment' | 'home-savings'
 
 export interface CashFlow {
   date: string

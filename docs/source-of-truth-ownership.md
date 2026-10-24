@@ -31,7 +31,7 @@
    - Register it in `docs/product-specs/PRODUCT_CATALOG.md`.
    - Do NOT add product-specific branches to engine code. Parameterize generators instead.
    - Do NOT hardcode field definitions in UI forms. Derive them from the spec.
-   - Home-savings deposit interest / contract-amount formulas belong in YAML once sourced from ÁSZF — never invented in code (ADR 0029).
+   - Home-savings deposit interest / contract-amount ‰ belong in product YAML (USZ Melléklet) — never invented in code (ADR 0029).
 
 2. **If modifying product logic**:
    - Update the product spec first (inputs, rules, examples).
@@ -68,7 +68,7 @@ Catalog statuses in [`PRODUCT_CATALOG.md`](product-specs/PRODUCT_CATALOG.md) are
 - **fully-spec-backed**: fixed-rate loan; DKJ, PMÁP, BMÁP on the **commercial investment** composer (embedded form/adapter parity; dual TS/JS formula copies remain until ADR 0017 bundler).
 - **commercially-usable**: six Hirdetmény mortgage-loan products (checks 1–3 green + commercial loan composer UX; embedded `*-product-spec.js` modules still deferred → not yet fully-spec-backed).
 - **schedule-usable**: fixed-rate mortgage (simplified loan composer); Vidéki Otthonfelújítási (packaging-quarantined; commercially-usable blocked until §6 reconciles).
-- **spec-only**: OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings`) — YAML + EBKM/Premium examples landed; engine/UI pending ROADMAP §5e; ÁSZF deposit rate is a calc-aligned fidelity blocker (ADR 0028–0031).
+- **calc-aligned**: OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings`) — engine mapper + deposits/fees/Premium + ACT/360 0.10% interest + 3.846‰ contract derivation (USZ Melléklet); UI/composer and EBKM still ROADMAP §5e (ADR 0028–0031).
 - **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion`.
 - **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders; generic bonds use a declarative presentation module (`public/controller/generic-bond-presentation.js`) on the **simplified investment** composer. Catalog government securities (DKJ/PMÁP/BMÁP) live on the **commercial investment** composer with dedicated hosts + mirrored help (`investment-field-help.js`) aligned to YAML (ADR 0027). Commercial loan UI metadata/fee blocks are hand-mirrored from YAML (migration scaffolding until fully-spec-backed). Home-savings commercial composer is not implemented yet.
 - **Known dual surface**: TypeScript engine primitives and `public/instruments.js` (plus `loan-fees.js` / `thm.js` / `eval-cache.js`) both host calculation code until a bundler lands (ADR 0017).

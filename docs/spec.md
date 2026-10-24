@@ -143,7 +143,7 @@ Acceptance criteria
 - [x] Product specifications validate against schema v2 (`specVersion: v2alpha1`) with families `loan`, `mortgage-loan`, `government-security`, and `home-savings` (ADR 0020 / 0028).
 - [x] ADR 0028–0031 record home-savings family/schema, `InstrumentType: 'home-savings'`, commercial composer readiness, and EBKM verification bar (ROADMAP §5e).
 - [x] OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`productCode: premium-plusz-10x30`) is authored under schema v2 at **spec-only** with Hirdetmény EBKM and Premium-tier examples locked (sales Hirdetmény 2026-10-10; díjtáblázat account fee 2026-08-03).
-- [ ] Home-savings calc-aligned engine mapper produces customer deposit/fee/Premium schedules from product YAML without product-specific generator forks (ÁSZF deposit rate required before interest fidelity).
+- [x] Home-savings calc-aligned engine mapper produces customer deposit/fee/Premium schedules from product YAML without product-specific generator forks, including ACT/360 deposit interest at USZ Melléklet 0.10% and contract-amount derivation via 3.846‰.
 - [ ] Commercial home-savings composer box exists with a product picker over catalog `home-savings` codes and shows a readiness hint for the selected product.
 - [ ] Progressive type picker / toolbar exposes home-savings; editing a catalog-backed home-savings bundle opens the commercial home-savings composer.
 - [ ] Schedule-usable home-savings path create/edit/preview/persist stamps `productId` / `productSpecVersion` and charts customer outflows (opening fee, deposits, account fees) plus terminal Premium inflow when housing purpose is assumed.

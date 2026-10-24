@@ -61,7 +61,26 @@ export {
   createLoanInstrumentBundle,
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentCashFlows,
-  createInvestmentInstrumentBundle
+  createInvestmentInstrumentBundle,
+  DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT,
+  DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT,
+  DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
+  DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
+  DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
+  calculateHomeSavingsDepositInterest,
+  ceilToTenForint,
+  createHomeSavingsInstrumentBundle,
+  generateHomeSavingsInstrumentCashFlows,
+  resolveContractAmountFromMonthlyDeposit,
+  resolveHomeSavingsPremiumRatePct,
+  resolveHomeSavingsSchedule,
+  resolveMonthlyDepositFromContractAmount
+} from './instruments'
+export type {
+  HomeSavingsBundleInput,
+  HomeSavingsInstrumentInput,
+  HomeSavingsPremiumTiers,
+  HomeSavingsScheduleSummary
 } from './instruments'
 export {
   parseFixedRateLoanProductSpecYaml,
@@ -85,13 +104,33 @@ export type {
   MortgageLoanEngineOutputs
 } from './product_specs/mortgage_loan'
 export {
+  parseHomeSavingsProductSpecYaml,
+  validateHomeSavingsProductSpec,
+  loadHomeSavingsProductSpec,
+  resolveHomeSavingsAccountFeeMonthly,
+  resolveHomeSavingsContractAmount,
+  resolveHomeSavingsOpeningFee,
+  mapHomeSavingsSpecInputsToInstrumentInput,
+  calculateHomeSavingsFromProductSpec,
+  generateCashFlowsFromHomeSavingsProductSpec,
+  resolvePremiumRateForTerm
+} from './product_specs/home_savings'
+export type {
+  HomeSavingsOpeningFeeMode,
+  HomeSavingsProductSpec,
+  HomeSavingsSpecInputs,
+  HomeSavingsEngineOutputs
+} from './product_specs/home_savings'
+export {
   DEFAULT_FIXED_RATE_LOAN_PRODUCT_SPEC_PATH,
   DEFAULT_PRODUCT_SCHEMA_PATH,
   MORTGAGE_LOAN_PRODUCT_SPEC_PATHS,
+  HOME_SAVINGS_PRODUCT_SPEC_PATHS,
   loadFixedRateLoanProductSpecFromFiles,
-  loadMortgageLoanProductSpecFromFiles
+  loadMortgageLoanProductSpecFromFiles,
+  loadHomeSavingsProductSpecFromFiles
 } from './product_specs/loader'
-export type { MortgageLoanProductCode } from './product_specs/loader'
+export type { MortgageLoanProductCode, HomeSavingsProductCode } from './product_specs/loader'
 export {
   applyFeesAndDiscounts,
   DEFAULT_REPRESENTATIVE_EXCLUDED_FEE_NAMES

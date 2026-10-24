@@ -119,7 +119,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Author `product.yaml` + Hirdetmény worked examples; register catalog row **`spec-only`** (`home-savings.premium-plusz-10x30.standard`).
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
 - [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium; ACT/360 interest at 0.10%; contract amount via 3.846‰ from USZ Melléklet / ÁSZF).
-- [ ] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
+- [x] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
 - [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`**.
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
 

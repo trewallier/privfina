@@ -1126,6 +1126,7 @@
             <button id="open-commercial-loan-box" class="primary" type="button">+ Commercial Loan</button>
             <button id="open-investment-box" class="primary" type="button">+ Simplified Investment</button>
             <button id="open-commercial-investment-box" class="primary" type="button">+ Commercial Investment</button>
+            <button id="open-home-savings-box" class="primary" type="button">+ Home Savings</button>
           </div>
 
           <div id="add-type-picker" class="add-type-picker" aria-label="Choose what to add">
@@ -1137,6 +1138,7 @@
             <button class="primary" type="button" data-add-type="commercial-loan">Commercial loan</button>
             <button class="primary" type="button" data-add-type="investment">Simplified investment</button>
             <button class="primary" type="button" data-add-type="commercial-investment">Commercial investment</button>
+            <button class="primary" type="button" data-add-type="home-savings">Home savings (Lakástakarék)</button>
           </div>
 
           <section id="flow-composer" class="flow-composer" aria-label="Flow composer panels">
@@ -2109,6 +2111,153 @@
                   <div class="actions">
                     <button id="commercial-investment-submit" class="primary" type="submit">Add Commercial Investment</button>
                     <button id="commercial-investment-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <details id="home-savings-box" class="flow-box">
+              <summary>
+                <span class="summary-main">
+                  <span class="summary-title">Commercial Home Savings</span>
+                </span>
+                <span class="summary-hint">OTP Lakástakarék catalog products</span>
+              </summary>
+              <div class="flow-form-wrap">
+                <form id="home-savings-form">
+                  <div class="investment-subtype-hero">
+                    <label>
+                      <span class="label-title"><span class="field-label">Home-savings product</span> <button type="button" class="info-chip" data-help-button="home-savings-product-help" aria-label="Home-savings product help">i</button></span>
+                      <select id="home-savings-product" name="productCode" required></select>
+                      <div id="home-savings-product-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-product-help" aria-label="Close">x</button>
+                        <p>Select a catalog OTP Lakástakarék savings product (not a loan or treasury investment).</p>
+                      </div>
+                    </label>
+                  </div>
+                  <p id="home-savings-readiness-hint" class="field-help-static"></p>
+                  <p id="home-savings-eligibility-hint" class="field-help-static"></p>
+                  <p id="home-savings-discount-hint" class="field-help-static"></p>
+                  <p id="home-savings-premium-hint" class="field-help-static" hidden></p>
+
+                  <div class="row">
+                    <label>
+                      <span class="label-title"><span class="field-label">Label</span> <button type="button" class="info-chip" data-help-button="home-savings-label-help" aria-label="Label help">i</button></span>
+                      <input id="home-savings-label" name="label" type="text" placeholder="Home savings" />
+                      <div id="home-savings-label-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-label-help" aria-label="Close">x</button>
+                        <p>Display name for this savings instrument on the chart and configured list.</p>
+                      </div>
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Savings start date</span> <button type="button" class="info-chip" data-help-button="home-savings-start-date-help" aria-label="Start date help">i</button></span>
+                      <input id="home-savings-start-date" name="startDate" type="date" required />
+                      <div id="home-savings-start-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-start-date-help" aria-label="Close">x</button>
+                        <p>First savings month start (ISO date). Deposit day-of-month is taken from this date.</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="row">
+                    <label>
+                      <span class="label-title"><span class="field-label">Monthly deposit</span> <button type="button" class="info-chip" data-help-button="home-savings-monthly-deposit-help" aria-label="Monthly deposit help">i</button></span>
+                      <input id="home-savings-monthly-deposit" name="monthlyDeposit" class="money-amount" type="text" inputmode="decimal" required />
+                      <div id="home-savings-monthly-deposit-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-monthly-deposit-help" aria-label="Close">x</button>
+                        <p>Contractual monthly betét (10 000–100 000 Ft).</p>
+                      </div>
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Term (months)</span> <button type="button" class="info-chip" data-help-button="home-savings-term-months-help" aria-label="Term help">i</button></span>
+                      <input id="home-savings-term-months" name="termMonths" type="number" min="1" max="120" step="1" required />
+                      <div id="home-savings-term-months-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-term-months-help" aria-label="Close">x</button>
+                        <p>Savings horizon; full módozat Premium path uses 120 months.</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="row">
+                    <label>
+                      <span class="label-title"><span class="field-label">Opening fee mode</span> <button type="button" class="info-chip" data-help-button="home-savings-opening-fee-mode-help" aria-label="Opening fee mode help">i</button></span>
+                      <select id="home-savings-opening-fee-mode" name="openingFeeMode" required></select>
+                      <div id="home-savings-opening-fee-mode-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-opening-fee-mode-help" aria-label="Close">x</button>
+                        <p>Standard 1% of szerződéses összeg, or Hirdetmény promo tables (0.5% / fixed 65 000 Ft) with loyalty commitment.</p>
+                      </div>
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Contract amount (optional)</span> <button type="button" class="info-chip" data-help-button="home-savings-contract-amount-help" aria-label="Contract amount help">i</button></span>
+                      <input id="home-savings-contract-amount" name="contractAmount" class="money-amount" type="text" inputmode="decimal" />
+                      <div id="home-savings-contract-amount-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-contract-amount-help" aria-label="Close">x</button>
+                        <p>Szerződéses összeg when known. When omitted, derived from monthly deposit via 3.846‰.</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="row">
+                    <label class="inline-field">
+                      <input id="home-savings-housing-purpose" name="housingPurpose" type="checkbox" checked />
+                      <span class="label-title"><span class="field-label">Housing purpose assumed</span> <button type="button" class="info-chip" data-help-button="home-savings-housing-purpose-help" aria-label="Housing purpose help">i</button></span>
+                      <div id="home-savings-housing-purpose-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-housing-purpose-help" aria-label="Close">x</button>
+                        <p>When checked, OTP Prémium tiers apply at exit/allotment (soft hint; not hard validation).</p>
+                      </div>
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Category</span> <button type="button" class="info-chip" data-help-button="home-savings-category-help" aria-label="Category help">i</button></span>
+                      <input id="home-savings-category" name="category" type="text" value="home-savings" />
+                      <div id="home-savings-category-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-category-help" aria-label="Close">x</button>
+                        <p>Optional category tag for cash-flow grouping.</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="row">
+                    <label>
+                      <span class="label-title"><span class="field-label">Description</span> <button type="button" class="info-chip" data-help-button="home-savings-description-help" aria-label="Description help">i</button></span>
+                      <input id="home-savings-description" name="description" type="text" placeholder="Optional notes" />
+                      <div id="home-savings-description-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-description-help" aria-label="Close">x</button>
+                        <p>Optional notes; also used as the monthly deposit flow description when set.</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <p class="investment-calculated-heading">Calculated outputs</p>
+                  <div class="row">
+                    <label>
+                      <span class="label-title"><span class="field-label">Opening fee preview</span></span>
+                      <input id="home-savings-opening-fee-preview" class="money-amount" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Total deposits preview</span></span>
+                      <input id="home-savings-total-deposits-preview" class="money-amount" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Total account fees preview</span></span>
+                      <input id="home-savings-total-account-fees-preview" class="money-amount" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Premium rate preview</span></span>
+                      <input id="home-savings-premium-rate-preview" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Premium amount preview</span></span>
+                      <input id="home-savings-premium-amount-preview" class="money-amount" type="text" readonly />
+                    </label>
+                    <label>
+                      <span class="label-title"><span class="field-label">Terminal payout preview</span></span>
+                      <input id="home-savings-terminal-payout-preview" class="money-amount" type="text" readonly />
+                    </label>
+                  </div>
+
+                  <div class="actions">
+                    <button id="home-savings-submit" class="primary" type="submit">Add Home Savings</button>
+                    <button id="home-savings-cancel-edit" class="secondary" type="button" hidden>Cancel Edit</button>
                   </div>
                 </form>
               </div>

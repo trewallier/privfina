@@ -2,7 +2,7 @@
 
 Home-savings (lakás-előtakarékossági) product specification for the currently sold OTP Lakástakarék módozat.
 
-**Catalog status:** `calc-aligned` (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
+**Catalog status:** `schedule-usable` (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
 
 **Architecture:** ADR 0028 (family/schema), ADR 0029 (instrument), ADR 0030 (commercial composer / readiness), ADR 0031 (EBKM verification).
 

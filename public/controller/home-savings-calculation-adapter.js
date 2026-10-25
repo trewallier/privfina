@@ -1,17 +1,20 @@
 /**
  * Browser commercial home-savings mapper (loan-bridge style).
  *
- * Contract-amount ‰ helpers live in `public/instruments.js` (ADR 0017 dual
- * surface with `src/finance_engine/instruments/home_savings.ts`). This module
- * only maps composer/spec inputs onto those primitives + the schedule/bundle
- * generators — no third formula surface.
+ * Contract-amount ‰ helpers and schedule math come from the finance-engine
+ * surface (ADR 0017 / 0032). This module only maps composer/spec inputs onto
+ * those primitives + the schedule/bundle generators — no third formula surface.
+ * EBKM is computed from the same customer cash-flow packaging as the chart
+ * (ADR 0031); published Hirdetmény match remains quarantined.
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
 import {
   resolveMonthlyDepositFromContractAmount,
-  resolveContractAmountFromMonthlyDeposit
+  resolveContractAmountFromMonthlyDeposit,
+  generateHomeSavingsInstrumentCashFlows
 } from '../instruments.js'
+import { calculateEbkmFromHomeSavingsCashFlows } from './ebkm.js'
 
 /**
  * Resolve szerződéses összeg from explicit input or monthly deposit via ‰.
@@ -104,6 +107,15 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
 }
 
 function scheduleOutputsFromBundleInput(bundleInput, schedule) {
+  const cashFlows = generateHomeSavingsInstrumentCashFlows(bundleInput)
+  const ebkm = calculateEbkmFromHomeSavingsCashFlows(
+    cashFlows.map((flow) => ({
+      date: flow.date,
+      amount: flow.amount,
+      direction: flow.direction === 'inflow' ? 'inflow' : 'outflow'
+    }))
+  )
+
   return {
     productId: bundleInput.productId,
     productCode: bundleInput.productCode,
@@ -117,12 +129,16 @@ function scheduleOutputsFromBundleInput(bundleInput, schedule) {
     premiumAmount: schedule.premiumAmount,
     terminalPayout: schedule.terminalPayout,
     depositInterest: schedule.depositInterest,
+    ebkmPct: ebkm.percentRounded,
     contractAmount: bundleInput.contractAmount,
     schedule
   }
 }
 
-/** Live preview: schedule scalars only (no recurring flow expansion). */
+/**
+ * Live preview: schedule scalars plus schedule-faithful EBKM (expands customer
+ * cash flows for Annex 3; same packaging as the chart).
+ */
 function calculateHomeSavingsScheduleFromSpecInputs(specInputs, options = {}) {
   const resolveHomeSavingsSchedule = options.resolveHomeSavingsSchedule
   if (typeof resolveHomeSavingsSchedule !== 'function') {

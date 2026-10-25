@@ -50,6 +50,18 @@ export {
 } from './instruments/thm'
 
 export {
+  calendarDaysBetween,
+  ebkmYearFraction,
+  roundEbkmPercent,
+  buildEbkmFlowsFromLegs,
+  ebkmPresentValue,
+  calculateEbkm,
+  calculateEbkmFromLegs,
+  buildEbkmLegsFromHomeSavingsCashFlows,
+  calculateEbkmFromHomeSavingsCashFlows
+} from './instruments/ebkm'
+
+export {
   calculateLoanMonthlyInstallment,
   monthlyInterestRateFromAnnual,
   resolveLoanSchedule,

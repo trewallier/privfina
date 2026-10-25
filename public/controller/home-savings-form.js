@@ -93,7 +93,11 @@ function renderHomeSavingsHints({
   premiumElement
 }) {
   if (readinessElement) {
-    readinessElement.textContent = resolveHomeSavingsReadinessHint(product?.migrationStatus)
+    const readiness = resolveHomeSavingsReadinessHint(product?.migrationStatus)
+    const blocked = product?.commerciallyBlockedReason
+      ? ` Not commercially ready: ${product.commerciallyBlockedReason}`
+      : ''
+    readinessElement.textContent = `${readiness}${blocked}`
   }
   if (eligibilityElement) {
     eligibilityElement.textContent = (product?.eligibilityHints || []).join(' ')

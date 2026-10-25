@@ -59,6 +59,18 @@ export {
   expandScheduleToMonthlyPayments,
   calculateThmFromMonthlyRepayments
 } from './instruments/thm'
+export type { EbkmCalculationResult, EbkmDatedFlow, EbkmLeg } from './instruments/ebkm'
+export {
+  calendarDaysBetween,
+  ebkmYearFraction,
+  roundEbkmPercent,
+  buildEbkmFlowsFromLegs,
+  ebkmPresentValue,
+  calculateEbkm,
+  calculateEbkmFromLegs,
+  buildEbkmLegsFromHomeSavingsCashFlows,
+  calculateEbkmFromHomeSavingsCashFlows
+} from './instruments/ebkm'
 export {
   createInvestmentMaturityPreview,
   generateInvestmentInstrumentCashFlows,

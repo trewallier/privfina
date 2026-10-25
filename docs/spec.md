@@ -147,8 +147,8 @@ Acceptance criteria
 - [x] Commercial home-savings composer box exists with a product picker over catalog `home-savings` codes and shows a readiness hint for the selected product.
 - [x] Progressive type picker / toolbar exposes home-savings; editing a catalog-backed home-savings bundle opens the commercial home-savings composer.
 - [x] Schedule-usable home-savings path create/edit/preview/persist stamps `productId` / `productSpecVersion` and charts customer outflows (opening fee, deposits, account fees) plus terminal Premium inflow when housing purpose is assumed.
-- [ ] Commercial home-savings UX surfaces opening-fee mode, account fee, Premium tier summary, loyalty hints, and a single EBKM preview (ADR 0031; no dual-lane UI).
-- [ ] Published EBKM goldens (20 000 and 100 000 Ft/hó; promo and 1% opening-fee tables; with/without Premium) pass engine verification before commercially-usable promotion.
+- [x] Commercial home-savings UX surfaces opening-fee mode, account fee, Premium tier summary, loyalty hints, and a single schedule-faithful EBKM preview (ADR 0031; no dual-lane UI).
+- [ ] Published EBKM goldens (20 000 and 100 000 Ft/hó; promo and 1% opening-fee tables; with/without Premium) pass schedule→engine verification before commercially-usable promotion (currently quarantined: gaps pinned visible; no packaging camouflage).
 - [ ] LTP lakáskölcsön / áthidaló kölcsön remains out of scope for ROADMAP §5e (deferred).
 - [x] Product identity uses free-form `variant` plus required `productCode`; schema v1 remains frozen and is not extended for new loan/mortgage constructs.
 - [x] Product schema v2 accepts structured optional `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing` blocks so future retail mortgage products can be authored as data.

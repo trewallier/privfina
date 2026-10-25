@@ -20,6 +20,7 @@ import {
   resolveHomeSavingsPremiumRatePct,
   calculateHomeSavingsDepositInterest,
   resolveHomeSavingsSchedule,
+  generateHomeSavingsInstrumentCashFlows,
   createHomeSavingsInstrumentBundle as createEngineHomeSavingsInstrumentBundle
 } from '@finance_engine/browser'
 
@@ -450,6 +451,7 @@ export {
   resolveHomeSavingsPremiumRatePct,
   calculateHomeSavingsDepositInterest,
   resolveHomeSavingsSchedule,
+  generateHomeSavingsInstrumentCashFlows,
   createHomeSavingsInstrumentBundle,
   flattenInstrumentFlows
 }

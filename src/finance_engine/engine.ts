@@ -154,6 +154,18 @@ export type {
   ThmFlow,
   ThmCalculationResult
 } from './instruments/thm'
+export {
+  calendarDaysBetween,
+  ebkmYearFraction,
+  roundEbkmPercent,
+  buildEbkmFlowsFromLegs,
+  ebkmPresentValue,
+  calculateEbkm,
+  calculateEbkmFromLegs,
+  buildEbkmLegsFromHomeSavingsCashFlows,
+  calculateEbkmFromHomeSavingsCashFlows
+} from './instruments/ebkm'
+export type { EbkmCalculationResult, EbkmDatedFlow, EbkmLeg } from './instruments/ebkm'
 export type { BmapRateOutputs, BmapSpecInputs } from './instruments/bmap'
 export {
   deriveBmapMaturityDate,

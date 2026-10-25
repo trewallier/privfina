@@ -55,11 +55,13 @@ function createHomeSavingsComposerHost({
   )
   const previewInputs = {
     openingFee: document.getElementById('home-savings-opening-fee-preview'),
+    accountFeeMonthly: document.getElementById('home-savings-account-fee-monthly-preview'),
     totalDeposits: document.getElementById('home-savings-total-deposits-preview'),
     totalAccountFees: document.getElementById('home-savings-total-account-fees-preview'),
     premiumRate: document.getElementById('home-savings-premium-rate-preview'),
     premiumAmount: document.getElementById('home-savings-premium-amount-preview'),
-    terminalPayout: document.getElementById('home-savings-terminal-payout-preview')
+    terminalPayout: document.getElementById('home-savings-terminal-payout-preview'),
+    ebkmPct: document.getElementById('home-savings-ebkm-preview')
   }
 
   let editingId = null
@@ -94,11 +96,13 @@ function createHomeSavingsComposerHost({
 
   function clearPreview() {
     if (previewInputs.openingFee) previewInputs.openingFee.value = '—'
+    if (previewInputs.accountFeeMonthly) previewInputs.accountFeeMonthly.value = '—'
     if (previewInputs.totalDeposits) previewInputs.totalDeposits.value = '—'
     if (previewInputs.totalAccountFees) previewInputs.totalAccountFees.value = '—'
     if (previewInputs.premiumRate) previewInputs.premiumRate.value = '—'
     if (previewInputs.premiumAmount) previewInputs.premiumAmount.value = '—'
     if (previewInputs.terminalPayout) previewInputs.terminalPayout.value = '—'
+    if (previewInputs.ebkmPct) previewInputs.ebkmPct.value = '—'
   }
 
   function syncPreview() {
@@ -132,6 +136,9 @@ function createHomeSavingsComposerHost({
       if (previewInputs.openingFee) {
         previewInputs.openingFee.value = formatMoneyAmount(outputs.accountOpeningFee)
       }
+      if (previewInputs.accountFeeMonthly) {
+        previewInputs.accountFeeMonthly.value = formatMoneyAmount(outputs.accountFeeMonthly)
+      }
       if (previewInputs.totalDeposits) {
         previewInputs.totalDeposits.value = formatMoneyAmount(outputs.totalDeposits)
       }
@@ -146,6 +153,12 @@ function createHomeSavingsComposerHost({
       }
       if (previewInputs.terminalPayout) {
         previewInputs.terminalPayout.value = formatMoneyAmount(outputs.terminalPayout)
+      }
+      if (previewInputs.ebkmPct) {
+        const ebkmPct = Number(outputs.ebkmPct)
+        previewInputs.ebkmPct.value = Number.isFinite(ebkmPct)
+          ? `${ebkmPct.toFixed(2)}%`
+          : '—'
       }
       setStatus('', 'info')
     } catch (error) {

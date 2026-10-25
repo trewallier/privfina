@@ -16,7 +16,7 @@ const HOME_SAVINGS_PRODUCTS = [
     productId: 'home-savings.premium-plusz-10x30.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Lakástakarék PRÉMIUM PLUSZ 10x30',
-    migrationStatus: 'commercially-usable',
+    migrationStatus: 'schedule-usable',
     depositInterestAnnualRatePct: 0.1,
     savingsRatePermille: 3.846,
     minContractAmount: 2_600_000,
@@ -47,7 +47,8 @@ const HOME_SAVINGS_PRODUCTS = [
     ],
     premiumHints:
       'Premium tiers with housing purpose: 10% (months 49–96), 20% (97–120), 30% at maturity from month 120. Premium applies to contractual deposits only.',
-    commerciallyBlockedReason: null
+    commerciallyBlockedReason:
+      'Schedule→EBKM (calendar-day Annex 3 on customer cash flows) still diverges from published Hirdetmény EBKM; commercially-usable requires ÁSZF-sourced settlement packaging without fitted lag/netting knobs (ADR 0031 quarantine).'
   }
 ]
 

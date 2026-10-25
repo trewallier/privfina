@@ -170,25 +170,26 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     ).toBe(65_000)
   })
 
-  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG', () => {
+  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (EBKM quarantined)', () => {
     const catalog = readRepoFile(CATALOG_PATH)
     const row = catalog
       .split('\n')
       .find(
         (line) =>
           line.startsWith('| home-savings.premium-plusz-10x30.standard |') &&
-          line.includes('| commercially-usable |')
+          line.includes('| schedule-usable |')
       )
     expect(row).toBeDefined()
+    expect(row).toMatch(/EBKM/i)
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
-    expect(entry?.migrationStatus).toBe('commercially-usable')
-    expect(entry?.commerciallyBlockedReason).toBeNull()
+    expect(entry?.migrationStatus).toBe('schedule-usable')
+    expect(entry?.commerciallyBlockedReason).toMatch(/EBKM/i)
     expect(entry?.discountHints?.length).toBeGreaterThan(0)
     expect(entry?.premiumHints).toMatch(/Premium tiers/i)
   })
 
-  it('surfaces a single EBKM preview value from the ADR 0031 packaging helper', () => {
+  it('surfaces schedule-faithful EBKM preview (pinned while Hirdetmény gap remains)', () => {
     const withPremium = calculateHomeSavingsScheduleFromSpecInputs(
       {
         productCode: 'premium-plusz-10x30',
@@ -213,8 +214,10 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     )
 
     expect(withPremium.accountFeeMonthly).toBe(500)
-    expect(withPremium.ebkmPct).toBe(4.35)
-    expect(withoutPremium.ebkmPct).toBe(-0.58)
+    // Schedule cash-flow EBKM pins (not published 4.35 / -0.58).
+    expect(withPremium.ebkmPct).toBe(4.54)
+    expect(withoutPremium.ebkmPct).toBe(-0.6)
+    expect(withPremium.ebkmPct).not.toBe(4.35)
   })
 
   it('keeps browser ‰ helpers aligned with engine Melléklet cases', () => {

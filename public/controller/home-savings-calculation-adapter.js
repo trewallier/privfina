@@ -4,15 +4,17 @@
  * Contract-amount ‰ helpers and schedule math come from the finance-engine
  * surface (ADR 0017 / 0032). This module only maps composer/spec inputs onto
  * those primitives + the schedule/bundle generators — no third formula surface.
- * EBKM uses the ADR 0031 Hirdetmény packaging helper.
+ * EBKM is computed from the same customer cash-flow packaging as the chart
+ * (ADR 0031); published Hirdetmény match remains quarantined.
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
 import {
   resolveMonthlyDepositFromContractAmount,
-  resolveContractAmountFromMonthlyDeposit
+  resolveContractAmountFromMonthlyDeposit,
+  generateHomeSavingsInstrumentCashFlows
 } from '../instruments.js'
-import { calculateEbkmFromHomeSavingsPackage } from './ebkm.js'
+import { calculateEbkmFromHomeSavingsCashFlows } from './ebkm.js'
 
 /**
  * Resolve szerződéses összeg from explicit input or monthly deposit via ‰.
@@ -105,14 +107,14 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
 }
 
 function scheduleOutputsFromBundleInput(bundleInput, schedule) {
-  const ebkm = calculateEbkmFromHomeSavingsPackage({
-    monthlyDeposit: Number(bundleInput.monthlyDeposit),
-    termMonths: Number(bundleInput.termMonths),
-    accountOpeningFee: schedule.accountOpeningFee,
-    accountFeeMonthly: schedule.accountFeeMonthly,
-    premiumAmount: schedule.premiumAmount,
-    depositInterest: schedule.depositInterest
-  })
+  const cashFlows = generateHomeSavingsInstrumentCashFlows(bundleInput)
+  const ebkm = calculateEbkmFromHomeSavingsCashFlows(
+    cashFlows.map((flow) => ({
+      date: flow.date,
+      amount: flow.amount,
+      direction: flow.direction === 'inflow' ? 'inflow' : 'outflow'
+    }))
+  )
 
   return {
     productId: bundleInput.productId,

@@ -50,8 +50,6 @@ export {
 } from './instruments/thm'
 
 export {
-  HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX,
-  HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING,
   calendarDaysBetween,
   ebkmYearFraction,
   roundEbkmPercent,
@@ -60,9 +58,7 @@ export {
   calculateEbkm,
   calculateEbkmFromLegs,
   buildEbkmLegsFromHomeSavingsCashFlows,
-  calculateEbkmFromHomeSavingsCashFlows,
-  buildHomeSavingsEbkmEqualMonthFlows,
-  calculateEbkmFromHomeSavingsPackage
+  calculateEbkmFromHomeSavingsCashFlows
 } from './instruments/ebkm'
 
 export {

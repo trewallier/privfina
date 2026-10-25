@@ -8,17 +8,17 @@
  *   Σ A_k / (1+r)^(t_k) = 0
  * with deposits/fees as negative A and payouts as positive A.
  *
- * Year fractions:
- * - Dated legs: calendar days from first deposit / 365 (decree t/365).
- * - Home-savings Hirdetmény packaging ({@link calculateEbkmFromHomeSavingsPackage}):
- *   equal months k/12 (common LTP installment practice), with payout month and
- *   terminal fee-netting locked against OTP PRÉMIUM PLUSZ 10x30 published EBKM.
+ * Year fractions for dated legs: calendar days from first deposit / 365
+ * (decree t/365). Do not invent settlement-lag or fee-netting knobs to force
+ * published goldens (ADR 0024/0025 packaging-camouflage ban applies equally
+ * here). Home-savings commercially-usable waits until schedule cash flows →
+ * this solver reproduce Hirdetmény EBKM without opaque calibration.
  *
  * Publication rounding (6. § (1) f / (3)): two decimal places, half-up.
  *
  * Fee inclusion and scenario assumptions (opening fee, account fee, Premium
- * on/off, deposit path) are caller-owned for the generic solver; the home-savings
- * packaging helper documents the Hirdetmény-calibrated assembly.
+ * on/off, deposit path) are caller-owned: assemble customer cash flows, then
+ * call {@link calculateEbkmFromHomeSavingsCashFlows} or the generic solvers.
  */
 
 import { parseIsoDate } from '../date_utils'
@@ -238,127 +238,13 @@ export function buildEbkmLegsFromHomeSavingsCashFlows(
 
 /**
  * ADR 0031 convenience: EBKM from dated home-savings customer cash flows
- * (calendar-day / 365 year fractions). Prefer
- * {@link calculateEbkmFromHomeSavingsPackage} for Hirdetmény verification.
+ * (calendar-day / 365 year fractions). Same packaging as the charted schedule
+ * when callers pass {@link generateHomeSavingsInstrumentCashFlows} output.
  */
 export function calculateEbkmFromHomeSavingsCashFlows(
   flows: ReadonlyArray<{ date: string; amount: number; direction: 'inflow' | 'outflow' }>
 ): EbkmCalculationResult {
   return calculateEbkmFromLegs(buildEbkmLegsFromHomeSavingsCashFlows(flows))
-}
-
-/**
- * Hirdetmény-calibrated settlement lag after the first deposit month (index 0).
- * Locked so engine EBKM matches OTP PRÉMIUM PLUSZ 10x30 published tables
- * (ADR 0031) together with {@link HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING}.
- */
-export const HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX = 121.7
-
-/**
- * Flat forint netting applied to the terminal credit in Hirdetmény EBKM
- * packaging (one month of the current 500 Ft account fee). Absolute, not
- * scaled by deposit — matches all eight locked goldens with the payout index.
- */
-export const HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING = 500
-
-export interface HomeSavingsEbkmPackageInput {
-  monthlyDeposit: number
-  termMonths: number
-  accountOpeningFee: number
-  accountFeeMonthly: number
-  /** Contractual-deposit Premium amount (0 when housing purpose is off). */
-  premiumAmount: number
-  /** ACT/360 deposit interest included in the customer terminal payout. */
-  depositInterest: number
-  /**
-   * Month index of the terminal payout (equal-month year fraction / 12).
-   * Defaults to {@link HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX}.
-   */
-  payoutMonthIndex?: number
-  /**
-   * Flat reduction of the terminal credit. Defaults to
-   * {@link HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING}.
-   */
-  terminalAccountFeeNetting?: number
-}
-
-/**
- * Build equal-month Annex 3 flows for OTP Lakástakarék Hirdetmény EBKM:
- * - opening fee at month 0
- * - deposit + account fee at months 0 .. termMonths-1
- * - terminal at {@link HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX}
- *   = deposits + Premium + interest − terminal fee netting
- */
-export function buildHomeSavingsEbkmEqualMonthFlows(
-  input: HomeSavingsEbkmPackageInput
-): EbkmDatedFlow[] {
-  const monthlyDeposit = Number(input.monthlyDeposit)
-  const termMonths = Number(input.termMonths)
-  const accountOpeningFee = Number(input.accountOpeningFee)
-  const accountFeeMonthly = Number(input.accountFeeMonthly)
-  const premiumAmount = Number(input.premiumAmount)
-  const depositInterest = Number(input.depositInterest)
-  const payoutMonthIndex = Number(
-    input.payoutMonthIndex ?? HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX
-  )
-  const terminalNetting = Number(
-    input.terminalAccountFeeNetting ?? HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING
-  )
-
-  if (!Number.isFinite(monthlyDeposit) || monthlyDeposit <= 0) {
-    throw new Error('monthlyDeposit must be a positive finite number.')
-  }
-  if (!Number.isInteger(termMonths) || termMonths <= 0) {
-    throw new Error('termMonths must be a positive integer.')
-  }
-  if (!Number.isFinite(accountOpeningFee) || accountOpeningFee < 0) {
-    throw new Error('accountOpeningFee must be a non-negative finite number.')
-  }
-  if (!Number.isFinite(accountFeeMonthly) || accountFeeMonthly < 0) {
-    throw new Error('accountFeeMonthly must be a non-negative finite number.')
-  }
-  if (!Number.isFinite(premiumAmount) || premiumAmount < 0) {
-    throw new Error('premiumAmount must be a non-negative finite number.')
-  }
-  if (!Number.isFinite(depositInterest) || depositInterest < 0) {
-    throw new Error('depositInterest must be a non-negative finite number.')
-  }
-  if (!Number.isFinite(payoutMonthIndex) || payoutMonthIndex < termMonths - 1) {
-    throw new Error('payoutMonthIndex must be finite and on/after the last deposit month.')
-  }
-  if (!Number.isFinite(terminalNetting) || terminalNetting < 0) {
-    throw new Error('terminalAccountFeeNetting must be a non-negative finite number.')
-  }
-
-  const totalDeposits = monthlyDeposit * termMonths
-  const terminal =
-    totalDeposits + premiumAmount + depositInterest - terminalNetting
-  if (!(terminal > 0)) {
-    throw new Error('EBKM terminal payout after fee netting must be positive.')
-  }
-
-  const flows: EbkmDatedFlow[] = []
-  if (accountOpeningFee > 0) {
-    flows.push({ yearFraction: 0, amount: -accountOpeningFee })
-  }
-  for (let monthIndex = 0; monthIndex < termMonths; monthIndex += 1) {
-    const yearFraction = monthIndex / 12
-    flows.push({ yearFraction, amount: -monthlyDeposit })
-    if (accountFeeMonthly > 0) {
-      flows.push({ yearFraction, amount: -accountFeeMonthly })
-    }
-  }
-  flows.push({ yearFraction: payoutMonthIndex / 12, amount: terminal })
-  return flows
-}
-
-/**
- * ADR 0031 home-savings EBKM from Hirdetmény-calibrated equal-month packaging.
- */
-export function calculateEbkmFromHomeSavingsPackage(
-  input: HomeSavingsEbkmPackageInput
-): EbkmCalculationResult {
-  return calculateEbkm(buildHomeSavingsEbkmEqualMonthFlows(input))
 }
 
 function assertPositiveLeg(leg: EbkmLeg, kind: string): void {

@@ -2,7 +2,7 @@
 
 Home-savings (lakás-előtakarékossági) product specification for the currently sold OTP Lakástakarék módozat.
 
-**Catalog status:** `commercially-usable` (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
+**Catalog status:** `schedule-usable` — EBKM packaging quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
 
 **Architecture:** ADR 0028 (family/schema), ADR 0029 (instrument), ADR 0030 (commercial composer / readiness), ADR 0031 (EBKM verification).
 
@@ -45,4 +45,4 @@ Premium applies to **contractual deposits only** (no compound on Premium; USZ §
 
 ## Worked examples
 
-Examples in this folder are acceptance criteria. EBKM examples lock Hirdetmény published percentages and are asserted by the ADR 0031 harness (`tests/home-savings-ebkm-verification.test.ts`). Maturity example locks Premium tiers, ACT/360 interest, and terminal payout.
+Examples in this folder are acceptance criteria. EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness (`tests/home-savings-ebkm-verification.test.ts`) pins schedule→Annex 3 EBKM and keeps gaps vs those goldens visible until settlement packaging reconciles. Maturity example locks Premium tiers, ACT/360 interest, and terminal payout.

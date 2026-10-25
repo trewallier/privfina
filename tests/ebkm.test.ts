@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildEbkmFlowsFromLegs,
-  buildHomeSavingsEbkmEqualMonthFlows,
   calculateEbkm,
-  calculateEbkmFromHomeSavingsPackage,
+  calculateEbkmFromHomeSavingsCashFlows,
   calculateEbkmFromLegs,
   calendarDaysBetween,
   ebkmPresentValue,
   ebkmYearFraction,
-  HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX,
-  HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING,
   roundEbkmPercent,
   type EbkmDatedFlow
 } from '../src/finance_engine/instruments/ebkm'
@@ -87,44 +84,12 @@ describe('calculateEbkm (3. melléklet)', () => {
       /at least one deposit/i
     )
   })
-})
 
-describe('home-savings Hirdetmény equal-month packaging', () => {
-  it('locks payout month and terminal fee-netting constants', () => {
-    expect(HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX).toBe(121.7)
-    expect(HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING).toBe(500)
-  })
-
-  it('builds opening + 120 deposit/fee months + terminal', () => {
-    const flows = buildHomeSavingsEbkmEqualMonthFlows({
-      monthlyDeposit: 20_000,
-      termMonths: 120,
-      accountOpeningFee: 26_000,
-      accountFeeMonthly: 500,
-      premiumAmount: 720_000,
-      depositInterest: 12_113
-    })
-    const opening = flows.filter((flow) => flow.yearFraction === 0 && flow.amount === -26_000)
-    const deposits = flows.filter((flow) => flow.amount === -20_000)
-    const fees = flows.filter((flow) => flow.amount === -500)
-    const terminal = flows.filter((flow) => flow.amount > 0)
-    expect(opening).toHaveLength(1)
-    expect(deposits).toHaveLength(120)
-    expect(fees).toHaveLength(120)
-    expect(terminal).toHaveLength(1)
-    expect(terminal[0].yearFraction).toBeCloseTo(121.7 / 12, 12)
-    expect(terminal[0].amount).toBe(20_000 * 120 + 720_000 + 12_113 - 500)
-  })
-
-  it('matches a locked promo 20k with-Premium golden', () => {
-    const ebkm = calculateEbkmFromHomeSavingsPackage({
-      monthlyDeposit: 20_000,
-      termMonths: 120,
-      accountOpeningFee: 26_000,
-      accountFeeMonthly: 500,
-      premiumAmount: 720_000,
-      depositInterest: 12_113
-    })
-    expect(ebkm.percentRounded).toBe(4.35)
+  it('maps home-savings schedule-shaped legs through the cash-flow helper', () => {
+    const ebkm = calculateEbkmFromHomeSavingsCashFlows([
+      { date: '2026-01-01', amount: 1000, direction: 'outflow' },
+      { date: '2027-01-01', amount: 1100, direction: 'inflow' }
+    ])
+    expect(ebkm.percentRounded).toBe(10)
   })
 })

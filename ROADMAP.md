@@ -120,7 +120,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
 - [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium; ACT/360 interest at 0.10%; contract amount via 3.846‰ from USZ Melléklet / ÁSZF).
 - [x] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
-- [x] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`**.
+- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (EBKM packaging quarantined: schedule→Annex 3 diverges from Hirdetmény goldens; no fitted lag/netting camouflage — reconcile ÁSZF settlement before promote).
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
 
 Schedule-usable review follow-ups (before / with commercially-usable; from PR #83)

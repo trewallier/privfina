@@ -1,6 +1,6 @@
 import Ajv2020 from 'ajv/dist/2020'
 import YAML from 'yaml'
-import type { CashFlow } from '../models'
+import { CashFlowDirection, type CashFlow } from '../models'
 import {
   DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT,
   DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT,
@@ -15,7 +15,7 @@ import {
   type HomeSavingsPremiumTiers,
   type HomeSavingsScheduleSummary
 } from '../instruments/home_savings'
-import { calculateEbkmFromHomeSavingsPackage } from '../instruments/ebkm'
+import { calculateEbkmFromHomeSavingsCashFlows } from '../instruments/ebkm'
 
 export type HomeSavingsOpeningFeeMode =
   | 'standard-1pct'
@@ -100,7 +100,11 @@ export interface HomeSavingsEngineOutputs {
   premiumAmount: number
   terminalPayout: number
   depositInterest: number
-  /** ADR 0031 Hirdetmény-packaged EBKM percent (two decimals). */
+  /**
+   * ADR 0031 EBKM percent from generated customer cash flows (calendar-day /
+   * 365 Annex 3). May still diverge from published Hirdetmény goldens until
+   * settlement/allotment packaging is ÁSZF-sourced (EBKM quarantine).
+   */
   ebkmPct: number
   schedule: HomeSavingsScheduleSummary
 }
@@ -273,14 +277,14 @@ export function calculateHomeSavingsFromProductSpec(
   assertValidHomeSavingsProductSpec(productSpec)
   const instrumentInput = mapHomeSavingsSpecInputsToInstrumentInput(productSpec, specInputs)
   const schedule = resolveHomeSavingsSchedule(instrumentInput)
-  const ebkm = calculateEbkmFromHomeSavingsPackage({
-    monthlyDeposit: instrumentInput.monthlyDeposit,
-    termMonths: instrumentInput.termMonths,
-    accountOpeningFee: schedule.accountOpeningFee,
-    accountFeeMonthly: schedule.accountFeeMonthly,
-    premiumAmount: schedule.premiumAmount,
-    depositInterest: schedule.depositInterest
-  })
+  const cashFlows = generateHomeSavingsInstrumentCashFlows(instrumentInput)
+  const ebkm = calculateEbkmFromHomeSavingsCashFlows(
+    cashFlows.map((flow) => ({
+      date: flow.date,
+      amount: flow.amount,
+      direction: flow.direction === CashFlowDirection.Inflow ? 'inflow' : 'outflow'
+    }))
+  )
 
   return {
     productId: productSpec.id,

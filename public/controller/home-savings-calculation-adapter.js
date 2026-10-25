@@ -135,7 +135,10 @@ function scheduleOutputsFromBundleInput(bundleInput, schedule) {
   }
 }
 
-/** Live preview: schedule scalars only (no recurring flow expansion). */
+/**
+ * Live preview: schedule scalars plus schedule-faithful EBKM (expands customer
+ * cash flows for Annex 3; same packaging as the chart).
+ */
 function calculateHomeSavingsScheduleFromSpecInputs(specInputs, options = {}) {
   const resolveHomeSavingsSchedule = options.resolveHomeSavingsSchedule
   if (typeof resolveHomeSavingsSchedule !== 'function') {

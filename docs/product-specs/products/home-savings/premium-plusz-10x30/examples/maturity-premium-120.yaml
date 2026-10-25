@@ -4,8 +4,8 @@ exampleId: maturity-premium-120
 title: Maturity Premium tier — 120 months housing purpose
 description: >
   Continuous saving through month 120 with housing-purpose allotment/termination
-  credits OTP Lakástakarék Prémium at 30%. Deposit interest omitted until ÁSZF
-  rate is sourced (ADR 0029).
+  credits OTP Lakástakarék Prémium at 30%. Deposit interest uses USZ Melléklet
+  ACT/360 at 0.10% (ADR 0029).
 
 inputs:
   monthlyDeposit: 50000

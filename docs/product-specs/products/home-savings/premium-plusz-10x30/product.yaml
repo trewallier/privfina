@@ -43,6 +43,9 @@ pricing:
     - >
       Interest: ACT/360 daily (tőke × kamatláb × napok / (360 × 100)); yearly
       capitalization; accrues from credit day through day before payout (ÁSZF/USZ).
+      Engine currently sets payout = last deposit date; OTP product-page calculator
+      maturity implies ~two further months (see web-calculator-maturity-*.yaml) —
+      calc-aligned blocked until ÁSZF-sourced payout dating.
     - >
       OTP Lakástakarék Prémium (not state aid): % of contractual deposits only
       (no compound on Premium); 30% after month 120 with housing-purpose use;

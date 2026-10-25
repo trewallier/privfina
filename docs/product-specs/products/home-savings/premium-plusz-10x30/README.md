@@ -2,7 +2,7 @@
 
 Home-savings (lakás-előtakarékossági) product specification for the currently sold OTP Lakástakarék módozat.
 
-**Catalog status:** `schedule-usable` — EBKM packaging quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
+**Catalog status:** `inputs-driven` — calc-aligned revoked until engine terminal/interest matches OTP product-page calculator goldens; EBKM packaging also quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
 
 **Architecture:** ADR 0028 (family/schema), ADR 0029 (instrument), ADR 0030 (commercial composer / readiness), ADR 0031 (EBKM verification).
 
@@ -24,7 +24,7 @@ Home-savings (lakás-előtakarékossági) product specification for the currentl
 | Havi betét | 10 000–100 000 Ft |
 | Prémium | 30% (maturity); early-exit bands 10% / 20% |
 
-Interest day-count: ACT/360 daily (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization, accrual from credit day through day before payout (ÁSZF/USZ).
+Interest day-count: ACT/360 daily (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization, accrual from credit day through day before payout (ÁSZF/USZ). **Engine currently treats payout as the last deposit date**; OTP product-page calculator maturity implies ~two further months of accrual (first of that month recovers almost all of the −866 / −351 / −1 743 Ft gaps). ÁSZF-sourced payout dating required before restoring calc-aligned.
 
 Premium applies to **contractual deposits only** (no compound on Premium; USZ §10).
 
@@ -46,4 +46,4 @@ Premium applies to **contractual deposits only** (no compound on Premium; USZ §
 
 ## Worked examples
 
-Examples in this folder are acceptance criteria. EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness (`tests/home-savings-ebkm-verification.test.ts`) pins schedule→Annex 3 EBKM and keeps gaps vs those goldens visible until settlement packaging reconciles. `maturity-premium-120.yaml` locks Premium tiers, ACT/360 interest, and engine terminal payout. `web-calculator-maturity-*.yaml` lock fee / Premium / contract amounts from the OTP product-page calculator and keep webpage-vs-engine terminal deltas visible.
+Examples in this folder are acceptance criteria. OTP product-page calculator figures are authoritative for fee / Premium / contract / maturity (`web-calculator-maturity-*.yaml`, `source.kind: otp-product-page-calculator`). Engine terminal residuals stay pinned as `engineTerminalPayout*` (calc-aligned blocked). EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness pins schedule→Annex 3 gaps until settlement packaging reconciles.

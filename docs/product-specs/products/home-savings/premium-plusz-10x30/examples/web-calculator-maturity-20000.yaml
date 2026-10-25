@@ -5,9 +5,7 @@ title: Web calculator maturity — 20 000 Ft/hó promo opening fee
 description: >
   OTP product-page calculator output for contractual monthly deposit 20 000 Ft
   (UI shows 20 500 Ft havonta fizetendő = deposit + 500 Ft account fee), 10-year
-  path with promo opening fee. Locks fee / Premium / contract fields that match
-  the engine; locks webpage terminal payout separately from engine ACT/360
-  terminal (small residual delta documented).
+  path with promo opening fee. OTP published numbers are authoritative.
 
 source:
   kind: otp-product-page-calculator
@@ -35,14 +33,21 @@ expected:
   premiumRatePct: 30
   premiumBase: 2400000
   premiumAmount: 720000
-  depositInterest: 12113
-  terminalPayout: 3132113
-  webpageTerminalPayout: 3132464
-  webpageTerminalPayoutDeltaFt: -351
+  # OTP authoritative (Lejáratkor felvehető megtakarítás)
+  depositInterest: 12464
+  terminalPayout: 3132464
+  # Engine (interest stops at last deposit) — quarantine until ÁSZF payout horizon reconciles
+  engineDepositInterest: 12113
+  engineTerminalPayout: 3132113
+  engineTerminalPayoutDeltaFt: -351
 
 notes:
-  - "Source: otp-product-page-calculator (see source.url / source.capturedAt)."
+  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP figures are authoritative."
   - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (20 500 Ft)."
   - "accountOpeningFee is the green akciós díj; accountOpeningFeeStandard1pct is the crossed-out 1% line."
-  - "Engine terminalPayout uses ACT/360 + yearly capitalization to last deposit; webpageTerminalPayout is the calculator 'Lejáratkor felvehető megtakarítás'."
-  - "webpageTerminalPayoutDeltaFt = engine terminalPayout − webpageTerminalPayout (residual; do not force-fit)."
+  - >
+    Gap: engineDepositInterest / engineTerminalPayout use ACT/360 + yearly capitalization
+    with accrual stopping at the last deposit date. OTP terminal implies ~311 more Ft of
+    interest. Extending accrual to the first of the month two months after last deposit
+    (2036-11-01 for start 2026-10-10) recovers almost all of the gap (engine then −3 Ft).
+    Do not fit a lag knob without ÁSZF-sourced payout dating — calc-aligned stays blocked.

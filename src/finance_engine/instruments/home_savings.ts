@@ -205,6 +205,12 @@ export function resolveContractAmountFromMonthlyDeposit(input: {
  * (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization on the first
  * day after each megtakarítási év, accrual from credit day through the day
  * before payout. Returns whole-forint interest (nearest).
+ *
+ * Payout horizon quarantine: `payoutDate` is currently the last deposit date.
+ * OTP product-page calculator maturity (authoritative) implies ~two further
+ * months of accrual toward the first of that month (see
+ * `web-calculator-maturity-*.yaml` engineTerminalPayoutDeltaFt). Do not fit a
+ * lag here without ÁSZF-sourced dating — home-savings calc-aligned is blocked.
  */
 export function calculateHomeSavingsDepositInterest(input: {
   monthlyDeposit: number

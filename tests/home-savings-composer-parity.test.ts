@@ -170,21 +170,21 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     ).toBe(65_000)
   })
 
-  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (EBKM quarantined)', () => {
+  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (maturity + EBKM quarantined)', () => {
     const catalog = readRepoFile(CATALOG_PATH)
     const row = catalog
       .split('\n')
       .find(
         (line) =>
           line.startsWith('| home-savings.premium-plusz-10x30.standard |') &&
-          line.includes('| schedule-usable |')
+          line.includes('| inputs-driven |')
       )
     expect(row).toBeDefined()
-    expect(row).toMatch(/EBKM/i)
+    expect(row).toMatch(/calc-aligned revoked|web-calculator|OTP/i)
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
-    expect(entry?.migrationStatus).toBe('schedule-usable')
-    expect(entry?.commerciallyBlockedReason).toMatch(/EBKM/i)
+    expect(entry?.migrationStatus).toBe('inputs-driven')
+    expect(entry?.commerciallyBlockedReason).toMatch(/Calc-aligned blocked|OTP product-page|EBKM/i)
     expect(entry?.discountHints?.length).toBeGreaterThan(0)
     expect(entry?.premiumHints).toMatch(/Premium tiers/i)
   })

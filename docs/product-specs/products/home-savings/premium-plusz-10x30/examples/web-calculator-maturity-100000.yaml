@@ -5,7 +5,8 @@ title: Web calculator maturity — 100 000 Ft/hó promo fixed opening fee
 description: >
   OTP product-page calculator output for contractual monthly deposit 100 000 Ft
   (UI shows 100 500 Ft havonta fizetendő = deposit + 500 Ft account fee), 10-year
-  path with promo fixed 65 000 Ft opening fee (50 000–100 000 Ft band).
+  path with promo fixed 65 000 Ft opening fee (50 000–100 000 Ft band). OTP
+  published numbers are authoritative.
 
 source:
   kind: otp-product-page-calculator
@@ -32,14 +33,19 @@ expected:
   premiumRatePct: 30
   premiumBase: 12000000
   premiumAmount: 3600000
-  depositInterest: 60570
-  terminalPayout: 15660570
-  webpageTerminalPayout: 15662313
-  webpageTerminalPayoutDeltaFt: -1743
+  # OTP authoritative (Lejáratkor felvehető megtakarítás)
+  depositInterest: 62313
+  terminalPayout: 15662313
+  # Engine (interest stops at last deposit) — quarantine until ÁSZF payout horizon reconciles
+  engineDepositInterest: 60570
+  engineTerminalPayout: 15660570
+  engineTerminalPayoutDeltaFt: -1743
 
 notes:
-  - "Source: otp-product-page-calculator (see source.url / source.capturedAt)."
+  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP figures are authoritative."
   - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (100 500 Ft)."
   - "accountOpeningFee is the green akciós díj (65 000); accountOpeningFeeStandard1pct is 1% of contract."
-  - "Engine terminalPayout uses ACT/360 to last deposit; webpageTerminalPayout is calculator maturity."
-  - "webpageTerminalPayoutDeltaFt = engine terminalPayout − webpageTerminalPayout (residual; do not force-fit)."
+  - >
+    Gap (−1 743 Ft): deposit interest only (OTP 62 313 vs engine 60 570). Same payout-horizon
+    hypothesis as web-calculator-maturity-50000 (accrual to first of month two months after
+    last deposit recovers to −1 Ft). ÁSZF-sourced dating required before calc-aligned.

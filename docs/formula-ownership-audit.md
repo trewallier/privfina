@@ -54,7 +54,7 @@ Inventory (by product)
   - Browser path: `public/controller/bmap-calculation-adapter.js` accepts user-supplied `dkjBaseYieldPct`
   - Status: coupon composition from base yield + premium is spec-backed; weighted auction DKJ base derivation remains future external-data work
 
-- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **schedule-usable** / EBKM packaging-quarantined
+- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **inputs-driven** / calc-aligned revoked (OTP web-calculator maturity ≠ engine interest payout horizon) / EBKM packaging-quarantined
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
   - Browser path: Vite SPA imports `@finance_engine` via thin `public/instruments.js` wrappers + `home-savings-calculation-adapter.js` + commercial composer (ADR 0030 / 0032)
   - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers); `src/finance_engine/instruments/ebkm.ts` (82/2010 Annex 3 from schedule cash flows, ADR 0031)
@@ -66,7 +66,7 @@ Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
 2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
-3. ROADMAP §5e home-savings: schedule-usable + EBKM quarantine (schedule→Annex 3 pinned; close Hirdetmény gap without camouflage → commercially-usable); fully-spec-backed later.
+3. ROADMAP §5e home-savings: inputs-driven until engine terminal matches OTP product-page calculator; then restore calc-aligned → schedule-usable; EBKM quarantine (schedule→Annex 3 pinned; close Hirdetmény gap without camouflage → commercially-usable); fully-spec-backed later.
 4. ROADMAP §6a / ADR 0032 Vite single calculation surface (done): browser imports `@finance_engine`; Pages deploys `dist-web`.
 5. ROADMAP §7 storage port (replace raw `localStorage` helpers).
 6. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets. LTP loan deferred under §5e.

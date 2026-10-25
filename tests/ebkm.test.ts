@@ -7,6 +7,7 @@ import {
   calendarDaysBetween,
   ebkmPresentValue,
   ebkmYearFraction,
+  resolveHomeSavingsEbkmPayoutDate,
   roundEbkmPercent,
   type EbkmDatedFlow
 } from '../src/finance_engine/instruments/ebkm'
@@ -86,10 +87,32 @@ describe('calculateEbkm (3. melléklet)', () => {
   })
 
   it('maps home-savings schedule-shaped legs through the cash-flow helper', () => {
-    const ebkm = calculateEbkmFromHomeSavingsCashFlows([
-      { date: '2026-01-01', amount: 1000, direction: 'outflow' },
-      { date: '2027-01-01', amount: 1100, direction: 'inflow' }
-    ])
+    // Disable kiutalás retarget so the one-year fixture stays on stated dates.
+    const ebkm = calculateEbkmFromHomeSavingsCashFlows(
+      [
+        { date: '2026-01-01', amount: 1000, direction: 'outflow' },
+        { date: '2027-01-01', amount: 1100, direction: 'inflow' }
+      ],
+      { retargetTerminalPayout: false }
+    )
     expect(ebkm.percentRounded).toBe(10)
+  })
+
+  it('retargets home-savings terminal inflow to ÁSZF kiutalás payout date by default', () => {
+    const scheduleDated = calculateEbkmFromHomeSavingsCashFlows(
+      [
+        { date: '2026-10-10', amount: 1000, direction: 'outflow' },
+        { date: '2036-09-10', amount: 1000, direction: 'outflow' },
+        { date: '2036-09-10', amount: 2500, direction: 'inflow' }
+      ],
+      { retargetTerminalPayout: false }
+    )
+    const aszfPackaged = calculateEbkmFromHomeSavingsCashFlows([
+      { date: '2026-10-10', amount: 1000, direction: 'outflow' },
+      { date: '2036-09-10', amount: 1000, direction: 'outflow' },
+      { date: '2036-09-10', amount: 2500, direction: 'inflow' }
+    ])
+    expect(resolveHomeSavingsEbkmPayoutDate('2036-09-10')).toBe('2036-12-01')
+    expect(aszfPackaged.percentRounded).toBeLessThan(scheduleDated.percentRounded)
   })
 })

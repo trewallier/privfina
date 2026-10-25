@@ -8,5 +8,6 @@ export {
   roundEbkmPercent,
   calculateEbkm,
   calculateEbkmFromLegs,
+  resolveHomeSavingsEbkmPayoutDate,
   calculateEbkmFromHomeSavingsCashFlows
 } from '@finance_engine/instruments/ebkm'

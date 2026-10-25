@@ -9,19 +9,24 @@
  * with deposits/fees as negative A and payouts as positive A.
  *
  * Year fractions for dated legs: calendar days from first deposit / 365
- * (decree t/365). Do not invent settlement-lag or fee-netting knobs to force
- * published goldens (ADR 0024/0025 packaging-camouflage ban applies equally
- * here). Home-savings commercially-usable waits until schedule cash flows →
- * this solver reproduce Hirdetmény EBKM without opaque calibration.
+ * (decree t/365). Publication rounding (6. § (1) f / (3)): two decimals, half-up.
  *
- * Publication rounding (6. § (1) f / (3)): two decimal places, half-up.
+ * Home-savings EBKM packaging (ÁSZF 22. §, contracts from 2017-07-01):
+ * customer outflows (opening fee, deposits, account fees) stay on schedule
+ * dates; the terminal inflow used for EBKM is dated on the **first calendar
+ * day of the month that is three months after the last-deposit month**
+ * (2-month kiutalási időszak after min. savings time, then payment in the
+ * following month — conventional day-1 marker). Chart/schedule cash flows use
+ * OTP-aligned maturity packaging (first of month after lastDeposit+2) for the
+ * terminal; only the EBKM leg list retargets that inflow to lastDepositMonth+3.
+ * Anchor the last-deposit month on deposit-labeled outflows when descriptions
+ * are supplied. Do not invent free lag/netting knobs beyond this ÁSZF-sourced
+ * rule (ADR 0024/0025 packaging-camouflage ban).
  *
- * Fee inclusion and scenario assumptions (opening fee, account fee, Premium
- * on/off, deposit path) are caller-owned: assemble customer cash flows, then
- * call {@link calculateEbkmFromHomeSavingsCashFlows} or the generic solvers.
+ * Fee inclusion and Premium on/off remain caller-owned when assembling flows.
  */
 
-import { parseIsoDate } from '../date_utils'
+import { formatIsoDate, parseIsoDate } from '../date_utils'
 
 /** One deposit installment (B_i) or payout (K_j) for 3. melléklet. */
 export interface EbkmLeg {
@@ -208,16 +213,42 @@ export function calculateEbkmFromLegs(input: {
 }
 
 /**
+ * OTP ÁSZF 22. § (contracts from 2017-07-01): earliest customer payout falls in
+ * the calendar month after min. savings time + a 2-month kiutalási időszak.
+ * For continuous monthly deposits this is modeled as the first day of the month
+ * three months after the last-deposit month (day-1 settlement marker).
+ */
+export function resolveHomeSavingsEbkmPayoutDate(lastDepositDateIso: string): string {
+  const lastDeposit = parseIsoDate(lastDepositDateIso)
+  return formatIsoDate(
+    new Date(Date.UTC(lastDeposit.getUTCFullYear(), lastDeposit.getUTCMonth() + 3, 1))
+  )
+}
+
+/**
  * Package home-savings customer cash flows into Annex 3 legs.
  * Caller supplies generated instrument flows; packaging is:
  *   B_i — outflows (opening fee, deposits, account fees)
- *   K_j — inflows (terminal payout)
+ *   K_j — inflows (terminal payout), retargeted to the ÁSZF EBKM payout date
+ *          unless `retargetTerminalPayout` is false (tests / diagnostics).
  */
 export function buildEbkmLegsFromHomeSavingsCashFlows(
-  flows: ReadonlyArray<{ date: string; amount: number; direction: 'inflow' | 'outflow' }>
+  flows: ReadonlyArray<{
+    date: string
+    amount: number
+    direction: 'inflow' | 'outflow'
+    /** When present, "Monthly deposit" labels anchor ÁSZF last-deposit month. */
+    description?: string
+  }>,
+  options: { retargetTerminalPayout?: boolean; lastDepositDate?: string } = {}
 ): { deposits: EbkmLeg[]; payouts: EbkmLeg[] } {
+  const retargetTerminalPayout = options.retargetTerminalPayout !== false
   const deposits: EbkmLeg[] = []
   const payouts: EbkmLeg[] = []
+  let lastDepositDate: string | null =
+    typeof options.lastDepositDate === 'string' ? options.lastDepositDate : null
+  let lastOutflowDate: string | null = null
+  let sawDepositLabel = lastDepositDate !== null
 
   for (const flow of flows) {
     const amount = Number(flow.amount)
@@ -226,10 +257,35 @@ export function buildEbkmLegsFromHomeSavingsCashFlows(
     }
     if (flow.direction === 'outflow') {
       deposits.push({ date: flow.date, amount })
+      if (lastOutflowDate === null || flow.date > lastOutflowDate) {
+        lastOutflowDate = flow.date
+      }
+      if (
+        typeof flow.description === 'string' &&
+        /monthly deposit/i.test(flow.description)
+      ) {
+        sawDepositLabel = true
+        if (lastDepositDate === null || flow.date > lastDepositDate) {
+          lastDepositDate = flow.date
+        }
+      }
     } else if (flow.direction === 'inflow') {
       payouts.push({ date: flow.date, amount })
     } else {
       throw new Error(`Unknown cash-flow direction: ${String(flow.direction)}`)
+    }
+  }
+
+  if (retargetTerminalPayout && payouts.length > 0) {
+    const anchor = sawDepositLabel ? lastDepositDate : lastOutflowDate
+    if (anchor === null) {
+      throw new Error(
+        'EBKM payout retarget requires a last-deposit date (Monthly deposit label, lastDepositDate option, or outflow fallback).'
+      )
+    }
+    const ebkmPayoutDate = resolveHomeSavingsEbkmPayoutDate(anchor)
+    for (const payout of payouts) {
+      payout.date = ebkmPayoutDate
     }
   }
 
@@ -238,13 +294,20 @@ export function buildEbkmLegsFromHomeSavingsCashFlows(
 
 /**
  * ADR 0031 convenience: EBKM from dated home-savings customer cash flows
- * (calendar-day / 365 year fractions). Same packaging as the charted schedule
- * when callers pass {@link generateHomeSavingsInstrumentCashFlows} output.
+ * (calendar-day / 365). By default retargets terminal inflow to the ÁSZF
+ * kiutalás payout date; pass `{ retargetTerminalPayout: false }` for
+ * schedule-date diagnostics.
  */
 export function calculateEbkmFromHomeSavingsCashFlows(
-  flows: ReadonlyArray<{ date: string; amount: number; direction: 'inflow' | 'outflow' }>
+  flows: ReadonlyArray<{
+    date: string
+    amount: number
+    direction: 'inflow' | 'outflow'
+    description?: string
+  }>,
+  options: { retargetTerminalPayout?: boolean; lastDepositDate?: string } = {}
 ): EbkmCalculationResult {
-  return calculateEbkmFromLegs(buildEbkmLegsFromHomeSavingsCashFlows(flows))
+  return calculateEbkmFromLegs(buildEbkmLegsFromHomeSavingsCashFlows(flows, options))
 }
 
 function assertPositiveLeg(leg: EbkmLeg, kind: string): void {

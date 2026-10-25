@@ -18,7 +18,8 @@ Related: 0022 (THM calculator for loans), 0024 / 0026 (loan three-check bar), 00
 
 - Introduce a **finance-engine EBKM verification primitive** (when calc/commercially-usable work lands) whose primary purpose is to compare engine-implied EBKM from customer cash flows + fees against Hirdetmény golden values in worked examples.
 - **Commercially-usable** for public-offering `home-savings` products requires engine EBKM ≡ published EBKM for the locked Hirdetmény examples (promo and 1% opening-fee tables; with and without Premium as published). Dual-lane display of conflicting EBKM figures is forbidden.
-- Exact statutory formula, day-count, and percent rounding follow Hungarian EBKM practice for lakás-takarékpénztári betétek and will be recorded in the primitive’s module docs / tests when implemented; this ADR commits to the verification bar, not a specific numeric algorithm yet.
+- Exact statutory formula, day-count, and percent rounding follow Hungarian EBKM practice for lakás-takarékpénztári betétek and are recorded in `src/finance_engine/instruments/ebkm.ts` (82/2010 3. melléklet; calendar days / 365; two-decimal half-up).
+- Home-savings EBKM flow packaging uses ÁSZF 22. § kiutalás dating for contracts from 2017-07-01: terminal inflow on the first calendar day of the month three months after the last-deposit month (2-month kiutalási időszak, then payment month). Chart/schedule cash flows use OTP-aligned maturity packaging (first of month after lastDeposit+2); only the EBKM leg list retargets that inflow to lastDepositMonth+3. Free lag/netting knobs remain forbidden.
 - Loan ADR 0024 THM three-check does **not** apply to home-savings.
 - Fee inclusion and scenario assumptions (account fee 500 Ft/hó, opening-fee rule, Premium on/off, deposit amount) remain the responsibility of the product/example layer that builds the flow list.
 

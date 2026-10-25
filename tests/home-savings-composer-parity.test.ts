@@ -170,7 +170,7 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     ).toBe(65_000)
   })
 
-  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (EBKM quarantined)', () => {
+  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (EBKM residual gap)', () => {
     const catalog = readRepoFile(CATALOG_PATH)
     const row = catalog
       .split('\n')
@@ -184,12 +184,12 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
     expect(entry?.migrationStatus).toBe('schedule-usable')
-    expect(entry?.commerciallyBlockedReason).toMatch(/EBKM/i)
+    expect(entry?.commerciallyBlockedReason).toMatch(/0\.01|EBKM|4\.47/i)
     expect(entry?.discountHints?.length).toBeGreaterThan(0)
     expect(entry?.premiumHints).toMatch(/Premium tiers/i)
   })
 
-  it('surfaces schedule-faithful EBKM preview (pinned while Hirdetmény gap remains)', () => {
+  it('surfaces ÁSZF-packaged EBKM preview matching Hirdetmény promo 20k goldens', () => {
     const ebkmExample = loadYaml(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-20000.yaml'
     ) as {
@@ -203,8 +203,8 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
         accountFeeMonthly: number
         ebkmPctWithPremium: number
         ebkmPctWithoutPremium: number
-        scheduleEbkmPctWithPremium: number
-        scheduleEbkmPctWithoutPremium: number
+        engineEbkmPctWithPremium: number
+        engineEbkmPctWithoutPremium: number
       }
     }
     const { inputs, expected } = ebkmExample
@@ -233,10 +233,11 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     )
 
     expect(withPremium.accountFeeMonthly).toBe(expected.accountFeeMonthly)
-    // Schedule pins from ebkm-promo-20000.yaml (not published Hirdetmény figures).
-    expect(withPremium.ebkmPct).toBe(expected.scheduleEbkmPctWithPremium)
-    expect(withoutPremium.ebkmPct).toBe(expected.scheduleEbkmPctWithoutPremium)
-    expect(withPremium.ebkmPct).not.toBe(expected.ebkmPctWithPremium)
+    // Promo 20k is a green ÁSZF-packaging cell — engine pins ≡ published.
+    expect(withPremium.ebkmPct).toBe(expected.engineEbkmPctWithPremium)
+    expect(withoutPremium.ebkmPct).toBe(expected.engineEbkmPctWithoutPremium)
+    expect(withPremium.ebkmPct).toBe(expected.ebkmPctWithPremium)
+    expect(withoutPremium.ebkmPct).toBe(expected.ebkmPctWithoutPremium)
   })
 
   it('keeps browser ‰ helpers aligned with engine Melléklet cases', () => {

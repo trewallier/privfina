@@ -101,9 +101,9 @@ export interface HomeSavingsEngineOutputs {
   terminalPayout: number
   depositInterest: number
   /**
-   * ADR 0031 EBKM percent from generated customer cash flows (calendar-day /
-   * 365 Annex 3). May still diverge from published Hirdetmény goldens until
-   * settlement/allotment packaging is ÁSZF-sourced (EBKM quarantine).
+   * ADR 0031 EBKM percent from customer cash flows (calendar-day / 365 Annex 3)
+   * with ÁSZF 22. § kiutalás payout dating (terminal inflow retargeted for EBKM;
+   * chart schedule uses OTP-aligned maturity packaging — first of lastDeposit+2).
    */
   ebkmPct: number
   schedule: HomeSavingsScheduleSummary
@@ -282,7 +282,8 @@ export function calculateHomeSavingsFromProductSpec(
     cashFlows.map((flow) => ({
       date: flow.date,
       amount: flow.amount,
-      direction: flow.direction === CashFlowDirection.Inflow ? 'inflow' : 'outflow'
+      direction: flow.direction === CashFlowDirection.Inflow ? 'inflow' : 'outflow',
+      description: flow.description
     }))
   )
 

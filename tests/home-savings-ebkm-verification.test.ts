@@ -7,6 +7,7 @@ import {
   calculateHomeSavingsFromProductSpec,
   generateCashFlowsFromHomeSavingsProductSpec,
   loadHomeSavingsProductSpec,
+  resolveHomeSavingsEbkmPayoutDate,
   type HomeSavingsSpecInputs
 } from '../src/finance_engine/engine'
 import { CashFlowDirection } from '../src/finance_engine/models'
@@ -24,32 +25,30 @@ function loadProduct() {
   return loadHomeSavingsProductSpec(yamlText, schema)
 }
 
-function ebkmFromScheduleFlows(
-  product: ReturnType<typeof loadProduct>,
-  inputs: HomeSavingsSpecInputs
-) {
-  const flows = generateCashFlowsFromHomeSavingsProductSpec(product, inputs)
-  return calculateEbkmFromHomeSavingsCashFlows(
-    flows.map((flow) => ({
-      date: flow.date,
-      amount: flow.amount,
-      direction: flow.direction === CashFlowDirection.Inflow ? 'inflow' : 'outflow'
-    }))
-  )
+function toEbkmFlows(
+  flows: ReturnType<typeof generateCashFlowsFromHomeSavingsProductSpec>
+): Array<{
+  date: string
+  amount: number
+  direction: 'inflow' | 'outflow'
+  description?: string
+}> {
+  return flows.map((flow) => ({
+    date: flow.date,
+    amount: flow.amount,
+    direction: flow.direction === CashFlowDirection.Inflow ? 'inflow' : 'outflow',
+    description: flow.description
+  }))
 }
 
 /**
- * ADR 0031 harness (schedule-faithful).
+ * ADR 0031 harness: engine EBKM (Annex 3 + ÁSZF 22. § kiutalás payout dating)
+ * vs published Hirdetmény goldens. Not a loan THM three-check.
  *
- * Engine EBKM is computed from generated customer cash flows (calendar-day /
- * 365 Annex 3) — the same packaging as the chart. Published Hirdetmény goldens
- * remain locked in YAML; schedule→EBKM pins live in the same examples as
- * `scheduleEbkmPct*`. Commercially-usable is quarantined until with-premium
- * schedule EBKM reproduces published figures without packaging camouflage
- * (same posture as Vidéki for loan installment packaging).
- *
- * Without-premium schedule may coincide with published (promo cases); that is
- * expected and does not lift the quarantine — with-premium must stay ≠ published.
+ * Chart/schedule terminal uses OTP-aligned maturity packaging (first of month
+ * after lastDeposit+2). EBKM retargets the terminal inflow to first of
+ * lastDepositMonth+3. Residual gaps stay visible via YAML `engineEbkmPct*` /
+ * notes (no packaging camouflage).
  */
 describe('home-savings EBKM verification (ADR 0031)', () => {
   const product = loadProduct()
@@ -61,32 +60,45 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
     'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-standard-100000.yaml'
   ]
 
+  it('resolves ÁSZF EBKM payout as first day of last-deposit month + 3', () => {
+    expect(resolveHomeSavingsEbkmPayoutDate('2036-09-10')).toBe('2036-12-01')
+    expect(resolveHomeSavingsEbkmPayoutDate('2036-01-31')).toBe('2036-04-01')
+  })
+
   for (const path of examplePaths) {
     describe(path.split('/').pop()!, () => {
-      it('locks published Hirdetmény EBKM goldens and schedule pins in YAML', () => {
+      it('locks published Hirdetmény EBKM goldens and engine pins in YAML', () => {
         const parsed = YAML.parse(readRepoFile(path))
         expect(typeof parsed.expected.ebkmPctWithPremium).toBe('number')
         expect(typeof parsed.expected.ebkmPctWithoutPremium).toBe('number')
-        expect(typeof parsed.expected.scheduleEbkmPctWithPremium).toBe('number')
-        expect(typeof parsed.expected.scheduleEbkmPctWithoutPremium).toBe('number')
+        expect(typeof parsed.expected.engineEbkmPctWithPremium).toBe('number')
+        expect(typeof parsed.expected.engineEbkmPctWithoutPremium).toBe('number')
       })
 
-      it('pins schedule→EBKM from YAML and keeps with-premium Hirdetmény gap visible', () => {
+      it('engine EBKM from ÁSZF-packaged cash flows matches published goldens (or documents gap)', () => {
         const parsed = YAML.parse(readRepoFile(path))
         const baseInputs = parsed.inputs as HomeSavingsSpecInputs
         const publishedWith = Number(parsed.expected.ebkmPctWithPremium)
         const publishedWithout = Number(parsed.expected.ebkmPctWithoutPremium)
-        const scheduleWith = Number(parsed.expected.scheduleEbkmPctWithPremium)
-        const scheduleWithout = Number(parsed.expected.scheduleEbkmPctWithoutPremium)
+        const engineWith = Number(parsed.expected.engineEbkmPctWithPremium)
+        const engineWithout = Number(parsed.expected.engineEbkmPctWithoutPremium)
 
-        const withPremiumFlows = ebkmFromScheduleFlows(product, {
-          ...baseInputs,
-          housingPurpose: true
-        })
-        const withoutPremiumFlows = ebkmFromScheduleFlows(product, {
-          ...baseInputs,
-          housingPurpose: false
-        })
+        const withPremiumFlows = calculateEbkmFromHomeSavingsCashFlows(
+          toEbkmFlows(
+            generateCashFlowsFromHomeSavingsProductSpec(product, {
+              ...baseInputs,
+              housingPurpose: true
+            })
+          )
+        )
+        const withoutPremiumFlows = calculateEbkmFromHomeSavingsCashFlows(
+          toEbkmFlows(
+            generateCashFlowsFromHomeSavingsProductSpec(product, {
+              ...baseInputs,
+              housingPurpose: false
+            })
+          )
+        )
 
         const withPremiumOutputs = calculateHomeSavingsFromProductSpec(product, {
           ...baseInputs,
@@ -97,23 +109,39 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
           housingPurpose: false
         })
 
-        // Mapper ebkmPct must match schedule cash-flow EBKM (no parallel packaging lane).
+        // Mapper ebkmPct must match the packaged cash-flow EBKM (no dual lane).
         expect(withPremiumOutputs.ebkmPct).toBe(withPremiumFlows.percentRounded)
         expect(withoutPremiumOutputs.ebkmPct).toBe(withoutPremiumFlows.percentRounded)
-
-        // Quarantine regression pins live in YAML (not test-only snapshots).
-        expect(withPremiumOutputs.ebkmPct).toBe(scheduleWith)
-        expect(withoutPremiumOutputs.ebkmPct).toBe(scheduleWithout)
-
-        // With-premium must remain ≠ published (no camouflage). Without-premium may coincide.
-        expect(withPremiumOutputs.ebkmPct).not.toBe(publishedWith)
         expect(withPremiumOutputs.premiumAmount).toBeGreaterThan(0)
         expect(withoutPremiumOutputs.premiumAmount).toBe(0)
-        // Pair inequality still required so both legs matching would fail the suite.
-        expect([withPremiumOutputs.ebkmPct, withoutPremiumOutputs.ebkmPct]).not.toEqual([
-          publishedWith,
-          publishedWithout
-        ])
+
+        expect(withPremiumOutputs.ebkmPct).toBe(engineWith)
+        expect(withoutPremiumOutputs.ebkmPct).toBe(engineWithout)
+
+        if (engineWith !== publishedWith || engineWithout !== publishedWithout) {
+          // Residual gap cell(s) — keep published ≠ engine visible; no camouflage.
+          expect([engineWith, engineWithout]).not.toEqual([publishedWith, publishedWithout])
+          return
+        }
+
+        expect(withPremiumOutputs.ebkmPct).toBe(publishedWith)
+        expect(withoutPremiumOutputs.ebkmPct).toBe(publishedWithout)
+      })
+
+      it('schedule-date EBKM (no kiutalás retarget) diverges from ÁSZF-packaged EBKM', () => {
+        const parsed = YAML.parse(readRepoFile(path))
+        const baseInputs = parsed.inputs as HomeSavingsSpecInputs
+        const flows = toEbkmFlows(
+          generateCashFlowsFromHomeSavingsProductSpec(product, {
+            ...baseInputs,
+            housingPurpose: true
+          })
+        )
+        const scheduleDated = calculateEbkmFromHomeSavingsCashFlows(flows, {
+          retargetTerminalPayout: false
+        })
+        const aszfPackaged = calculateEbkmFromHomeSavingsCashFlows(flows)
+        expect(scheduleDated.percentRounded).not.toBe(aszfPackaged.percentRounded)
       })
     })
   }

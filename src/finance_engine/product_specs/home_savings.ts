@@ -15,6 +15,7 @@ import {
   type HomeSavingsPremiumTiers,
   type HomeSavingsScheduleSummary
 } from '../instruments/home_savings'
+import { calculateEbkmFromHomeSavingsPackage } from '../instruments/ebkm'
 
 export type HomeSavingsOpeningFeeMode =
   | 'standard-1pct'
@@ -99,6 +100,8 @@ export interface HomeSavingsEngineOutputs {
   premiumAmount: number
   terminalPayout: number
   depositInterest: number
+  /** ADR 0031 Hirdetmény-packaged EBKM percent (two decimals). */
+  ebkmPct: number
   schedule: HomeSavingsScheduleSummary
 }
 
@@ -270,6 +273,14 @@ export function calculateHomeSavingsFromProductSpec(
   assertValidHomeSavingsProductSpec(productSpec)
   const instrumentInput = mapHomeSavingsSpecInputsToInstrumentInput(productSpec, specInputs)
   const schedule = resolveHomeSavingsSchedule(instrumentInput)
+  const ebkm = calculateEbkmFromHomeSavingsPackage({
+    monthlyDeposit: instrumentInput.monthlyDeposit,
+    termMonths: instrumentInput.termMonths,
+    accountOpeningFee: schedule.accountOpeningFee,
+    accountFeeMonthly: schedule.accountFeeMonthly,
+    premiumAmount: schedule.premiumAmount,
+    depositInterest: schedule.depositInterest
+  })
 
   return {
     productId: productSpec.id,
@@ -284,6 +295,7 @@ export function calculateHomeSavingsFromProductSpec(
     premiumAmount: schedule.premiumAmount,
     terminalPayout: schedule.terminalPayout,
     depositInterest: schedule.depositInterest,
+    ebkmPct: ebkm.percentRounded,
     schedule
   }
 }

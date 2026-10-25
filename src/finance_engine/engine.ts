@@ -154,6 +154,27 @@ export type {
   ThmFlow,
   ThmCalculationResult
 } from './instruments/thm'
+export {
+  HOME_SAVINGS_EBKM_PAYOUT_MONTH_INDEX,
+  HOME_SAVINGS_EBKM_TERMINAL_ACCOUNT_FEE_NETTING,
+  calendarDaysBetween,
+  ebkmYearFraction,
+  roundEbkmPercent,
+  buildEbkmFlowsFromLegs,
+  ebkmPresentValue,
+  calculateEbkm,
+  calculateEbkmFromLegs,
+  buildEbkmLegsFromHomeSavingsCashFlows,
+  calculateEbkmFromHomeSavingsCashFlows,
+  buildHomeSavingsEbkmEqualMonthFlows,
+  calculateEbkmFromHomeSavingsPackage
+} from './instruments/ebkm'
+export type {
+  EbkmCalculationResult,
+  EbkmDatedFlow,
+  EbkmLeg,
+  HomeSavingsEbkmPackageInput
+} from './instruments/ebkm'
 export type { BmapRateOutputs, BmapSpecInputs } from './instruments/bmap'
 export {
   deriveBmapMaturityDate,

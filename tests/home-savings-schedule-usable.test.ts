@@ -39,10 +39,13 @@ describe('home-savings schedule-usable metadata', () => {
     const codes = HOME_SAVINGS_PRODUCTS.map((entry) => entry.productCode)
     expect(codes).toEqual(['premium-plusz-10x30'])
     expect(buildHomeSavingsProductOptions()).toHaveLength(1)
-    expect(findHomeSavingsProduct('premium-plusz-10x30')?.migrationStatus).toBe('schedule-usable')
+    expect(findHomeSavingsProduct('premium-plusz-10x30')?.migrationStatus).toBe(
+      'commercially-usable'
+    )
     expect(
       findHomeSavingsProductById('home-savings.premium-plusz-10x30.standard')?.displayName
     ).toMatch(/PRÉMIUM PLUSZ 10x30/)
+    expect(resolveHomeSavingsReadinessHint('commercially-usable')).toMatch(/commercially-usable/)
     expect(resolveHomeSavingsReadinessHint('schedule-usable')).toMatch(/schedule-usable/)
   })
 

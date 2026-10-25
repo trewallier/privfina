@@ -8,12 +8,14 @@ import {
 } from '../public/controller/home-savings-product-metadata.js'
 import {
   resolveHomeSavingsOpeningFee,
-  mapHomeSavingsSpecInputsToBundleInput
+  mapHomeSavingsSpecInputsToBundleInput,
+  calculateHomeSavingsScheduleFromSpecInputs
 } from '../public/controller/home-savings-calculation-adapter.js'
 import {
   ceilToTenForint,
   resolveMonthlyDepositFromContractAmount,
-  resolveContractAmountFromMonthlyDeposit
+  resolveContractAmountFromMonthlyDeposit,
+  resolveHomeSavingsSchedule
 } from '../public/instruments.js'
 import {
   ceilToTenForint as engineCeilToTenForint,
@@ -175,13 +177,44 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
       .find(
         (line) =>
           line.startsWith('| home-savings.premium-plusz-10x30.standard |') &&
-          line.includes('| schedule-usable |')
+          line.includes('| commercially-usable |')
       )
     expect(row).toBeDefined()
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
-    expect(entry?.migrationStatus).toBe('schedule-usable')
+    expect(entry?.migrationStatus).toBe('commercially-usable')
     expect(entry?.commerciallyBlockedReason).toBeNull()
+    expect(entry?.discountHints?.length).toBeGreaterThan(0)
+    expect(entry?.premiumHints).toMatch(/Premium tiers/i)
+  })
+
+  it('surfaces a single EBKM preview value from the ADR 0031 packaging helper', () => {
+    const withPremium = calculateHomeSavingsScheduleFromSpecInputs(
+      {
+        productCode: 'premium-plusz-10x30',
+        monthlyDeposit: 20_000,
+        termMonths: 120,
+        startDate: '2026-10-10',
+        housingPurpose: true,
+        openingFeeMode: 'promo-half-percent'
+      },
+      { resolveHomeSavingsSchedule }
+    )
+    const withoutPremium = calculateHomeSavingsScheduleFromSpecInputs(
+      {
+        productCode: 'premium-plusz-10x30',
+        monthlyDeposit: 20_000,
+        termMonths: 120,
+        startDate: '2026-10-10',
+        housingPurpose: false,
+        openingFeeMode: 'promo-half-percent'
+      },
+      { resolveHomeSavingsSchedule }
+    )
+
+    expect(withPremium.accountFeeMonthly).toBe(500)
+    expect(withPremium.ebkmPct).toBe(4.35)
+    expect(withoutPremium.ebkmPct).toBe(-0.58)
   })
 
   it('keeps browser ‰ helpers aligned with engine Melléklet cases', () => {

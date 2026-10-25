@@ -1,10 +1,10 @@
 /**
  * Browser commercial home-savings mapper (loan-bridge style).
  *
- * Contract-amount ‰ helpers live in `public/instruments.js` (ADR 0017 dual
- * surface with `src/finance_engine/instruments/home_savings.ts`). This module
- * only maps composer/spec inputs onto those primitives + the schedule/bundle
- * generators — no third formula surface.
+ * Contract-amount ‰ helpers and schedule math come from the finance-engine
+ * surface (ADR 0017 / 0032). This module only maps composer/spec inputs onto
+ * those primitives + the schedule/bundle generators — no third formula surface.
+ * EBKM uses the ADR 0031 Hirdetmény packaging helper.
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
@@ -12,6 +12,7 @@ import {
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit
 } from '../instruments.js'
+import { calculateEbkmFromHomeSavingsPackage } from './ebkm.js'
 
 /**
  * Resolve szerződéses összeg from explicit input or monthly deposit via ‰.
@@ -104,6 +105,15 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
 }
 
 function scheduleOutputsFromBundleInput(bundleInput, schedule) {
+  const ebkm = calculateEbkmFromHomeSavingsPackage({
+    monthlyDeposit: Number(bundleInput.monthlyDeposit),
+    termMonths: Number(bundleInput.termMonths),
+    accountOpeningFee: schedule.accountOpeningFee,
+    accountFeeMonthly: schedule.accountFeeMonthly,
+    premiumAmount: schedule.premiumAmount,
+    depositInterest: schedule.depositInterest
+  })
+
   return {
     productId: bundleInput.productId,
     productCode: bundleInput.productCode,
@@ -117,6 +127,7 @@ function scheduleOutputsFromBundleInput(bundleInput, schedule) {
     premiumAmount: schedule.premiumAmount,
     terminalPayout: schedule.terminalPayout,
     depositInterest: schedule.depositInterest,
+    ebkmPct: ebkm.percentRounded,
     contractAmount: bundleInput.contractAmount,
     schedule
   }

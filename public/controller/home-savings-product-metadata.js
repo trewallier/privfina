@@ -16,7 +16,7 @@ const HOME_SAVINGS_PRODUCTS = [
     productId: 'home-savings.premium-plusz-10x30.standard',
     specVersion: 'v2alpha1',
     displayName: 'OTP Lakástakarék PRÉMIUM PLUSZ 10x30',
-    migrationStatus: 'schedule-usable',
+    migrationStatus: 'commercially-usable',
     depositInterestAnnualRatePct: 0.1,
     savingsRatePermille: 3.846,
     minContractAmount: 2_600_000,

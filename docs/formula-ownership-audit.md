@@ -54,19 +54,19 @@ Inventory (by product)
   - Browser path: `public/controller/bmap-calculation-adapter.js` accepts user-supplied `dkjBaseYieldPct`
   - Status: coupon composition from base yield + premium is spec-backed; weighted auction DKJ base derivation remains future external-data work
 
-- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **schedule-usable**
+- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **commercially-usable**
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
   - Browser path: Vite SPA imports `@finance_engine` via thin `public/instruments.js` wrappers + `home-savings-calculation-adapter.js` + commercial composer (ADR 0030 / 0032)
-  - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers)
-  - Family mapper: `src/finance_engine/product_specs/home_savings.ts`
+  - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers); `src/finance_engine/instruments/ebkm.ts` (82/2010 Annex 3 + Hirdetmény packaging, ADR 0031)
+  - Family mapper: `src/finance_engine/product_specs/home_savings.ts` (includes `ebkmPct`)
   - Metadata: hand-mirrored `HOME_SAVINGS_PRODUCTS` parity-tested against YAML (`tests/home-savings-composer-parity.test.ts`)
-  - Status: commercial composer create/edit/preview/persist stamps lineage; deposits / fees / Premium / 0.10% ACT/360 / 3.846‰; third mapper surface collapsed; EBKM harness still ROADMAP §5e commercially-usable
+  - Status: commercial composer fee/Premium/loyalty hints + single EBKM preview; ADR 0031 harness green; fully-spec-backed embedded parity still open
 
 Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
 2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
-3. ROADMAP §5e home-savings: schedule-usable follow-ups done (collapse + YAML parity + host extract); EBKM harness (ADR 0031) for commercially-usable.
+3. ROADMAP §5e home-savings: commercially-usable done (EBKM harness + preview); fully-spec-backed embedded parity still open.
 4. ROADMAP §6a / ADR 0032 Vite single calculation surface (done): browser imports `@finance_engine`; Pages deploys `dist-web`.
 5. ROADMAP §7 storage port (replace raw `localStorage` helpers).
 6. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets. LTP loan deferred under §5e.

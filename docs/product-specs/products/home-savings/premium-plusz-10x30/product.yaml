@@ -232,3 +232,6 @@ exampleRefs:
   - examples/ebkm-standard-100000.yaml
   - examples/ebkm-standard-20000.yaml
   - examples/maturity-premium-120.yaml
+  - examples/web-calculator-maturity-20000.yaml
+  - examples/web-calculator-maturity-50000.yaml
+  - examples/web-calculator-maturity-100000.yaml

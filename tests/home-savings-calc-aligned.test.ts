@@ -80,6 +80,42 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     expect(outputs.productSpecVersion).toBe('v2alpha1')
   })
 
+  it.each([
+    'web-calculator-maturity-20000.yaml',
+    'web-calculator-maturity-50000.yaml',
+    'web-calculator-maturity-100000.yaml'
+  ])('locks OTP product-page calculator fee / Premium / maturity for %s', (fileName) => {
+    const relativePath = `docs/product-specs/products/home-savings/premium-plusz-10x30/examples/${fileName}`
+    const example = YAML.parse(readRepoFile(relativePath)) as {
+      source: { kind: string; url: string; capturedAt: string }
+      inputs: HomeSavingsSpecInputs
+      expected: Record<string, number>
+    }
+
+    expect(example.source.kind).toBe('otp-product-page-calculator')
+    expect(example.source.url).toContain('otpbank.hu/lakastakarek')
+    expect(example.source.capturedAt).toBe('2026-10-25')
+
+    const { inputs, expected } = example
+    const outputs = calculateHomeSavingsFromProductSpec(product, inputs)
+    const contractAmount = resolveHomeSavingsContractAmount(product, inputs)
+
+    expect(outputs.accountFeeMonthly).toBe(expected.accountFeeMonthly)
+    expect(outputs.accountOpeningFee).toBe(expected.accountOpeningFee)
+    expect(contractAmount).toBe(expected.contractAmount)
+    expect(contractAmount * 0.01).toBe(expected.accountOpeningFeeStandard1pct)
+    expect(outputs.totalDeposits).toBe(expected.totalDeposits)
+    expect(outputs.totalAccountFees).toBe(expected.totalAccountFees)
+    expect(outputs.premiumRatePct).toBe(expected.premiumRatePct)
+    expect(outputs.premiumBase).toBe(expected.premiumBase)
+    expect(outputs.premiumAmount).toBe(expected.premiumAmount)
+    expect(outputs.depositInterest).toBe(expected.depositInterest)
+    expect(outputs.terminalPayout).toBe(expected.terminalPayout)
+    expect(outputs.terminalPayout - expected.webpageTerminalPayout).toBe(
+      expected.webpageTerminalPayoutDeltaFt
+    )
+  })
+
   it('generates customer cash flows: opening fee, deposits, account fees, terminal inflow', () => {
     const { inputs, expected } = loadExample(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'

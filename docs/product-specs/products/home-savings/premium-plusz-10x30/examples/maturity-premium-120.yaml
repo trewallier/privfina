@@ -36,3 +36,7 @@ notes:
   - depositInterest uses ACT/360 + yearly capitalization at 0.10% (USZ Melléklet / ÁSZF).
   - contractAmount 13 000 000 Ft = monthly 50 000 via 3.846‰ (ceil10).
   - Loyalty unlock is out of scope for this default continuous path.
+  - >
+      Cross-check: OTP product-page calculator at the same 50 000 Ft/hó promo path
+      publishes terminal 7 831 152 Ft (see web-calculator-maturity-50000.yaml);
+      engine terminalPayout here is 7 830 286 Ft (delta −866 Ft).

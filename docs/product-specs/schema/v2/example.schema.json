@@ -25,6 +25,30 @@
     "description": {
       "type": "string"
     },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "description": "Provenance for published/worked numbers locked in this example.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable provenance tag (for example otp-product-page-calculator, hirdetmeny-sales)."
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capturedAt": {
+          "type": "string",
+          "description": "ISO calendar date (Europe/Budapest) when the numbers were captured."
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
     "inputs": {
       "type": "object"
     },

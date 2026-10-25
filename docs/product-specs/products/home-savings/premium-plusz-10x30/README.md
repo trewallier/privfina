@@ -12,6 +12,7 @@ Home-savings (lakás-előtakarékossági) product specification for the currentl
 - Hirdetmény — kamat, díj és költség tételek (Díjtáblázat) — **2026-08-03**
 - ÁSZF — Általános Szerződési Feltételei — közzététel **2026-03-24** (interest / contract mechanics)
 - Üzletszabályzat (2023-03-01+ contracts) Melléklet — hatály **2026-08-03** — módozat table
+- Product-page calculator — [Lakástakarék Prémium Plusz ajánlat](https://www.otpbank.hu/lakastakarek/lakastakarek-premium-ajanlat) — maturity / fee / Premium captures **2026-10-25** (`web-calculator-maturity-*.yaml`; not EBKM)
 
 ## Módozat lock-ins (USZ Melléklet)
 
@@ -45,4 +46,4 @@ Premium applies to **contractual deposits only** (no compound on Premium; USZ §
 
 ## Worked examples
 
-Examples in this folder are acceptance criteria. EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness (`tests/home-savings-ebkm-verification.test.ts`) pins schedule→Annex 3 EBKM and keeps gaps vs those goldens visible until settlement packaging reconciles. Maturity example locks Premium tiers, ACT/360 interest, and terminal payout.
+Examples in this folder are acceptance criteria. EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness (`tests/home-savings-ebkm-verification.test.ts`) pins schedule→Annex 3 EBKM and keeps gaps vs those goldens visible until settlement packaging reconciles. `maturity-premium-120.yaml` locks Premium tiers, ACT/360 interest, and engine terminal payout. `web-calculator-maturity-*.yaml` lock fee / Premium / contract amounts from the OTP product-page calculator and keep webpage-vs-engine terminal deltas visible.

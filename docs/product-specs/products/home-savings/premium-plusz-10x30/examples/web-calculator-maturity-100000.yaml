@@ -1,0 +1,45 @@
+specVersion: v2alpha1
+productId: home-savings.premium-plusz-10x30.standard
+exampleId: web-calculator-maturity-100000
+title: Web calculator maturity — 100 000 Ft/hó promo fixed opening fee
+description: >
+  OTP product-page calculator output for contractual monthly deposit 100 000 Ft
+  (UI shows 100 500 Ft havonta fizetendő = deposit + 500 Ft account fee), 10-year
+  path with promo fixed 65 000 Ft opening fee (50 000–100 000 Ft band).
+
+source:
+  kind: otp-product-page-calculator
+  url: https://www.otpbank.hu/lakastakarek/lakastakarek-premium-ajanlat
+  capturedAt: "2026-10-25"
+  note: >
+    Interactive "Havi betét összege" widget on Lakástakarék Prémium Plusz online
+    ajánlat page. Captured Europe/Budapest. EBKM is not computed by this widget.
+
+inputs:
+  monthlyDeposit: 100000
+  termMonths: 120
+  startDate: 2026-10-10
+  housingPurpose: true
+  openingFeeMode: promo-fixed-65000
+
+expected:
+  accountFeeMonthly: 500
+  accountOpeningFee: 65000
+  accountOpeningFeeStandard1pct: 260000
+  contractAmount: 26000000
+  totalDeposits: 12000000
+  totalAccountFees: 60000
+  premiumRatePct: 30
+  premiumBase: 12000000
+  premiumAmount: 3600000
+  depositInterest: 60570
+  terminalPayout: 15660570
+  webpageTerminalPayout: 15662313
+  webpageTerminalPayoutDeltaFt: -1743
+
+notes:
+  - "Source: otp-product-page-calculator (see source.url / source.capturedAt)."
+  - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (100 500 Ft)."
+  - "accountOpeningFee is the green akciós díj (65 000); accountOpeningFeeStandard1pct is 1% of contract."
+  - "Engine terminalPayout uses ACT/360 to last deposit; webpageTerminalPayout is calculator maturity."
+  - "webpageTerminalPayoutDeltaFt = engine terminalPayout − webpageTerminalPayout (residual; do not force-fit)."

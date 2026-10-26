@@ -72,4 +72,4 @@ Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playb
 
 Hirdetmény 2026-04-20 mortgages: six products are **commercially-usable** (checks 1–3 + commercial composer UX + composer parity). Vidéki remains **schedule-usable** / packaging-quarantined until §6 installment reconciles. Full embedded `*-product-spec.js` parity (**fully-spec-backed**) is a later lifecycle step. No new consumer loan codes in this epic.
 
-Home savings (ROADMAP §5e): PRÉMIUM PLUSZ 10x30 is **schedule-usable** with fee/Premium/maturity calc-aligned to OTP product-page calculator via ÁSZF §10/§22 interest packaging. EBKM packaging quarantined (schedule→Annex 3 pinned; Hirdetmény gaps visible). Commercially-usable waits on EBKM reconciliation. LTP lakáskölcsön / áthidaló remains deferred.
+Home savings (ROADMAP §5e): PRÉMIUM PLUSZ 10x30 is **schedule-usable** with fee/Premium/maturity calc-aligned to OTP product-page calculator via ÁSZF §10 + OTP-aligned kiutalási payout packaging. EBKM packaging quarantined (schedule→Annex 3 pinned; Hirdetmény gaps visible). Commercially-usable waits on EBKM reconciliation. LTP lakáskölcsön / áthidaló remains deferred.

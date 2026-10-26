@@ -206,7 +206,7 @@ assumptions:
   - Customer-perspective cash flows only; no bank internal legs.
   - Default path is continuous monthly saving with housing-purpose Premium at exit.
   - State support is absent for this offering cohort.
-  - Deposit interest uses engine.depositInterestAnnualRatePct (0.10) with ACT/360 + yearly capitalization through ÁSZF §22 maturity payout date.
+  - Deposit interest uses engine.depositInterestAnnualRatePct (0.10) with ACT/360 + yearly capitalization through the OTP-aligned continuous-path maturity payout date (ÁSZF §10 accrual; §22 supplies the 2-month kiutalási structure only).
   - Contract amount derives from monthly deposit via engine.savingsRatePermille (3.846) when not supplied.
   - Irregular-payment Premium quarterly caps (USZ §10 (4)) are out of scope for the continuous contractual path.
 

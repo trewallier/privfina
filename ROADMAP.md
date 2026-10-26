@@ -120,7 +120,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
 - [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium / contract via 3.846‰; OTP product-page calculator Lejáratkor via ÁSZF §10 ACT/360 + OTP-aligned first-of-month lastDeposit+2 packaging; ≤4 Ft residuals pinned, not claimed as proven rounding).
 - [x] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
-- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (EBKM packaging quarantined: schedule→Annex 3 diverges from Hirdetmény goldens; no fitted lag/netting camouflage).
+- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (ÁSZF 22. § kiutalás EBKM packaging matches 6/8 Hirdetmény goldens after OTP maturity terminals; residual 0.01 on promo 20 000 Ft/hó both legs — 4.36 vs 4.35 and −0.57 vs −0.58 — blocks promote; no fitted lag/netting camouflage).
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
 
 Schedule-usable review follow-ups (before / with commercially-usable; from PR #83+)

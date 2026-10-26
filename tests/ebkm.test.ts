@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildEbkmFlowsFromLegs,
+  buildEbkmLegsFromHomeSavingsCashFlows,
   calculateEbkm,
   calculateEbkmFromHomeSavingsCashFlows,
   calculateEbkmFromLegs,
   calendarDaysBetween,
   ebkmPresentValue,
   ebkmYearFraction,
+  resolveHomeSavingsEbkmPayoutDate,
   roundEbkmPercent,
   type EbkmDatedFlow
 } from '../src/finance_engine/instruments/ebkm'
@@ -86,10 +88,55 @@ describe('calculateEbkm (3. melléklet)', () => {
   })
 
   it('maps home-savings schedule-shaped legs through the cash-flow helper', () => {
-    const ebkm = calculateEbkmFromHomeSavingsCashFlows([
-      { date: '2026-01-01', amount: 1000, direction: 'outflow' },
-      { date: '2027-01-01', amount: 1100, direction: 'inflow' }
-    ])
+    // Disable kiutalás retarget so the one-year fixture stays on stated dates.
+    const ebkm = calculateEbkmFromHomeSavingsCashFlows(
+      [
+        { date: '2026-01-01', amount: 1000, direction: 'outflow' },
+        { date: '2027-01-01', amount: 1100, direction: 'inflow' }
+      ],
+      { retargetTerminalPayout: false }
+    )
     expect(ebkm.percentRounded).toBe(10)
+  })
+
+  it('retargets home-savings terminal inflow to ÁSZF kiutalás payout date by default', () => {
+    const scheduleDated = calculateEbkmFromHomeSavingsCashFlows(
+      [
+        { date: '2026-10-10', amount: 1000, direction: 'outflow' },
+        { date: '2036-09-10', amount: 1000, direction: 'outflow' },
+        { date: '2036-09-10', amount: 2500, direction: 'inflow' }
+      ],
+      { retargetTerminalPayout: false }
+    )
+    const aszfPackaged = calculateEbkmFromHomeSavingsCashFlows([
+      { date: '2026-10-10', amount: 1000, direction: 'outflow' },
+      { date: '2036-09-10', amount: 1000, direction: 'outflow' },
+      { date: '2036-09-10', amount: 2500, direction: 'inflow' }
+    ])
+    expect(resolveHomeSavingsEbkmPayoutDate('2036-09-10')).toBe('2036-12-01')
+    expect(aszfPackaged.percentRounded).toBeLessThan(scheduleDated.percentRounded)
+  })
+
+  it('anchors kiutalás retarget on Monthly deposit labels, not later fee-only outflows', () => {
+    const legs = buildEbkmLegsFromHomeSavingsCashFlows([
+      { date: '2026-10-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+      { date: '2036-09-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+      // Hypothetical later fee must not shift last-deposit month.
+      { date: '2036-10-15', amount: 500, direction: 'outflow', description: 'Account management fee' },
+      { date: '2036-11-01', amount: 2500, direction: 'inflow', description: 'Home-savings terminal payout' }
+    ])
+    expect(legs.payouts).toHaveLength(1)
+    expect(legs.payouts[0].date).toBe('2036-12-01')
+  })
+
+  it('rejects multi-inflow schedules when kiutalás retarget is enabled', () => {
+    expect(() =>
+      buildEbkmLegsFromHomeSavingsCashFlows([
+        { date: '2026-10-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+        { date: '2036-09-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+        { date: '2036-11-01', amount: 2000, direction: 'inflow' },
+        { date: '2036-12-01', amount: 500, direction: 'inflow' }
+      ])
+    ).toThrow(/single terminal inflow/i)
   })
 })

@@ -4,8 +4,8 @@
  * Contract-amount ‰ helpers and schedule math come from the finance-engine
  * surface (ADR 0017 / 0032). This module only maps composer/spec inputs onto
  * those primitives + the schedule/bundle generators — no third formula surface.
- * EBKM is computed from the same customer cash-flow packaging as the chart
- * (ADR 0031); published Hirdetmény match remains quarantined.
+ * EBKM uses the same deposit/fee/Premium amounts as the chart, with terminal
+ * inflow retargeted to the ÁSZF 22. § kiutalás payout date (ADR 0031).
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
@@ -112,7 +112,8 @@ function scheduleOutputsFromBundleInput(bundleInput, schedule) {
     cashFlows.map((flow) => ({
       date: flow.date,
       amount: flow.amount,
-      direction: flow.direction === 'inflow' ? 'inflow' : 'outflow'
+      direction: flow.direction === 'inflow' ? 'inflow' : 'outflow',
+      description: flow.description
     }))
   )
 
@@ -136,8 +137,8 @@ function scheduleOutputsFromBundleInput(bundleInput, schedule) {
 }
 
 /**
- * Live preview: schedule scalars plus schedule-faithful EBKM (expands customer
- * cash flows for Annex 3; same packaging as the chart).
+ * Live preview: schedule scalars plus ADR 0031 EBKM (Annex 3 on customer
+ * amounts; ÁSZF kiutalás payout dating for the terminal leg).
  */
 function calculateHomeSavingsScheduleFromSpecInputs(specInputs, options = {}) {
   const resolveHomeSavingsSchedule = options.resolveHomeSavingsSchedule

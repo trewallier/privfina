@@ -2,7 +2,9 @@
 
 Home-savings (lakás-előtakarékossági) product specification for the currently marketed OTP Lakástakarék módozat.
 
-**Catalog status:** `schedule-usable` — fee/Premium/contract exact vs OTP product-page calculator; maturity interest uses ÁSZF §10 ACT/360 with OTP-aligned kiutalási packaging (see below); EBKM packaging quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
+**Catalog status:** `schedule-usable` — fee/Premium/contract exact vs OTP product-page calculator; maturity interest uses ÁSZF §10 ACT/360 with OTP-aligned kiutalási packaging (see below); ÁSZF kiutalás EBKM packaging lands 6/8 Hirdetmény goldens (0.01 residual on promo-20k both legs blocks commercially-usable; see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
+
+**Architecture:** ADR 0028 (family/schema), ADR 0029 (instrument), ADR 0030 (commercial composer / readiness), ADR 0031 (EBKM verification).
 
 ## Sources (Europe/Budapest effective dates)
 
@@ -49,4 +51,4 @@ With housing-purpose use: 10% (months 49–96), 20% (97–120), **30%** at matur
 
 ## Worked examples
 
-OTP product-page calculator **Lejáratkor terminal** is authoritative for maturity; `depositInterest` in examples is **derived** as `terminal − deposits − premium` unless separately captured. Engine values are pinned as `engineTerminalPayout*` (≤4 Ft residual). EBKM examples lock Hirdetmény published percentages; schedule→Annex 3 pins live in YAML / ADR 0031 harness (with-premium gaps remain; some without-premium legs may coincide with published).
+OTP product-page calculator **Lejáratkor terminal** is authoritative for maturity; `depositInterest` in examples is **derived** as `terminal − deposits − premium` unless separately captured. Engine values are pinned as `engineTerminalPayout*` (≤4 Ft residual). EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness asserts Annex 3 + ÁSZF 22. § kiutalás payout dating (6/8 green; residual gap documented on `ebkm-promo-20000` via `engineEbkmPct*`).

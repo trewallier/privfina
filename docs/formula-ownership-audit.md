@@ -54,19 +54,19 @@ Inventory (by product)
   - Browser path: `public/controller/bmap-calculation-adapter.js` accepts user-supplied `dkjBaseYieldPct`
   - Status: coupon composition from base yield + premium is spec-backed; weighted auction DKJ base derivation remains future external-data work
 
-- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **schedule-usable** / calc-aligned (OTP web Lejáratkor ↔ ÁSZF §10 + OTP-aligned payout packaging) / EBKM packaging-quarantined
+- OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings.premium-plusz-10x30.standard`) — **schedule-usable** / calc-aligned (OTP web Lejáratkor ↔ ÁSZF §10 + OTP-aligned payout packaging) / ÁSZF kiutalás EBKM 6/8 (0.01 residual on promo-20k)
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
   - Browser path: Vite SPA imports `@finance_engine` via thin `public/instruments.js` wrappers + `home-savings-calculation-adapter.js` + commercial composer (ADR 0030 / 0032)
-  - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers); `src/finance_engine/instruments/ebkm.ts` (82/2010 Annex 3 from schedule cash flows, ADR 0031)
-  - Family mapper: `src/finance_engine/product_specs/home_savings.ts` (includes schedule-faithful `ebkmPct`)
+  - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers); `src/finance_engine/instruments/ebkm.ts` (82/2010 Annex 3 + ÁSZF 22. § kiutalás payout dating, ADR 0031)
+  - Family mapper: `src/finance_engine/product_specs/home_savings.ts` (includes ÁSZF-packaged `ebkmPct`)
   - Metadata: hand-mirrored `HOME_SAVINGS_PRODUCTS` parity-tested against YAML (`tests/home-savings-composer-parity.test.ts`)
-  - Status: commercial composer + schedule-faithful EBKM preview; Hirdetmény EBKM gaps pinned visible; commercially-usable blocked until settlement packaging reconciles
+  - Status: commercial composer + EBKM preview; 6/8 Hirdetmény goldens green; 0.01 residual on promo-20k both legs blocks commercially-usable
 
 Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
 2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Vidéki §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
-3. ROADMAP §5e home-savings: schedule-usable + maturity calc-aligned (ÁSZF §10 + OTP-aligned payout packaging); EBKM quarantine (schedule→Annex 3 pinned; close Hirdetmény with-premium gap without camouflage → commercially-usable); fully-spec-backed later.
+3. ROADMAP §5e home-savings: schedule-usable + maturity calc-aligned (ÁSZF §10 + OTP-aligned payout packaging); ÁSZF kiutalás EBKM 6/8 (close promo-20k 0.01 residuals without camouflage → commercially-usable); fully-spec-backed later.
 4. ROADMAP §6a / ADR 0032 Vite single calculation surface (done): browser imports `@finance_engine`; Pages deploys `dist-web`.
 5. ROADMAP §7 storage port (replace raw `localStorage` helpers).
 6. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets. LTP loan deferred under §5e.

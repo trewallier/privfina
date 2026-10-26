@@ -57,6 +57,7 @@ export {
   ebkmPresentValue,
   calculateEbkm,
   calculateEbkmFromLegs,
+  resolveHomeSavingsEbkmPayoutDate,
   buildEbkmLegsFromHomeSavingsCashFlows,
   calculateEbkmFromHomeSavingsCashFlows
 } from './instruments/ebkm'

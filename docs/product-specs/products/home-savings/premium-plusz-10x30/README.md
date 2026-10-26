@@ -1,16 +1,14 @@
 # OTP Lakástakarék PRÉMIUM PLUSZ 10x30
 
-Home-savings (lakás-előtakarékossági) product specification for the currently sold OTP Lakástakarék módozat.
+Home-savings (lakás-előtakarékossági) product specification for the currently marketed OTP Lakástakarék módozat.
 
-**Catalog status:** `inputs-driven` — calc-aligned revoked until engine terminal/interest matches OTP product-page calculator goldens; EBKM packaging also quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
-
-**Architecture:** ADR 0028 (family/schema), ADR 0029 (instrument), ADR 0030 (commercial composer / readiness), ADR 0031 (EBKM verification).
+**Catalog status:** `schedule-usable` — maturity/fee/Premium calc-aligned to OTP product-page calculator via ÁSZF §10/§22 interest packaging; EBKM packaging quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
 
 ## Sources (Europe/Budapest effective dates)
 
-- Hirdetmény — értékesített termékek, akciók és feltételek — **2026-10-10**
+- Hirdetmény — értékesített termékekről — **2026-10-10**
 - Hirdetmény — kamat, díj és költség tételek (Díjtáblázat) — **2026-08-03**
-- ÁSZF — Általános Szerződési Feltételei — közzététel **2026-03-24** (interest / contract mechanics)
+- ÁSZF — Általános Szerződési Feltételei — közzététel **2026-03-24** (interest / kiutalás mechanics)
 - Üzletszabályzat (2023-03-01+ contracts) Melléklet — hatály **2026-08-03** — módozat table
 - Product-page calculator — [Lakástakarék Prémium Plusz ajánlat](https://www.otpbank.hu/lakastakarek/lakastakarek-premium-ajanlat) — maturity / fee / Premium captures **2026-10-25** (`web-calculator-maturity-*.yaml`; not EBKM)
 
@@ -19,31 +17,31 @@ Home-savings (lakás-előtakarékossági) product specification for the currentl
 | Field | Value |
 | --- | --- |
 | Betéti kamat | **0.10%** p.a. |
-| Megtakarítási ráta | **3.846‰ /hó** of szerződéses összeg (round up to 10 Ft) |
+| Megtakarítási ráta | **3.846‰**/hó |
 | Szerződéses összeg | 2 600 000–26 000 000 Ft |
-| Havi betét | 10 000–100 000 Ft |
-| Prémium | 30% (maturity); early-exit bands 10% / 20% |
+| Értékelés min. előtakarékossági idő | **120** hó |
+| Kiutalás min. előtakarékossági idő | **122** hó (= 120 + 2-month kiutalási időszak) |
 
-Interest day-count: ACT/360 daily (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization, accrual from credit day through day before payout (ÁSZF/USZ). **Engine currently treats payout as the last deposit date**; OTP product-page calculator maturity implies ~two further months of accrual (first of that month recovers almost all of the −866 / −351 / −1 743 Ft gaps). ÁSZF-sourced payout dating required before restoring calc-aligned.
+Interest day-count: ACT/360 daily (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization, accrual from credit day through day before payout (ÁSZF §10). Continuous-path **maturity payout date** = first of the month two months after last deposit (ÁSZF §22 kiutalási időszak for post-2017-07-01 contracts) — matches OTP product-page calculator within ≤4 Ft.
 
-Premium applies to **contractual deposits only** (no compound on Premium; USZ §10).
+Havi betét = ceil10(szerződéses összeg × 3,846 / 1000).
 
-## In scope
+## Premium (OTP Lakástakarék Prémium — not state aid)
 
-- Monthly deposit bounds and contract-amount derivation via 3.846‰
-- Account opening fee (standard 1% / promo 0.5% or fixed 65 000 Ft) and 500 Ft/hó account fee
-- OTP Lakástakarék Prémium tiers with housing-purpose assumption
-- 48-month loyalty commitment for promo opening fee; unlock fee as scenario mode
-- Published EBKM goldens (20k and 100k monthly deposit; promo and 1% tables; with/without Premium)
-- Explicit absence of state support for this cohort
-- ACT/360 deposit interest at 0.10%
+With housing-purpose use: 10% (months 49–96), 20% (97–120), **30%** at maturity from month 120. Premium applies to **contractual deposits only** (no compound on Premium; USZ §10).
+
+## Calc-aligned bar
+
+- Fee / Premium / contract / maturity from OTP product-page calculator (`web-calculator-maturity-*.yaml`, `source.kind: otp-product-page-calculator`)
+- Engine ACT/360 + ÁSZF §22 payout dating within ≤4 Ft of those goldens
+- No product-specific generator forks (ADR 0015)
 
 ## Out of scope
 
-- LTP *lakáskölcsön* and *áthidaló kölcsön* (including díjtáblázat THM representative examples) — ROADMAP §5e deferred
 - Hard validation of housing purpose / eligibility (hints only through schedule-usable)
-- Irregular-payment Premium quarterly 25% caps (USZ §10 (4)) — continuous contractual path only for v1
+- LTP lakáskölcsön / áthidaló kölcsön
+- Loyalty unlock fee scenario modes beyond hints
 
 ## Worked examples
 
-Examples in this folder are acceptance criteria. OTP product-page calculator figures are authoritative for fee / Premium / contract / maturity (`web-calculator-maturity-*.yaml`, `source.kind: otp-product-page-calculator`). Engine terminal residuals stay pinned as `engineTerminalPayout*` (calc-aligned blocked). EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness pins schedule→Annex 3 gaps until settlement packaging reconciles.
+Examples in this folder are acceptance criteria. OTP product-page calculator figures are authoritative for fee / Premium / contract / maturity (`web-calculator-maturity-*.yaml`). Engine residuals ≤4 Ft are pinned as `engineTerminalPayout*`. EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness pins schedule→Annex 3 gaps until commercially-usable.

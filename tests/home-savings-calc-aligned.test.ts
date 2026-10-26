@@ -8,6 +8,7 @@ import {
   loadHomeSavingsProductSpec,
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsContractAmount,
+  resolveHomeSavingsMaturityPayoutDate,
   resolveMonthlyDepositFromContractAmount,
   resolvePremiumRateForTerm,
   type HomeSavingsSpecInputs
@@ -40,7 +41,7 @@ function loadExample(relativePath: string): {
   }
 }
 
-describe('home-savings engine vs OTP web maturity (PRÉMIUM PLUSZ 10x30)', () => {
+describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
   const product = loadProduct()
 
   it('loads product under home-savings family with USZ Melléklet rate locks', () => {
@@ -62,7 +63,13 @@ describe('home-savings engine vs OTP web maturity (PRÉMIUM PLUSZ 10x30)', () =>
     expect(resolveContractAmountFromMonthlyDeposit({ monthlyDeposit: 20_000 })).toBe(5_200_000)
   })
 
-  it('matches OTP fee / Premium for maturity-premium-120; pins engine terminal gap', () => {
+  it('resolves ÁSZF §22 maturity payout as first of month two months after last deposit', () => {
+    expect(
+      resolveHomeSavingsMaturityPayoutDate({ startDate: '2026-10-10', termMonths: 120 })
+    ).toBe('2036-11-01')
+  })
+
+  it('matches OTP fee / Premium for maturity-premium-120; ÁSZF interest within rounding of OTP', () => {
     const { inputs, expected } = loadExample(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
     )
@@ -76,18 +83,18 @@ describe('home-savings engine vs OTP web maturity (PRÉMIUM PLUSZ 10x30)', () =>
     expect(outputs.premiumRatePct).toBe(expected.premiumRatePct)
     expect(outputs.premiumBase).toBe(expected.premiumBase)
     expect(outputs.premiumAmount).toBe(expected.premiumAmount)
-    // OTP authoritative terminal (not yet produced by engine)
     expect(expected.terminalPayout).toBe(7_831_152)
     expect(outputs.depositInterest).toBe(expected.engineDepositInterest)
     expect(outputs.terminalPayout).toBe(expected.engineTerminalPayout)
     expect(outputs.terminalPayout - (expected.terminalPayout as number)).toBe(
       expected.engineTerminalPayoutDeltaFt
     )
+    expect(Math.abs(expected.engineTerminalPayoutDeltaFt as number)).toBeLessThanOrEqual(4)
     expect(outputs.productId).toBe('home-savings.premium-plusz-10x30.standard')
     expect(outputs.productSpecVersion).toBe('v2alpha1')
   })
 
-  it('generates customer cash flows: opening fee, deposits, account fees, engine terminal inflow', () => {
+  it('generates customer cash flows with terminal on ÁSZF maturity payout date', () => {
     const { inputs, expected } = loadExample(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
     )
@@ -110,14 +117,15 @@ describe('home-savings engine vs OTP web maturity (PRÉMIUM PLUSZ 10x30)', () =>
     expect(terminal).toHaveLength(1)
     expect(terminal[0].direction).toBe(CashFlowDirection.Inflow)
     expect(terminal[0].amount).toBe(expected.engineTerminalPayout)
-    expect(terminal[0].date).toBe(deposits[deposits.length - 1].date)
+    expect(terminal[0].date).toBe(expected.maturityPayoutDate)
+    expect(terminal[0].date).not.toBe(deposits[deposits.length - 1].date)
   })
 
   it.each([
     'web-calculator-maturity-20000.yaml',
     'web-calculator-maturity-50000.yaml',
     'web-calculator-maturity-100000.yaml'
-  ])('locks OTP product-page fee / Premium / maturity and pins engine gap for %s', (fileName) => {
+  ])('locks OTP product-page fee / Premium / maturity and ÁSZF engine residual for %s', (fileName) => {
     const relativePath = `docs/product-specs/products/home-savings/premium-plusz-10x30/examples/${fileName}`
     const { inputs, expected, source } = loadExample(relativePath)
 
@@ -127,6 +135,10 @@ describe('home-savings engine vs OTP web maturity (PRÉMIUM PLUSZ 10x30)', () =>
 
     const outputs = calculateHomeSavingsFromProductSpec(product, inputs)
     const contractAmount = resolveHomeSavingsContractAmount(product, inputs)
+    const payoutDate = resolveHomeSavingsMaturityPayoutDate({
+      startDate: inputs.startDate,
+      termMonths: inputs.termMonths
+    })
 
     expect(outputs.accountFeeMonthly).toBe(expected.accountFeeMonthly)
     expect(outputs.accountOpeningFee).toBe(expected.accountOpeningFee)
@@ -137,20 +149,19 @@ describe('home-savings engine vs OTP web maturity (PRÉMIUM PLUSZ 10x30)', () =>
     expect(outputs.premiumRatePct).toBe(expected.premiumRatePct)
     expect(outputs.premiumBase).toBe(expected.premiumBase)
     expect(outputs.premiumAmount).toBe(expected.premiumAmount)
+    expect(payoutDate).toBe(expected.maturityPayoutDate)
 
-    // OTP authoritative maturity
     expect(expected.depositInterest).toBe(
       (expected.terminalPayout as number) -
         (expected.totalDeposits as number) -
         (expected.premiumAmount as number)
     )
-    // Engine still stops interest at last deposit — gap pinned, not force-fitted
     expect(outputs.depositInterest).toBe(expected.engineDepositInterest)
     expect(outputs.terminalPayout).toBe(expected.engineTerminalPayout)
     expect(outputs.terminalPayout - (expected.terminalPayout as number)).toBe(
       expected.engineTerminalPayoutDeltaFt
     )
-    expect(outputs.terminalPayout).not.toBe(expected.terminalPayout)
+    expect(Math.abs(expected.engineTerminalPayoutDeltaFt as number)).toBeLessThanOrEqual(4)
   })
 
   it('resolves Premium early-exit bands from Hirdetmény tiers', () => {

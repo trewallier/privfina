@@ -22,6 +22,13 @@ export const DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE = 3.846
 export const DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT = 2_600_000
 export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
 
+/**
+ * ÁSZF §22 (4): kiutalási időszak length for contracts concluded on/after 2017-07-01
+ * (2 months; older cohorts use 3). Current Prémium Plusz uses 2.
+ * With evaluation min megtakarítási idő 120 (USZ Melléklet) → kiutalás min 122.
+ */
+export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS = 2
+
 export interface HomeSavingsPremiumTiers {
   months49to96: number
   months97to120: number
@@ -144,6 +151,38 @@ function shiftUtcDays(date: Date, days: number): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days))
 }
 
+/**
+ * Continuous-path maturity payout date for interest end + terminal inflow.
+ *
+ * ÁSZF §22: after evaluation min megtakarítási idő, a 2-month kiutalási időszak
+ * runs (post-2017-07-01). USZ Melléklet encodes this as kiutalás min = 122 for
+ * the 120-month módozat. OTP product-page calculator "Lejáratkor" goldens match
+ * the **first calendar day** of the month that is
+ * {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS} after the last deposit's month
+ * (not the literal kiutalási időpont = last day of that period / §22 (1) payment
+ * month). Interest ends the day before this date (ÁSZF §10).
+ */
+export function resolveHomeSavingsMaturityPayoutDate(input: {
+  startDate: string
+  termMonths: number
+  kiutalasiPeriodMonths?: number
+}): string {
+  const termMonths = Number(input.termMonths)
+  if (!Number.isInteger(termMonths) || termMonths <= 0) {
+    throw new Error('termMonths must be a positive integer.')
+  }
+  const lag = Number(input.kiutalasiPeriodMonths ?? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS)
+  if (!Number.isInteger(lag) || lag < 0) {
+    throw new Error('kiutalasiPeriodMonths must be a non-negative integer.')
+  }
+  const start = parseIsoDate(input.startDate)
+  const lastDeposit = addMonthsUtc(start, termMonths - 1)
+  const payout = new Date(
+    Date.UTC(lastDeposit.getUTCFullYear(), lastDeposit.getUTCMonth() + lag, 1)
+  )
+  return formatIsoDate(payout)
+}
+
 export function ceilToTenForint(amount: number): number {
   return Math.ceil(amount / 10) * 10
 }
@@ -204,19 +243,18 @@ export function resolveContractAmountFromMonthlyDeposit(input: {
  * ÁSZF/USZ deposit interest: ACT/360 daily
  * (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization on the first
  * day after each megtakarítási év, accrual from credit day through the day
- * before payout. Returns whole-forint interest (nearest).
+ * before payout (ÁSZF §10). Returns whole-forint interest (nearest).
  *
- * Payout horizon quarantine: `payoutDate` is currently the last deposit date.
- * OTP product-page calculator maturity (authoritative) implies ~two further
- * months of accrual toward the first of that month (see
- * `web-calculator-maturity-*.yaml` engineTerminalPayoutDeltaFt). Do not fit a
- * lag here without ÁSZF-sourced dating — home-savings calc-aligned is blocked.
+ * Payout date defaults to {@link resolveHomeSavingsMaturityPayoutDate} (ÁSZF §22
+ * 2-month kiutalási packaging aligned with OTP product-page calculator goldens).
  */
 export function calculateHomeSavingsDepositInterest(input: {
   monthlyDeposit: number
   termMonths: number
   startDate: string
   annualRatePct?: number
+  /** Override maturity payout date (ISO); defaults to ÁSZF kiutalási packaging. */
+  payoutDate?: string
 }): number {
   const monthlyDeposit = ensurePositiveAmount(input.monthlyDeposit)
   const termMonths = Number(input.termMonths)
@@ -247,12 +285,21 @@ export function calculateHomeSavingsDepositInterest(input: {
 
   const yearStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1))
   const capDates = new Set<string>()
-  for (let yearIndex = 1; yearIndex <= Math.ceil(termMonths / 12) + 1; yearIndex += 1) {
+  for (
+    let yearIndex = 1;
+    yearIndex <= Math.ceil(termMonths / 12) + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS + 1;
+    yearIndex += 1
+  ) {
     capDates.add(formatIsoDate(addMonthsUtc(yearStart, yearIndex * 12)))
   }
 
-  const lastDeposit = addMonthsUtc(start, termMonths - 1)
-  const payoutDate = lastDeposit
+  const payoutDate = parseIsoDate(
+    input.payoutDate ??
+      resolveHomeSavingsMaturityPayoutDate({
+        startDate: input.startDate,
+        termMonths
+      })
+  )
   let balance = 0
   let pendingInterest = 0
   let totalInterest = 0
@@ -273,7 +320,7 @@ export function calculateHomeSavingsDepositInterest(input: {
       balance += deposit
     }
 
-    // Interest ends on the day before payout (ÁSZF/USZ).
+    // Interest ends on the day before payout (ÁSZF §10).
     if (cursor.getTime() < payoutDate.getTime()) {
       pendingInterest += (balance * annualRatePct) / (360 * 100)
     }
@@ -403,14 +450,15 @@ export function generateHomeSavingsInstrumentCashFlows(
     )
   }
 
-  const depositFlows = flows.filter((flow) => flow.description === depositDescription)
-  const lastDepositDate =
-    depositFlows.length > 0 ? depositFlows[depositFlows.length - 1].date : input.startDate
+  const maturityPayoutDate = resolveHomeSavingsMaturityPayoutDate({
+    startDate: input.startDate,
+    termMonths
+  })
 
   if (schedule.terminalPayout > 0) {
     flows.push(
       createCashFlow(
-        lastDepositDate,
+        maturityPayoutDate,
         schedule.terminalPayout,
         CashFlowDirection.Inflow,
         category,

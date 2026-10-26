@@ -25,14 +25,14 @@ Statuses are transitional rollout markers reflecting current integration state, 
 | Simplified examples | `loan.fixed-rate.standard`, `loan.fixed-rate.mortgage`; generic bond subtypes (not catalog rows) | Loans: `30/360` equal-month (`r/12`). Bonds: instrument-mode presentation on simplified investment composer |
 | Public offerings (loans) | Seven Hirdetmény `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
 | Public offerings (securities) | `government-security.{dkj,pmap,bmap}.standard` | ÁKK / State Treasury; commercial investment composer (ADR 0027) |
-| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Lakástakarék; commercial home-savings composer (ADR 0028–0031); USZ Melléklet 0.10% / 3.846‰; calc-aligned requires OTP web-calculator maturity match |
+| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Lakástakarék; commercial home-savings composer (ADR 0028–0031); USZ Melléklet 0.10% / 3.846‰ / kiutalás 122; ÁSZF §10/§22 interest packaging |
 
 **What `calc-aligned` requires in this repo** (engine bar; UI may still be below schedule-usable):
 
 - Family-level product-spec mapper under `src/finance_engine/product_specs/` that loads schema-v2 YAML and drives reusable primitives (no per-product amortizer forks).
 - Executable tests that assert engine-computed outputs from example inputs (not only YAML constant lock-in).
 - Catalog row, [`formula-ownership-audit.md`](../formula-ownership-audit.md), and product README updated to `calc-aligned`.
-- **Home-savings public offering:** engine terminal payout / deposit interest must match OTP product-page calculator worked examples (`web-calculator-maturity-*.yaml`). Fee / Premium / contract agreement alone is not sufficient; do not fit interest payout-horizon lags without ÁSZF-sourced dating.
+- **Home-savings public offering:** engine terminal payout / deposit interest must match OTP product-page calculator worked examples (`web-calculator-maturity-*.yaml`) within documented rounding (≤4 Ft). Interest payout dating must follow ÁSZF §10/§22 (2-month kiutalási packaging), not stop at last deposit.
 
 **What `schedule-usable` requires** (ADR 0023 loans; ADR 0027 securities; ADR 0030 home-savings):
 
@@ -66,10 +66,10 @@ Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playb
 | government-security.dkj.standard | government-security | dkj | dkj | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/dkj/product.yaml | docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed end-to-end (ADR 0027) |
 | government-security.pmap.standard | government-security | pmap | pmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/pmap/product.yaml | docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, preview/adapter seam, and examples are spec-backed (ADR 0027) |
 | government-security.bmap.standard | government-security | bmap | bmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/bmap/product.yaml | docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed; accrued/coupon primitives in `src/finance_engine/instruments/bmap.ts` (Vite `@finance_engine`, ADR 0032) |
-| home-savings.premium-plusz-10x30.standard | home-savings | premium-plusz-10x30 | premium-plusz-10x30 | v2alpha1 | inputs-driven | docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml | docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ | Composer scaffolding present; calc-aligned revoked — OTP web-calculator maturity/interest ≠ engine (payout-horizon gap pinned in `web-calculator-maturity-*.yaml`); EBKM also quarantined (ADR 0031 / ROADMAP §5e) |
+| home-savings.premium-plusz-10x30.standard | home-savings | premium-plusz-10x30 | premium-plusz-10x30 | v2alpha1 | schedule-usable | docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml | docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ | Commercial composer + fee/Premium/maturity calc-aligned (ÁSZF §22 kiutalási packaging ↔ OTP web calculator ≤4 Ft); EBKM packaging quarantined (ADR 0031 / ROADMAP §5e) |
 
 ## Planned catalog extensions
 
 Hirdetmény 2026-04-20 mortgages: six products are **commercially-usable** (checks 1–3 + commercial composer UX + composer parity). Vidéki remains **schedule-usable** / packaging-quarantined until §6 installment reconciles. Full embedded `*-product-spec.js` parity (**fully-spec-backed**) is a later lifecycle step. No new consumer loan codes in this epic.
 
-Home savings (ROADMAP §5e): PRÉMIUM PLUSZ 10x30 is **inputs-driven** — calc-aligned / schedule-usable revoked until engine terminal matches OTP product-page calculator goldens (interest accrual currently stops at last deposit; OTP implies ~first-of-month two months later). EBKM packaging also quarantined. LTP lakáskölcsön / áthidaló remains deferred.
+Home savings (ROADMAP §5e): PRÉMIUM PLUSZ 10x30 is **schedule-usable** with fee/Premium/maturity calc-aligned to OTP product-page calculator via ÁSZF §10/§22 interest packaging. EBKM packaging quarantined (schedule→Annex 3 pinned; Hirdetmény gaps visible). Commercially-usable waits on EBKM reconciliation. LTP lakáskölcsön / áthidaló remains deferred.

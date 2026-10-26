@@ -170,21 +170,21 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     ).toBe(65_000)
   })
 
-  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (maturity + EBKM quarantined)', () => {
+  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (EBKM quarantined)', () => {
     const catalog = readRepoFile(CATALOG_PATH)
     const row = catalog
       .split('\n')
       .find(
         (line) =>
           line.startsWith('| home-savings.premium-plusz-10x30.standard |') &&
-          line.includes('| inputs-driven |')
+          line.includes('| schedule-usable |')
       )
     expect(row).toBeDefined()
-    expect(row).toMatch(/calc-aligned revoked|web-calculator|OTP/i)
+    expect(row).toMatch(/EBKM/i)
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
-    expect(entry?.migrationStatus).toBe('inputs-driven')
-    expect(entry?.commerciallyBlockedReason).toMatch(/Calc-aligned blocked|OTP product-page|EBKM/i)
+    expect(entry?.migrationStatus).toBe('schedule-usable')
+    expect(entry?.commerciallyBlockedReason).toMatch(/EBKM/i)
     expect(entry?.discountHints?.length).toBeGreaterThan(0)
     expect(entry?.premiumHints).toMatch(/Premium tiers/i)
   })
@@ -215,8 +215,8 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
 
     expect(withPremium.accountFeeMonthly).toBe(500)
     // Schedule cash-flow EBKM pins (not published 4.35 / -0.58).
-    expect(withPremium.ebkmPct).toBe(4.54)
-    expect(withoutPremium.ebkmPct).toBe(-0.6)
+    expect(withPremium.ebkmPct).toBe(4.42)
+    expect(withoutPremium.ebkmPct).toBe(-0.58)
     expect(withPremium.ebkmPct).not.toBe(4.35)
   })
 

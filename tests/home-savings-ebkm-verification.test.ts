@@ -61,25 +61,26 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
       path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-20000.yaml',
       publishedWith: 4.35,
       publishedWithout: -0.58,
-      enginePins: { withPremium: 4.54, withoutPremium: -0.6 }
+      // Pins after ÁSZF §22 maturity payout dating (terminal on first of lastDeposit+2).
+      enginePins: { withPremium: 4.42, withoutPremium: -0.58 }
     },
     {
       path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-100000.yaml',
       publishedWith: 4.84,
       publishedWithout: -0.1,
-      enginePins: { withPremium: 5.05, withoutPremium: -0.11 }
+      enginePins: { withPremium: 4.92, withoutPremium: -0.1 }
     },
     {
       path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-standard-20000.yaml',
       publishedWith: 4.12,
       publishedWithout: -0.77,
-      enginePins: { withPremium: 4.29, withoutPremium: -0.8 }
+      enginePins: { withPremium: 4.18, withoutPremium: -0.78 }
     },
     {
       path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-standard-100000.yaml',
       publishedWith: 4.48,
       publishedWithout: -0.4,
-      enginePins: { withPremium: 4.66, withoutPremium: -0.42 }
+      enginePins: { withPremium: 4.54, withoutPremium: -0.41 }
     }
   ]
 
@@ -120,9 +121,12 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
         expect(withPremiumOutputs.ebkmPct).toBe(example.enginePins.withPremium)
         expect(withoutPremiumOutputs.ebkmPct).toBe(example.enginePins.withoutPremium)
 
-        // Gap vs published must remain visible — do not camouflage with fitted knobs.
-        expect(withPremiumOutputs.ebkmPct).not.toBe(example.publishedWith)
-        expect(withoutPremiumOutputs.ebkmPct).not.toBe(example.publishedWithout)
+        // Pair vs published must still show a quarantine gap (individual legs may match).
+        // Do not camouflage remaining with/without mismatches with fitted knobs.
+        expect([withPremiumOutputs.ebkmPct, withoutPremiumOutputs.ebkmPct]).not.toEqual([
+          example.publishedWith,
+          example.publishedWithout
+        ])
         expect(withPremiumOutputs.premiumAmount).toBeGreaterThan(0)
         expect(withoutPremiumOutputs.premiumAmount).toBe(0)
       })

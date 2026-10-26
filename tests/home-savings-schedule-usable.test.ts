@@ -34,19 +34,19 @@ function formDataFrom(entries: Record<string, string>): FormData {
   } as FormData
 }
 
-describe('home-savings composer metadata (inputs-driven until OTP maturity match)', () => {
+describe('home-savings schedule-usable metadata', () => {
   it('exposes PRÉMIUM PLUSZ 10x30 for the commercial home-savings picker', () => {
     const codes = HOME_SAVINGS_PRODUCTS.map((entry) => entry.productCode)
     expect(codes).toEqual(['premium-plusz-10x30'])
     expect(buildHomeSavingsProductOptions()).toHaveLength(1)
-    expect(findHomeSavingsProduct('premium-plusz-10x30')?.migrationStatus).toBe('inputs-driven')
+    expect(findHomeSavingsProduct('premium-plusz-10x30')?.migrationStatus).toBe('schedule-usable')
     expect(findHomeSavingsProduct('premium-plusz-10x30')?.commerciallyBlockedReason).toMatch(
       /EBKM/i
     )
     expect(
       findHomeSavingsProductById('home-savings.premium-plusz-10x30.standard')?.displayName
     ).toMatch(/PRÉMIUM PLUSZ 10x30/)
-    expect(resolveHomeSavingsReadinessHint('inputs-driven')).toMatch(/inputs-driven/)
+    expect(resolveHomeSavingsReadinessHint('schedule-usable')).toMatch(/schedule-usable/)
   })
 
   it('maps form inputs to stamped product lineage and customer-perspective schedule', () => {
@@ -151,10 +151,9 @@ describe('home-savings composer metadata (inputs-driven until OTP maturity match
     expect(outputs.totalAccountFees).toBe(60_000)
     expect(outputs.premiumRatePct).toBe(30)
     expect(outputs.premiumAmount).toBe(1_800_000)
-    // Engine terminal (last-deposit interest horizon) — OTP authoritative is 7_831_152
-    expect(outputs.depositInterest).toBe(30_286)
-    expect(outputs.terminalPayout).toBe(7_830_286)
-    expect(outputs.terminalPayout).not.toBe(7_831_152)
+    // ÁSZF §22 kiutalási packaging — OTP authoritative terminal is 7_831_152 (Δ +4 Ft)
+    expect(outputs.depositInterest).toBe(31_156)
+    expect(outputs.terminalPayout).toBe(7_831_156)
     expect(outputs.productId).toBe('home-savings.premium-plusz-10x30.standard')
     expect(outputs.productSpecVersion).toBe('v2alpha1')
 
@@ -187,7 +186,8 @@ describe('home-savings composer metadata (inputs-driven until OTP maturity match
     expect(fees).toHaveLength(120)
     expect(terminal).toHaveLength(1)
     expect(terminal[0].direction).toBe('inflow')
-    expect(terminal[0].amount).toBe(7_830_286)
+    expect(terminal[0].amount).toBe(7_831_156)
+    expect(terminal[0].date).toBe('2036-11-01')
   })
 
   it('preview schedule path returns scalars without requiring a bundle factory', () => {
@@ -203,8 +203,8 @@ describe('home-savings composer metadata (inputs-driven until OTP maturity match
       { resolveHomeSavingsSchedule }
     )
 
-    expect(outputs.terminalPayout).toBe(7_830_286)
-    expect(outputs.depositInterest).toBe(30_286)
+    expect(outputs.terminalPayout).toBe(7_831_156)
+    expect(outputs.depositInterest).toBe(31_156)
     expect((outputs as { bundle?: unknown }).bundle).toBeUndefined()
   })
 
@@ -224,7 +224,7 @@ describe('home-savings composer metadata (inputs-driven until OTP maturity match
     expect(outputs.accountOpeningFee).toBe(130_000)
     expect(outputs.premiumRatePct).toBe(0)
     expect(outputs.premiumAmount).toBe(0)
-    expect(outputs.terminalPayout).toBe(6_000_000 + 30_286)
+    expect(outputs.terminalPayout).toBe(6_000_000 + 31_156)
   })
 
   it('matches engine locked maturity example on the browser dual-surface', () => {

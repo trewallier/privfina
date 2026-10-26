@@ -118,16 +118,16 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Schema v2: add `home-savings` family + `engine.instrumentType: home-savings` + account fee types; validation fixtures cover the new product folder.
 - [x] Author `product.yaml` + Hirdetmény worked examples; register catalog row **`spec-only`** (`home-savings.premium-plusz-10x30.standard`).
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
-- [ ] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium / contract via 3.846‰ match; **OTP product-page calculator terminal/interest must match** — currently revoked: engine stops interest at last deposit; OTP maturity implies ~first-of-month two months later; residuals pinned in `web-calculator-maturity-*.yaml`; no fitted lag without ÁSZF).
-- [ ] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`** (composer scaffolding exists; catalog demoted to **inputs-driven** until calc-aligned restored).
-- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (blocked on calc-aligned + EBKM packaging; no fitted lag/netting camouflage).
+- [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium / contract via 3.846‰; OTP product-page calculator maturity via ÁSZF §10 ACT/360 + §22 2-month kiutalási payout dating; ≤4 Ft rounding residuals pinned).
+- [x] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
+- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (EBKM packaging quarantined: schedule→Annex 3 diverges from Hirdetmény goldens; no fitted lag/netting camouflage).
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
 
-Composer / example follow-ups (before restoring calc-aligned; from PR #83+)
+Schedule-usable review follow-ups (before / with commercially-usable; from PR #83+)
 - [x] Collapse browser home-savings product-spec mapper (`home-savings-calculation-adapter.js`) onto shared primitives — avoid a third formula surface beyond ADR 0017 TS↔`instruments.js`; keep locked-example engine↔browser parity green.
 - [x] Assert hand-authored `HOME_SAVINGS_PRODUCTS` metadata against product YAML (rates, fees, promo bands, migrationStatus).
 - [x] Extract commercial home-savings composer host from `app-controller.js` (god-controller; securities partially did this).
-- [x] Lock OTP product-page calculator fee / Premium / contract / maturity as authoritative (`web-calculator-maturity-*.yaml`, `source.kind: otp-product-page-calculator`); pin engine terminal gaps; demote catalog below calc-aligned until match.
+- [x] Lock OTP product-page calculator fee / Premium / contract / maturity as authoritative; implement ÁSZF §22 kiutalási maturity payout dating (`resolveHomeSavingsMaturityPayoutDate`); pin ≤4 Ft engine residuals.
 
 Deferred (explicitly out of scope for §5e)
 - [ ] OTP Lakástakarék *lakáskölcsön* / *áthidaló kölcsön* (díjtáblázat THM representative examples for PRÉMIUM PLUSZ 10x30). Prefer reuse of `mortgage-loan` + ADR 0024 patterns in a later epic; new ADR only if that reuse fails.

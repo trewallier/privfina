@@ -42,10 +42,11 @@ pricing:
       ceil10(szerződéses összeg × 3,846 / 1000).
     - >
       Interest: ACT/360 daily (tőke × kamatláb × napok / (360 × 100)); yearly
-      capitalization; accrues from credit day through day before payout (ÁSZF/USZ).
-      Engine currently sets payout = last deposit date; OTP product-page calculator
-      maturity implies ~two further months (see web-calculator-maturity-*.yaml) —
-      calc-aligned blocked until ÁSZF-sourced payout dating.
+      capitalization; accrues from credit day through day before payout (ÁSZF §10).
+      Continuous-path maturity payout date = first calendar day of the month two
+      months after last deposit (ÁSZF §22 2-month kiutalási időszak for
+      post-2017-07-01 contracts; USZ Melléklet kiutalás min 122). Aligns with OTP
+      product-page calculator Lejáratkor goldens (≤4 Ft rounding residual).
     - >
       OTP Lakástakarék Prémium (not state aid): % of contractual deposits only
       (no compound on Premium); 30% after month 120 with housing-purpose use;
@@ -204,7 +205,7 @@ assumptions:
   - Customer-perspective cash flows only; no bank internal legs.
   - Default path is continuous monthly saving with housing-purpose Premium at exit.
   - State support is absent for this offering cohort.
-  - Deposit interest uses engine.depositInterestAnnualRatePct (0.10) with ACT/360 + yearly capitalization.
+  - Deposit interest uses engine.depositInterestAnnualRatePct (0.10) with ACT/360 + yearly capitalization through ÁSZF §22 maturity payout date.
   - Contract amount derives from monthly deposit via engine.savingsRatePermille (3.846) when not supplied.
   - Irregular-payment Premium quarterly caps (USZ §10 (4)) are out of scope for the continuous contractual path.
 

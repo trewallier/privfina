@@ -5,8 +5,8 @@ title: Maturity Premium tier — 120 months housing purpose
 description: >
   Continuous saving through month 120 with housing-purpose allotment/termination
   credits OTP Lakástakarék Prémium at 30%. Terminal / interest goldens follow the
-  OTP product-page calculator (authoritative); engine ACT/360 interest to last
-  deposit remains quarantined until ÁSZF payout dating reconciles.
+  OTP product-page calculator (authoritative). Engine uses ÁSZF §10 ACT/360 with
+  §22 2-month kiutalási maturity payout packaging.
 
 inputs:
   monthlyDeposit: 50000
@@ -27,9 +27,10 @@ expected:
   depositInterest: 31152
   terminalPayout: 7831152
   contractAmount: 13000000
-  engineDepositInterest: 30286
-  engineTerminalPayout: 7830286
-  engineTerminalPayoutDeltaFt: -866
+  maturityPayoutDate: 2036-11-01
+  engineDepositInterest: 31156
+  engineTerminalPayout: 7831156
+  engineTerminalPayoutDeltaFt: 4
   earlyExitPremiumRatePctByMonthBand:
     months49to96: 10
     months97to120: 20
@@ -42,9 +43,9 @@ notes:
     depositInterest / terminalPayout are OTP product-page calculator figures
     (7 831 152 Ft marketing band / widget). See web-calculator-maturity-50000.yaml
     source block.
+  - >
+    Engine interest: ÁSZF §10 ACT/360 + yearly capitalization through day before
+    maturityPayoutDate (first of month two months after last deposit — ÁSZF §22
+    kiutalási időszak / USZ Melléklet kiutalás min 122). Residual +4 Ft vs OTP.
   - contractAmount 13 000 000 Ft = monthly 50 000 via 3.846‰ (ceil10).
   - Loyalty unlock is out of scope for this default continuous path.
-  - >
-    Engine gap (−866 Ft) is deposit interest only: accrual currently stops at last
-    deposit; OTP implies ~two further months toward first-of-month payout. Blocks
-    calc-aligned until ÁSZF-sourced.

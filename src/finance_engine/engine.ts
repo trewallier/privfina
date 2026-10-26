@@ -71,7 +71,9 @@ export {
   ceilToTenForint,
   createHomeSavingsInstrumentBundle,
   generateHomeSavingsInstrumentCashFlows,
+  HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS,
   resolveContractAmountFromMonthlyDeposit,
+  resolveHomeSavingsMaturityPayoutDate,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
   resolveMonthlyDepositFromContractAmount

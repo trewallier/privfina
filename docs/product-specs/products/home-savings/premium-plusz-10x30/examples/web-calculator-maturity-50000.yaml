@@ -38,18 +38,16 @@ expected:
   # OTP authoritative (Lejáratkor felvehető megtakarítás / marketing band)
   depositInterest: 31152
   terminalPayout: 7831152
-  # Engine (interest stops at last deposit) — quarantine until ÁSZF payout horizon reconciles
-  engineDepositInterest: 30286
-  engineTerminalPayout: 7830286
-  engineTerminalPayoutDeltaFt: -866
+  maturityPayoutDate: 2036-11-01
+  engineDepositInterest: 31156
+  engineTerminalPayout: 7831156
+  engineTerminalPayoutDeltaFt: 4
 
 notes:
   - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP figures are authoritative."
   - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (50 500 Ft)."
   - "accountOpeningFee is the green akciós díj (65 000); accountOpeningFeeStandard1pct is 1% of contract."
   - >
-    Gap (−866 Ft): entire delta is deposit interest (OTP 31 152 vs engine 30 286).
-    Engine ACT/360 + yearly capitalization stops accrual at the last deposit date
-    (2036-09-10). Extending accrual to the first of the month two months after last
-    deposit (2036-11-01) yields engine interest 31 156 (−/+4 Ft vs OTP). Do not ship
-    a fitted lag without ÁSZF-sourced payout dating — blocks calc-aligned.
+    Interest horizon: ÁSZF §10 / §22 — ACT/360 through day before first of month
+    two months after last deposit (2036-11-01). Closes the former −866 Ft
+    last-deposit gap; residual +4 Ft is rounding only.

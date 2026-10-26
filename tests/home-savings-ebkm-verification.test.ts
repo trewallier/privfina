@@ -199,10 +199,38 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
     })
   }
 
-  it('promo-20k residual cells stay at the documented 0.01 half-up gaps', () => {
+  it('promo-20k residual cells stay at the documented 0.01 half-up gaps (pins + raw)', () => {
     expect(ENGINE_EBKM_PINS['ebkm-promo-20000.yaml'].withPremium).toBe(4.36)
     expect(HIRDETMENY_PUBLISHED_EBKM['ebkm-promo-20000.yaml'].withPremium).toBe(4.35)
     expect(ENGINE_EBKM_PINS['ebkm-promo-20000.yaml'].withoutPremium).toBe(-0.57)
     expect(HIRDETMENY_PUBLISHED_EBKM['ebkm-promo-20000.yaml'].withoutPremium).toBe(-0.58)
+
+    const parsed = YAML.parse(readRepoFile(examplePaths[0]))
+    const baseInputs = parsed.inputs as HomeSavingsSpecInputs
+    const withFlows = calculateEbkmFromHomeSavingsCashFlows(
+      toEbkmFlows(
+        generateCashFlowsFromHomeSavingsProductSpec(product, {
+          ...baseInputs,
+          housingPurpose: true
+        })
+      )
+    )
+    const withoutFlows = calculateEbkmFromHomeSavingsCashFlows(
+      toEbkmFlows(
+        generateCashFlowsFromHomeSavingsProductSpec(product, {
+          ...baseInputs,
+          housingPurpose: false
+        })
+      )
+    )
+
+    // Raw rates sit just past the 6. § half-up boundary (visible if packaging drifts).
+    expect(withFlows.percentRounded).toBe(4.36)
+    expect(withoutFlows.percentRounded).toBe(-0.57)
+    expect(withFlows.rate * 100).toBeCloseTo(4.35546674, 5)
+    expect(withoutFlows.rate * 100).toBeCloseTo(-0.57401831, 5)
+    // Half-up to published would need raw < 4.355 (with) / ≤ −0.575 (without).
+    expect(withFlows.rate * 100).toBeGreaterThanOrEqual(4.355)
+    expect(withoutFlows.rate * 100).toBeGreaterThan(-0.575)
   })
 })

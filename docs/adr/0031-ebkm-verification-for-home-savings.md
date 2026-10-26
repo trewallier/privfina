@@ -20,11 +20,13 @@ Related: 0022 (THM calculator for loans), 0024 / 0026 (loan three-check bar), 00
 - **Commercially-usable** for public-offering `home-savings` products requires engine EBKM ≡ published EBKM for the locked Hirdetmény examples (promo and 1% opening-fee tables; with and without Premium as published). Dual-lane display of conflicting EBKM figures is forbidden.
 - Exact statutory formula, day-count, and percent rounding follow Hungarian EBKM practice for lakás-takarékpénztári betétek and are recorded in `src/finance_engine/instruments/ebkm.ts` (82/2010 3. melléklet; calendar days / 365; two-decimal half-up).
 - Home-savings EBKM flow packaging uses ÁSZF 22. § kiutalás dating for contracts from 2017-07-01: terminal inflow on the first calendar day of the month three months after the last-deposit month (2-month kiutalási időszak, then payment month). Chart/schedule cash flows use OTP-aligned maturity packaging (first of month after lastDeposit+2); only the EBKM leg list retargets that inflow to lastDepositMonth+3. Free lag/netting knobs remain forbidden.
+- **Day-1 vs end-of-kiutalási knife-edge:** under locked examples (start `2026-10-10`, last deposit `2036-09-10`), day-1 packaging (`2036-12-01`) currently matches **6/8** Hirdetmény cells; promo-20k both legs sit just past the 6. § half-up boundary (raw ≈ **4.35547** → 4.36 vs published 4.35; raw ≈ **−0.57402** → −0.57 vs −0.58). Moving the marker one day earlier to end of kiutalási (`2036-11-30`) can flip those cells but trades the residual onto other examples — do not change the marker without an ÁSZF/OTP cite for the published calculator’s settlement day.
 - Loan ADR 0024 THM three-check does **not** apply to home-savings.
 - Fee inclusion and scenario assumptions (account fee 500 Ft/hó, opening-fee rule, Premium on/off, deposit amount) remain the responsibility of the product/example layer that builds the flow list.
 
 ## Consequences
 
 - Product examples must lock published EBKM figures from the sales Hirdetmény (effective 2026-10-10 for current tables; díjtáblázat account fee from 2026-08-03).
-- `schedule-usable` may ship before EBKM harness green; promotion to `commercially-usable` waits on ADR 0031 checks.
+- `schedule-usable` may ship before EBKM harness green; promotion to `commercially-usable` waits on ADR 0031 checks (currently 6/8; residual pinned visible on promo-20k).
 - Contributors reuse one EBKM solver across future LTP savings módozatok instead of ad hoc deposit APR math.
+- Harness anti-washing: published goldens and engine pins are locked in tests (not YAML-only); factual 6/8 score and residual raw rates stay asserted.

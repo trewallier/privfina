@@ -215,8 +215,15 @@ export function calculateEbkmFromLegs(input: {
 /**
  * OTP ÁSZF 22. § (contracts from 2017-07-01): earliest customer payout falls in
  * the calendar month after min. savings time + a 2-month kiutalási időszak.
- * For continuous monthly deposits this is modeled as the first day of the month
- * three months after the last-deposit month (day-1 settlement marker).
+ * For continuous monthly deposits this is modeled as the **first calendar day**
+ * of the month three months after the last-deposit month (conventional day-1
+ * settlement marker inside the payment month).
+ *
+ * Half-up knife-edge: for the locked Hirdetmény examples (start `2026-10-10`,
+ * last deposit `2036-09-10`), day-1 (`2036-12-01`) leaves promo-20k both legs
+ * 0.01 off published; end-of-kiutalási (`2036-11-30`) would flip those green
+ * but reopen other cells. Do **not** switch markers without an ÁSZF/OTP cite
+ * for which day inside the payment month the published EBKM calculator uses.
  */
 export function resolveHomeSavingsEbkmPayoutDate(lastDepositDateIso: string): string {
   const lastDeposit = parseIsoDate(lastDepositDateIso)
@@ -277,16 +284,18 @@ export function buildEbkmLegsFromHomeSavingsCashFlows(
   }
 
   if (retargetTerminalPayout && payouts.length > 0) {
+    if (payouts.length !== 1) {
+      throw new Error(
+        `EBKM payout retarget expects a single terminal inflow (got ${payouts.length}).`
+      )
+    }
     const anchor = sawDepositLabel ? lastDepositDate : lastOutflowDate
     if (anchor === null) {
       throw new Error(
         'EBKM payout retarget requires a last-deposit date (Monthly deposit label, lastDepositDate option, or outflow fallback).'
       )
     }
-    const ebkmPayoutDate = resolveHomeSavingsEbkmPayoutDate(anchor)
-    for (const payout of payouts) {
-      payout.date = ebkmPayoutDate
-    }
+    payouts[0].date = resolveHomeSavingsEbkmPayoutDate(anchor)
   }
 
   return { deposits, payouts }

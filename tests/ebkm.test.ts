@@ -125,6 +125,18 @@ describe('calculateEbkm (3. melléklet)', () => {
       { date: '2036-10-15', amount: 500, direction: 'outflow', description: 'Account management fee' },
       { date: '2036-11-01', amount: 2500, direction: 'inflow', description: 'Home-savings terminal payout' }
     ])
+    expect(legs.payouts).toHaveLength(1)
     expect(legs.payouts[0].date).toBe('2036-12-01')
+  })
+
+  it('rejects multi-inflow schedules when kiutalás retarget is enabled', () => {
+    expect(() =>
+      buildEbkmLegsFromHomeSavingsCashFlows([
+        { date: '2026-10-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+        { date: '2036-09-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+        { date: '2036-11-01', amount: 2000, direction: 'inflow' },
+        { date: '2036-12-01', amount: 500, direction: 'inflow' }
+      ])
+    ).toThrow(/single terminal inflow/i)
   })
 })

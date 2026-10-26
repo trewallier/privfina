@@ -4,7 +4,7 @@ const PMAP_PRODUCT_SPEC = {
   family: 'government-security',
   variant: 'pmap',
   productCode: 'pmap',
-  displayName: 'Premium Hungarian Government Security',
+  displayName: 'Premium Hungarian Government Security (PMÁP)',
   inputs: [
     {
       name: 'principal',
@@ -125,7 +125,7 @@ const PMAP_PRODUCT_SPEC = {
     }
   ],
   ui: {
-    formTitle: 'Premium Hungarian Government Security',
+    formTitle: 'Premium Hungarian Government Security (PMÁP)',
     sections: [
       {
         id: 'pmap-core',

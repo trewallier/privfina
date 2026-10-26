@@ -1,34 +1,34 @@
 /**
- * EBKM (egységesített betéti kamatlábmutató) per 82/2010. (III. 25.) Korm. rendelet
- * 3. § (5) and 3. melléklet (ADR 0031). Primary use: verify Hirdetmény golden
- * ebkmPct for installment-deposit products (home-savings / LTP); optionally
- * compute when unknown.
+ * EBKM (unified deposit rate indicator / egységesített betéti kamatlábmutató)
+ * per 82/2010. (III. 25.) Korm. rendelet 3. § (5) and 3. melléklet (ADR 0031).
+ * Primary use: verify published tariff notice (Hirdetmény) golden ebkmPct for
+ * installment-deposit products (home-savings / LTP); optionally compute when unknown.
  *
- * Formula (3. melléklet — betét több részletben), NPV form:
+ * Formula (Annex 3 — deposit in installments), NPV form:
  *   Σ A_k / (1+r)^(t_k) = 0
  * with deposits/fees as negative A and payouts as positive A.
  *
  * Year fractions for dated legs: calendar days from first deposit / 365
  * (decree t/365). Publication rounding (6. § (1) f / (3)): two decimals, half-up.
  *
- * Home-savings EBKM packaging (ÁSZF 22. §, contracts from 2017-07-01):
- * customer outflows (opening fee, deposits, account fees) stay on schedule
- * dates; the terminal inflow used for EBKM is dated on the **first calendar
- * day of the month that is three months after the last-deposit month**
- * (2-month kiutalási időszak after min. savings time, then payment in the
- * following month — conventional day-1 marker). Chart/schedule cash flows use
- * OTP-aligned maturity packaging (first of month after lastDeposit+2) for the
- * terminal; only the EBKM leg list retargets that inflow to lastDepositMonth+3.
- * Anchor the last-deposit month on deposit-labeled outflows when descriptions
- * are supplied. Do not invent free lag/netting knobs beyond this ÁSZF-sourced
- * rule (ADR 0024/0025 packaging-camouflage ban).
+ * Home-savings EBKM packaging (General Terms and Conditions (ÁSZF) §22,
+ * contracts from 2017-07-01): customer outflows (opening fee, deposits, account
+ * fees) stay on schedule dates; the terminal inflow used for EBKM is dated on
+ * the **first calendar day of the month that is three months after the
+ * last-deposit month** (2-month allocation period after min. savings time, then
+ * payment in the following month — conventional day-1 marker). Chart/schedule
+ * cash flows use OTP-aligned maturity packaging (first of month after
+ * lastDeposit+2) for the terminal; only the EBKM leg list retargets that inflow
+ * to lastDepositMonth+3. Anchor the last-deposit month on deposit-labeled
+ * outflows when descriptions are supplied. Do not invent free lag/netting knobs
+ * beyond this ÁSZF-sourced rule (ADR 0024/0025 packaging-camouflage ban).
  *
  * Fee inclusion and Premium on/off remain caller-owned when assembling flows.
  */
 
 import { formatIsoDate, parseIsoDate } from '../date_utils'
 
-/** One deposit installment (B_i) or payout (K_j) for 3. melléklet. */
+/** One deposit installment (B_i) or payout (K_j) for Annex 3 (3. melléklet). */
 export interface EbkmLeg {
   /** ISO calendar date of the cash movement. */
   date: string
@@ -39,7 +39,7 @@ export interface EbkmLeg {
 export interface EbkmCalculationResult {
   /** Solved annual rate r as a decimal (e.g. 0.0435). */
   rate: number
-  /** Percent rounded per 6. § — two decimals, half-up. */
+  /** Percent rounded per decree 6. § — two decimals, half-up. */
   percentRounded: number
 }
 
@@ -57,7 +57,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 /**
  * Calendar days from `fromIso` to `toIso` (same-day → 0).
- * Matches 3. melléklet t_i / t_j counting from the first deposit date.
+ * Matches Annex 3 (3. melléklet) t_i / t_j counting from the first deposit date.
  */
 export function calendarDaysBetween(fromIso: string, toIso: string): number {
   const from = parseIsoDate(fromIso)
@@ -68,7 +68,7 @@ export function calendarDaysBetween(fromIso: string, toIso: string): number {
   return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY)
 }
 
-/** 3. melléklet year fraction: calendar days / 365. */
+/** Annex 3 (3. melléklet) year fraction: calendar days / 365. */
 export function ebkmYearFraction(fromIso: string, toIso: string): number {
   return calendarDaysBetween(fromIso, toIso) / 365
 }
@@ -149,7 +149,7 @@ export function ebkmPresentValue(rate: number, flows: readonly EbkmDatedFlow[]):
 }
 
 /**
- * Solve 3. melléklet for annual r via signed NPV = 0.
+ * Solve Annex 3 (3. melléklet) for annual r via signed NPV = 0.
  */
 export function calculateEbkm(flows: readonly EbkmDatedFlow[]): EbkmCalculationResult {
   assertValidEbkmFlows(flows)
@@ -213,15 +213,16 @@ export function calculateEbkmFromLegs(input: {
 }
 
 /**
- * OTP ÁSZF 22. § (contracts from 2017-07-01): earliest customer payout falls in
- * the calendar month after min. savings time + a 2-month kiutalási időszak.
- * For continuous monthly deposits this is modeled as the **first calendar day**
- * of the month three months after the last-deposit month (conventional day-1
- * settlement marker inside the payment month).
+ * OTP General Terms and Conditions (ÁSZF) §22 (contracts from 2017-07-01):
+ * earliest customer payout falls in the calendar month after min. savings time
+ * + a 2-month allocation period (kiutalási időszak). For continuous monthly
+ * deposits this is modeled as the **first calendar day** of the month three
+ * months after the last-deposit month (conventional day-1 settlement marker
+ * inside the payment month).
  *
  * Half-up residual: for the locked Hirdetmény examples (start `2026-10-10`,
  * last deposit `2036-09-10`), day-1 (`2036-12-01`) leaves promo-20k both legs
- * 0.01 off published. End-of-kiutalási (`2036-11-30`) keeps that same miss
+ * 0.01 off published. End-of-allocation (`2036-11-30`) keeps that same miss
  * pair; no single day marker closes both legs without reopening other cells.
  * Do **not** hunt a fitted settlement day — wait for an ÁSZF/OTP cite.
  */
@@ -304,8 +305,8 @@ export function buildEbkmLegsFromHomeSavingsCashFlows(
 /**
  * ADR 0031 convenience: EBKM from dated home-savings customer cash flows
  * (calendar-day / 365). By default retargets terminal inflow to the ÁSZF
- * kiutalás payout date; pass `{ retargetTerminalPayout: false }` for
- * schedule-date diagnostics.
+ * allocation (kiutalás) payout date; pass `{ retargetTerminalPayout: false }`
+ * for schedule-date diagnostics.
  */
 export function calculateEbkmFromHomeSavingsCashFlows(
   flows: ReadonlyArray<{

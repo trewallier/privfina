@@ -2,7 +2,7 @@
  * Fixed-rate mortgage form metadata seam.
  *
  * Schedule-usable (ADR 0023): shares the simplified loan composer DOM (`#loan-*`
- * fields) as a variant alongside fixed-rate-standard. Commercial Hirdetmény
+ * fields) as a variant alongside fixed-rate-standard. Commercial published tariff notice (Hirdetmény)
  * products use the separate commercial loan composer.
  */
 

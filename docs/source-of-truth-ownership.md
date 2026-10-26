@@ -25,13 +25,13 @@
 
 ### When Adding a Product or Feature
 
-1. **If defining a new product (loan variant, bond type, home-savings módozat, etc.)**:
+1. **If defining a new product (loan variant, bond type, home-savings product scheme / módozat, etc.)**:
    - Create a product spec in `docs/product-specs/products/<family>/<variant>/product.yaml` (families include `loan`, `mortgage-loan`, `government-security`, `home-savings`).
    - Include at least one worked example showing typical inputs and outputs.
    - Register it in `docs/product-specs/PRODUCT_CATALOG.md`.
    - Do NOT add product-specific branches to engine code. Parameterize generators instead.
    - Do NOT hardcode field definitions in UI forms. Derive them from the spec.
-   - Home-savings deposit interest / contract-amount ‰ belong in product YAML (USZ Melléklet) — never invented in code (ADR 0029).
+   - Home-savings deposit interest / contract-amount ‰ belong in product YAML (deposit interest rate sheet annex / USZ Melléklet) — never invented in code (ADR 0029).
 
 2. **If modifying product logic**:
    - Update the product spec first (inputs, rules, examples).
@@ -66,8 +66,8 @@
 Catalog statuses in [`PRODUCT_CATALOG.md`](product-specs/PRODUCT_CATALOG.md) are authoritative. Snapshot after ROADMAP §5a/§5b:
 
 - **fully-spec-backed**: fixed-rate loan; DKJ, PMÁP, BMÁP on the **commercial investment** composer (embedded form/adapter parity; dual TS/JS formula copies retire under ADR 0032 / ROADMAP §6a).
-- **commercially-usable**: six Hirdetmény mortgage-loan products (checks 1–3 green + commercial loan composer UX; embedded `*-product-spec.js` modules still deferred → not yet fully-spec-backed).
-- **schedule-usable**: fixed-rate mortgage (simplified loan composer); Vidéki Otthonfelújítási (packaging-quarantined; commercially-usable blocked until §6 reconciles); OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`home-savings`) on the **commercial home-savings** composer (fee/Premium/loyalty + OTP-aligned kiutalási maturity packaging (ÁSZF §10 day-count; not literal §22 (1)) + ÁSZF kiutalás EBKM preview; 6/8 Hirdetmény goldens green, 0.01 residual on promo-20k both legs; ADR 0028–0031).
+- **commercially-usable**: six published tariff notice (Hirdetmény) mortgage-loan products (checks 1–3 green + commercial loan composer UX; embedded `*-product-spec.js` modules still deferred → not yet fully-spec-backed).
+- **schedule-usable**: fixed-rate mortgage (simplified loan composer); OTP Rural Home Renovation Loan (packaging-quarantined; commercially-usable blocked until §6 reconciles); OTP Home Savings Premium Plus 10x30 (`home-savings`) on the **commercial home-savings** composer (fee/Premium/loyalty + OTP-aligned allocation maturity packaging (General Terms and Conditions (ÁSZF) §10 day-count; not literal §22 (1)) + ÁSZF allocation EBKM preview; 6/8 Hirdetmény goldens green, 0.01 residual on promo-20k both legs; ADR 0028–0031).
 - **Bundle lineage**: generated flows persist `id` + source-instrument lineage; catalog-backed bundles also persist `productId` / `productSpecVersion` (home-savings also stamps `productCode` / opening-fee mode for edit round-trips).
 - **Still transitional**: salary, subscription, and generic bond subtypes remain instrument-mode (code + DESIGN) without product-spec folders; generic bonds use a declarative presentation module (`public/controller/generic-bond-presentation.js`) on the **simplified investment** composer. Catalog government securities (DKJ/PMÁP/BMÁP) live on the **commercial investment** composer with dedicated hosts + mirrored help (`investment-field-help.js`) aligned to YAML (ADR 0027). Commercial loan and home-savings UI metadata/fee blocks are hand-mirrored from YAML (migration scaffolding until fully-spec-backed).
 - **Single browser calculation surface**: Vite SPA (`dist-web`, ADR 0032 / ROADMAP §6a) imports `@finance_engine`; `public/instruments.js` / fee / THM / eval-cache entries are thin re-exports or UI normalize wrappers (no second formula engine). Home-savings `home-savings-calculation-adapter.js` is mapping-only. Node product-spec YAML loaders stay off the browser graph.

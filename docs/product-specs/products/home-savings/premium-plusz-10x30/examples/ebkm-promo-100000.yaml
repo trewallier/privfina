@@ -1,11 +1,12 @@
 specVersion: v2alpha1
 productId: home-savings.premium-plusz-10x30.standard
 exampleId: ebkm-promo-100000
-title: EBKM lock — promo opening fee, 100 000 Ft/hó
+title: EBKM lock — promo opening fee, 100 000 HUF/month
 description: >
-  Published EBKM from OTP Lakástakarék értékesített termékek Hirdetmény A
-  (effective 2026-10-10): continuous monthly deposit 100.000 Ft, account fee
-  500 Ft/hó, számlanyitási díjkedvezmény (promo).
+  Published unified deposit rate indicator (EBKM) from OTP Home Savings marketed
+  products published tariff notice (Hirdetmény) A (effective 2026-10-10): continuous
+  monthly deposit 100.000 Ft, account fee 500 HUF/month, discounted account-opening
+  fee (promo).
 
 inputs:
   monthlyDeposit: 100000
@@ -20,10 +21,10 @@ expected:
   # Published Hirdetmény A goldens (authoritative commercially-usable target).
   ebkmPctWithPremium: 4.84
   ebkmPctWithoutPremium: -0.10
-  # Engine Annex 3 + ÁSZF 22. § kiutalás payout dating (terminal on first of lastDepositMonth+3).
+  # Engine Annex 3 + ÁSZF 22. § allocation payout dating (terminal on first of lastDepositMonth+3).
   engineEbkmPctWithPremium: 4.84
   engineEbkmPctWithoutPremium: -0.10
 
 notes:
   - Hirdetmény A EBKM pair with Premium / without Premium.
-  - "ADR 0031: engine Annex 3 + ÁSZF 22. § kiutalás payout dating matches both goldens."
+  - "ADR 0031: engine Annex 3 + ÁSZF 22. § allocation payout dating matches both goldens."

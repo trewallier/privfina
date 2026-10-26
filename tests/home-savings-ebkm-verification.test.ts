@@ -54,9 +54,10 @@ const HIRDETMENY_PUBLISHED_EBKM = {
 } as const
 
 /**
- * Engine pins under Annex 3 + ÁSZF 22. § kiutalás payout dating (lastDepositMonth+3
- * day-1) on OTP-maturity terminal amounts. Promo-20k both legs remain residual;
- * do not “fix” by changing {@link HIRDETMENY_PUBLISHED_EBKM}.
+ * Engine pins under Annex 3 + General Terms and Conditions (ÁSZF) §22 allocation
+ * payout dating (lastDepositMonth+3 day-1) on OTP-maturity terminal amounts.
+ * Promo-20k both legs remain residual; do not “fix” by changing
+ * {@link HIRDETMENY_PUBLISHED_EBKM}.
  */
 const ENGINE_EBKM_PINS = {
   'ebkm-promo-20000.yaml': { withPremium: 4.36, withoutPremium: -0.57 },
@@ -68,7 +69,7 @@ const ENGINE_EBKM_PINS = {
 type ExampleFile = keyof typeof HIRDETMENY_PUBLISHED_EBKM
 
 /**
- * ADR 0031 harness: engine EBKM (Annex 3 + ÁSZF 22. § kiutalás payout dating)
+ * ADR 0031 harness: engine EBKM (Annex 3 + ÁSZF §22 allocation payout dating)
  * vs published Hirdetmény goldens. Not a loan THM three-check.
  *
  * Chart/schedule terminal uses OTP-aligned maturity packaging (first of month
@@ -181,7 +182,7 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
         }
       })
 
-      it('schedule-date EBKM (no kiutalás retarget) diverges from ÁSZF-packaged EBKM', () => {
+      it('schedule-date EBKM (no allocation retarget) diverges from ÁSZF-packaged EBKM', () => {
         const parsed = YAML.parse(readRepoFile(path))
         const baseInputs = parsed.inputs as HomeSavingsSpecInputs
         const flows = toEbkmFlows(

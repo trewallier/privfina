@@ -16,7 +16,7 @@ const PURPOSE_LABELS = {
   refinancing: 'Refinancing'
 }
 
-/** ADR 0025 — Hirdetmény mortgages use ACT/360 equal-month + forint rounding. */
+/** ADR 0025 — published tariff notice (Hirdetmény) mortgages use ACT/360 equal-month + forint rounding. */
 const HIRDETMENY_DAY_COUNT = {
   interestDayCountConvention: 'act/360',
   paymentRounding: 'forint'
@@ -27,7 +27,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'otp-1x1',
     productId: 'mortgage-loan.otp-1x1.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP 1x1 Lakáshitel',
+    displayName: 'OTP 1x1 Home Loan (1x1 Lakáshitel)',
     migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 7.99,
@@ -44,11 +44,11 @@ const COMMERCIAL_LOAN_PRODUCTS = [
       'refinancing'
     ],
     eligibilityHints: [
-      'Market forint home loan; conditions follow the OTP Hirdetmény for applications from 2026-04-20.'
+      'Market forint home loan; conditions follow the OTP published tariff notice (Hirdetmény) for applications from 2026-04-20.'
     ],
     discountHints: [
       'Loyalty service rate discount (up to 1.2%) may apply when income-routing conditions are met.',
-      'Disbursement fee waiver may apply under OTP Díjkedvezményes conditions.'
+      'Disbursement fee waiver may apply under OTP discounted-fee campaign conditions.'
     ],
     postSubsidyInfo: null,
     commerciallyBlockedReason: null
@@ -57,7 +57,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'otp-zold',
     productId: 'mortgage-loan.otp-zold.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Zöld Lakáshitel',
+    displayName: 'OTP Green Home Loan (Zöld Lakáshitel)',
     migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 7.99,
@@ -66,12 +66,12 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     graceRequired: false,
     loanPurposes: ['new-home-purchase', 'construction', 'renovation', 'modernization'],
     eligibilityHints: [
-      'Green housing energy conditions are required for the Zöld rate discount.',
+      'Green housing energy conditions are required for the green rate discount.',
       'Representative rate assumes the 50 bp green discount (base 8.49% → 7.99%).'
     ],
     discountHints: [
-      'Zöld kamatkedvezmény: 50 bp when green housing conditions are met.',
-      'OTP Zöld folyósítási díj waiver may apply under the green fee action.'
+      'Green rate discount: 50 bp when green housing conditions are met.',
+      'OTP Green disbursement fee waiver may apply under the green fee action.'
     ],
     postSubsidyInfo: null,
     commerciallyBlockedReason: null
@@ -80,7 +80,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'vegig-fix',
     productId: 'mortgage-loan.vegig-fix.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Végig Fix Lakáshitel',
+    displayName: 'OTP Fixed-for-Term Home Loan (Végig Fix Lakáshitel)',
     migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 8.49,
@@ -97,10 +97,10 @@ const COMMERCIAL_LOAN_PRODUCTS = [
       'refinancing'
     ],
     eligibilityHints: [
-      'Contractual rate fixed for the full term at the Hirdetmény Végig Fix rate.'
+      'Contractual rate fixed for the full term at the published Fixed-for-Term (Végig Fix) tariff rate.'
     ],
     discountHints: [
-      'Fee-waiver discounts may apply under OTP Díjkedvezményes conditions.'
+      'Fee-waiver discounts may apply under OTP discounted-fee campaign conditions.'
     ],
     postSubsidyInfo: null,
     commerciallyBlockedReason: null
@@ -109,7 +109,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'csok-plusz',
     productId: 'mortgage-loan.csok-plusz.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Évnyerő CSOK Plusz Lakáshitel',
+    displayName: 'OTP Year-Saver CSOK Plus Home Loan (Évnyerő CSOK Plusz Lakáshitel)',
     migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
@@ -118,7 +118,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     graceRequired: true,
     loanPurposes: ['used-home-purchase', 'new-home-purchase', 'extension'],
     eligibilityHints: [
-      'Eligible under 518/2023. (XI. 30.) CSOK Plusz program rules.',
+      'Eligible under 518/2023. (XI. 30.) CSOK Plus program rules.',
       'Mandatory 12-month interest-only grace at the start of the term.',
       'Only customer repayments are included in the user balance (bank↔state subsidy legs out of scope).'
     ],
@@ -133,7 +133,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'falusi-csok',
     productId: 'mortgage-loan.falusi-csok.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Falusi CSOK Lakáshitel',
+    displayName: 'OTP Home-Creation Loan — Village CSOK (Falusi CSOK / Otthonteremtési Lakáshitel)',
     migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
@@ -142,7 +142,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     graceRequired: false,
     loanPurposes: ['used-home-purchase', 'renovation', 'modernization', 'extension'],
     eligibilityHints: [
-      'State-subsidized Falusi CSOK / Otthonteremtés rules apply.',
+      'State-subsidized Village CSOK / home-creation rules apply.',
       'Only customer repayments are included in the user balance.'
     ],
     discountHints: [],
@@ -154,7 +154,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'otthon-start',
     productId: 'mortgage-loan.otthon-start.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Évnyerő Otthon Start Lakáshitel',
+    displayName: 'OTP Year-Saver Home Start Loan (Évnyerő Otthon Start Lakáshitel)',
     migrationStatus: 'commercially-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 3,
@@ -163,7 +163,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     graceRequired: false,
     loanPurposes: ['used-home-purchase', 'new-home-purchase', 'construction'],
     eligibilityHints: [
-      'State-subsidized Otthon Start customer rate during the subsidy window.',
+      'State-subsidized Home Start customer rate during the subsidy window.',
       'Only customer repayments are included in the user balance.'
     ],
     discountHints: [],
@@ -175,7 +175,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     productCode: 'videki-otthonfelujitasi',
     productId: 'mortgage-loan.videki-otthonfelujitasi.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Vidéki Otthonfelújítási Hitel',
+    displayName: 'OTP Rural Home Renovation Loan (Vidéki Otthonfelújítási Lakáshitel)',
     migrationStatus: 'schedule-usable',
     ...HIRDETMENY_DAY_COUNT,
     defaultAnnualInterestRatePct: 4.87,
@@ -191,7 +191,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     postSubsidyInfo:
       'Subsidy lasts up to 120 months; post-subsidy rate steps are informational only.',
     commerciallyBlockedReason:
-      'Published Hirdetmény §6 installment packaging cannot amortize the stated principal; commercially-usable requires reconciled offering figures and all three ADR 0024 checks (ADR 0026).'
+      'Published tariff notice (Hirdetmény) §6 installment packaging cannot amortize the stated principal; commercially-usable requires reconciled offering figures and all three ADR 0024 checks (ADR 0026).'
   }
 ]
 

@@ -48,7 +48,7 @@ describe('mortgage-loan product_specs mapper', () => {
     expect(result.thmPct).toBe(3.3)
   })
 
-  it('applies otp-zold folyósítási waiver when discount is activated', () => {
+  it('applies otp-zold disbursement (folyósítási) waiver when discount is activated', () => {
     const product = loadMortgageLoanProductSpecFromFiles({ productCode: 'otp-zold' })
     const without = calculateMortgageLoanFromProductSpec(product, {
       principal: 12_000_000,

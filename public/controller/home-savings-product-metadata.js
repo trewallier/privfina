@@ -15,7 +15,7 @@ const HOME_SAVINGS_PRODUCTS = [
     productCode: 'premium-plusz-10x30',
     productId: 'home-savings.premium-plusz-10x30.standard',
     specVersion: 'v2alpha1',
-    displayName: 'OTP Lakástakarék PRÉMIUM PLUSZ 10x30',
+    displayName: 'OTP Home Savings Premium Plus 10x30 (Lakástakarék PRÉMIUM PLUSZ 10x30)',
     migrationStatus: 'schedule-usable',
     depositInterestAnnualRatePct: 0.1,
     savingsRatePermille: 3.846,
@@ -29,7 +29,7 @@ const HOME_SAVINGS_PRODUCTS = [
     defaultHousingPurpose: true,
     defaultOpeningFeeMode: 'promo-fixed-65000',
     openingFeeModes: ['standard-1pct', 'promo-half-percent', 'promo-fixed-65000'],
-    /** Hirdetmény A deposit bands for promo opening-fee modes (inclusive). */
+    /** Published tariff notice (Hirdetmény) A deposit bands for promo opening-fee modes (inclusive). */
     openingFeeModeDepositBands: {
       'promo-half-percent': { min: 10_000, max: 49_990 },
       'promo-fixed-65000': { min: 50_000, max: 100_000 }
@@ -38,7 +38,7 @@ const HOME_SAVINGS_PRODUCTS = [
     // Keep in sync with product.yaml — asserted by tests/home-savings-composer-parity.test.ts.
     eligibilityHints: [
       'Natural person or condominium/cooperative saver; Hungarian residential or stay address for natural persons.',
-      'Housing-purpose use is required for OTP Lakástakarék Prémium (soft hint in v1).',
+      'Housing-purpose use is required for OTP Home Savings Premium (soft hint in v1).',
       'No state support for contracts from 2018-10-17.'
     ],
     discountHints: [
@@ -48,7 +48,7 @@ const HOME_SAVINGS_PRODUCTS = [
     premiumHints:
       'Premium tiers with housing purpose: 10% (months 49–96), 20% (97–120), 30% at maturity from month 120. Premium applies to contractual deposits only.',
     commerciallyBlockedReason:
-      'ÁSZF 22. § kiutalás EBKM packaging matches six of eight Hirdetmény goldens; promo 20 000 Ft/hó still solves to 4.36% / −0.57% vs published 4.35% / −0.58% (0.01 residual at the two-decimal boundary on both legs). Commercially-usable waits on closing those cells without fitted lag/netting camouflage (ADR 0031). Maturity/interest uses ÁSZF §10 ACT/360 with OTP-aligned first-of-month lastDeposit+2 packaging (not literal §22 (1)).'
+      'General Terms and Conditions (ÁSZF) §22 allocation EBKM packaging matches six of eight published tariff notice (Hirdetmény) goldens; promo 20 000 HUF/month still solves to 4.36% / −0.57% vs published 4.35% / −0.58% (0.01 residual at the two-decimal boundary on both legs). Commercially-usable waits on closing those cells without fitted lag/netting camouflage (ADR 0031). Maturity/interest uses ÁSZF §10 ACT/360 with OTP-aligned first-of-month lastDeposit+2 packaging (not literal §22 (1)).'
   }
 ]
 

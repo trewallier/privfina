@@ -32,4 +32,4 @@ notes:
   - "Source: Lakáshitel_H_kondicio_20260420, §6 — OTP Vidéki Otthonfelújítási Lakáshitel."
   - "paymentCount 120 is inferred from published installment × term aligning with totalPaid − fees (10-year packaging)."
   - "QUARANTINED packaging fixture: published monthlyPayment 63.457 × 120 ≈ 7,61 mFt cannot amortize the stated 12 mFt principal. Treat §6 installment/totalPaid/fees as audit-only until reconciled against the Hirdetmény source."
-  - "Engine lane uses bare customer-rate annuity under ADR 0025 ACT/360 equal-month (126913 Ft/hó at 4,87% / 120 months) pinned in tests/hirdetmeny-mortgage-calc-aligned.test.ts; do not rewrite amortization to chase §6."
+  - "Engine lane uses bare customer-rate annuity under ADR 0025 ACT/360 equal-month (126913 HUF/month at 4,87% / 120 months) pinned in tests/hirdetmeny-mortgage-calc-aligned.test.ts; do not rewrite amortization to chase §6."

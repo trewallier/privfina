@@ -52,7 +52,7 @@ An instrument is a source of one or more cash flows.
 - `Investment`: contributions, distributions, and valuation-related flows
 - `HomeSavings`: recurring deposits, account fees, opening fee, and terminal Premium (ADR 0029; engine under ROADMAP §5e)
 
-The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, investment, and home-savings subtypes under `src/finance_engine/instruments/` (browser SPA imports them via Vite / `@finance_engine`, ADR 0032). Product-specific contracts for cataloged loans, mortgage loans, government securities, and home-savings (OTP Lakástakarék) live under `docs/product-specs/` (ADR 0013–0016, schema v2 / ADR 0020 / ADR 0028). Product detail stays in YAML, not in this file.
+The current implementation includes the common `CashFlow` model plus instrument generators for salary, subscription, loan, investment, and home-savings subtypes under `src/finance_engine/instruments/` (browser SPA imports them via Vite / `@finance_engine`, ADR 0032). Product-specific contracts for cataloged loans, mortgage loans, government securities, and home-savings (OTP Home Savings / Lakástakarék) live under `docs/product-specs/` (ADR 0013–0016, schema v2 / ADR 0020 / ADR 0028). Product detail stays in YAML, not in this file.
 
 ### Product Specification Schema (v2)
 
@@ -102,28 +102,28 @@ Baseline instrument behavior for salary, subscription, loan, and investment (imp
 		- Product specs:
 			- Fixed-rate loan: [docs/product-specs/products/loans/fixed-rate-loan/product.yaml](docs/product-specs/products/loans/fixed-rate-loan/product.yaml)
 			- Fixed-rate mortgage: [docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/product.yaml)
-			- OTP 1x1 (schema v2 catalog): [docs/product-specs/products/loans/otp-1x1/product.yaml](docs/product-specs/products/loans/otp-1x1/product.yaml)
-			- OTP Zöld (schema v2 catalog): [docs/product-specs/products/loans/otp-zold/product.yaml](docs/product-specs/products/loans/otp-zold/product.yaml)
-			- Végig Fix (schema v2 catalog): [docs/product-specs/products/loans/vegig-fix/product.yaml](docs/product-specs/products/loans/vegig-fix/product.yaml)
-			- CSOK Plusz (schema v2 catalog): [docs/product-specs/products/loans/csok-plusz/product.yaml](docs/product-specs/products/loans/csok-plusz/product.yaml)
-			- Falusi CSOK (schema v2 catalog): [docs/product-specs/products/loans/falusi-csok/product.yaml](docs/product-specs/products/loans/falusi-csok/product.yaml)
-			- Otthon Start (schema v2 catalog): [docs/product-specs/products/loans/otthon-start/product.yaml](docs/product-specs/products/loans/otthon-start/product.yaml)
-			- Vidéki Otthonfelújítási (schema v2 catalog): [docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml](docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml)
+			- OTP 1x1 Home Loan (schema v2 catalog): [docs/product-specs/products/loans/otp-1x1/product.yaml](docs/product-specs/products/loans/otp-1x1/product.yaml)
+			- OTP Green Home Loan (Zöld Lakáshitel) (schema v2 catalog): [docs/product-specs/products/loans/otp-zold/product.yaml](docs/product-specs/products/loans/otp-zold/product.yaml)
+			- OTP Fixed-for-Term Home Loan (Végig Fix Lakáshitel) (schema v2 catalog): [docs/product-specs/products/loans/vegig-fix/product.yaml](docs/product-specs/products/loans/vegig-fix/product.yaml)
+			- OTP Year-Saver CSOK Plus Home Loan (schema v2 catalog): [docs/product-specs/products/loans/csok-plusz/product.yaml](docs/product-specs/products/loans/csok-plusz/product.yaml)
+			- Village CSOK / OTP Home-Creation Loan (Falusi CSOK) (schema v2 catalog): [docs/product-specs/products/loans/falusi-csok/product.yaml](docs/product-specs/products/loans/falusi-csok/product.yaml)
+			- Home Start / OTP Year-Saver Home Start Loan (Otthon Start) (schema v2 catalog): [docs/product-specs/products/loans/otthon-start/product.yaml](docs/product-specs/products/loans/otthon-start/product.yaml)
+			- OTP Rural Home Renovation Loan (Vidéki Otthonfelújítási) (schema v2 catalog): [docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml](docs/product-specs/products/loans/videki-otthonfelujitasi/product.yaml)
 		- Engine implementation (loan primitives): [src/finance_engine/instruments/loan.ts](src/finance_engine/instruments/loan.ts)
 		- Commercial mortgage primitives (ADR 0021): [src/finance_engine/instruments/loan_fees.ts](src/finance_engine/instruments/loan_fees.ts), [src/finance_engine/instruments/loan_subsidy.ts](src/finance_engine/instruments/loan_subsidy.ts), [src/finance_engine/instruments/thm.ts](src/finance_engine/instruments/thm.ts)
 		- Mortgage-loan product-spec seam: [src/finance_engine/product_specs/mortgage_loan.ts](src/finance_engine/product_specs/mortgage_loan.ts)
 		- Worked examples / living documentation and tests:
 			- Fixed-rate loan example: [docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-loan/examples/nominal-case.yaml) and [tests/fixed-rate-loan-example.test.ts](tests/fixed-rate-loan-example.test.ts)
 			- Fixed-rate mortgage example: [docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml](docs/product-specs/products/loans/fixed-rate-mortgage/examples/nominal-case.yaml) and [tests/fixed-rate-mortgage-calculation-adapter.test.ts](tests/fixed-rate-mortgage-calculation-adapter.test.ts)
-			- Hirdetmény mortgage calc-aligned tests: [tests/hirdetmeny-mortgage-calc-aligned.test.ts](tests/hirdetmeny-mortgage-calc-aligned.test.ts) (engine-lane goldens for otp-1x1, otp-zold, vegig-fix, csok-plusz, falusi-csok, otthon-start, videki-otthonfelujitasi); per-product `tests/*-product.test.ts` suites retain §6 packaging fixture lock-in
+			- Published tariff notice (Hirdetmény) mortgage calc-aligned tests: [tests/hirdetmeny-mortgage-calc-aligned.test.ts](tests/hirdetmeny-mortgage-calc-aligned.test.ts) (engine-lane goldens for otp-1x1, otp-zold, vegig-fix, csok-plusz, falusi-csok, otthon-start, videki-otthonfelujitasi); per-product `tests/*-product.test.ts` suites retain §6 packaging fixture lock-in
 - Generated flows:
 	- optional one-time disbursement inflow at start
 	- optional interest-only outflows during grace (when capitalization is off)
 	- fixed monthly amortizing repayment outflows over the post-grace term
 - Commercial packaging (ADR 0021):
 	- Upfront fee/discount application from product-spec `fees` / `discounts` produces a credit-cost package used for `totalCreditCostFees` and fee-inclusive THM.
-	- State-subsidized products resolve the **customer** annual rate for schedule math; ügyleti / state cash-flow splits remain deferred.
-	- Offering verification (ADR 0024): engine installment, THM from offering numbers, and THM from engine payments + fee package must match §6 for commercially-usable promotion. Vidéki §6 installment×term packaging remains quarantined.
+	- State-subsidized products resolve the **customer** annual rate for schedule math; contractual interest rate (ügyleti) / state cash-flow splits remain deferred.
+	- Offering verification (ADR 0024): engine installment, THM from offering numbers, and THM from engine payments + fee package must match §6 for commercially-usable promotion. Rural Home Renovation §6 installment×term packaging remains quarantined.
 - Future extensions: early full repayment rules, state-interest subsidy cash-flow splits, multi-segment interest-period resets, post-subsidy rate steps, and associated on-event penalties.
 
 #### Investment (stateful by product rules, finite maturity first)

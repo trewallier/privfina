@@ -13,7 +13,7 @@ These statuses track the rollout of the spec-driven product model (ADR 0013–00
 - **commercially-usable**:
   - **Loans (public offerings):** commercial UX (fees, discounts, purpose, THM) is wired **and** all three ADR 0024 checks are green. Dual-lane display is forbidden (ADR 0026).
   - **Government securities:** commercial investment composer UX (treasury product picker, labels/help from spec, calculated outputs) is wired and examples/adapters match published product numbers; dual-lane display is forbidden. Loan THM three-check does **not** apply (ADR 0027).
-  - **Home-savings:** commercial home-savings composer UX (product picker, fees / Premium / loyalty hints, EBKM preview) is wired and engine EBKM matches published Hirdetmény figures for locked examples (ADR 0031). Loan THM three-check does **not** apply.
+  - **Home-savings:** commercial home-savings composer UX (product picker, fees / Premium / loyalty hints, EBKM preview) is wired and engine EBKM matches published tariff notice (Hirdetmény) figures for locked examples (ADR 0031). Loan THM three-check does **not** apply.
 - **fully-spec-backed**: Product spec, frontend inputs, calculations, and examples are aligned end-to-end. For public-offering loans this requires the commercially-usable bar (ADR 0023). For government securities this is the current DKJ/PMÁP/BMÁP bar (embedded form/adapter parity). For home-savings this requires the commercially-usable EBKM bar (ADR 0030 / 0031) plus embedded frontend parity.
 
 Statuses are transitional rollout markers reflecting current integration state, not completion guarantees.
@@ -23,16 +23,16 @@ Statuses are transitional rollout markers reflecting current integration state, 
 | Class | Product IDs | Math / numbers |
 | --- | --- | --- |
 | Simplified examples | `loan.fixed-rate.standard`, `loan.fixed-rate.mortgage`; generic bond subtypes (not catalog rows) | Loans: `30/360` equal-month (`r/12`). Bonds: instrument-mode presentation on simplified investment composer |
-| Public offerings (loans) | Seven Hirdetmény `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
-| Public offerings (securities) | `government-security.{dkj,pmap,bmap}.standard` | ÁKK / State Treasury; commercial investment composer (ADR 0027) |
-| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Lakástakarék; commercial home-savings composer (ADR 0028–0031); USZ Melléklet 0.10% / 3.846‰ / kiutalás 122; ÁSZF §10 interest + OTP-aligned kiutalási payout packaging |
+| Public offerings (loans) | Seven published tariff notice (Hirdetmény) `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
+| Public offerings (securities) | `government-security.{dkj,pmap,bmap}.standard` | ÁKK / Hungarian State Treasury; commercial investment composer (ADR 0027) |
+| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Home Savings (LTP); commercial home-savings composer (ADR 0028–0031); deposit interest rate sheet annex (USZ Melléklet) 0.10% / 3.846‰ / allocation (kiutalás) 122; General Terms and Conditions (ÁSZF) §10 interest + OTP-aligned allocation payout packaging |
 
 **What `calc-aligned` requires in this repo** (engine bar; UI may still be below schedule-usable):
 
 - Family-level product-spec mapper under `src/finance_engine/product_specs/` that loads schema-v2 YAML and drives reusable primitives (no per-product amortizer forks).
 - Executable tests that assert engine-computed outputs from example inputs (not only YAML constant lock-in).
 - Catalog row, [`formula-ownership-audit.md`](../formula-ownership-audit.md), and product README updated to `calc-aligned`.
-- **Home-savings public offering:** engine terminal must match OTP product-page calculator Lejáratkor terminals (`web-calculator-maturity-*.yaml`) within ≤4 Ft under the documented continuous-path packaging (first of month after lastDeposit+2 — OTP calculator alignment, not literal ÁSZF §22 (1)). Fee / Premium / contract must be exact. Interest day-count follows ÁSZF §10; do not stop accrual at last deposit.
+- **Home-savings public offering:** engine terminal must match OTP product-page calculator at-maturity (Lejáratkor) terminals (`web-calculator-maturity-*.yaml`) within ≤4 Ft under the documented continuous-path packaging (first of month after lastDeposit+2 — OTP calculator alignment, not literal ÁSZF §22 (1)). Fee / Premium / contract must be exact. Interest day-count follows ÁSZF §10; do not stop accrual at last deposit.
 
 **What `schedule-usable` requires** (ADR 0023 loans; ADR 0027 securities; ADR 0030 home-savings):
 
@@ -66,10 +66,10 @@ Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playb
 | government-security.dkj.standard | government-security | dkj | dkj | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/dkj/product.yaml | docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed end-to-end (ADR 0027) |
 | government-security.pmap.standard | government-security | pmap | pmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/pmap/product.yaml | docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, preview/adapter seam, and examples are spec-backed (ADR 0027) |
 | government-security.bmap.standard | government-security | bmap | bmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/bmap/product.yaml | docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed; accrued/coupon primitives in `src/finance_engine/instruments/bmap.ts` (Vite `@finance_engine`, ADR 0032) |
-| home-savings.premium-plusz-10x30.standard | home-savings | premium-plusz-10x30 | premium-plusz-10x30 | v2alpha1 | schedule-usable | docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml | docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ | Commercial composer + fee/Premium/maturity calc-aligned (OTP Lejáratkor ≤4 Ft); ÁSZF 22. § kiutalás EBKM 6/8 (0.01 residual on promo-20k both legs blocks commercially-usable; ADR 0031 / ROADMAP §5e) |
+| home-savings.premium-plusz-10x30.standard | home-savings | premium-plusz-10x30 | premium-plusz-10x30 | v2alpha1 | schedule-usable | docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml | docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ | Commercial composer + fee/Premium/maturity calc-aligned (OTP at-maturity ≤4 Ft); ÁSZF 22. § allocation EBKM 6/8 (0.01 residual on promo-20k both legs blocks commercially-usable; ADR 0031 / ROADMAP §5e) |
 
 ## Planned catalog extensions
 
-Hirdetmény 2026-04-20 mortgages: six products are **commercially-usable** (checks 1–3 + commercial composer UX + composer parity). Vidéki remains **schedule-usable** / packaging-quarantined until §6 installment reconciles. Full embedded `*-product-spec.js` parity (**fully-spec-backed**) is a later lifecycle step. No new consumer loan codes in this epic.
+Published tariff notice (Hirdetmény) 2026-04-20 mortgages: six products are **commercially-usable** (checks 1–3 + commercial composer UX + composer parity). OTP Rural Home Renovation Loan remains **schedule-usable** / packaging-quarantined until §6 installment reconciles. Full embedded `*-product-spec.js` parity (**fully-spec-backed**) is a later lifecycle step. No new consumer loan codes in this epic.
 
-Home savings (ROADMAP §5e): PRÉMIUM PLUSZ 10x30 is **schedule-usable** with fee/Premium/maturity calc-aligned to OTP product-page calculator (ÁSZF §10 + OTP-aligned kiutalási payout packaging) and ÁSZF 22. § kiutalás EBKM packaging (6/8 Hirdetmény goldens green; 0.01 residual on promo 20 000 Ft/hó both legs). Commercially-usable waits on closing those cells. LTP lakáskölcsön / áthidaló remains deferred.
+Home savings (ROADMAP §5e): OTP Home Savings Premium Plus 10x30 is **schedule-usable** with fee/Premium/maturity calc-aligned to OTP product-page calculator (ÁSZF §10 + OTP-aligned allocation payout packaging) and ÁSZF 22. § allocation EBKM packaging (6/8 Hirdetmény goldens green; 0.01 residual on promo 20 000 HUF/month both legs). Commercially-usable waits on closing those cells. LTP home loan / bridging loan remains deferred.

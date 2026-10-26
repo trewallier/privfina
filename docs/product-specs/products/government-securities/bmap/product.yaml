@@ -4,7 +4,7 @@ id: government-security.bmap.standard
 family: government-security
 variant: bmap
 productCode: bmap
-displayName: Bonus Hungarian Government Security
+displayName: Bonus Hungarian Government Security (BMÁP)
 description: Hungarian retail government bond with variable coupon linked to 3-month DKJ auction yields and quarterly interest payment.
 
 category: retail-government-bond
@@ -144,7 +144,7 @@ assumptions:
   - Live DKJ market data integration is future work; examples use explicit base-yield input values.
 
 ui:
-  formTitle: Bonus Hungarian Government Security
+  formTitle: Bonus Hungarian Government Security (BMÁP)
   sections:
     - id: bmap-core
       title: BMAP Inputs

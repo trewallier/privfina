@@ -26,7 +26,7 @@ describe('loan interest day-count conventions (ADR 0025)', () => {
       (0.0799 * EQUAL_MONTH_DAYS_NON_LEAP) / ACT_360_YEAR_DAYS,
       12
     )
-    // kamat = tőke × r × (365/12) / 360
+    // interest = principal × r × (365/12) / 360
     expect(12_000_000 * monthlyInterestRateFromAnnual(0.03, 'act/360')).toBeCloseTo(
       12_000_000 * 0.03 * (365 / 12) / 360,
       8

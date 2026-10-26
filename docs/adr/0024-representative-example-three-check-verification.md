@@ -11,7 +11,7 @@ Related: 0022 (THM calculator), 0023 (loan product readiness), ROADMAP §5b, `do
 ## Context
 
 - ADR 0023 requires public-offering products to be offering-faithful before commercially-usable promotion, and forbids dual-lane UI.
-- Representative Hirdetmény examples exist to **verify** the calculation system, not to be reproduced by camouflaging gaps (e.g. invisible packaging-rate adjustments).
+- Representative published tariff notice (Hirdetmény) examples exist to **verify** the calculation system, not to be reproduced by camouflaging gaps (e.g. invisible packaging-rate adjustments).
 - Gaps can sit in different layers: schedule math, THM/fee assembly, or end-to-end wiring. A single combined assertion muddies diagnosis.
 
 ## Decision
@@ -27,7 +27,7 @@ Representative examples verify products with **three independent checks**:
 3. **THM from engine payments (checks global system wiring)**  
    ADR 0022 `percentRounded` must reproduce the stated `thmPct` when fed **monthly payments calculated by the engine** (check 1 path) together with the **engine fee package**. Check 3 therefore depends on **both** schedule fidelity and fee-package fidelity; a mismatch can come from either layer (or both) even when the other looks fine in isolation.
 
-Commercially-usable promotion requires all three checks green for that product (Vidéki remains packaging-quarantined until its §6 example can amortize stated principal).
+Commercially-usable promotion requires all three checks green for that product (OTP Rural Home Renovation Loan remains packaging-quarantined until its §6 example can amortize stated principal).
 
 ## Consequences
 

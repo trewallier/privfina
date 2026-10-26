@@ -3,9 +3,9 @@ productId: home-savings.premium-plusz-10x30.standard
 exampleId: maturity-premium-120
 title: Maturity Premium tier — 120 months housing purpose
 description: >
-  Continuous saving through month 120 with housing-purpose allotment/termination
-  credits OTP Lakástakarék Prémium at 30%. Terminal golden follows the OTP
-  product-page calculator Lejáratkor figure (authoritative).
+  Continuous saving through month 120 with housing-purpose allocation/termination
+  credits OTP Home Savings Premium at 30%. Terminal golden follows the OTP
+  product-page calculator at-maturity (Lejáratkor) figure (authoritative).
 
 inputs:
   monthlyDeposit: 50000
@@ -37,11 +37,12 @@ expected:
   maturityPremiumRatePctFromMonth120: 30
 
 notes:
-  - Premium percents from Hirdetmény B / USZ §10 (natural person and társasház tables).
+  - Premium percents from Hirdetmény B / USZ §10 (natural person and condominium (társasház) tables).
   - premiumBase = contractual deposits only; Premium has no compound interest (USZ §10).
   - >
-    terminalPayout is OTP product-page calculator Lejáratkor (7 831 152 Ft);
-    depositInterest is derived. See web-calculator-maturity-50000.yaml source.
+    terminalPayout is OTP product-page calculator at-maturity / Lejáratkor
+    (7 831 152 Ft); depositInterest is derived. See
+    web-calculator-maturity-50000.yaml source.
   - >
     maturityPayoutDate / engine interest use OTP-calculator continuous-path
     packaging (first of month two months after last deposit), not literal

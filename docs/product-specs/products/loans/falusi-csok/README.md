@@ -1,6 +1,6 @@
-# OTP Otthonteremtési Lakáshitel (Falusi CSOK)
+# OTP Home-Creation Loan — Village CSOK (Falusi CSOK / Otthonteremtési Lakáshitel)
 
-State-subsidized Falusi CSOK / Otthonteremtés home loan (`productCode: falusi-csok`) with a 3% customer rate during subsidy.
+State-subsidized Village CSOK / home-creation loan (`productCode: falusi-csok`) with a 3% customer rate during subsidy.
 
 ## Representative example (§6)
 
@@ -10,7 +10,7 @@ State-subsidized Falusi CSOK / Otthonteremtés home loan (`productCode: falusi-c
 | Term | 20 years / 240 installments |
 | Purpose | Used home purchase (preferred small settlement) |
 | Customer rate | 3,00% |
-| Ügyleti kamat (Apr 2026) | 8,18% |
+| Contractual interest rate (Apr 2026) | 8,18% |
 | Monthly installment | 66.802 Ft |
 | Total paid | 16.256.448 Ft |
 | Fees/costs | 223.965 Ft |

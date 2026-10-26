@@ -9,23 +9,24 @@ import {
   sortCashFlowsByDate
 } from './common'
 
-/** Default OTP Lakástakarék Prémium tiers (PRÉMIUM PLUSZ 10x30 Hirdetmény / USZ). */
+/** Default OTP Home Savings Premium tiers (PRÉMIUM PLUSZ 10x30 Hirdetmény / USZ). */
 export const DEFAULT_HOME_SAVINGS_PREMIUM_TIERS = {
   months49to96: 10,
   months97to120: 20,
   maturityFrom120: 30
 } as const
 
-/** USZ Melléklet 2026-08-03 — PRÉMIUM PLUSZ 10x30. */
+/** Deposit interest rate sheet annex (USZ Melléklet) 2026-08-03 — PRÉMIUM PLUSZ 10x30. */
 export const DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT = 0.1
 export const DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE = 3.846
 export const DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT = 2_600_000
 export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
 
 /**
- * ÁSZF §22 (4): kiutalási időszak length for contracts concluded on/after 2017-07-01
- * (2 months; older cohorts use 3). Current Prémium Plusz uses 2.
- * With evaluation min megtakarítási idő 120 (USZ Melléklet) → kiutalás min 122.
+ * General Terms and Conditions (ÁSZF) §22 (4): allocation period (kiutalási időszak)
+ * length for contracts concluded on/after 2017-07-01 (2 months; older cohorts use 3).
+ * Current Premium Plus uses 2. With evaluation min savings period 120
+ * (USZ Melléklet) → allocation min 122.
  */
 export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS = 2
 
@@ -84,7 +85,7 @@ export interface HomeSavingsBundleInput extends HomeSavingsInstrumentInput {
   productSpecVersion?: string
   /** Opening-fee mode for edit round-trips (commercial composer). */
   openingFeeMode?: string
-  /** Resolved or explicit szerződéses összeg for edit round-trips. */
+  /** Resolved or explicit contractual amount (szerződéses összeg) for edit round-trips. */
   contractAmount?: number
   createdAt?: string
   updatedAt?: string
@@ -103,7 +104,7 @@ function monthlyPeriod(dayOfMonth: number): string {
 }
 
 /**
- * Resolve OTP Prémium percent from holding length and housing-purpose assumption.
+ * Resolve OTP Home Savings Premium percent from holding length and housing-purpose assumption.
  * Parameterized tiers — not productCode forks (ADR 0015).
  */
 export function resolveHomeSavingsPremiumRatePct(input: {
@@ -154,12 +155,13 @@ function shiftUtcDays(date: Date, days: number): Date {
 /**
  * Continuous-path maturity payout date for interest end + terminal inflow.
  *
- * ÁSZF §22: after evaluation min megtakarítási idő, a 2-month kiutalási időszak
- * runs (post-2017-07-01). USZ Melléklet encodes this as kiutalás min = 122 for
- * the 120-month módozat. OTP product-page calculator "Lejáratkor" goldens match
- * the **first calendar day** of the month that is
+ * ÁSZF §22: after minimum savings period (megtakarítási idő), a 2-month
+ * allocation period (kiutalási időszak) runs (post-2017-07-01). USZ Melléklet
+ * encodes this as allocation min = 122 for the 120-month product scheme
+ * (módozat). OTP product-page calculator "at maturity" (Lejáratkor) goldens
+ * match the **first calendar day** of the month that is
  * {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS} after the last deposit's month
- * (not the literal kiutalási időpont = last day of that period / §22 (1) payment
+ * (not the literal allocation date = last day of that period / §22 (1) payment
  * month). Interest ends the day before this date (ÁSZF §10).
  */
 export function resolveHomeSavingsMaturityPayoutDate(input: {
@@ -188,7 +190,7 @@ export function ceilToTenForint(amount: number): number {
 }
 
 /**
- * Havi betét = szerződéses összeg × ‰ / 1000, rounded up to 10 Ft (USZ/ÁSZF).
+ * Monthly deposit = contractual amount × ‰ / 1000, rounded up to 10 Ft (USZ/ÁSZF).
  */
 export function resolveMonthlyDepositFromContractAmount(input: {
   contractAmount: number
@@ -206,7 +208,7 @@ export function resolveMonthlyDepositFromContractAmount(input: {
 }
 
 /**
- * Invert the ‰ rule to a 10 000 Ft multiple in the módozat contract bounds.
+ * Invert the ‰ rule to a 10 000 Ft multiple in the product-scheme (módozat) contract bounds.
  */
 export function resolveContractAmountFromMonthlyDeposit(input: {
   monthlyDeposit: number
@@ -241,19 +243,20 @@ export function resolveContractAmountFromMonthlyDeposit(input: {
 
 /**
  * ÁSZF/USZ deposit interest: ACT/360 daily
- * (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization on the first
- * day after each megtakarítási év, accrual from credit day through the day
- * before payout (ÁSZF §10). Returns whole-forint interest (nearest).
+ * (interest = principal × rate × days / (360 × 100);
+ * HU: `tőke × kamatláb × napok / (360 × 100)`), yearly capitalization on the
+ * first day after each savings year (megtakarítási év), accrual from credit day
+ * through the day before payout (ÁSZF §10). Returns whole-forint interest (nearest).
  *
  * Payout date defaults to {@link resolveHomeSavingsMaturityPayoutDate} (ÁSZF §22
- * 2-month kiutalási packaging aligned with OTP product-page calculator goldens).
+ * 2-month allocation packaging aligned with OTP product-page calculator goldens).
  */
 export function calculateHomeSavingsDepositInterest(input: {
   monthlyDeposit: number
   termMonths: number
   startDate: string
   annualRatePct?: number
-  /** Override maturity payout date (ISO); defaults to ÁSZF kiutalási packaging. */
+  /** Override maturity payout date (ISO); defaults to ÁSZF allocation packaging. */
   payoutDate?: string
 }): number {
   const monthlyDeposit = ensurePositiveAmount(input.monthlyDeposit)

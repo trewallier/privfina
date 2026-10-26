@@ -1,4 +1,4 @@
-# OTP Vidéki Otthonfelújítási Lakáshitel
+# OTP Rural Home Renovation Loan (Vidéki Otthonfelújítási Lakáshitel)
 
 State-subsidized rural renovation loan (`productCode: videki-otthonfelujitasi`) with a fixed 3 pp interest subsidy for up to 10 years.
 
@@ -10,7 +10,7 @@ State-subsidized rural renovation loan (`productCode: videki-otthonfelujitasi`) 
 | Term | 10 years / 120 installments (§6 packaging) |
 | Purpose | Renovation |
 | Customer rate | 4,87% |
-| Ügyleti kamat (Apr 2026) | 7,87% |
+| Contractual interest rate (Apr 2026) | 7,87% |
 | Monthly installment | 63.457 Ft |
 | Total paid | 7.731.977 Ft |
 | Fees/costs | 117.145 Ft |

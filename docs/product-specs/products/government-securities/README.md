@@ -3,9 +3,9 @@
 This family contains Hungarian government securities in the product-specification layer.
 
 The first target product types are:
-- DKJ
-- PMAP
-- BMAP
+- Discount Treasury Bond (DKJ)
+- Premium Hungarian Government Security (PMÁP)
+- Bonus Hungarian Government Security (BMÁP)
 
 In this family, product differences should live primarily in product specifications, assumptions, worked examples, and metadata rather than engine branches.
 

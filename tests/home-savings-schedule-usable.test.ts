@@ -182,7 +182,7 @@ describe('home-savings schedule-usable metadata', () => {
     expect(outputs.totalAccountFees).toBe(expected.totalAccountFees)
     expect(outputs.premiumRatePct).toBe(expected.premiumRatePct)
     expect(outputs.premiumAmount).toBe(expected.premiumAmount)
-    // Engine pins from maturity-premium-120.yaml (OTP Lejáratkor is expected.terminalPayout).
+    // Engine pins from maturity-premium-120.yaml (OTP at-maturity / Lejáratkor is expected.terminalPayout).
     expect(outputs.depositInterest).toBe(expected.engineDepositInterest)
     expect(outputs.terminalPayout).toBe(expected.engineTerminalPayout)
     expect(outputs.productId).toBe('home-savings.premium-plusz-10x30.standard')

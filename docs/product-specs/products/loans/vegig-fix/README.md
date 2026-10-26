@@ -1,10 +1,10 @@
-# Végig Fix Lakáshitel
+# OTP Fixed-for-Term Home Loan (Végig Fix Lakáshitel)
 
 Market forint home loan from OTP Jelzálogbank with a rate fixed for the full term (`productCode: vegig-fix`).
 
 ## Source
 
-OTP Bank / OTP Jelzálogbank Hirdetmény: *Forint lakáshitelek kamat, díj, jutalék és költség tételei*, effective for applications accepted from **2026-04-20** (`Lakáshitel_H_kondicio_20260420`).
+OTP Bank / OTP Jelzálogbank published tariff notice (Hirdetmény): *Forint lakáshitelek kamat, díj, jutalék és költség tételei*, effective for applications accepted from **2026-04-20** (`Lakáshitel_H_kondicio_20260420`).
 
 ## Representative example (§6)
 

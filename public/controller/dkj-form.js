@@ -13,7 +13,7 @@ const DKJ_PRODUCT_SPEC = {
   family: 'government-security',
   variant: 'dkj',
   productCode: 'dkj',
-  displayName: 'Discount Treasury Bond',
+  displayName: 'Discount Treasury Bond (DKJ)',
   inputs: [
     {
       name: 'faceValue',
@@ -111,7 +111,7 @@ const DKJ_PRODUCT_SPEC = {
     }
   ],
   ui: {
-    formTitle: 'Discount Treasury Bond',
+    formTitle: 'Discount Treasury Bond (DKJ)',
     sections: [
       {
         id: 'dkj-core',

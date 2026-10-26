@@ -4,13 +4,13 @@ id: mortgage-loan.otp-zold.standard
 family: mortgage-loan
 variant: otp-zold
 productCode: otp-zold
-displayName: OTP Zöld Lakáshitel
+displayName: OTP Green Home Loan (Zöld Lakáshitel)
 description: >
-  OTP Jelzálogbank green market forint home loan with a contractual rate fixed
-  for the full term (Egyszeri kamatcsökkentéssel) and a 50 bp Zöld kamatkedvezmény
-  when green housing conditions are met. Conditions sourced from the OTP
-  Hirdetmény effective for applications accepted from 2026-04-20
-  (Lakáshitel H kondíció 2026-04-20).
+  OTP Jelzálogbank green market forint home loan with a contractual interest
+  rate fixed for the full term (with optional one-time rate reduction) and a
+  50 bp green rate discount when green housing conditions are met. Conditions
+  sourced from the OTP published tariff notice (Hirdetmény) effective for
+  applications accepted from 2026-04-20 (Lakáshitel H kondíció 2026-04-20).
 
 engine:
   instrumentType: loan
@@ -34,9 +34,9 @@ loanPurposes:
 pricing:
   rateSettingRule: fixed-for-full-term-with-green-and-optional-loyalty-discounts
   notes:
-    - "Base ügyleti kamat 8,49%; with Zöld kamatkedvezmény (50 bp) the customer rate is 7,99% when green housing conditions are met (Hirdetmény 2.1.2)."
-    - "THM reprezentatív példa új lakás vásárlásra 8,5% (12 mFt / 20 év, Zöld kedvezménnyel)."
-    - "Optional 12-month interest-only türelmi idő is available on the product family but is not the representative annuity case."
+    - "Base contractual interest rate (ügyleti kamat) 8,49%; with green rate discount (50 bp) the customer rate is 7,99% when green housing conditions are met (Hirdetmény 2.1.2)."
+    - "THM representative example for new-home purchase is 8,5% (12 HUF million / 20 years, with green discount)."
+    - "Optional 12-month interest-only grace period is available on the product family but is not the representative annuity case."
 
 discounts:
   - name: zold-kamatkedvezmeny
@@ -82,19 +82,19 @@ fees:
     unit: percent
     maxAmount: 200000
     timing: upfront
-    description: 0,75%, max 200.000 Ft; waived for OTP Zöld under OTP Zöld Díjkedvezményes akció.
+    description: 0,75%, max 200.000 Ft; waived for OTP Green under the OTP Green discounted-fee campaign.
   - name: hitelbiztositeki-ertek-megallapitas
     type: appraisal
     value: 58765
     unit: amount
     timing: upfront
-    description: On-site appraisal for demand under 50 mFt (alap); Zöld action may cap customer pay above 35.000 Ft.
+    description: On-site appraisal for demand under 50 HUF million (base); Green campaign may cap customer pay above 35.000 Ft.
   - name: azonnali-ertekbecsles
     type: appraisal
     value: 21980
     unit: amount
     timing: upfront
-    description: Statistical instant appraisal; waived under OTP Zöld Díjkedvezményes akció for one property.
+    description: Statistical instant appraisal; waived under OTP Green discounted-fee campaign for one property.
   - name: fedezetkezelesi-koltseg
     type: property-management
     value: 20000
@@ -107,24 +107,24 @@ fees:
     unit: amount
     timing: upfront
     description: >
-      Fedezetváltozási költség (10.600 Ft/fedezet/jelzálog) for mortgage release;
+      Collateral change fee (10.600 Ft/collateral/mortgage) for mortgage release;
       included in Hirdetmény §6 total credit-cost fees / THM packaging.
-      §6 new-home purchase packaging does not add tulajdoni lap / térképmásolat
-      (térkép applies to családi házas collateral; new-lakás example omits those lines).
+      §6 new-home purchase packaging does not add title-deed / cadastral-map extracts
+      (cadastral map applies to detached-house collateral; new-home example omits those lines).
   - name: egyszeri-kamatcsokkentes-dij
     type: other
     value: 2
     unit: percent
     maxAmount: 200000
     timing: upfront
-    description: 2%, max 200.000 Ft at contract; waived under Egyszeri kamatcsökkentés díjelengedési akció for OTP Zöld.
+    description: 2%, max 200.000 Ft at contract; waived under one-time rate-reduction fee-waiver campaign for OTP Green.
   - name: elotorlesztesi-dij
     type: prepayment
     value: 1
     unit: percent
     maxAmount: 30000
     timing: on-event
-    description: 1,00%, max 30.000 Ft per occasion for OTP Zöld Lakáshitelek.
+    description: 1,00%, max 30.000 Ft per occasion for OTP Green Home Loans.
   - name: szerzodesmodositasi-dij
     type: contract-modification
     value: 51850
@@ -135,8 +135,8 @@ fees:
 eligibilityRules:
   - Mortgage collateral on residential real estate is required.
   - Property insurance meeting lender conditions is required.
-  - Green housing energy-performance conditions must be met for the Zöld kamatkedvezmény and green-purpose packaging.
-  - Closing authentic energy certificate (Hiteles energetikai tanúsítvány) documents green-purpose completion.
+  - Green housing energy-performance conditions must be met for the green rate discount and green-purpose packaging.
+  - Closing authentic energy certificate documents green-purpose completion.
 
 inputs:
   - name: principal
@@ -154,8 +154,8 @@ inputs:
     required: true
     unit: percent
     description: >
-      Customer rate after Zöld kamatkedvezmény when green conditions are met (7,99%).
-      Base ügyleti kamat without green discount is 8,49%.
+      Customer rate after green rate discount when green conditions are met (7,99%).
+      Base contractual interest rate without green discount is 8,49%.
     constraints:
       minimum: 0
       maximum: 100
@@ -225,7 +225,7 @@ outputs:
     label: Total Paid
     required: true
     unit: currency
-    description: Sum of scheduled repayments (engine) or Hirdetmény total including packaged fees when taken from the representative example.
+    description: Sum of scheduled repayments (engine) or published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.
 
   - name: thmPct
     type: number
@@ -235,15 +235,15 @@ outputs:
     description: Published total cost of credit indicator for the representative case.
 
 assumptions:
-  - "Base contractual rate is 8,49% fixed for the full term; representative packaging applies 50 bp Zöld kamatkedvezmény for a 7,99% customer rate when green conditions are met."
+  - "Base contractual rate is 8,49% fixed for the full term; representative packaging applies 50 bp green rate discount for a 7,99% customer rate when green conditions are met."
   - "Representative Hirdetmény example uses new-home purchase, 12.000.000 Ft, 20 years, annuity repayment, single disbursement, conditions as of 2026-04-01 packaging with 2026-04-20 Hirdetmény product rates."
   - "Optional 12-month interest-only grace exists on the market-loan family but is out of scope for the representative annuity example."
-  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate."
-  - "Representative fee package (with Zöld folyósítási waiver) is appraisal + fedezetkezelési + fedezetváltozási; §6 new-home packaging omits tulajdoni lap / térképmásolat lines."
-  - "OTP 1x1, Végig Fix, and subsidized constructions are separate productCodes."
+  - "Engine schedule uses ACT/360 equal-month interest: interest = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025) so check-1 installments match §6 at the stated rate."
+  - "Representative fee package (with Green disbursement waiver) is appraisal + collateral administration + collateral change; §6 new-home packaging omits title-deed / cadastral-map extract lines."
+  - "OTP 1x1, Fixed-for-Term, and subsidized constructions are separate productCodes."
 
 ui:
-  formTitle: OTP Zöld Lakáshitel
+  formTitle: OTP Green Home Loan (Zöld Lakáshitel)
   sections:
     - id: otp-zold-core
       title: Loan Inputs

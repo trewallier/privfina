@@ -3,6 +3,7 @@
 Checklist for contributors and agents. Detail stays in the linked owners; this file is routing only.
 
 Authoritative status definitions: [`../product-specs/PRODUCT_CATALOG.md`](../product-specs/PRODUCT_CATALOG.md).  
+English naming / Hungarian gloss rules: [`english-product-naming.md`](english-product-naming.md).  
 Ownership rules: [`../source-of-truth-ownership.md`](../source-of-truth-ownership.md).  
 Agent entry: [`../../AGENTS.md`](../../AGENTS.md).  
 Readiness policy (loans): [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md); public-offering commercially-usable bar: [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) + [ADR 0024](../adr/0024-representative-example-three-check-verification.md).  
@@ -37,7 +38,7 @@ Frontend may stay below schedule-usable.
    - Public-offering mortgages → **commercial loan** composer with product picker.
    - Generic bonds → **simplified investment** composer (subtype list only).
    - ÁKK / catalog `government-security` → **commercial investment** composer with treasury product picker (ADR 0027). Do **not** add catalog codes to the simplified investment subtype list.
-   - OTP Lakástakarék / catalog `home-savings` → **commercial home-savings** composer with product picker (ADR 0030). Do **not** add LTP codes to investment or loan composers.
+   - OTP Home Savings (Lakástakarék) / catalog `home-savings` → **commercial home-savings** composer with product picker (ADR 0030). Do **not** add LTP codes to investment or loan composers.
 2. Confirm create/edit/preview/persist of **customer-perspective** cash flows (`productId` / `productSpecVersion` stamped).
 3. Loans: purpose / eligibility / discount as **hints only** (no hard validation yet). Home-savings: housing purpose / loyalty as **hints only** at this rung.
 4. No dual-lane figures in the UI; no bank↔state subsidy legs on the user balance.
@@ -48,7 +49,7 @@ Frontend may stay below schedule-usable.
 ### Loans
 1. Surface fees / selectable discounts / purpose / THM on the commercial loan composer as specified.
 2. For public offerings: all three [ADR 0024](../adr/0024-representative-example-three-check-verification.md) checks must be green (engine installment at stated rate; THM from offering numbers; THM from engine payments + fee package). ADR 0022 `percentRounded` ≡ published `thmPct` is necessary but not sufficient alone ([ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md)).
-3. Clear packaging quarantines (e.g. Vidéki) only after offering figures reconcile with an amortizing schedule.
+3. Clear packaging quarantines (e.g. OTP Rural Home Renovation Loan) only after offering figures reconcile with an amortizing schedule.
 4. Bump catalog status → **`commercially-usable`**.
 
 ### Government securities
@@ -61,9 +62,9 @@ Frontend may stay below schedule-usable.
 ### Home savings
 1. Ensure the offering appears on the **commercial home-savings** product picker with readiness hint from catalog status.
 2. Fees / Premium tiers / loyalty hints and EBKM preview wired from product YAML.
-3. Engine EBKM matches published Hirdetmény goldens for locked examples (ADR 0031); no dual-lane display.
+3. Engine EBKM matches published tariff notice (Hirdetmény) goldens for locked examples (ADR 0031); no dual-lane display.
 4. Do **not** require ADR 0024 THM three-check.
-5. Do **not** invent ÁSZF deposit rates — interest fidelity waits on módozat annex numbers in YAML.
+5. Do **not** invent General Terms and Conditions (ÁSZF) deposit rates — interest fidelity waits on product-scheme (módozat) annex numbers in YAML.
 6. Bump catalog status → **`commercially-usable`**.
 
 ## E. Promote to fully-spec-backed

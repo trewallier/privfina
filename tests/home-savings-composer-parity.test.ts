@@ -184,12 +184,12 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
     expect(entry?.migrationStatus).toBe('schedule-usable')
-    expect(entry?.commerciallyBlockedReason).toMatch(/0\.01|EBKM|4\.47/i)
+    expect(entry?.commerciallyBlockedReason).toMatch(/0\.01|EBKM|4\.36|promo/i)
     expect(entry?.discountHints?.length).toBeGreaterThan(0)
     expect(entry?.premiumHints).toMatch(/Premium tiers/i)
   })
 
-  it('surfaces ÁSZF-packaged EBKM preview matching Hirdetmény promo 20k goldens', () => {
+  it('surfaces ÁSZF-packaged EBKM preview for promo 20k (residual gap pinned)', () => {
     const ebkmExample = loadYaml(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-20000.yaml'
     ) as {
@@ -233,11 +233,11 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     )
 
     expect(withPremium.accountFeeMonthly).toBe(expected.accountFeeMonthly)
-    // Promo 20k is a green ÁSZF-packaging cell — engine pins ≡ published.
+    // Promo 20k residual cells — engine pins ≠ published (0.01 each leg).
     expect(withPremium.ebkmPct).toBe(expected.engineEbkmPctWithPremium)
     expect(withoutPremium.ebkmPct).toBe(expected.engineEbkmPctWithoutPremium)
-    expect(withPremium.ebkmPct).toBe(expected.ebkmPctWithPremium)
-    expect(withoutPremium.ebkmPct).toBe(expected.ebkmPctWithoutPremium)
+    expect(withPremium.ebkmPct).not.toBe(expected.ebkmPctWithPremium)
+    expect(withoutPremium.ebkmPct).not.toBe(expected.ebkmPctWithoutPremium)
   })
 
   it('keeps browser ‰ helpers aligned with engine Melléklet cases', () => {

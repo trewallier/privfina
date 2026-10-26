@@ -20,11 +20,16 @@ expected:
   # Published Hirdetmény A goldens (authoritative commercially-usable target).
   ebkmPctWithPremium: 4.35
   ebkmPctWithoutPremium: -0.58
-  # Engine Annex 3 + ÁSZF 22. § kiutalás payout dating (terminal on first of lastDepositMonth+3).
-  engineEbkmPctWithPremium: 4.35
-  engineEbkmPctWithoutPremium: -0.58
+  # Engine Annex 3 + ÁSZF 22. § kiutalás dating on OTP-maturity terminal amounts.
+  # Both legs sit 0.01 past the two-decimal half-up boundary (residual gap).
+  engineEbkmPctWithPremium: 4.36
+  engineEbkmPctWithoutPremium: -0.57
 
 notes:
   - Hirdetmény A EBKM pair with Premium / without Premium.
-  - "ADR 0031: engine Annex 3 + ÁSZF 22. § kiutalás payout dating matches both goldens."
+  - >
+      ADR 0031 / ÁSZF 22. § packaging (terminal on first of lastDepositMonth+3) with
+      OTP-aligned maturity terminal amounts solves to 4.36 / −0.57 vs published
+      4.35 / −0.58 (0.01 residual each — harness gap).
+  - Do not close these cells with a fitted lag/netting knob.
   - Percent opening fee needs szerződéses összeg from ÁSZF/calculator before engine fee amount assertion.

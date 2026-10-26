@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildEbkmFlowsFromLegs,
+  buildEbkmLegsFromHomeSavingsCashFlows,
   calculateEbkm,
   calculateEbkmFromHomeSavingsCashFlows,
   calculateEbkmFromLegs,
@@ -114,5 +115,16 @@ describe('calculateEbkm (3. melléklet)', () => {
     ])
     expect(resolveHomeSavingsEbkmPayoutDate('2036-09-10')).toBe('2036-12-01')
     expect(aszfPackaged.percentRounded).toBeLessThan(scheduleDated.percentRounded)
+  })
+
+  it('anchors kiutalás retarget on Monthly deposit labels, not later fee-only outflows', () => {
+    const legs = buildEbkmLegsFromHomeSavingsCashFlows([
+      { date: '2026-10-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+      { date: '2036-09-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
+      // Hypothetical later fee must not shift last-deposit month.
+      { date: '2036-10-15', amount: 500, direction: 'outflow', description: 'Account management fee' },
+      { date: '2036-11-01', amount: 2500, direction: 'inflow', description: 'Home-savings terminal payout' }
+    ])
+    expect(legs.payouts[0].date).toBe('2036-12-01')
   })
 })

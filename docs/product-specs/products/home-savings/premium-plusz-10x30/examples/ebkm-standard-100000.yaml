@@ -19,14 +19,11 @@ expected:
   # Published Hirdetmény B goldens (authoritative commercially-usable target).
   ebkmPctWithPremium: 4.48
   ebkmPctWithoutPremium: -0.40
-  # Engine pins under ÁSZF 22. § packaging — with-Premium residual 0.01 vs published.
-  engineEbkmPctWithPremium: 4.47
+  # Engine Annex 3 + ÁSZF 22. § kiutalás payout dating (terminal on first of lastDepositMonth+3).
+  engineEbkmPctWithPremium: 4.48
   engineEbkmPctWithoutPremium: -0.4
 
 notes:
   - Hirdetmény B EBKM pair with Premium / without Premium.
   - 1% opening fee is percent of szerződéses összeg (26 000 000 → 260 000 Ft).
-  - >
-      ADR 0031 / ÁSZF 22. § packaging matches without-Premium (−0.40); with-Premium
-      engine still solves to 4.47 vs published 4.48 (0.01 residual — harness gap).
-  - Do not close the 0.01 cell with a fitted lag/netting knob.
+  - "ADR 0031: engine Annex 3 + ÁSZF 22. § kiutalás payout dating matches both goldens."

@@ -21,7 +21,7 @@ expected:
   ebkmPctWithoutPremium: -0.40
   # Engine Annex 3 + ÁSZF 22. § kiutalás payout dating (terminal on first of lastDepositMonth+3).
   engineEbkmPctWithPremium: 4.48
-  engineEbkmPctWithoutPremium: -0.4
+  engineEbkmPctWithoutPremium: -0.40
 
 notes:
   - Hirdetmény B EBKM pair with Premium / without Premium.

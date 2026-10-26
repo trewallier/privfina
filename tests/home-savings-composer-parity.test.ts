@@ -184,7 +184,11 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
     expect(entry?.migrationStatus).toBe('schedule-usable')
-    expect(entry?.commerciallyBlockedReason).toMatch(/0\.01|EBKM|4\.36|promo/i)
+    // Residual figures must stay visible — soft "EBKM" alone would wash the gap.
+    expect(entry?.commerciallyBlockedReason).toMatch(/4\.36/)
+    expect(entry?.commerciallyBlockedReason).toMatch(/-0\.57|−0\.57/)
+    expect(entry?.commerciallyBlockedReason).toMatch(/4\.35/)
+    expect(entry?.commerciallyBlockedReason).toMatch(/0\.01/)
     expect(entry?.discountHints?.length).toBeGreaterThan(0)
     expect(entry?.premiumHints).toMatch(/Premium tiers/i)
   })

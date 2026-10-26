@@ -82,10 +82,46 @@ export interface HomeSavingsInstrumentInput {
   /** Override Premium percent; when omitted, resolve from term + tiers. */
   premiumRatePct?: number
   premiumTiers?: HomeSavingsPremiumTiers
+  /**
+   * Allocation (kiutalási) period length in months after last deposit.
+   * Defaults to {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS} (2). Product YAML
+   * supplies `allocationMinMonths − evaluationMinMonths` when both are set.
+   */
+  kiutalasiPeriodMonths?: number
   /** Early-exit scenario: savings month index (1-based) used for Premium band. */
   earlyExitMonth?: number
   category?: string
   description?: string
+}
+
+/** Resolve allocation-period length from USZ Melléklet eval/alloc mins when both present. */
+export function resolveKiutalasiPeriodMonths(input: {
+  evaluationMinMonths?: number
+  allocationMinMonths?: number
+  fallback?: number
+}): number {
+  const evaluation = input.evaluationMinMonths
+  const allocation = input.allocationMinMonths
+  if (
+    evaluation !== undefined &&
+    evaluation !== null &&
+    allocation !== undefined &&
+    allocation !== null
+  ) {
+    const evalN = Number(evaluation)
+    const allocN = Number(allocation)
+    if (!Number.isInteger(evalN) || evalN < 1 || !Number.isInteger(allocN) || allocN < evalN) {
+      throw new Error(
+        'evaluationMinMonths / allocationMinMonths must be positive integers with allocation ≥ evaluation.'
+      )
+    }
+    return allocN - evalN
+  }
+  const fallback = Number(input.fallback ?? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS)
+  if (!Number.isInteger(fallback) || fallback < 0) {
+    throw new Error('kiutalasiPeriodMonths fallback must be a non-negative integer.')
+  }
+  return fallback
 }
 
 export interface HomeSavingsScheduleSummary {
@@ -549,9 +585,10 @@ export function generateHomeSavingsInstrumentCashFlows(
  * maturity packaging in {@link generateHomeSavingsInstrumentCashFlows}).
  *
  * - **Account fees** continue through the allocation (kiutalási) period:
- *   `termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS` (USZ Melléklet
- *   allocation min = evaluation min + 2 for PRÉMIUM PLUSZ 10x30). Chart/OTP
- *   calculator maturity illustrations keep `termMonths` fee months only.
+ *   `termMonths + kiutalasiPeriodMonths` (from product YAML
+ *   `allocationMinMonths − evaluationMinMonths`, else
+ *   {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS}). Chart/OTP calculator
+ *   maturity illustrations keep `termMonths` fee months only.
  * - **Terminal amount** uses deposit interest accrued through the day before
  *   the ÁSZF EBKM payout date (ÁSZF §10); the inflow is dated on that payout
  *   date (`lastDepositMonth+3` day-1 via {@link resolveHomeSavingsEbkmPayoutDate}).
@@ -574,7 +611,10 @@ export function buildHomeSavingsAszfEbkmCashFlows(
   if (!Number.isInteger(termMonths) || termMonths <= 0) {
     throw new Error('termMonths must be a positive integer.')
   }
-  assertBoundedHorizon(undefined, termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS)
+  const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    fallback: input.kiutalasiPeriodMonths ?? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS
+  })
+  assertBoundedHorizon(undefined, termMonths + kiutalasiPeriodMonths)
 
   const dayOfMonth = input.depositDayOfMonth ?? deriveDepositDayOfMonth(input.startDate)
   const period = monthlyPeriod(dayOfMonth)
@@ -641,7 +681,7 @@ export function buildHomeSavingsAszfEbkmCashFlows(
   }
 
   if (accountFeeMonthly > 0) {
-    const feeMonths = termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS
+    const feeMonths = termMonths + kiutalasiPeriodMonths
     const feeFlows = generateRecurringCashFlows({
       period,
       startDate: input.startDate,

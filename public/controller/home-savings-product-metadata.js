@@ -108,9 +108,17 @@ function openingFeeModeLabel(mode) {
   return mode
 }
 
-function assertStartDateInSaleWindow(startDate, saleWindow) {
-  if (!saleWindow || !saleWindow.from) {
+/**
+ * UI/composer sale-window check. Soft when `saleWindow` is absent (legacy
+ * bundles). When a window is present, requires a valid `from` and enforces the
+ * same inclusive bounds as engine `assertStartDateInSaleWindow`.
+ */
+function assertComposerStartDateInSaleWindow(startDate, saleWindow) {
+  if (!saleWindow) {
     return
+  }
+  if (!saleWindow.from || !/^\d{4}-\d{2}-\d{2}$/.test(saleWindow.from)) {
+    throw new Error('saleWindow.from must be an ISO calendar date (YYYY-MM-DD).')
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
     throw new Error('Savings start date is required (YYYY-MM-DD).')
@@ -120,10 +128,15 @@ function assertStartDateInSaleWindow(startDate, saleWindow) {
       `Savings start date ${startDate} is before this módozat's sale window start ${saleWindow.from}.`
     )
   }
-  if (saleWindow.to && startDate > saleWindow.to) {
-    throw new Error(
-      `Savings start date ${startDate} is after this módozat's sale window end ${saleWindow.to}.`
-    )
+  if (saleWindow.to != null && saleWindow.to !== '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(saleWindow.to)) {
+      throw new Error('saleWindow.to must be an ISO calendar date (YYYY-MM-DD) when set.')
+    }
+    if (startDate > saleWindow.to) {
+      throw new Error(
+        `Savings start date ${startDate} is after this módozat's sale window end ${saleWindow.to}.`
+      )
+    }
   }
 }
 
@@ -148,6 +161,6 @@ export {
   findHomeSavingsProductById,
   resolveHomeSavingsReadinessHint,
   openingFeeModeLabel,
-  assertStartDateInSaleWindow,
+  assertComposerStartDateInSaleWindow,
   defaultStartDateForSaleWindow
 }

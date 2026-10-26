@@ -79,6 +79,7 @@ export {
   resolveHomeSavingsMaturityPayoutDate,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
+  resolveKiutalasiPeriodMonths,
   resolveMonthlyDepositFromContractAmount
 } from './instruments'
 export type {

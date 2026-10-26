@@ -39,6 +39,7 @@ describe('home-savings embedded product-spec parity (fully-spec-backed)', () => 
     expect(embedded.engine.evaluationMinMonths).toBe(yaml.engine.evaluationMinMonths)
     expect(embedded.engine.allocationMinMonths).toBe(yaml.engine.allocationMinMonths)
     expect(embedded.saleWindow).toEqual(yaml.saleWindow)
+    expect(embedded.premiumTiers).toEqual(yaml.premiumTiers)
 
     expect(embedded.eligibilityRules).toEqual(yaml.eligibilityRules)
     expect(embedded.fees.map((f: { name: string }) => f.name)).toEqual(

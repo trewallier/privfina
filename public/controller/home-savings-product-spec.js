@@ -172,7 +172,7 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC = {
       }
     ]
   },
-  /** Composer-facing Premium tiers (USZ / Hirdetmény) — not a YAML engine block. */
+  /** Premium tiers — keep in parity with product.yaml `premiumTiers`. */
   premiumTiers: {
     bands: [
       { minHoldingMonths: 120, ratePct: 30 },

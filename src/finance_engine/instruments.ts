@@ -110,5 +110,6 @@ export {
   resolveHomeSavingsMaturityPayoutDate,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
+  resolveKiutalasiPeriodMonths,
   resolveMonthlyDepositFromContractAmount
 } from './instruments/home_savings'

@@ -9,7 +9,7 @@
  * chart/schedule OTP maturity cash flows.
  */
 import {
-  assertStartDateInSaleWindow,
+  assertComposerStartDateInSaleWindow,
   findHomeSavingsProduct
 } from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
@@ -84,9 +84,20 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
     throw new Error('Unknown home-savings product.')
   }
 
-  assertStartDateInSaleWindow(String(specInputs.startDate), product.saleWindow)
+  assertComposerStartDateInSaleWindow(String(specInputs.startDate), product.saleWindow)
   const accountOpeningFee = resolveHomeSavingsOpeningFee(product, specInputs)
   const contractAmount = resolveHomeSavingsContractAmount(product, specInputs)
+  const evaluationMinMonths = Number(product.evaluationMinMonths)
+  const allocationMinMonths = Number(product.allocationMinMonths)
+  let kiutalasiPeriodMonths
+  if (
+    Number.isInteger(evaluationMinMonths) &&
+    evaluationMinMonths >= 1 &&
+    Number.isInteger(allocationMinMonths) &&
+    allocationMinMonths >= evaluationMinMonths
+  ) {
+    kiutalasiPeriodMonths = allocationMinMonths - evaluationMinMonths
+  }
 
   return {
     id: options.id,
@@ -103,6 +114,7 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
     housingPurpose: Boolean(specInputs.housingPurpose),
     depositInterestAnnualRatePct: product.depositInterestAnnualRatePct,
     premiumTiers: product.premiumTiers,
+    kiutalasiPeriodMonths,
     earlyExitMonth: specInputs.earlyExitMonth,
     category: options.category || 'home-savings',
     // Free-text notes only — deposit cash-flow description is fixed in the generator.

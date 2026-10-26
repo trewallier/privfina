@@ -131,6 +131,7 @@ describe('home-savings withdrawn módozatok + saleWindow (§5f)', () => {
   })
 
   it('composer form rejects out-of-window start for withdrawn Plus 4x10', () => {
+    // Uses assertComposerStartDateInSaleWindow (UI helper; soft only when saleWindow absent).
     const product = findHomeSavingsProduct('premium-plusz-4x10')
     expect(product).toBeTruthy()
     const formData = {

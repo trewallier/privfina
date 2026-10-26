@@ -1,7 +1,10 @@
 /**
  * Embedded catalog entries for withdrawn OTP Premium / Premium Plus módozatok
  * (ROADMAP §5f). Keep in sync with
- * `docs/product-specs/products/home-savings/<code>/product.yaml`.
+ * `docs/product-specs/products/home-savings/<code>/product.yaml`
+ * (asserted by `tests/home-savings-withdrawn-product-spec-parity.test.ts` for
+ * identity / engine / saleWindow / premiumTiers / fees — fully-spec-backed
+ * UI parity may still trail).
  * Sale windows are closed — composer/engine require startDate inside the window.
  */
 
@@ -27,7 +30,8 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_4X10_PRODUCT_SPEC = {
   saleWindow: { from: '2025-08-01', to: '2026-08-02' },
   fees: [
     { name: 'szamlanyitasi-dij', type: 'account-opening', value: 1, unit: 'percent' },
-    { name: 'szamlavezetesi-dij', type: 'account-management', value: 350, unit: 'amount' }
+    { name: 'szamlavezetesi-dij', type: 'account-management', value: 350, unit: 'amount' },
+    { name: 'huseg-feloldas-dij', type: 'other', value: 100, unit: 'percent' }
   ],
   inputs: [
     {
@@ -95,7 +99,8 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_8X30_PRODUCT_SPEC = {
   saleWindow: { from: '2025-08-01', to: '2026-08-02' },
   fees: [
     { name: 'szamlanyitasi-dij', type: 'account-opening', value: 1, unit: 'percent' },
-    { name: 'szamlavezetesi-dij', type: 'account-management', value: 350, unit: 'amount' }
+    { name: 'szamlavezetesi-dij', type: 'account-management', value: 350, unit: 'amount' },
+    { name: 'huseg-feloldas-dij', type: 'other', value: 100, unit: 'percent' }
   ],
   inputs: [
     {

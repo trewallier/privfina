@@ -21,6 +21,8 @@ engine:
   evaluationMinMonths: 48
   allocationMinMonths: 50
 
+# Sale window from THM Hirdetmény “Értékesítés ideje: 2023.03.01. – 2025.07.31.”
+# (ltp_thm_lk_20250801.pdf) and marketed-products Hirdetmény 2025-08-01 (withdrawal).
 saleWindow:
   from: "2023-03-01"
   to: "2025-07-31"
@@ -40,10 +42,14 @@ pricing:
   rateSettingRule: usz-melleklet-0.1pct-act360-plus-otp-premium-tiers
   notes:
     - >
-      Sources: Hirdetmény 2025-08-01 (withdrawal of PRÉMIUM 4x10 / 8x30);
-      USZ Melléklet PRÉMIUM table through 2025-07-31 (evaluation 48 / allocation 50;
-      savings 11.627‰; contract 860 000–4 300 000 Ft; deposit 10 000–50 000 Ft);
-      archived EBKM Hirdetmény 2025-08-01.
+      Sources: THM Hirdetmény sale window 2023-03-01–2025-07-31
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/ltp_thm_lk_20250801.pdf);
+      marketed-products Hirdetmény 2025-08-01 (withdrawal of PRÉMIUM 4x10 / 8x30)
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/ltp_h_ertekesitett_20250801.pdf);
+      USZ Melléklet PRÉMIUM table through 2025-07-31
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/LTP_USZ_230301tol_kotott_szerzodesek_20250110.pdf)
+      — evaluation 48 / allocation 50; savings 11.627‰; contract 860 000–4 300 000 Ft;
+      deposit 10 000–50 000 Ft; archived EBKM Hirdetmény 2025-08-01.
     - Account fee default 150 Ft/hó (pre-2025-09-30 Díjtáblázat cohort).
     - OTP Premium 10% at maturity from month 48 with housing-purpose use.
     - >

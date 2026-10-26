@@ -1,5 +1,5 @@
 import {
-  assertStartDateInSaleWindow,
+  assertComposerStartDateInSaleWindow,
   defaultStartDateForSaleWindow,
   findHomeSavingsProduct,
   openingFeeModeLabel,
@@ -41,7 +41,7 @@ function mapFormDataToHomeSavingsSpecInputs(formData, product) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
     throw new Error('Savings start date is required (YYYY-MM-DD).')
   }
-  assertStartDateInSaleWindow(startDate, product.saleWindow)
+  assertComposerStartDateInSaleWindow(startDate, product.saleWindow)
   if (!(product.openingFeeModes || []).includes(openingFeeMode)) {
     throw new Error('Select a valid opening fee mode.')
   }
@@ -111,7 +111,7 @@ function applyHomeSavingsSaleWindowToDateInput(dateInput, product, force = false
     dateInput.value = defaultStartDateForSaleWindow(window)
   } else if (window) {
     try {
-      assertStartDateInSaleWindow(dateInput.value, window)
+      assertComposerStartDateInSaleWindow(dateInput.value, window)
     } catch {
       dateInput.value = defaultStartDateForSaleWindow(window)
     }

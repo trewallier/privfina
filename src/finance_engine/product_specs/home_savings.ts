@@ -13,6 +13,7 @@ import {
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
+  resolveKiutalasiPeriodMonths,
   type HomeSavingsInstrumentInput,
   type HomeSavingsPremiumTiers,
   type HomeSavingsSaleWindow,
@@ -278,6 +279,11 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
             DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT
         )
 
+  const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    evaluationMinMonths: productSpec.engine.evaluationMinMonths,
+    allocationMinMonths: productSpec.engine.allocationMinMonths
+  })
+
   return {
     monthlyDeposit: specInputs.monthlyDeposit,
     termMonths: specInputs.termMonths,
@@ -288,6 +294,7 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
     housingPurpose: specInputs.housingPurpose,
     depositInterestAnnualRatePct,
     premiumTiers,
+    kiutalasiPeriodMonths,
     earlyExitMonth: specInputs.earlyExitMonth,
     category: specInputs.category ?? 'home-savings',
     description: specInputs.description ?? productSpec.displayName

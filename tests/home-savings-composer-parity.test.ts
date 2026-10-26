@@ -64,7 +64,7 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
       }>
     }
 
-    expect(HOME_SAVINGS_PRODUCTS).toHaveLength(1)
+    expect(HOME_SAVINGS_PRODUCTS.length).toBeGreaterThanOrEqual(5)
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
     expect(entry).not.toBeNull()
     if (!entry) return
@@ -128,11 +128,20 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     expect(entry).not.toBeNull()
     if (!entry) return
 
-    expect(entry.premiumTiers).toEqual({
-      months49to96: example.expected.earlyExitPremiumRatePctByMonthBand.months49to96,
-      months97to120: example.expected.earlyExitPremiumRatePctByMonthBand.months97to120,
-      maturityFrom120: example.expected.maturityPremiumRatePctFromMonth120
-    })
+    expect(entry.premiumTiers.months49to96).toBe(
+      example.expected.earlyExitPremiumRatePctByMonthBand.months49to96
+    )
+    expect(entry.premiumTiers.months97to120).toBe(
+      example.expected.earlyExitPremiumRatePctByMonthBand.months97to120
+    )
+    expect(entry.premiumTiers.maturityFrom120).toBe(
+      example.expected.maturityPremiumRatePctFromMonth120
+    )
+    expect(entry.premiumTiers.bands).toEqual([
+      { minHoldingMonths: 120, ratePct: 30 },
+      { minHoldingMonths: 97, ratePct: 20 },
+      { minHoldingMonths: 49, ratePct: 10 }
+    ])
     expect(entry.defaultMonthlyDeposit).toBe(example.inputs.monthlyDeposit)
     expect(entry.defaultTermMonths).toBe(example.inputs.termMonths)
     expect(entry.defaultOpeningFeeMode).toBe(example.inputs.openingFeeMode)

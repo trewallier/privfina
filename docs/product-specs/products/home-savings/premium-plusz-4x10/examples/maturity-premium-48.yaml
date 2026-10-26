@@ -1,0 +1,28 @@
+specVersion: v2alpha1
+productId: home-savings.premium-plusz-4x10.standard
+exampleId: maturity-premium-48
+title: Maturity Premium — 48 months housing purpose (withdrawn Plus 4x10)
+description: >
+  Continuous saving through month 48 inside saleWindow. Premium 10% of contractual
+  deposits. startDate is last day of sale (2026-08-02).
+
+inputs:
+  monthlyDeposit: 50000
+  termMonths: 48
+  startDate: 2026-08-02
+  housingPurpose: true
+  openingFeeMode: promo-fixed-25000
+
+expected:
+  accountFeeMonthly: 350
+  accountOpeningFee: 25000
+  totalDeposits: 2400000
+  totalAccountFees: 16800
+  premiumRatePct: 10
+  premiumAmount: 240000
+  contractAmount: 5000000
+
+notes:
+  - Sale window 2025-08-01 … 2026-08-02; startDate on last marketed day.
+  - Contract 5 000 000 Ft via savingsRatePermille 10.000.
+  - Account fee 350 Ft/hó (Hirdetmény 2025-09-30 late-sale packaging).

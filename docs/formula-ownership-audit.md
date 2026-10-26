@@ -58,16 +58,20 @@ Inventory (by product)
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
   - Embedded: `public/controller/home-savings-product-spec.js` (YAML parity tests)
   - Browser path: Vite SPA imports `@finance_engine` via thin `public/instruments.js` wrappers + `home-savings-calculation-adapter.js` + commercial composer (ADR 0030 / 0032)
-  - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium tiers, `buildHomeSavingsAszfEbkmCashFlows`); `src/finance_engine/instruments/ebkm.ts` (82/2010 Annex 3, ADR 0031)
+  - Engine primitives: `src/finance_engine/instruments/home_savings.ts` (ACT/360 interest, ‰ contract derivation, Premium bands, saleWindow assert, `buildHomeSavingsAszfEbkmCashFlows`); `src/finance_engine/instruments/ebkm.ts` (82/2010 Annex 3, ADR 0031)
   - Family mapper: `src/finance_engine/product_specs/home_savings.ts` (includes ÁSZF-packaged `ebkmPct`)
-  - Metadata: `HOME_SAVINGS_PRODUCTS` derived from embedded spec (`tests/home-savings-product-spec-parity.test.ts`)
+  - Metadata: `HOME_SAVINGS_PRODUCTS` derived from embedded + withdrawn specs (`tests/home-savings-product-spec-parity.test.ts`)
   - Status: commercial composer + EBKM preview; 8/8 Hirdetmény goldens; fully-spec-backed
+- Withdrawn OTP Premium / Premium Plus 4x10 & 8x30 — **schedule-usable** / `saleWindow`-bounded startDate (ROADMAP §5f)
+  - Specs under `docs/product-specs/products/home-savings/{premium-4x10,premium-8x30,premium-plusz-4x10,premium-plusz-8x30}/`
+  - Composer catalog: `public/controller/home-savings-withdrawn-product-specs.js`
+  - Engine: parameterized Premium bands + `assertStartDateInSaleWindow` (no productCode forks)
 
 Current cleanup priority
 ------------------------
 1. Keep loan/mortgage adapters on shared `loan-legacy-bridges.js` (done).
 2. ROADMAP §5a/§5b closed for schedule-usable + six commercially-usable offerings. Remaining product work: Rural Home Renovation §6 reconcile; optional fully-spec-backed embedded product-spec modules for public offerings; optional fixed-rate mortgage → fully-spec-backed.
-3. ROADMAP §5e home-savings: fully-spec-backed (ÁSZF EBKM packaging 8/8 + embedded product-spec). LTP loan deferred.
+3. ROADMAP §5e home-savings: fully-spec-backed (ÁSZF EBKM packaging 8/8 + embedded product-spec). §5f withdrawn módozatok schedule-usable. LTP loan deferred.
 4. ROADMAP §6a / ADR 0032 Vite single calculation surface (done): browser imports `@finance_engine`; Pages deploys `dist-web`.
 5. ROADMAP §7 storage port (replace raw `localStorage` helpers).
 6. Deferred (§5c): bank↔state subsidy settlement splits; simulated multi-segment / post-subsidy rate resets. LTP loan deferred under §5e.

@@ -8,7 +8,10 @@
  * period account fees + interest to ÁSZF payout date; ADR 0031) — distinct from
  * chart/schedule OTP maturity cash flows.
  */
-import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
+import {
+  assertStartDateInSaleWindow,
+  findHomeSavingsProduct
+} from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
 import {
   resolveMonthlyDepositFromContractAmount,
@@ -47,12 +50,15 @@ function resolveHomeSavingsContractAmount(product, specInputs) {
   })
 }
 
+const PROMO_FIXED_OPENING_FEE_MODE = /^promo-fixed-(\d+)$/
+
 function resolveHomeSavingsOpeningFee(product, specInputs) {
   const mode = specInputs.openingFeeMode
   assertOpeningFeeModeForDeposit(product, mode, Number(specInputs.monthlyDeposit))
 
-  if (mode === 'promo-fixed-65000') {
-    return 65_000
+  const fixedMatch = PROMO_FIXED_OPENING_FEE_MODE.exec(mode)
+  if (fixedMatch) {
+    return Number(fixedMatch[1])
   }
 
   const contractAmount = resolveHomeSavingsContractAmount(product, specInputs)
@@ -78,6 +84,7 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
     throw new Error('Unknown home-savings product.')
   }
 
+  assertStartDateInSaleWindow(String(specInputs.startDate), product.saleWindow)
   const accountOpeningFee = resolveHomeSavingsOpeningFee(product, specInputs)
   const contractAmount = resolveHomeSavingsContractAmount(product, specInputs)
 

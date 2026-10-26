@@ -1,0 +1,29 @@
+specVersion: v2alpha1
+productId: home-savings.premium-8x30.standard
+exampleId: maturity-premium-96
+title: Maturity Premium — 96 months housing purpose (withdrawn Premium 8x30)
+description: >
+  Continuous saving through month 96 inside saleWindow. Premium 30%.
+  startDate 2024-06-01.
+
+inputs:
+  monthlyDeposit: 20000
+  termMonths: 96
+  startDate: 2024-06-01
+  housingPurpose: true
+  openingFeeMode: standard-1pct
+
+expected:
+  accountFeeMonthly: 150
+  accountOpeningFee: 40000
+  totalDeposits: 1920000
+  totalAccountFees: 14400
+  premiumRatePct: 30
+  premiumAmount: 576000
+  contractAmount: 4000000
+
+notes:
+  - Sale window 2023-03-01 … 2025-07-31.
+  - Contract 4 000 000 Ft via savingsRatePermille 5.000.
+  - Opening fee 1% of contract = 40 000 Ft.
+  - Account fee 150 Ft/hó (PRÉMIUM-era default).

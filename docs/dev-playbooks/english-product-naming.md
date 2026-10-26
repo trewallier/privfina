@@ -27,6 +27,10 @@ Issuer phrasing for treasury products: **ÁKK / Hungarian State Treasury**.
 | Bonus Hungarian Government Security (BMÁP) | Bónusz Magyar Állampapír |
 | Home Savings (LTP / lakástakarékpénztár) | lakás-előtakarékosság |
 | OTP Home Savings Premium Plus 10x30 (Lakástakarék PRÉMIUM PLUSZ 10x30) | — |
+| OTP Home Savings Premium Plus 4x10 (Lakástakarék PRÉMIUM PLUSZ 4x10) | — |
+| OTP Home Savings Premium Plus 8x30 (Lakástakarék PRÉMIUM PLUSZ 8x30) | — |
+| OTP Home Savings Premium 4x10 (Lakástakarék PRÉMIUM 4x10) | — |
+| OTP Home Savings Premium 8x30 (Lakástakarék PRÉMIUM 8x30) | — |
 | OTP 1x1 Home Loan (1x1 Lakáshitel) | — |
 | OTP Green Home Loan (Zöld Lakáshitel) | — |
 | OTP Fixed-for-Term Home Loan (Végig Fix Lakáshitel) | — |

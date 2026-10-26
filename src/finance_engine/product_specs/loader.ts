@@ -30,7 +30,13 @@ export type MortgageLoanProductCode = keyof typeof MORTGAGE_LOAN_PRODUCT_SPEC_PA
 
 export const HOME_SAVINGS_PRODUCT_SPEC_PATHS = {
   'premium-plusz-10x30':
-    'docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml'
+    'docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml',
+  'premium-plusz-4x10':
+    'docs/product-specs/products/home-savings/premium-plusz-4x10/product.yaml',
+  'premium-plusz-8x30':
+    'docs/product-specs/products/home-savings/premium-plusz-8x30/product.yaml',
+  'premium-4x10': 'docs/product-specs/products/home-savings/premium-4x10/product.yaml',
+  'premium-8x30': 'docs/product-specs/products/home-savings/premium-8x30/product.yaml'
 } as const
 
 export type HomeSavingsProductCode = keyof typeof HOME_SAVINGS_PRODUCT_SPEC_PATHS

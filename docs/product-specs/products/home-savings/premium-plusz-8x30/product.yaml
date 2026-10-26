@@ -1,0 +1,207 @@
+specVersion: v2alpha1
+kind: financial-product
+id: home-savings.premium-plusz-8x30.standard
+family: home-savings
+variant: premium-plusz-8x30
+productCode: premium-plusz-8x30
+displayName: OTP Home Savings Premium Plus 8x30 (Lakástakarék PRÉMIUM PLUSZ 8x30)
+description: >
+  Withdrawn OTP Lakástakarék PRÉMIUM PLUSZ 8x30 product scheme (módozat).
+  Sold 2025-08-01 through 2026-08-02. Customer-perspective savings schedule only.
+  startDate must fall in saleWindow (historical). LTP home loan out of scope.
+
+engine:
+  instrumentType: home-savings
+  paymentFrequency: monthly
+  depositInterestAnnualRatePct: 0.1
+  savingsRatePermille: 5
+  minContractAmount: 2000000
+  maxContractAmount: 20000000
+  evaluationMinMonths: 96
+  allocationMinMonths: 98
+
+saleWindow:
+  from: "2025-08-01"
+  to: "2026-08-02"
+
+premiumTiers:
+  bands:
+    - { minHoldingMonths: 96, ratePct: 30 }
+
+eligibilityRules:
+  - natural-person-or-condominium-cooperative-saver
+  - hungarian-residential-or-stay-address-for-natural-person
+  - housing-purpose-required-for-premium
+  - no-state-support-post-2018-10-17
+  - loyalty-commitment-required-for-promo-opening-fee
+  - start-date-must-fall-in-sale-window
+
+pricing:
+  rateSettingRule: usz-melleklet-0.1pct-act360-plus-otp-premium-tiers
+  notes:
+    - >
+      Sources: Hirdetmény marketed products 2025-09-30 (promo + EBKM with 350 Ft/hó
+      account fee); USZ Melléklet PRÉMIUM PLUSZ table (evaluation 96 / allocation 98;
+      savings 5.000‰; contract 2 000 000–20 000 000 Ft). Withdrawn from sale 2026-08-03.
+    - Default account fee 350 Ft/hó (late-sale EBKM packaging). Earlier 150 Ft/hó optional later.
+    - OTP Premium 30% at maturity from month 96 with housing-purpose use (single band).
+    - >
+      Promo opening fee (Hirdetmény A): 0.5% for deposit 10 000–49 990; fixed 50 000 Ft
+      for deposit 50 000–100 000.
+
+discounts:
+  - name: promo-opening-fee-half-percent
+    type: fee-waiver
+    value: 50
+    unit: percent
+    conditions:
+      - monthly-deposit-10000-to-49990
+      - loyalty-commitment-48-months
+      - promo-hirdetmeny-active
+    appliesToFeeNames:
+      - szamlanyitasi-dij
+  - name: promo-opening-fee-fixed-50000
+    type: fee-waiver
+    value: 0
+    unit: amount
+    conditions:
+      - monthly-deposit-50000-to-100000
+      - loyalty-commitment-48-months
+      - promo-hirdetmeny-active
+      - opening-fee-fixed-50000-ft
+    appliesToFeeNames:
+      - szamlanyitasi-dij
+
+fees:
+  - name: szamlanyitasi-dij
+    type: account-opening
+    value: 1
+    unit: percent
+    timing: upfront
+    description: >
+      Standard 1% of contract. Promo: 0.5% (deposit 10.000–49.990) or fixed 50.000 Ft
+      (deposit 50.000–100.000).
+  - name: szamlavezetesi-dij
+    type: account-management
+    value: 350
+    unit: amount
+    timing: periodic
+    description: Monthly account fee default for late-sale cohort (350 HUF from 2025-09-30).
+  - name: huseg-feloldas-dij
+    type: other
+    value: 100
+    unit: percent
+    timing: on-event
+    description: Loyalty unlock fee — 100% of waived opening fee through month 48.
+
+inputs:
+  - name: monthlyDeposit
+    type: number
+    label: Monthly Deposit
+    required: true
+    unit: currency
+    constraints:
+      minimum: 10000
+      maximum: 100000
+  - name: termMonths
+    type: integer
+    label: Savings Term (Months)
+    required: true
+    unit: months
+    description: Savings period; full Premium path uses 96 months.
+    constraints:
+      minimum: 1
+      maximum: 96
+  - name: startDate
+    type: string
+    label: Savings Start Date
+    required: true
+    unit: date
+    description: Must fall in saleWindow 2025-08-01 … 2026-08-02.
+  - name: housingPurpose
+    type: boolean
+    label: Housing Purpose Assumed
+    required: true
+  - name: openingFeeMode
+    type: string
+    label: Opening Fee Mode
+    required: true
+    description: standard-1pct | promo-half-percent | promo-fixed-50000
+    constraints:
+      enum:
+        - standard-1pct
+        - promo-half-percent
+        - promo-fixed-50000
+  - name: contractAmount
+    type: number
+    label: Contract Amount
+    required: false
+    unit: currency
+
+derivedVariables:
+  - name: accountOpeningFee
+    type: number
+    label: Account Opening Fee
+    required: true
+    unit: currency
+  - name: premiumRatePct
+    type: number
+    label: Premium Rate Percent
+    required: true
+    unit: percent
+
+outputs:
+  - name: totalDeposits
+    type: number
+    label: Total Deposits
+    required: true
+    unit: currency
+  - name: totalAccountFees
+    type: number
+    label: Total Account Fees
+    required: true
+    unit: currency
+  - name: premiumAmount
+    type: number
+    label: Premium Amount
+    required: true
+    unit: currency
+  - name: terminalPayout
+    type: number
+    label: Terminal Payout
+    required: true
+    unit: currency
+  - name: ebkmPct
+    type: number
+    label: EBKM Percent
+    required: true
+    unit: percent
+
+assumptions:
+  - Customer-perspective cash flows only; withdrawn offering — startDate in saleWindow.
+  - Continuous monthly saving with housing-purpose Premium at month 96.
+  - Contract amount derives from monthly deposit via savingsRatePermille 5.000 when omitted.
+
+ui:
+  formTitle: OTP Home Savings Premium Plus 8x30 (withdrawn)
+  sections:
+    - id: contract
+      title: Contract
+      fieldNames:
+        - monthlyDeposit
+        - termMonths
+        - startDate
+        - housingPurpose
+        - openingFeeMode
+        - contractAmount
+    - id: results
+      title: Results
+      fieldNames:
+        - totalDeposits
+        - totalAccountFees
+        - premiumAmount
+        - terminalPayout
+        - ebkmPct
+
+exampleRefs:
+  - examples/maturity-premium-96.yaml

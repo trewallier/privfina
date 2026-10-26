@@ -87,7 +87,9 @@ export {
 export type {
   HomeSavingsBundleInput,
   HomeSavingsInstrumentInput,
+  HomeSavingsPremiumBand,
   HomeSavingsPremiumTiers,
+  HomeSavingsSaleWindow,
   HomeSavingsScheduleSummary
 } from './instruments/home_savings'
 export {
@@ -97,6 +99,7 @@ export {
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
   DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
   HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS,
+  assertStartDateInSaleWindow,
   buildHomeSavingsAszfEbkmCashFlows,
   calculateEbkmFromHomeSavingsInstrument,
   calculateHomeSavingsDepositInterest,

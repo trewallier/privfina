@@ -16,6 +16,11 @@ import {
 
 /** Default OTP Home Savings Premium tiers (PRÉMIUM PLUSZ 10x30 Hirdetmény / USZ). */
 export const DEFAULT_HOME_SAVINGS_PREMIUM_TIERS = {
+  bands: [
+    { minHoldingMonths: 120, ratePct: 30 },
+    { minHoldingMonths: 97, ratePct: 20 },
+    { minHoldingMonths: 49, ratePct: 10 }
+  ],
   months49to96: 10,
   months97to120: 20,
   maturityFrom120: 30
@@ -35,10 +40,29 @@ export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
  */
 export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS = 2
 
+/** One Premium band: rate applies when holding months ≥ minHoldingMonths. */
+export interface HomeSavingsPremiumBand {
+  minHoldingMonths: number
+  ratePct: number
+}
+
+/**
+ * Premium tier table. Prefer `bands` (parameterized for 4x10 / 8x30 / 10x30).
+ * Legacy month-breakpoint fields remain for older callers / YAML examples.
+ */
 export interface HomeSavingsPremiumTiers {
-  months49to96: number
-  months97to120: number
-  maturityFrom120: number
+  bands?: readonly HomeSavingsPremiumBand[]
+  months49to96?: number
+  months97to120?: number
+  maturityFrom120?: number
+}
+
+/** Marketed / withdrawn sale window (Europe/Budapest calendar dates, inclusive). */
+export interface HomeSavingsSaleWindow {
+  /** First calendar day the módozat was offered (ISO YYYY-MM-DD). */
+  from: string
+  /** Last calendar day offered; omit/null while still marketed. */
+  to?: string | null
 }
 
 export interface HomeSavingsInstrumentInput {
@@ -108,6 +132,16 @@ function monthlyPeriod(dayOfMonth: number): string {
   return `0 0 ${dayOfMonth} * *`
 }
 
+function legacyPremiumBandsFromTiers(
+  tiers: HomeSavingsPremiumTiers
+): HomeSavingsPremiumBand[] {
+  return [
+    { minHoldingMonths: 120, ratePct: Number(tiers.maturityFrom120 ?? 0) },
+    { minHoldingMonths: 97, ratePct: Number(tiers.months97to120 ?? 0) },
+    { minHoldingMonths: 49, ratePct: Number(tiers.months49to96 ?? 0) }
+  ]
+}
+
 /**
  * Resolve OTP Home Savings Premium percent from holding length and housing-purpose assumption.
  * Parameterized tiers — not productCode forks (ADR 0015).
@@ -132,16 +166,48 @@ export function resolveHomeSavingsPremiumRatePct(input: {
     throw new Error('Holding months for Premium resolution must be a positive integer.')
   }
 
-  if (holdingMonths >= 120) {
-    return tiers.maturityFrom120
-  }
-  if (holdingMonths >= 97) {
-    return tiers.months97to120
-  }
-  if (holdingMonths >= 49) {
-    return tiers.months49to96
+  const bands =
+    tiers.bands && tiers.bands.length > 0
+      ? [...tiers.bands]
+      : legacyPremiumBandsFromTiers(tiers)
+
+  bands.sort((a, b) => b.minHoldingMonths - a.minHoldingMonths)
+  for (const band of bands) {
+    if (holdingMonths >= band.minHoldingMonths) {
+      return Number(band.ratePct)
+    }
   }
   return 0
+}
+
+/**
+ * Assert savings startDate lies in the product sale window (inclusive ISO dates).
+ * Withdrawn módozatok have a past `to` — valid starts are therefore in the past.
+ */
+export function assertStartDateInSaleWindow(
+  startDate: string,
+  saleWindow: HomeSavingsSaleWindow
+): void {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    throw new Error('startDate must be an ISO calendar date (YYYY-MM-DD).')
+  }
+  if (!saleWindow || !/^\d{4}-\d{2}-\d{2}$/.test(saleWindow.from)) {
+    throw new Error('saleWindow.from must be an ISO calendar date (YYYY-MM-DD).')
+  }
+  if (startDate < saleWindow.from) {
+    throw new Error(
+      `startDate ${startDate} is before sale window start ${saleWindow.from}.`
+    )
+  }
+  const to = saleWindow.to
+  if (to !== undefined && to !== null && to !== '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      throw new Error('saleWindow.to must be an ISO calendar date (YYYY-MM-DD) when set.')
+    }
+    if (startDate > to) {
+      throw new Error(`startDate ${startDate} is after sale window end ${to}.`)
+    }
+  }
 }
 
 function addMonthsUtc(date: Date, months: number): Date {

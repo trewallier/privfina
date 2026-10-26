@@ -1,9 +1,11 @@
 /**
- * Commercial home-savings composer catalog derived from the embedded product
- * spec (`home-savings-product-spec.js`). Keep YAML ↔ embedded parity via
- * `tests/home-savings-product-spec-parity.test.ts` (fully-spec-backed).
+ * Commercial home-savings composer catalog: current Premium Plus 10x30 (embedded
+ * fully-spec-backed) plus withdrawn Premium / Premium Plus módozatok (§5f).
+ * Keep YAML ↔ embedded parity via `tests/home-savings-product-spec-parity.test.ts`
+ * for 10x30; withdrawn specs mirrored in `home-savings-withdrawn-product-specs.js`.
  */
 import { HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC } from './home-savings-product-spec.js'
+import { HOME_SAVINGS_WITHDRAWN_PRODUCT_SPECS } from './home-savings-withdrawn-product-specs.js'
 
 const HOME_SAVINGS_PREMIUM_TIERS = {
   ...HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC.premiumTiers
@@ -12,6 +14,8 @@ const HOME_SAVINGS_PREMIUM_TIERS = {
 function catalogEntryFromEmbeddedSpec(spec) {
   const accountFee = (spec.fees || []).find((fee) => fee.type === 'account-management')
   const monthlyDepositInput = (spec.inputs || []).find((field) => field.name === 'monthlyDeposit')
+  const termInput = (spec.inputs || []).find((field) => field.name === 'termMonths')
+  const openingFeeInput = (spec.inputs || []).find((field) => field.name === 'openingFeeMode')
   return {
     productCode: spec.productCode,
     productId: spec.id,
@@ -22,18 +26,23 @@ function catalogEntryFromEmbeddedSpec(spec) {
     savingsRatePermille: spec.engine.savingsRatePermille,
     minContractAmount: spec.engine.minContractAmount,
     maxContractAmount: spec.engine.maxContractAmount,
+    evaluationMinMonths: spec.engine.evaluationMinMonths,
+    allocationMinMonths: spec.engine.allocationMinMonths,
     minMonthlyDeposit: monthlyDepositInput?.constraints?.minimum ?? 10_000,
     maxMonthlyDeposit: monthlyDepositInput?.constraints?.maximum ?? 100_000,
+    minTermMonths: termInput?.constraints?.minimum ?? 1,
+    maxTermMonths: termInput?.constraints?.maximum ?? 120,
     accountFeeMonthly: accountFee?.value ?? 500,
     defaultMonthlyDeposit: spec.defaults.monthlyDeposit,
     defaultTermMonths: spec.defaults.termMonths,
     defaultHousingPurpose: spec.defaults.housingPurpose,
     defaultOpeningFeeMode: spec.defaults.openingFeeMode,
-    openingFeeModes: monthlyDepositInput
-      ? [...(spec.inputs.find((f) => f.name === 'openingFeeMode')?.constraints?.enum || [])]
-      : ['standard-1pct', 'promo-half-percent', 'promo-fixed-65000'],
-    openingFeeModeDepositBands: { ...spec.openingFeeModeDepositBands },
+    openingFeeModes: [...(openingFeeInput?.constraints?.enum || ['standard-1pct'])],
+    openingFeeModeDepositBands: { ...(spec.openingFeeModeDepositBands || {}) },
     premiumTiers: { ...spec.premiumTiers },
+    saleWindow: spec.saleWindow
+      ? { from: spec.saleWindow.from, to: spec.saleWindow.to ?? null }
+      : null,
     eligibilityHints: [...(spec.eligibilityHints || [])],
     discountHints: [...(spec.discountHints || [])],
     premiumHints: spec.premiumHints,
@@ -43,7 +52,8 @@ function catalogEntryFromEmbeddedSpec(spec) {
 }
 
 const HOME_SAVINGS_PRODUCTS = [
-  catalogEntryFromEmbeddedSpec(HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC)
+  catalogEntryFromEmbeddedSpec(HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC),
+  ...HOME_SAVINGS_WITHDRAWN_PRODUCT_SPECS.map(catalogEntryFromEmbeddedSpec)
 ]
 
 function buildHomeSavingsProductOptions() {
@@ -51,7 +61,8 @@ function buildHomeSavingsProductOptions() {
     value: product.productCode,
     label: product.displayName,
     productId: product.productId,
-    migrationStatus: product.migrationStatus
+    migrationStatus: product.migrationStatus,
+    saleWindow: product.saleWindow
   }))
 }
 
@@ -83,16 +94,49 @@ function resolveHomeSavingsReadinessHint(migrationStatus) {
 }
 
 function openingFeeModeLabel(mode) {
-  switch (mode) {
-    case 'standard-1pct':
-      return 'Standard 1% of contract amount'
-    case 'promo-half-percent':
-      return 'Promo 0.5% of contract amount'
-    case 'promo-fixed-65000':
-      return 'Promo fixed 65 000 Ft'
-    default:
-      return mode
+  if (mode === 'standard-1pct') {
+    return 'Standard 1% of contract amount'
   }
+  if (mode === 'promo-half-percent') {
+    return 'Promo 0.5% of contract amount'
+  }
+  const fixedMatch = /^promo-fixed-(\d+)$/.exec(mode)
+  if (fixedMatch) {
+    const amount = Number(fixedMatch[1])
+    return `Promo fixed ${amount.toLocaleString('hu-HU')} Ft`
+  }
+  return mode
+}
+
+function assertStartDateInSaleWindow(startDate, saleWindow) {
+  if (!saleWindow || !saleWindow.from) {
+    return
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    throw new Error('Savings start date is required (YYYY-MM-DD).')
+  }
+  if (startDate < saleWindow.from) {
+    throw new Error(
+      `Savings start date ${startDate} is before this módozat's sale window start ${saleWindow.from}.`
+    )
+  }
+  if (saleWindow.to && startDate > saleWindow.to) {
+    throw new Error(
+      `Savings start date ${startDate} is after this módozat's sale window end ${saleWindow.to}.`
+    )
+  }
+}
+
+function defaultStartDateForSaleWindow(saleWindow) {
+  if (!saleWindow || !saleWindow.from) {
+    return ''
+  }
+  if (saleWindow.to) {
+    return saleWindow.to
+  }
+  const today = new Date()
+  const iso = today.toISOString().slice(0, 10)
+  return iso < saleWindow.from ? saleWindow.from : iso
 }
 
 export {
@@ -103,5 +147,7 @@ export {
   findHomeSavingsProduct,
   findHomeSavingsProductById,
   resolveHomeSavingsReadinessHint,
-  openingFeeModeLabel
+  openingFeeModeLabel,
+  assertStartDateInSaleWindow,
+  defaultStartDateForSaleWindow
 }

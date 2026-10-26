@@ -77,6 +77,25 @@ describe('product specification schema v2', () => {
     expect(spec.family).toBe('home-savings')
     expect(spec.productCode).toBe('premium-plusz-10x30')
     expect(spec.engine.instrumentType).toBe('home-savings')
+    expect(spec.saleWindow).toEqual({ from: '2026-08-03', to: null })
+  })
+
+  it('validates withdrawn home-savings módozatok with closed saleWindow', () => {
+    for (const folder of [
+      'premium-plusz-4x10',
+      'premium-plusz-8x30',
+      'premium-4x10',
+      'premium-8x30'
+    ]) {
+      const spec = YAML.parse(
+        readRepoFile(`docs/product-specs/products/home-savings/${folder}/product.yaml`)
+      )
+      expect(validateProduct(spec), JSON.stringify(validateProduct.errors)).toBe(true)
+      expect(spec.family).toBe('home-savings')
+      expect(spec.saleWindow?.from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      expect(spec.saleWindow?.to).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      expect(spec.premiumTiers?.bands?.length).toBeGreaterThan(0)
+    }
   })
 
   it('accepts expandable mortgage commercial constructs used by future products', () => {

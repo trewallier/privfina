@@ -134,7 +134,7 @@ inputs:
 
   - name: transactionalAnnualRatePct
     type: number
-    label: Transactional Annual Interest Rate
+    label: Contractual Annual Interest Rate
     required: false
     unit: percent
     description: Contractual interest rate (ÁKK-linked cap). April 2026 packaging uses 7,87%.
@@ -216,7 +216,7 @@ outputs:
     label: Total Paid
     required: true
     unit: currency
-    description: Hirdetmény total including packaged fees when taken from the representative example.
+    description: Published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.
 
   - name: thmPct
     type: number

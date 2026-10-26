@@ -16,7 +16,7 @@ const PURPOSE_LABELS = {
   refinancing: 'Refinancing'
 }
 
-/** ADR 0025 — Hirdetmény mortgages use ACT/360 equal-month + forint rounding. */
+/** ADR 0025 — published tariff notice (Hirdetmény) mortgages use ACT/360 equal-month + forint rounding. */
 const HIRDETMENY_DAY_COUNT = {
   interestDayCountConvention: 'act/360',
   paymentRounding: 'forint'
@@ -97,7 +97,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
       'refinancing'
     ],
     eligibilityHints: [
-      'Contractual rate fixed for the full term at the Hirdetmény Fixed-for-Term rate.'
+      'Contractual rate fixed for the full term at the published Fixed-for-Term (Végig Fix) tariff rate.'
     ],
     discountHints: [
       'Fee-waiver discounts may apply under OTP discounted-fee campaign conditions.'
@@ -191,7 +191,7 @@ const COMMERCIAL_LOAN_PRODUCTS = [
     postSubsidyInfo:
       'Subsidy lasts up to 120 months; post-subsidy rate steps are informational only.',
     commerciallyBlockedReason:
-      'Published Hirdetmény §6 installment packaging cannot amortize the stated principal; commercially-usable requires reconciled offering figures and all three ADR 0024 checks (ADR 0026).'
+      'Published tariff notice (Hirdetmény) §6 installment packaging cannot amortize the stated principal; commercially-usable requires reconciled offering figures and all three ADR 0024 checks (ADR 0026).'
   }
 ]
 

@@ -17,7 +17,7 @@ import {
 import { calculateEbkmFromHomeSavingsCashFlows } from './ebkm.js'
 
 /**
- * Resolve szerződéses összeg from explicit input or monthly deposit via ‰.
+ * Resolve contractual amount from explicit input or monthly deposit via ‰.
  * Rejects an explicit contractAmount that does not map back to monthlyDeposit.
  */
 function resolveHomeSavingsContractAmount(product, specInputs) {

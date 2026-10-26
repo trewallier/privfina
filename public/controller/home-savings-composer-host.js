@@ -22,10 +22,10 @@ function formatDepositBoundsHelp(product) {
   const min = Number(product?.minMonthlyDeposit)
   const max = Number(product?.maxMonthlyDeposit)
   if (!Number.isFinite(min) || !Number.isFinite(max)) {
-    return 'Contractual monthly betét for the selected product.'
+    return 'Contractual monthly deposit for the selected product.'
   }
   const formatBound = (value) => value.toLocaleString('hu-HU')
-  return `Contractual monthly betét (${formatBound(min)}–${formatBound(max)} Ft).`
+  return `Contractual monthly deposit (${formatBound(min)}–${formatBound(max)} Ft).`
 }
 
 function createHomeSavingsComposerHost({

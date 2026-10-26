@@ -31,7 +31,7 @@ const DEFAULT_SPEC_FIELD_HELP = {
   monthlyPayment: 'Level monthly annuity installment after any optional grace period.',
   totalInterest: 'Total interest paid over the full term (engine annuity path).',
   totalPaid:
-    'Sum of scheduled repayments (engine) or Hirdetmény total including packaged fees when taken from the representative example.',
+    'Sum of scheduled repayments (engine) or published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.',
   thmPct: 'Published total cost of credit indicator for the representative case.'
 }
 
@@ -53,14 +53,14 @@ const PRODUCT_SPEC_FIELD_HELP = {
     gracePeriodMonths: 'Mandatory interest-only months before annuity amortization begins.',
     monthlyPayment: 'Level annuity installment from month 13 onward.',
     totalPaid:
-      'Hirdetmény total including packaged fees when taken from the representative example.'
+      'Published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.'
   },
   'falusi-csok': {
     ...DEFAULT_SPEC_FIELD_HELP,
     principal: 'Approved forint principal under Village CSOK / home creation.',
     annualInterestRatePct: 'Customer-payable interest rate during subsidy (fixed 3,00%).',
     totalPaid:
-      'Hirdetmény total including packaged fees when taken from the representative example.'
+      'Published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.'
   },
   'otthon-start': {
     ...DEFAULT_SPEC_FIELD_HELP,
@@ -71,7 +71,7 @@ const PRODUCT_SPEC_FIELD_HELP = {
       'Optional interest-only months before annuity amortization (representative §6 packaging uses 12).',
     monthlyPayment: 'Level annuity installment after any grace period.',
     totalPaid:
-      'Hirdetmény total including packaged fees when taken from the representative example.'
+      'Published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.'
   },
   'videki-otthonfelujitasi': {
     ...DEFAULT_SPEC_FIELD_HELP,
@@ -83,7 +83,7 @@ const PRODUCT_SPEC_FIELD_HELP = {
     loanPurpose: 'Renovation/modernization purpose for the rural home-improvement program.',
     monthlyPayment: 'Level monthly annuity installment.',
     totalPaid:
-      'Hirdetmény total including packaged fees when taken from the representative example.'
+      'Published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.'
   }
 }
 

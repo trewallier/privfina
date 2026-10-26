@@ -225,7 +225,7 @@ outputs:
     label: Total Paid
     required: true
     unit: currency
-    description: Sum of scheduled repayments (engine) or Hirdetmény total including packaged fees when taken from the representative example.
+    description: Sum of scheduled repayments (engine) or published tariff notice (Hirdetmény) total including packaged fees when taken from the representative example.
 
   - name: thmPct
     type: number

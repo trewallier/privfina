@@ -4,12 +4,12 @@ id: mortgage-loan.videki-otthonfelujitasi.standard
 family: mortgage-loan
 variant: videki-otthonfelujitasi
 productCode: videki-otthonfelujitasi
-displayName: OTP Vidéki Otthonfelújítási Lakáshitel
+displayName: OTP Rural Home Renovation Loan (Vidéki Otthonfelújítási Lakáshitel)
 description: >
   State-subsidized rural home-renovation loan with a fixed 3 pp interest subsidy
   for up to 10 years and 1y → 1y → 5y interest periods. Customer rate for the
-  April 2026 packaging is 4,87%. Conditions sourced from the OTP Hirdetmény
-  effective for applications accepted from 2026-04-20
+  April 2026 packaging is 4,87%. Conditions sourced from the OTP published
+  tariff notice (Hirdetmény) effective for applications accepted from 2026-04-20
   (Lakáshitel H kondíció 2026-04-20), section 2.2.1.3.
 
 engine:
@@ -34,11 +34,11 @@ loanPurposes:
 pricing:
   rateSettingRule: state-subsidized-customer-rate-fixed-with-akk-linked-transactional-cap
   notes:
-    - "State provides a fixed 3 pp interest subsidy for up to 10 years; customer rate = ügyleti kamat − 3 pp (April 2026 packaging 4,87%)."
-    - "Ügyleti kamat 2026. április 1-től 7,87%; 2026. május 1-től 7,90%."
-    - "Kamatperiódus: 1, 1, majd 5 éves periódusok."
-    - "Excluded from OTP Díjkedvezményes akció."
-    - "THM reprezentatív példa 5,5% (12 mFt / 10 év packaging in §6)."
+    - "State provides a fixed 3 pp interest subsidy for up to 10 years; customer rate = contractual interest rate (ügyleti kamat) − 3 pp (April 2026 packaging 4,87%)."
+    - "Contractual interest rate from 1 April 2026 is 7,87%; from 1 May 2026 is 7,90%."
+    - "Interest periods: 1 year, 1 year, then 5-year periods."
+    - "Excluded from OTP discounted-fee campaign."
+    - "THM representative example is 5,5% (12 HUF million / 10 years packaging in §6)."
 
 discounts: []
 
@@ -49,13 +49,13 @@ fees:
     unit: percent
     maxAmount: 200000
     timing: upfront
-    description: Standard folyósítási díj 0,75%, max 200.000 Ft (Vidéki Otthonfelújítási is outside the OTP Díjkedvezményes akció).
+    description: Standard disbursement fee 0,75%, max 200.000 Ft (Rural Home Renovation is outside the OTP discounted-fee campaign).
   - name: hitelbiztositeki-ertek-megallapitas
     type: appraisal
     value: 58765
     unit: amount
     timing: upfront
-    description: On-site appraisal for demand under 50 mFt (alap).
+    description: On-site appraisal for demand under 50 HUF million (base).
   - name: fedezetkezelesi-koltseg
     type: property-management
     value: 20000
@@ -76,7 +76,7 @@ fees:
     description: Flat contract modification fee.
 
 eligibilityRules:
-  - Eligible under 389/2024. (XII. 11.) Korm. rendelet Vidéki Otthonfelújítási Program (families with children or pensioner applicants in small settlements).
+  - Eligible under 389/2024. (XII. 11.) Korm. rendelet Rural Home Renovation Program (families with children or pensioner applicants in small settlements).
   - Mortgage collateral on residential real estate is required.
   - Property insurance meeting lender conditions is required.
   - State interest subsidy applies only to non-overdue principal.
@@ -87,7 +87,7 @@ inputs:
     label: Loan Principal
     required: true
     unit: currency
-    description: Approved forint principal under Vidéki Otthonfelújítás.
+    description: Approved forint principal under Rural Home Renovation.
     constraints:
       minimum: 1
 
@@ -96,7 +96,7 @@ inputs:
     label: Customer Annual Interest Rate
     required: true
     unit: percent
-    description: Adós által fizetendő kamat after the fixed 3 pp subsidy (April 2026 packaging 4,87%).
+    description: Customer-payable interest rate after the fixed 3 pp subsidy (April 2026 packaging 4,87%).
     constraints:
       minimum: 0
       maximum: 100
@@ -107,7 +107,7 @@ inputs:
     label: Transactional Annual Interest Rate
     required: false
     unit: percent
-    description: Ügyleti kamat (ÁKK-linked cap). April 2026 packaging uses 7,87%.
+    description: Contractual interest rate (ÁKK-linked cap). April 2026 packaging uses 7,87%.
     constraints:
       minimum: 0
       maximum: 100
@@ -178,13 +178,13 @@ outputs:
     description: Published total cost of credit indicator for the representative case.
 
 assumptions:
-  - "Customer rate equals ügyleti kamat minus a fixed 3 pp state subsidy for up to 10 years."
+  - "Customer rate equals contractual interest rate minus a fixed 3 pp state subsidy for up to 10 years."
   - "Representative Hirdetmény §6 example uses 12.000.000 Ft over 10 years (120 installments) at 4,87%."
-  - "Engine schedule uses ACT/360 equal-month interest: kamat = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025). §6 installment×term packaging remains quarantined; fee-package totals may still differ from published figures until a later §5b slice."
-  - "Excluded from OTP Díjkedvezményes akció packaging."
+  - "Engine schedule uses ACT/360 equal-month interest: interest = principal × r × (365/12) / 360, with paymentRounding forint (ADR 0025). §6 installment×term packaging remains quarantined; fee-package totals may still differ from published figures until a later §5b slice."
+  - "Excluded from OTP discounted-fee campaign packaging."
 
 ui:
-  formTitle: OTP Vidéki Otthonfelújítási Lakáshitel
+  formTitle: OTP Rural Home Renovation Loan (Vidéki Otthonfelújítási Lakáshitel)
   sections:
     - id: videki-otthonfelujitasi-core
       title: Loan Inputs

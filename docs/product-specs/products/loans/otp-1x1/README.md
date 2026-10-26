@@ -1,10 +1,10 @@
-# OTP 1x1 Lakáshitel
+# OTP 1x1 Home Loan (1x1 Lakáshitel)
 
 Market forint home loan from OTP Jelzálogbank with a rate fixed for the full term (`productCode: otp-1x1`).
 
 ## Source
 
-OTP Bank / OTP Jelzálogbank Hirdetmény: *Forint lakáshitelek kamat, díj, jutalék és költség tételei*, effective for applications accepted from **2026-04-20** (`Lakáshitel_H_kondicio_20260420`).
+OTP Bank / OTP Jelzálogbank published tariff notice (Hirdetmény): *Forint lakáshitelek kamat, díj, jutalék és költség tételei*, effective for applications accepted from **2026-04-20** (`Lakáshitel_H_kondicio_20260420`).
 
 ## Representative example (§6)
 

@@ -15,7 +15,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Folyósítási díj",
+        "label": "Disbursement fee",
         "optional": false
       },
       {
@@ -24,7 +24,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 58765,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Hitelbiztosítéki érték-megállapítás",
+        "label": "Collateral appraisal fee",
         "optional": false
       },
       {
@@ -33,7 +33,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 21980,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Azonnali értékbecslés (optional)",
+        "label": "Instant valuation (optional)",
         "optional": true
       },
       {
@@ -42,7 +42,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 20000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetkezelési költség",
+        "label": "Collateral administration fee",
         "optional": false
       },
       {
@@ -51,7 +51,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 9600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Tulajdoni lap lekérés",
+        "label": "Title-deed extract fee",
         "optional": false
       },
       {
@@ -60,7 +60,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 5000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Térképmásolat lekérés",
+        "label": "Cadastral-map extract fee",
         "optional": false
       },
       {
@@ -69,7 +69,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 10600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetváltozási költség",
+        "label": "Collateral change fee",
         "optional": false
       },
       {
@@ -79,7 +79,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Egyszeri kamatcsökkentés díj (optional)",
+        "label": "One-time rate-reduction fee (optional)",
         "optional": true
       }
     ],
@@ -89,21 +89,21 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "type": "rate-discount",
         "value": 120,
         "unit": "bp",
-        "label": "Hűség szolgáltatás (−120 bp)"
+        "label": "Loyalty service (−120 bp)"
       },
       {
         "name": "otp-dijkedvezmenyes-folyositasi-dij-elengedes",
         "type": "fee-waiver",
         "value": 100,
         "unit": "percent",
-        "label": "OTP Díjkedvezményes folyósítási díj elengedés"
+        "label": "OTP discounted-fee campaign disbursement waiver"
       },
       {
         "name": "egyszeri-kamatcsokkentes-dij-elengedes",
         "type": "fee-waiver",
         "value": 100,
         "unit": "percent",
-        "label": "Egyszeri kamatcsökkentés díj elengedés"
+        "label": "One-time rate-reduction fee waiver"
       }
     ],
     "defaultActiveDiscountNames": []
@@ -117,7 +117,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Folyósítási díj",
+        "label": "Disbursement fee",
         "optional": false
       },
       {
@@ -126,7 +126,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 58765,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Hitelbiztosítéki érték-megállapítás",
+        "label": "Collateral appraisal fee",
         "optional": false
       },
       {
@@ -135,7 +135,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 21980,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Azonnali értékbecslés (optional)",
+        "label": "Instant valuation (optional)",
         "optional": true
       },
       {
@@ -144,7 +144,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 20000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetkezelési költség",
+        "label": "Collateral administration fee",
         "optional": false
       },
       {
@@ -153,7 +153,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 10600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetváltozási költség",
+        "label": "Collateral change fee",
         "optional": false
       },
       {
@@ -163,7 +163,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Egyszeri kamatcsökkentés díj (optional)",
+        "label": "One-time rate-reduction fee (optional)",
         "optional": true
       }
     ],
@@ -173,21 +173,21 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "type": "rate-discount",
         "value": 50,
         "unit": "bp",
-        "label": "Zöld kamatkedvezmény (−50 bp)"
+        "label": "Green rate discount (−50 bp)"
       },
       {
         "name": "huseg-szolgaltatas",
         "type": "rate-discount",
         "value": 120,
         "unit": "bp",
-        "label": "Hűség szolgáltatás (−120 bp)"
+        "label": "Loyalty service (−120 bp)"
       },
       {
         "name": "otp-zold-folyositasi-dij-elengedes",
         "type": "fee-waiver",
         "value": 100,
         "unit": "percent",
-        "label": "OTP Zöld folyósítási díj elengedés"
+        "label": "OTP Green disbursement fee waiver"
       },
       {
         "name": "egyszeri-kamatcsokkentes-dij-elengedes",
@@ -197,7 +197,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "appliesToFeeNames": [
           "egyszeri-kamatcsokkentes-dij"
         ],
-        "label": "Egyszeri kamatcsökkentés díj elengedés"
+        "label": "One-time rate-reduction fee waiver"
       }
     ],
     "defaultActiveDiscountNames": [
@@ -213,7 +213,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Folyósítási díj",
+        "label": "Disbursement fee",
         "optional": false
       },
       {
@@ -222,7 +222,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 58765,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Hitelbiztosítéki érték-megállapítás",
+        "label": "Collateral appraisal fee",
         "optional": false
       },
       {
@@ -231,7 +231,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 21980,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Azonnali értékbecslés (optional)",
+        "label": "Instant valuation (optional)",
         "optional": true
       },
       {
@@ -240,7 +240,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 20000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetkezelési költség",
+        "label": "Collateral administration fee",
         "optional": false
       },
       {
@@ -249,7 +249,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 9600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Tulajdoni lap lekérés",
+        "label": "Title-deed extract fee",
         "optional": false
       },
       {
@@ -258,7 +258,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 5000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Térképmásolat lekérés",
+        "label": "Cadastral-map extract fee",
         "optional": false
       },
       {
@@ -267,7 +267,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 10600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetváltozási költség",
+        "label": "Collateral change fee",
         "optional": false
       },
       {
@@ -277,7 +277,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Egyszeri kamatcsökkentés díj (optional)",
+        "label": "One-time rate-reduction fee (optional)",
         "optional": true
       }
     ],
@@ -287,21 +287,21 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "type": "rate-discount",
         "value": 120,
         "unit": "bp",
-        "label": "Hűség szolgáltatás (−120 bp)"
+        "label": "Loyalty service (−120 bp)"
       },
       {
         "name": "otp-dijkedvezmenyes-folyositasi-dij-csokkentes",
         "type": "fee-waiver",
         "value": 87.5,
         "unit": "percent",
-        "label": "OTP Díjkedvezményes folyósítási díj csökkentés"
+        "label": "OTP discounted-fee campaign disbursement reduction"
       },
       {
         "name": "egyszeri-kamatcsokkentes-dij-elengedes",
         "type": "fee-waiver",
         "value": 100,
         "unit": "percent",
-        "label": "Egyszeri kamatcsökkentés díj elengedés"
+        "label": "One-time rate-reduction fee waiver"
       }
     ],
     "defaultActiveDiscountNames": []
@@ -315,7 +315,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 300000,
         "timing": "upfront",
-        "label": "Folyósítási díj",
+        "label": "Disbursement fee",
         "optional": false
       },
       {
@@ -324,7 +324,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 58765,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Hitelbiztosítéki érték-megállapítás",
+        "label": "Collateral appraisal fee",
         "optional": false
       },
       {
@@ -333,7 +333,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 20000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetkezelési költség",
+        "label": "Collateral administration fee",
         "optional": false
       },
       {
@@ -342,7 +342,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 9600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Tulajdoni lap lekérés",
+        "label": "Title-deed extract fee",
         "optional": false
       },
       {
@@ -351,7 +351,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 5000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Térképmásolat lekérés",
+        "label": "Cadastral-map extract fee",
         "optional": false
       },
       {
@@ -360,7 +360,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 10600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetváltozási költség",
+        "label": "Collateral change fee",
         "optional": false
       }
     ],
@@ -370,7 +370,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "type": "fee-waiver",
         "value": 91.67,
         "unit": "percent",
-        "label": "OTP Díjkedvezményes folyósítási díj csökkentés"
+        "label": "OTP discounted-fee campaign disbursement reduction"
       }
     ],
     "defaultActiveDiscountNames": []
@@ -384,7 +384,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Folyósítási díj",
+        "label": "Disbursement fee",
         "optional": false
       },
       {
@@ -393,7 +393,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 58765,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Hitelbiztosítéki érték-megállapítás",
+        "label": "Collateral appraisal fee",
         "optional": false
       },
       {
@@ -402,7 +402,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 20000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetkezelési költség",
+        "label": "Collateral administration fee",
         "optional": false
       },
       {
@@ -411,7 +411,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 9600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Tulajdoni lap lekérés",
+        "label": "Title-deed extract fee",
         "optional": false
       },
       {
@@ -420,7 +420,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 5000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Térképmásolat lekérés",
+        "label": "Cadastral-map extract fee",
         "optional": false
       },
       {
@@ -429,7 +429,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 10600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetváltozási költség",
+        "label": "Collateral change fee",
         "optional": false
       }
     ],
@@ -445,7 +445,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 30000,
         "timing": "upfront",
-        "label": "Folyósítási díj",
+        "label": "Disbursement fee",
         "optional": false
       },
       {
@@ -454,7 +454,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 58765,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Hitelbiztosítéki érték-megállapítás",
+        "label": "Collateral appraisal fee",
         "optional": false
       },
       {
@@ -463,7 +463,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 20000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetkezelési költség",
+        "label": "Collateral administration fee",
         "optional": false
       },
       {
@@ -472,7 +472,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 9600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Tulajdoni lap lekérés",
+        "label": "Title-deed extract fee",
         "optional": false
       },
       {
@@ -481,7 +481,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 5000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Térképmásolat lekérés",
+        "label": "Cadastral-map extract fee",
         "optional": false
       },
       {
@@ -490,7 +490,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 10600,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetváltozási költség",
+        "label": "Collateral change fee",
         "optional": false
       }
     ],
@@ -500,7 +500,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "type": "fee-waiver",
         "value": 100,
         "unit": "percent",
-        "label": "OTP Díjkedvezményes folyósítási díj elengedés"
+        "label": "OTP discounted-fee campaign disbursement waiver"
       }
     ],
     "defaultActiveDiscountNames": []
@@ -514,7 +514,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "unit": "percent",
         "maxAmount": 200000,
         "timing": "upfront",
-        "label": "Folyósítási díj",
+        "label": "Disbursement fee",
         "optional": false
       },
       {
@@ -523,7 +523,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 58765,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Hitelbiztosítéki érték-megállapítás",
+        "label": "Collateral appraisal fee",
         "optional": false
       },
       {
@@ -532,7 +532,7 @@ const COMMERCIAL_LOAN_COMMERCIAL_BLOCKS = {
         "value": 20000,
         "unit": "amount",
         "timing": "upfront",
-        "label": "Fedezetkezelési költség",
+        "label": "Collateral administration fee",
         "optional": false
       }
     ],

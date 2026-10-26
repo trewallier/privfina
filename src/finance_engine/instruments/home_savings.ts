@@ -8,6 +8,11 @@ import {
   ensurePositiveAmount,
   sortCashFlowsByDate
 } from './common'
+import {
+  calculateEbkmFromHomeSavingsCashFlows,
+  resolveHomeSavingsEbkmPayoutDate,
+  type EbkmCalculationResult
+} from './ebkm'
 
 /** Default OTP Home Savings Premium tiers (PRÉMIUM PLUSZ 10x30 Hirdetmény / USZ). */
 export const DEFAULT_HOME_SAVINGS_PREMIUM_TIERS = {
@@ -471,6 +476,147 @@ export function generateHomeSavingsInstrumentCashFlows(
   }
 
   return sortCashFlowsByDate(flows)
+}
+
+/**
+ * ADR 0031 ÁSZF EBKM cash-flow packaging (distinct from chart/schedule OTP
+ * maturity packaging in {@link generateHomeSavingsInstrumentCashFlows}).
+ *
+ * - **Account fees** continue through the allocation (kiutalási) period:
+ *   `termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS` (USZ Melléklet
+ *   allocation min = evaluation min + 2 for PRÉMIUM PLUSZ 10x30). Chart/OTP
+ *   calculator maturity illustrations keep `termMonths` fee months only.
+ * - **Terminal amount** uses deposit interest accrued through the day before
+ *   the ÁSZF EBKM payout date (ÁSZF §10); the inflow is dated on that payout
+ *   date (`lastDepositMonth+3` day-1 via {@link resolveHomeSavingsEbkmPayoutDate}).
+ *
+ * This packaging closes Hirdetmény EBKM goldens (including promo-20k) without
+ * fitted lag/netting knobs.
+ */
+export function buildHomeSavingsAszfEbkmCashFlows(
+  input: HomeSavingsInstrumentInput
+): Array<{
+  date: string
+  amount: number
+  direction: 'inflow' | 'outflow'
+  description?: string
+}> {
+  const monthlyDeposit = ensurePositiveAmount(input.monthlyDeposit)
+  const accountFeeMonthly = ensurePositiveAmount(input.accountFeeMonthly)
+  const accountOpeningFee = ensurePositiveAmount(input.accountOpeningFee)
+  const termMonths = Number(input.termMonths)
+  if (!Number.isInteger(termMonths) || termMonths <= 0) {
+    throw new Error('termMonths must be a positive integer.')
+  }
+  assertBoundedHorizon(undefined, termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS)
+
+  const dayOfMonth = input.depositDayOfMonth ?? deriveDepositDayOfMonth(input.startDate)
+  const period = monthlyPeriod(dayOfMonth)
+  const start = parseIsoDate(input.startDate)
+  const lastDepositDate = formatIsoDate(addMonthsUtc(start, termMonths - 1))
+  const ebkmPayoutDate = resolveHomeSavingsEbkmPayoutDate(lastDepositDate)
+
+  const depositInterest = calculateHomeSavingsDepositInterest({
+    monthlyDeposit,
+    termMonths,
+    startDate: input.startDate,
+    annualRatePct: input.depositInterestAnnualRatePct,
+    payoutDate: ebkmPayoutDate
+  })
+
+  const totalDeposits = monthlyDeposit * termMonths
+  const premiumRatePct =
+    input.premiumRatePct !== undefined && input.premiumRatePct !== null
+      ? Number(input.premiumRatePct)
+      : resolveHomeSavingsPremiumRatePct({
+          termMonths,
+          housingPurpose: input.housingPurpose,
+          earlyExitMonth: input.earlyExitMonth,
+          tiers: input.premiumTiers
+        })
+  if (!Number.isFinite(premiumRatePct) || premiumRatePct < 0) {
+    throw new Error('premiumRatePct must be a non-negative finite number.')
+  }
+  const premiumAmount = (totalDeposits * premiumRatePct) / 100
+  const terminalPayout = totalDeposits + depositInterest + premiumAmount
+
+  const flows: Array<{
+    date: string
+    amount: number
+    direction: 'inflow' | 'outflow'
+    description?: string
+  }> = []
+
+  if (accountOpeningFee > 0) {
+    flows.push({
+      date: input.startDate,
+      amount: accountOpeningFee,
+      direction: 'outflow',
+      description: 'Account opening fee'
+    })
+  }
+
+  const depositFlows = generateRecurringCashFlows({
+    period,
+    startDate: input.startDate,
+    occurrences: termMonths,
+    amount: monthlyDeposit,
+    direction: CashFlowDirection.Outflow,
+    category: 'home-savings',
+    description: 'Monthly deposit'
+  })
+  for (const flow of depositFlows) {
+    flows.push({
+      date: flow.date,
+      amount: flow.amount,
+      direction: 'outflow',
+      description: flow.description
+    })
+  }
+
+  if (accountFeeMonthly > 0) {
+    const feeMonths = termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS
+    const feeFlows = generateRecurringCashFlows({
+      period,
+      startDate: input.startDate,
+      occurrences: feeMonths,
+      amount: accountFeeMonthly,
+      direction: CashFlowDirection.Outflow,
+      category: 'home-savings',
+      description: 'Account management fee'
+    })
+    for (const flow of feeFlows) {
+      flows.push({
+        date: flow.date,
+        amount: flow.amount,
+        direction: 'outflow',
+        description: flow.description
+      })
+    }
+  }
+
+  if (terminalPayout > 0) {
+    flows.push({
+      date: ebkmPayoutDate,
+      amount: terminalPayout,
+      direction: 'inflow',
+      description: 'Home-savings terminal payout'
+    })
+  }
+
+  return flows
+}
+
+/**
+ * ADR 0031: Annex 3 EBKM from ÁSZF-packaged home-savings cash flows
+ * ({@link buildHomeSavingsAszfEbkmCashFlows}).
+ */
+export function calculateEbkmFromHomeSavingsInstrument(
+  input: HomeSavingsInstrumentInput
+): EbkmCalculationResult {
+  return calculateEbkmFromHomeSavingsCashFlows(buildHomeSavingsAszfEbkmCashFlows(input), {
+    retargetTerminalPayout: false
+  })
 }
 
 export function createHomeSavingsInstrumentBundle(

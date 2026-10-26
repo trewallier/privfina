@@ -4,18 +4,17 @@
  * Contract-amount ‰ helpers and schedule math come from the finance-engine
  * surface (ADR 0017 / 0032). This module only maps composer/spec inputs onto
  * those primitives + the schedule/bundle generators — no third formula surface.
- * EBKM uses the same deposit/fee/Premium amounts as the chart, with terminal
- * inflow retargeted to the General Terms and Conditions (ÁSZF) §22 allocation
- * payout date (ADR 0031).
+ * EBKM uses ÁSZF packaging (`calculateEbkmFromHomeSavingsInstrument`: allocation-
+ * period account fees + interest to ÁSZF payout date; ADR 0031) — distinct from
+ * chart/schedule OTP maturity cash flows.
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
 import {
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit,
-  generateHomeSavingsInstrumentCashFlows
+  calculateEbkmFromHomeSavingsInstrument
 } from '../instruments.js'
-import { calculateEbkmFromHomeSavingsCashFlows } from './ebkm.js'
 
 /**
  * Resolve contractual amount from explicit input or monthly deposit via ‰.
@@ -108,15 +107,7 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
 }
 
 function scheduleOutputsFromBundleInput(bundleInput, schedule) {
-  const cashFlows = generateHomeSavingsInstrumentCashFlows(bundleInput)
-  const ebkm = calculateEbkmFromHomeSavingsCashFlows(
-    cashFlows.map((flow) => ({
-      date: flow.date,
-      amount: flow.amount,
-      direction: flow.direction === 'inflow' ? 'inflow' : 'outflow',
-      description: flow.description
-    }))
-  )
+  const ebkm = calculateEbkmFromHomeSavingsInstrument(bundleInput)
 
   return {
     productId: bundleInput.productId,
@@ -138,8 +129,7 @@ function scheduleOutputsFromBundleInput(bundleInput, schedule) {
 }
 
 /**
- * Live preview: schedule scalars plus ADR 0031 EBKM (Annex 3 on customer
- * amounts; ÁSZF allocation (kiutalás) payout dating for the terminal leg).
+ * Live preview: schedule scalars plus ADR 0031 ÁSZF-packaged EBKM.
  */
 function calculateHomeSavingsScheduleFromSpecInputs(specInputs, options = {}) {
   const resolveHomeSavingsSchedule = options.resolveHomeSavingsSchedule

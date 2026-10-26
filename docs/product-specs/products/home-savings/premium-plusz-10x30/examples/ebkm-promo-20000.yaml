@@ -20,22 +20,16 @@ expected:
   # Published Hirdetmény A goldens (authoritative commercially-usable target).
   ebkmPctWithPremium: 4.35
   ebkmPctWithoutPremium: -0.58
-  # Engine Annex 3 + ÁSZF 22. § allocation dating on OTP-maturity terminal amounts.
-  # Both legs sit 0.01 past the two-decimal half-up boundary (residual gap).
-  engineEbkmPctWithPremium: 4.36
-  engineEbkmPctWithoutPremium: -0.57
+  # Engine Annex 3 + ÁSZF EBKM packaging (allocation-period account fees +
+  # interest to lastDepositMonth+3 day-1) matches published.
+  engineEbkmPctWithPremium: 4.35
+  engineEbkmPctWithoutPremium: -0.58
 
 notes:
   - Hirdetmény A EBKM pair with Premium / without Premium.
   - >
-      ADR 0031 / ÁSZF 22. § packaging (terminal on first of lastDepositMonth+3 =
-      2036-12-01) with OTP-aligned maturity terminal amounts solves to 4.36 / −0.57
-      vs published 4.35 / −0.58. Raw rates ≈ 4.35547 / −0.57402 sit just past the
-      6. § half-up boundary (published ticks need raw below 4.355 / at or below −0.575).
-  - >
-      End-of-allocation (kiutalási) 2036-11-30 keeps the same promo-20k miss pair. No
-      single day marker closes both legs (with-Premium needs ≥ 2036-12-02; without
-      needs ≲ mid-November), and 2036-12-02 already reopens standard-100k with-Premium.
-      Do not hunt a fitted settlement day without an ÁSZF/OTP cite.
-  - Do not close these cells with a fitted lag/netting knob.
+      ADR 0031 ÁSZF packaging: account fees through allocation min (122 months /
+      termMonths+2 per USZ Melléklet) and terminal interest through day before
+      ÁSZF EBKM payout date (ÁSZF §10 / §22). Closes prior 0.01 half-up residual
+      (day-1 retarget of OTP-maturity amounts alone was 4.36 / −0.57).
   - Percent opening fee needs contractual amount from ÁSZF/calculator before engine fee amount assertion.

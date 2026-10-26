@@ -170,30 +170,26 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     ).toBe(65_000)
   })
 
-  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (EBKM residual gap)', () => {
+  it('keeps metadata migrationStatus aligned with PRODUCT_CATALOG (fully-spec-backed)', () => {
     const catalog = readRepoFile(CATALOG_PATH)
     const row = catalog
       .split('\n')
       .find(
         (line) =>
           line.startsWith('| home-savings.premium-plusz-10x30.standard |') &&
-          line.includes('| schedule-usable |')
+          line.includes('| fully-spec-backed |')
       )
     expect(row).toBeDefined()
-    expect(row).toMatch(/EBKM/i)
+    expect(row).toMatch(/EBKM|product-spec/i)
 
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
-    expect(entry?.migrationStatus).toBe('schedule-usable')
-    // Residual figures must stay visible — soft "EBKM" alone would wash the gap.
-    expect(entry?.commerciallyBlockedReason).toMatch(/4\.36/)
-    expect(entry?.commerciallyBlockedReason).toMatch(/-0\.57|−0\.57/)
-    expect(entry?.commerciallyBlockedReason).toMatch(/4\.35/)
-    expect(entry?.commerciallyBlockedReason).toMatch(/0\.01/)
+    expect(entry?.migrationStatus).toBe('fully-spec-backed')
+    expect(entry?.commerciallyBlockedReason).toBeNull()
     expect(entry?.discountHints?.length).toBeGreaterThan(0)
     expect(entry?.premiumHints).toMatch(/Premium tiers/i)
   })
 
-  it('surfaces ÁSZF-packaged EBKM preview for promo 20k (residual gap pinned)', () => {
+  it('surfaces ÁSZF-packaged EBKM preview matching published promo-20k goldens', () => {
     const ebkmExample = loadYaml(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-20000.yaml'
     ) as {
@@ -237,11 +233,10 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     )
 
     expect(withPremium.accountFeeMonthly).toBe(expected.accountFeeMonthly)
-    // Promo 20k residual cells — engine pins ≠ published (0.01 each leg).
+    expect(withPremium.ebkmPct).toBe(expected.ebkmPctWithPremium)
+    expect(withoutPremium.ebkmPct).toBe(expected.ebkmPctWithoutPremium)
     expect(withPremium.ebkmPct).toBe(expected.engineEbkmPctWithPremium)
     expect(withoutPremium.ebkmPct).toBe(expected.engineEbkmPctWithoutPremium)
-    expect(withPremium.ebkmPct).not.toBe(expected.ebkmPctWithPremium)
-    expect(withoutPremium.ebkmPct).not.toBe(expected.ebkmPctWithoutPremium)
   })
 
   it('keeps browser ‰ helpers aligned with engine USZ Melléklet cases', () => {

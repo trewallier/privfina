@@ -19,6 +19,7 @@ import {
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
   calculateHomeSavingsDepositInterest,
+  calculateEbkmFromHomeSavingsInstrument,
   resolveHomeSavingsSchedule,
   generateHomeSavingsInstrumentCashFlows,
   createHomeSavingsInstrumentBundle as createEngineHomeSavingsInstrumentBundle
@@ -450,6 +451,7 @@ export {
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
   calculateHomeSavingsDepositInterest,
+  calculateEbkmFromHomeSavingsInstrument,
   resolveHomeSavingsSchedule,
   generateHomeSavingsInstrumentCashFlows,
   createHomeSavingsInstrumentBundle,

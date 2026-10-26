@@ -16,6 +16,7 @@ import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
 import {
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit,
+  resolveKiutalasiPeriodMonths,
   calculateEbkmFromHomeSavingsInstrument
 } from '../instruments.js'
 
@@ -87,17 +88,10 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
   assertComposerStartDateInSaleWindow(String(specInputs.startDate), product.saleWindow)
   const accountOpeningFee = resolveHomeSavingsOpeningFee(product, specInputs)
   const contractAmount = resolveHomeSavingsContractAmount(product, specInputs)
-  const evaluationMinMonths = Number(product.evaluationMinMonths)
-  const allocationMinMonths = Number(product.allocationMinMonths)
-  let kiutalasiPeriodMonths
-  if (
-    Number.isInteger(evaluationMinMonths) &&
-    evaluationMinMonths >= 1 &&
-    Number.isInteger(allocationMinMonths) &&
-    allocationMinMonths >= evaluationMinMonths
-  ) {
-    kiutalasiPeriodMonths = allocationMinMonths - evaluationMinMonths
-  }
+  const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    evaluationMinMonths: product.evaluationMinMonths,
+    allocationMinMonths: product.allocationMinMonths
+  })
 
   return {
     id: options.id,

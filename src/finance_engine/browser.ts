@@ -98,6 +98,7 @@ export {
   buildHomeSavingsAszfEbkmCashFlows,
   calculateEbkmFromHomeSavingsInstrument,
   ceilToTenForint,
+  resolveKiutalasiPeriodMonths,
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsMaturityPayoutDate,

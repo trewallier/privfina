@@ -1,0 +1,216 @@
+specVersion: v2alpha1
+kind: financial-product
+id: home-savings.premium-plusz-4x10.standard
+family: home-savings
+variant: premium-plusz-4x10
+productCode: premium-plusz-4x10
+displayName: OTP Home Savings Premium Plus 4x10 (Lakástakarék PRÉMIUM PLUSZ 4x10)
+description: >
+  Withdrawn OTP Lakástakarék PRÉMIUM PLUSZ 4x10 product scheme (módozat).
+  Sold 2025-08-01 through 2026-08-02. Customer-perspective savings schedule only.
+  startDate must fall in saleWindow (historical). LTP home loan out of scope.
+
+engine:
+  instrumentType: home-savings
+  paymentFrequency: monthly
+  # USZ Melléklet (PRÉMIUM PLUSZ) effective through 2026-08-02
+  depositInterestAnnualRatePct: 0.1
+  savingsRatePermille: 10
+  minContractAmount: 1000000
+  maxContractAmount: 10000000
+  evaluationMinMonths: 48
+  allocationMinMonths: 50
+
+saleWindow:
+  from: "2025-08-01"
+  to: "2026-08-02"
+
+premiumTiers:
+  bands:
+    - { minHoldingMonths: 48, ratePct: 10 }
+
+eligibilityRules:
+  - natural-person-or-condominium-cooperative-saver
+  - hungarian-residential-or-stay-address-for-natural-person
+  - housing-purpose-required-for-premium
+  - no-state-support-post-2018-10-17
+  - loyalty-commitment-required-for-promo-opening-fee
+  - start-date-must-fall-in-sale-window
+
+pricing:
+  rateSettingRule: usz-melleklet-0.1pct-act360-plus-otp-premium-tiers
+  notes:
+    - >
+      Sources: Hirdetmény marketed products 2025-09-30 (promo + EBKM with 350 Ft/hó
+      account fee); USZ Melléklet PRÉMIUM PLUSZ table (evaluation 48 / allocation 50;
+      savings 10.000‰; contract 1 000 000–10 000 000 Ft). Withdrawn from sale 2026-08-03.
+    - >
+      Default account fee 350 Ft/hó matches late-sale EBKM packaging (2025-09-30).
+      Earlier 150 Ft/hó cohort (Hirdetmény 2025-08-01) is optional override later.
+    - >
+      OTP Premium 10% at maturity from month 48 with housing-purpose use (single band;
+      no 10x30 early-exit ladder).
+    - >
+      Promo opening fee (Hirdetmény A): 0.5% for deposit 10 000–49 990; fixed 25 000 Ft
+      for deposit 50 000–100 000; both require 48-month loyalty.
+
+discounts:
+  - name: promo-opening-fee-half-percent
+    type: fee-waiver
+    value: 50
+    unit: percent
+    conditions:
+      - monthly-deposit-10000-to-49990
+      - loyalty-commitment-48-months
+      - promo-hirdetmeny-active
+    appliesToFeeNames:
+      - szamlanyitasi-dij
+  - name: promo-opening-fee-fixed-25000
+    type: fee-waiver
+    value: 0
+    unit: amount
+    conditions:
+      - monthly-deposit-50000-to-100000
+      - loyalty-commitment-48-months
+      - promo-hirdetmeny-active
+      - opening-fee-fixed-25000-ft
+    appliesToFeeNames:
+      - szamlanyitasi-dij
+
+fees:
+  - name: szamlanyitasi-dij
+    type: account-opening
+    value: 1
+    unit: percent
+    timing: upfront
+    description: >
+      Standard account opening fee is 1% of contractual amount. Promo (Hirdetmény A):
+      0.5% when monthly deposit is 10.000–49.990 Ft; fixed 25.000 Ft when monthly
+      deposit is 50.000–100.000 Ft.
+  - name: szamlavezetesi-dij
+    type: account-management
+    value: 350
+    unit: amount
+    timing: periodic
+    description: Monthly account fee default for late-sale cohort (350 HUF from 2025-09-30).
+  - name: huseg-feloldas-dij
+    type: other
+    value: 100
+    unit: percent
+    timing: on-event
+    description: Loyalty unlock fee — 100% of waived opening fee through month 48.
+
+inputs:
+  - name: monthlyDeposit
+    type: number
+    label: Monthly Deposit
+    required: true
+    unit: currency
+    description: Contractual monthly deposit (10.000–100.000 Ft).
+    constraints:
+      minimum: 10000
+      maximum: 100000
+  - name: termMonths
+    type: integer
+    label: Savings Term (Months)
+    required: true
+    unit: months
+    description: Savings period; full Premium path uses 48 months.
+    constraints:
+      minimum: 1
+      maximum: 48
+  - name: startDate
+    type: string
+    label: Savings Start Date
+    required: true
+    unit: date
+    description: Must fall in saleWindow 2025-08-01 … 2026-08-02 (ISO date).
+  - name: housingPurpose
+    type: boolean
+    label: Housing Purpose Assumed
+    required: true
+    description: When true, Premium applies at exit/allocation.
+  - name: openingFeeMode
+    type: string
+    label: Opening Fee Mode
+    required: true
+    description: standard-1pct | promo-half-percent | promo-fixed-25000
+    constraints:
+      enum:
+        - standard-1pct
+        - promo-half-percent
+        - promo-fixed-25000
+  - name: contractAmount
+    type: number
+    label: Contract Amount
+    required: false
+    unit: currency
+
+derivedVariables:
+  - name: accountOpeningFee
+    type: number
+    label: Account Opening Fee
+    required: true
+    unit: currency
+  - name: premiumRatePct
+    type: number
+    label: Premium Rate Percent
+    required: true
+    unit: percent
+
+outputs:
+  - name: totalDeposits
+    type: number
+    label: Total Deposits
+    required: true
+    unit: currency
+  - name: totalAccountFees
+    type: number
+    label: Total Account Fees
+    required: true
+    unit: currency
+  - name: premiumAmount
+    type: number
+    label: Premium Amount
+    required: true
+    unit: currency
+  - name: terminalPayout
+    type: number
+    label: Terminal Payout
+    required: true
+    unit: currency
+  - name: ebkmPct
+    type: number
+    label: EBKM Percent
+    required: true
+    unit: percent
+
+assumptions:
+  - Customer-perspective cash flows only; withdrawn offering — startDate in saleWindow.
+  - Default path is continuous monthly saving with housing-purpose Premium at month 48.
+  - State support absent for this offering cohort.
+  - Contract amount derives from monthly deposit via savingsRatePermille 10.000 when omitted.
+
+ui:
+  formTitle: OTP Home Savings Premium Plus 4x10 (withdrawn)
+  sections:
+    - id: contract
+      title: Contract
+      fieldNames:
+        - monthlyDeposit
+        - termMonths
+        - startDate
+        - housingPurpose
+        - openingFeeMode
+        - contractAmount
+    - id: results
+      title: Results
+      fieldNames:
+        - totalDeposits
+        - totalAccountFees
+        - premiumAmount
+        - terminalPayout
+        - ebkmPct
+
+exampleRefs:
+  - examples/maturity-premium-48.yaml

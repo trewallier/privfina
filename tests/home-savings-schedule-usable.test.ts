@@ -35,14 +35,25 @@ function formDataFrom(entries: Record<string, string>): FormData {
 }
 
 describe('home-savings schedule-usable metadata', () => {
-  it('exposes PRÉMIUM PLUSZ 10x30 for the commercial home-savings picker', () => {
+  it('exposes current and withdrawn Premium-family módozatok for the commercial picker', () => {
     const codes = HOME_SAVINGS_PRODUCTS.map((entry) => entry.productCode)
-    expect(codes).toEqual(['premium-plusz-10x30'])
-    expect(buildHomeSavingsProductOptions()).toHaveLength(1)
+    expect(codes).toEqual([
+      'premium-plusz-10x30',
+      'premium-plusz-4x10',
+      'premium-plusz-8x30',
+      'premium-4x10',
+      'premium-8x30'
+    ])
+    expect(buildHomeSavingsProductOptions()).toHaveLength(5)
     expect(findHomeSavingsProduct('premium-plusz-10x30')?.migrationStatus).toBe(
       'fully-spec-backed'
     )
     expect(findHomeSavingsProduct('premium-plusz-10x30')?.commerciallyBlockedReason).toBeNull()
+    expect(findHomeSavingsProduct('premium-plusz-4x10')?.migrationStatus).toBe('schedule-usable')
+    expect(findHomeSavingsProduct('premium-plusz-4x10')?.saleWindow).toEqual({
+      from: '2025-08-01',
+      to: '2026-08-02'
+    })
     expect(
       findHomeSavingsProductById('home-savings.premium-plusz-10x30.standard')?.displayName
     ).toMatch(/PRÉMIUM PLUSZ 10x30/)

@@ -36,6 +36,10 @@ describe('home-savings embedded product-spec parity (fully-spec-backed)', () => 
     expect(embedded.engine.savingsRatePermille).toBe(yaml.engine.savingsRatePermille)
     expect(embedded.engine.minContractAmount).toBe(yaml.engine.minContractAmount)
     expect(embedded.engine.maxContractAmount).toBe(yaml.engine.maxContractAmount)
+    expect(embedded.engine.evaluationMinMonths).toBe(yaml.engine.evaluationMinMonths)
+    expect(embedded.engine.allocationMinMonths).toBe(yaml.engine.allocationMinMonths)
+    expect(embedded.saleWindow).toEqual(yaml.saleWindow)
+    expect(embedded.premiumTiers).toEqual(yaml.premiumTiers)
 
     expect(embedded.eligibilityRules).toEqual(yaml.eligibilityRules)
     expect(embedded.fees.map((f: { name: string }) => f.name)).toEqual(
@@ -63,7 +67,7 @@ describe('home-savings embedded product-spec parity (fully-spec-backed)', () => 
   })
 
   it('drives HOME_SAVINGS_PRODUCTS catalog entry from the embedded spec', () => {
-    expect(HOME_SAVINGS_PRODUCTS).toHaveLength(1)
+    expect(HOME_SAVINGS_PRODUCTS.length).toBeGreaterThanOrEqual(5)
     const entry = findHomeSavingsProduct('premium-plusz-10x30')
     expect(entry?.spec).toBe(embedded)
     expect(entry?.migrationStatus).toBe('fully-spec-backed')
@@ -78,6 +82,7 @@ describe('home-savings embedded product-spec parity (fully-spec-backed)', () => 
       'promo-half-percent',
       'promo-fixed-65000'
     ])
+    expect(entry?.saleWindow).toEqual({ from: '2026-08-03', to: null })
     expect(entry?.commerciallyBlockedReason).toBeNull()
   })
 

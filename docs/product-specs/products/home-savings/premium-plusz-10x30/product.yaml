@@ -21,6 +21,22 @@ engine:
   savingsRatePermille: 3.846
   minContractAmount: 2600000
   maxContractAmount: 26000000
+  evaluationMinMonths: 120
+  allocationMinMonths: 122
+
+# Marketed from 2026-08-03 (Hirdetmény); still sold — to is null.
+saleWindow:
+  from: "2026-08-03"
+  to: null
+
+premiumTiers:
+  bands:
+    - { minHoldingMonths: 120, ratePct: 30 }
+    - { minHoldingMonths: 97, ratePct: 20 }
+    - { minHoldingMonths: 49, ratePct: 10 }
+  months49to96: 10
+  months97to120: 20
+  maturityFrom120: 30
 
 eligibilityRules:
   - natural-person-or-condominium-cooperative-saver

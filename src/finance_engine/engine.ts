@@ -74,16 +74,20 @@ export {
   createHomeSavingsInstrumentBundle,
   generateHomeSavingsInstrumentCashFlows,
   HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS,
+  assertStartDateInSaleWindow,
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsMaturityPayoutDate,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
+  resolveKiutalasiPeriodMonths,
   resolveMonthlyDepositFromContractAmount
 } from './instruments'
 export type {
   HomeSavingsBundleInput,
   HomeSavingsInstrumentInput,
+  HomeSavingsPremiumBand,
   HomeSavingsPremiumTiers,
+  HomeSavingsSaleWindow,
   HomeSavingsScheduleSummary
 } from './instruments'
 export {

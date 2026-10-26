@@ -1,0 +1,29 @@
+specVersion: v2alpha1
+productId: home-savings.premium-4x10.standard
+exampleId: maturity-premium-48
+title: Maturity Premium — 48 months housing purpose (withdrawn Premium 4x10)
+description: >
+  Continuous saving through month 48 inside saleWindow. Premium 10%.
+  startDate last marketed day 2025-07-31.
+
+inputs:
+  monthlyDeposit: 20000
+  termMonths: 48
+  startDate: 2025-07-31
+  housingPurpose: true
+  openingFeeMode: standard-1pct
+
+expected:
+  accountFeeMonthly: 150
+  accountOpeningFee: 17200
+  totalDeposits: 960000
+  totalAccountFees: 7200
+  premiumRatePct: 10
+  premiumAmount: 96000
+  contractAmount: 1720000
+
+notes:
+  - Sale window 2023-03-01 … 2025-07-31.
+  - Contract 1 720 000 Ft via savingsRatePermille 11.627 (ceil10 monthly invert).
+  - Opening fee 1% of contract = 17 200 Ft.
+  - Account fee 150 Ft/hó (PRÉMIUM-era default).

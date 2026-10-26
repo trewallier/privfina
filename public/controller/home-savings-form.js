@@ -1,4 +1,6 @@
 import {
+  assertComposerStartDateInSaleWindow,
+  defaultStartDateForSaleWindow,
   findHomeSavingsProduct,
   openingFeeModeLabel,
   resolveHomeSavingsReadinessHint
@@ -27,16 +29,19 @@ function mapFormDataToHomeSavingsSpecInputs(formData, product) {
   const contractAmountRaw = String(formData.get('contractAmount') || '').trim()
   const minDeposit = Number(product.minMonthlyDeposit ?? 10_000)
   const maxDeposit = Number(product.maxMonthlyDeposit ?? 100_000)
+  const minTerm = Number(product.minTermMonths ?? 1)
+  const maxTerm = Number(product.maxTermMonths ?? 120)
 
   if (!Number.isFinite(monthlyDeposit) || monthlyDeposit < minDeposit || monthlyDeposit > maxDeposit) {
     throw new Error(`Monthly deposit must be between ${minDeposit} and ${maxDeposit} Ft.`)
   }
-  if (!Number.isInteger(termMonths) || termMonths < 1 || termMonths > 120) {
-    throw new Error('Savings term must be an integer between 1 and 120 months.')
+  if (!Number.isInteger(termMonths) || termMonths < minTerm || termMonths > maxTerm) {
+    throw new Error(`Savings term must be an integer between ${minTerm} and ${maxTerm} months.`)
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
     throw new Error('Savings start date is required (YYYY-MM-DD).')
   }
+  assertComposerStartDateInSaleWindow(startDate, product.saleWindow)
   if (!(product.openingFeeModes || []).includes(openingFeeMode)) {
     throw new Error('Select a valid opening fee mode.')
   }
@@ -85,6 +90,34 @@ function populateHomeSavingsOpeningFeeModes(selectElement, product) {
   }
 }
 
+function applyHomeSavingsSaleWindowToDateInput(dateInput, product, force = false) {
+  if (!dateInput || !product) {
+    return
+  }
+
+  const window = product.saleWindow
+  if (window?.from) {
+    dateInput.min = window.from
+  } else {
+    dateInput.removeAttribute('min')
+  }
+  if (window?.to) {
+    dateInput.max = window.to
+  } else {
+    dateInput.removeAttribute('max')
+  }
+
+  if (force || !dateInput.value) {
+    dateInput.value = defaultStartDateForSaleWindow(window)
+  } else if (window) {
+    try {
+      assertComposerStartDateInSaleWindow(dateInput.value, window)
+    } catch {
+      dateInput.value = defaultStartDateForSaleWindow(window)
+    }
+  }
+}
+
 function renderHomeSavingsHints({
   product,
   readinessElement,
@@ -94,10 +127,16 @@ function renderHomeSavingsHints({
 }) {
   if (readinessElement) {
     const readiness = resolveHomeSavingsReadinessHint(product?.migrationStatus)
+    const sale =
+      product?.saleWindow?.to != null
+        ? ` Historical offering — start date must fall in ${product.saleWindow.from} … ${product.saleWindow.to}.`
+        : product?.saleWindow?.from
+          ? ` Marketed from ${product.saleWindow.from}.`
+          : ''
     const blocked = product?.commerciallyBlockedReason
       ? ` Not commercially ready: ${product.commerciallyBlockedReason}`
       : ''
-    readinessElement.textContent = `${readiness}${blocked}`
+    readinessElement.textContent = `${readiness}${sale}${blocked}`
   }
   if (eligibilityElement) {
     eligibilityElement.textContent = (product?.eligibilityHints || []).join(' ')
@@ -121,12 +160,21 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
   const termInput = form.querySelector('#home-savings-term-months')
   const housingInput = form.querySelector('#home-savings-housing-purpose')
   const openingFeeSelect = form.querySelector('#home-savings-opening-fee-mode')
+  const startDateInput = form.querySelector('#home-savings-start-date')
 
   if (depositInput && (force || !depositInput.value)) {
     depositInput.value = String(product.defaultMonthlyDeposit)
   }
+  if (depositInput) {
+    depositInput.min = String(product.minMonthlyDeposit ?? 10_000)
+    depositInput.max = String(product.maxMonthlyDeposit ?? 100_000)
+  }
   if (termInput && (force || !termInput.value)) {
     termInput.value = String(product.defaultTermMonths)
+  }
+  if (termInput) {
+    termInput.min = String(product.minTermMonths ?? 1)
+    termInput.max = String(product.maxTermMonths ?? 120)
   }
   if (housingInput && (force || !form.dataset.housingTouched)) {
     housingInput.checked = Boolean(product.defaultHousingPurpose)
@@ -139,6 +187,8 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
   if (force && openingFeeSelect) {
     openingFeeSelect.value = product.defaultOpeningFeeMode
   }
+
+  applyHomeSavingsSaleWindowToDateInput(startDateInput, product, force)
 }
 
 function applyHomeSavingsProductSelection({

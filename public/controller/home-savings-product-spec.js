@@ -21,7 +21,13 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC = {
     depositInterestAnnualRatePct: 0.1,
     savingsRatePermille: 3.846,
     minContractAmount: 2_600_000,
-    maxContractAmount: 26_000_000
+    maxContractAmount: 26_000_000,
+    evaluationMinMonths: 120,
+    allocationMinMonths: 122
+  },
+  saleWindow: {
+    from: '2026-08-03',
+    to: null
   },
   eligibilityRules: [
     'natural-person-or-condominium-cooperative-saver',
@@ -166,8 +172,13 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC = {
       }
     ]
   },
-  /** Composer-facing Premium tiers (USZ / Hirdetmény) — not a YAML engine block. */
+  /** Premium tiers — keep in parity with product.yaml `premiumTiers`. */
   premiumTiers: {
+    bands: [
+      { minHoldingMonths: 120, ratePct: 30 },
+      { minHoldingMonths: 97, ratePct: 20 },
+      { minHoldingMonths: 49, ratePct: 10 }
+    ],
     months49to96: 10,
     months97to120: 20,
     maturityFrom120: 30

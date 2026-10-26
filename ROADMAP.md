@@ -132,6 +132,32 @@ Schedule-usable review follow-ups (before / with commercially-usable; from PR #8
 Deferred (explicitly out of scope for §5e)
 - [ ] OTP Home Savings LTP home loan / bridging loan (fee-schedule THM representative examples for Premium Plus 10x30). Prefer reuse of `mortgage-loan` + ADR 0024 patterns in a later epic; new ADR only if that reuse fails.
 
+#### 5f) Home savings — withdrawn Premium / Premium Plus módozatok (historical start dates)
+Goal: model **actually sold, then withdrawn** OTP Premium-family savings módozatok so existing contracts can be calculated. Do **not** invent never-sold schemes. Reuse ADR 0028–0031; no new family.
+
+**Sale windows (Europe/Budapest, inclusive):**
+| Módozat | From | To |
+| --- | --- | --- |
+| PRÉMIUM 4x10 | 2023-03-01 | 2025-07-31 |
+| PRÉMIUM 8x30 | 2023-03-01 | 2025-07-31 |
+| PRÉMIUM PLUSZ 4x10 | 2025-08-01 | 2026-08-02 |
+| PRÉMIUM PLUSZ 8x30 | 2025-08-01 | 2026-08-02 |
+| PRÉMIUM PLUSZ 10x30 (current) | 2026-08-03 | open |
+
+Constraints
+- `startDate` must lie in each product’s `saleWindow` (engine + UI). Withdrawn ⇒ window end is past ⇒ start must be in the past.
+- No `if (productCode === …)` in core generators (ADR 0015); scheme params + Premium bands + opening-fee modes live in YAML.
+- Account fee default for Plus 4x10/8x30 = **350** Ft/hó (Hirdetmény 2025-09-30 EBKM); earlier 150 Ft/hó cohort is optional examples later.
+- Out of scope: pre-2023 Start / Fix / Otthon / BÓNUSZ; Erste / Fundamenta; LTP loan / áthidaló.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ROADMAP §5f + catalog / `docs/spec.md` / naming / ownership: document withdrawn módozatok + sale-window rule; forbid unpublished schemes.
+- [x] Schema/YAML: `saleWindow` on home-savings products; author `premium-4x10`, `premium-8x30`, `premium-plusz-4x10`, `premium-plusz-8x30`; add `saleWindow` to 10x30 (`from: 2026-08-03`, `to: null`).
+- [x] Engine: `assertStartDateInSaleWindow` + parameterized Premium bands / `promo-fixed-<Ft>` opening fees from YAML → **calc-aligned** examples inside each window.
+- [x] Commercial composer: picker lists withdrawn products with historical hint; date min/max = sale window; default start = last day of window (never today) → **schedule-usable**.
+- [ ] EBKM vs archived Hirdetmény goldens (ADR 0031) → **commercially-usable** per product (can trail).
+- [ ] Embedded frontend spec parity → **fully-spec-backed** (can trail; withdrawn specs live in `home-savings-withdrawn-product-specs.js` for schedule-usable).
+
 ### 6) Platform, Data Integrations, And Operations
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.

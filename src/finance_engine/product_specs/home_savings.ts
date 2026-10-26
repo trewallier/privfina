@@ -7,20 +7,21 @@ import {
   DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
   DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
+  assertStartDateInSaleWindow,
   calculateEbkmFromHomeSavingsInstrument,
   generateHomeSavingsInstrumentCashFlows,
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
+  resolveKiutalasiPeriodMonths,
   type HomeSavingsInstrumentInput,
   type HomeSavingsPremiumTiers,
+  type HomeSavingsSaleWindow,
   type HomeSavingsScheduleSummary
 } from '../instruments/home_savings'
 
-export type HomeSavingsOpeningFeeMode =
-  | 'standard-1pct'
-  | 'promo-half-percent'
-  | 'promo-fixed-65000'
+/** Opening-fee mode; `promo-fixed-<amount>` encodes the fixed Ft fee in the slug. */
+export type HomeSavingsOpeningFeeMode = string
 
 export interface HomeSavingsProductFeeDefinition {
   name: string
@@ -58,7 +59,18 @@ export interface HomeSavingsProductSpec {
     savingsRatePermille?: number
     minContractAmount?: number
     maxContractAmount?: number
+    /** Evaluation min savings period (months) from USZ Melléklet. */
+    evaluationMinMonths?: number
+    /** Allocation (kiutalás) min savings period (months) from USZ Melléklet. */
+    allocationMinMonths?: number
   }
+  /**
+   * Inclusive sale window (Europe/Budapest calendar). Withdrawn módozatok set `to`
+   * in the past so composer/engine require a historical startDate.
+   */
+  saleWindow?: HomeSavingsSaleWindow
+  /** Parameterized Premium bands (preferred) or legacy 10x30 breakpoints. */
+  premiumTiers?: HomeSavingsPremiumTiers
   fees?: HomeSavingsProductFeeDefinition[]
   discounts?: HomeSavingsProductDiscountDefinition[]
   eligibilityRules?: string[]
@@ -211,10 +223,13 @@ export function resolveHomeSavingsContractAmount(
   })
 }
 
+const PROMO_FIXED_OPENING_FEE_MODE = /^promo-fixed-(\d+)$/
+
 /**
  * Resolve account opening fee from mode + product rules.
  * Percent modes derive contractual amount (szerződéses összeg) from monthly
  * deposit via product-scheme (módozat) ‰ when omitted.
+ * Fixed promo modes use slug `promo-fixed-<Ft>` (e.g. promo-fixed-65000).
  */
 export function resolveHomeSavingsOpeningFee(
   productSpec: HomeSavingsProductSpec,
@@ -223,8 +238,9 @@ export function resolveHomeSavingsOpeningFee(
   assertValidHomeSavingsProductSpec(productSpec)
   const mode = specInputs.openingFeeMode
 
-  if (mode === 'promo-fixed-65000') {
-    return 65000
+  const fixedMatch = PROMO_FIXED_OPENING_FEE_MODE.exec(mode)
+  if (fixedMatch) {
+    return Number(fixedMatch[1])
   }
 
   const contractAmount = resolveHomeSavingsContractAmount(productSpec, specInputs)
@@ -246,9 +262,14 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
 ): HomeSavingsInstrumentInput {
   assertValidHomeSavingsProductSpec(productSpec)
 
+  if (productSpec.saleWindow) {
+    assertStartDateInSaleWindow(specInputs.startDate, productSpec.saleWindow)
+  }
+
   const accountFeeMonthly = resolveHomeSavingsAccountFeeMonthly(productSpec)
   const accountOpeningFee = resolveHomeSavingsOpeningFee(productSpec, specInputs)
-  const premiumTiers = specInputs.premiumTiers ?? DEFAULT_HOME_SAVINGS_PREMIUM_TIERS
+  const premiumTiers =
+    specInputs.premiumTiers ?? productSpec.premiumTiers ?? DEFAULT_HOME_SAVINGS_PREMIUM_TIERS
   const depositInterestAnnualRatePct =
     specInputs.depositInterestAnnualRatePct !== undefined &&
     specInputs.depositInterestAnnualRatePct !== null
@@ -257,6 +278,11 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
           productSpec.engine.depositInterestAnnualRatePct ??
             DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT
         )
+
+  const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    evaluationMinMonths: productSpec.engine.evaluationMinMonths,
+    allocationMinMonths: productSpec.engine.allocationMinMonths
+  })
 
   return {
     monthlyDeposit: specInputs.monthlyDeposit,
@@ -268,6 +294,7 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
     housingPurpose: specInputs.housingPurpose,
     depositInterestAnnualRatePct,
     premiumTiers,
+    kiutalasiPeriodMonths,
     earlyExitMonth: specInputs.earlyExitMonth,
     category: specInputs.category ?? 'home-savings',
     description: specInputs.description ?? productSpec.displayName

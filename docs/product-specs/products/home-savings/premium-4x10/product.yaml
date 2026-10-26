@@ -1,0 +1,184 @@
+specVersion: v2alpha1
+kind: financial-product
+id: home-savings.premium-4x10.standard
+family: home-savings
+variant: premium-4x10
+productCode: premium-4x10
+displayName: OTP Home Savings Premium 4x10 (Lakástakarék PRÉMIUM 4x10)
+description: >
+  Withdrawn OTP Lakástakarék PRÉMIUM 4x10 product scheme (módozat).
+  Sold 2023-03-01 through 2025-07-31 (replaced by PRÉMIUM PLUSZ 4x10).
+  Customer-perspective savings schedule only. startDate must fall in saleWindow.
+
+engine:
+  instrumentType: home-savings
+  paymentFrequency: monthly
+  # USZ Melléklet PRÉMIUM table (through 2025-07-31)
+  depositInterestAnnualRatePct: 0.1
+  savingsRatePermille: 11.627
+  minContractAmount: 860000
+  maxContractAmount: 4300000
+  evaluationMinMonths: 48
+  allocationMinMonths: 50
+
+# Sale window from THM Hirdetmény “Értékesítés ideje: 2023.03.01. – 2025.07.31.”
+# (ltp_thm_lk_20250801.pdf) and marketed-products Hirdetmény 2025-08-01 (withdrawal).
+saleWindow:
+  from: "2023-03-01"
+  to: "2025-07-31"
+
+premiumTiers:
+  bands:
+    - { minHoldingMonths: 48, ratePct: 10 }
+
+eligibilityRules:
+  - natural-person-or-condominium-cooperative-saver
+  - hungarian-residential-or-stay-address-for-natural-person
+  - housing-purpose-required-for-premium
+  - no-state-support-post-2018-10-17
+  - start-date-must-fall-in-sale-window
+
+pricing:
+  rateSettingRule: usz-melleklet-0.1pct-act360-plus-otp-premium-tiers
+  notes:
+    - >
+      Sources: THM Hirdetmény sale window 2023-03-01–2025-07-31
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/ltp_thm_lk_20250801.pdf);
+      marketed-products Hirdetmény 2025-08-01 (withdrawal of PRÉMIUM 4x10 / 8x30)
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/ltp_h_ertekesitett_20250801.pdf);
+      USZ Melléklet PRÉMIUM table through 2025-07-31
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/LTP_USZ_230301tol_kotott_szerzodesek_20250110.pdf)
+      — evaluation 48 / allocation 50; savings 11.627‰; contract 860 000–4 300 000 Ft;
+      deposit 10 000–50 000 Ft; archived EBKM Hirdetmény 2025-08-01.
+    - Account fee default 150 Ft/hó (pre-2025-09-30 Díjtáblázat cohort).
+    - OTP Premium 10% at maturity from month 48 with housing-purpose use.
+    - >
+      Opening fee: standard 1% of contract (EBKM archive tables); promo modes deferred
+      unless locked from a contemporaneous Hirdetmény A table.
+
+discounts: []
+
+fees:
+  - name: szamlanyitasi-dij
+    type: account-opening
+    value: 1
+    unit: percent
+    timing: upfront
+    description: Standard account opening fee is 1% of contractual amount.
+  - name: szamlavezetesi-dij
+    type: account-management
+    value: 150
+    unit: amount
+    timing: periodic
+    description: Monthly account fee default for PRÉMIUM-era cohort (150 HUF/month).
+
+inputs:
+  - name: monthlyDeposit
+    type: number
+    label: Monthly Deposit
+    required: true
+    unit: currency
+    description: Contractual monthly deposit (10.000–50.000 Ft).
+    constraints:
+      minimum: 10000
+      maximum: 50000
+  - name: termMonths
+    type: integer
+    label: Savings Term (Months)
+    required: true
+    unit: months
+    description: Savings period; full Premium path uses 48 months.
+    constraints:
+      minimum: 1
+      maximum: 48
+  - name: startDate
+    type: string
+    label: Savings Start Date
+    required: true
+    unit: date
+    description: Must fall in saleWindow 2023-03-01 … 2025-07-31.
+  - name: housingPurpose
+    type: boolean
+    label: Housing Purpose Assumed
+    required: true
+  - name: openingFeeMode
+    type: string
+    label: Opening Fee Mode
+    required: true
+    description: standard-1pct
+    constraints:
+      enum:
+        - standard-1pct
+  - name: contractAmount
+    type: number
+    label: Contract Amount
+    required: false
+    unit: currency
+
+derivedVariables:
+  - name: accountOpeningFee
+    type: number
+    label: Account Opening Fee
+    required: true
+    unit: currency
+  - name: premiumRatePct
+    type: number
+    label: Premium Rate Percent
+    required: true
+    unit: percent
+
+outputs:
+  - name: totalDeposits
+    type: number
+    label: Total Deposits
+    required: true
+    unit: currency
+  - name: totalAccountFees
+    type: number
+    label: Total Account Fees
+    required: true
+    unit: currency
+  - name: premiumAmount
+    type: number
+    label: Premium Amount
+    required: true
+    unit: currency
+  - name: terminalPayout
+    type: number
+    label: Terminal Payout
+    required: true
+    unit: currency
+  - name: ebkmPct
+    type: number
+    label: EBKM Percent
+    required: true
+    unit: percent
+
+assumptions:
+  - Customer-perspective cash flows only; withdrawn offering — startDate in saleWindow.
+  - Continuous monthly saving with housing-purpose Premium at month 48.
+  - Contract amount derives from monthly deposit via savingsRatePermille 11.627 when omitted.
+
+ui:
+  formTitle: OTP Home Savings Premium 4x10 (withdrawn)
+  sections:
+    - id: contract
+      title: Contract
+      fieldNames:
+        - monthlyDeposit
+        - termMonths
+        - startDate
+        - housingPurpose
+        - openingFeeMode
+        - contractAmount
+    - id: results
+      title: Results
+      fieldNames:
+        - totalDeposits
+        - totalAccountFees
+        - premiumAmount
+        - terminalPayout
+        - ebkmPct
+
+exampleRefs:
+  - examples/maturity-premium-48.yaml

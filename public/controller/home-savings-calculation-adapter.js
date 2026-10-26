@@ -8,11 +8,15 @@
  * period account fees + interest to ÁSZF payout date; ADR 0031) — distinct from
  * chart/schedule OTP maturity cash flows.
  */
-import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
+import {
+  assertComposerStartDateInSaleWindow,
+  findHomeSavingsProduct
+} from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
 import {
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit,
+  resolveKiutalasiPeriodMonths,
   calculateEbkmFromHomeSavingsInstrument
 } from '../instruments.js'
 
@@ -47,12 +51,15 @@ function resolveHomeSavingsContractAmount(product, specInputs) {
   })
 }
 
+const PROMO_FIXED_OPENING_FEE_MODE = /^promo-fixed-(\d+)$/
+
 function resolveHomeSavingsOpeningFee(product, specInputs) {
   const mode = specInputs.openingFeeMode
   assertOpeningFeeModeForDeposit(product, mode, Number(specInputs.monthlyDeposit))
 
-  if (mode === 'promo-fixed-65000') {
-    return 65_000
+  const fixedMatch = PROMO_FIXED_OPENING_FEE_MODE.exec(mode)
+  if (fixedMatch) {
+    return Number(fixedMatch[1])
   }
 
   const contractAmount = resolveHomeSavingsContractAmount(product, specInputs)
@@ -78,8 +85,13 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
     throw new Error('Unknown home-savings product.')
   }
 
+  assertComposerStartDateInSaleWindow(String(specInputs.startDate), product.saleWindow)
   const accountOpeningFee = resolveHomeSavingsOpeningFee(product, specInputs)
   const contractAmount = resolveHomeSavingsContractAmount(product, specInputs)
+  const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    evaluationMinMonths: product.evaluationMinMonths,
+    allocationMinMonths: product.allocationMinMonths
+  })
 
   return {
     id: options.id,
@@ -96,6 +108,7 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
     housingPurpose: Boolean(specInputs.housingPurpose),
     depositInterestAnnualRatePct: product.depositInterestAnnualRatePct,
     premiumTiers: product.premiumTiers,
+    kiutalasiPeriodMonths,
     earlyExitMonth: specInputs.earlyExitMonth,
     category: options.category || 'home-savings',
     // Free-text notes only — deposit cash-flow description is fixed in the generator.

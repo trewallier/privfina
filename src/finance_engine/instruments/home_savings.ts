@@ -16,6 +16,11 @@ import {
 
 /** Default OTP Home Savings Premium tiers (PRÉMIUM PLUSZ 10x30 Hirdetmény / USZ). */
 export const DEFAULT_HOME_SAVINGS_PREMIUM_TIERS = {
+  bands: [
+    { minHoldingMonths: 120, ratePct: 30 },
+    { minHoldingMonths: 97, ratePct: 20 },
+    { minHoldingMonths: 49, ratePct: 10 }
+  ],
   months49to96: 10,
   months97to120: 20,
   maturityFrom120: 30
@@ -35,10 +40,29 @@ export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
  */
 export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS = 2
 
+/** One Premium band: rate applies when holding months ≥ minHoldingMonths. */
+export interface HomeSavingsPremiumBand {
+  minHoldingMonths: number
+  ratePct: number
+}
+
+/**
+ * Premium tier table. Prefer `bands` (parameterized for 4x10 / 8x30 / 10x30).
+ * Legacy month-breakpoint fields remain for older callers / YAML examples.
+ */
 export interface HomeSavingsPremiumTiers {
-  months49to96: number
-  months97to120: number
-  maturityFrom120: number
+  bands?: readonly HomeSavingsPremiumBand[]
+  months49to96?: number
+  months97to120?: number
+  maturityFrom120?: number
+}
+
+/** Marketed / withdrawn sale window (Europe/Budapest calendar dates, inclusive). */
+export interface HomeSavingsSaleWindow {
+  /** First calendar day the módozat was offered (ISO YYYY-MM-DD). */
+  from: string
+  /** Last calendar day offered; omit/null while still marketed. */
+  to?: string | null
 }
 
 export interface HomeSavingsInstrumentInput {
@@ -58,10 +82,46 @@ export interface HomeSavingsInstrumentInput {
   /** Override Premium percent; when omitted, resolve from term + tiers. */
   premiumRatePct?: number
   premiumTiers?: HomeSavingsPremiumTiers
+  /**
+   * Allocation (kiutalási) period length in months after last deposit.
+   * Defaults to {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS} (2). Product YAML
+   * supplies `allocationMinMonths − evaluationMinMonths` when both are set.
+   */
+  kiutalasiPeriodMonths?: number
   /** Early-exit scenario: savings month index (1-based) used for Premium band. */
   earlyExitMonth?: number
   category?: string
   description?: string
+}
+
+/** Resolve allocation-period length from USZ Melléklet eval/alloc mins when both present. */
+export function resolveKiutalasiPeriodMonths(input: {
+  evaluationMinMonths?: number
+  allocationMinMonths?: number
+  fallback?: number
+}): number {
+  const evaluation = input.evaluationMinMonths
+  const allocation = input.allocationMinMonths
+  if (
+    evaluation !== undefined &&
+    evaluation !== null &&
+    allocation !== undefined &&
+    allocation !== null
+  ) {
+    const evalN = Number(evaluation)
+    const allocN = Number(allocation)
+    if (!Number.isInteger(evalN) || evalN < 1 || !Number.isInteger(allocN) || allocN < evalN) {
+      throw new Error(
+        'evaluationMinMonths / allocationMinMonths must be positive integers with allocation ≥ evaluation.'
+      )
+    }
+    return allocN - evalN
+  }
+  const fallback = Number(input.fallback ?? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS)
+  if (!Number.isInteger(fallback) || fallback < 0) {
+    throw new Error('kiutalasiPeriodMonths fallback must be a non-negative integer.')
+  }
+  return fallback
 }
 
 export interface HomeSavingsScheduleSummary {
@@ -108,6 +168,16 @@ function monthlyPeriod(dayOfMonth: number): string {
   return `0 0 ${dayOfMonth} * *`
 }
 
+function legacyPremiumBandsFromTiers(
+  tiers: HomeSavingsPremiumTiers
+): HomeSavingsPremiumBand[] {
+  return [
+    { minHoldingMonths: 120, ratePct: Number(tiers.maturityFrom120 ?? 0) },
+    { minHoldingMonths: 97, ratePct: Number(tiers.months97to120 ?? 0) },
+    { minHoldingMonths: 49, ratePct: Number(tiers.months49to96 ?? 0) }
+  ]
+}
+
 /**
  * Resolve OTP Home Savings Premium percent from holding length and housing-purpose assumption.
  * Parameterized tiers — not productCode forks (ADR 0015).
@@ -132,16 +202,48 @@ export function resolveHomeSavingsPremiumRatePct(input: {
     throw new Error('Holding months for Premium resolution must be a positive integer.')
   }
 
-  if (holdingMonths >= 120) {
-    return tiers.maturityFrom120
-  }
-  if (holdingMonths >= 97) {
-    return tiers.months97to120
-  }
-  if (holdingMonths >= 49) {
-    return tiers.months49to96
+  const bands =
+    tiers.bands && tiers.bands.length > 0
+      ? [...tiers.bands]
+      : legacyPremiumBandsFromTiers(tiers)
+
+  bands.sort((a, b) => b.minHoldingMonths - a.minHoldingMonths)
+  for (const band of bands) {
+    if (holdingMonths >= band.minHoldingMonths) {
+      return Number(band.ratePct)
+    }
   }
   return 0
+}
+
+/**
+ * Assert savings startDate lies in the product sale window (inclusive ISO dates).
+ * Withdrawn módozatok have a past `to` — valid starts are therefore in the past.
+ */
+export function assertStartDateInSaleWindow(
+  startDate: string,
+  saleWindow: HomeSavingsSaleWindow
+): void {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    throw new Error('startDate must be an ISO calendar date (YYYY-MM-DD).')
+  }
+  if (!saleWindow || !/^\d{4}-\d{2}-\d{2}$/.test(saleWindow.from)) {
+    throw new Error('saleWindow.from must be an ISO calendar date (YYYY-MM-DD).')
+  }
+  if (startDate < saleWindow.from) {
+    throw new Error(
+      `startDate ${startDate} is before sale window start ${saleWindow.from}.`
+    )
+  }
+  const to = saleWindow.to
+  if (to !== undefined && to !== null && to !== '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      throw new Error('saleWindow.to must be an ISO calendar date (YYYY-MM-DD) when set.')
+    }
+    if (startDate > to) {
+      throw new Error(`startDate ${startDate} is after sale window end ${to}.`)
+    }
+  }
 }
 
 function addMonthsUtc(date: Date, months: number): Date {
@@ -483,9 +585,10 @@ export function generateHomeSavingsInstrumentCashFlows(
  * maturity packaging in {@link generateHomeSavingsInstrumentCashFlows}).
  *
  * - **Account fees** continue through the allocation (kiutalási) period:
- *   `termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS` (USZ Melléklet
- *   allocation min = evaluation min + 2 for PRÉMIUM PLUSZ 10x30). Chart/OTP
- *   calculator maturity illustrations keep `termMonths` fee months only.
+ *   `termMonths + kiutalasiPeriodMonths` (from product YAML
+ *   `allocationMinMonths − evaluationMinMonths`, else
+ *   {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS}). Chart/OTP calculator
+ *   maturity illustrations keep `termMonths` fee months only.
  * - **Terminal amount** uses deposit interest accrued through the day before
  *   the ÁSZF EBKM payout date (ÁSZF §10); the inflow is dated on that payout
  *   date (`lastDepositMonth+3` day-1 via {@link resolveHomeSavingsEbkmPayoutDate}).
@@ -508,7 +611,10 @@ export function buildHomeSavingsAszfEbkmCashFlows(
   if (!Number.isInteger(termMonths) || termMonths <= 0) {
     throw new Error('termMonths must be a positive integer.')
   }
-  assertBoundedHorizon(undefined, termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS)
+  const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    fallback: input.kiutalasiPeriodMonths ?? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS
+  })
+  assertBoundedHorizon(undefined, termMonths + kiutalasiPeriodMonths)
 
   const dayOfMonth = input.depositDayOfMonth ?? deriveDepositDayOfMonth(input.startDate)
   const period = monthlyPeriod(dayOfMonth)
@@ -575,7 +681,7 @@ export function buildHomeSavingsAszfEbkmCashFlows(
   }
 
   if (accountFeeMonthly > 0) {
-    const feeMonths = termMonths + HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS
+    const feeMonths = termMonths + kiutalasiPeriodMonths
     const feeFlows = generateRecurringCashFlows({
       period,
       startDate: input.startDate,

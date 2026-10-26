@@ -1,6 +1,14 @@
 /**
  * Slice A residual diagnostics (ADR 0031). Prints invert-solve ΔFt and
- * sensitivity / hypothesis results. Not a promotion gate — informational.
+ * sensitivity / hypothesis results.
+ *
+ * Not a promotion gate — soft asserts only (line counts). The 8/8 Hirdetmény
+ * bar lives in `home-savings-ebkm-verification.test.ts`.
+ *
+ * Packaging baselines:
+ * - Invert-solve uses production ÁSZF flows (`buildHomeSavingsAszfEbkmCashFlows`).
+ * - Fee-count / interest / +2-fee / combined hypotheses deliberately start from
+ *   schedule (OTP maturity) flows to show why ÁSZF packaging was needed.
  */
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -8,12 +16,14 @@ import { resolve } from 'node:path'
 import YAML from 'yaml'
 import {
   buildEbkmLegsFromHomeSavingsCashFlows,
+  buildHomeSavingsAszfEbkmCashFlows,
   calculateEbkmFromLegs,
   calculateEbkmFromHomeSavingsCashFlows,
   calculateHomeSavingsDepositInterest,
   calculateHomeSavingsFromProductSpec,
   generateCashFlowsFromHomeSavingsProductSpec,
   loadHomeSavingsProductSpec,
+  mapHomeSavingsSpecInputsToInstrumentInput,
   resolveHomeSavingsEbkmPayoutDate,
   resolveHomeSavingsMaturityPayoutDate,
   resolveHomeSavingsOpeningFee,
@@ -45,38 +55,6 @@ function toEbkmFlows(
       | 'outflow',
     description: flow.description
   }))
-}
-
-/** Binary-search terminal K such that Annex 3 rounded EBKM equals targetPct. */
-function invertTerminalForPublishedEbkm(
-  deposits: Array<{ date: string; amount: number }>,
-  payoutDate: string,
-  targetPct: number,
-  seedK: number
-): { k: number; ratePct: number; rounded: number } {
-  // Direction: higher K → higher EBKM. Find K where rounded == targetPct,
-  // preferring the K nearest seed that sits on the published side of the boundary.
-  let lo = seedK * 0.9
-  let hi = seedK * 1.1
-  for (let i = 0; i < 80; i += 1) {
-    const mid = (lo + hi) / 2
-    const result = calculateEbkmFromLegs({
-      deposits,
-      payouts: [{ date: payoutDate, amount: mid }]
-    })
-    // If rate too high vs target, need smaller K
-    if (result.rate * 100 > targetPct) {
-      hi = mid
-    } else {
-      lo = mid
-    }
-  }
-  const k = (lo + hi) / 2
-  const result = calculateEbkmFromLegs({
-    deposits,
-    payouts: [{ date: payoutDate, amount: k }]
-  })
-  return { k, ratePct: result.rate * 100, rounded: result.percentRounded }
 }
 
 /** Find max K such that percentRounded === targetPct (upper edge of tick bucket). */
@@ -135,8 +113,12 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
     const rows: string[] = []
     for (const housingPurpose of [true, false] as const) {
       const inputs = { ...baseInputs, housingPurpose }
-      const flows = toEbkmFlows(generateCashFlowsFromHomeSavingsProductSpec(product, inputs))
-      const legs = buildEbkmLegsFromHomeSavingsCashFlows(flows)
+      // Production ÁSZF packaging (not schedule OTP maturity flows).
+      const instrument = mapHomeSavingsSpecInputsToInstrumentInput(product, inputs)
+      const flows = buildHomeSavingsAszfEbkmCashFlows(instrument)
+      const legs = buildEbkmLegsFromHomeSavingsCashFlows(flows, {
+        retargetTerminalPayout: false
+      })
       const engine = calculateHomeSavingsFromProductSpec(product, inputs)
       const published = housingPurpose ? 4.35 : -0.58
       const payoutDate = legs.payouts[0].date
@@ -147,6 +129,7 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
         deposits: legs.deposits,
         payouts: [{ date: payoutDate, amount: maxK }]
       })
+      const aszfInterest = engineK - engine.totalDeposits - engine.premiumAmount
       rows.push(
         [
           housingPurpose ? 'withPremium' : 'withoutPremium',
@@ -156,13 +139,14 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
           `maxKForPublished=${maxK.toFixed(2)}`,
           `deltaFt=${delta.toFixed(2)}`,
           `rawAtMax=${(atMax.rate * 100).toFixed(8)}`,
-          `interest=${engine.depositInterest}`,
+          `aszfInterest=${aszfInterest}`,
+          `scheduleInterest=${engine.depositInterest}`,
           `premium=${engine.premiumAmount}`
         ].join(' | ')
       )
     }
     // eslint-disable-next-line no-console
-    console.log('\n=== Invert-solve K ===\n' + rows.join('\n'))
+    console.log('\n=== Invert-solve K (ÁSZF packaging) ===\n' + rows.join('\n'))
     expect(rows.length).toBe(2)
   })
 
@@ -211,26 +195,10 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
         .sort()
         .at(-1)!
       const [y, m] = lastDeposit.split('-').map(Number)
-      const extra = [
-        {
-          date: `${y}-${String(m + 1).padStart(2, '0')}-10`,
-          amount: 500,
-          direction: 'outflow' as const,
-          description: 'Account management fee'
-        },
-        {
-          date: `${y}-${String(m + 2).padStart(2, '0')}-10`,
-          amount: 500,
-          direction: 'outflow' as const,
-          description: 'Account management fee'
-        }
-      ]
-      // Fix month overflow for Sep+1/+2
       const extras = [1, 2].map((add) => {
         const d = new Date(Date.UTC(y, m - 1 + add, 10))
-        const iso = d.toISOString().slice(0, 10)
         return {
-          date: iso,
+          date: d.toISOString().slice(0, 10),
           amount: 500,
           direction: 'outflow' as const,
           description: 'Account management fee'
@@ -387,8 +355,10 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
   })
 
   it('USZ theoretical 0% / 0.5% / 1% opening-fee grid at 20k (diagnostic)', () => {
-    // USZ Melléklet: 20k with Premium: 1%=4.12, 0.5%=4.35, 0%=4.59
-    // without: 1%=-0.77, 0.5%=-0.58, 0%=0.00
+    // Hirdetmény-locked cells for 1% / 0.5% match commercially-usable goldens.
+    // 0% opening-fee row is exploratory only: with-Premium 4.59 is reproduced under
+    // ÁSZF packaging; without-Premium target 0.00 is NOT reproduced (engine ≈ −0.38)
+    // and is not a locked Hirdetmény cell — do not treat as a promotion golden.
     const usz = {
       'standard-1pct': { with: 4.12, without: -0.77 },
       'promo-half-percent': { with: 4.35, without: -0.58 },
@@ -401,7 +371,6 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
         let openingFee: number
         let openingFeeMode: HomeSavingsSpecInputs['openingFeeMode']
         if (mode === 'zero') {
-          // Force zero opening fee via standard mode then override by patching flows.
           openingFeeMode = 'standard-1pct'
         } else {
           openingFeeMode = mode as HomeSavingsSpecInputs['openingFeeMode']
@@ -411,12 +380,14 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
           housingPurpose,
           openingFeeMode
         }
-        const flows = toEbkmFlows(generateCashFlowsFromHomeSavingsProductSpec(product, inputs))
-        let adjusted = flows
-        if (mode === 'zero') {
-          adjusted = flows.filter((f) => f.description !== 'Account opening fee')
-        }
-        const ebkm = calculateEbkmFromHomeSavingsCashFlows(adjusted)
+        const instrument = mapHomeSavingsSpecInputsToInstrumentInput(product, inputs)
+        const flows =
+          mode === 'zero'
+            ? buildHomeSavingsAszfEbkmCashFlows({ ...instrument, accountOpeningFee: 0 })
+            : buildHomeSavingsAszfEbkmCashFlows(instrument)
+        const ebkm = calculateEbkmFromHomeSavingsCashFlows(flows, {
+          retargetTerminalPayout: false
+        })
         const target = housingPurpose ? published.with : published.without
         openingFee =
           mode === 'zero'
@@ -428,7 +399,7 @@ describe('home-savings EBKM residual diagnostics (Slice A)', () => {
       }
     }
     // eslint-disable-next-line no-console
-    console.log('\n=== USZ theoretical grid (20k) ===\n' + lines.join('\n'))
+    console.log('\n=== USZ/Hirdetmény grid @20k (ÁSZF packaging) ===\n' + lines.join('\n'))
     expect(lines.length).toBe(6)
   })
 

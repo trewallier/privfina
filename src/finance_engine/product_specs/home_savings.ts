@@ -101,10 +101,12 @@ export interface HomeSavingsEngineOutputs {
   terminalPayout: number
   depositInterest: number
   /**
-   * ADR 0031 EBKM percent from customer cash flows (calendar-day / 365 Annex 3)
-   * with General Terms and Conditions (ÁSZF) §22 allocation payout dating
-   * (terminal inflow retargeted for EBKM; chart schedule uses OTP-aligned
-   * maturity packaging — first of lastDeposit+2).
+   * ADR 0031 EBKM percent (calendar-day / 365 Annex 3) from
+   * {@link calculateEbkmFromHomeSavingsInstrument} / ÁSZF packaging
+   * (`buildHomeSavingsAszfEbkmCashFlows`: account fees through allocation min
+   * `termMonths+2`; interest through day before lastDepositMonth+3 day-1 payout).
+   * Chart/schedule scalars still use OTP maturity packaging (first of
+   * lastDeposit+2; `termMonths` fee months only) — not this field.
    */
   ebkmPct: number
   schedule: HomeSavingsScheduleSummary

@@ -31,6 +31,6 @@ Related: 0022 (THM calculator for loans), 0024 / 0026 (loan three-check bar), 00
 ## Consequences
 
 - Product examples must lock published EBKM figures from the sales Hirdetmény (effective 2026-10-10 for current tables; fee-schedule account fee from 2026-08-03).
-- ADR 0031 checks are green (8/8); `home-savings.premium-plusz-10x30.standard` may promote to `commercially-usable`.
+- ADR 0031 checks are green (8/8); `home-savings.premium-plusz-10x30.standard` is promoted to `commercially-usable` and, with embedded frontend YAML parity, to `fully-spec-backed`.
 - Contributors reuse one EBKM solver across future LTP savings product schemes (módozatok) instead of ad hoc deposit APR math.
 - Harness anti-washing: published goldens and engine pins are locked in tests (not YAML-only); score must stay 8/8 with raw rates on the published half-up side of the boundary.

@@ -25,7 +25,7 @@ Statuses are transitional rollout markers reflecting current integration state, 
 | Simplified examples | `loan.fixed-rate.standard`, `loan.fixed-rate.mortgage`; generic bond subtypes (not catalog rows) | Loans: `30/360` equal-month (`r/12`). Bonds: instrument-mode presentation on simplified investment composer |
 | Public offerings (loans) | Seven published tariff notice (Hirdetmény) `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
 | Public offerings (securities) | `government-security.{dkj,pmap,bmap}.standard` | ÁKK / Hungarian State Treasury; commercial investment composer (ADR 0027) |
-| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Home Savings (LTP); commercial home-savings composer (ADR 0028–0031); deposit interest rate sheet annex (USZ Melléklet) 0.10% / 3.846‰ / allocation (kiutalás) 122; General Terms and Conditions (ÁSZF) §10 interest + OTP-aligned allocation payout packaging |
+| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Home Savings (LTP); commercial home-savings composer (ADR 0028–0031); USZ Melléklet 0.10% / 3.846‰ / allocation min 122; chart uses OTP maturity packaging (lastDeposit+2); `ebkmPct` uses ÁSZF EBKM packaging (fees through allocation min + interest to lastDepositMonth+3 day-1; ADR 0031) |
 
 **What `calc-aligned` requires in this repo** (engine bar; UI may still be below schedule-usable):
 

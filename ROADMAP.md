@@ -155,8 +155,8 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Schema/YAML: `saleWindow` on home-savings products; author `premium-4x10`, `premium-8x30`, `premium-plusz-4x10`, `premium-plusz-8x30`; add `saleWindow` to 10x30 (`from: 2026-08-03`, `to: null`).
 - [x] Engine: `assertStartDateInSaleWindow` + parameterized Premium bands / `promo-fixed-<Ft>` opening fees from YAML → **calc-aligned** examples inside each window.
 - [x] Commercial composer: picker lists withdrawn products with historical hint; date min/max = sale window; default start = last day of window (never today) → **schedule-usable**.
-- [ ] EBKM vs archived Hirdetmény goldens (ADR 0031) → **commercially-usable** per product (can trail).
-- [ ] Embedded frontend spec parity → **fully-spec-backed** (can trail; withdrawn specs live in `home-savings-withdrawn-product-specs.js` for schedule-usable).
+- [x] EBKM vs archived Hirdetmény goldens (ADR 0031) → **commercially-usable** per product (can trail): Premium 8x30 4/4 and Premium Plus 8x30 8/8 green; Premium 4x10 (3/4) and Premium Plus 4x10 (7/8) keep a pinned 0.01 without-Premium residual under shared ÁSZF packaging (no productCode fork) and stay schedule-usable.
+- [ ] Embedded frontend spec parity → **fully-spec-backed** (can trail; withdrawn specs live in `home-savings-withdrawn-product-specs.js`).
 
 ### 6) Platform, Data Integrations, And Operations
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)

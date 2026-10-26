@@ -124,7 +124,7 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_8X30_PRODUCT_SPEC = {
   premiumTiers: {
     bands: [{ minHoldingMonths: 96, ratePct: 30 }]
   },
-  migrationStatus: 'schedule-usable',
+  migrationStatus: 'commercially-usable',
   openingFeeModeDepositBands: {
     'promo-half-percent': { min: 10_000, max: 49_990 },
     'promo-fixed-50000': { min: 50_000, max: 100_000 }
@@ -249,7 +249,7 @@ const HOME_SAVINGS_PREMIUM_8X30_PRODUCT_SPEC = {
   premiumTiers: {
     bands: [{ minHoldingMonths: 96, ratePct: 30 }]
   },
-  migrationStatus: 'schedule-usable',
+  migrationStatus: 'commercially-usable',
   openingFeeModeDepositBands: {},
   eligibilityHints: [
     'Withdrawn módozat — savings start date must fall in 2023-03-01 … 2025-07-31.',

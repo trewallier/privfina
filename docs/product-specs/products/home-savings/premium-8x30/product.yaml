@@ -48,7 +48,8 @@ pricing:
       USZ Melléklet PRÉMIUM table through 2025-07-31
       (https://www.otpbank.hu/static/otplakastakarek/sw/file/LTP_USZ_230301tol_kotott_szerzodesek_20250110.pdf)
       — evaluation 96 / allocation 98; savings 5.000‰; contract 2 000 000–10 000 000 Ft;
-      deposit 10 000–50 000 Ft; archived EBKM Hirdetmény 2025-08-01.
+      deposit 10 000–50 000 Ft; archived EBKM Hirdetmény 2025-08-01
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/ltp_ebkm_20250801.pdf).
     - Account fee default 150 Ft/hó (PRÉMIUM-era cohort).
     - OTP Premium 30% at maturity from month 96 with housing-purpose use.
     - "Opening fee: standard 1% of contract for v1."
@@ -178,4 +179,6 @@ ui:
         - ebkmPct
 
 exampleRefs:
+  - examples/ebkm-standard-20000.yaml
+  - examples/ebkm-standard-50000.yaml
   - examples/maturity-premium-96.yaml

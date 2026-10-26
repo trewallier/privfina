@@ -154,6 +154,9 @@ Acceptance criteria
 - [ ] LTP home loan / bridging loan remains out of scope for ROADMAP §5e (deferred).
 - [x] Withdrawn OTP Premium / Premium Plus 4x10 and 8x30 are cataloged with `saleWindow`; engine and commercial composer reject `startDate` outside the window (ROADMAP §5f).
 - [x] Never-sold módozatok are not invented; pre-2023 Start/Fix/Otthon/BÓNUSZ families remain out of scope for §5f.
+- [x] Withdrawn Premium 8x30 and Premium Plus 8x30 pass ADR 0031 EBKM verification vs archived Hirdetmény goldens (2025-08-01 / 2025-09-30) and are **commercially-usable** (ROADMAP §5f).
+- [x] Withdrawn Premium 4x10 and Premium Plus 4x10 lock published EBKM goldens with a pinned 0.01 without-Premium engine residual under shared ÁSZF packaging; catalog stays **schedule-usable** until the residual closes (ROADMAP §5f can trail).
+- [x] Home-savings continuous monthly deposit/fee dates use anniversary clamping (`addMonthsUtc`), not cron day-of-month skip of short months, so ÁSZF last-deposit / EBKM payout dating stays aligned for end-of-month `startDate` values.
 - [x] Product identity uses free-form `variant` plus required `productCode`; schema v1 remains frozen and is not extended for new loan/mortgage constructs.
 - [x] Product schema v2 accepts structured optional `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing` blocks so future retail mortgage products can be authored as data.
 - [x] OTP 1x1 Home Loan (`productCode: otp-1x1`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% / 101.128 Ft installment) locked in unit tests.

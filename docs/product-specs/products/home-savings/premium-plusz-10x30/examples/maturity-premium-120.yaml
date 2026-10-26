@@ -4,8 +4,8 @@ exampleId: maturity-premium-120
 title: Maturity Premium tier — 120 months housing purpose
 description: >
   Continuous saving through month 120 with housing-purpose allotment/termination
-  credits OTP Lakástakarék Prémium at 30%. Deposit interest uses USZ Melléklet
-  ACT/360 at 0.10% (ADR 0029).
+  credits OTP Lakástakarék Prémium at 30%. Terminal golden follows the OTP
+  product-page calculator Lejáratkor figure (authoritative).
 
 inputs:
   monthlyDeposit: 50000
@@ -22,9 +22,15 @@ expected:
   premiumRatePct: 30
   premiumBase: 6000000
   premiumAmount: 1800000
-  depositInterest: 30286
-  terminalPayout: 7830286
+  # OTP authoritative — same capture as web-calculator-maturity-50000.yaml
+  terminalPayout: 7831152
+  # Derived from OTP terminal
+  depositInterest: 31152
   contractAmount: 13000000
+  maturityPayoutDate: 2036-11-01
+  engineDepositInterest: 31156
+  engineTerminalPayout: 7831156
+  engineTerminalPayoutDeltaFt: 4
   earlyExitPremiumRatePctByMonthBand:
     months49to96: 10
     months97to120: 20
@@ -33,6 +39,12 @@ expected:
 notes:
   - Premium percents from Hirdetmény B / USZ §10 (natural person and társasház tables).
   - premiumBase = contractual deposits only; Premium has no compound interest (USZ §10).
-  - depositInterest uses ACT/360 + yearly capitalization at 0.10% (USZ Melléklet / ÁSZF).
+  - >
+    terminalPayout is OTP product-page calculator Lejáratkor (7 831 152 Ft);
+    depositInterest is derived. See web-calculator-maturity-50000.yaml source.
+  - >
+    maturityPayoutDate / engine interest use OTP-calculator continuous-path
+    packaging (first of month two months after last deposit), not literal
+    ÁSZF §22 (1). Residual +4 Ft is unexplained (not proven rounding).
   - contractAmount 13 000 000 Ft = monthly 50 000 via 3.846‰ (ceil10).
   - Loyalty unlock is out of scope for this default continuous path.

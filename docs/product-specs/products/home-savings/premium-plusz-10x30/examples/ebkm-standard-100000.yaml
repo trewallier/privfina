@@ -16,9 +16,15 @@ inputs:
 
 expected:
   accountFeeMonthly: 500
+  # Published Hirdetmény B goldens (authoritative commercially-usable target).
   ebkmPctWithPremium: 4.48
   ebkmPctWithoutPremium: -0.40
+  # Schedule→Annex 3 regression pins (not published). Quarantine until with-premium matches.
+  scheduleEbkmPctWithPremium: 4.54
+  scheduleEbkmPctWithoutPremium: -0.41
 
 notes:
   - Hirdetmény B EBKM pair with Premium / without Premium.
+  - scheduleEbkmPct* are ADR 0031 quarantine pins of current schedule cash-flow EBKM (not Hirdetmény).
+  - With-premium schedule ≠ published; without-premium may also diverge (−0.41 vs −0.40).
   - 1% opening fee is percent of szerződéses összeg; absolute Ft amount waits on contract-amount formula.

@@ -48,7 +48,7 @@ const HOME_SAVINGS_PRODUCTS = [
     premiumHints:
       'Premium tiers with housing purpose: 10% (months 49–96), 20% (97–120), 30% at maturity from month 120. Premium applies to contractual deposits only.',
     commerciallyBlockedReason:
-      'Schedule→EBKM (calendar-day Annex 3 on customer cash flows) still diverges from published Hirdetmény EBKM; commercially-usable requires ÁSZF-sourced settlement packaging without fitted lag/netting knobs (ADR 0031 quarantine).'
+      'Schedule→EBKM (calendar-day Annex 3 on customer cash flows) still diverges from published Hirdetmény EBKM; commercially-usable requires closing that gap without fitted lag/netting knobs (ADR 0031 quarantine). Maturity/interest uses ÁSZF §10 ACT/360 with OTP-aligned first-of-month lastDeposit+2 packaging (not literal §22 (1)).'
   }
 ]
 

@@ -1,0 +1,54 @@
+specVersion: v2alpha1
+productId: home-savings.premium-plusz-10x30.standard
+exampleId: web-calculator-maturity-20000
+title: Web calculator maturity — 20 000 Ft/hó promo opening fee
+description: >
+  OTP product-page calculator output for contractual monthly deposit 20 000 Ft
+  (UI shows 20 500 Ft havonta fizetendő = deposit + 500 Ft account fee), 10-year
+  path with promo opening fee. OTP Lejáratkor terminal is authoritative.
+
+source:
+  kind: otp-product-page-calculator
+  url: https://www.otpbank.hu/lakastakarek/lakastakarek-premium-ajanlat
+  capturedAt: "2026-10-25"
+  note: >
+    Interactive "Havi betét összege" widget on Lakástakarék Prémium Plusz online
+    ajánlat page. Captured Europe/Budapest. Widget publishes Lejáratkor terminal;
+    depositInterest below is derived (terminal − deposits − premium), not a
+    separate widget readout. EBKM is not computed by this widget.
+
+inputs:
+  monthlyDeposit: 20000
+  termMonths: 120
+  startDate: 2026-10-10
+  housingPurpose: true
+  openingFeeMode: promo-half-percent
+
+expected:
+  accountFeeMonthly: 500
+  accountOpeningFee: 26000
+  accountOpeningFeeStandard1pct: 52000
+  contractAmount: 5200000
+  totalDeposits: 2400000
+  totalAccountFees: 60000
+  premiumRatePct: 30
+  premiumBase: 2400000
+  premiumAmount: 720000
+  # OTP authoritative Lejáratkor terminal
+  terminalPayout: 3132464
+  # Derived from OTP terminal (not a separate capture)
+  depositInterest: 12464
+  maturityPayoutDate: 2036-11-01
+  engineDepositInterest: 12461
+  engineTerminalPayout: 3132461
+  engineTerminalPayoutDeltaFt: -3
+
+notes:
+  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP Lejáratkor terminal is authoritative."
+  - "depositInterest is derived as terminalPayout − totalDeposits − premiumAmount."
+  - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (20 500 Ft)."
+  - "accountOpeningFee is the green akciós díj; accountOpeningFeeStandard1pct is the crossed-out 1% line."
+  - >
+    maturityPayoutDate is OTP-calculator continuous-path packaging (first of month
+    two months after last deposit), not literal ÁSZF §22 (1). Engine residual −3 Ft
+    is unexplained (mixed-sign across captures; not proven rounding).

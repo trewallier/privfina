@@ -1,0 +1,33 @@
+specVersion: v2alpha1
+productId: home-savings.premium-4x10.standard
+exampleId: ebkm-standard-20000
+title: EBKM lock — standard 1% opening fee, 20 000 HUF/month
+description: >
+  Published unified deposit rate indicator (EBKM) from OTP Home Savings marketed
+  products Hirdetmény (effective 2025-08-01) for withdrawn PRÉMIUM 4x10:
+  continuous monthly deposit 20.000 Ft, account fee 150 HUF/month, 1% opening fee.
+
+inputs:
+  monthlyDeposit: 20000
+  termMonths: 48
+  startDate: 2025-07-02
+  housingPurpose: true
+  openingFeeMode: standard-1pct
+
+expected:
+  accountFeeMonthly: 150
+  # Published Hirdetmény goldens (authoritative commercially-usable target).
+  ebkmPctWithPremium: 3.23
+  ebkmPctWithoutPremium: -1.04
+  # Engine Annex 3 + ÁSZF EBKM packaging target (pin after harness run).
+  engineEbkmPctWithPremium: 3.23
+  engineEbkmPctWithoutPremium: -1.03
+
+notes:
+  - "Source: ltp_h_ertekesitett_20250801.pdf / ltp_ebkm_20250801.pdf (A/2 withdrawn PRÉMIUM)."
+  - "ADR 0031 ÁSZF packaging: allocation-period account fees + interest to lastDepositMonth+3 day-1."
+  - Sale window last day 2025-07-31; account fee 150 Ft/hó.
+  - >
+    Engine ÁSZF packaging leaves a 0.01 half-up residual on without-Premium
+    (-1.03 vs published); commercially-usable trails for this cell (same class
+    of residual ADR 0031 closed for 10x30 via packaging — no productCode fork).

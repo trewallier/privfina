@@ -1,7 +1,6 @@
 import { daysInMonthUtc, formatIsoDate, parseIsoDate } from '../date_utils'
 import type { CashFlow, InstrumentBundle } from '../models'
 import { CashFlowDirection } from '../models'
-import { generateRecurringCashFlows } from '../recurring'
 import {
   assertBoundedHorizon,
   createCashFlow,
@@ -164,10 +163,6 @@ function deriveDepositDayOfMonth(startDate: string): number {
   return day
 }
 
-function monthlyPeriod(dayOfMonth: number): string {
-  return `0 0 ${dayOfMonth} * *`
-}
-
 function legacyPremiumBandsFromTiers(
   tiers: HomeSavingsPremiumTiers
 ): HomeSavingsPremiumBand[] {
@@ -253,6 +248,24 @@ function addMonthsUtc(date: Date, months: number): Date {
   const targetMonth = ((month % 12) + 12) % 12
   const day = Math.min(date.getUTCDate(), daysInMonthUtc(targetYear, targetMonth))
   return new Date(Date.UTC(targetYear, targetMonth, day))
+}
+
+/**
+ * Continuous monthly anniversary dates from `startDate` (inclusive).
+ * Short months clamp the day (31 → 30/28) — do **not** use cron day-of-month
+ * recurrence here: `0 0 31 * *` skips Feb/Apr/… and stretches 48 “months”
+ * across ~55 calendar months, breaking ÁSZF last-deposit / EBKM payout alignment.
+ */
+function monthlyAnniversaryDates(startDate: string, occurrences: number): string[] {
+  if (!Number.isInteger(occurrences) || occurrences <= 0) {
+    throw new Error('occurrences must be a positive integer.')
+  }
+  const start = parseIsoDate(startDate)
+  const dates: string[] = []
+  for (let i = 0; i < occurrences; i += 1) {
+    dates.push(formatIsoDate(addMonthsUtc(start, i)))
+  }
+  return dates
 }
 
 function shiftUtcDays(date: Date, days: number): Date {
@@ -513,8 +526,6 @@ export function generateHomeSavingsInstrumentCashFlows(
   const termMonths = Number(input.termMonths)
   assertBoundedHorizon(undefined, termMonths)
 
-  const dayOfMonth = input.depositDayOfMonth ?? deriveDepositDayOfMonth(input.startDate)
-  const period = monthlyPeriod(dayOfMonth)
   const category = input.category ?? 'home-savings'
   // Fixed flow label — `input.description` is free-text notes on the bundle/config only.
   const depositDescription = 'Monthly deposit'
@@ -534,30 +545,30 @@ export function generateHomeSavingsInstrumentCashFlows(
     )
   }
 
-  flows.push(
-    ...generateRecurringCashFlows({
-      period,
-      startDate: input.startDate,
-      occurrences: termMonths,
-      amount: monthlyDeposit,
-      direction: CashFlowDirection.Outflow,
-      category,
-      description: depositDescription
-    })
-  )
+  for (const date of monthlyAnniversaryDates(input.startDate, termMonths)) {
+    flows.push(
+      createCashFlow(
+        date,
+        monthlyDeposit,
+        CashFlowDirection.Outflow,
+        category,
+        depositDescription
+      )
+    )
+  }
 
   if (accountFeeMonthly > 0) {
-    flows.push(
-      ...generateRecurringCashFlows({
-        period,
-        startDate: input.startDate,
-        occurrences: termMonths,
-        amount: accountFeeMonthly,
-        direction: CashFlowDirection.Outflow,
-        category,
-        description: 'Account management fee'
-      })
-    )
+    for (const date of monthlyAnniversaryDates(input.startDate, termMonths)) {
+      flows.push(
+        createCashFlow(
+          date,
+          accountFeeMonthly,
+          CashFlowDirection.Outflow,
+          category,
+          'Account management fee'
+        )
+      )
+    }
   }
 
   const maturityPayoutDate = resolveHomeSavingsMaturityPayoutDate({
@@ -616,8 +627,6 @@ export function buildHomeSavingsAszfEbkmCashFlows(
   })
   assertBoundedHorizon(undefined, termMonths + kiutalasiPeriodMonths)
 
-  const dayOfMonth = input.depositDayOfMonth ?? deriveDepositDayOfMonth(input.startDate)
-  const period = monthlyPeriod(dayOfMonth)
   const start = parseIsoDate(input.startDate)
   const lastDepositDate = formatIsoDate(addMonthsUtc(start, termMonths - 1))
   const ebkmPayoutDate = resolveHomeSavingsEbkmPayoutDate(lastDepositDate)
@@ -662,41 +671,23 @@ export function buildHomeSavingsAszfEbkmCashFlows(
     })
   }
 
-  const depositFlows = generateRecurringCashFlows({
-    period,
-    startDate: input.startDate,
-    occurrences: termMonths,
-    amount: monthlyDeposit,
-    direction: CashFlowDirection.Outflow,
-    category: 'home-savings',
-    description: 'Monthly deposit'
-  })
-  for (const flow of depositFlows) {
+  for (const date of monthlyAnniversaryDates(input.startDate, termMonths)) {
     flows.push({
-      date: flow.date,
-      amount: flow.amount,
+      date,
+      amount: monthlyDeposit,
       direction: 'outflow',
-      description: flow.description
+      description: 'Monthly deposit'
     })
   }
 
   if (accountFeeMonthly > 0) {
     const feeMonths = termMonths + kiutalasiPeriodMonths
-    const feeFlows = generateRecurringCashFlows({
-      period,
-      startDate: input.startDate,
-      occurrences: feeMonths,
-      amount: accountFeeMonthly,
-      direction: CashFlowDirection.Outflow,
-      category: 'home-savings',
-      description: 'Account management fee'
-    })
-    for (const flow of feeFlows) {
+    for (const date of monthlyAnniversaryDates(input.startDate, feeMonths)) {
       flows.push({
-        date: flow.date,
-        amount: flow.amount,
+        date,
+        amount: accountFeeMonthly,
         direction: 'outflow',
-        description: flow.description
+        description: 'Account management fee'
       })
     }
   }

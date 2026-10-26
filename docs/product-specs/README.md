@@ -4,7 +4,7 @@ This directory holds the structured product specification layer introduced by AD
 
 Product specs define financial products as data: inputs, derived values, outputs, assumptions, UI metadata, commercial constructs (fees, discounts, subsidy, eligibility), and worked examples. YAML is used for authoring because it stays readable for contributors, while JSON Schema provides a validation contract that can be checked automatically.
 
-**Discovery:** agent entry [`AGENTS.md`](../../AGENTS.md); add/promote checklist [`../dev-playbooks/product-lifecycle.md`](../dev-playbooks/product-lifecycle.md). Migration statuses (`spec-only`, `inputs-driven`, `calc-aligned`, `schedule-usable`, `commercially-usable`, `fully-spec-backed`) are defined **only** in [`PRODUCT_CATALOG.md`](PRODUCT_CATALOG.md)—do not redefine them here.
+**Discovery:** agent entry [`AGENTS.md`](../../AGENTS.md); add/promote checklist [`../dev-playbooks/product-lifecycle.md`](../dev-playbooks/product-lifecycle.md). English naming and Hungarian gloss rules: [`../dev-playbooks/english-product-naming.md`](../dev-playbooks/english-product-naming.md). Migration statuses (`spec-only`, `inputs-driven`, `calc-aligned`, `schedule-usable`, `commercially-usable`, `fully-spec-backed`) are defined **only** in [`PRODUCT_CATALOG.md`](PRODUCT_CATALOG.md)—do not redefine them here.
 
 Folder conventions:
 

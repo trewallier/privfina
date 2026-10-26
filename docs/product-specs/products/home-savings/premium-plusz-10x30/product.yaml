@@ -4,18 +4,19 @@ id: home-savings.premium-plusz-10x30.standard
 family: home-savings
 variant: premium-plusz-10x30
 productCode: premium-plusz-10x30
-displayName: OTP Lakástakarék PRÉMIUM PLUSZ 10x30
+displayName: OTP Home Savings Premium Plus 10x30 (Lakástakarék PRÉMIUM PLUSZ 10x30)
 description: >
-  OTP Lakástakarék Zrt. lakás-előtakarékossági megtakarítási szerződés,
-  PRÉMIUM PLUSZ 10x30 módozat. Customer-perspective savings schedule only
-  (deposits, account fees, opening fee, OTP Lakástakarék Prémium). No state
-  support for contracts from 2018-10-17. LTP lakáskölcsön / áthidaló kölcsön
-  is out of scope for this product folder (ROADMAP §5e deferred).
+  OTP Lakástakarék Zrt. home-savings (lakás-előtakarékossági) contract,
+  PRÉMIUM PLUSZ 10x30 product scheme (módozat). Customer-perspective savings
+  schedule only (deposits, account fees, opening fee, OTP Home Savings Premium).
+  No state support for contracts from 2018-10-17. LTP home loan (lakáskölcsön) /
+  bridging loan (áthidaló kölcsön) is out of scope for this product folder
+  (ROADMAP §5e deferred).
 
 engine:
   instrumentType: home-savings
   paymentFrequency: monthly
-  # USZ Melléklet 2026-08-03 — PRÉMIUM PLUSZ 10x30
+  # Deposit interest rate sheet annex (USZ Melléklet) 2026-08-03 — PRÉMIUM PLUSZ 10x30
   depositInterestAnnualRatePct: 0.1
   savingsRatePermille: 3.846
   minContractAmount: 2600000
@@ -32,29 +33,32 @@ pricing:
   rateSettingRule: usz-melleklet-0.1pct-act360-plus-otp-premium-tiers
   notes:
     - >
-      Sources: Hirdetmény értékesített termékekről (effective 2026-10-10);
-      Díjtáblázat kamat/díj/költség (effective 2026-08-03);
-      ÁSZF közzététel 2026-03-24; Üzletszabályzat Melléklet hatály 2026-08-03.
-      Europe/Budapest dates.
+      Sources: published tariff notice (Hirdetmény) for marketed products
+      (effective 2026-10-10); fee schedule for interest/fees/costs (Díjtáblázat,
+      effective 2026-08-03); General Terms and Conditions (ÁSZF) publication
+      2026-03-24; Business Regulations annex (Üzletszabályzat Melléklet)
+      effective 2026-08-03. Europe/Budapest dates.
     - >
-      Módozat lock-ins (USZ Melléklet): betéti kamat 0,10% p.a.; megtakarítási
-      ráta 3,846‰/hó; szerződéses összeg 2 600 000–26 000 000 Ft; havi betét =
-      ceil10(szerződéses összeg × 3,846 / 1000).
+      Product-scheme lock-ins (deposit interest rate sheet annex / USZ Melléklet):
+      deposit interest 0.10% p.a.; savings rate 3.846‰/month; contractual amount
+      2 600 000–26 000 000 Ft; monthly deposit =
+      ceil10(contractual amount × 3.846 / 1000).
     - >
-      Interest: ACT/360 daily (tőke × kamatláb × napok / (360 × 100)); yearly
+      Interest: ACT/360 daily (principal × rate × days / (360 × 100)); yearly
       capitalization; accrues from credit day through day before payout (ÁSZF §10).
       Continuous-path maturity payout date packaging = first calendar day of the
       month two months after last deposit — OTP product-page calculator alignment
-      (not literal ÁSZF §22 (1) kifizetés month / not startDate+122 calendar months).
-      ÁSZF §22 still supplies the 2-month kiutalási structure (USZ Melléklet
-      kiutalás min 122). Residuals vs OTP Lejáratkor ≤4 Ft, mixed-sign, unexplained.
+      (not literal ÁSZF §22 (1) payout month / not startDate+122 calendar months).
+      ÁSZF §22 still supplies the 2-month allocation (kiutalás) structure
+      (USZ Melléklet allocation min 122). Residuals vs OTP at-maturity (Lejáratkor)
+      ≤4 Ft, mixed-sign, unexplained.
     - >
-      OTP Lakástakarék Prémium (not state aid): % of contractual deposits only
+      OTP Home Savings Premium (not state aid): % of contractual deposits only
       (no compound on Premium); 30% after month 120 with housing-purpose use;
       early exit 10% (49–96) / 20% (97–120) (USZ §10 / Hirdetmény).
     - >
-      Hűség period for promo opening-fee contracts: from savings start through
-      the last day of month 48. Loyalty unlock fee (current cohort from
+      Loyalty (Hűség) period for promo opening-fee contracts: from savings start
+      through the last day of month 48. Loyalty unlock fee (current cohort from
       2026-08-03): 100% of waived opening fee through month 48.
 
 discounts:
@@ -87,7 +91,7 @@ fees:
     unit: percent
     timing: upfront
     description: >
-      Standard account opening fee is 1% of szerződéses összeg. Promo tables
+      Standard account opening fee is 1% of contractual amount. Promo tables
       (Hirdetmény A): 0.5% of contract amount when monthly deposit is
       10.000–49.990 Ft; fixed 65.000 Ft when monthly deposit is 50.000–100.000 Ft,
       both requiring 48-month loyalty commitment.
@@ -96,7 +100,7 @@ fees:
     value: 500
     unit: amount
     timing: periodic
-    description: Monthly account management fee for contracts from 2026-08-03 (500 Ft/hó).
+    description: Monthly account management fee for contracts from 2026-08-03 (500 HUF/month).
   - name: huseg-feloldas-dij
     type: other
     value: 100
@@ -112,7 +116,7 @@ inputs:
     label: Monthly Deposit
     required: true
     unit: currency
-    description: Contractual monthly betét (10.000–100.000 Ft).
+    description: Contractual monthly deposit (10.000–100.000 Ft).
     constraints:
       minimum: 10000
       maximum: 100000
@@ -121,7 +125,7 @@ inputs:
     label: Savings Term (Months)
     required: true
     unit: months
-    description: Savings horizon; módozat full Premium path uses 120 months.
+    description: Savings period; product scheme full Premium path uses 120 months.
     constraints:
       minimum: 1
       maximum: 120
@@ -135,7 +139,7 @@ inputs:
     type: boolean
     label: Housing Purpose Assumed
     required: true
-    description: When true, Premium tiers apply at exit/allotment (hint for v1; not hard validation).
+    description: When true, Premium tiers apply at exit/allocation (hint for v1; not hard validation).
   - name: openingFeeMode
     type: string
     label: Opening Fee Mode
@@ -152,7 +156,7 @@ inputs:
     required: false
     unit: currency
     description: >
-      Szerződéses összeg when known from the offering calculator / ÁSZF.
+      Contractual amount when known from the offering calculator / ÁSZF.
       Required to evaluate percent-based opening fees once sourced; optional
       until contract-amount formula is locked.
 
@@ -168,7 +172,7 @@ derivedVariables:
     label: Premium Rate Percent
     required: true
     unit: percent
-    description: OTP Prémium percent from term and housing-purpose path.
+    description: OTP Premium percent from term and housing-purpose path.
 
 outputs:
   - name: totalDeposits
@@ -188,30 +192,32 @@ outputs:
     label: Premium Amount
     required: true
     unit: currency
-    description: OTP Lakástakarék Prémium credited under the assumed exit path.
+    description: OTP Home Savings Premium credited under the assumed exit path.
   - name: terminalPayout
     type: number
     label: Terminal Payout
     required: true
     unit: currency
-    description: Customer inflow at allotment/termination (deposits + interest if modeled + Premium).
+    description: Customer inflow at allocation/termination (deposits + interest if modeled + Premium).
   - name: ebkmPct
     type: number
     label: EBKM Percent
     required: true
     unit: percent
-    description: Engine EBKM for verification against Hirdetmény (ADR 0031).
+    description: >
+      Engine unified deposit rate indicator (EBKM) for verification against
+      published tariff notice (Hirdetmény) (ADR 0031).
 
 assumptions:
   - Customer-perspective cash flows only; no bank internal legs.
   - Default path is continuous monthly saving with housing-purpose Premium at exit.
   - State support is absent for this offering cohort.
-  - Deposit interest uses engine.depositInterestAnnualRatePct (0.10) with ACT/360 + yearly capitalization through the OTP-aligned continuous-path maturity payout date (ÁSZF §10 accrual; §22 supplies the 2-month kiutalási structure only).
+  - Deposit interest uses engine.depositInterestAnnualRatePct (0.10) with ACT/360 + yearly capitalization through the OTP-aligned continuous-path maturity payout date (ÁSZF §10 accrual; §22 supplies the 2-month allocation structure only).
   - Contract amount derives from monthly deposit via engine.savingsRatePermille (3.846) when not supplied.
   - Irregular-payment Premium quarterly caps (USZ §10 (4)) are out of scope for the continuous contractual path.
 
 ui:
-  formTitle: OTP Lakástakarék PRÉMIUM PLUSZ 10x30
+  formTitle: OTP Home Savings Premium Plus 10x30 (Lakástakarék PRÉMIUM PLUSZ 10x30)
   sections:
     - id: contract
       title: Contract

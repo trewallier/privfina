@@ -13,7 +13,7 @@ const BMAP_PRODUCT_SPEC = {
   family: 'government-security',
   variant: 'bmap',
   productCode: 'bmap',
-  displayName: 'Bonus Hungarian Government Security',
+  displayName: 'Bonus Hungarian Government Security (BMÁP)',
   inputs: [
     {
       name: 'principal',
@@ -134,7 +134,7 @@ const BMAP_PRODUCT_SPEC = {
     }
   ],
   ui: {
-    formTitle: 'Bonus Hungarian Government Security',
+    formTitle: 'Bonus Hungarian Government Security (BMÁP)',
     sections: [
       {
         id: 'bmap-core',

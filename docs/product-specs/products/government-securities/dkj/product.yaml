@@ -4,7 +4,7 @@ id: government-security.dkj.standard
 family: government-security
 variant: dkj
 productCode: dkj
-displayName: Discount Treasury Bond
+displayName: Discount Treasury Bond (DKJ)
 description: Short-term Hungarian treasury bill with no coupon, redeemed at face value at maturity.
 
 category: treasury-bill
@@ -116,7 +116,7 @@ assumptions:
   - Secondary-market pricing and series-level auction data are out of scope for this first product-type spec.
 
 ui:
-  formTitle: Discount Treasury Bond
+  formTitle: Discount Treasury Bond (DKJ)
   sections:
     - id: dkj-core
       title: DKJ Inputs

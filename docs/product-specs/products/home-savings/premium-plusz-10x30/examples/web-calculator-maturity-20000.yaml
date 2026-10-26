@@ -1,21 +1,23 @@
 specVersion: v2alpha1
 productId: home-savings.premium-plusz-10x30.standard
 exampleId: web-calculator-maturity-20000
-title: Web calculator maturity — 20 000 Ft/hó promo opening fee
+title: Web calculator maturity — 20 000 HUF/month promo opening fee
 description: >
   OTP product-page calculator output for contractual monthly deposit 20 000 Ft
-  (UI shows 20 500 Ft havonta fizetendő = deposit + 500 Ft account fee), 10-year
-  path with promo opening fee. OTP Lejáratkor terminal is authoritative.
+  (UI shows 20 500 Ft monthly payable = deposit + 500 Ft account fee), 10-year
+  path with promo opening fee. OTP at-maturity (Lejáratkor) terminal is
+  authoritative.
 
 source:
   kind: otp-product-page-calculator
   url: https://www.otpbank.hu/lakastakarek/lakastakarek-premium-ajanlat
   capturedAt: "2026-10-25"
   note: >
-    Interactive "Havi betét összege" widget on Lakástakarék Prémium Plusz online
-    ajánlat page. Captured Europe/Budapest. Widget publishes Lejáratkor terminal;
-    depositInterest below is derived (terminal − deposits − premium), not a
-    separate widget readout. EBKM is not computed by this widget.
+    Interactive monthly deposit amount ("Havi betét összege") widget on the
+    Lakástakarék Prémium Plusz online offer page. Captured Europe/Budapest.
+    Widget publishes at-maturity (Lejáratkor) terminal; depositInterest below is
+    derived (terminal − deposits − premium), not a separate widget readout. EBKM
+    is not computed by this widget.
 
 inputs:
   monthlyDeposit: 20000
@@ -44,10 +46,10 @@ expected:
   engineTerminalPayoutDeltaFt: -3
 
 notes:
-  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP Lejáratkor terminal is authoritative."
+  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP at-maturity (Lejáratkor) terminal is authoritative."
   - "depositInterest is derived as terminalPayout − totalDeposits − premiumAmount."
   - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (20 500 Ft)."
-  - "accountOpeningFee is the green akciós díj; accountOpeningFeeStandard1pct is the crossed-out 1% line."
+  - "accountOpeningFee is the green promotional fee (akciós díj); accountOpeningFeeStandard1pct is the crossed-out 1% line."
   - >
     maturityPayoutDate is OTP-calculator continuous-path packaging (first of month
     two months after last deposit), not literal ÁSZF §22 (1). Engine residual −3 Ft

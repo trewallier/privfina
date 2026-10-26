@@ -1,21 +1,22 @@
 specVersion: v2alpha1
 productId: home-savings.premium-plusz-10x30.standard
 exampleId: web-calculator-maturity-100000
-title: Web calculator maturity — 100 000 Ft/hó promo fixed opening fee
+title: Web calculator maturity — 100 000 HUF/month promo fixed opening fee
 description: >
   OTP product-page calculator output for contractual monthly deposit 100 000 Ft
-  (UI shows 100 500 Ft havonta fizetendő = deposit + 500 Ft account fee), 10-year
+  (UI shows 100 500 Ft monthly payable = deposit + 500 Ft account fee), 10-year
   path with promo fixed 65 000 Ft opening fee (50 000–100 000 Ft band). OTP
-  Lejáratkor terminal is authoritative.
+  at-maturity (Lejáratkor) terminal is authoritative.
 
 source:
   kind: otp-product-page-calculator
   url: https://www.otpbank.hu/lakastakarek/lakastakarek-premium-ajanlat
   capturedAt: "2026-10-25"
   note: >
-    Interactive "Havi betét összege" widget on Lakástakarék Prémium Plusz online
-    ajánlat page. Captured Europe/Budapest. depositInterest is derived from the
-    Lejáratkor terminal. EBKM is not computed by this widget.
+    Interactive monthly deposit amount ("Havi betét összege") widget on the
+    Lakástakarék Prémium Plusz online offer page. Captured Europe/Budapest.
+    depositInterest is derived from the at-maturity (Lejáratkor) terminal. EBKM
+    is not computed by this widget.
 
 inputs:
   monthlyDeposit: 100000
@@ -42,10 +43,10 @@ expected:
   engineTerminalPayoutDeltaFt: -1
 
 notes:
-  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP Lejáratkor terminal is authoritative."
+  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP at-maturity (Lejáratkor) terminal is authoritative."
   - "depositInterest is derived as terminalPayout − totalDeposits − premiumAmount."
   - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (100 500 Ft)."
-  - "accountOpeningFee is the green akciós díj (65 000); accountOpeningFeeStandard1pct is 1% of contract."
+  - "accountOpeningFee is the green promotional fee (akciós díj, 65 000); accountOpeningFeeStandard1pct is 1% of contract."
   - >
     maturityPayoutDate is OTP-calculator continuous-path packaging (first of month
     two months after last deposit), not literal ÁSZF §22 (1). Engine residual −1 Ft

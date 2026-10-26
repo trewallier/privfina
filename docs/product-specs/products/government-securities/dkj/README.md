@@ -1,4 +1,4 @@
-# Diszkont Kincstárjegy (DKJ)
+# Discount Treasury Bond / Diszkont Kincstárjegy (DKJ)
 
 Hungarian short-term treasury bill with no coupon, purchased at a discount to face value and redeemed at par at maturity.
 

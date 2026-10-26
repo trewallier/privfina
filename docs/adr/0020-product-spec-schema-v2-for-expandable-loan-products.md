@@ -11,7 +11,7 @@ Related: 0013 (product specification layer), 0014 (specification-by-example), 00
 ## Context
 
 - Schema `v1` / `specVersion: v1alpha1` was a pilot contract for fixed-rate loans and Hungarian government securities.
-- Upcoming retail mortgage and state-supported loan products (for example CSOK Plus, Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási, green / 1x1 / végig-fix style offerings) need:
+- Upcoming retail mortgage and state-supported loan products (for example CSOK Plus, Village CSOK / Falusi CSOK, Home Start / Otthon Start, OTP Rural Home Renovation Loan / Vidéki Otthonfelújítási, green / 1x1 / fixed-for-term style offerings) need:
   - a `mortgage-loan` family distinct from generic `loan`
   - stable product identity beyond a closed `variant` enum (`productCode` plus free-form `variant`)
   - richer engine knobs (subsidized / variable-with-subsidy rates, interest-only-then-annuity, grace and interest-period months)

@@ -1,4 +1,4 @@
-# 0022 — THM Calculator for Hirdetmény Verification (83/2010)
+# 0022 — THM Calculator for Published Tariff Notice (Hirdetmény) Verification (83/2010)
 
 Status: accepted
 
@@ -10,7 +10,7 @@ Related: 0013 (product specification layer), 0014 (specification-by-example), 00
 
 ## Context
 
-- Loan and mortgage product specs lock published `thmPct` values from public offering announcements (Hirdetmény) as golden expected outputs.
+- Loan and mortgage product specs lock published `thmPct` values from public offering announcements / published tariff notices (Hirdetmény) as golden expected outputs.
 - Asserting that a YAML constant equals itself does not prove that the engine’s repayment schedule and fee-inclusive cash flows imply that THM under Hungarian law.
 - ADR 0021 introduced a fee-inclusive monthly-IRR helper (`computeThmPct`) for the engine lane. That helper annualizes as \((1+r_{month})^{12}-1\), which matches the Annex equation when year fractions are equal months (`k/12`), but it did not expose the regulatory cash-flow API, year-fraction helpers, or 5. § (2) e one-decimal half-up rounding needed for Hirdetmény verification.
 - Generic NPV discounting in `recurring.ts` uses a different day-count convention and must not be reused for THM.

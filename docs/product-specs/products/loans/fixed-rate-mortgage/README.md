@@ -21,5 +21,5 @@ The examples in this folder are executable acceptance criteria for the specifica
 
 ## Implementation Status
 
-- **schedule-usable** (ADR 0023): simplified fixed-rate mortgage shares the simplified loan composer as a product variant (shared annuity math). Not a public-offering Hirdetmény product.
+- **schedule-usable** (ADR 0023): simplified fixed-rate mortgage shares the simplified loan composer as a product variant (shared annuity math). Not a public-offering published tariff notice (Hirdetmény) product.
 - Calculation adapter and form metadata seams live under `public/controller/` and are covered by tests.

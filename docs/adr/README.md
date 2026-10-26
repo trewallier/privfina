@@ -19,13 +19,13 @@ Recent decisions
 - `0019-adaptive-responsive-workspace-ux.md` — one SPA/visual language; desktop keeps two workspaces; narrow viewports separate browse vs compose and prefer card lists (ROADMAP §4).
 - `0020-product-spec-schema-v2-for-expandable-loan-products.md` — freeze schema v1; active product specs use `v2alpha1` with open `variant`, required `productCode`, mortgage family, and subsidy/fee/discount constructs.
 - `0021-commercial-mortgage-calculation-primitives.md` — fee/discount application, subsidy customer-rate resolution, and fee-inclusive THM as reusable engine primitives. (Dual-lane *readiness/UI* posture for public offerings is superseded by ADR 0023 / 0025 / 0026; primitives remain in force.)
-- `0022-thm-calculator-for-hirdetmeny-verification.md` — 83/2010 Annex THM primitive for verifying (or computing) Hirdetmény `thmPct` during product implementation.
+- `0022-thm-calculator-for-hirdetmeny-verification.md` — 83/2010 Annex THM primitive for verifying (or computing) published tariff notice (Hirdetmény) `thmPct` during product implementation.
 - `0023-loan-product-readiness-and-offering-fidelity.md` — schedule-usable vs commercially-usable; public-offering fidelity (no dual-lane UI); customer-perspective subsidy; commercial loan composer architecture. Commercially-usable *definition* for public offerings refined by ADR 0026.
 - `0024-representative-example-three-check-verification.md` — representative examples: (1) engine installment at stated rate, (2) THM from offering numbers, (3) THM from engine payments; no packaging-rate camouflage.
 - `0025-loan-interest-day-count-act-conventions.md` — ACT/360, ACT/365, ACT/366, 30/360 equal-month formulas; OTP Hirdetmény uses ACT/360 `r×(365/12)/360` (closes ADR 0024 check 1).
 - `0026-commercially-usable-requires-three-check-verification.md` — public-offering commercially-usable requires all three ADR 0024 checks (supersedes ADR 0023’s THM-match-only bar).
 - `0027-government-security-readiness-and-commercial-composer.md` — split simplified vs commercial investment composers; government-security readiness ladder (no loan THM three-check).
-- `0028-home-savings-product-family-and-schema.md` — add `home-savings` schema family + fee types; first product PRÉMIUM PLUSZ 10x30 (LTP loan deferred).
+- `0028-home-savings-product-family-and-schema.md` — add `home-savings` schema family + fee types; first product OTP Home Savings Premium Plus 10x30 (LTP loan deferred).
 - `0029-home-savings-instrument-type.md` — runtime `InstrumentType: 'home-savings'` cash-flow contract; ÁSZF deposit rate required before interest fidelity.
 - `0030-home-savings-readiness-and-commercial-composer.md` — commercial home-savings composer + readiness ladder (no loan THM three-check).
 - `0031-ebkm-verification-for-home-savings.md` — EBKM verification bar for commercially-usable home-savings offerings.

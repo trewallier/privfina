@@ -35,10 +35,10 @@ Scenarios / Use-cases
 - Simplified investment instrument setup: users can configure regular bond, discount bond, inflation-linked bond, and custom bond variants with finite maturity outputs (pedagogical / instrument-mode; not ÁKK catalog products).
 - Commercial investment composer: users open a separate commercial-investment box, pick an ÁKK / Hungarian State Treasury `government-security` product (DKJ, PMÁP, BMÁP), and configure catalog-backed cash flows with readiness status visible for the selected offering (ADR 0027).
 - Government-security product readiness (ADR 0027): same catalog ladder as loans; commercially-usable means commercial composer UX + offering-faithful numbers (no loan THM three-check). New treasury products land on the commercial picker, not the simplified subtype list.
-- Commercial home-savings composer (ADR 0028–0030 / ROADMAP §5e): users open a dedicated Lakástakarék box, pick a catalog `home-savings` product (PRÉMIUM PLUSZ 10x30), and configure monthly deposit, term, opening-fee mode, and housing-purpose assumption for customer cash flows.
-- Home-savings product readiness (ADR 0030 / 0031): same catalog ladder; schedule-usable means deposit/fee/Premium schedule on the chart; commercially-usable additionally requires fee/Premium/loyalty UX and engine EBKM ≡ published Hirdetmény EBKM (no loan THM three-check).
-- Home-savings Premium path: at ≥120 months with housing purpose, OTP Prémium is 30%; early-exit housing-purpose bands are 10% (months 49–96) and 20% (months 97–120).
-- Home-savings fee path: account fee 500 Ft/hó (from 2026-08-03); opening fee standard 1% of contract amount or promo 0.5% / fixed 65 000 Ft with 48-month loyalty; loyalty unlock is an optional scenario mode.
+- Commercial home-savings composer (ADR 0028–0030 / ROADMAP §5e): users open a dedicated Home Savings (Lakástakarék) box, pick a catalog `home-savings` product (OTP Home Savings Premium Plus 10x30), and configure monthly deposit, term, opening-fee mode, and housing-purpose assumption for customer cash flows.
+- Home-savings product readiness (ADR 0030 / 0031): same catalog ladder; schedule-usable means deposit/fee/Premium schedule on the chart; commercially-usable additionally requires fee/Premium/loyalty UX and engine EBKM ≡ published tariff notice (Hirdetmény) EBKM (no loan THM three-check).
+- Home-savings Premium path: at ≥120 months with housing purpose, OTP Premium is 30%; early-exit housing-purpose bands are 10% (months 49–96) and 20% (months 97–120).
+- Home-savings fee path: account fee 500 HUF/month (from 2026-08-03); opening fee standard 1% of contract amount or promo 0.5% / fixed 65 000 Ft with 48-month loyalty; loyalty unlock is an optional scenario mode.
 - Investment subtype UX: users can clearly see and switch a prominent simplified-bond subtype selector, and the form adapts visible and editable fields to the selected subtype.
 - Discount bond setup: users must provide issue date, due date, transaction date, purchase price, and face value; yield and current value percentage are derived fields.
 - Inflation-linked bond setup: users must provide issue date, due date, transaction date, additional annual interest spread, and inflation assumptions for each accrual period; payment schedule and accrual rates are derived fields.
@@ -49,7 +49,7 @@ Scenarios / Use-cases
 - Custom bond setup: users can configure a custom bond variant with recurring interest payout schedule and one-time principal repayment at maturity.
 - Pre-generated instrument bundles: users can save instrument definitions only after full bounded cash-flow generation is computed and attached for charting.
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
-- Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): Hirdetmény mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
+- Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): published tariff notice (Hirdetmény) mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
 - Configured-flow folders: users can organize flows into flat collapsible folders (no nested folders), rename folders, drag items into/out of folders (mouse drag-and-drop or touch long-press), and reorder items; folder collapsed state and item order persist in `listStatus` and round-trip through export/import.
 
 Assumptions
@@ -142,28 +142,28 @@ Acceptance criteria
 - [x] Evaluation-result cache covers recurring evaluate/expand and instrument range slices, with explicit invalidation on definition/bundle mutations.
 - [x] Product specifications validate against schema v2 (`specVersion: v2alpha1`) with families `loan`, `mortgage-loan`, `government-security`, and `home-savings` (ADR 0020 / 0028).
 - [x] ADR 0028–0031 record home-savings family/schema, `InstrumentType: 'home-savings'`, commercial composer readiness, and EBKM verification bar (ROADMAP §5e).
-- [x] OTP Lakástakarék PRÉMIUM PLUSZ 10x30 (`productCode: premium-plusz-10x30`) is authored under schema v2 at **spec-only** with Hirdetmény EBKM and Premium-tier examples locked (sales Hirdetmény 2026-10-10; díjtáblázat account fee 2026-08-03).
-- [x] Home-savings calc-aligned: fee / Premium / contract exact vs OTP product-page calculator; engine terminal within ≤4 Ft of OTP Lejáratkor under documented continuous-path payout packaging (ÁSZF §10 ACT/360; first-of-month lastDeposit+2 as OTP calculator packaging, not literal §22 (1)).
-- [x] Home-savings fee / Premium / contract / maturity goldens treat OTP product-page calculator Lejáratkor as authoritative (`web-calculator-maturity-*.yaml` with `source.kind: otp-product-page-calculator`); derived `depositInterest` and ≤4 Ft engine residuals pinned explicitly.
+- [x] OTP Home Savings Premium Plus 10x30 (`productCode: premium-plusz-10x30`) is authored under schema v2 at **spec-only** with published tariff notice (Hirdetmény) EBKM and Premium-tier examples locked (sales Hirdetmény 2026-10-10; fee-schedule account fee 2026-08-03).
+- [x] Home-savings calc-aligned: fee / Premium / contract exact vs OTP product-page calculator; engine terminal within ≤4 Ft of OTP at-maturity under documented continuous-path payout packaging (General Terms and Conditions (ÁSZF) §10 ACT/360; first-of-month lastDeposit+2 as OTP calculator packaging, not literal §22 (1)).
+- [x] Home-savings fee / Premium / contract / maturity goldens treat OTP product-page calculator at-maturity as authoritative (`web-calculator-maturity-*.yaml` with `source.kind: otp-product-page-calculator`); derived `depositInterest` and ≤4 Ft engine residuals pinned explicitly.
 - [x] Commercial home-savings composer box exists with a product picker over catalog `home-savings` codes and shows a readiness hint for the selected product.
 - [x] Progressive type picker / toolbar exposes home-savings; editing a catalog-backed home-savings bundle opens the commercial home-savings composer.
 - [x] Schedule-usable home-savings path create/edit/preview/persist stamps `productId` / `productSpecVersion` and charts customer outflows (opening fee, deposits, account fees) plus terminal Premium inflow on the OTP-packaging maturity payout date when housing purpose is assumed.
 - [x] Commercial home-savings UX surfaces opening-fee mode, account fee, Premium tier summary, loyalty hints, and a single ÁSZF-packaged EBKM preview (ADR 0031; no dual-lane UI).
-- [ ] Published EBKM goldens (20 000 and 100 000 Ft/hó; promo and 1% opening-fee tables; with/without Premium) pass engine verification before commercially-usable promotion (ÁSZF 22. § packaging: 6/8 green; residual 0.01 on promo 20 000 Ft/hó both legs — 4.36 vs 4.35 and −0.57 vs −0.58 — pinned visible; no packaging camouflage).
-- [ ] LTP lakáskölcsön / áthidaló kölcsön remains out of scope for ROADMAP §5e (deferred).
+- [ ] Published EBKM goldens (20 000 and 100 000 HUF/month; promo and 1% opening-fee tables; with/without Premium) pass engine verification before commercially-usable promotion (ÁSZF 22. § packaging: 6/8 green; residual 0.01 on promo 20 000 HUF/month both legs — 4.36 vs 4.35 and −0.57 vs −0.58 — pinned visible; no packaging camouflage).
+- [ ] LTP home loan / bridging loan remains out of scope for ROADMAP §5e (deferred).
 - [x] Product identity uses free-form `variant` plus required `productCode`; schema v1 remains frozen and is not extended for new loan/mortgage constructs.
 - [x] Product schema v2 accepts structured optional `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing` blocks so future retail mortgage products can be authored as data.
-- [x] OTP 1x1 (`productCode: otp-1x1`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% / 101.128 Ft installment) locked in unit tests.
-- [x] OTP Zöld (`productCode: otp-zold`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% with 50 bp green discount / 101.128 Ft installment / THM 8,5%) locked in unit tests.
-- [x] Végig Fix (`productCode: vegig-fix`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 8,49% / 104.960 Ft installment / THM 9,2%) locked in unit tests.
-- [x] CSOK Plusz (`productCode: csok-plusz`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% customer rate / 12-month grace 30.416 Ft then 69.362 Ft / THM 3,3%) locked in unit tests.
-- [x] Falusi CSOK (`productCode: falusi-csok`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / 66.802 Ft / THM 3,3%) locked in unit tests.
-- [x] Otthon Start (`productCode: otthon-start`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / published 69.362 Ft amortizing installment with grace packaging / THM 3,2%) locked in unit tests.
-- [x] Vidéki Otthonfelújítási (`productCode: videki-otthonfelujitasi`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 10 years / 4,87% / 63.457 Ft / THM 5,5%) locked in unit tests.
+- [x] OTP 1x1 Home Loan (`productCode: otp-1x1`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% / 101.128 Ft installment) locked in unit tests.
+- [x] OTP Green Home Loan (`productCode: otp-zold`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 7,99% with 50 bp green discount / 101.128 Ft installment / THM 8,5%) locked in unit tests.
+- [x] OTP Fixed-for-Term Home Loan (`productCode: vegig-fix`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 8,49% / 104.960 Ft installment / THM 9,2%) locked in unit tests.
+- [x] OTP Year-Saver CSOK Plus Home Loan (`productCode: csok-plusz`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% customer rate / 12-month grace 30.416 Ft then 69.362 Ft / THM 3,3%) locked in unit tests.
+- [x] Village CSOK / OTP Home-Creation Loan (`productCode: falusi-csok`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / 66.802 Ft / THM 3,3%) locked in unit tests.
+- [x] Home Start / OTP Year-Saver Home Start Loan (`productCode: otthon-start`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 20 years / 3% / published 69.362 Ft amortizing installment with grace packaging / THM 3,2%) locked in unit tests.
+- [x] OTP Rural Home Renovation Loan (`productCode: videki-otthonfelujitasi`) mortgage product is authored under schema v2 with Hirdetmény 2026-04-20 §6 representative numbers (12.000.000 Ft / 10 years / 4,87% / 63.457 Ft / THM 5,5%) locked in unit tests.
 - [x] Mortgage-loan engine applies structured product-spec fees/discounts into an upfront credit-cost package without product-specific amortization branches (ADR 0021).
 - [x] State-subsidized mortgage-loan products resolve the customer annual rate for schedule generation; interest-only-then-annuity maps to existing grace primitives.
 - [x] Fee-inclusive THM helpers exist (ADR 0021 monthly helper + ADR 0022 83/2010 calculator) for product verification.
-- [x] All seven Hirdetmény mortgage-loan products are calc-aligned in the finance engine (executable example tests).
+- [x] All seven published tariff notice (Hirdetmény) mortgage-loan products are calc-aligned in the finance engine (executable example tests).
 - [x] ADR 0023 records schedule-usable vs commercially-usable readiness, customer-perspective subsidy only, and offering-fidelity (no dual-lane UI).
 - [x] ADR 0026 clarifies that public-offering commercially-usable requires all three ADR 0024 checks (supersedes ADR 0023’s THM-match-only bar).
 - [x] Simplified loan composer exposes fixed-rate loan and fixed-rate mortgage as selectable variants on one form (shared simplified annuity math).
@@ -178,11 +178,11 @@ Acceptance criteria
 - [x] Tests pin engine installment/fees/rounded THM and assert fee-package deltas independently of installment/THM checks (ADR 0024).
 - [x] Public-offering products pass check 1 (engine installment at stated rate) via ADR 0025 ACT/360 equal-month (`r × (365/12) / 360`) + forint rounding — no packaging-rate camouflage.
 - [x] Five of six non-quarantined products pass check 3 (THM from engine payments + engine fees) after check 1 closes.
-- [x] Fee-package fidelity: product YAML includes §6 land-registry lines (tulajdoni lap 2×, térképmásolat, fedezetváltozási; otp-zold new-home adds fedezetváltozási only) so engine `totalCreditCostFees` matches published figures for the six non-quarantined offerings.
-- [x] CSOK Plusz passes check 3 (engine THM 3.3) after fee-package fidelity closes the former 3.2 vs 3.3 gap (ROADMAP §5b fee-package slice).
+- [x] Fee-package fidelity: product YAML includes §6 land-registry lines (title-deed extract 2×, cadastral-map extract, collateral-change fee; otp-zold new-home adds collateral-change fee only) so engine `totalCreditCostFees` matches published figures for the six non-quarantined offerings.
+- [x] CSOK Plus passes check 3 (engine THM 3.3) after fee-package fidelity closes the former 3.2 vs 3.3 gap (ROADMAP §5b fee-package slice).
 - [x] Commercial composer surfaces selectable discount toggles, optional fee toggles, purpose, fee-package total, and a single engine THM preview (ADR 0022 `percentRounded`; no dual-lane UI) (ROADMAP §5b).
 - [x] Six non-quarantined Hirdetmény products are promoted to **commercially-usable** after composer parity tests (fee/discount blocks ↔ YAML; composer package THM ≡ published `thmPct`; form → bundle lineage) (ROADMAP §5b).
-- [x] Vidéki Otthonfelújítási stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
+- [x] OTP Rural Home Renovation Loan stays below commercially-usable until published installment/principal packaging is reconciled with an amortizing schedule (quarantine retained).
 
 How to use this file
 - Add scenario descriptions and acceptance criteria as items that map to tests and PRs.

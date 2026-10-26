@@ -10,7 +10,7 @@ Related: 0015 (data-driven variants), 0020 (schema v2), 0021 (commercial mortgag
 
 ## Context
 
-- Nine catalog loan products exist: two simplified examples (`fixed-rate-standard`, `fixed-rate-mortgage`) and seven Hirdetmény public-offering mortgages.
+- Nine catalog loan products exist: two simplified examples (`fixed-rate-standard`, `fixed-rate-mortgage`) and seven published tariff notice (Hirdetmény) public-offering mortgages.
 - ADR 0021 allowed engine schedule/THM to differ from published §6 packaging fixtures (dual-lane). That posture blocked a single source of truth for UI and readiness.
 - Contributors need an intermediate **schedule-usable** bar (customer cash flows on the chart) before a stricter **commercially-usable** bar (fees/THM/purpose UX with offering-faithful math).
 - Subsidy modeling for the user balance should stay customer-perspective only; bank↔state settlement flows and post-subsidy rate steps are future work.
@@ -36,11 +36,11 @@ Related: 0015 (data-driven variants), 0020 (schema v2), 0021 (commercial mortgag
 ### Subsidy cash flows
 
 - User balance includes only customer inflows/outflows.
-- Government / bank settlement legs and full ügyleti↔state split analytics remain deferred (may later support government-cost views; not required for schedule-usable or commercially-usable customer UX).
+- Government / bank settlement legs and full contractual-interest-rate (ügyleti)↔state split analytics remain deferred (may later support government-cost views; not required for schedule-usable or commercially-usable customer UX).
 
 ## Consequences
 
 - ROADMAP §5 and `docs/spec.md` track schedule-usable then commercially-usable slices; dual-lane acceptance criteria are retired for readiness.
 - Product tests for public offerings should converge on ADR 0022 `percentRounded` vs golden `thmPct` before commercially-usable promotion.
-- Vidéki (and any offering whose published installment cannot amortize stated principal) stays blocked for commercially-usable until the offering example is reconciled or the engine packaging matches.
+- OTP Rural Home Renovation Loan (and any offering whose published installment cannot amortize stated principal) stays blocked for commercially-usable until the offering example is reconciled or the engine packaging matches.
 - Catalog glossary and lifecycle playbook document the new statuses and promotion gates.

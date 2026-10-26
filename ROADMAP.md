@@ -56,11 +56,11 @@ Out of scope for this epic
 - [ ] Add inflation-linked and bond-rate-linked interest rules.
 - [x] Support grace periods and end-term interest capitalization.
 - [x] Product-spec schema v2 for expandable loan/mortgage products (open `variant`, `productCode`, subsidy/fees/discounts/purposes/eligibility; ADR 0020).
-- [x] Author OTP 1x1 mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
-- [x] Author OTP Zöld mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
-- [x] Author Végig Fix mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
-- [x] Author CSOK Plusz mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
-- [x] Author remaining Hirdetmény 2026-04-20 mortgage product specs (Falusi CSOK, Otthon Start, Vidéki Otthonfelújítási) on schema v2.
+- [x] Author OTP 1x1 Home Loan mortgage product spec on schema v2 with published tariff notice (Hirdetmény) 2026-04-20 representative example numbers locked in tests.
+- [x] Author OTP Green Home Loan (Zöld Lakáshitel) mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
+- [x] Author OTP Fixed-for-Term Home Loan (Végig Fix Lakáshitel) mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
+- [x] Author OTP Year-Saver CSOK Plus Home Loan mortgage product spec on schema v2 with Hirdetmény 2026-04-20 representative example numbers locked in tests.
+- [x] Author remaining Hirdetmény 2026-04-20 mortgage product specs (Village CSOK / Falusi CSOK, Home Start / Otthon Start, OTP Rural Home Renovation Loan / Vidéki Otthonfelújítási) on schema v2.
 - [x] Engine primitives for structured fee/discount application, subsidy customer-rate resolution, and fee-inclusive THM (ADR 0021).
 - [x] Generic mortgage-loan product-spec mapper and calc-aligned engine-lane tests for all seven Hirdetmény mortgage products (composer UI delivered in §5a/§5b).
 - [x] ADR 0022: 83/2010 THM calculator for Hirdetmény verification.
@@ -74,19 +74,19 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Simplified loan surface: fold `fixed-rate-mortgage` into the existing loan composer as a subtype/variant (shared simplified annuity math).
 - [x] Commercial loan composer box + investment-style product picker for the seven Hirdetmény `mortgage-loan` codes.
 - [x] Schedule-usable wiring per commercial product: form → customer-rate schedule → preview → persist bundle with `productId` / `productSpecVersion`; purpose/eligibility/discount as hints.
-- [x] Promote catalog rows to `schedule-usable` when the above path works (Vidéki schedule-usable with commercially-usable still blocked until offering reconciliation + THM match).
+- [x] Promote catalog rows to `schedule-usable` when the above path works (Rural Home Renovation schedule-usable with commercially-usable still blocked until offering reconciliation + THM match).
 - [x] Loan field chrome parity: simplified + commercial loan composers mark required/optional/calculated like investments; site-wide info-chip size locked (`--info-chip-size` / `INFO_CHIP_SIZE_PX`).
 
 #### 5b) Loan products — commercially-usable (offering fidelity)
 Goal: commercial UX (fees, discounts, purpose, THM) with **no dual-lane display**. Public-offering products are not ready until **all three ADR 0024 checks** are green (engine installment at stated rate; THM from offering numbers; THM from engine payments + fee package). Closing check 1 alone does not always close check 3 — fee-package fidelity remains an independent gate (csok-plusz). Simplified examples stay on annuity primitives.
 
 Plan slices
-- [x] Representative-example verification harness (ADR 0024): (1) engine installment from amount/term/rate; (2) law-based THM from offering numbers; (3) law-based THM from engine monthly payments — gaps stay visible (no packaging-rate camouflage). Engine outputs pinned while gapped; fee-package deltas asserted separately; check 2 green for six products; Vidéki packaging quarantined with stated-rate engine pin retained.
+- [x] Representative-example verification harness (ADR 0024): (1) engine installment from amount/term/rate; (2) law-based THM from offering numbers; (3) law-based THM from engine monthly payments — gaps stay visible (no packaging-rate camouflage). Engine outputs pinned while gapped; fee-package deltas asserted separately; check 2 green for six products; Rural Home Renovation packaging quarantined with stated-rate engine pin retained.
 - [x] Close check-1 installment gaps at the stated rate (ADR 0025: shared ACT/360 equal-month day-count `r×(365/12)/360` + forint rounding via product YAML; no packaging-rate camouflage).
-- [x] Close fee-package gaps by authoring missing land-registry lines in product YAML (`tulajdoni-lap-lekeres` 9 600, `terkepmasolat-lekeres` 5 000, `fedezetvaltozasi-koltseg` 10 600; otp-zold new-home packaging adds only fedezetváltozási) so engine `totalCreditCostFees` matches published §6.
-- [x] Close remaining check-3 gap (csok-plusz) once fee package matches; Vidéki reconcile separately.
+- [x] Close fee-package gaps by authoring missing land-registry lines in product YAML (`tulajdoni-lap-lekeres` 9 600, `terkepmasolat-lekeres` 5 000, `fedezetvaltozasi-koltseg` 10 600; otp-zold new-home packaging adds only collateral-change fee) so engine `totalCreditCostFees` matches published §6.
+- [x] Close remaining check-3 gap (csok-plusz) once fee package matches; Rural Home Renovation reconcile separately.
 - [x] Commercial composer: fee/discount toggles, purpose field, THM preview from engine (single number).
-- [x] Promote six non-quarantined products to `commercially-usable` after all three checks pass + composer↔YAML / THM parity tests (Vidéki remains schedule-usable / packaging-quarantined; fully-spec-backed embedded product-spec modules deferred).
+- [x] Promote six non-quarantined products to `commercially-usable` after all three checks pass + composer↔YAML / THM parity tests (Rural Home Renovation remains schedule-usable / packaging-quarantined; fully-spec-backed embedded product-spec modules deferred).
 
 #### 5c) Deferred (explicitly out of scope for 5a/5b)
 - [ ] Bank↔state subsidy settlement cash-flow splits (future government-cost views).
@@ -104,33 +104,33 @@ Plan slices
 - [x] Edit routing: catalog-backed investment bundles open commercial composer; generic subtypes open simplified.
 - [x] Catalog / lifecycle / spec / ownership docs document securities readiness beside loans for future ÁKK additions.
 
-#### 5e) Home savings — OTP Lakástakarék (ADR 0028–0031)
-Goal: catalog OTP Lakástakarék *lakás-előtakarékossági* savings (first product **PRÉMIUM PLUSZ 10x30**) on a dedicated commercial home-savings surface. Customer-perspective deposits, account fees, opening fee, and OTP Prémium; EBKM verification for commercially-usable (not loan THM). Architecture: ADR 0028 (family/schema), 0029 (instrument), 0030 (composer/readiness), 0031 (EBKM).
+#### 5e) Home savings — OTP Home Savings / Lakástakarék (ADR 0028–0031)
+Goal: catalog OTP Home Savings (LTP / lakástakarékpénztár) contracts (first product **OTP Home Savings Premium Plus 10x30**) on a dedicated commercial home-savings surface. Customer-perspective deposits, account fees, opening fee, and OTP Premium; EBKM verification for commercially-usable (not loan THM). Architecture: ADR 0028 (family/schema), 0029 (instrument), 0030 (composer/readiness), 0031 (EBKM).
 
 Constraints
 - Do **not** overload `government-security`, simplified investment subtypes, or loan composers.
 - No `if (productCode === …)` in core generators (ADR 0015); math in `src/finance_engine/` first (ADR 0017).
-- Deposit rate **0.10%**, savings ‰ **3.846**, and contract bounds come from USZ Melléklet 2026-08-03 (product YAML); do not invent alternate rates.
-- LTP *lakáskölcsön* / *áthidaló kölcsön* is out of scope for this epic (deferred below).
+- Deposit rate **0.10%**, savings ‰ **3.846**, and contract bounds come from the deposit interest rate sheet annex (USZ Melléklet) 2026-08-03 (product YAML); do not invent alternate rates.
+- LTP home loan (lakáskölcsön) / bridging loan (áthidaló kölcsön) is out of scope for this epic (deferred below).
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Accept ADRs 0028–0031 (family/schema, instrument type, commercial composer + readiness, EBKM verification bar).
 - [x] Schema v2: add `home-savings` family + `engine.instrumentType: home-savings` + account fee types; validation fixtures cover the new product folder.
-- [x] Author `product.yaml` + Hirdetmény worked examples; register catalog row **`spec-only`** (`home-savings.premium-plusz-10x30.standard`).
+- [x] Author `product.yaml` + published tariff notice (Hirdetmény) worked examples; register catalog row **`spec-only`** (`home-savings.premium-plusz-10x30.standard`).
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
-- [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium / contract via 3.846‰; OTP product-page calculator Lejáratkor via ÁSZF §10 ACT/360 + OTP-aligned first-of-month lastDeposit+2 packaging; ≤4 Ft residuals pinned, not claimed as proven rounding).
+- [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium / contract via 3.846‰; OTP product-page calculator at-maturity via General Terms and Conditions (ÁSZF) §10 ACT/360 + OTP-aligned first-of-month lastDeposit+2 packaging; ≤4 Ft residuals pinned, not claimed as proven rounding).
 - [x] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
-- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (ÁSZF 22. § kiutalás EBKM packaging matches 6/8 Hirdetmény goldens after OTP maturity terminals; residual 0.01 on promo 20 000 Ft/hó both legs — 4.36 vs 4.35 and −0.57 vs −0.58 — blocks promote; no fitted lag/netting camouflage).
+- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (ÁSZF 22. § allocation EBKM packaging matches 6/8 Hirdetmény goldens after OTP maturity terminals; residual 0.01 on promo 20 000 HUF/month both legs — 4.36 vs 4.35 and −0.57 vs −0.58 — blocks promote; no fitted lag/netting camouflage).
 - [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
 
 Schedule-usable review follow-ups (before / with commercially-usable; from PR #83+)
 - [x] Collapse browser home-savings product-spec mapper (`home-savings-calculation-adapter.js`) onto shared primitives — avoid a third formula surface beyond ADR 0017 TS↔`instruments.js`; keep locked-example engine↔browser parity green.
 - [x] Assert hand-authored `HOME_SAVINGS_PRODUCTS` metadata against product YAML (rates, fees, promo bands, migrationStatus).
 - [x] Extract commercial home-savings composer host from `app-controller.js` (god-controller; securities partially did this).
-- [x] Lock OTP product-page calculator fee / Premium / contract / Lejáratkor maturity as authoritative; implement OTP-aligned kiutalási maturity payout dating (`resolveHomeSavingsMaturityPayoutDate`); pin ≤4 Ft engine residuals with packaging caveat.
+- [x] Lock OTP product-page calculator fee / Premium / contract / at-maturity as authoritative; implement OTP-aligned allocation maturity payout dating (`resolveHomeSavingsMaturityPayoutDate`); pin ≤4 Ft engine residuals with packaging caveat.
 
 Deferred (explicitly out of scope for §5e)
-- [ ] OTP Lakástakarék *lakáskölcsön* / *áthidaló kölcsön* (díjtáblázat THM representative examples for PRÉMIUM PLUSZ 10x30). Prefer reuse of `mortgage-loan` + ADR 0024 patterns in a later epic; new ADR only if that reuse fails.
+- [ ] OTP Home Savings LTP home loan / bridging loan (fee-schedule THM representative examples for Premium Plus 10x30). Prefer reuse of `mortgage-loan` + ADR 0024 patterns in a later epic; new ADR only if that reuse fails.
 
 ### 6) Platform, Data Integrations, And Operations
 - [ ] v1: external data fetch adapter (mock first; real endpoints later)

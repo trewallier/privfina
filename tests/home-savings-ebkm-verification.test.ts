@@ -3,10 +3,13 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import YAML from 'yaml'
 import {
+  buildHomeSavingsAszfEbkmCashFlows,
   calculateEbkmFromHomeSavingsCashFlows,
+  calculateEbkmFromHomeSavingsInstrument,
   calculateHomeSavingsFromProductSpec,
   generateCashFlowsFromHomeSavingsProductSpec,
   loadHomeSavingsProductSpec,
+  mapHomeSavingsSpecInputsToInstrumentInput,
   resolveHomeSavingsEbkmPayoutDate,
   type HomeSavingsSpecInputs
 } from '../src/finance_engine/engine'
@@ -54,13 +57,12 @@ const HIRDETMENY_PUBLISHED_EBKM = {
 } as const
 
 /**
- * Engine pins under Annex 3 + General Terms and Conditions (ÁSZF) §22 allocation
- * payout dating (lastDepositMonth+3 day-1) on OTP-maturity terminal amounts.
- * Promo-20k both legs remain residual; do not “fix” by changing
- * {@link HIRDETMENY_PUBLISHED_EBKM}.
+ * Engine pins under Annex 3 + ÁSZF EBKM packaging
+ * ({@link buildHomeSavingsAszfEbkmCashFlows}: allocation-period account fees +
+ * interest to ÁSZF payout date). All eight cells match published goldens.
  */
 const ENGINE_EBKM_PINS = {
-  'ebkm-promo-20000.yaml': { withPremium: 4.36, withoutPremium: -0.57 },
+  'ebkm-promo-20000.yaml': { withPremium: 4.35, withoutPremium: -0.58 },
   'ebkm-promo-100000.yaml': { withPremium: 4.84, withoutPremium: -0.1 },
   'ebkm-standard-20000.yaml': { withPremium: 4.12, withoutPremium: -0.77 },
   'ebkm-standard-100000.yaml': { withPremium: 4.48, withoutPremium: -0.4 }
@@ -69,13 +71,12 @@ const ENGINE_EBKM_PINS = {
 type ExampleFile = keyof typeof HIRDETMENY_PUBLISHED_EBKM
 
 /**
- * ADR 0031 harness: engine EBKM (Annex 3 + ÁSZF §22 allocation payout dating)
- * vs published Hirdetmény goldens. Not a loan THM three-check.
+ * ADR 0031 harness: engine EBKM (Annex 3 + ÁSZF packaging) vs published
+ * Hirdetmény goldens. Not a loan THM three-check.
  *
  * Chart/schedule terminal uses OTP-aligned maturity packaging (first of month
- * after lastDeposit+2). EBKM retargets the terminal inflow to first of
- * lastDepositMonth+3. Residual gaps stay visible via locked engine pins /
- * YAML `engineEbkmPct*` (no packaging camouflage).
+ * after lastDeposit+2; termMonths fee months). EBKM uses allocation-period
+ * account fees + interest to lastDepositMonth+3 day-1.
  */
 describe('home-savings EBKM verification (ADR 0031)', () => {
   const product = loadProduct()
@@ -92,7 +93,7 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
     expect(resolveHomeSavingsEbkmPayoutDate('2036-01-31')).toBe('2036-04-01')
   })
 
-  it('reports a factual 6/8 Hirdetmény match under ÁSZF packaging (no score washing)', () => {
+  it('reports 8/8 Hirdetmény match under ÁSZF packaging (no score washing)', () => {
     let green = 0
     let total = 0
     for (const path of examplePaths) {
@@ -112,7 +113,7 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
       }
     }
     expect(total).toBe(8)
-    expect(green).toBe(6)
+    expect(green).toBe(8)
   })
 
   for (const path of examplePaths) {
@@ -121,34 +122,31 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
       const publishedLock = HIRDETMENY_PUBLISHED_EBKM[file]
       const engineLock = ENGINE_EBKM_PINS[file]
 
-      it('locks published Hirdetmény EBKM goldens and engine pins in YAML', () => {
+      it('locks published Hirdetmény EBKM goldens and matching engine pins in YAML', () => {
         const parsed = YAML.parse(readRepoFile(path))
         expect(parsed.expected.ebkmPctWithPremium).toBe(publishedLock.withPremium)
         expect(parsed.expected.ebkmPctWithoutPremium).toBe(publishedLock.withoutPremium)
         expect(parsed.expected.engineEbkmPctWithPremium).toBe(engineLock.withPremium)
         expect(parsed.expected.engineEbkmPctWithoutPremium).toBe(engineLock.withoutPremium)
+        expect(engineLock.withPremium).toBe(publishedLock.withPremium)
+        expect(engineLock.withoutPremium).toBe(publishedLock.withoutPremium)
       })
 
-      it('engine EBKM from ÁSZF-packaged cash flows matches locked pins (published or residual)', () => {
+      it('engine EBKM from ÁSZF-packaged cash flows matches published goldens', () => {
         const parsed = YAML.parse(readRepoFile(path))
         const baseInputs = parsed.inputs as HomeSavingsSpecInputs
 
-        const withPremiumFlows = calculateEbkmFromHomeSavingsCashFlows(
-          toEbkmFlows(
-            generateCashFlowsFromHomeSavingsProductSpec(product, {
-              ...baseInputs,
-              housingPurpose: true
-            })
-          )
-        )
-        const withoutPremiumFlows = calculateEbkmFromHomeSavingsCashFlows(
-          toEbkmFlows(
-            generateCashFlowsFromHomeSavingsProductSpec(product, {
-              ...baseInputs,
-              housingPurpose: false
-            })
-          )
-        )
+        const withInstrument = mapHomeSavingsSpecInputsToInstrumentInput(product, {
+          ...baseInputs,
+          housingPurpose: true
+        })
+        const withoutInstrument = mapHomeSavingsSpecInputsToInstrumentInput(product, {
+          ...baseInputs,
+          housingPurpose: false
+        })
+
+        const withPremiumFlows = calculateEbkmFromHomeSavingsInstrument(withInstrument)
+        const withoutPremiumFlows = calculateEbkmFromHomeSavingsInstrument(withoutInstrument)
 
         const withPremiumOutputs = calculateHomeSavingsFromProductSpec(product, {
           ...baseInputs,
@@ -159,79 +157,77 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
           housingPurpose: false
         })
 
-        // Mapper ebkmPct must match the packaged cash-flow EBKM (no dual lane).
+        // Mapper ebkmPct must match the ÁSZF-packaged cash-flow EBKM (no dual lane).
         expect(withPremiumOutputs.ebkmPct).toBe(withPremiumFlows.percentRounded)
         expect(withoutPremiumOutputs.ebkmPct).toBe(withoutPremiumFlows.percentRounded)
         expect(withPremiumOutputs.premiumAmount).toBeGreaterThan(0)
         expect(withoutPremiumOutputs.premiumAmount).toBe(0)
 
-        // Live engine must equal locked pins (YAML + in-test constants).
+        expect(withPremiumOutputs.ebkmPct).toBe(publishedLock.withPremium)
+        expect(withoutPremiumOutputs.ebkmPct).toBe(publishedLock.withoutPremium)
         expect(withPremiumOutputs.ebkmPct).toBe(engineLock.withPremium)
         expect(withoutPremiumOutputs.ebkmPct).toBe(engineLock.withoutPremium)
-
-        // Per-cell: match published, or keep residual visible (never wash published).
-        if (engineLock.withPremium === publishedLock.withPremium) {
-          expect(withPremiumOutputs.ebkmPct).toBe(publishedLock.withPremium)
-        } else {
-          expect(withPremiumOutputs.ebkmPct).not.toBe(publishedLock.withPremium)
-        }
-        if (engineLock.withoutPremium === publishedLock.withoutPremium) {
-          expect(withoutPremiumOutputs.ebkmPct).toBe(publishedLock.withoutPremium)
-        } else {
-          expect(withoutPremiumOutputs.ebkmPct).not.toBe(publishedLock.withoutPremium)
-        }
       })
 
-      it('schedule-date EBKM (no allocation retarget) diverges from ÁSZF-packaged EBKM', () => {
+      it('schedule-date EBKM (OTP maturity packaging) diverges from ÁSZF-packaged EBKM', () => {
         const parsed = YAML.parse(readRepoFile(path))
         const baseInputs = parsed.inputs as HomeSavingsSpecInputs
-        const flows = toEbkmFlows(
+        const instrument = mapHomeSavingsSpecInputsToInstrumentInput(product, {
+          ...baseInputs,
+          housingPurpose: true
+        })
+        const scheduleFlows = toEbkmFlows(
           generateCashFlowsFromHomeSavingsProductSpec(product, {
             ...baseInputs,
             housingPurpose: true
           })
         )
-        const scheduleDated = calculateEbkmFromHomeSavingsCashFlows(flows, {
+        const scheduleDated = calculateEbkmFromHomeSavingsCashFlows(scheduleFlows, {
           retargetTerminalPayout: false
         })
-        const aszfPackaged = calculateEbkmFromHomeSavingsCashFlows(flows)
+        const aszfPackaged = calculateEbkmFromHomeSavingsInstrument(instrument)
         expect(scheduleDated.percentRounded).not.toBe(aszfPackaged.percentRounded)
+
+        // ÁSZF builder uses more fee months than chart schedule.
+        const aszfFlows = buildHomeSavingsAszfEbkmCashFlows(instrument)
+        const scheduleFeeCount = scheduleFlows.filter((f) =>
+          /account management fee/i.test(f.description ?? '')
+        ).length
+        const aszfFeeCount = aszfFlows.filter((f) =>
+          /account management fee/i.test(f.description ?? '')
+        ).length
+        expect(aszfFeeCount).toBe(scheduleFeeCount + 2)
       })
     })
   }
 
-  it('promo-20k residual cells stay at the documented 0.01 half-up gaps (pins + raw)', () => {
-    expect(ENGINE_EBKM_PINS['ebkm-promo-20000.yaml'].withPremium).toBe(4.36)
+  it('promo-20k raw rates sit on the published half-up side of the boundary', () => {
+    expect(ENGINE_EBKM_PINS['ebkm-promo-20000.yaml'].withPremium).toBe(4.35)
     expect(HIRDETMENY_PUBLISHED_EBKM['ebkm-promo-20000.yaml'].withPremium).toBe(4.35)
-    expect(ENGINE_EBKM_PINS['ebkm-promo-20000.yaml'].withoutPremium).toBe(-0.57)
+    expect(ENGINE_EBKM_PINS['ebkm-promo-20000.yaml'].withoutPremium).toBe(-0.58)
     expect(HIRDETMENY_PUBLISHED_EBKM['ebkm-promo-20000.yaml'].withoutPremium).toBe(-0.58)
 
     const parsed = YAML.parse(readRepoFile(examplePaths[0]))
     const baseInputs = parsed.inputs as HomeSavingsSpecInputs
-    const withFlows = calculateEbkmFromHomeSavingsCashFlows(
-      toEbkmFlows(
-        generateCashFlowsFromHomeSavingsProductSpec(product, {
-          ...baseInputs,
-          housingPurpose: true
-        })
-      )
+    const withFlows = calculateEbkmFromHomeSavingsInstrument(
+      mapHomeSavingsSpecInputsToInstrumentInput(product, {
+        ...baseInputs,
+        housingPurpose: true
+      })
     )
-    const withoutFlows = calculateEbkmFromHomeSavingsCashFlows(
-      toEbkmFlows(
-        generateCashFlowsFromHomeSavingsProductSpec(product, {
-          ...baseInputs,
-          housingPurpose: false
-        })
-      )
+    const withoutFlows = calculateEbkmFromHomeSavingsInstrument(
+      mapHomeSavingsSpecInputsToInstrumentInput(product, {
+        ...baseInputs,
+        housingPurpose: false
+      })
     )
 
-    // Raw rates sit just past the 6. § half-up boundary (visible if packaging drifts).
-    expect(withFlows.percentRounded).toBe(4.36)
-    expect(withoutFlows.percentRounded).toBe(-0.57)
-    expect(withFlows.rate * 100).toBeCloseTo(4.35546674, 5)
-    expect(withoutFlows.rate * 100).toBeCloseTo(-0.57401831, 5)
-    // Half-up to published would need raw < 4.355 (with) / ≤ −0.575 (without).
-    expect(withFlows.rate * 100).toBeGreaterThanOrEqual(4.355)
-    expect(withoutFlows.rate * 100).toBeGreaterThan(-0.575)
+    expect(withFlows.percentRounded).toBe(4.35)
+    expect(withoutFlows.percentRounded).toBe(-0.58)
+    // Regression: stay below the half-up ticks that previously failed (4.355 / −0.575).
+    expect(withFlows.rate * 100).toBeLessThan(4.355)
+    expect(withoutFlows.rate * 100).toBeLessThanOrEqual(-0.575)
+    expect(withFlows.rate * 100).toBeCloseTo(4.350689, 5)
+    expect(withoutFlows.rate * 100).toBeCloseTo(-0.580358, 5)
   })
 })

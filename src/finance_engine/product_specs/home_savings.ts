@@ -1,12 +1,13 @@
 import Ajv2020 from 'ajv/dist/2020'
 import YAML from 'yaml'
-import { CashFlowDirection, type CashFlow } from '../models'
+import type { CashFlow } from '../models'
 import {
   DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT,
   DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT,
   DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
   DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
+  calculateEbkmFromHomeSavingsInstrument,
   generateHomeSavingsInstrumentCashFlows,
   resolveContractAmountFromMonthlyDeposit,
   resolveHomeSavingsPremiumRatePct,
@@ -15,7 +16,6 @@ import {
   type HomeSavingsPremiumTiers,
   type HomeSavingsScheduleSummary
 } from '../instruments/home_savings'
-import { calculateEbkmFromHomeSavingsCashFlows } from '../instruments/ebkm'
 
 export type HomeSavingsOpeningFeeMode =
   | 'standard-1pct'
@@ -279,15 +279,7 @@ export function calculateHomeSavingsFromProductSpec(
   assertValidHomeSavingsProductSpec(productSpec)
   const instrumentInput = mapHomeSavingsSpecInputsToInstrumentInput(productSpec, specInputs)
   const schedule = resolveHomeSavingsSchedule(instrumentInput)
-  const cashFlows = generateHomeSavingsInstrumentCashFlows(instrumentInput)
-  const ebkm = calculateEbkmFromHomeSavingsCashFlows(
-    cashFlows.map((flow) => ({
-      date: flow.date,
-      amount: flow.amount,
-      direction: flow.direction === CashFlowDirection.Inflow ? 'inflow' : 'outflow',
-      description: flow.description
-    }))
-  )
+  const ebkm = calculateEbkmFromHomeSavingsInstrument(instrumentInput)
 
   return {
     productId: productSpec.id,

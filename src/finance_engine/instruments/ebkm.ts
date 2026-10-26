@@ -11,17 +11,14 @@
  * Year fractions for dated legs: calendar days from first deposit / 365
  * (decree t/365). Publication rounding (6. § (1) f / (3)): two decimals, half-up.
  *
- * Home-savings EBKM packaging (General Terms and Conditions (ÁSZF) §22,
- * contracts from 2017-07-01): customer outflows (opening fee, deposits, account
- * fees) stay on schedule dates; the terminal inflow used for EBKM is dated on
- * the **first calendar day of the month that is three months after the
- * last-deposit month** (2-month allocation period after min. savings time, then
- * payment in the following month — conventional day-1 marker). Chart/schedule
- * cash flows use OTP-aligned maturity packaging (first of month after
- * lastDeposit+2) for the terminal; only the EBKM leg list retargets that inflow
- * to lastDepositMonth+3. Anchor the last-deposit month on deposit-labeled
- * outflows when descriptions are supplied. Do not invent free lag/netting knobs
- * beyond this ÁSZF-sourced rule (ADR 0024/0025 packaging-camouflage ban).
+ * Home-savings commercially-usable EBKM packaging (ÁSZF §22 / USZ Melléklet)
+ * lives in `buildHomeSavingsAszfEbkmCashFlows`: allocation-period account fees
+ * (`termMonths + 2`), terminal interest through day before ÁSZF EBKM payout,
+ * terminal dated first of lastDepositMonth+3. Chart/schedule cash flows keep
+ * OTP product-page calculator maturity packaging (lastDeposit+2; termMonths
+ * fee months only). Helpers here can retarget a schedule terminal date for
+ * diagnostics; prefer the ÁSZF builder for verification. Do not invent free
+ * lag/netting knobs (ADR 0024/0025 packaging-camouflage ban).
  *
  * Fee inclusion and Premium on/off remain caller-owned when assembling flows.
  */
@@ -220,11 +217,10 @@ export function calculateEbkmFromLegs(input: {
  * months after the last-deposit month (conventional day-1 settlement marker
  * inside the payment month).
  *
- * Half-up residual: for the locked Hirdetmény examples (start `2026-10-10`,
- * last deposit `2036-09-10`), day-1 (`2036-12-01`) leaves promo-20k both legs
- * 0.01 off published. End-of-allocation (`2036-11-30`) keeps that same miss
- * pair; no single day marker closes both legs without reopening other cells.
- * Do **not** hunt a fitted settlement day — wait for an ÁSZF/OTP cite.
+ * Day-1 marker alone (retargeting schedule terminal amounts) left promo-20k
+ * 0.01 past half-up; commercially-usable packaging uses
+ * {@link buildHomeSavingsAszfEbkmCashFlows} (allocation-period account fees +
+ * interest to this payout date) rather than a fitted settlement day.
  */
 export function resolveHomeSavingsEbkmPayoutDate(lastDepositDateIso: string): string {
   const lastDeposit = parseIsoDate(lastDepositDateIso)

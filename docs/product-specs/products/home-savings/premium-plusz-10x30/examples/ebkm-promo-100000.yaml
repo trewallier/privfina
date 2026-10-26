@@ -21,10 +21,10 @@ expected:
   # Published Hirdetmény A goldens (authoritative commercially-usable target).
   ebkmPctWithPremium: 4.84
   ebkmPctWithoutPremium: -0.10
-  # Engine Annex 3 + ÁSZF 22. § allocation payout dating (terminal on first of lastDepositMonth+3).
+  # Engine Annex 3 + ÁSZF EBKM packaging (allocation-period fees + interest to payout date).
   engineEbkmPctWithPremium: 4.84
   engineEbkmPctWithoutPremium: -0.10
 
 notes:
   - Hirdetmény A EBKM pair with Premium / without Premium.
-  - "ADR 0031: engine Annex 3 + ÁSZF 22. § allocation payout dating matches both goldens."
+  - "ADR 0031: ÁSZF EBKM packaging (termMonths+2 account fees; interest to lastDepositMonth+3 day-1) matches both goldens."

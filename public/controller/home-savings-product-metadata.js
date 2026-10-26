@@ -1,55 +1,49 @@
 /**
- * Migration scaffolding (ADR 0028–0030): hand-authored commercial home-savings
- * composer catalog. Keep displayName / defaults / migrationStatus in sync with
- * product YAML + PRODUCT_CATALOG until fully-spec-backed embedded modules replace this map.
+ * Commercial home-savings composer catalog derived from the embedded product
+ * spec (`home-savings-product-spec.js`). Keep YAML ↔ embedded parity via
+ * `tests/home-savings-product-spec-parity.test.ts` (fully-spec-backed).
  */
+import { HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC } from './home-savings-product-spec.js'
 
 const HOME_SAVINGS_PREMIUM_TIERS = {
-  months49to96: 10,
-  months97to120: 20,
-  maturityFrom120: 30
+  ...HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC.premiumTiers
+}
+
+function catalogEntryFromEmbeddedSpec(spec) {
+  const accountFee = (spec.fees || []).find((fee) => fee.type === 'account-management')
+  const monthlyDepositInput = (spec.inputs || []).find((field) => field.name === 'monthlyDeposit')
+  return {
+    productCode: spec.productCode,
+    productId: spec.id,
+    specVersion: spec.specVersion,
+    displayName: spec.displayName,
+    migrationStatus: spec.migrationStatus,
+    depositInterestAnnualRatePct: spec.engine.depositInterestAnnualRatePct,
+    savingsRatePermille: spec.engine.savingsRatePermille,
+    minContractAmount: spec.engine.minContractAmount,
+    maxContractAmount: spec.engine.maxContractAmount,
+    minMonthlyDeposit: monthlyDepositInput?.constraints?.minimum ?? 10_000,
+    maxMonthlyDeposit: monthlyDepositInput?.constraints?.maximum ?? 100_000,
+    accountFeeMonthly: accountFee?.value ?? 500,
+    defaultMonthlyDeposit: spec.defaults.monthlyDeposit,
+    defaultTermMonths: spec.defaults.termMonths,
+    defaultHousingPurpose: spec.defaults.housingPurpose,
+    defaultOpeningFeeMode: spec.defaults.openingFeeMode,
+    openingFeeModes: monthlyDepositInput
+      ? [...(spec.inputs.find((f) => f.name === 'openingFeeMode')?.constraints?.enum || [])]
+      : ['standard-1pct', 'promo-half-percent', 'promo-fixed-65000'],
+    openingFeeModeDepositBands: { ...spec.openingFeeModeDepositBands },
+    premiumTiers: { ...spec.premiumTiers },
+    eligibilityHints: [...(spec.eligibilityHints || [])],
+    discountHints: [...(spec.discountHints || [])],
+    premiumHints: spec.premiumHints,
+    commerciallyBlockedReason: null,
+    spec
+  }
 }
 
 const HOME_SAVINGS_PRODUCTS = [
-  {
-    productCode: 'premium-plusz-10x30',
-    productId: 'home-savings.premium-plusz-10x30.standard',
-    specVersion: 'v2alpha1',
-    displayName: 'OTP Home Savings Premium Plus 10x30 (Lakástakarék PRÉMIUM PLUSZ 10x30)',
-    migrationStatus: 'schedule-usable',
-    depositInterestAnnualRatePct: 0.1,
-    savingsRatePermille: 3.846,
-    minContractAmount: 2_600_000,
-    maxContractAmount: 26_000_000,
-    minMonthlyDeposit: 10_000,
-    maxMonthlyDeposit: 100_000,
-    accountFeeMonthly: 500,
-    defaultMonthlyDeposit: 50_000,
-    defaultTermMonths: 120,
-    defaultHousingPurpose: true,
-    defaultOpeningFeeMode: 'promo-fixed-65000',
-    openingFeeModes: ['standard-1pct', 'promo-half-percent', 'promo-fixed-65000'],
-    /** Published tariff notice (Hirdetmény) A deposit bands for promo opening-fee modes (inclusive). */
-    openingFeeModeDepositBands: {
-      'promo-half-percent': { min: 10_000, max: 49_990 },
-      'promo-fixed-65000': { min: 50_000, max: 100_000 }
-    },
-    premiumTiers: { ...HOME_SAVINGS_PREMIUM_TIERS },
-    // Keep in sync with product.yaml — asserted by tests/home-savings-composer-parity.test.ts.
-    eligibilityHints: [
-      'Natural person or condominium/cooperative saver; Hungarian residential or stay address for natural persons.',
-      'Housing-purpose use is required for OTP Home Savings Premium (soft hint in v1).',
-      'No state support for contracts from 2018-10-17.'
-    ],
-    discountHints: [
-      'Promo opening fee (0.5% or fixed 65 000 Ft) requires a 48-month loyalty commitment.',
-      'Loyalty unlock fee (current cohort): 100% of the waived opening fee through month 48 (scenario mode).'
-    ],
-    premiumHints:
-      'Premium tiers with housing purpose: 10% (months 49–96), 20% (97–120), 30% at maturity from month 120. Premium applies to contractual deposits only.',
-    commerciallyBlockedReason:
-      'General Terms and Conditions (ÁSZF) §22 allocation EBKM packaging matches six of eight published tariff notice (Hirdetmény) goldens; promo 20 000 HUF/month still solves to 4.36% / −0.57% vs published 4.35% / −0.58% (0.01 residual at the two-decimal boundary on both legs). Commercially-usable waits on closing those cells without fitted lag/netting camouflage (ADR 0031). Maturity/interest uses ÁSZF §10 ACT/360 with OTP-aligned first-of-month lastDeposit+2 packaging (not literal §22 (1)).'
-  }
+  catalogEntryFromEmbeddedSpec(HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC)
 ]
 
 function buildHomeSavingsProductOptions() {
@@ -80,7 +74,7 @@ function resolveHomeSavingsReadinessHint(migrationStatus) {
     case 'calc-aligned':
       return 'Readiness: calc-aligned — engine aligned; commercial composer may still be incomplete.'
     case 'inputs-driven':
-      return 'Readiness: inputs-driven — form inputs follow the spec; calculations may lag.'
+      return 'Readiness: inputs-driven — form inputs follow the spec; composer calculations may lag.'
     case 'spec-only':
       return 'Readiness: spec-only — product YAML exists; composer wiring is not ready yet.'
     default:
@@ -104,6 +98,7 @@ function openingFeeModeLabel(mode) {
 export {
   HOME_SAVINGS_PREMIUM_TIERS,
   HOME_SAVINGS_PRODUCTS,
+  HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC,
   buildHomeSavingsProductOptions,
   findHomeSavingsProduct,
   findHomeSavingsProductById,

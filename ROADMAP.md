@@ -120,8 +120,8 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Update lifecycle playbook / catalog glossary / ownership / `docs/spec.md` for home-savings readiness + EBKM bar.
 - [x] Engine primitives + family mapper → promote to **`calc-aligned`** (deposits / fees / Premium / contract via 3.846‰; OTP product-page calculator at-maturity via General Terms and Conditions (ÁSZF) §10 ACT/360 + OTP-aligned first-of-month lastDeposit+2 packaging; ≤4 Ft residuals pinned, not claimed as proven rounding).
 - [x] Commercial home-savings composer + product picker + type-picker entry → **`schedule-usable`**.
-- [ ] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (ÁSZF 22. § allocation EBKM packaging matches 6/8 Hirdetmény goldens after OTP maturity terminals; residual 0.01 on promo 20 000 HUF/month both legs — 4.36 vs 4.35 and −0.57 vs −0.58 — blocks promote; no fitted lag/netting camouflage).
-- [ ] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
+- [x] Fees / Premium / loyalty hints + EBKM preview + ADR 0031 verification harness → **`commercially-usable`** (ÁSZF EBKM packaging: allocation-period account fees + interest to lastDepositMonth+3 day-1; 8/8 Hirdetmény goldens).
+- [x] Embedded frontend spec/adapter parity → **`fully-spec-backed`**.
 
 Schedule-usable review follow-ups (before / with commercially-usable; from PR #83+)
 - [x] Collapse browser home-savings product-spec mapper (`home-savings-calculation-adapter.js`) onto shared primitives — avoid a third formula surface beyond ADR 0017 TS↔`instruments.js`; keep locked-example engine↔browser parity green.

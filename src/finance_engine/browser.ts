@@ -95,6 +95,8 @@ export {
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
   DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
   HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS,
+  buildHomeSavingsAszfEbkmCashFlows,
+  calculateEbkmFromHomeSavingsInstrument,
   ceilToTenForint,
   resolveMonthlyDepositFromContractAmount,
   resolveContractAmountFromMonthlyDeposit,

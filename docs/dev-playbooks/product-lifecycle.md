@@ -3,6 +3,7 @@
 Checklist for contributors and agents. Detail stays in the linked owners; this file is routing only.
 
 Authoritative status definitions: [`../product-specs/PRODUCT_CATALOG.md`](../product-specs/PRODUCT_CATALOG.md).  
+English naming / Hungarian gloss rules: [`english-product-naming.md`](english-product-naming.md).  
 Ownership rules: [`../source-of-truth-ownership.md`](../source-of-truth-ownership.md).  
 Agent entry: [`../../AGENTS.md`](../../AGENTS.md).  
 Readiness policy (loans): [ADR 0023](../adr/0023-loan-product-readiness-and-offering-fidelity.md); public-offering commercially-usable bar: [ADR 0026](../adr/0026-commercially-usable-requires-three-check-verification.md) + [ADR 0024](../adr/0024-representative-example-three-check-verification.md).  

@@ -131,7 +131,7 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     'web-calculator-maturity-20000.yaml',
     'web-calculator-maturity-50000.yaml',
     'web-calculator-maturity-100000.yaml'
-  ])('locks OTP fee / Premium / Lejáratkor and live |engine − OTP| ≤ 4 Ft for %s', (fileName) => {
+  ])('locks OTP fee / Premium / at-maturity (Lejáratkor) and live |engine − OTP| ≤ 4 Ft for %s', (fileName) => {
     const relativePath = `docs/product-specs/products/home-savings/premium-plusz-10x30/examples/${fileName}`
     const { inputs, expected, source } = loadExample(relativePath)
 

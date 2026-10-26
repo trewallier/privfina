@@ -88,7 +88,7 @@ describe('calculateEbkm (3. melléklet)', () => {
   })
 
   it('maps home-savings schedule-shaped legs through the cash-flow helper', () => {
-    // Disable kiutalás retarget so the one-year fixture stays on stated dates.
+    // Disable allocation (kiutalás) retarget so the one-year fixture stays on stated dates.
     const ebkm = calculateEbkmFromHomeSavingsCashFlows(
       [
         { date: '2026-01-01', amount: 1000, direction: 'outflow' },
@@ -99,7 +99,7 @@ describe('calculateEbkm (3. melléklet)', () => {
     expect(ebkm.percentRounded).toBe(10)
   })
 
-  it('retargets home-savings terminal inflow to ÁSZF kiutalás payout date by default', () => {
+  it('retargets home-savings terminal inflow to ÁSZF allocation (kiutalás) payout date by default', () => {
     const scheduleDated = calculateEbkmFromHomeSavingsCashFlows(
       [
         { date: '2026-10-10', amount: 1000, direction: 'outflow' },
@@ -117,7 +117,7 @@ describe('calculateEbkm (3. melléklet)', () => {
     expect(aszfPackaged.percentRounded).toBeLessThan(scheduleDated.percentRounded)
   })
 
-  it('anchors kiutalás retarget on Monthly deposit labels, not later fee-only outflows', () => {
+  it('anchors allocation (kiutalás) retarget on Monthly deposit labels, not later fee-only outflows', () => {
     const legs = buildEbkmLegsFromHomeSavingsCashFlows([
       { date: '2026-10-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
       { date: '2036-09-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },
@@ -129,7 +129,7 @@ describe('calculateEbkm (3. melléklet)', () => {
     expect(legs.payouts[0].date).toBe('2036-12-01')
   })
 
-  it('rejects multi-inflow schedules when kiutalás retarget is enabled', () => {
+  it('rejects multi-inflow schedules when allocation (kiutalás) retarget is enabled', () => {
     expect(() =>
       buildEbkmLegsFromHomeSavingsCashFlows([
         { date: '2026-10-10', amount: 1000, direction: 'outflow', description: 'Monthly deposit' },

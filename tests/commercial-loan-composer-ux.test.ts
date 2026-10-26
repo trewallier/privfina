@@ -54,7 +54,7 @@ describe('commercial loan composer UX (§5b)', () => {
     expect(packaged.thmPct).toBe(8.6)
   })
 
-  it('applies otp-zold folyósítási waiver by default and exposes THM preview fields', () => {
+  it('applies otp-zold disbursement (folyósítási) waiver by default and exposes THM preview fields', () => {
     const outputs = calculateCommercialLoanFromSpecInputs(
       {
         productCode: 'otp-zold',

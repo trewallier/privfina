@@ -1,7 +1,8 @@
 /**
- * THM (teljes hiteldíj mutató) per 83/2010. (III. 25.) Korm. rendelet
- * 5. § and 1. melléklet (ADR 0022). Primary use: verify Hirdetmény golden
- * thmPct during loan-product implementation; optionally compute when unknown.
+ * THM (APR indicator / teljes hiteldíj mutató) per 83/2010. (III. 25.) Korm. rendelet
+ * 5. § and 1. melléklet (ADR 0022). Primary use: verify published tariff notice
+ * (Hirdetmény) golden thmPct during loan-product implementation; optionally
+ * compute when unknown.
  *
  * Fee inclusion (§3) and scenario assumptions (§4) are caller-owned: this
  * module solves the Annex equation for a supplied cash-flow set.

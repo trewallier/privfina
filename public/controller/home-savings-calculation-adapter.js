@@ -5,7 +5,8 @@
  * surface (ADR 0017 / 0032). This module only maps composer/spec inputs onto
  * those primitives + the schedule/bundle generators — no third formula surface.
  * EBKM uses the same deposit/fee/Premium amounts as the chart, with terminal
- * inflow retargeted to the ÁSZF 22. § kiutalás payout date (ADR 0031).
+ * inflow retargeted to the General Terms and Conditions (ÁSZF) §22 allocation
+ * payout date (ADR 0031).
  */
 import { findHomeSavingsProduct } from './home-savings-product-metadata.js'
 import { assertOpeningFeeModeForDeposit } from './home-savings-form.js'
@@ -138,7 +139,7 @@ function scheduleOutputsFromBundleInput(bundleInput, schedule) {
 
 /**
  * Live preview: schedule scalars plus ADR 0031 EBKM (Annex 3 on customer
- * amounts; ÁSZF kiutalás payout dating for the terminal leg).
+ * amounts; ÁSZF allocation (kiutalás) payout dating for the terminal leg).
  */
 function calculateHomeSavingsScheduleFromSpecInputs(specInputs, options = {}) {
   const resolveHomeSavingsSchedule = options.resolveHomeSavingsSchedule

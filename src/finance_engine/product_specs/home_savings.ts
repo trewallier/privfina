@@ -52,9 +52,9 @@ export interface HomeSavingsProductSpec {
   engine: {
     instrumentType: 'home-savings'
     paymentFrequency?: string
-    /** Annual deposit rate percent from USZ Melléklet (e.g. 0.1). */
+    /** Annual deposit rate percent from deposit interest rate sheet annex (USZ Melléklet) (e.g. 0.1). */
     depositInterestAnnualRatePct?: number
-    /** Monthly savings rate in ‰ of contract amount (e.g. 3.846). */
+    /** Monthly savings rate in ‰ of contractual amount (e.g. 3.846). */
     savingsRatePermille?: number
     minContractAmount?: number
     maxContractAmount?: number
@@ -76,7 +76,7 @@ export interface HomeSavingsSpecInputs {
   startDate: string
   housingPurpose: boolean
   openingFeeMode: HomeSavingsOpeningFeeMode
-  /** Required for percent-based opening-fee modes until ÁSZF contract-amount formula is locked. */
+  /** Required for percent-based opening-fee modes until ÁSZF contractual-amount formula is locked. */
   contractAmount?: number
   depositDayOfMonth?: number
   /** Optional ÁSZF annual deposit rate (percent). Omit to leave interest unmodeled. */
@@ -102,8 +102,9 @@ export interface HomeSavingsEngineOutputs {
   depositInterest: number
   /**
    * ADR 0031 EBKM percent from customer cash flows (calendar-day / 365 Annex 3)
-   * with ÁSZF 22. § kiutalás payout dating (terminal inflow retargeted for EBKM;
-   * chart schedule uses OTP-aligned maturity packaging — first of lastDeposit+2).
+   * with General Terms and Conditions (ÁSZF) §22 allocation payout dating
+   * (terminal inflow retargeted for EBKM; chart schedule uses OTP-aligned
+   * maturity packaging — first of lastDeposit+2).
    */
   ebkmPct: number
   schedule: HomeSavingsScheduleSummary
@@ -167,7 +168,7 @@ function findFee(
 }
 
 /**
- * Resolve monthly account management fee from product YAML (szamlavezetesi-dij).
+ * Resolve monthly account management fee from product YAML (fee slug: szamlavezetesi-dij).
  */
 export function resolveHomeSavingsAccountFeeMonthly(
   productSpec: HomeSavingsProductSpec
@@ -210,7 +211,8 @@ export function resolveHomeSavingsContractAmount(
 
 /**
  * Resolve account opening fee from mode + product rules.
- * Percent modes derive szerződéses összeg from monthly deposit via módozat ‰ when omitted.
+ * Percent modes derive contractual amount (szerződéses összeg) from monthly
+ * deposit via product-scheme (módozat) ‰ when omitted.
  */
 export function resolveHomeSavingsOpeningFee(
   productSpec: HomeSavingsProductSpec,

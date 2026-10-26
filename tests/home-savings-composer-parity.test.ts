@@ -244,7 +244,7 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
     expect(withoutPremium.ebkmPct).not.toBe(expected.ebkmPctWithoutPremium)
   })
 
-  it('keeps browser ‰ helpers aligned with engine Melléklet cases', () => {
+  it('keeps browser ‰ helpers aligned with engine USZ Melléklet cases', () => {
     const cases = [
       { contractAmount: 26_000_000, monthlyDeposit: 100_000 },
       { contractAmount: 13_000_000, monthlyDeposit: 50_000 },

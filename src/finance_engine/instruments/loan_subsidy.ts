@@ -14,7 +14,7 @@ export interface ProductSubsidyDefinition {
 export interface MortgageRateResolutionInput {
   /** Contractual / customer annual rate in percent (spec input annualInterestRatePct). */
   annualInterestRatePct: number
-  /** Optional ügyleti / transactional rate in percent (retained for future split analytics). */
+  /** Optional contractual interest rate (ügyleti) in percent (retained for future split analytics). */
   transactionalAnnualRatePct?: number
   subsidy?: ProductSubsidyDefinition | null
   /** Additional rate discount in basis points to subtract from the customer percent rate. */
@@ -51,7 +51,7 @@ function ensureFiniteNumber(value: number, label: string): number {
  * When `subsidy.type === 'state-interest-subsidy'` and `subsidy.customerRate` is set, the
  * input percent rate must match `customerRate * 100` within
  * {@link SUBSIDY_CUSTOMER_RATE_TOLERANCE_PP} (checked before rate discounts).
- * Ügyleti / state cash-flow splits remain deferred.
+ * Contractual (ügyleti) / state cash-flow splits remain deferred.
  */
 export function resolveMortgageCustomerRate(
   input: MortgageRateResolutionInput

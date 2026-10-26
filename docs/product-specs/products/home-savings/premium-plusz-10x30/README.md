@@ -2,7 +2,7 @@
 
 Home-savings (lakás-előtakarékossági) product specification for the currently marketed OTP Lakástakarék módozat.
 
-**Catalog status:** `schedule-usable` — maturity/fee/Premium calc-aligned to OTP product-page calculator via ÁSZF §10/§22 interest packaging; EBKM packaging quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
+**Catalog status:** `schedule-usable` — fee/Premium/contract exact vs OTP product-page calculator; maturity interest uses ÁSZF §10 ACT/360 with OTP-aligned kiutalási packaging (see below); EBKM packaging quarantined (see [`PRODUCT_CATALOG.md`](../../../PRODUCT_CATALOG.md)).
 
 ## Sources (Europe/Budapest effective dates)
 
@@ -20,11 +20,16 @@ Home-savings (lakás-előtakarékossági) product specification for the currentl
 | Megtakarítási ráta | **3.846‰**/hó |
 | Szerződéses összeg | 2 600 000–26 000 000 Ft |
 | Értékelés min. előtakarékossági idő | **120** hó |
-| Kiutalás min. előtakarékossági idő | **122** hó (= 120 + 2-month kiutalási időszak) |
+| Kiutalás min. előtakarékossági idő | **122** hó |
 
-Interest day-count: ACT/360 daily (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization, accrual from credit day through day before payout (ÁSZF §10). Continuous-path **maturity payout date** = first of the month two months after last deposit (ÁSZF §22 kiutalási időszak for post-2017-07-01 contracts) — matches OTP product-page calculator within ≤4 Ft.
+Havi betét = ceil10(szerződéses összeg × 3,846 / 1000) (ÁSZF §6 (1)).
 
-Havi betét = ceil10(szerződéses összeg × 3,846 / 1000).
+## Interest / maturity payout dating
+
+- **Day-count (ÁSZF §10):** ACT/360 daily (`tőke × kamatláb × napok / (360 × 100)`), yearly capitalization, accrual from credit day through day before payout.
+- **Kiutalási structure (ÁSZF §22):** for contracts from 2017-07-01, a **2-month** kiutalási időszak follows evaluation min megtakarítási idő (USZ Melléklet encodes kiutalás min = 122 for this 120-month módozat).
+- **Engine continuous-path packaging:** `resolveHomeSavingsMaturityPayoutDate` = **first calendar day** of the month two months after the last deposit’s month (e.g. start `2026-10-10` → `2036-11-01`). This matches OTP product-page calculator “Lejáratkor” terminals within ≤4 Ft.
+- **Caveat:** that first-of-month rule is **OTP calculator packaging**, not a literal reading of ÁSZF §22 (1) (earliest kifizetés in the month after the kiutalási időszak) or of “122 months” as `startDate + 122` calendar months (`2036-12-10` for the locked example). Residuals vs OTP are **mixed-sign** (−3 / +4 / −1) and are **not** proven nearest-forint rounding of an identical formula.
 
 ## Premium (OTP Lakástakarék Prémium — not state aid)
 
@@ -32,8 +37,8 @@ With housing-purpose use: 10% (months 49–96), 20% (97–120), **30%** at matur
 
 ## Calc-aligned bar
 
-- Fee / Premium / contract / maturity from OTP product-page calculator (`web-calculator-maturity-*.yaml`, `source.kind: otp-product-page-calculator`)
-- Engine ACT/360 + ÁSZF §22 payout dating within ≤4 Ft of those goldens
+- Fee / Premium / contract exact from OTP product-page calculator (`web-calculator-maturity-*.yaml`, `source.kind: otp-product-page-calculator`)
+- Engine terminal within ≤4 Ft of OTP Lejáratkor terminal under the packaging above
 - No product-specific generator forks (ADR 0015)
 
 ## Out of scope
@@ -44,4 +49,4 @@ With housing-purpose use: 10% (months 49–96), 20% (97–120), **30%** at matur
 
 ## Worked examples
 
-Examples in this folder are acceptance criteria. OTP product-page calculator figures are authoritative for fee / Premium / contract / maturity (`web-calculator-maturity-*.yaml`). Engine residuals ≤4 Ft are pinned as `engineTerminalPayout*`. EBKM examples lock Hirdetmény published percentages; the ADR 0031 harness pins schedule→Annex 3 gaps until commercially-usable.
+OTP product-page calculator **Lejáratkor terminal** is authoritative for maturity; `depositInterest` in examples is **derived** as `terminal − deposits − premium` unless separately captured. Engine values are pinned as `engineTerminalPayout*` (≤4 Ft residual). EBKM examples lock Hirdetmény published percentages; schedule→Annex 3 pins live in YAML / ADR 0031 harness (with-premium gaps remain; some without-premium legs may coincide with published).

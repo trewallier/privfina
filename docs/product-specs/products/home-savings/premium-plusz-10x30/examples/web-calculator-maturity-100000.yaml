@@ -6,7 +6,7 @@ description: >
   OTP product-page calculator output for contractual monthly deposit 100 000 Ft
   (UI shows 100 500 Ft havonta fizetendő = deposit + 500 Ft account fee), 10-year
   path with promo fixed 65 000 Ft opening fee (50 000–100 000 Ft band). OTP
-  published numbers are authoritative.
+  Lejáratkor terminal is authoritative.
 
 source:
   kind: otp-product-page-calculator
@@ -14,7 +14,8 @@ source:
   capturedAt: "2026-10-25"
   note: >
     Interactive "Havi betét összege" widget on Lakástakarék Prémium Plusz online
-    ajánlat page. Captured Europe/Budapest. EBKM is not computed by this widget.
+    ajánlat page. Captured Europe/Budapest. depositInterest is derived from the
+    Lejáratkor terminal. EBKM is not computed by this widget.
 
 inputs:
   monthlyDeposit: 100000
@@ -33,18 +34,19 @@ expected:
   premiumRatePct: 30
   premiumBase: 12000000
   premiumAmount: 3600000
-  # OTP authoritative (Lejáratkor felvehető megtakarítás)
-  depositInterest: 62313
   terminalPayout: 15662313
+  depositInterest: 62313
   maturityPayoutDate: 2036-11-01
   engineDepositInterest: 62312
   engineTerminalPayout: 15662312
   engineTerminalPayoutDeltaFt: -1
 
 notes:
-  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP figures are authoritative."
+  - "Source: otp-product-page-calculator (see source.url / source.capturedAt). OTP Lejáratkor terminal is authoritative."
+  - "depositInterest is derived as terminalPayout − totalDeposits − premiumAmount."
   - "Webpage UI labels monthly payable as deposit + 500 Ft account fee (100 500 Ft)."
   - "accountOpeningFee is the green akciós díj (65 000); accountOpeningFeeStandard1pct is 1% of contract."
   - >
-    Interest horizon: ÁSZF §10 / §22 — ACT/360 through day before first of month
-    two months after last deposit (2036-11-01). Residual −1 Ft is rounding only.
+    maturityPayoutDate is OTP-calculator continuous-path packaging (first of month
+    two months after last deposit), not literal ÁSZF §22 (1). Engine residual −1 Ft
+    is unexplained (mixed-sign across captures; not proven rounding).

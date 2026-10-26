@@ -4,9 +4,8 @@ exampleId: maturity-premium-120
 title: Maturity Premium tier — 120 months housing purpose
 description: >
   Continuous saving through month 120 with housing-purpose allotment/termination
-  credits OTP Lakástakarék Prémium at 30%. Terminal / interest goldens follow the
-  OTP product-page calculator (authoritative). Engine uses ÁSZF §10 ACT/360 with
-  §22 2-month kiutalási maturity payout packaging.
+  credits OTP Lakástakarék Prémium at 30%. Terminal golden follows the OTP
+  product-page calculator Lejáratkor figure (authoritative).
 
 inputs:
   monthlyDeposit: 50000
@@ -24,8 +23,9 @@ expected:
   premiumBase: 6000000
   premiumAmount: 1800000
   # OTP authoritative — same capture as web-calculator-maturity-50000.yaml
-  depositInterest: 31152
   terminalPayout: 7831152
+  # Derived from OTP terminal
+  depositInterest: 31152
   contractAmount: 13000000
   maturityPayoutDate: 2036-11-01
   engineDepositInterest: 31156
@@ -40,12 +40,11 @@ notes:
   - Premium percents from Hirdetmény B / USZ §10 (natural person and társasház tables).
   - premiumBase = contractual deposits only; Premium has no compound interest (USZ §10).
   - >
-    depositInterest / terminalPayout are OTP product-page calculator figures
-    (7 831 152 Ft marketing band / widget). See web-calculator-maturity-50000.yaml
-    source block.
+    terminalPayout is OTP product-page calculator Lejáratkor (7 831 152 Ft);
+    depositInterest is derived. See web-calculator-maturity-50000.yaml source.
   - >
-    Engine interest: ÁSZF §10 ACT/360 + yearly capitalization through day before
-    maturityPayoutDate (first of month two months after last deposit — ÁSZF §22
-    kiutalási időszak / USZ Melléklet kiutalás min 122). Residual +4 Ft vs OTP.
+    maturityPayoutDate / engine interest use OTP-calculator continuous-path
+    packaging (first of month two months after last deposit), not literal
+    ÁSZF §22 (1). Residual +4 Ft is unexplained (not proven rounding).
   - contractAmount 13 000 000 Ft = monthly 50 000 via 3.846‰ (ceil10).
   - Loyalty unlock is out of scope for this default continuous path.

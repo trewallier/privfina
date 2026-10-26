@@ -63,18 +63,22 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     expect(resolveContractAmountFromMonthlyDeposit({ monthlyDeposit: 20_000 })).toBe(5_200_000)
   })
 
-  it('resolves ÁSZF §22 maturity payout as first of month two months after last deposit', () => {
+  it('resolves OTP-calculator maturity packaging (first of month after lastDeposit+2), not literal §22 (1)', () => {
+    // start 2026-10-10 → last deposit 2036-09-10 → first of month +2 = 2036-11-01.
+    // Calendar start+122 = 2036-12-10; literal §22 (1) is also not this first-of-month rule.
     expect(
       resolveHomeSavingsMaturityPayoutDate({ startDate: '2026-10-10', termMonths: 120 })
     ).toBe('2036-11-01')
   })
 
-  it('matches OTP fee / Premium for maturity-premium-120; ÁSZF interest within rounding of OTP', () => {
+  it('matches OTP fee / Premium for maturity-premium-120; live |engine − OTP terminal| ≤ 4 Ft', () => {
     const { inputs, expected } = loadExample(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
     )
 
     const outputs = calculateHomeSavingsFromProductSpec(product, inputs)
+    const otpTerminal = expected.terminalPayout as number
+    const liveDelta = outputs.terminalPayout - otpTerminal
 
     expect(outputs.accountFeeMonthly).toBe(expected.accountFeeMonthly)
     expect(outputs.accountOpeningFee).toBe(expected.accountOpeningFee)
@@ -83,18 +87,20 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     expect(outputs.premiumRatePct).toBe(expected.premiumRatePct)
     expect(outputs.premiumBase).toBe(expected.premiumBase)
     expect(outputs.premiumAmount).toBe(expected.premiumAmount)
-    expect(expected.terminalPayout).toBe(7_831_152)
+    expect(otpTerminal).toBe(7_831_152)
+    // Derived interest in YAML (terminal − deposits − premium), not a separate OTP readout.
+    expect(expected.depositInterest).toBe(
+      otpTerminal - (expected.totalDeposits as number) - (expected.premiumAmount as number)
+    )
     expect(outputs.depositInterest).toBe(expected.engineDepositInterest)
     expect(outputs.terminalPayout).toBe(expected.engineTerminalPayout)
-    expect(outputs.terminalPayout - (expected.terminalPayout as number)).toBe(
-      expected.engineTerminalPayoutDeltaFt
-    )
-    expect(Math.abs(expected.engineTerminalPayoutDeltaFt as number)).toBeLessThanOrEqual(4)
+    expect(liveDelta).toBe(expected.engineTerminalPayoutDeltaFt)
+    expect(Math.abs(liveDelta)).toBeLessThanOrEqual(4)
     expect(outputs.productId).toBe('home-savings.premium-plusz-10x30.standard')
     expect(outputs.productSpecVersion).toBe('v2alpha1')
   })
 
-  it('generates customer cash flows with terminal on ÁSZF maturity payout date', () => {
+  it('generates customer cash flows with terminal on OTP-packaging maturity payout date', () => {
     const { inputs, expected } = loadExample(
       'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
     )
@@ -125,7 +131,7 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     'web-calculator-maturity-20000.yaml',
     'web-calculator-maturity-50000.yaml',
     'web-calculator-maturity-100000.yaml'
-  ])('locks OTP product-page fee / Premium / maturity and ÁSZF engine residual for %s', (fileName) => {
+  ])('locks OTP fee / Premium / Lejáratkor and live |engine − OTP| ≤ 4 Ft for %s', (fileName) => {
     const relativePath = `docs/product-specs/products/home-savings/premium-plusz-10x30/examples/${fileName}`
     const { inputs, expected, source } = loadExample(relativePath)
 
@@ -139,6 +145,8 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
       startDate: inputs.startDate,
       termMonths: inputs.termMonths
     })
+    const otpTerminal = expected.terminalPayout as number
+    const liveDelta = outputs.terminalPayout - otpTerminal
 
     expect(outputs.accountFeeMonthly).toBe(expected.accountFeeMonthly)
     expect(outputs.accountOpeningFee).toBe(expected.accountOpeningFee)
@@ -151,17 +159,15 @@ describe('home-savings calc-aligned (PRÉMIUM PLUSZ 10x30)', () => {
     expect(outputs.premiumAmount).toBe(expected.premiumAmount)
     expect(payoutDate).toBe(expected.maturityPayoutDate)
 
+    // depositInterest in YAML is derived from OTP terminal, not a separate widget capture.
     expect(expected.depositInterest).toBe(
-      (expected.terminalPayout as number) -
-        (expected.totalDeposits as number) -
-        (expected.premiumAmount as number)
+      otpTerminal - (expected.totalDeposits as number) - (expected.premiumAmount as number)
     )
     expect(outputs.depositInterest).toBe(expected.engineDepositInterest)
     expect(outputs.terminalPayout).toBe(expected.engineTerminalPayout)
-    expect(outputs.terminalPayout - (expected.terminalPayout as number)).toBe(
-      expected.engineTerminalPayoutDeltaFt
-    )
-    expect(Math.abs(expected.engineTerminalPayoutDeltaFt as number)).toBeLessThanOrEqual(4)
+    expect(liveDelta).toBe(expected.engineTerminalPayoutDeltaFt)
+    // Live OTP residual bar (≤4 Ft observed max; mixed-sign, not proven rounding).
+    expect(Math.abs(liveDelta)).toBeLessThanOrEqual(4)
   })
 
   it('resolves Premium early-exit bands from Hirdetmény tiers', () => {

@@ -190,34 +190,53 @@ describe('home-savings composer parity (§5e schedule-usable follow-up)', () => 
   })
 
   it('surfaces schedule-faithful EBKM preview (pinned while Hirdetmény gap remains)', () => {
+    const ebkmExample = loadYaml(
+      'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-20000.yaml'
+    ) as {
+      inputs: {
+        monthlyDeposit: number
+        termMonths: number
+        startDate: string
+        openingFeeMode: string
+      }
+      expected: {
+        accountFeeMonthly: number
+        ebkmPctWithPremium: number
+        ebkmPctWithoutPremium: number
+        scheduleEbkmPctWithPremium: number
+        scheduleEbkmPctWithoutPremium: number
+      }
+    }
+    const { inputs, expected } = ebkmExample
+
     const withPremium = calculateHomeSavingsScheduleFromSpecInputs(
       {
         productCode: 'premium-plusz-10x30',
-        monthlyDeposit: 20_000,
-        termMonths: 120,
-        startDate: '2026-10-10',
+        monthlyDeposit: inputs.monthlyDeposit,
+        termMonths: inputs.termMonths,
+        startDate: inputs.startDate,
         housingPurpose: true,
-        openingFeeMode: 'promo-half-percent'
+        openingFeeMode: inputs.openingFeeMode
       },
       { resolveHomeSavingsSchedule }
     )
     const withoutPremium = calculateHomeSavingsScheduleFromSpecInputs(
       {
         productCode: 'premium-plusz-10x30',
-        monthlyDeposit: 20_000,
-        termMonths: 120,
-        startDate: '2026-10-10',
+        monthlyDeposit: inputs.monthlyDeposit,
+        termMonths: inputs.termMonths,
+        startDate: inputs.startDate,
         housingPurpose: false,
-        openingFeeMode: 'promo-half-percent'
+        openingFeeMode: inputs.openingFeeMode
       },
       { resolveHomeSavingsSchedule }
     )
 
-    expect(withPremium.accountFeeMonthly).toBe(500)
-    // Schedule cash-flow EBKM pins (not published 4.35 / -0.58).
-    expect(withPremium.ebkmPct).toBe(4.42)
-    expect(withoutPremium.ebkmPct).toBe(-0.58)
-    expect(withPremium.ebkmPct).not.toBe(4.35)
+    expect(withPremium.accountFeeMonthly).toBe(expected.accountFeeMonthly)
+    // Schedule pins from ebkm-promo-20000.yaml (not published Hirdetmény figures).
+    expect(withPremium.ebkmPct).toBe(expected.scheduleEbkmPctWithPremium)
+    expect(withoutPremium.ebkmPct).toBe(expected.scheduleEbkmPctWithoutPremium)
+    expect(withPremium.ebkmPct).not.toBe(expected.ebkmPctWithPremium)
   })
 
   it('keeps browser ‰ helpers aligned with engine Melléklet cases', () => {

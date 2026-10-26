@@ -43,10 +43,11 @@ pricing:
     - >
       Interest: ACT/360 daily (tőke × kamatláb × napok / (360 × 100)); yearly
       capitalization; accrues from credit day through day before payout (ÁSZF §10).
-      Continuous-path maturity payout date = first calendar day of the month two
-      months after last deposit (ÁSZF §22 2-month kiutalási időszak for
-      post-2017-07-01 contracts; USZ Melléklet kiutalás min 122). Aligns with OTP
-      product-page calculator Lejáratkor goldens (≤4 Ft rounding residual).
+      Continuous-path maturity payout date packaging = first calendar day of the
+      month two months after last deposit — OTP product-page calculator alignment
+      (not literal ÁSZF §22 (1) kifizetés month / not startDate+122 calendar months).
+      ÁSZF §22 still supplies the 2-month kiutalási structure (USZ Melléklet
+      kiutalás min 122). Residuals vs OTP Lejáratkor ≤4 Ft, mixed-sign, unexplained.
     - >
       OTP Lakástakarék Prémium (not state aid): % of contractual deposits only
       (no compound on Premium); 30% after month 120 with housing-purpose use;

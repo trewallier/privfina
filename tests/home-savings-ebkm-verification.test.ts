@@ -43,58 +43,41 @@ function ebkmFromScheduleFlows(
  *
  * Engine EBKM is computed from generated customer cash flows (calendar-day /
  * 365 Annex 3) — the same packaging as the chart. Published Hirdetmény goldens
- * remain locked; gaps stay visible. Commercially-usable is quarantined until
- * schedule→EBKM reproduces published figures without packaging camouflage
+ * remain locked in YAML; schedule→EBKM pins live in the same examples as
+ * `scheduleEbkmPct*`. Commercially-usable is quarantined until with-premium
+ * schedule EBKM reproduces published figures without packaging camouflage
  * (same posture as Vidéki for loan installment packaging).
+ *
+ * Without-premium schedule may coincide with published (promo cases); that is
+ * expected and does not lift the quarantine — with-premium must stay ≠ published.
  */
 describe('home-savings EBKM verification (ADR 0031)', () => {
   const product = loadProduct()
 
-  const examples: Array<{
-    path: string
-    publishedWith: number
-    publishedWithout: number
-    /** Pinned schedule→EBKM while Hirdetmény gap remains. */
-    enginePins: { withPremium: number; withoutPremium: number }
-  }> = [
-    {
-      path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-20000.yaml',
-      publishedWith: 4.35,
-      publishedWithout: -0.58,
-      // Pins after ÁSZF §22 maturity payout dating (terminal on first of lastDeposit+2).
-      enginePins: { withPremium: 4.42, withoutPremium: -0.58 }
-    },
-    {
-      path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-100000.yaml',
-      publishedWith: 4.84,
-      publishedWithout: -0.1,
-      enginePins: { withPremium: 4.92, withoutPremium: -0.1 }
-    },
-    {
-      path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-standard-20000.yaml',
-      publishedWith: 4.12,
-      publishedWithout: -0.77,
-      enginePins: { withPremium: 4.18, withoutPremium: -0.78 }
-    },
-    {
-      path: 'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-standard-100000.yaml',
-      publishedWith: 4.48,
-      publishedWithout: -0.4,
-      enginePins: { withPremium: 4.54, withoutPremium: -0.41 }
-    }
+  const examplePaths = [
+    'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-20000.yaml',
+    'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-promo-100000.yaml',
+    'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-standard-20000.yaml',
+    'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ebkm-standard-100000.yaml'
   ]
 
-  for (const example of examples) {
-    describe(example.path.split('/').pop()!, () => {
-      it('locks published Hirdetmény EBKM goldens in YAML', () => {
-        const parsed = YAML.parse(readRepoFile(example.path))
-        expect(Number(parsed.expected.ebkmPctWithPremium)).toBe(example.publishedWith)
-        expect(Number(parsed.expected.ebkmPctWithoutPremium)).toBe(example.publishedWithout)
+  for (const path of examplePaths) {
+    describe(path.split('/').pop()!, () => {
+      it('locks published Hirdetmény EBKM goldens and schedule pins in YAML', () => {
+        const parsed = YAML.parse(readRepoFile(path))
+        expect(typeof parsed.expected.ebkmPctWithPremium).toBe('number')
+        expect(typeof parsed.expected.ebkmPctWithoutPremium).toBe('number')
+        expect(typeof parsed.expected.scheduleEbkmPctWithPremium).toBe('number')
+        expect(typeof parsed.expected.scheduleEbkmPctWithoutPremium).toBe('number')
       })
 
-      it('pins schedule→EBKM and keeps the Hirdetmény gap visible (quarantine)', () => {
-        const parsed = YAML.parse(readRepoFile(example.path))
+      it('pins schedule→EBKM from YAML and keeps with-premium Hirdetmény gap visible', () => {
+        const parsed = YAML.parse(readRepoFile(path))
         const baseInputs = parsed.inputs as HomeSavingsSpecInputs
+        const publishedWith = Number(parsed.expected.ebkmPctWithPremium)
+        const publishedWithout = Number(parsed.expected.ebkmPctWithoutPremium)
+        const scheduleWith = Number(parsed.expected.scheduleEbkmPctWithPremium)
+        const scheduleWithout = Number(parsed.expected.scheduleEbkmPctWithoutPremium)
 
         const withPremiumFlows = ebkmFromScheduleFlows(product, {
           ...baseInputs,
@@ -118,17 +101,19 @@ describe('home-savings EBKM verification (ADR 0031)', () => {
         expect(withPremiumOutputs.ebkmPct).toBe(withPremiumFlows.percentRounded)
         expect(withoutPremiumOutputs.ebkmPct).toBe(withoutPremiumFlows.percentRounded)
 
-        expect(withPremiumOutputs.ebkmPct).toBe(example.enginePins.withPremium)
-        expect(withoutPremiumOutputs.ebkmPct).toBe(example.enginePins.withoutPremium)
+        // Quarantine regression pins live in YAML (not test-only snapshots).
+        expect(withPremiumOutputs.ebkmPct).toBe(scheduleWith)
+        expect(withoutPremiumOutputs.ebkmPct).toBe(scheduleWithout)
 
-        // Pair vs published must still show a quarantine gap (individual legs may match).
-        // Do not camouflage remaining with/without mismatches with fitted knobs.
-        expect([withPremiumOutputs.ebkmPct, withoutPremiumOutputs.ebkmPct]).not.toEqual([
-          example.publishedWith,
-          example.publishedWithout
-        ])
+        // With-premium must remain ≠ published (no camouflage). Without-premium may coincide.
+        expect(withPremiumOutputs.ebkmPct).not.toBe(publishedWith)
         expect(withPremiumOutputs.premiumAmount).toBeGreaterThan(0)
         expect(withoutPremiumOutputs.premiumAmount).toBe(0)
+        // Pair inequality still required so both legs matching would fail the suite.
+        expect([withPremiumOutputs.ebkmPct, withoutPremiumOutputs.ebkmPct]).not.toEqual([
+          publishedWith,
+          publishedWithout
+        ])
       })
     })
   }

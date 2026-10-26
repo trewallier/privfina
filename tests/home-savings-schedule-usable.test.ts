@@ -129,15 +129,46 @@ describe('home-savings schedule-usable metadata', () => {
   })
 
   it('creates/persists a browser bundle with productCode and fixed deposit flow labels', () => {
+    const example = YAML.parse(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
+        ),
+        'utf8'
+      )
+    ) as {
+      inputs: {
+        monthlyDeposit: number
+        termMonths: number
+        startDate: string
+        housingPurpose: boolean
+        openingFeeMode: string
+      }
+      expected: {
+        accountOpeningFee: number
+        totalDeposits: number
+        totalAccountFees: number
+        premiumRatePct: number
+        premiumAmount: number
+        contractAmount: number
+        maturityPayoutDate: string
+        engineDepositInterest: number
+        engineTerminalPayout: number
+        terminalPayout: number
+      }
+    }
+    const { inputs, expected } = example
+
     const product = findHomeSavingsProduct('premium-plusz-10x30')
     const outputs = calculateHomeSavingsFromSpecInputs(
       {
         productCode: product!.productCode,
-        monthlyDeposit: 50_000,
-        termMonths: 120,
-        startDate: '2026-10-10',
-        housingPurpose: true,
-        openingFeeMode: 'promo-fixed-65000'
+        monthlyDeposit: inputs.monthlyDeposit,
+        termMonths: inputs.termMonths,
+        startDate: inputs.startDate,
+        housingPurpose: inputs.housingPurpose,
+        openingFeeMode: inputs.openingFeeMode
       },
       {
         createHomeSavingsInstrumentBundle,
@@ -146,14 +177,14 @@ describe('home-savings schedule-usable metadata', () => {
       }
     )
 
-    expect(outputs.accountOpeningFee).toBe(65_000)
-    expect(outputs.totalDeposits).toBe(6_000_000)
-    expect(outputs.totalAccountFees).toBe(60_000)
-    expect(outputs.premiumRatePct).toBe(30)
-    expect(outputs.premiumAmount).toBe(1_800_000)
-    // ÁSZF §22 kiutalási packaging — OTP authoritative terminal is 7_831_152 (Δ +4 Ft)
-    expect(outputs.depositInterest).toBe(31_156)
-    expect(outputs.terminalPayout).toBe(7_831_156)
+    expect(outputs.accountOpeningFee).toBe(expected.accountOpeningFee)
+    expect(outputs.totalDeposits).toBe(expected.totalDeposits)
+    expect(outputs.totalAccountFees).toBe(expected.totalAccountFees)
+    expect(outputs.premiumRatePct).toBe(expected.premiumRatePct)
+    expect(outputs.premiumAmount).toBe(expected.premiumAmount)
+    // Engine pins from maturity-premium-120.yaml (OTP Lejáratkor is expected.terminalPayout).
+    expect(outputs.depositInterest).toBe(expected.engineDepositInterest)
+    expect(outputs.terminalPayout).toBe(expected.engineTerminalPayout)
     expect(outputs.productId).toBe('home-savings.premium-plusz-10x30.standard')
     expect(outputs.productSpecVersion).toBe('v2alpha1')
 
@@ -162,8 +193,8 @@ describe('home-savings schedule-usable metadata', () => {
     expect(bundle.productId).toBe('home-savings.premium-plusz-10x30.standard')
     expect(bundle.productSpecVersion).toBe('v2alpha1')
     expect(bundle.config.productCode).toBe('premium-plusz-10x30')
-    expect(bundle.config.openingFeeMode).toBe('promo-fixed-65000')
-    expect(bundle.config.contractAmount).toBe(13_000_000)
+    expect(bundle.config.openingFeeMode).toBe(inputs.openingFeeMode)
+    expect(bundle.config.contractAmount).toBe(expected.contractAmount)
     expect(bundle.config.description).toBe('Optional notes')
 
     const opening = bundle.generatedFlows.filter(
@@ -181,34 +212,71 @@ describe('home-savings schedule-usable metadata', () => {
 
     expect(opening).toHaveLength(1)
     expect(opening[0].direction).toBe('outflow')
-    expect(opening[0].amount).toBe(65_000)
-    expect(deposits).toHaveLength(120)
-    expect(fees).toHaveLength(120)
+    expect(opening[0].amount).toBe(expected.accountOpeningFee)
+    expect(deposits).toHaveLength(inputs.termMonths)
+    expect(fees).toHaveLength(inputs.termMonths)
     expect(terminal).toHaveLength(1)
     expect(terminal[0].direction).toBe('inflow')
-    expect(terminal[0].amount).toBe(7_831_156)
-    expect(terminal[0].date).toBe('2036-11-01')
+    expect(terminal[0].amount).toBe(expected.engineTerminalPayout)
+    expect(terminal[0].date).toBe(expected.maturityPayoutDate)
   })
 
   it('preview schedule path returns scalars without requiring a bundle factory', () => {
+    const example = YAML.parse(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
+        ),
+        'utf8'
+      )
+    ) as {
+      inputs: {
+        monthlyDeposit: number
+        termMonths: number
+        startDate: string
+        housingPurpose: boolean
+        openingFeeMode: string
+      }
+      expected: {
+        engineDepositInterest: number
+        engineTerminalPayout: number
+      }
+    }
+
     const outputs = calculateHomeSavingsScheduleFromSpecInputs(
       {
         productCode: 'premium-plusz-10x30',
-        monthlyDeposit: 50_000,
-        termMonths: 120,
-        startDate: '2026-10-10',
-        housingPurpose: true,
-        openingFeeMode: 'promo-fixed-65000'
+        monthlyDeposit: example.inputs.monthlyDeposit,
+        termMonths: example.inputs.termMonths,
+        startDate: example.inputs.startDate,
+        housingPurpose: example.inputs.housingPurpose,
+        openingFeeMode: example.inputs.openingFeeMode
       },
       { resolveHomeSavingsSchedule }
     )
 
-    expect(outputs.terminalPayout).toBe(7_831_156)
-    expect(outputs.depositInterest).toBe(31_156)
+    expect(outputs.terminalPayout).toBe(example.expected.engineTerminalPayout)
+    expect(outputs.depositInterest).toBe(example.expected.engineDepositInterest)
     expect((outputs as { bundle?: unknown }).bundle).toBeUndefined()
   })
 
   it('zeros Premium when housing purpose is not assumed', () => {
+    const example = YAML.parse(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          'docs/product-specs/products/home-savings/premium-plusz-10x30/examples/maturity-premium-120.yaml'
+        ),
+        'utf8'
+      )
+    ) as {
+      expected: {
+        totalDeposits: number
+        engineDepositInterest: number
+      }
+    }
+
     const outputs = calculateHomeSavingsFromSpecInputs(
       {
         productCode: 'premium-plusz-10x30',
@@ -224,7 +292,9 @@ describe('home-savings schedule-usable metadata', () => {
     expect(outputs.accountOpeningFee).toBe(130_000)
     expect(outputs.premiumRatePct).toBe(0)
     expect(outputs.premiumAmount).toBe(0)
-    expect(outputs.terminalPayout).toBe(6_000_000 + 31_156)
+    expect(outputs.terminalPayout).toBe(
+      example.expected.totalDeposits + example.expected.engineDepositInterest
+    )
   })
 
   it('matches engine locked maturity example on the browser dual-surface', () => {

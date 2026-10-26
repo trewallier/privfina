@@ -25,14 +25,14 @@ Statuses are transitional rollout markers reflecting current integration state, 
 | Simplified examples | `loan.fixed-rate.standard`, `loan.fixed-rate.mortgage`; generic bond subtypes (not catalog rows) | Loans: `30/360` equal-month (`r/12`). Bonds: instrument-mode presentation on simplified investment composer |
 | Public offerings (loans) | Seven Hirdetmény `mortgage-loan.*` codes | `act/360` equal-month (`r×(365/12)/360`, ADR 0025); commercially-usable requires all three ADR 0024 checks |
 | Public offerings (securities) | `government-security.{dkj,pmap,bmap}.standard` | ÁKK / State Treasury; commercial investment composer (ADR 0027) |
-| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Lakástakarék; commercial home-savings composer (ADR 0028–0031); USZ Melléklet 0.10% / 3.846‰ / kiutalás 122; ÁSZF §10/§22 interest packaging |
+| Public offerings (home savings) | `home-savings.premium-plusz-10x30.standard` | OTP Lakástakarék; commercial home-savings composer (ADR 0028–0031); USZ Melléklet 0.10% / 3.846‰ / kiutalás 122; ÁSZF §10 interest + OTP-aligned kiutalási payout packaging |
 
 **What `calc-aligned` requires in this repo** (engine bar; UI may still be below schedule-usable):
 
 - Family-level product-spec mapper under `src/finance_engine/product_specs/` that loads schema-v2 YAML and drives reusable primitives (no per-product amortizer forks).
 - Executable tests that assert engine-computed outputs from example inputs (not only YAML constant lock-in).
 - Catalog row, [`formula-ownership-audit.md`](../formula-ownership-audit.md), and product README updated to `calc-aligned`.
-- **Home-savings public offering:** engine terminal payout / deposit interest must match OTP product-page calculator worked examples (`web-calculator-maturity-*.yaml`) within documented rounding (≤4 Ft). Interest payout dating must follow ÁSZF §10/§22 (2-month kiutalási packaging), not stop at last deposit.
+- **Home-savings public offering:** engine terminal must match OTP product-page calculator Lejáratkor terminals (`web-calculator-maturity-*.yaml`) within ≤4 Ft under the documented continuous-path packaging (first of month after lastDeposit+2 — OTP calculator alignment, not literal ÁSZF §22 (1)). Fee / Premium / contract must be exact. Interest day-count follows ÁSZF §10; do not stop accrual at last deposit.
 
 **What `schedule-usable` requires** (ADR 0023 loans; ADR 0027 securities; ADR 0030 home-savings):
 
@@ -66,7 +66,7 @@ Checklist for promotions: [`../dev-playbooks/product-lifecycle.md`](../dev-playb
 | government-security.dkj.standard | government-security | dkj | dkj | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/dkj/product.yaml | docs/product-specs/products/government-securities/dkj/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed end-to-end (ADR 0027) |
 | government-security.pmap.standard | government-security | pmap | pmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/pmap/product.yaml | docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, preview/adapter seam, and examples are spec-backed (ADR 0027) |
 | government-security.bmap.standard | government-security | bmap | bmap | v2alpha1 | fully-spec-backed | docs/product-specs/products/government-securities/bmap/product.yaml | docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml | Commercial investment composer; form metadata, controller mapping, and adapter-calculation seam are spec-backed; accrued/coupon primitives in `src/finance_engine/instruments/bmap.ts` (Vite `@finance_engine`, ADR 0032) |
-| home-savings.premium-plusz-10x30.standard | home-savings | premium-plusz-10x30 | premium-plusz-10x30 | v2alpha1 | schedule-usable | docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml | docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ | Commercial composer + fee/Premium/maturity calc-aligned (ÁSZF §22 kiutalási packaging ↔ OTP web calculator ≤4 Ft); EBKM packaging quarantined (ADR 0031 / ROADMAP §5e) |
+| home-savings.premium-plusz-10x30.standard | home-savings | premium-plusz-10x30 | premium-plusz-10x30 | v2alpha1 | schedule-usable | docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml | docs/product-specs/products/home-savings/premium-plusz-10x30/examples/ | Commercial composer + fee/Premium/maturity calc-aligned (OTP web calculator Lejáratkor ≤4 Ft under documented payout packaging); EBKM packaging quarantined (ADR 0031 / ROADMAP §5e) |
 
 ## Planned catalog extensions
 

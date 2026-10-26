@@ -17,9 +17,15 @@ inputs:
 expected:
   accountFeeMonthly: 500
   accountOpeningFee: 65000
+  # Published Hirdetmény A goldens (authoritative commercially-usable target).
   ebkmPctWithPremium: 4.84
   ebkmPctWithoutPremium: -0.10
+  # Schedule→Annex 3 regression pins (not published). Quarantine until with-premium matches.
+  scheduleEbkmPctWithPremium: 4.92
+  scheduleEbkmPctWithoutPremium: -0.1
 
 notes:
   - Hirdetmény A EBKM pair with Premium / without Premium.
-  - Engine EBKM verification is ADR 0031; this example locks published goldens at spec-only.
+  - scheduleEbkmPct* are ADR 0031 quarantine pins of current schedule cash-flow EBKM (not Hirdetmény).
+  - Without-premium schedule may coincide with published (−0.10); with-premium gap must stay visible.
+  - Engine EBKM verification is ADR 0031; this example locks published goldens + schedule pins.

@@ -219,11 +219,11 @@ export function calculateEbkmFromLegs(input: {
  * of the month three months after the last-deposit month (conventional day-1
  * settlement marker inside the payment month).
  *
- * Half-up knife-edge: for the locked Hirdetmény examples (start `2026-10-10`,
+ * Half-up residual: for the locked Hirdetmény examples (start `2026-10-10`,
  * last deposit `2036-09-10`), day-1 (`2036-12-01`) leaves promo-20k both legs
- * 0.01 off published; end-of-kiutalási (`2036-11-30`) would flip those green
- * but reopen other cells. Do **not** switch markers without an ÁSZF/OTP cite
- * for which day inside the payment month the published EBKM calculator uses.
+ * 0.01 off published. End-of-kiutalási (`2036-11-30`) keeps that same miss
+ * pair; no single day marker closes both legs without reopening other cells.
+ * Do **not** hunt a fitted settlement day — wait for an ÁSZF/OTP cite.
  */
 export function resolveHomeSavingsEbkmPayoutDate(lastDepositDateIso: string): string {
   const lastDeposit = parseIsoDate(lastDepositDateIso)

@@ -207,3 +207,29 @@ Artifacts: [`tarifatabla-8x30-kamat-compare-summary.json`](tarifatabla-8x30-kama
 - **10x30 web harvest:** still mixed **−3 / +4 / −1** Ft (same order of magnitude).
 - Under the tariff’s implied day (~4) + maturity packaging, the interest engine is **not** the source of ~80–200 Ft EBKM `K` residuals. Those remain a packaging / fee-span / payout-date / EBKM-assembly issue, not ACT/360 daily accrual math.
 - Naïve use of tariff-effective `2025-09-30` or EBKM witness `2025-10-12` as startDate **does** show ~0.5% understatement — that is startDate mismatch, not a broken rate formula.
+
+### 8c — Equal 30-day months vs the same 8x30 `Kamat (Ft)` goldens
+
+Hypothesis: if “payments on the same day of the month” were paired with **every month = 30 days** (30/360-style), would that hit the tariff better than calendar ACT/360?
+
+Probe (91 rows; yearly capitalization + final `Math.round` kept). Artifact: [`equal-30day-month-kamat-probe.json`](equal-30day-month-kamat-probe.json).
+
+| Model | Packaging knobs | exact / 91 | mean ‖Δ‖ | max ‖Δ‖ | mean ‖Δ/kamat‖ |
+| --- | --- | ---: | ---: | ---: | ---: |
+| **Calendar ACT/360 (engine)** | startDate `2025-09-04`, maturity +2 FOM | **14** | **2.46 Ft** | **11 Ft** | **0.015%** |
+| Synthetic 30-day calendar | deposit day 12, payout +3 FOM | 12 | 3.64 Ft | 13 Ft | 0.019% |
+| Synthetic 30-day calendar | day 1, maturity +2 FOM | 0 | 277 Ft | 503 Ft | 1.25% |
+| Period 30/360 (×30 days each month) | term+2 full months | 0 | 165 Ft | 301 Ft | 0.75% |
+| Period 30/360 | term+1 | 0 | 276 Ft | 502 Ft | 1.25% |
+| Equal-month ACT/360 loan-style (365/12 days) | term+1 | 0 | 27 Ft | 55 Ft | 0.12% |
+
+Sample every 10 000 Ft (calendar best vs plain 30/360 term+2 vs synth day12/+3):
+
+| monthly | tariff | ACT/360 Δ | 30/360 term+2 Δ | synth30 day12/+3 Δ |
+| ---: | ---: | ---: | ---: | ---: |
+| 10 000 | 4 020 | −1 | +30 | 0 |
+| 20 000 | 8 040 | −1 | +57 | +1 |
+| 50 000 | 20 095 | +1 | +151 | +3 |
+| 100 000 | 40 192 | +1 | +301 | +5 |
+
+**Verdict:** equal 30-day months do **not** improve on the tariff. A blunt 30/360 period model is systematically off by **~0.75–1.25%**. A synthetic 30-day calendar can get near-exact only with an awkward day-12 + kiutalási+3 fit, and still loses to real-calendar ACT/360 at day 4. The goldens behave like **actual calendar ACT/360**, not 30-day months.

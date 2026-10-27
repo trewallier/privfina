@@ -159,20 +159,11 @@ Artifacts: this note + [`ebkm-4x10-interest-invariance-probe.json`](ebkm-4x10-in
 
 Pedagogical timeline (round numbers, OTP vs ÁSZF interest-end): [`home-savings-interest-timeline-worked-example.md`](home-savings-interest-timeline-worked-example.md).
 
-## Phase 8 — Interest 1 Ft check vs OTP harvest
+## Phase 8 — Interest 1 Ft check vs OTP harvest + internal 8x30 tariff
 
-Question: does engine `depositInterest` match OTP-derived interest at **1 Ft** on harvested calculator / internal multi-amount goldens? If yes, residual EBKM would have to come from packaging / K assembly elsewhere.
+Question: does engine `depositInterest` match OTP-derived / internal tariff interest at **1 Ft**? If yes, residual EBKM would have to come from packaging / K assembly elsewhere.
 
-### Data available
-
-| Source | Present in checkout? | Coverage |
-| --- | --- | --- |
-| OTP product-page calculator harvest (`web-calculator-maturity-*.yaml`, captured 2026-10-25) | **Yes** | Premium Plus **10x30** only — 20k / 50k / 100k |
-| Internal multi-amount **8x30** interest + savings table | **No** | Not in repo, agent stores, canvases, or prior LTP/OTP agent transcripts |
-
-OTP widget publishes Lejáratkor **terminal** only; YAML `depositInterest` is derived as `terminal − totalDeposits − premiumAmount` (not a separate UI kamat line).
-
-### Live engine vs OTP-derived interest (10x30, startDate 2026-10-10)
+### 8a — Premium Plus 10x30 OTP web-calculator harvest
 
 | monthly | OTP interest | engine interest | Δinterest | OTP terminal | engine terminal | Δterminal |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -180,10 +171,39 @@ OTP widget publishes Lejáratkor **terminal** only; YAML `depositInterest` is de
 | 50 000 | 31 152 | 31 156 | **+4** | 7 831 152 | 7 831 156 | +4 |
 | 100 000 | 62 313 | 62 312 | **−1** | 15 662 313 | 15 662 312 | −1 |
 
-`Δterminal ≡ Δinterest` on all three rows (fees / deposits / Premium exact) — the entire residual sits in the interest path (or equivalent accrual-end packaging that changes rounded interest).
+`Δterminal ≡ Δinterest` (fees / deposits / Premium exact). Mixed-sign ≤4 Ft band — not 1 Ft clean.
+
+### 8b — Internal Premium Plus 8x30 tariff `Kamat (Ft)` (2025-09-30)
+
+Source: uploaded internal tarifatábla *PRÉMIUM PLUSZ 8x30* (effective 2025-09-30; **not committed** — internal-only). 91 rows, monthly deposit 10 000…100 000 Ft step 1 000. Column `Kamat (Ft)` = accumulated deposit interest through savings; `Teljes megtakarítás = deposits + kamat + Premium` identity holds on all rows. Premium / total deposits match the engine exactly on every row.
+
+Engine path: `calculateHomeSavingsFromProductSpec` → schedule `depositInterest` with default **maturity packaging** (last-deposit month + 2 → day-1; interest through day before payout). ÁSZF EBKM interest-end (+3) is a much worse fit (~+330 Ft mean).
+
+Tariff does **not** state `startDate`. Day sweep inside `saleWindow` (Aug–Dec 2025):
+
+| startDate | exact / 91 | mean ‖Δ‖ (Ft) | median ‖Δ‖ | max ‖Δ‖ | mean signed Δ | mean ‖Δ/kamat‖ | max ‖Δ/kamat‖ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **2025-09-04** (best) | **14** | **2.46** | **2** | **11** | **+0.22** | **0.015%** | **0.105%** |
+| 2025-11-04 | 6 | 2.98 | 2 | 12 | +2.30 | 0.016% | 0.118% |
+| 2025-09-01 (month-1) | 0 | 44.5 | 44 | 87 | +44.5 | 0.202% | 0.315% |
+| 2025-10-01 | 0 | 52.8 | 53 | 99 | +52.8 | 0.239% | 0.354% |
+| 2025-10-12 (EBKM witness) | 0 | 109.2 | 109 | 201 | −109.2 | 0.493% | 0.565% |
+| 2025-09-30 (tariff effective) | 0 | 120.5 | 121 | 221 | −120.5 | 0.545% | 0.622% |
+
+Best-alignment abs histogram (2025-09-04): `0×14, 1×22, 2×20, 3×14, 4×11, …, 11×1` — **81/91** within ≤4 Ft; all within ≤11 Ft. Sample every 10 000 Ft:
+
+| monthly | tariff kamat | engine | Δ Ft | Δ % |
+| ---: | ---: | ---: | ---: | ---: |
+| 10 000 | 4 020 | 4 019 | −1 | −0.025% |
+| 20 000 | 8 040 | 8 039 | −1 | −0.012% |
+| 50 000 | 20 095 | 20 096 | +1 | +0.005% |
+| 100 000 | 40 192 | 40 193 | +1 | +0.002% |
+
+Artifacts: [`tarifatabla-8x30-kamat-compare-summary.json`](tarifatabla-8x30-kamat-compare-summary.json), [`tarifatabla-8x30-kamat-compare-best-rows.json`](tarifatabla-8x30-kamat-compare-best-rows.json).
 
 ### Conclusion
 
-- Interest is **not** 1 Ft clean against the harvested OTP calculator goldens (mixed-sign residuals within the documented ≤4 Ft band).
-- Therefore the “interest flawless → bug elsewhere” hypothesis is **not** supported by the data we have.
-- The multi-amount 8x30 internal table was not located; that stricter grid could not be re-run here.
+- **8x30 tariff (aligned calendar):** interest path is **near-exact** — mean abs **~2.5 Ft** / **~0.015%**, max **11 Ft** / **~0.1%**, mixed sign, consistent with yearly-cap / final `Math.round` noise. Not a systematic multi-ten/hundred Ft bias.
+- **10x30 web harvest:** still mixed **−3 / +4 / −1** Ft (same order of magnitude).
+- Under the tariff’s implied day (~4) + maturity packaging, the interest engine is **not** the source of ~80–200 Ft EBKM `K` residuals. Those remain a packaging / fee-span / payout-date / EBKM-assembly issue, not ACT/360 daily accrual math.
+- Naïve use of tariff-effective `2025-09-30` or EBKM witness `2025-10-12` as startDate **does** show ~0.5% understatement — that is startDate mismatch, not a broken rate formula.

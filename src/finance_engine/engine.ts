@@ -73,7 +73,9 @@ export {
   ceilToTenForint,
   createHomeSavingsInstrumentBundle,
   generateHomeSavingsInstrumentCashFlows,
+  HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE,
   HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS,
+  HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS_BEFORE_CUTOVER,
   HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY,
   assertHomeSavingsRegularDepositDayOfMonth,
   assertStartDateInSaleWindow,
@@ -84,6 +86,7 @@ export {
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
   resolveKiutalasiPeriodMonths,
+  resolveKiutalasiPeriodMonthsForContractStart,
   resolveMonthlyDepositFromContractAmount
 } from './instruments'
 export type {

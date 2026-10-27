@@ -98,6 +98,14 @@ Full-catalog revalidation (`scripts/revalidate-home-savings-ebkm-witnesses.ts`) 
 
 So: allowing late first credits **does not** close residual 4x10 cells (still zero witnesses; same 0.01 without-Premium pin). Longer módozatok gain many day>12 witnesses because subsequent credits clamp to day 12; short 4x10 green cells stay on day≤12-only witnesses.
 
+### ÁSZF §22 (4) kiutalási cutover 2017-07-01
+
+Contracts concluded **before** 2017-07-01 use a **3**-month kiutalási időszak; on/after that date **2** months. Engine: `resolveKiutalasiPeriodMonthsForContractStart`; EBKM payout = `lastDepositMonth + kiutalási + 1` day-1.
+
+No catalog módozat was available at the cutover (`saleWindow.from` ≥ 2023-03-01 for Premium 4x10/8x30; later for Plus). Current Hirdetmény pins therefore stay on the 2-month path — the rule is encoded for ÁSZF fidelity / future historical módozatok, not a pin retune.
+
+Forced `kiutalasiPeriodMonths: 3` sensitivity at YAML startDates (short 4x10): without-Premium moves **away** from published residuals (e.g. Premium 4x10/20k −1.03 → −1.00; Plus 4x10/100k −0.97 → −0.94; ΔWO ≈ +0.03) and with-Premium also drifts (~−0.12). Does **not** close residuals. See `scripts/revalidate-home-savings-ebkm-witnesses.ts`.
+
 ## Annex 3 EBKM vs contract interest (why short módozatok are sharper)
 
 Two different calculators share the same cash-flow dates/amounts:

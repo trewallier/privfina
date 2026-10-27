@@ -285,7 +285,9 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
             DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT
         )
 
+  // ÁSZF §22 (4) from contract startDate wins over YAML alloc−eval when present.
   const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    startDate: specInputs.startDate,
     evaluationMinMonths: productSpec.engine.evaluationMinMonths,
     allocationMinMonths: productSpec.engine.allocationMinMonths
   })

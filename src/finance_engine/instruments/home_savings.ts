@@ -32,12 +32,21 @@ export const DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT = 2_600_000
 export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
 
 /**
- * General Terms and Conditions (ÁSZF) §22 (4): allocation period (kiutalási időszak)
- * length for contracts concluded on/after 2017-07-01 (2 months; older cohorts use 3).
- * Current Premium Plus uses 2. With evaluation min savings period 120
- * (USZ Melléklet) → allocation min 122.
+ * ÁSZF §22 (4) cutover: contracts concluded **on/after** this ISO date use a
+ * 2-month kiutalási időszak; contracts concluded **before** use 3 months.
+ */
+export const HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE = '2017-07-01'
+
+/**
+ * ÁSZF §22 (4): allocation period (kiutalási időszak) for contracts concluded
+ * on/after {@link HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE}.
+ * Current Premium / Premium Plus sale windows are all post-cutover → 2.
+ * With evaluation min savings period 120 (USZ Melléklet) → allocation min 122.
  */
 export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS = 2
+
+/** ÁSZF §22 (4): kiutalási időszak for contracts concluded before the cutover. */
+export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS_BEFORE_CUTOVER = 3
 
 /**
  * ÁSZF / USZ **regular** monthly deposit arrival deadline: tárgyhó **12.** napja
@@ -92,10 +101,11 @@ export interface HomeSavingsInstrumentInput {
   /** Override Premium percent; when omitted, resolve from term + tiers. */
   premiumRatePct?: number
   premiumTiers?: HomeSavingsPremiumTiers
-  /**
+/**
    * Allocation (kiutalási) period length in months after last deposit.
-   * Defaults to {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS} (2). Product YAML
-   * supplies `allocationMinMonths − evaluationMinMonths` when both are set.
+   * Defaults from ÁSZF §22 (4) via {@link resolveKiutalasiPeriodMonthsForContractStart}
+   * when omitted. Product YAML may supply `allocationMinMonths − evaluationMinMonths`
+   * for post-cutover módozat schemes (always 2 for current catalog).
    */
   kiutalasiPeriodMonths?: number
   /** Early-exit scenario: savings month index (1-based) used for Premium band. */
@@ -104,12 +114,34 @@ export interface HomeSavingsInstrumentInput {
   description?: string
 }
 
-/** Resolve allocation-period length from USZ Melléklet eval/alloc mins when both present. */
+/**
+ * ÁSZF §22 (4): kiutalási időszak length from contract conclusion / first-credit
+ * date — 3 months before 2017-07-01, 2 months on/after that date (inclusive).
+ */
+export function resolveKiutalasiPeriodMonthsForContractStart(startDate: string): number {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    throw new Error('startDate must be an ISO calendar date (YYYY-MM-DD).')
+  }
+  return startDate < HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE
+    ? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS_BEFORE_CUTOVER
+    : HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS
+}
+
+/**
+ * Resolve allocation-period length.
+ * Priority: explicit `fallback` when provided without startDate/YAML → else
+ * ÁSZF §22 (4) from `startDate` when present → else USZ Melléklet
+ * `allocationMinMonths − evaluationMinMonths` → else post-cutover default 2.
+ */
 export function resolveKiutalasiPeriodMonths(input: {
+  startDate?: string | null
   evaluationMinMonths?: number
   allocationMinMonths?: number
   fallback?: number
 }): number {
+  if (input.startDate !== undefined && input.startDate !== null && input.startDate !== '') {
+    return resolveKiutalasiPeriodMonthsForContractStart(String(input.startDate))
+  }
   const evaluation = input.evaluationMinMonths
   const allocation = input.allocationMinMonths
   if (
@@ -354,13 +386,12 @@ function shiftUtcDays(date: Date, days: number): Date {
 /**
  * Continuous-path maturity payout date for interest end + terminal inflow.
  *
- * ÁSZF §22: after minimum savings period (megtakarítási idő), a 2-month
- * allocation period (kiutalási időszak) runs (post-2017-07-01). USZ Melléklet
- * encodes this as allocation min = 122 for the 120-month product scheme
- * (módozat). OTP product-page calculator "at maturity" (Lejáratkor) goldens
- * match the **first calendar day** of the month that is
- * {@link HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS} after the last deposit's month
- * (not the literal allocation date = last day of that period / §22 (1) payment
+ * ÁSZF §22: after minimum savings period (megtakarítási idő), a 2- or 3-month
+ * allocation period (kiutalási időszak) runs (§22 (4) cutover 2017-07-01).
+ * USZ Melléklet encodes post-cutover as allocation min = 122 for the 120-month
+ * scheme. OTP product-page calculator "at maturity" (Lejáratkor) goldens match
+ * the **first calendar day** of the month that is `kiutalasiPeriodMonths` after
+ * the last deposit's month (not the literal allocation end / §22 (1) payment
  * month). Interest ends the day before this date (ÁSZF §10).
  */
 export function resolveHomeSavingsMaturityPayoutDate(input: {
@@ -372,7 +403,10 @@ export function resolveHomeSavingsMaturityPayoutDate(input: {
   if (!Number.isInteger(termMonths) || termMonths <= 0) {
     throw new Error('termMonths must be a positive integer.')
   }
-  const lag = Number(input.kiutalasiPeriodMonths ?? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS)
+  const lag = Number(
+    input.kiutalasiPeriodMonths ??
+      resolveKiutalasiPeriodMonthsForContractStart(input.startDate)
+  )
   if (!Number.isInteger(lag) || lag < 0) {
     throw new Error('kiutalasiPeriodMonths must be a non-negative integer.')
   }
@@ -662,7 +696,8 @@ export function generateHomeSavingsInstrumentCashFlows(
 
   const maturityPayoutDate = resolveHomeSavingsMaturityPayoutDate({
     startDate: input.startDate,
-    termMonths
+    termMonths,
+    kiutalasiPeriodMonths: input.kiutalasiPeriodMonths
   })
 
   if (schedule.terminalPayout > 0) {
@@ -691,7 +726,8 @@ export function generateHomeSavingsInstrumentCashFlows(
  *   maturity illustrations keep `termMonths` fee months only.
  * - **Terminal amount** uses deposit interest accrued through the day before
  *   the ÁSZF EBKM payout date (ÁSZF §10); the inflow is dated on that payout
- *   date (`lastDepositMonth+3` day-1 via {@link resolveHomeSavingsEbkmPayoutDate}).
+ *   date (`lastDepositMonth + kiutalási + 1` day-1 via
+ *   {@link resolveHomeSavingsEbkmPayoutDate}; post-2017 → +3).
  *
  * This packaging closes Hirdetmény EBKM goldens (including promo-20k) without
  * fitted lag/netting knobs.
@@ -711,9 +747,13 @@ export function buildHomeSavingsAszfEbkmCashFlows(
   if (!Number.isInteger(termMonths) || termMonths <= 0) {
     throw new Error('termMonths must be a positive integer.')
   }
-  const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
-    fallback: input.kiutalasiPeriodMonths ?? HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS
-  })
+  const kiutalasiPeriodMonths =
+    input.kiutalasiPeriodMonths !== undefined && input.kiutalasiPeriodMonths !== null
+      ? Number(input.kiutalasiPeriodMonths)
+      : resolveKiutalasiPeriodMonths({ startDate: input.startDate })
+  if (!Number.isInteger(kiutalasiPeriodMonths) || kiutalasiPeriodMonths < 0) {
+    throw new Error('kiutalasiPeriodMonths must be a non-negative integer.')
+  }
   assertBoundedHorizon(undefined, termMonths + kiutalasiPeriodMonths)
 
   const depositDates = buildHomeSavingsMonthlyDepositDates({
@@ -722,7 +762,9 @@ export function buildHomeSavingsAszfEbkmCashFlows(
     depositDayOfMonth: input.depositDayOfMonth
   })
   const lastDepositDate = depositDates[depositDates.length - 1]!
-  const ebkmPayoutDate = resolveHomeSavingsEbkmPayoutDate(lastDepositDate)
+  const ebkmPayoutDate = resolveHomeSavingsEbkmPayoutDate(lastDepositDate, {
+    kiutalasiPeriodMonths
+  })
 
   const depositInterest = calculateHomeSavingsDepositInterest({
     monthlyDeposit,

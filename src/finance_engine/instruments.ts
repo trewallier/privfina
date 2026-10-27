@@ -98,7 +98,9 @@ export {
   DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
   DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
+  HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE,
   HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS,
+  HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS_BEFORE_CUTOVER,
   HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY,
   assertHomeSavingsRegularDepositDayOfMonth,
   assertStartDateInSaleWindow,
@@ -115,5 +117,6 @@ export {
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
   resolveKiutalasiPeriodMonths,
+  resolveKiutalasiPeriodMonthsForContractStart,
   resolveMonthlyDepositFromContractAmount
 } from './instruments/home_savings'

@@ -1,7 +1,8 @@
 /**
  * One-shot: revalidate all catalog home-savings EBKM cells under current engine
- * (first deposit ÁSZF-exempt; subsequent ≤12) — YAML startDate fit + full
- * saleWindow witness counts, with 4x10 residual deltas called out.
+ * (first deposit ÁSZF-exempt; subsequent ≤12; ÁSZF §22 (4) kiutalási cutover)
+ * — YAML startDate fit + full saleWindow witness counts, with 4x10 residual
+ * deltas and a forced-3-month kiutalási sensitivity for short terms.
  *
  * Run: npx tsx scripts/revalidate-home-savings-ebkm-witnesses.ts
  */
@@ -9,8 +10,13 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import YAML from 'yaml'
 import {
+  HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE,
+  buildHomeSavingsAszfEbkmCashFlows,
+  calculateEbkmFromHomeSavingsCashFlows,
   calculateHomeSavingsFromProductSpec,
   loadHomeSavingsProductSpec,
+  mapHomeSavingsSpecInputsToInstrumentInput,
+  resolveKiutalasiPeriodMonthsForContractStart,
   type HomeSavingsProductSpec,
   type HomeSavingsSpecInputs
 } from '../src/finance_engine/engine'
@@ -238,6 +244,64 @@ function main(): void {
         yamlOK ? 'YES' : 'NO'
       } | ${witnesses} (${dayLe12}/${dayGt12}) | ${first ?? '-'} | ${
         cell.residual ? 'RESIDUAL' : isLiveOpen ? 'live±45d' : 'ok'
+      }`
+    )
+  }
+
+  console.log('\n=== ÁSZF §22 (4) kiutalási cutover ===')
+  console.log(`cutover=${HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE}`)
+  const schema = JSON.parse(readRepo(DEFAULT_PRODUCT_SCHEMA_PATH))
+  const productPaths = [
+    'docs/product-specs/products/home-savings/premium-4x10/product.yaml',
+    'docs/product-specs/products/home-savings/premium-8x30/product.yaml',
+    'docs/product-specs/products/home-savings/premium-plusz-4x10/product.yaml',
+    'docs/product-specs/products/home-savings/premium-plusz-8x30/product.yaml',
+    'docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml'
+  ]
+  for (const path of productPaths) {
+    const product = loadHomeSavingsProductSpec(readRepo(path), schema)
+    const from = product.saleWindow?.from ?? '?'
+    const availableAtCutover = from < HOME_SAVINGS_KIUTALASI_PERIOD_CUTOVER_DATE
+    console.log(
+      `${path.split('/').slice(-2, -1)[0]} saleWindow.from=${from} availableAtCutover=${availableAtCutover} kiutalási@from=${resolveKiutalasiPeriodMonthsForContractStart(from)}`
+    )
+  }
+
+  console.log('\n=== Forced kiutalási=3 sensitivity at YAML start (short terms) ===')
+  console.log('label | engine2 W/WO | forced3 W/WO | ΔWO | closes residual?')
+  for (const cell of CELLS.filter((c) => c.label.includes('4x10'))) {
+    const product = loadProduct(cell.product)
+    const example = YAML.parse(readRepo(cell.example))
+    const base = example.inputs as HomeSavingsSpecInputs
+    const instrument2 = mapHomeSavingsSpecInputsToInstrumentInput(product, {
+      ...base,
+      housingPurpose: false
+    })
+    const instrument3 = { ...instrument2, kiutalasiPeriodMonths: 3 }
+    const ebkm2 = calculateEbkmFromHomeSavingsCashFlows(
+      buildHomeSavingsAszfEbkmCashFlows({ ...instrument2, housingPurpose: false }),
+      { retargetTerminalPayout: false }
+    )
+    const ebkm3 = calculateEbkmFromHomeSavingsCashFlows(
+      buildHomeSavingsAszfEbkmCashFlows({ ...instrument3, housingPurpose: false }),
+      { retargetTerminalPayout: false }
+    )
+    const with2 = calculateEbkmFromHomeSavingsCashFlows(
+      buildHomeSavingsAszfEbkmCashFlows({ ...instrument2, housingPurpose: true }),
+      { retargetTerminalPayout: false }
+    )
+    const with3 = calculateEbkmFromHomeSavingsCashFlows(
+      buildHomeSavingsAszfEbkmCashFlows({ ...instrument3, housingPurpose: true }),
+      { retargetTerminalPayout: false }
+    )
+    const dWo = Number((ebkm3.percentRounded - ebkm2.percentRounded).toFixed(2))
+    const closes =
+      cell.residual &&
+      with3.percentRounded === cell.published.with &&
+      ebkm3.percentRounded === cell.published.without
+    console.log(
+      `${cell.label} | ${with2.percentRounded}/${ebkm2.percentRounded} | ${with3.percentRounded}/${ebkm3.percentRounded} | ${dWo} | ${
+        cell.residual ? (closes ? 'YES' : 'NO') : 'n/a'
       }`
     )
   }

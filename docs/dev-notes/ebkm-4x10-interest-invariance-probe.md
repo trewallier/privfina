@@ -106,6 +106,15 @@ No catalog módozat was available at the cutover (`saleWindow.from` ≥ 2023-03-
 
 Forced `kiutalasiPeriodMonths: 3` sensitivity at YAML startDates (short 4x10): without-Premium moves **away** from published residuals (e.g. Premium 4x10/20k −1.03 → −1.00; Plus 4x10/100k −0.97 → −0.94; ΔWO ≈ +0.03) and with-Premium also drifts (~−0.12). Does **not** close residuals. See `scripts/revalidate-home-savings-ebkm-witnesses.ts`.
 
+### Rounding-direction theory (rejected)
+
+Residuals are negative without-Premium cells, which invites “maybe OTP rounds further from zero and we round toward +∞.” Counter-evidence (`scripts/compare-ebkm-rounding-theories.ts`, write-up `docs/dev-notes/ebkm-rounding-theory-compare.md`):
+
+- Engine `roundEbkmPercent` is **already** half-up away from zero.
+- Away vs algebraic half-up: **identical** on all 32 harness sides at YAML starts (no cell on a negative `*.xx5` edge).
+- Residual raws (−1.030978 / −0.973389) are **not** on the half-up boundary (need ≥1.035 / 0.975).
+- Always-ceil-magnitude would print the residual ticks but **regresses 8** green cells (incl. positive EBKM) → 24/32 net.
+
 ## Annex 3 EBKM vs contract interest (why short módozatok are sharper)
 
 Two different calculators share the same cash-flow dates/amounts:

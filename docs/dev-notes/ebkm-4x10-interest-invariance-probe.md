@@ -233,3 +233,42 @@ Sample every 10 000 Ft (calendar best vs plain 30/360 term+2 vs synth day12/+3
 | 100 000 | 40 192 | +1 | +301 | +5 |
 
 **Verdict:** equal 30-day months do **not** improve on the tariff. A blunt 30/360 period model is systematically off by **~0.75–1.25%**. A synthetic 30-day calendar can get near-exact only with an awkward day-12 + kiutalási+3 fit, and still loses to real-calendar ACT/360 at day 4. The goldens behave like **actual calendar ACT/360**, not 30-day months.
+
+### 8d — Capitalization rounding decimals (0…8) vs the same `Kamat (Ft)` goldens
+
+Hypothesis: year-cap / terminal rounding of pending interest to whole forints vs fillér (2 dp) vs finer precision changes the tariff fit.
+
+Method: same ACT/360 daily loop as the engine; only `Math.round(pending)` at each megtakarítási-év capitalization (and optionally at terminal) is replaced by round-to-N-decimals (`N = 0…8`). Compare `Math.round(totalInterest)` to tariff whole-Ft kamat. Anchor startDate **2025-09-04** (best calendar alignment from 8b). Artifact: [`cap-rounding-decimals-kamat-probe.json`](cap-rounding-decimals-kamat-probe.json).
+
+**Mode A — round cap and terminal to N decimals**
+
+| N (decimals) | label | exact / 91 | mean ‖Δ‖ | median ‖Δ‖ | max ‖Δ‖ | mean signed Δ | mean ‖Δ/kamat‖ | max ‖Δ/kamat‖ |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | whole Ft (engine today) | **14** | 2.462 | 2 | 11 | +0.22 | 0.0149% | 0.105% |
+| 1 | 1 dp | 9 | 2.363 | 2 | 10 | +0.30 | 0.0143% | 0.105% |
+| 2 | fillér | 11 | 2.363 | 2 | 10 | +0.27 | 0.0144% | 0.105% |
+| 3 | 3 dp | 11 | 2.363 | 2 | 10 | +0.27 | 0.0144% | 0.105% |
+| 4 | 4 dp | 11 | 2.363 | 2 | 10 | +0.27 | 0.0144% | 0.105% |
+| 5 | 5 dp | 11 | 2.363 | 2 | 10 | +0.27 | 0.0144% | 0.105% |
+| 6 | 6 dp | 11 | 2.363 | 2 | 10 | +0.27 | 0.0144% | 0.105% |
+| 7 | 7 dp | 11 | 2.363 | 2 | 10 | +0.27 | 0.0144% | 0.105% |
+| 8 | 8 dp | 11 | 2.363 | 2 | 10 | +0.27 | 0.0144% | 0.105% |
+
+**Mode B — round caps to N decimals; terminal leftover always whole Ft**
+
+| N | exact / 91 | mean ‖Δ‖ | max ‖Δ‖ | mean signed Δ | mean ‖Δ/kamat‖ |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | **14** | 2.462 | 11 | +0.22 | 0.0149% |
+| 1 | 11 | 2.418 | 10 | +0.31 | 0.0145% |
+| 2…8 | 13 | 2.407 | 10 | +0.25 | 0.0145% |
+
+Sample every 10 000 Ft (mode A):
+
+| monthly | tariff | N=0 Δ | N=2 Δ | N=8 Δ |
+| ---: | ---: | ---: | ---: | ---: |
+| 10 000 | 4 020 | −1 | −1 | −1 |
+| 20 000 | 8 040 | −1 | −2 | −2 |
+| 50 000 | 20 095 | +1 | +1 | +1 |
+| 100 000 | 40 192 | +1 | 0 | 0 |
+
+**Verdict:** capitalization decimal precision is **not** a lever. Moving from whole Ft → fillér → 8 dp changes mean ‖Δ‖ by **≲0.1 Ft** and never closes the residual band; N≥2 is flat. Whole-forint caps still win on exact count (14/91). Wrong startDate still dominates (e.g. `2025-09-30` stays ~120 Ft mean regardless of N).

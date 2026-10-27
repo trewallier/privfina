@@ -113,6 +113,24 @@ function openingFeeModeLabel(mode) {
  * bundles). When a window is present, requires a valid `from` and enforces the
  * same inclusive bounds as engine `assertStartDateInSaleWindow`.
  */
+/** ÁSZF/USZ regular monthly deposit due-by day (tárgyhó 12.). Mirrors engine. */
+const HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY = 12
+
+function dayOfMonthFromIso(isoDate) {
+  return Number(String(isoDate).slice(8, 10))
+}
+
+function clampIsoToAszfDepositDueDay(isoDate) {
+  const day = dayOfMonthFromIso(isoDate)
+  if (!Number.isInteger(day) || day < 1) {
+    return isoDate
+  }
+  if (day <= HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY) {
+    return isoDate
+  }
+  return `${String(isoDate).slice(0, 8)}${String(HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY).padStart(2, '0')}`
+}
+
 function assertComposerStartDateInSaleWindow(startDate, saleWindow) {
   if (!saleWindow) {
     return
@@ -138,6 +156,12 @@ function assertComposerStartDateInSaleWindow(startDate, saleWindow) {
       )
     }
   }
+  const day = dayOfMonthFromIso(startDate)
+  if (day > HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY) {
+    throw new Error(
+      `Savings start date day-of-month must be 1…${HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY} (ÁSZF/USZ tárgyhó 12. napja; got ${startDate}).`
+    )
+  }
 }
 
 function defaultStartDateForSaleWindow(saleWindow) {
@@ -145,11 +169,13 @@ function defaultStartDateForSaleWindow(saleWindow) {
     return ''
   }
   if (saleWindow.to) {
-    return saleWindow.to
+    const clamped = clampIsoToAszfDepositDueDay(saleWindow.to)
+    return clamped < saleWindow.from ? saleWindow.from : clamped
   }
   const today = new Date()
   const iso = today.toISOString().slice(0, 10)
-  return iso < saleWindow.from ? saleWindow.from : iso
+  const candidate = iso < saleWindow.from ? saleWindow.from : iso
+  return clampIsoToAszfDepositDueDay(candidate)
 }
 
 export {

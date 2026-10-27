@@ -79,7 +79,7 @@ Full-window ADR 0031 ÁSZF sweep (every calendar day in `saleWindow`):
 
 So: **date tuning is real and mandatory for green cells** (lock a witness `startDate` in YAML). It is **not** sufficient for residual 4x10 cells under ÁSZF — zero witnesses — those still need a packaging change (e.g. ADR 0033 hybrid) or stay pinned residuals.
 
-Harness encoding: `tests/home-savings-ebkm-startdate-witness.test.ts`.
+Harness encoding: `tests/home-savings-ebkm-startdate-witness.test.ts` (witness days restricted to **1…12** per ÁSZF/USZ tárgyhó 12. due bound; see `HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY`).
 
 ## Annex 3 EBKM vs contract interest (why short módozatok are sharper)
 

@@ -11,12 +11,16 @@
  * Empirically, residual 4x10 without-Premium cells have **zero** ÁSZF witnesses
  * in the full sale window — date tuning alone cannot close them. Non-residual
  * cells have many witnesses; the example YAML startDate must be one of them.
+ *
+ * ÁSZF/USZ: regular monthly deposits due by tárgyhó 12. — witness search only
+ * considers startDate day-of-month 1…12.
  */
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import YAML from 'yaml'
 import {
+  HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY,
   calculateHomeSavingsFromProductSpec,
   loadHomeSavingsProductSpec,
   type HomeSavingsProductSpec,
@@ -85,6 +89,8 @@ function findWitnesses(
   const hits: string[] = []
   const limit = options.limit ?? Number.POSITIVE_INFINITY
   for (const startDate of eachDayInclusive(from, to)) {
+    const day = parseIsoDate(startDate).getUTCDate()
+    if (day > HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY) continue
     if (matchesPublished(product, baseInputs, startDate, published)) {
       hits.push(startDate)
       if (hits.length >= limit) break

@@ -39,6 +39,15 @@ export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
  */
 export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS = 2
 
+/**
+ * ÁSZF / USZ regular monthly deposit arrival deadline: tárgyhó **12.** napja
+ * (“havonta, legkésőbb a tárgyhó 12. napjáig”). First deposit has a separate
+ * deadline (month after offer signing, day 12); continuous EBKM/schedule
+ * modeling still keeps every credit day on 1…12 so subsequent anniversaries
+ * remain within the regular due bound.
+ */
+export const HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY = 12
+
 /** One Premium band: rate applies when holding months ≥ minHoldingMonths. */
 export interface HomeSavingsPremiumBand {
   minHoldingMonths: number
@@ -161,6 +170,81 @@ function deriveDepositDayOfMonth(startDate: string): number {
     throw new Error('Home-savings startDate must be in YYYY-MM-DD format.')
   }
   return day
+}
+
+/**
+ * Assert a calendar day-of-month is within the ÁSZF regular monthly deposit
+ * due bound (1…{@link HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY}).
+ */
+export function assertHomeSavingsRegularDepositDayOfMonth(dayOfMonth: number): void {
+  const day = Number(dayOfMonth)
+  if (
+    !Number.isInteger(day) ||
+    day < 1 ||
+    day > HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY
+  ) {
+    throw new Error(
+      `Home-savings regular deposit day-of-month must be 1…${HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY} (ÁSZF/USZ tárgyhó 12. napja; got ${String(dayOfMonth)}).`
+    )
+  }
+}
+
+/**
+ * Resolve the regular monthly deposit day (subsequent months). Defaults from
+ * startDate; always asserts the ÁSZF tárgyhó-12 bound.
+ */
+export function resolveHomeSavingsDepositDayOfMonth(input: {
+  startDate: string
+  depositDayOfMonth?: number | null
+}): number {
+  const day =
+    input.depositDayOfMonth === undefined || input.depositDayOfMonth === null
+      ? deriveDepositDayOfMonth(input.startDate)
+      : Number(input.depositDayOfMonth)
+  assertHomeSavingsRegularDepositDayOfMonth(day)
+  return day
+}
+
+/**
+ * Assert startDate day-of-month is within 1…12 so a continuous anniversary
+ * schedule (or first credit day) stays inside the ÁSZF regular due bound.
+ */
+export function assertHomeSavingsStartDateDepositDay(startDate: string): void {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    throw new Error('startDate must be an ISO calendar date (YYYY-MM-DD).')
+  }
+  assertHomeSavingsRegularDepositDayOfMonth(deriveDepositDayOfMonth(startDate))
+}
+
+/**
+ * Monthly deposit credit dates: first on `startDate`, then month anniversaries
+ * on `depositDayOfMonth` (default: day of startDate). Both the start day and
+ * the regular day must satisfy ÁSZF tárgyhó ≤12.
+ */
+export function buildHomeSavingsMonthlyDepositDates(input: {
+  startDate: string
+  termMonths: number
+  depositDayOfMonth?: number | null
+}): string[] {
+  const termMonths = Number(input.termMonths)
+  if (!Number.isInteger(termMonths) || termMonths <= 0) {
+    throw new Error('termMonths must be a positive integer.')
+  }
+  assertHomeSavingsStartDateDepositDay(input.startDate)
+  const regularDay = resolveHomeSavingsDepositDayOfMonth(input)
+  const start = parseIsoDate(input.startDate)
+  const dates: string[] = [input.startDate]
+  for (let i = 1; i < termMonths; i += 1) {
+    const monthAnchor = addMonthsUtc(
+      new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1)),
+      i
+    )
+    const y = monthAnchor.getUTCFullYear()
+    const m = monthAnchor.getUTCMonth()
+    const day = Math.min(regularDay, daysInMonthUtc(y, m))
+    dates.push(formatIsoDate(new Date(Date.UTC(y, m, day))))
+  }
+  return dates
 }
 
 function legacyPremiumBandsFromTiers(
@@ -375,6 +459,8 @@ export function calculateHomeSavingsDepositInterest(input: {
   monthlyDeposit: number
   termMonths: number
   startDate: string
+  /** Regular monthly credit day (1…12); defaults from startDate. */
+  depositDayOfMonth?: number | null
   annualRatePct?: number
   /** Override maturity payout date (ISO); defaults to ÁSZF allocation packaging. */
   payoutDate?: string
@@ -400,9 +486,11 @@ export function calculateHomeSavingsDepositInterest(input: {
 
   const start = parseIsoDate(input.startDate)
   const depositDates = new Map<string, number>()
-  for (let i = 0; i < termMonths; i += 1) {
-    const depositDate = addMonthsUtc(start, i)
-    const key = formatIsoDate(depositDate)
+  for (const key of buildHomeSavingsMonthlyDepositDates({
+    startDate: input.startDate,
+    termMonths,
+    depositDayOfMonth: input.depositDayOfMonth
+  })) {
     depositDates.set(key, (depositDates.get(key) ?? 0) + monthlyDeposit)
   }
 
@@ -476,6 +564,7 @@ export function resolveHomeSavingsSchedule(
     monthlyDeposit,
     termMonths,
     startDate: input.startDate,
+    depositDayOfMonth: input.depositDayOfMonth,
     annualRatePct: input.depositInterestAnnualRatePct
   })
   // Premium % applies to contractual deposits only (USZ §10); interest is additive.
@@ -545,7 +634,11 @@ export function generateHomeSavingsInstrumentCashFlows(
     )
   }
 
-  for (const date of monthlyAnniversaryDates(input.startDate, termMonths)) {
+  for (const date of buildHomeSavingsMonthlyDepositDates({
+    startDate: input.startDate,
+    termMonths,
+    depositDayOfMonth: input.depositDayOfMonth
+  })) {
     flows.push(
       createCashFlow(
         date,
@@ -558,6 +651,7 @@ export function generateHomeSavingsInstrumentCashFlows(
   }
 
   if (accountFeeMonthly > 0) {
+    // Account fees keep startDate anniversary dating (fee span ≠ deposit-day knob).
     for (const date of monthlyAnniversaryDates(input.startDate, termMonths)) {
       flows.push(
         createCashFlow(
@@ -627,14 +721,19 @@ export function buildHomeSavingsAszfEbkmCashFlows(
   })
   assertBoundedHorizon(undefined, termMonths + kiutalasiPeriodMonths)
 
-  const start = parseIsoDate(input.startDate)
-  const lastDepositDate = formatIsoDate(addMonthsUtc(start, termMonths - 1))
+  const depositDates = buildHomeSavingsMonthlyDepositDates({
+    startDate: input.startDate,
+    termMonths,
+    depositDayOfMonth: input.depositDayOfMonth
+  })
+  const lastDepositDate = depositDates[depositDates.length - 1]!
   const ebkmPayoutDate = resolveHomeSavingsEbkmPayoutDate(lastDepositDate)
 
   const depositInterest = calculateHomeSavingsDepositInterest({
     monthlyDeposit,
     termMonths,
     startDate: input.startDate,
+    depositDayOfMonth: input.depositDayOfMonth,
     annualRatePct: input.depositInterestAnnualRatePct,
     payoutDate: ebkmPayoutDate
   })
@@ -671,7 +770,7 @@ export function buildHomeSavingsAszfEbkmCashFlows(
     })
   }
 
-  for (const date of monthlyAnniversaryDates(input.startDate, termMonths)) {
+  for (const date of depositDates) {
     flows.push({
       date,
       amount: monthlyDeposit,

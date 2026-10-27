@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T06:21:16.997Z",
+  "generatedAt": "2026-10-27T06:23:10.397Z",
   "note": "Probe-only results; variants B/C/D/E/F are experimental and not production engine.",
   "scoreboard": [
     {
@@ -153,7 +153,7 @@
             "3.32/-1.07",
             "3.33/-1.07"
           ],
-          "exampleDayMatch": true
+          "exampleDayMatch": false
         }
       }
     },
@@ -801,7 +801,7 @@
     {
       "cell": "premium-4x10/ebkm-standard-20000",
       "variant": "A",
-      "exampleStart": "2025-07-03",
+      "exampleStart": "2025-07-02",
       "published": {
         "withPremium": 3.23,
         "withoutPremium": -1.04
@@ -1008,7 +1008,7 @@
     {
       "cell": "premium-4x10/ebkm-standard-20000",
       "variant": "H",
-      "exampleStart": "2025-07-03",
+      "exampleStart": "2025-07-02",
       "published": {
         "withPremium": 3.23,
         "withoutPremium": -1.04
@@ -1215,7 +1215,7 @@
     {
       "cell": "premium-4x10/ebkm-standard-20000",
       "variant": "B",
-      "exampleStart": "2025-07-03",
+      "exampleStart": "2025-07-02",
       "published": {
         "withPremium": 3.23,
         "withoutPremium": -1.04
@@ -1422,7 +1422,7 @@
     {
       "cell": "premium-4x10/ebkm-standard-20000",
       "variant": "G",
-      "exampleStart": "2025-07-03",
+      "exampleStart": "2025-07-02",
       "published": {
         "withPremium": 3.23,
         "withoutPremium": -1.04

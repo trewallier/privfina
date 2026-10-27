@@ -150,22 +150,14 @@ function monthlyAnniversaryDates(startDate: string, occurrences: number): string
   return dates
 }
 
-/** Variant A/G path via production builder with forced interest-end. */
-function buildProductionFlows(
+/** Variant A: production ADR 0031 ÁSZF EBKM builder. */
+function buildAszfProductionFlows(
   product: HomeSavingsProductSpec,
   baseInputs: HomeSavingsSpecInputs,
   housingPurpose: boolean,
-  interestThrough: 'aszf-ebkm-payout' | 'otp-maturity-payout',
   startDate: string
 ): { flows: Flow[]; interest: number; terminal: number } {
-  const productForced: HomeSavingsProductSpec = {
-    ...product,
-    engine: {
-      ...product.engine,
-      ebkmInterestAccrualThrough: interestThrough
-    }
-  }
-  const instrument = mapHomeSavingsSpecInputsToInstrumentInput(productForced, {
+  const instrument = mapHomeSavingsSpecInputsToInstrumentInput(product, {
     ...baseInputs,
     startDate,
     housingPurpose
@@ -173,18 +165,63 @@ function buildProductionFlows(
   const flows = buildHomeSavingsAszfEbkmCashFlows(instrument) as Flow[]
   const terminal = flows.find((f) => f.direction === 'inflow')
   const totalDeposits = instrument.monthlyDeposit * instrument.termMonths
-  const premium =
-    housingPurpose
-      ? (totalDeposits *
-          resolveHomeSavingsPremiumRatePct({
-            termMonths: instrument.termMonths,
-            housingPurpose: true,
-            tiers: instrument.premiumTiers
-          })) /
-        100
-      : 0
+  const premium = housingPurpose
+    ? (totalDeposits *
+        resolveHomeSavingsPremiumRatePct({
+          termMonths: instrument.termMonths,
+          housingPurpose: true,
+          tiers: instrument.premiumTiers
+        })) /
+      100
+    : 0
   const interest = (terminal?.amount ?? 0) - totalDeposits - premium
   return { flows, interest, terminal: terminal?.amount ?? 0 }
+}
+
+/**
+ * Variant G (ADR 0033 hybrid, experimental): ÁSZF fee span + ÁSZF terminal date,
+ * interest through OTP maturity payout (lastDeposit+2). Probe-only — not in engine on this base.
+ */
+function buildHybridGFlows(
+  product: HomeSavingsProductSpec,
+  baseInputs: HomeSavingsSpecInputs,
+  housingPurpose: boolean,
+  startDate: string
+): { flows: Flow[]; interest: number; terminal: number } {
+  const instrument = mapHomeSavingsSpecInputsToInstrumentInput(product, {
+    ...baseInputs,
+    startDate,
+    housingPurpose
+  })
+  const termMonths = instrument.termMonths
+  const kiutalasi = resolveKiutalasiPeriodMonths({
+    fallback: instrument.kiutalasiPeriodMonths ?? 2
+  })
+  const otpMaturity = resolveHomeSavingsMaturityPayoutDate({
+    startDate,
+    termMonths,
+    kiutalasiPeriodMonths: kiutalasi
+  })
+  const interest = calculateHomeSavingsDepositInterest({
+    monthlyDeposit: instrument.monthlyDeposit,
+    termMonths,
+    startDate,
+    annualRatePct: Number(instrument.depositInterestAnnualRatePct ?? 0.1),
+    payoutDate: otpMaturity
+  })
+  const flows = assembleFlows({
+    instrument,
+    startDate,
+    depositStartDate: startDate,
+    feeStartDate: startDate,
+    interest,
+    housingPurpose
+  })
+  return {
+    flows,
+    interest,
+    terminal: flows.find((f) => f.direction === 'inflow')!.amount
+  }
 }
 
 /**
@@ -393,41 +430,21 @@ function buildVariantFlows(
   contractStartDate: string
 ): { flows: Flow[]; interest: number; terminal: number; scenarioStart: string } {
   if (variant === 'A') {
-    const r = buildProductionFlows(
-      product,
-      baseInputs,
-      housingPurpose,
-      'aszf-ebkm-payout',
-      contractStartDate
-    )
+    const r = buildAszfProductionFlows(product, baseInputs, housingPurpose, contractStartDate)
     return { ...r, scenarioStart: contractStartDate }
   }
   if (variant === 'G') {
-    const r = buildProductionFlows(
-      product,
-      baseInputs,
-      housingPurpose,
-      'otp-maturity-payout',
-      contractStartDate
-    )
+    const r = buildHybridGFlows(product, baseInputs, housingPurpose, contractStartDate)
     return { ...r, scenarioStart: contractStartDate }
   }
 
-  // Force ADR 0031 interest-end in product for instrument mapping fees/premium.
-  const productAszf: HomeSavingsProductSpec = {
-    ...product,
-    engine: { ...product.engine, ebkmInterestAccrualThrough: 'aszf-ebkm-payout' }
-  }
-  const instrument = mapHomeSavingsSpecInputsToInstrumentInput(productAszf, {
+  const instrument = mapHomeSavingsSpecInputsToInstrumentInput(product, {
     ...baseInputs,
     startDate: contractStartDate,
     housingPurpose
   })
   const rate = Number(instrument.depositInterestAnnualRatePct ?? 0.1)
   const termMonths = instrument.termMonths
-  const kiutalasi = resolveKiutalasiPeriodMonths({
-    fallback: instrument.kiutalasiPeriodMonths ?? 2
-  })
 
   if (variant === 'H') {
     const scenarioStart = monthDay1(contractStartDate)

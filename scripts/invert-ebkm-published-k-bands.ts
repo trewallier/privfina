@@ -221,23 +221,42 @@ function kBandForPublished(
 
 function main(): void {
   const schema = JSON.parse(readRepo(DEFAULT_PRODUCT_SCHEMA_PATH))
+  // pctInBand: 0 = kMin, 100 = kMax (may be <0 or >100 when outside).
+  // relΔmid / relΔedge: (engineK − mid|edge) / monthlyDeposit.
   console.log(
-    'label | side | term | pub | rawBand% | engineRaw% | inR? | Kband Ft | engineK | ΔtoMid | ΔtoNearEdge | inK? | bandWidth'
+    [
+      'label',
+      'side',
+      'term',
+      'monthly',
+      'pub%',
+      'engineRaw%',
+      'Kmin',
+      'Kmax',
+      'engineK',
+      'pctInBand',
+      'relΔmid',
+      'relΔtoNearEdge',
+      'inK?',
+      'bandWidth/mo'
+    ].join(' | ')
   )
 
   const summary: Array<{
     label: string
     side: string
     term: number
+    monthly: number
     inK: boolean
-    deltaNear: number
-    bandWidth: number
-    engineK: number
+    pctInBand: number
+    relDeltaNear: number
+    bandWidthPerMo: number
   }> = []
 
   for (const cell of CELLS) {
     const product = loadHomeSavingsProductSpec(readRepo(cell.product), schema)
     const base = YAML.parse(readRepo(cell.example)).inputs as HomeSavingsSpecInputs
+    const monthly = Number(base.monthlyDeposit)
     for (const housingPurpose of [true, false] as const) {
       const published = housingPurpose ? cell.published.with : cell.published.without
       const instrument = mapHomeSavingsSpecInputsToInstrumentInput(product, {
@@ -255,9 +274,6 @@ function main(): void {
         payouts: [{ date: payoutDate, amount: engineK }]
       })
       const engineRaw = engine.rate * 100
-      const rawBand = rawPercentBandForPublished(published)
-      // For negatives, hiExclusive is tricky; check membership via roundEbkmPercent
-      const inR = roundEbkmPercent(engineRaw) === published
       const { kMin, kMax } = kBandForPublished(
         legs.deposits,
         payoutDate,
@@ -266,33 +282,33 @@ function main(): void {
       )
       const mid = (kMin + kMax) / 2
       const bandWidth = kMax - kMin
+      const pctInBand = bandWidth > 0 ? (100 * (engineK - kMin)) / bandWidth : 50
       const inK = engineK >= kMin - 0.01 && engineK <= kMax + 0.01
-      // signed: positive means engine K too high vs mid; near-edge signed toward outside
-      const deltaMid = engineK - mid
+      const relDeltaMid = (engineK - mid) / monthly
       let deltaNear: number
-      if (engineK < kMin) deltaNear = engineK - kMin // negative = short
-      else if (engineK > kMax) deltaNear = engineK - kMax // positive = over
-      else deltaNear = Math.min(engineK - kMin, kMax - engineK) // distance inside (positive slack)
+      if (engineK < kMin) deltaNear = engineK - kMin
+      else if (engineK > kMax) deltaNear = engineK - kMax
+      else deltaNear = Math.min(engineK - kMin, kMax - engineK)
+      const relDeltaNear = deltaNear / monthly
+      const bandWidthPerMo = bandWidth / monthly
 
       const side = housingPurpose ? 'with' : 'without'
-      const rawLo = published > 0 ? rawBand.lo : -(Math.abs(published) + 0.005)
-      const rawHi = published > 0 ? rawBand.hiExclusive : -(Math.abs(published) - 0.005)
-
       console.log(
         [
           cell.label,
           side,
           cell.termMonths,
-          published,
-          `[${rawLo.toFixed(3)}, ${rawHi.toFixed(3)}${published > 0 ? ')' : ']'}`,
+          monthly,
+          published.toFixed(2),
           engineRaw.toFixed(6),
-          inR ? 'Y' : 'n',
-          `[${kMin.toFixed(2)}, ${kMax.toFixed(2)}]`,
-          engineK.toFixed(2),
-          deltaMid.toFixed(2),
-          inK ? `slack ${deltaNear.toFixed(2)}` : `miss ${deltaNear.toFixed(2)}`,
+          kMin.toFixed(0),
+          kMax.toFixed(0),
+          engineK.toFixed(0),
+          pctInBand.toFixed(1),
+          relDeltaMid.toFixed(4),
+          inK ? `slack ${relDeltaNear.toFixed(4)}` : `miss ${relDeltaNear.toFixed(4)}`,
           inK ? 'Y' : 'n',
-          bandWidth.toFixed(2)
+          bandWidthPerMo.toFixed(4)
         ].join(' | ')
       )
 
@@ -300,29 +316,32 @@ function main(): void {
         label: cell.label,
         side,
         term: cell.termMonths,
+        monthly,
         inK,
-        deltaNear: inK ? 0 : deltaNear,
-        bandWidth,
-        engineK
+        pctInBand,
+        relDeltaNear: inK ? 0 : relDeltaNear,
+        bandWidthPerMo
       })
     }
   }
 
-  console.log('\n=== Outside published K band (misses) ===')
+  console.log('\n=== Outside published K band (relative to monthly) ===')
   for (const row of summary.filter((r) => !r.inK)) {
     console.log(
-      `${row.label} ${row.side} term=${row.term}: miss ${row.deltaNear.toFixed(2)} Ft (bandWidth=${row.bandWidth.toFixed(2)})`
+      `${row.label} ${row.side} term=${row.term}: pctInBand=${row.pctInBand.toFixed(1)} missRel=${row.relDeltaNear.toFixed(4)}×monthly bandWidth/mo=${row.bandWidthPerMo.toFixed(4)}`
     )
   }
 
-  console.log('\n=== Band width by term (median over cells/sides) ===')
+  console.log('\n=== Band width / monthly by term (median) ===')
   for (const term of [48, 96, 120]) {
     const rows = summary.filter((r) => r.term === term)
-    const widths = rows.map((r) => r.bandWidth).sort((a, b) => a - b)
+    const widths = rows.map((r) => r.bandWidthPerMo).sort((a, b) => a - b)
     const mid = widths[Math.floor(widths.length / 2)]!
+    const pcts = rows.map((r) => r.pctInBand).sort((a, b) => a - b)
+    const pctMid = pcts[Math.floor(pcts.length / 2)]!
     const misses = rows.filter((r) => !r.inK).length
     console.log(
-      `${term}m: n=${rows.length} medianBandWidth=${mid.toFixed(2)} Ft misses=${misses}/${rows.length}`
+      `${term}m: n=${rows.length} medianBand/mo=${mid.toFixed(4)} medianPctInBand=${pctMid.toFixed(1)} misses=${misses}/${rows.length}`
     )
   }
 }

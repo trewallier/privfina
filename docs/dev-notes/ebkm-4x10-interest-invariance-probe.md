@@ -40,7 +40,7 @@ Near the PR #94 example day:
 | 2025-07-03 | 2149 | 3.23 / −1.03 | 2066 | **3.23 / −1.04** |
 | 2025-07-04 | 2146 | 3.24 / −1.03 | 2063 | 3.23 / −1.04 |
 
-Hybrid G matches published on **2/28** days only (3 and 4)—classic day shopping.
+Hybrid G matches published on **2/28** days only (3 and 4)—classic day shopping. On the PR #93 example `startDate` `2025-07-02`, G does **not** match (needs the PR #94 retune to `2025-07-03`).
 
 **Residual Plus 4x10 / 100k** (3.27 / −0.98): A scores **0/28**; without stays −0.97 on early days while with is already 3.27.
 
@@ -85,3 +85,5 @@ npx tsx scripts/probe-home-savings-ebkm-startdate.ts
 ```
 
 Artifacts: this note + [`ebkm-4x10-interest-invariance-probe.json`](ebkm-4x10-interest-invariance-probe.json).
+
+Pedagogical timeline (round numbers, OTP vs ÁSZF interest-end): [`home-savings-interest-timeline-worked-example.md`](home-savings-interest-timeline-worked-example.md).

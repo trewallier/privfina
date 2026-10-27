@@ -15,6 +15,7 @@ Start at the root [`AGENTS.md`](../AGENTS.md) (agents) or [`README.md`](../READM
 | Spec authoring conventions | [`product-specs/README.md`](product-specs/README.md) |
 | Add or promote a product (checklist) | [`dev-playbooks/product-lifecycle.md`](dev-playbooks/product-lifecycle.md) |
 | Formula ↔ code inventory | [`formula-ownership-audit.md`](formula-ownership-audit.md) |
+| Home-savings interest event timeline (worked example) | [`dev-notes/home-savings-interest-timeline-worked-example.md`](dev-notes/home-savings-interest-timeline-worked-example.md) |
 | Work sequencing | [`../ROADMAP.md`](../ROADMAP.md) |
 
 ## Architecture sketch

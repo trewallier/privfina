@@ -158,3 +158,32 @@ npx tsx scripts/probe-home-savings-ebkm-startdate.ts
 Artifacts: this note + [`ebkm-4x10-interest-invariance-probe.json`](ebkm-4x10-interest-invariance-probe.json).
 
 Pedagogical timeline (round numbers, OTP vs ÁSZF interest-end): [`home-savings-interest-timeline-worked-example.md`](home-savings-interest-timeline-worked-example.md).
+
+## Phase 8 — Interest 1 Ft check vs OTP harvest
+
+Question: does engine `depositInterest` match OTP-derived interest at **1 Ft** on harvested calculator / internal multi-amount goldens? If yes, residual EBKM would have to come from packaging / K assembly elsewhere.
+
+### Data available
+
+| Source | Present in checkout? | Coverage |
+| --- | --- | --- |
+| OTP product-page calculator harvest (`web-calculator-maturity-*.yaml`, captured 2026-10-25) | **Yes** | Premium Plus **10x30** only — 20k / 50k / 100k |
+| Internal multi-amount **8x30** interest + savings table | **No** | Not in repo, agent stores, canvases, or prior LTP/OTP agent transcripts |
+
+OTP widget publishes Lejáratkor **terminal** only; YAML `depositInterest` is derived as `terminal − totalDeposits − premiumAmount` (not a separate UI kamat line).
+
+### Live engine vs OTP-derived interest (10x30, startDate 2026-10-10)
+
+| monthly | OTP interest | engine interest | Δinterest | OTP terminal | engine terminal | Δterminal |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 000 | 12 464 | 12 461 | **−3** | 3 132 464 | 3 132 461 | −3 |
+| 50 000 | 31 152 | 31 156 | **+4** | 7 831 152 | 7 831 156 | +4 |
+| 100 000 | 62 313 | 62 312 | **−1** | 15 662 313 | 15 662 312 | −1 |
+
+`Δterminal ≡ Δinterest` on all three rows (fees / deposits / Premium exact) — the entire residual sits in the interest path (or equivalent accrual-end packaging that changes rounded interest).
+
+### Conclusion
+
+- Interest is **not** 1 Ft clean against the harvested OTP calculator goldens (mixed-sign residuals within the documented ≤4 Ft band).
+- Therefore the “interest flawless → bug elsewhere” hypothesis is **not** supported by the data we have.
+- The multi-amount 8x30 internal table was not located; that stricter grid could not be re-run here.

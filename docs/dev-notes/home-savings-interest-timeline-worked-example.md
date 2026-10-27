@@ -114,7 +114,9 @@ Difference: `3360 − 2430 =` **930 Ft** = May’s 31 × 30 Ft. Same deposit sch
 - **Account management fees** continue through allocation (`termMonths + 2` months of fee outflows under ADR 0031 EBKM packaging).  
 - **Premium** (OTP Lakástakarék Prémium) is a % of contractual deposits only — added to `K`, not compounded as deposit interest.  
 - **Opening fee** is an outflow on start.  
-- **EBKM %** is a separate Annex 3 solve on the full dated cash-flow list (calendar days / 365), not the 3.60% contract rate above.  
+- **EBKM %** is a separate Annex 3 solve on the full dated cash-flow list, **not** the contract deposit rate above. After interest builds terminal `K` (ACT/360), EBKM finds annual `r` such that the NPV of all signed legs is zero, with each time weight  
+  `t = (calendar days from first deposit to that leg) / 365`  
+  (82/2010 3. melléklet), then prints `r` as a percent with two-decimal half-up. Example shape: opening fee and deposits are negative `A`, terminal `K` is positive `A`; solving `Σ A/(1+r)^t = 0` yields the published-style EBKM. Same solver for 4x10 and 10x30 — shorter horizons are simply closer to half-up boundaries for a given forint error in `K`.  
 - **Yearly capitalization** rounds pending interest into balance on the first day after each megtakarítási év (month-1 anchors per ÁSZF §5).
 
 ## Reproduce

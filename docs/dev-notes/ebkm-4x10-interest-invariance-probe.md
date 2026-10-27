@@ -61,21 +61,58 @@ H invariance check (contract days 1/15/28 → same scenario): interest/terminal/
 
 Control Plus 4x10 / 20k already greens under A on early days; H scores 28/28 there because the published pair coincides with the month-1 ÁSZF result—not because H fixes residuals.
 
+## Full saleWindow witness search (follow-up)
+
+Mechanism confirmed: deposit anniversaries carry the contract **day-of-month**, while capitalization and ÁSZF/OTP payout markers sit on **month day-1**, and month lengths differ — so both **day-of-month** and **start month** move rounded EBKM.
+
+Policy nuance: Hirdetmény publishes one EBKM with no start day, so “exists a startDate in `saleWindow` under fixed packaging” is a fair verification rule **when witnesses exist**.
+
+Full-window ADR 0031 ÁSZF sweep (every calendar day in `saleWindow`):
+
+| Cell | ÁSZF witnesses | Hybrid G witnesses |
+| --- | ---: | ---: |
+| Premium 4x10 / 20k (residual) | **0** / 884 | 69 |
+| Premium 4x10 / 50k | 70 | 69 |
+| Plus 4x10 / 100k (residual) | **0** / 367 | 24 |
+| Plus 4x10 / 20k | 29 | 7 |
+| Premium 8x30 / 20k | 86 | 86 |
+
+So: **date tuning is real and mandatory for green cells** (lock a witness `startDate` in YAML). It is **not** sufficient for residual 4x10 cells under ÁSZF — zero witnesses — those still need a packaging change (e.g. ADR 0033 hybrid) or stay pinned residuals.
+
+Harness encoding: `tests/home-savings-ebkm-startdate-witness.test.ts`.
+
+## Annex 3 EBKM vs contract interest (why short módozatok are sharper)
+
+Two different calculators share the same cash-flow dates/amounts:
+
+1. **Contract deposit interest (ÁSZF §10)** builds terminal `K` with **ACT/360** daily forints (`tőke × kamatláb × napok / (360×100)`), year caps, stop day before payout marker.
+2. **EBKM % (82/2010 Annex 3)** solves for annual rate `r` in  
+   `Σ A_i / (1+r)^(t_i) = 0`  
+   where each `t_i = (calendar days from first deposit to that leg) / 365`, then rounds to two decimals half-up.
+
+So EBKM is **not** “the 0.10% deposit rate restated.” It is an IRR-like indicator on the customer cash-flow list (deposits, fees, opening fee, terminal `K`). Changing start day moves both the ACT/360 `K` **and** every Annex 3 `t_i`.
+
+Why 4x10 residuals show up more than 8x30/10x30 under the same ÁSZF packaging:
+
+- A ~80–100 Ft change in `K` flips 4x10 without-Premium across the 0.01 half-up boundary (raw ≈ −1.031 → −1.036), while the same ΔK on 8x30/10x30 often stays inside the same rounded cent (probe: ±200 Ft still prints −0.56 / −0.77).
+- One month of interest-end packaging is a **larger fraction** of total interest on a 48-month path than on 96/120 months.
+- Annex 3 itself is the same solver for all módozatok; shortness amplifies half-up sensitivity, it does not use a different day-count law.
+
 ## Decision
 
-**No principled winner.**
+**No principled ÁSZF-only winner for residual 4x10 cells.**
 
-1. Document-backed daily ACT/360 + ÁSZF payout interest end (**A**) leaves the known 0.01 residuals; day sweeps do not find a shared day where both with/without match published.
-2. Month-1 EBKM scenario (**H**) achieves true startDate invariance but **does not close** residual cells and regresses mid-month 8x30/10x30 examples if applied as the only verification scenario without also relocating those goldens to day-1.
+1. Document-backed daily ACT/360 + ÁSZF payout interest end (**A**) leaves residuals; **full saleWindow** still has **zero** dual-side witnesses for those cells.
+2. Month-1 EBKM scenario (**H**) is startDate-invariant but does not close residuals.
 3. Ignore-partial / equal-month (**B/C**) lack ÁSZF support and do not systematically close residuals.
-4. ADR 0033 hybrid (**G**) closes residuals only on a **knife-edge** of start days (and needs the `2025-07-03` retune for Premium 4x10 20k)—fails the invariance bar and is packaging fitting.
+4. ADR 0033 hybrid (**G**) creates witnesses only by mixing interest-end conventions — packaging fit, not a newly found ÁSZF rule.
+5. For **non-residual** cells, accepting “example `startDate` is a saleWindow witness under ÁSZF” is correct; that date choice should stay explicit in YAML.
 
 ### Recommendation
 
-- **Do not** promote 4x10 to commercially-usable on ADR 0033 hybrid packaging.
-- Prefer **PR #93 posture**: keep Premium / Premium Plus 4x10 at **schedule-usable** with pinned 0.01 without-Premium engine residuals under shared ÁSZF packaging; anti-wash harness keeps published vs engine pins visible.
-- Optionally document that published Hirdetmény EBKM is a single continuous-deposit figure with **undocumented** internal start-day assumptions; engine calendar ACT/360 + Annex 3 day fractions remain day-sensitive by construction.
-- Defer month-1 EBKM scenario (**H**) unless product policy later requires verification cash flows to use megtakarítási idő day-1 for *all* módozatok **and** example `startDate`s are moved accordingly—with a fresh full-matrix re-lock (H alone does not fix 4x10 residuals).
+- **Do not** promote residual 4x10 cells to commercially-usable on date tuning alone (no ÁSZF witness) or on ADR 0033 hybrid without an external citation.
+- Keep Premium / Premium Plus 4x10 residual examples **schedule-usable** with pinned 0.01 engine residuals; non-residual cells keep locked witness `startDate`s.
+- Treat startDate selection inside `saleWindow` as a **first-class verification input** for cells that do match under ÁSZF (witness test above).
 
 ## How to reproduce
 

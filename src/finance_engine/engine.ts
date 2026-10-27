@@ -76,7 +76,6 @@ export {
   HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS,
   HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY,
   assertHomeSavingsRegularDepositDayOfMonth,
-  assertHomeSavingsStartDateDepositDay,
   assertStartDateInSaleWindow,
   buildHomeSavingsMonthlyDepositDates,
   resolveContractAmountFromMonthlyDeposit,

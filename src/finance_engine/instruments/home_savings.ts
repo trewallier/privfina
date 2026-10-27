@@ -40,11 +40,13 @@ export const DEFAULT_HOME_SAVINGS_MAX_CONTRACT_AMOUNT = 26_000_000
 export const HOME_SAVINGS_KIUTALASI_PERIOD_MONTHS = 2
 
 /**
- * ÁSZF / USZ regular monthly deposit arrival deadline: tárgyhó **12.** napja
- * (“havonta, legkésőbb a tárgyhó 12. napjáig”). First deposit has a separate
- * deadline (month after offer signing, day 12); continuous EBKM/schedule
- * modeling still keeps every credit day on 1…12 so subsequent anniversaries
- * remain within the regular due bound.
+ * ÁSZF / USZ **regular** monthly deposit arrival deadline: tárgyhó **12.** napja
+ * (“havonta, legkésőbb a tárgyhó 12. napjáig”).
+ *
+ * The first deposit is explicitly exempt: it is due by day 12 of the month
+ * **after** offer signing (“az ajánlat aláírását követő hónap 12. napjáig”),
+ * so the first credit day (`startDate`) may fall on day 13…31 of the signing
+ * month. Subsequent modeled credits use this regular due-by day bound.
  */
 export const HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY = 12
 
@@ -190,36 +192,27 @@ export function assertHomeSavingsRegularDepositDayOfMonth(dayOfMonth: number): v
 }
 
 /**
- * Resolve the regular monthly deposit day (subsequent months). Defaults from
- * startDate; always asserts the ÁSZF tárgyhó-12 bound.
+ * Resolve the **regular** (subsequent-month) deposit day. Explicit values must
+ * satisfy ÁSZF tárgyhó ≤12. When omitted, defaults to the startDate day clamped
+ * into 1…{@link HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY} so a late
+ * first credit (ÁSZF-exempt) still yields on-time subsequent credits.
  */
 export function resolveHomeSavingsDepositDayOfMonth(input: {
   startDate: string
   depositDayOfMonth?: number | null
 }): number {
-  const day =
-    input.depositDayOfMonth === undefined || input.depositDayOfMonth === null
-      ? deriveDepositDayOfMonth(input.startDate)
-      : Number(input.depositDayOfMonth)
-  assertHomeSavingsRegularDepositDayOfMonth(day)
-  return day
-}
-
-/**
- * Assert startDate day-of-month is within 1…12 so a continuous anniversary
- * schedule (or first credit day) stays inside the ÁSZF regular due bound.
- */
-export function assertHomeSavingsStartDateDepositDay(startDate: string): void {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
-    throw new Error('startDate must be an ISO calendar date (YYYY-MM-DD).')
+  if (input.depositDayOfMonth !== undefined && input.depositDayOfMonth !== null) {
+    const day = Number(input.depositDayOfMonth)
+    assertHomeSavingsRegularDepositDayOfMonth(day)
+    return day
   }
-  assertHomeSavingsRegularDepositDayOfMonth(deriveDepositDayOfMonth(startDate))
+  const fromStart = deriveDepositDayOfMonth(input.startDate)
+  return Math.min(fromStart, HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY)
 }
 
 /**
- * Monthly deposit credit dates: first on `startDate`, then month anniversaries
- * on `depositDayOfMonth` (default: day of startDate). Both the start day and
- * the regular day must satisfy ÁSZF tárgyhó ≤12.
+ * Monthly deposit credit dates: first credit on `startDate` (ÁSZF-exempt from
+ * tárgyhó-12), then subsequent months on the regular day (≤12).
  */
 export function buildHomeSavingsMonthlyDepositDates(input: {
   startDate: string
@@ -230,7 +223,9 @@ export function buildHomeSavingsMonthlyDepositDates(input: {
   if (!Number.isInteger(termMonths) || termMonths <= 0) {
     throw new Error('termMonths must be a positive integer.')
   }
-  assertHomeSavingsStartDateDepositDay(input.startDate)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.startDate)) {
+    throw new Error('startDate must be an ISO calendar date (YYYY-MM-DD).')
+  }
   const regularDay = resolveHomeSavingsDepositDayOfMonth(input)
   const start = parseIsoDate(input.startDate)
   const dates: string[] = [input.startDate]
@@ -844,7 +839,10 @@ export function createHomeSavingsInstrumentBundle(
       monthlyDeposit: input.monthlyDeposit,
       termMonths: input.termMonths,
       startDate: input.startDate,
-      depositDayOfMonth: input.depositDayOfMonth ?? deriveDepositDayOfMonth(input.startDate),
+      depositDayOfMonth: resolveHomeSavingsDepositDayOfMonth({
+        startDate: input.startDate,
+        depositDayOfMonth: input.depositDayOfMonth
+      }),
       accountFeeMonthly: input.accountFeeMonthly,
       accountOpeningFee: input.accountOpeningFee,
       housingPurpose: input.housingPurpose,

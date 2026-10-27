@@ -7,7 +7,6 @@ import {
   DEFAULT_HOME_SAVINGS_MIN_CONTRACT_AMOUNT,
   DEFAULT_HOME_SAVINGS_PREMIUM_TIERS,
   DEFAULT_HOME_SAVINGS_SAVINGS_RATE_PERMILLE,
-  assertHomeSavingsStartDateDepositDay,
   assertStartDateInSaleWindow,
   calculateEbkmFromHomeSavingsInstrument,
   generateHomeSavingsInstrumentCashFlows,
@@ -267,10 +266,8 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
   if (productSpec.saleWindow) {
     assertStartDateInSaleWindow(specInputs.startDate, productSpec.saleWindow)
   }
-  // ÁSZF/USZ: regular monthly deposits due by tárgyhó 12. — continuous schedules
-  // keep startDate and depositDayOfMonth inside 1…12.
-  assertHomeSavingsStartDateDepositDay(specInputs.startDate)
-  resolveHomeSavingsDepositDayOfMonth({
+  // ÁSZF/USZ: first deposit is exempt from tárgyhó-12; regular subsequent day ≤12.
+  const depositDayOfMonth = resolveHomeSavingsDepositDayOfMonth({
     startDate: specInputs.startDate,
     depositDayOfMonth: specInputs.depositDayOfMonth
   })
@@ -297,7 +294,7 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
     monthlyDeposit: specInputs.monthlyDeposit,
     termMonths: specInputs.termMonths,
     startDate: specInputs.startDate,
-    depositDayOfMonth: specInputs.depositDayOfMonth,
+    depositDayOfMonth,
     accountFeeMonthly,
     accountOpeningFee,
     housingPurpose: specInputs.housingPurpose,

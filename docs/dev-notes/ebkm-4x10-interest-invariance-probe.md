@@ -79,7 +79,24 @@ Full-window ADR 0031 ÁSZF sweep (every calendar day in `saleWindow`):
 
 So: **date tuning is real and mandatory for green cells** (lock a witness `startDate` in YAML). It is **not** sufficient for residual 4x10 cells under ÁSZF — zero witnesses — those still need a packaging change (e.g. ADR 0033 hybrid) or stay pinned residuals.
 
-Harness encoding: `tests/home-savings-ebkm-startdate-witness.test.ts` (witness days restricted to **1…12** per ÁSZF/USZ tárgyhó 12. due bound; see `HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY`).
+Harness encoding: `tests/home-savings-ebkm-startdate-witness.test.ts` (full `saleWindow` startDate sweep — first deposit is ÁSZF-exempt from tárgyhó-12; subsequent credits clamp via `HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY`).
+
+### ÁSZF first-deposit exemption (revalidated)
+
+USZ/ÁSZF: regular deposits by tárgyhó 12.; **first** deposit is exempt — due by day 12 of the month **after** offer signing. Engine correction: `startDate` may be day 13…31; subsequent default to `min(startDay, 12)`.
+
+Full-catalog revalidation (`scripts/revalidate-home-savings-ebkm-witnesses.ts`) after that correction:
+
+| Cell | YAML fit | Witnesses (day≤12 / day>12) | without-Premium Δ vs Hirdetmény |
+| --- | --- | ---: | ---: |
+| Premium 4x10 / 20k (residual) | no | **0** / 0 | **+0.01** (unchanged) |
+| Premium 4x10 / 50k | yes | 70 / 0 | 0 |
+| Plus 4x10 / 100k (residual) | no | **0** / 0 | **+0.01** (unchanged) |
+| Plus 4x10 other cells | yes | 11–29 / 0 | 0 |
+| Premium / Plus 8x30 | yes | dozens / **hundreds** (late first + clamp) | 0 |
+| Plus 10x30 (live ±45d) | yes | green | 0 |
+
+So: allowing late first credits **does not** close residual 4x10 cells (still zero witnesses; same 0.01 without-Premium pin). Longer módozatok gain many day>12 witnesses because subsequent credits clamp to day 12; short 4x10 green cells stay on day≤12-only witnesses.
 
 ## Annex 3 EBKM vs contract interest (why short módozatok are sharper)
 

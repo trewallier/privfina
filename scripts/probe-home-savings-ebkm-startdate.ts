@@ -9,7 +9,6 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import YAML from 'yaml'
 import {
-  HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY,
   buildHomeSavingsAszfEbkmCashFlows,
   calculateEbkmFromHomeSavingsCashFlows,
   calculateHomeSavingsDepositInterest,
@@ -631,7 +630,7 @@ type DayRow = {
 function sweepCell(
   cell: CellSpec,
   variant: VariantId,
-  maxDay = HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY
+  maxDay = 28
 ): {
   cell: string
   variant: VariantId
@@ -650,7 +649,7 @@ function sweepCell(
   const exampleStart = baseInputs.startDate
   const dayRows: DayRow[] = []
 
-  // ÁSZF/USZ tárgyhó ≤12 — sweep only legal continuous-schedule credit days.
+  // First deposit may be any day (ÁSZF-exempt); subsequent clamp to ≤12 in engine.
   for (let day = 1; day <= maxDay; day += 1) {
     const startDate = withDayOfMonth(exampleStart, day)
     const withR = buildVariantFlows(variant, product, baseInputs, true, startDate)
@@ -735,7 +734,7 @@ function main(): void {
     }
   }
 
-  // H invariance: same month, different legal contract days (1…12) → identical scenario
+  // H invariance: same month, different contract days → identical month-1 scenario
   const hInvarianceChecks = []
   for (const cell of focusCells.filter((c) => c.role === 'residual')) {
     const product = loadProduct(cell.productYaml)
@@ -748,35 +747,35 @@ function main(): void {
       false,
       withDayOfMonth(baseInputs.startDate, 1)
     )
-    const d6 = buildVariantFlows(
+    const d15 = buildVariantFlows(
       'H',
       product,
       baseInputs,
       false,
-      withDayOfMonth(baseInputs.startDate, 6)
+      withDayOfMonth(baseInputs.startDate, 15)
     )
-    const d12 = buildVariantFlows(
+    const d28 = buildVariantFlows(
       'H',
       product,
       baseInputs,
       false,
-      withDayOfMonth(baseInputs.startDate, HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY)
+      withDayOfMonth(baseInputs.startDate, 28)
     )
     hInvarianceChecks.push({
       cell: cell.label,
-      scenarioStarts: [d1.scenarioStart, d6.scenarioStart, d12.scenarioStart],
-      interests: [d1.interest, d6.interest, d12.interest],
-      terminals: [d1.terminal, d6.terminal, d12.terminal],
+      scenarioStarts: [d1.scenarioStart, d15.scenarioStart, d28.scenarioStart],
+      interests: [d1.interest, d15.interest, d28.interest],
+      terminals: [d1.terminal, d15.terminal, d28.terminal],
       ebkms: [
         ebkmFromFlows(d1.flows).percentRounded,
-        ebkmFromFlows(d6.flows).percentRounded,
-        ebkmFromFlows(d12.flows).percentRounded
+        ebkmFromFlows(d15.flows).percentRounded,
+        ebkmFromFlows(d28.flows).percentRounded
       ],
       invariant:
-        d1.interest === d6.interest &&
-        d6.interest === d12.interest &&
-        d1.terminal === d6.terminal &&
-        ebkmFromFlows(d1.flows).percentRounded === ebkmFromFlows(d6.flows).percentRounded
+        d1.interest === d15.interest &&
+        d15.interest === d28.interest &&
+        d1.terminal === d15.terminal &&
+        ebkmFromFlows(d1.flows).percentRounded === ebkmFromFlows(d15.flows).percentRounded
     })
   }
 
@@ -844,7 +843,7 @@ function main(): void {
     }
     console.log('')
   }
-  console.log('=== H month-1 invariance (contract day 1/6/12; ÁSZF due bound) ===')
+  console.log('=== H month-1 invariance (contract day 1/15/28) ===')
   console.log(JSON.stringify(hInvarianceChecks, null, 2))
   console.log('\n=== Regression at example startDate ===')
   for (const [label, variants] of Object.entries(regressions)) {

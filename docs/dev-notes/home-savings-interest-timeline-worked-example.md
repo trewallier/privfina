@@ -8,7 +8,7 @@ Engine references: `calculateHomeSavingsDepositInterest`, `resolveHomeSavingsEbk
 
 | Input | Value | Why it is easy to read |
 | --- | --- | --- |
-| First deposit / start | **2025-01-10** | Mid-month start ≤ ÁSZF tárgyhó **12.** due bound; partial first month visible |
+| First deposit / start | **2025-01-10** | Mid-month first credit (ÁSZF-exempt from tárgyhó-12); partial first month visible |
 | Monthly deposit | **100 000 Ft** | Three easy balances: 100k → 200k → 300k |
 | Term | **3** months | Short; only three deposit events |
 | Annual deposit rate | **3.60%** | Daily factor = `3.60 / (360 × 100) = 0.0001` → **10 Ft/day** on 100 000 Ft |

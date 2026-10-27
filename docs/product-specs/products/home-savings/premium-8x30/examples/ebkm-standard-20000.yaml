@@ -25,4 +25,4 @@ notes:
   - "Source: ltp_h_ertekesitett_20250801.pdf / ltp_ebkm_20250801.pdf (A/2 withdrawn PRÉMIUM)."
   - "ADR 0031 ÁSZF packaging: allocation-period account fees + interest to lastDepositMonth+3 day-1."
   - Sale window last day 2025-07-31; account fee 150 Ft/hó.
-  - startDate 2025-05-12 — ÁSZF tárgyhó ≤12 witness under ADR 0031 (day 13…31 rejected).
+  - startDate 2025-05-12 — ADR 0031 ÁSZF witness (aligned first+regular day ≤12; first deposit may be day 13+).

@@ -1,11 +1,12 @@
 /**
- * ÁSZF/USZ tárgyhó 12. napja — regular monthly deposit due bound + schedule alignment.
+ * ÁSZF/USZ deposit due rules:
+ * - Regular monthly deposits: tárgyhó 12. napja
+ * - First deposit: exempt; due by day 12 of the month after offer signing
  */
 import { describe, expect, it } from 'vitest'
 import {
   HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY,
   assertHomeSavingsRegularDepositDayOfMonth,
-  assertHomeSavingsStartDateDepositDay,
   buildHomeSavingsAszfEbkmCashFlows,
   buildHomeSavingsMonthlyDepositDates,
   calculateEbkmFromHomeSavingsCashFlows,
@@ -13,6 +14,7 @@ import {
   calculateHomeSavingsFromProductSpec,
   loadHomeSavingsProductSpec,
   mapHomeSavingsSpecInputsToInstrumentInput,
+  resolveHomeSavingsDepositDayOfMonth,
   resolveHomeSavingsEbkmPayoutDate
 } from '../src/finance_engine/engine'
 import { readFileSync } from 'node:fs'
@@ -25,13 +27,27 @@ function readRepo(rel: string): string {
 }
 
 describe('home-savings ÁSZF deposit due-by day (tárgyhó 12.)', () => {
-  it('exports due-by day 12 and rejects day 13+', () => {
+  it('exports due-by day 12 for regular deposits only; first credit may be day 13+', () => {
     expect(HOME_SAVINGS_REGULAR_MONTHLY_DEPOSIT_DUE_BY_DAY).toBe(12)
     expect(() => assertHomeSavingsRegularDepositDayOfMonth(12)).not.toThrow()
     expect(() => assertHomeSavingsRegularDepositDayOfMonth(1)).not.toThrow()
     expect(() => assertHomeSavingsRegularDepositDayOfMonth(13)).toThrow(/tárgyhó 12/)
-    expect(() => assertHomeSavingsStartDateDepositDay('2025-07-13')).toThrow(/tárgyhó 12/)
-    expect(() => assertHomeSavingsStartDateDepositDay('2025-07-12')).not.toThrow()
+
+    // First deposit exempt — startDate day 13/31 is legal; subsequent clamp to ≤12.
+    expect(
+      buildHomeSavingsMonthlyDepositDates({
+        startDate: '2025-07-13',
+        termMonths: 3
+      })
+    ).toEqual(['2025-07-13', '2025-08-12', '2025-09-12'])
+    expect(
+      buildHomeSavingsMonthlyDepositDates({
+        startDate: '2025-07-31',
+        termMonths: 3
+      })
+    ).toEqual(['2025-07-31', '2025-08-12', '2025-09-12'])
+    expect(resolveHomeSavingsDepositDayOfMonth({ startDate: '2025-07-31' })).toBe(12)
+    expect(resolveHomeSavingsDepositDayOfMonth({ startDate: '2025-07-03' })).toBe(3)
   })
 
   it('builds first credit on startDate then regular day for subsequent months', () => {
@@ -43,27 +59,27 @@ describe('home-savings ÁSZF deposit due-by day (tárgyhó 12.)', () => {
     expect(dates).toEqual(['2025-01-03', '2025-02-12', '2025-03-12', '2025-04-12'])
   })
 
-  it('composer default start clamps saleWindow.to past day 12 down to day 12', () => {
+  it('composer default start uses saleWindow.to (first deposit may be after day 12)', () => {
     expect(
       defaultStartDateForSaleWindow({ from: '2023-03-01', to: '2025-07-31' })
-    ).toBe('2025-07-12')
+    ).toBe('2025-07-31')
   })
 
-  it('product-spec mapping rejects startDate after day 12', () => {
+  it('product-spec mapping accepts startDate after day 12 inside saleWindow', () => {
     const schema = JSON.parse(readRepo(DEFAULT_PRODUCT_SCHEMA_PATH))
     const product = loadHomeSavingsProductSpec(
       readRepo('docs/product-specs/products/home-savings/premium-4x10/product.yaml'),
       schema
     )
-    expect(() =>
-      mapHomeSavingsSpecInputsToInstrumentInput(product, {
-        monthlyDeposit: 20000,
-        termMonths: 48,
-        startDate: '2025-07-31',
-        housingPurpose: true,
-        openingFeeMode: 'standard-1pct'
-      })
-    ).toThrow(/tárgyhó 12/)
+    const mapped = mapHomeSavingsSpecInputsToInstrumentInput(product, {
+      monthlyDeposit: 20000,
+      termMonths: 48,
+      startDate: '2025-07-31',
+      housingPurpose: true,
+      openingFeeMode: 'standard-1pct'
+    })
+    expect(mapped.startDate).toBe('2025-07-31')
+    expect(mapped.depositDayOfMonth).toBe(12)
   })
 
   it('misaligned regular deposit day (3 vs 12) shifts last deposit, interest, and Annex 3 EBKM', () => {
@@ -107,19 +123,16 @@ describe('home-savings ÁSZF deposit due-by day (tárgyhó 12.)', () => {
     })
     expect(interestMisaligned).toBeGreaterThan(0)
     expect(interestAligned).toBeGreaterThan(0)
-    // Later subsequent credits shorten ACT/360 accrual windows → different K even with shared payout day.
     expect(interestMisaligned).not.toBe(interestAligned)
 
     const flowsAligned = buildHomeSavingsAszfEbkmCashFlows(aligned)
     const flowsMisaligned = buildHomeSavingsAszfEbkmCashFlows(misaligned)
-    const depositDatesAligned = flowsAligned
-      .filter((f) => f.description === 'Monthly deposit')
-      .map((f) => f.date)
-    const depositDatesMisaligned = flowsMisaligned
-      .filter((f) => f.description === 'Monthly deposit')
-      .map((f) => f.date)
-    expect(depositDatesAligned).toEqual(datesAligned)
-    expect(depositDatesMisaligned).toEqual(datesMisaligned)
+    expect(
+      flowsAligned.filter((f) => f.description === 'Monthly deposit').map((f) => f.date)
+    ).toEqual(datesAligned)
+    expect(
+      flowsMisaligned.filter((f) => f.description === 'Monthly deposit').map((f) => f.date)
+    ).toEqual(datesMisaligned)
 
     const ebkmAligned = calculateEbkmFromHomeSavingsCashFlows(flowsAligned, {
       retargetTerminalPayout: false
@@ -127,8 +140,54 @@ describe('home-savings ÁSZF deposit due-by day (tárgyhó 12.)', () => {
     const ebkmMisaligned = calculateEbkmFromHomeSavingsCashFlows(flowsMisaligned, {
       retargetTerminalPayout: false
     })
-    // Later deposit legs change Annex 3 t_i and terminal K → rounded EBKM moves.
     expect(ebkmMisaligned.percentRounded).not.toBe(ebkmAligned.percentRounded)
+  })
+
+  it('late first credit (day 31) clamps subsequent to day 12 and changes ACT/360 interest vs day-12 start', () => {
+    const lateFirst = {
+      monthlyDeposit: 100_000,
+      termMonths: 12,
+      startDate: '2025-01-31',
+      accountFeeMonthly: 150,
+      accountOpeningFee: 10_000,
+      housingPurpose: false,
+      depositInterestAnnualRatePct: 3.6
+    }
+    const alignedDay12 = { ...lateFirst, startDate: '2025-01-12' }
+
+    const datesLate = buildHomeSavingsMonthlyDepositDates(lateFirst)
+    expect(datesLate[0]).toBe('2025-01-31')
+    expect(datesLate[1]).toBe('2025-02-12')
+    expect(datesLate.at(-1)).toBe('2025-12-12')
+
+    const interestLate = calculateHomeSavingsDepositInterest({
+      monthlyDeposit: lateFirst.monthlyDeposit,
+      termMonths: lateFirst.termMonths,
+      startDate: lateFirst.startDate,
+      annualRatePct: 3.6,
+      payoutDate: resolveHomeSavingsEbkmPayoutDate(datesLate.at(-1)!)
+    })
+    const interestAligned = calculateHomeSavingsDepositInterest({
+      monthlyDeposit: alignedDay12.monthlyDeposit,
+      termMonths: alignedDay12.termMonths,
+      startDate: alignedDay12.startDate,
+      annualRatePct: 3.6,
+      payoutDate: resolveHomeSavingsEbkmPayoutDate(
+        buildHomeSavingsMonthlyDepositDates(alignedDay12).at(-1)!
+      )
+    })
+    expect(interestLate).not.toBe(interestAligned)
+
+    const ebkmLate = calculateEbkmFromHomeSavingsCashFlows(
+      buildHomeSavingsAszfEbkmCashFlows(lateFirst),
+      { retargetTerminalPayout: false }
+    )
+    const ebkmAligned = calculateEbkmFromHomeSavingsCashFlows(
+      buildHomeSavingsAszfEbkmCashFlows(alignedDay12),
+      { retargetTerminalPayout: false }
+    )
+    // Raw Annex 3 rate moves; half-up rounded % may still coincide on some cells.
+    expect(ebkmLate.rate).not.toBe(ebkmAligned.rate)
   })
 
   it('rejects depositDayOfMonth past ÁSZF bound even when startDate is legal', () => {
@@ -141,7 +200,7 @@ describe('home-savings ÁSZF deposit due-by day (tárgyhó 12.)', () => {
     ).toThrow(/tárgyhó 12/)
   })
 
-  it('premium-8x30 EBKM examples stay green on ÁSZF day≤12 witness 2025-05-12', () => {
+  it('premium-8x30 EBKM examples stay green on aligned witness 2025-05-12', () => {
     const schema = JSON.parse(readRepo(DEFAULT_PRODUCT_SCHEMA_PATH))
     const product = loadHomeSavingsProductSpec(
       readRepo('docs/product-specs/products/home-savings/premium-8x30/product.yaml'),

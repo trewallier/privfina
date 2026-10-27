@@ -272,3 +272,23 @@ Sample every 10 000 Ft (mode A):
 | 100 000 | 40 192 | +1 | 0 | 0 |
 
 **Verdict:** capitalization decimal precision is **not** a lever. Moving from whole Ft → fillér → 8 dp changes mean ‖Δ‖ by **≲0.1 Ft** and never closes the residual band; N≥2 is flat. Whole-forint caps still win on exact count (14/91). Wrong startDate still dominates (e.g. `2025-09-30` stays ~120 Ft mean regardless of N).
+
+### 8e — Linearity of interest vs monthly deposit (golden vs engine)
+
+Question: are tariff `Kamat (Ft)` values perfectly proportional to monthly deposit, and what breaks linearity in the engine?
+
+Artifact: [`interest-linearity-kamat-probe.json`](interest-linearity-kamat-probe.json). Anchor `startDate` **2025-09-04**.
+
+| Series | `kamat/m` range | unique ΔI/Δm (+1000 Ft steps) | OLS residual max ‖ε‖ | Homogeneous `I(2m)=2·I(m)`? |
+| --- | ---: | ---: | ---: | --- |
+| **Golden tariff** | 0.40153…0.40217 | **19** distinct | ~9.5 Ft | **No** (e.g. 10k→4020, 40k→16074 ≠ 16080) |
+| **Engine float** (no cap/final round) | constant **0.401922** (±1e−15) | 1 (to FP noise) | ~0 | **Yes** |
+| **Engine + final `Math.round` only** | ~6e−5 span | — | ~0.5 Ft | Almost (≤1 Ft) |
+| **Engine + year-cap `Math.round` only** | ~1.2e−4 span | — | ~2.1 Ft | **No** |
+| **Engine today** (cap + final round) | ~1.8e−4 span | **5** distinct (0.400…0.404) | ~2.4 Ft | **No** (`I(66k)−2·I(33k)=+4`) |
+
+Golden looks linear (R² ≈ 1 − 1.7×10⁻⁸) but is **not** exact-proportional: only 11/91 rows lie on the `4020/10 000` ray; first differences jump between **0.390** and **0.413** per Ft of deposit. So “perfect golden linearity” is visual, not algebraic.
+
+**Root cause of engine non-linearity:** `Math.round` on pending interest at each megtakarítási-év capitalization (and the terminal round). Daily ACT/360 accrual is homogeneous in deposit size; rounding is not (`round(2x) ≠ 2·round(x)`). Cap-trace example 33k vs 66k: several year-caps differ by ±1 Ft from `2×` the 33k rounded cap, summing to **`I(66k) = 2·I(33k) + 4`**.
+
+Implication: a perfectly linear engine (float path, or single final round of `c·m`) still cannot hit every tariff integer — goldens themselves are not one ray — but the **cap-round sawtooth** is why engine `I/m` wobbles and why some rows (e.g. 66k, Δ=+11) sit farther from both the float ray and the tariff.

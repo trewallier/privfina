@@ -45,10 +45,7 @@ function createHomeSavingsComposerHost({
   const productInput = document.getElementById('home-savings-product')
   const submitButton = document.getElementById('home-savings-submit')
   const cancelButton = document.getElementById('home-savings-cancel-edit')
-  const readinessHint = document.getElementById('home-savings-readiness-hint')
-  const eligibilityHint = document.getElementById('home-savings-eligibility-hint')
-  const discountHint = document.getElementById('home-savings-discount-hint')
-  const premiumHint = document.getElementById('home-savings-premium-hint')
+  const availabilityHint = document.getElementById('home-savings-availability-hint')
   const formStatus = document.getElementById('home-savings-form-status')
   const monthlyDepositHelp = document.querySelector(
     '#home-savings-monthly-deposit-help p'
@@ -85,10 +82,7 @@ function createHomeSavingsComposerHost({
     const product = applyHomeSavingsProductSelection({
       form,
       productCode: productInput.value,
-      readinessElement: readinessHint,
-      eligibilityElement: eligibilityHint,
-      discountElement: discountHint,
-      premiumElement: premiumHint,
+      availabilityElement: availabilityHint,
       forceDefaults
     })
     syncDepositHelp(product)

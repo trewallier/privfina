@@ -2180,10 +2180,7 @@
                       </div>
                     </label>
                   </div>
-                  <p id="home-savings-readiness-hint" class="field-help-static"></p>
-                  <p id="home-savings-eligibility-hint" class="field-help-static"></p>
-                  <p id="home-savings-discount-hint" class="field-help-static"></p>
-                  <p id="home-savings-premium-hint" class="field-help-static" hidden></p>
+                  <p id="home-savings-availability-hint" class="field-help-static" hidden></p>
                   <div id="home-savings-form-status" aria-live="polite" hidden></div>
 
                   <div class="row">
@@ -2200,7 +2197,7 @@
                       <input id="home-savings-start-date" name="startDate" type="date" required />
                       <div id="home-savings-start-date-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="home-savings-start-date-help" aria-label="Close">x</button>
-                        <p>First savings month start (ISO date). Deposit day-of-month is taken from this date.</p>
+                        <p>First savings month start (ISO date). Must fall inside the selected módozat’s offering period (date picker is limited to that window). Deposit day-of-month is taken from this date.</p>
                       </div>
                     </label>
                   </div>
@@ -2216,10 +2213,10 @@
                     </label>
                     <label>
                       <span class="label-title"><span class="field-label">Term (months)</span> <button type="button" class="info-chip" data-help-button="home-savings-term-months-help" aria-label="Term help">i</button></span>
-                      <input id="home-savings-term-months" name="termMonths" type="number" min="1" max="120" step="1" required />
+                      <input id="home-savings-term-months" name="termMonths" type="number" min="1" max="120" step="1" required readonly />
                       <div id="home-savings-term-months-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="home-savings-term-months-help" aria-label="Close">x</button>
-                        <p>Savings horizon; full product-scheme Premium path uses 120 months.</p>
+                        <p>Fixed by the selected módozat. Early sell / shorter terms are out of scope for now.</p>
                       </div>
                     </label>
                   </div>
@@ -2230,7 +2227,7 @@
                       <select id="home-savings-opening-fee-mode" name="openingFeeMode" required></select>
                       <div id="home-savings-opening-fee-mode-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="home-savings-opening-fee-mode-help" aria-label="Close">x</button>
-                        <p>Standard 1% of contractual amount, or published tariff notice (Hirdetmény) promo tables (0.5% / fixed 65 000 Ft) with loyalty commitment.</p>
+                        <p>Standard 1% of contractual amount is always available. Promo modes require a 48-month loyalty commitment (Hűség). Promo deposit bands depend on the selected módozat.</p>
                       </div>
                     </label>
                     <label>
@@ -2249,7 +2246,7 @@
                       <span class="label-title"><span class="field-label">Housing purpose assumed</span> <button type="button" class="info-chip" data-help-button="home-savings-housing-purpose-help" aria-label="Housing purpose help">i</button></span>
                       <div id="home-savings-housing-purpose-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="home-savings-housing-purpose-help" aria-label="Close">x</button>
-                        <p>When checked, OTP Home Savings Premium tiers apply at exit/allocation (soft hint; not hard validation).</p>
+                        <p>Required to receive OTP Home Savings Premium. When unchecked, Premium amount is 0 in the schedule and preview (housing-purpose use is a condition for Premium).</p>
                       </div>
                     </label>
                     <label>
@@ -2288,8 +2285,12 @@
                       <input id="home-savings-total-deposits-preview" class="money-amount" type="text" readonly />
                     </label>
                     <label>
-                      <span class="label-title"><span class="field-label">Total account fees preview</span></span>
+                      <span class="label-title"><span class="field-label">Total account fees preview</span> <button type="button" class="info-chip" data-help-button="home-savings-total-account-fees-help" aria-label="Total account fees help">i</button></span>
                       <input id="home-savings-total-account-fees-preview" class="money-amount" type="text" readonly />
+                      <div id="home-savings-total-account-fees-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="home-savings-total-account-fees-help" aria-label="Close">x</button>
+                        <p>Sum of monthly account-management fees over the savings term (monthly fee × term months). Does not include the account-opening fee (shown separately in Opening fee preview).</p>
+                      </div>
                     </label>
                     <label>
                       <span class="label-title"><span class="field-label">Premium rate preview</span></span>

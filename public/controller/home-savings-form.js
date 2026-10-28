@@ -2,8 +2,9 @@ import {
   assertComposerStartDateInSaleWindow,
   defaultStartDateForSaleWindow,
   findHomeSavingsProduct,
-  openingFeeModeLabel,
-  resolveHomeSavingsReadinessHint
+  formatHomeSavingsAvailabilityHint,
+  formatOpeningFeeModeHelp,
+  openingFeeModeLabel
 } from './home-savings-product-metadata.js'
 import { parseMoneyAmount } from './money-format.js'
 
@@ -29,14 +30,16 @@ function mapFormDataToHomeSavingsSpecInputs(formData, product) {
   const contractAmountRaw = String(formData.get('contractAmount') || '').trim()
   const minDeposit = Number(product.minMonthlyDeposit ?? 10_000)
   const maxDeposit = Number(product.maxMonthlyDeposit ?? 100_000)
-  const minTerm = Number(product.minTermMonths ?? 1)
-  const maxTerm = Number(product.maxTermMonths ?? 120)
+  const schemeTerm = Number(product.defaultTermMonths)
 
   if (!Number.isFinite(monthlyDeposit) || monthlyDeposit < minDeposit || monthlyDeposit > maxDeposit) {
     throw new Error(`Monthly deposit must be between ${minDeposit} and ${maxDeposit} Ft.`)
   }
-  if (!Number.isInteger(termMonths) || termMonths < minTerm || termMonths > maxTerm) {
-    throw new Error(`Savings term must be an integer between ${minTerm} and ${maxTerm} months.`)
+  // Composer locks term to the módozat default (early sell out of scope).
+  if (!Number.isInteger(termMonths) || termMonths !== schemeTerm) {
+    throw new Error(
+      `Savings term must be ${schemeTerm} months for this módozat (early sell is out of scope).`
+    )
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
     throw new Error('Savings start date is required (YYYY-MM-DD).')
@@ -118,37 +121,17 @@ function applyHomeSavingsSaleWindowToDateInput(dateInput, product, force = false
   }
 }
 
-function renderHomeSavingsHints({
-  product,
-  readinessElement,
-  eligibilityElement,
-  discountElement,
-  premiumElement
-}) {
-  if (readinessElement) {
-    const readiness = resolveHomeSavingsReadinessHint(product?.migrationStatus)
-    const sale =
-      product?.saleWindow?.to != null
-        ? ` Historical offering — start date must fall in ${product.saleWindow.from} … ${product.saleWindow.to}.`
-        : product?.saleWindow?.from
-          ? ` Marketed from ${product.saleWindow.from}.`
-          : ''
-    const blocked = product?.commerciallyBlockedReason
-      ? ` Not commercially ready: ${product.commerciallyBlockedReason}`
-      : ''
-    readinessElement.textContent = `${readiness}${sale}${blocked}`
+/**
+ * Single availability line under the product picker (no readiness / eligibility /
+ * loyalty / purpose dump). Withdrawn → "Unavailable since {to}"; else hidden.
+ */
+function renderHomeSavingsHints({ product, availabilityElement }) {
+  if (!availabilityElement) {
+    return
   }
-  if (eligibilityElement) {
-    eligibilityElement.textContent = (product?.eligibilityHints || []).join(' ')
-  }
-  if (discountElement) {
-    discountElement.textContent = (product?.discountHints || []).join(' ')
-  }
-  if (premiumElement) {
-    const text = product?.premiumHints || ''
-    premiumElement.hidden = !text
-    premiumElement.textContent = text
-  }
+  const text = formatHomeSavingsAvailabilityHint(product?.saleWindow)
+  availabilityElement.textContent = text
+  availabilityElement.hidden = !text
 }
 
 function applyHomeSavingsProductDefaults({ form, product, force = false }) {
@@ -161,6 +144,8 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
   const housingInput = form.querySelector('#home-savings-housing-purpose')
   const openingFeeSelect = form.querySelector('#home-savings-opening-fee-mode')
   const startDateInput = form.querySelector('#home-savings-start-date')
+  const openingFeeHelp = form.querySelector('#home-savings-opening-fee-mode-help p')
+  const termHelp = form.querySelector('#home-savings-term-months-help p')
 
   if (depositInput && (force || !depositInput.value)) {
     depositInput.value = String(product.defaultMonthlyDeposit)
@@ -169,12 +154,15 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
     depositInput.min = String(product.minMonthlyDeposit ?? 10_000)
     depositInput.max = String(product.maxMonthlyDeposit ?? 100_000)
   }
-  if (termInput && (force || !termInput.value)) {
-    termInput.value = String(product.defaultTermMonths)
-  }
+  // Term is fixed to the módozat scheme default (early sell out of scope).
   if (termInput) {
-    termInput.min = String(product.minTermMonths ?? 1)
-    termInput.max = String(product.maxTermMonths ?? 120)
+    termInput.value = String(product.defaultTermMonths)
+    termInput.readOnly = true
+    termInput.min = String(product.defaultTermMonths)
+    termInput.max = String(product.defaultTermMonths)
+  }
+  if (termHelp) {
+    termHelp.textContent = `Fixed at ${product.defaultTermMonths} months for this módozat. Early sell / shorter terms are out of scope for now.`
   }
   if (housingInput && (force || !form.dataset.housingTouched)) {
     housingInput.checked = Boolean(product.defaultHousingPurpose)
@@ -187,6 +175,9 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
   if (force && openingFeeSelect) {
     openingFeeSelect.value = product.defaultOpeningFeeMode
   }
+  if (openingFeeHelp) {
+    openingFeeHelp.textContent = formatOpeningFeeModeHelp(product)
+  }
 
   applyHomeSavingsSaleWindowToDateInput(startDateInput, product, force)
 }
@@ -194,10 +185,7 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
 function applyHomeSavingsProductSelection({
   form,
   productCode,
-  readinessElement,
-  eligibilityElement,
-  discountElement,
-  premiumElement,
+  availabilityElement,
   forceDefaults = false
 }) {
   const product = findHomeSavingsProduct(productCode)
@@ -208,10 +196,7 @@ function applyHomeSavingsProductSelection({
   applyHomeSavingsProductDefaults({ form, product, force: forceDefaults })
   renderHomeSavingsHints({
     product,
-    readinessElement,
-    eligibilityElement,
-    discountElement,
-    premiumElement
+    availabilityElement
   })
 
   return product

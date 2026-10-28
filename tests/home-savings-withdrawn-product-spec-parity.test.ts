@@ -111,6 +111,8 @@ describe('home-savings withdrawn embedded ↔ YAML parity (schedule-usable 4x10)
       const yaml = YAML.parse(readRepoFile(entry.yamlPath))
       assertCoreParity(yaml, entry.embedded, entry.code)
       expect(entry.embedded.migrationStatus).toBe('schedule-usable')
+      expect(entry.embedded.displayName).toBe(yaml.displayName)
+      expect(String(entry.embedded.displayName)).not.toMatch(/withdrawn|start \d{4}/)
     })
   }
 })

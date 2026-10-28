@@ -8,7 +8,8 @@
  * displayName and commercial fields match YAML like 10x30).
  * Premium / Premium Plus **4x10** stay schedule-usable with pinned 0.01
  * without-Premium EBKM residuals (ADR 0033 hybrid rejected — PR #94/#95);
- * picker displayName may keep the withdrawn/window suffix until promotion.
+ * picker displayName matches YAML (no sale-window suffix; availability is a
+ * separate composer line).
  * Sale windows are closed — composer/engine require startDate inside the window.
  */
 
@@ -19,8 +20,7 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_4X10_PRODUCT_SPEC = {
   family: 'home-savings',
   variant: 'premium-plusz-4x10',
   productCode: 'premium-plusz-4x10',
-  displayName:
-    'OTP Home Savings Premium Plus 4x10 (withdrawn) — start 2025-08-01…2026-08-02',
+  displayName: 'OTP Home Savings Premium Plus 4x10 (Lakástakarék PRÉMIUM PLUSZ 4x10)',
   engine: {
     instrumentType: 'home-savings',
     paymentFrequency: 'monthly',
@@ -278,7 +278,7 @@ const HOME_SAVINGS_PREMIUM_4X10_PRODUCT_SPEC = {
   family: 'home-savings',
   variant: 'premium-4x10',
   productCode: 'premium-4x10',
-  displayName: 'OTP Home Savings Premium 4x10 (withdrawn) — start 2023-03-01…2025-07-31',
+  displayName: 'OTP Home Savings Premium 4x10 (Lakástakarék PRÉMIUM 4x10)',
   engine: {
     instrumentType: 'home-savings',
     paymentFrequency: 'monthly',

@@ -4,9 +4,11 @@
  * `docs/product-specs/products/home-savings/<code>/product.yaml`
  * (asserted by `tests/home-savings-withdrawn-product-spec-parity.test.ts`).
  *
- * Premium / Premium Plus **8x30** are fully-spec-backed (ADR 0031 EBKM green).
+ * Premium / Premium Plus **8x30** are fully-spec-backed (ADR 0031 EBKM green;
+ * displayName and commercial fields match YAML like 10x30).
  * Premium / Premium Plus **4x10** stay schedule-usable with pinned 0.01
- * without-Premium EBKM residuals (ADR 0033 hybrid rejected — PR #94/#95).
+ * without-Premium EBKM residuals (ADR 0033 hybrid rejected — PR #94/#95);
+ * picker displayName may keep the withdrawn/window suffix until promotion.
  * Sale windows are closed — composer/engine require startDate inside the window.
  */
 
@@ -86,8 +88,7 @@ const HOME_SAVINGS_PREMIUM_PLUSZ_8X30_PRODUCT_SPEC = {
   family: 'home-savings',
   variant: 'premium-plusz-8x30',
   productCode: 'premium-plusz-8x30',
-  displayName:
-    'OTP Home Savings Premium Plus 8x30 (withdrawn) — start 2025-08-01…2026-08-02',
+  displayName: 'OTP Home Savings Premium Plus 8x30 (Lakástakarék PRÉMIUM PLUSZ 8x30)',
   description:
     'Withdrawn OTP Lakástakarék PRÉMIUM PLUSZ 8x30 product scheme (módozat). Sold 2025-08-01 through 2026-08-02. Customer-perspective savings schedule only. startDate must fall in saleWindow (historical). LTP home loan out of scope.',
   engine: {
@@ -337,7 +338,7 @@ const HOME_SAVINGS_PREMIUM_8X30_PRODUCT_SPEC = {
   family: 'home-savings',
   variant: 'premium-8x30',
   productCode: 'premium-8x30',
-  displayName: 'OTP Home Savings Premium 8x30 (withdrawn) — start 2023-03-01…2025-07-31',
+  displayName: 'OTP Home Savings Premium 8x30 (Lakástakarék PRÉMIUM 8x30)',
   description:
     'Withdrawn OTP Lakástakarék PRÉMIUM 8x30 product scheme (módozat). Sold 2023-03-01 through 2025-07-31 (replaced by PRÉMIUM PLUSZ 8x30). Customer-perspective savings schedule only. startDate must fall in saleWindow.',
   engine: {

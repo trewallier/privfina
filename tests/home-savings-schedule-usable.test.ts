@@ -49,7 +49,12 @@ describe('home-savings schedule-usable metadata', () => {
       'fully-spec-backed'
     )
     expect(findHomeSavingsProduct('premium-plusz-10x30')?.commerciallyBlockedReason).toBeNull()
+    expect(findHomeSavingsProduct('premium-plusz-8x30')?.migrationStatus).toBe(
+      'fully-spec-backed'
+    )
+    expect(findHomeSavingsProduct('premium-8x30')?.migrationStatus).toBe('fully-spec-backed')
     expect(findHomeSavingsProduct('premium-plusz-4x10')?.migrationStatus).toBe('schedule-usable')
+    expect(findHomeSavingsProduct('premium-4x10')?.migrationStatus).toBe('schedule-usable')
     expect(findHomeSavingsProduct('premium-plusz-4x10')?.saleWindow).toEqual({
       from: '2025-08-01',
       to: '2026-08-02'
@@ -57,6 +62,9 @@ describe('home-savings schedule-usable metadata', () => {
     expect(
       findHomeSavingsProductById('home-savings.premium-plusz-10x30.standard')?.displayName
     ).toMatch(/PRÉMIUM PLUSZ 10x30/)
+    expect(
+      findHomeSavingsProductById('home-savings.premium-plusz-8x30.standard')?.displayName
+    ).toBe('OTP Home Savings Premium Plus 8x30 (Lakástakarék PRÉMIUM PLUSZ 8x30)')
     expect(resolveHomeSavingsReadinessHint('schedule-usable')).toMatch(/schedule-usable/)
   })
 

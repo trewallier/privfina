@@ -1,7 +1,9 @@
 /**
  * Withdrawn home-savings embedded ↔ YAML parity (ROADMAP §5f).
- * - 8x30: fully-spec-backed field coverage (ADR 0031 EBKM green).
- * - 4x10: schedule-usable identity/engine/saleWindow/fees (0.01 EBKM residual; ADR 0033 rejected).
+ * - 8x30: fully-spec-backed (ADR 0031 EBKM green) — displayName + commercial
+ *   fields aligned with YAML at the 10x30 bar (not every optional YAML prose field).
+ * - 4x10: schedule-usable identity/engine/saleWindow/fees (0.01 EBKM residual;
+ *   ADR 0033 rejected).
  */
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -18,6 +20,12 @@ import { resolveKiutalasiPeriodMonths } from '../src/finance_engine/engine'
 
 function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
+}
+
+function depositBandFromCondition(condition: string): { min: number; max: number } | null {
+  const match = /^monthly-deposit-(\d+)-to-(\d+)$/.exec(condition)
+  if (!match) return null
+  return { min: Number(match[1]), max: Number(match[2]) }
 }
 
 const SCHEDULE_USABLE = [
@@ -109,17 +117,92 @@ describe('home-savings withdrawn embedded ↔ YAML parity (schedule-usable 4x10)
 
 describe('home-savings withdrawn embedded ↔ YAML parity (fully-spec-backed 8x30)', () => {
   for (const entry of FULLY_SPEC_BACKED) {
-    it(`${entry.code}: full YAML field parity`, () => {
+    it(`${entry.code}: YAML ↔ embedded parity (displayName, fees, discounts, inputs, ui)`, () => {
       const yaml = YAML.parse(readRepoFile(entry.yamlPath))
       const embedded = entry.embedded
       assertCoreParity(yaml, embedded, entry.code)
 
       expect(embedded.migrationStatus).toBe('fully-spec-backed')
+      expect(embedded.displayName).toBe(yaml.displayName)
       expect(embedded.description).toBeTruthy()
       expect(embedded.eligibilityRules).toEqual(yaml.eligibilityRules)
-      expect((embedded.discounts || []).map((d: { name: string }) => d.name)).toEqual(
-        (yaml.discounts || []).map((d: { name: string }) => d.name)
+
+      expect(
+        (embedded.fees || []).map(
+          (f: { name: string; type: string; value: number; unit: string; timing?: string }) => ({
+            name: f.name,
+            type: f.type,
+            value: f.value,
+            unit: f.unit,
+            timing: f.timing
+          })
+        )
+      ).toEqual(
+        (yaml.fees || []).map(
+          (f: { name: string; type: string; value: number; unit: string; timing?: string }) => ({
+            name: f.name,
+            type: f.type,
+            value: f.value,
+            unit: f.unit,
+            timing: f.timing
+          })
+        )
       )
+
+      expect(
+        (embedded.discounts || []).map(
+          (d: {
+            name: string
+            type: string
+            value: number
+            unit: string
+            conditions?: string[]
+            appliesToFeeNames?: string[]
+          }) => ({
+            name: d.name,
+            type: d.type,
+            value: d.value,
+            unit: d.unit,
+            conditions: d.conditions,
+            appliesToFeeNames: d.appliesToFeeNames
+          })
+        )
+      ).toEqual(
+        (yaml.discounts || []).map(
+          (d: {
+            name: string
+            type: string
+            value: number
+            unit: string
+            conditions?: string[]
+            appliesToFeeNames?: string[]
+          }) => ({
+            name: d.name,
+            type: d.type,
+            value: d.value,
+            unit: d.unit,
+            conditions: d.conditions,
+            appliesToFeeNames: d.appliesToFeeNames
+          })
+        )
+      )
+
+      const catalog = findHomeSavingsProduct(entry.code)
+      expect(catalog?.displayName).toBe(yaml.displayName)
+      for (const discount of yaml.discounts || []) {
+        const band = (discount.conditions || [])
+          .map(depositBandFromCondition)
+          .find(Boolean)
+        if (!band) continue
+        if (discount.name === 'promo-opening-fee-half-percent') {
+          expect(embedded.openingFeeModeDepositBands['promo-half-percent']).toEqual(band)
+          expect(catalog?.openingFeeModeDepositBands['promo-half-percent']).toEqual(band)
+        } else if (discount.name.startsWith('promo-opening-fee-fixed-')) {
+          const mode = `promo-fixed-${discount.name.replace('promo-opening-fee-fixed-', '')}`
+          expect(embedded.openingFeeModeDepositBands[mode]).toEqual(band)
+          expect(catalog?.openingFeeModeDepositBands[mode]).toEqual(band)
+        }
+      }
 
       const yamlOpeningModes = yaml.inputs.find(
         (f: { name: string }) => f.name === 'openingFeeMode'
@@ -128,6 +211,7 @@ describe('home-savings withdrawn embedded ↔ YAML parity (fully-spec-backed 8x3
         (f: { name: string }) => f.name === 'openingFeeMode'
       )?.constraints?.enum
       expect(embeddedOpeningModes).toEqual(yamlOpeningModes)
+      expect(catalog?.openingFeeModes).toEqual(yamlOpeningModes)
 
       const yamlDeposit = yaml.inputs.find((f: { name: string }) => f.name === 'monthlyDeposit')
       const embeddedDeposit = embedded.inputs.find(
@@ -144,6 +228,9 @@ describe('home-savings withdrawn embedded ↔ YAML parity (fully-spec-backed 8x3
       expect(embedded.ui.formTitle).toBe(yaml.ui.formTitle)
       expect(embedded.ui.sections.map((s: { id: string }) => s.id)).toEqual(
         yaml.ui.sections.map((s: { id: string }) => s.id)
+      )
+      expect(embedded.ui.sections.map((s: { fieldNames: string[] }) => s.fieldNames)).toEqual(
+        yaml.ui.sections.map((s: { fieldNames: string[] }) => s.fieldNames)
       )
     })
 

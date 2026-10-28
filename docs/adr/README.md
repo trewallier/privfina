@@ -14,7 +14,6 @@ Location
 
 Recent decisions
 - `0017-converge-on-single-browser-calculation-surface.md` — keep TS engine as formula owner; treat `public/instruments.js` as interim until bundler ADR (implemented by 0032 / ROADMAP §6a).
-- `0032-vite-browser-bundler-and-single-calculation-surface.md` — Vite as Pages SPA bundler (`dist-web`); browser imports `@finance_engine`; retire dual-surface formula copies.
 - `0018-trust-stored-instrument-flows-on-import.md` — import trusts stored `generatedFlows`; migrations only fill lineage metadata (schema v4).
 - `0019-adaptive-responsive-workspace-ux.md` — one SPA/visual language; desktop keeps two workspaces; narrow viewports separate browse vs compose and prefer card lists (ROADMAP §4).
 - `0020-product-spec-schema-v2-for-expandable-loan-products.md` — freeze schema v1; active product specs use `v2alpha1` with open `variant`, required `productCode`, mortgage family, and subsidy/fee/discount constructs.
@@ -29,6 +28,7 @@ Recent decisions
 - `0029-home-savings-instrument-type.md` — runtime `InstrumentType: 'home-savings'` cash-flow contract; ÁSZF deposit rate required before interest fidelity.
 - `0030-home-savings-readiness-and-commercial-composer.md` — commercial home-savings composer + readiness ladder (no loan THM three-check).
 - `0031-ebkm-verification-for-home-savings.md` — EBKM verification bar for commercially-usable home-savings offerings.
+- `0032-vite-browser-bundler-and-single-calculation-surface.md` — Vite as Pages SPA bundler (`dist-web`); browser imports `@finance_engine`; retire dual-surface formula copies.
 - `0033-home-savings-ebkm-interest-accrual-through.md` — **rejected** (PR #95 / #94): hybrid OTP-maturity interest end for 4x10 residuals is packaging fit only; not adopted without an external citation.
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).

@@ -483,6 +483,10 @@ export function resolveContractAmountFromMonthlyDeposit(input: {
  *
  * Payout date defaults to {@link resolveHomeSavingsMaturityPayoutDate} (ÁSZF §22
  * 2-month allocation packaging aligned with OTP product-page calculator goldens).
+ *
+ * Accepted residual bars (ROADMAP §5f): ≤4 Ft vs OTP 10x30 web maturity; ≤11 Ft vs
+ * Plus 8x30 tariff Kamat under witness startDate — see
+ * `docs/dev-notes/ebkm-4x10-interest-invariance-probe.md`.
  */
 export function calculateHomeSavingsDepositInterest(input: {
   monthlyDeposit: number

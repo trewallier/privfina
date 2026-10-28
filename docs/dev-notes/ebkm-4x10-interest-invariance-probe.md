@@ -1,16 +1,58 @@
 # EBKM 4x10 interest invariance probe
 
-Status: investigation complete (probe-only; no catalog promotion)
+Status: **closed — accepted model locked; interest fine-tuning deferred**
 
-Date: 2026-10-27 (Europe/Budapest)
+Date: 2026-10-27 … 2026-10-28 (Europe/Budapest)
 
-Related: ROADMAP §5f, ADR 0031, ADR 0033 / PR #94 review, `scripts/probe-home-savings-ebkm-startdate.ts`, machine output `ebkm-4x10-interest-invariance-probe.json`
+Related: ROADMAP §5f, ADR 0031, ADR 0033 / PR #94 review, `scripts/probe-home-savings-ebkm-startdate.ts`, machine output `ebkm-4x10-interest-invariance-probe.json`, harness `tests/home-savings-plusz-8x30-tariff-kamat.test.ts`
 
 Branch base: stacks on PR #93 (`cursor/5f-withdrawn-ltp-ebkm-e4dc`) so withdrawn EBKM examples exist; variant **G** is implemented experimentally in the probe (production ADR 0033 enum not required).
 
-## Question
+## Accepted model (production)
+
+| Lever | Choice |
+| --- | --- |
+| Day-count | **ACT/360 calendar daily** (ÁSZF §10): `tőke × kamatláb × napok / (360 × 100)` |
+| Capitalization | Whole **forint** `Math.round` at each megtakarítási-év cap **and** at terminal |
+| Chart / maturity packaging | First of month after last-deposit month **+ 2** (OTP calculator alignment) |
+| EBKM packaging | Unchanged ADR 0031 (allocation fees + interest to lastDepositMonth+3 day-1) |
+| Deposit due day | ÁSZF tárgyhó-12 for regular deposits; first deposit exempt |
+
+### Accepted residual / harness tolerance
+
+| Golden | Tolerance | Observed (witness) | Harness |
+| --- | --- | --- | --- |
+| OTP product-page calculator at-maturity (Premium Plus **10x30**) | **≤ 4 Ft** terminal / interest | mixed-sign −3 / +4 / −1 | `tests/home-savings-calc-aligned.test.ts` |
+| Internal tariff `Kamat (Ft)` (Premium Plus **8x30**, 91 amounts) | **≤ 11 Ft** abs | mean ‖Δ‖ ≈ 2.5 Ft, max 11 Ft, 14 exact @ `startDate` **2025-09-04** | `tests/home-savings-plusz-8x30-tariff-kamat.test.ts` + `examples/tariff-kamat-20250930.json` |
+
+Relative error on the 8x30 tariff grid: mean ≈ **0.015%**, max ≈ **0.105%**. Residual treated as year-cap / final rounding noise under the locked model — **not** proof of a wrong rate formula.
+
+**Deferred (ROADMAP §5f):** further interest algorithm fine-tuning (fillér caps, 30-day months, exact 1 Ft tariff match, closing 4x10 EBKM 0.01 cells via interest tweaks). 4x10 stays **schedule-usable** with pinned 0.01 without-Premium EBKM residual under shared ÁSZF packaging.
+
+## What was tried (quick scorecard)
+
+| Attempt | Result |
+| --- | --- |
+| ÁSZF day-12 deposit due + first-deposit exemption | Encoded; does **not** close 4x10 EBKM residuals |
+| §22(4) kiutalási 3→2 cutover @ 2017-07-01 | Encoded; no catalog módozat in pre-cutover window |
+| Month-1 EBKM scenario / startDate day shopping | Invariant on month-1; **no** dual-side 4x10 witnesses without hybrid |
+| ADR 0033 hybrid interest-end (G) | Packaging fit only; not adopted as ÁSZF rule for residuals |
+| “Further from zero” EBKM % rounding | **Rejected** — not the residual cause |
+| Published-EBKM → K-band invert | Engine K high on residual without-Premium cells (elsewhere than rate %) |
+| Equal 30-day months / 30/360 period | **Worse** vs 8x30 tariff (mean ‖Δ‖ ~165–277 Ft) |
+| Cap rounding 0…8 decimals | Flat — mean ‖Δ‖ only 2.46→2.36 Ft; whole-Ft still most exacts |
+| Float year-caps + final round only | Near-linear; still ≤11 Ft band vs tariff; not adopted (ÁSZF capitalizes yearly) |
+| DFT / linearity of I and I/m | Golden near-linear hash; engine non-linearity = year-cap `Math.round`; error vs m uncorrelated (R²≈0.002) |
+
+**What worked:** keep calendar ACT/360 + whole-Ft caps; document tolerances; ÁSZF deposit-due / kiutalási cutover fidelity.
+
+**What did not:** close 4x10 0.01 EBKM via interest-rule shopping; beat whole-Ft ACT/360 on the 8x30 tariff with 30-day or finer-cap variants.
+
+## Question (original)
 
 Can withdrawn Premium / Premium Plus **4x10** close the 0.01 without-Premium EBKM residuals under a **document-backed**, **startDate-invariant** interest rule—without ADR 0033’s hybrid (ÁSZF fees/terminal date + OTP-maturity interest end) and without day-of-month shopping?
+
+**Answer:** No. Interest path is good enough within the tolerances above; residual 4x10 EBKM remains a packaging / K-assembly issue deferred with the product at schedule-usable.
 
 ## Phase 1 — ÁSZF / USZ evidence (deposit interest)
 

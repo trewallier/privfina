@@ -211,3 +211,4 @@ exampleRefs:
   - examples/ebkm-standard-100000.yaml
   - examples/ebkm-standard-20000.yaml
   - examples/maturity-premium-96.yaml
+  - examples/tariff-kamat-20250930.json

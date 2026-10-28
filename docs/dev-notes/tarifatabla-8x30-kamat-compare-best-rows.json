@@ -1,0 +1,915 @@
+{
+  "startDate": "2025-09-04",
+  "rows": [
+    {
+      "monthly": 10000,
+      "goldenKamat": 4020,
+      "engineKamat": 4019,
+      "dAbs": -1,
+      "dRel": -0.0002487562189054726,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 11000,
+      "goldenKamat": 4423,
+      "engineKamat": 4420,
+      "dAbs": -3,
+      "dRel": -0.0006782726656115759,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 12000,
+      "goldenKamat": 4823,
+      "engineKamat": 4822,
+      "dAbs": -1,
+      "dRel": -0.00020733982998133942,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 13000,
+      "goldenKamat": 5222,
+      "engineKamat": 5225,
+      "dAbs": 3,
+      "dRel": 0.0005744925315970893,
+      "dTerm": 3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 14000,
+      "goldenKamat": 5624,
+      "engineKamat": 5627,
+      "dAbs": 3,
+      "dRel": 0.0005334281650071124,
+      "dTerm": 3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 15000,
+      "goldenKamat": 6030,
+      "engineKamat": 6028,
+      "dAbs": -2,
+      "dRel": -0.0003316749585406302,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 16000,
+      "goldenKamat": 6429,
+      "engineKamat": 6431,
+      "dAbs": 2,
+      "dRel": 0.00031109037175299425,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 17000,
+      "goldenKamat": 6834,
+      "engineKamat": 6834,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 18000,
+      "goldenKamat": 7239,
+      "engineKamat": 7235,
+      "dAbs": -4,
+      "dRel": -0.0005525625086337892,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 19000,
+      "goldenKamat": 7629,
+      "engineKamat": 7637,
+      "dAbs": 8,
+      "dRel": 0.0010486302267662866,
+      "dTerm": 8,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 20000,
+      "goldenKamat": 8040,
+      "engineKamat": 8039,
+      "dAbs": -1,
+      "dRel": -0.0001243781094527363,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 21000,
+      "goldenKamat": 8442,
+      "engineKamat": 8441,
+      "dAbs": -1,
+      "dRel": -0.00011845534233593936,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 22000,
+      "goldenKamat": 8840,
+      "engineKamat": 8843,
+      "dAbs": 3,
+      "dRel": 0.00033936651583710406,
+      "dTerm": 3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 23000,
+      "goldenKamat": 9245,
+      "engineKamat": 9245,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 24000,
+      "goldenKamat": 9647,
+      "engineKamat": 9646,
+      "dAbs": -1,
+      "dRel": -0.0001036591686534674,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 25000,
+      "goldenKamat": 10052,
+      "engineKamat": 10049,
+      "dAbs": -3,
+      "dRel": -0.0002984480700358138,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 26000,
+      "goldenKamat": 10451,
+      "engineKamat": 10451,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 27000,
+      "goldenKamat": 10854,
+      "engineKamat": 10852,
+      "dAbs": -2,
+      "dRel": -0.00018426386585590566,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 28000,
+      "goldenKamat": 11252,
+      "engineKamat": 11255,
+      "dAbs": 3,
+      "dRel": 0.0002666192676857448,
+      "dTerm": 3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 29000,
+      "goldenKamat": 11655,
+      "engineKamat": 11655,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 30000,
+      "goldenKamat": 12060,
+      "engineKamat": 12056,
+      "dAbs": -4,
+      "dRel": -0.0003316749585406302,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 31000,
+      "goldenKamat": 12462,
+      "engineKamat": 12458,
+      "dAbs": -4,
+      "dRel": -0.0003209757663296421,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 32000,
+      "goldenKamat": 12859,
+      "engineKamat": 12861,
+      "dAbs": 2,
+      "dRel": 0.0001555330896648262,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 33000,
+      "goldenKamat": 13263,
+      "engineKamat": 13262,
+      "dAbs": -1,
+      "dRel": -7.539772298876574e-05,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 34000,
+      "goldenKamat": 13662,
+      "engineKamat": 13664,
+      "dAbs": 2,
+      "dRel": 0.00014639145073927682,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 35000,
+      "goldenKamat": 14067,
+      "engineKamat": 14067,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 36000,
+      "goldenKamat": 14471,
+      "engineKamat": 14468,
+      "dAbs": -3,
+      "dRel": -0.0002073111740722825,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 37000,
+      "goldenKamat": 14870,
+      "engineKamat": 14870,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 38000,
+      "goldenKamat": 15265,
+      "engineKamat": 15272,
+      "dAbs": 7,
+      "dRel": 0.00045856534556174255,
+      "dTerm": 7,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 39000,
+      "goldenKamat": 15674,
+      "engineKamat": 15674,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 40000,
+      "goldenKamat": 16074,
+      "engineKamat": 16076,
+      "dAbs": 2,
+      "dRel": 0.00012442453651860148,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 41000,
+      "goldenKamat": 16480,
+      "engineKamat": 16479,
+      "dAbs": -1,
+      "dRel": -6.0679611650485434e-05,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 42000,
+      "goldenKamat": 16884,
+      "engineKamat": 16881,
+      "dAbs": -3,
+      "dRel": -0.00017768301350390902,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 43000,
+      "goldenKamat": 17285,
+      "engineKamat": 17283,
+      "dAbs": -2,
+      "dRel": -0.00011570726063060458,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 44000,
+      "goldenKamat": 17686,
+      "engineKamat": 17685,
+      "dAbs": -1,
+      "dRel": -5.6541897546081646e-05,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 45000,
+      "goldenKamat": 18091,
+      "engineKamat": 18087,
+      "dAbs": -4,
+      "dRel": -0.0002211044165607208,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 46000,
+      "goldenKamat": 18486,
+      "engineKamat": 18490,
+      "dAbs": 4,
+      "dRel": 0.00021637996321540625,
+      "dTerm": 4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 47000,
+      "goldenKamat": 18891,
+      "engineKamat": 18892,
+      "dAbs": 1,
+      "dRel": 5.293526017680377e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 48000,
+      "goldenKamat": 19291,
+      "engineKamat": 19292,
+      "dAbs": 1,
+      "dRel": 5.183764449743404e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 49000,
+      "goldenKamat": 19686,
+      "engineKamat": 19693,
+      "dAbs": 7,
+      "dRel": 0.00035558264756679875,
+      "dTerm": 7,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 50000,
+      "goldenKamat": 20095,
+      "engineKamat": 20096,
+      "dAbs": 1,
+      "dRel": 4.976362279173924e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 51000,
+      "goldenKamat": 20500,
+      "engineKamat": 20498,
+      "dAbs": -2,
+      "dRel": -9.75609756097561e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 52000,
+      "goldenKamat": 20898,
+      "engineKamat": 20899,
+      "dAbs": 1,
+      "dRel": 4.785146904009953e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 53000,
+      "goldenKamat": 21304,
+      "engineKamat": 21301,
+      "dAbs": -3,
+      "dRel": -0.00014081862561021404,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 54000,
+      "goldenKamat": 21704,
+      "engineKamat": 21704,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 55000,
+      "goldenKamat": 22106,
+      "engineKamat": 22105,
+      "dAbs": -1,
+      "dRel": -4.523658735185018e-05,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 56000,
+      "goldenKamat": 22511,
+      "engineKamat": 22507,
+      "dAbs": -4,
+      "dRel": -0.00017769090666785127,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 57000,
+      "goldenKamat": 22909,
+      "engineKamat": 22911,
+      "dAbs": 2,
+      "dRel": 8.730193373783229e-05,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 58000,
+      "goldenKamat": 23310,
+      "engineKamat": 23312,
+      "dAbs": 2,
+      "dRel": 8.58000858000858e-05,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 59000,
+      "goldenKamat": 23714,
+      "engineKamat": 23714,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 60000,
+      "goldenKamat": 24120,
+      "engineKamat": 24116,
+      "dAbs": -4,
+      "dRel": -0.0001658374792703151,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 61000,
+      "goldenKamat": 24519,
+      "engineKamat": 24518,
+      "dAbs": -1,
+      "dRel": -4.078469758146743e-05,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 62000,
+      "goldenKamat": 24919,
+      "engineKamat": 24920,
+      "dAbs": 1,
+      "dRel": 4.013002126891127e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 63000,
+      "goldenKamat": 25324,
+      "engineKamat": 25322,
+      "dAbs": -2,
+      "dRel": -7.8976465013426e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 64000,
+      "goldenKamat": 25725,
+      "engineKamat": 25723,
+      "dAbs": -2,
+      "dRel": -7.774538386783285e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 65000,
+      "goldenKamat": 26116,
+      "engineKamat": 26126,
+      "dAbs": 10,
+      "dRel": 0.000382907030173074,
+      "dTerm": 10,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 66000,
+      "goldenKamat": 26517,
+      "engineKamat": 26528,
+      "dAbs": 11,
+      "dRel": 0.0004148282234038541,
+      "dTerm": 11,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 67000,
+      "goldenKamat": 26930,
+      "engineKamat": 26929,
+      "dAbs": -1,
+      "dRel": -3.713330857779428e-05,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 68000,
+      "goldenKamat": 27330,
+      "engineKamat": 27330,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 69000,
+      "goldenKamat": 27732,
+      "engineKamat": 27732,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 70000,
+      "goldenKamat": 28135,
+      "engineKamat": 28133,
+      "dAbs": -2,
+      "dRel": -7.108583614714768e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 71000,
+      "goldenKamat": 28536,
+      "engineKamat": 28534,
+      "dAbs": -2,
+      "dRel": -7.008690776562938e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 72000,
+      "goldenKamat": 28937,
+      "engineKamat": 28937,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 73000,
+      "goldenKamat": 29339,
+      "engineKamat": 29340,
+      "dAbs": 1,
+      "dRel": 3.408432461910767e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 74000,
+      "goldenKamat": 29743,
+      "engineKamat": 29741,
+      "dAbs": -2,
+      "dRel": -6.724271257102511e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 75000,
+      "goldenKamat": 30148,
+      "engineKamat": 30143,
+      "dAbs": -5,
+      "dRel": -0.0001658484808279156,
+      "dTerm": -5,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 76000,
+      "goldenKamat": 30539,
+      "engineKamat": 30546,
+      "dAbs": 7,
+      "dRel": 0.00022921510200072038,
+      "dTerm": 7,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 77000,
+      "goldenKamat": 30952,
+      "engineKamat": 30948,
+      "dAbs": -4,
+      "dRel": -0.00012923235978288964,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 78000,
+      "goldenKamat": 31349,
+      "engineKamat": 31350,
+      "dAbs": 1,
+      "dRel": 3.1898944144948805e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 79000,
+      "goldenKamat": 31752,
+      "engineKamat": 31753,
+      "dAbs": 1,
+      "dRel": 3.1494079113126735e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 80000,
+      "goldenKamat": 32150,
+      "engineKamat": 32154,
+      "dAbs": 4,
+      "dRel": 0.0001244167962674961,
+      "dTerm": 4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 81000,
+      "goldenKamat": 32555,
+      "engineKamat": 32556,
+      "dAbs": 1,
+      "dRel": 3.071724773460298e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 82000,
+      "goldenKamat": 32961,
+      "engineKamat": 32958,
+      "dAbs": -3,
+      "dRel": -9.101665604805679e-05,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 83000,
+      "goldenKamat": 33360,
+      "engineKamat": 33360,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 84000,
+      "goldenKamat": 33759,
+      "engineKamat": 33762,
+      "dAbs": 3,
+      "dRel": 8.88651915044877e-05,
+      "dTerm": 3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 85000,
+      "goldenKamat": 34166,
+      "engineKamat": 34164,
+      "dAbs": -2,
+      "dRel": -5.853772756541591e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 86000,
+      "goldenKamat": 34563,
+      "engineKamat": 34565,
+      "dAbs": 2,
+      "dRel": 5.7865347336747386e-05,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 87000,
+      "goldenKamat": 34968,
+      "engineKamat": 34966,
+      "dAbs": -2,
+      "dRel": -5.719514985129261e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 88000,
+      "goldenKamat": 35367,
+      "engineKamat": 35368,
+      "dAbs": 1,
+      "dRel": 2.8274945570729776e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 89000,
+      "goldenKamat": 35770,
+      "engineKamat": 35770,
+      "dAbs": 0,
+      "dRel": 0,
+      "dTerm": 0,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 90000,
+      "goldenKamat": 36180,
+      "engineKamat": 36174,
+      "dAbs": -6,
+      "dRel": -0.0001658374792703151,
+      "dTerm": -6,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 91000,
+      "goldenKamat": 36573,
+      "engineKamat": 36575,
+      "dAbs": 2,
+      "dRel": 5.468515024745031e-05,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 92000,
+      "goldenKamat": 36974,
+      "engineKamat": 36977,
+      "dAbs": 3,
+      "dRel": 8.113809704116407e-05,
+      "dTerm": 3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 93000,
+      "goldenKamat": 37380,
+      "engineKamat": 37378,
+      "dAbs": -2,
+      "dRel": -5.3504547886570356e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 94000,
+      "goldenKamat": 37778,
+      "engineKamat": 37782,
+      "dAbs": 4,
+      "dRel": 0.00010588173010746995,
+      "dTerm": 4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 95000,
+      "goldenKamat": 38185,
+      "engineKamat": 38182,
+      "dAbs": -3,
+      "dRel": -7.85648814979704e-05,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 96000,
+      "goldenKamat": 38576,
+      "engineKamat": 38585,
+      "dAbs": 9,
+      "dRel": 0.00023330568228950642,
+      "dTerm": 9,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 97000,
+      "goldenKamat": 38989,
+      "engineKamat": 38986,
+      "dAbs": -3,
+      "dRel": -7.694477929672471e-05,
+      "dTerm": -3,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 98000,
+      "goldenKamat": 39384,
+      "engineKamat": 39390,
+      "dAbs": 6,
+      "dRel": 0.00015234613040828764,
+      "dTerm": 6,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 99000,
+      "goldenKamat": 39794,
+      "engineKamat": 39790,
+      "dAbs": -4,
+      "dRel": -0.00010051766597979596,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 100000,
+      "goldenKamat": 40192,
+      "engineKamat": 40193,
+      "dAbs": 1,
+      "dRel": 2.4880573248407645e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    }
+  ]
+}

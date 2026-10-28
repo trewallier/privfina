@@ -1,0 +1,761 @@
+{
+  "specVersion": "v2alpha1",
+  "productId": "home-savings.premium-plusz-8x30.standard",
+  "exampleId": "tariff-kamat-20250930",
+  "title": "Internal tariff Kamat (Ft) \u2014 Premium Plus 8x30",
+  "source": {
+    "kind": "otp-internal-tarifatabla",
+    "document": "Tarifatabla_Premium_Plusz_8x30_20250930",
+    "effectiveFrom": "2025-09-30",
+    "note": "Extracted Kamat/megtakar\u00edt\u00e1s columns for harness only; full PDF is internal and not committed."
+  },
+  "witness": {
+    "termMonths": 96,
+    "startDate": "2025-09-04",
+    "housingPurpose": true,
+    "openingFeeModeNote": "Interest path independent of opening-fee mode; harness uses promo modes by deposit band.",
+    "interestModel": "ACT/360 calendar daily + whole-forint year-cap and final Math.round; maturity packaging lastDeposit+2 FOM"
+  },
+  "tolerance": {
+    "absMaxDeltaFt": 11,
+    "observed": {
+      "exactCount": 14,
+      "absMeanFt": 2.462,
+      "absMedianFt": 2,
+      "absMaxFt": 11,
+      "relMeanAbsPct": 0.01485,
+      "relMaxAbsPct": 0.10486
+    },
+    "rationale": "Best calendar alignment (startDate 2025-09-04) under accepted ACT/360 whole-Ft model; residual treated as accepted year-cap rounding noise. Fine-tuning deferred (ROADMAP \u00a75f)."
+  },
+  "rows": [
+    {
+      "contractAmount": 2000000,
+      "monthlyDeposit": 10000,
+      "totalDeposits": 960000,
+      "kamatFt": 4020,
+      "premiumAmount": 288000,
+      "terminalSavingsFt": 1252020
+    },
+    {
+      "contractAmount": 2200000,
+      "monthlyDeposit": 11000,
+      "totalDeposits": 1056000,
+      "kamatFt": 4423,
+      "premiumAmount": 316800,
+      "terminalSavingsFt": 1377223
+    },
+    {
+      "contractAmount": 2400000,
+      "monthlyDeposit": 12000,
+      "totalDeposits": 1152000,
+      "kamatFt": 4823,
+      "premiumAmount": 345600,
+      "terminalSavingsFt": 1502423
+    },
+    {
+      "contractAmount": 2600000,
+      "monthlyDeposit": 13000,
+      "totalDeposits": 1248000,
+      "kamatFt": 5222,
+      "premiumAmount": 374400,
+      "terminalSavingsFt": 1627622
+    },
+    {
+      "contractAmount": 2800000,
+      "monthlyDeposit": 14000,
+      "totalDeposits": 1344000,
+      "kamatFt": 5624,
+      "premiumAmount": 403200,
+      "terminalSavingsFt": 1752824
+    },
+    {
+      "contractAmount": 3000000,
+      "monthlyDeposit": 15000,
+      "totalDeposits": 1440000,
+      "kamatFt": 6030,
+      "premiumAmount": 432000,
+      "terminalSavingsFt": 1878030
+    },
+    {
+      "contractAmount": 3200000,
+      "monthlyDeposit": 16000,
+      "totalDeposits": 1536000,
+      "kamatFt": 6429,
+      "premiumAmount": 460800,
+      "terminalSavingsFt": 2003229
+    },
+    {
+      "contractAmount": 3400000,
+      "monthlyDeposit": 17000,
+      "totalDeposits": 1632000,
+      "kamatFt": 6834,
+      "premiumAmount": 489600,
+      "terminalSavingsFt": 2128434
+    },
+    {
+      "contractAmount": 3600000,
+      "monthlyDeposit": 18000,
+      "totalDeposits": 1728000,
+      "kamatFt": 7239,
+      "premiumAmount": 518400,
+      "terminalSavingsFt": 2253639
+    },
+    {
+      "contractAmount": 3800000,
+      "monthlyDeposit": 19000,
+      "totalDeposits": 1824000,
+      "kamatFt": 7629,
+      "premiumAmount": 547200,
+      "terminalSavingsFt": 2378829
+    },
+    {
+      "contractAmount": 4000000,
+      "monthlyDeposit": 20000,
+      "totalDeposits": 1920000,
+      "kamatFt": 8040,
+      "premiumAmount": 576000,
+      "terminalSavingsFt": 2504040
+    },
+    {
+      "contractAmount": 4200000,
+      "monthlyDeposit": 21000,
+      "totalDeposits": 2016000,
+      "kamatFt": 8442,
+      "premiumAmount": 604800,
+      "terminalSavingsFt": 2629242
+    },
+    {
+      "contractAmount": 4400000,
+      "monthlyDeposit": 22000,
+      "totalDeposits": 2112000,
+      "kamatFt": 8840,
+      "premiumAmount": 633600,
+      "terminalSavingsFt": 2754440
+    },
+    {
+      "contractAmount": 4600000,
+      "monthlyDeposit": 23000,
+      "totalDeposits": 2208000,
+      "kamatFt": 9245,
+      "premiumAmount": 662400,
+      "terminalSavingsFt": 2879645
+    },
+    {
+      "contractAmount": 4800000,
+      "monthlyDeposit": 24000,
+      "totalDeposits": 2304000,
+      "kamatFt": 9647,
+      "premiumAmount": 691200,
+      "terminalSavingsFt": 3004847
+    },
+    {
+      "contractAmount": 5000000,
+      "monthlyDeposit": 25000,
+      "totalDeposits": 2400000,
+      "kamatFt": 10052,
+      "premiumAmount": 720000,
+      "terminalSavingsFt": 3130052
+    },
+    {
+      "contractAmount": 5200000,
+      "monthlyDeposit": 26000,
+      "totalDeposits": 2496000,
+      "kamatFt": 10451,
+      "premiumAmount": 748800,
+      "terminalSavingsFt": 3255251
+    },
+    {
+      "contractAmount": 5400000,
+      "monthlyDeposit": 27000,
+      "totalDeposits": 2592000,
+      "kamatFt": 10854,
+      "premiumAmount": 777600,
+      "terminalSavingsFt": 3380454
+    },
+    {
+      "contractAmount": 5600000,
+      "monthlyDeposit": 28000,
+      "totalDeposits": 2688000,
+      "kamatFt": 11252,
+      "premiumAmount": 806400,
+      "terminalSavingsFt": 3505652
+    },
+    {
+      "contractAmount": 5800000,
+      "monthlyDeposit": 29000,
+      "totalDeposits": 2784000,
+      "kamatFt": 11655,
+      "premiumAmount": 835200,
+      "terminalSavingsFt": 3630855
+    },
+    {
+      "contractAmount": 6000000,
+      "monthlyDeposit": 30000,
+      "totalDeposits": 2880000,
+      "kamatFt": 12060,
+      "premiumAmount": 864000,
+      "terminalSavingsFt": 3756060
+    },
+    {
+      "contractAmount": 6200000,
+      "monthlyDeposit": 31000,
+      "totalDeposits": 2976000,
+      "kamatFt": 12462,
+      "premiumAmount": 892800,
+      "terminalSavingsFt": 3881262
+    },
+    {
+      "contractAmount": 6400000,
+      "monthlyDeposit": 32000,
+      "totalDeposits": 3072000,
+      "kamatFt": 12859,
+      "premiumAmount": 921600,
+      "terminalSavingsFt": 4006459
+    },
+    {
+      "contractAmount": 6600000,
+      "monthlyDeposit": 33000,
+      "totalDeposits": 3168000,
+      "kamatFt": 13263,
+      "premiumAmount": 950400,
+      "terminalSavingsFt": 4131663
+    },
+    {
+      "contractAmount": 6800000,
+      "monthlyDeposit": 34000,
+      "totalDeposits": 3264000,
+      "kamatFt": 13662,
+      "premiumAmount": 979200,
+      "terminalSavingsFt": 4256862
+    },
+    {
+      "contractAmount": 7000000,
+      "monthlyDeposit": 35000,
+      "totalDeposits": 3360000,
+      "kamatFt": 14067,
+      "premiumAmount": 1008000,
+      "terminalSavingsFt": 4382067
+    },
+    {
+      "contractAmount": 7200000,
+      "monthlyDeposit": 36000,
+      "totalDeposits": 3456000,
+      "kamatFt": 14471,
+      "premiumAmount": 1036800,
+      "terminalSavingsFt": 4507271
+    },
+    {
+      "contractAmount": 7400000,
+      "monthlyDeposit": 37000,
+      "totalDeposits": 3552000,
+      "kamatFt": 14870,
+      "premiumAmount": 1065600,
+      "terminalSavingsFt": 4632470
+    },
+    {
+      "contractAmount": 7600000,
+      "monthlyDeposit": 38000,
+      "totalDeposits": 3648000,
+      "kamatFt": 15265,
+      "premiumAmount": 1094400,
+      "terminalSavingsFt": 4757665
+    },
+    {
+      "contractAmount": 7800000,
+      "monthlyDeposit": 39000,
+      "totalDeposits": 3744000,
+      "kamatFt": 15674,
+      "premiumAmount": 1123200,
+      "terminalSavingsFt": 4882874
+    },
+    {
+      "contractAmount": 8000000,
+      "monthlyDeposit": 40000,
+      "totalDeposits": 3840000,
+      "kamatFt": 16074,
+      "premiumAmount": 1152000,
+      "terminalSavingsFt": 5008074
+    },
+    {
+      "contractAmount": 8200000,
+      "monthlyDeposit": 41000,
+      "totalDeposits": 3936000,
+      "kamatFt": 16480,
+      "premiumAmount": 1180800,
+      "terminalSavingsFt": 5133280
+    },
+    {
+      "contractAmount": 8400000,
+      "monthlyDeposit": 42000,
+      "totalDeposits": 4032000,
+      "kamatFt": 16884,
+      "premiumAmount": 1209600,
+      "terminalSavingsFt": 5258484
+    },
+    {
+      "contractAmount": 8600000,
+      "monthlyDeposit": 43000,
+      "totalDeposits": 4128000,
+      "kamatFt": 17285,
+      "premiumAmount": 1238400,
+      "terminalSavingsFt": 5383685
+    },
+    {
+      "contractAmount": 8800000,
+      "monthlyDeposit": 44000,
+      "totalDeposits": 4224000,
+      "kamatFt": 17686,
+      "premiumAmount": 1267200,
+      "terminalSavingsFt": 5508886
+    },
+    {
+      "contractAmount": 9000000,
+      "monthlyDeposit": 45000,
+      "totalDeposits": 4320000,
+      "kamatFt": 18091,
+      "premiumAmount": 1296000,
+      "terminalSavingsFt": 5634091
+    },
+    {
+      "contractAmount": 9200000,
+      "monthlyDeposit": 46000,
+      "totalDeposits": 4416000,
+      "kamatFt": 18486,
+      "premiumAmount": 1324800,
+      "terminalSavingsFt": 5759286
+    },
+    {
+      "contractAmount": 9400000,
+      "monthlyDeposit": 47000,
+      "totalDeposits": 4512000,
+      "kamatFt": 18891,
+      "premiumAmount": 1353600,
+      "terminalSavingsFt": 5884491
+    },
+    {
+      "contractAmount": 9600000,
+      "monthlyDeposit": 48000,
+      "totalDeposits": 4608000,
+      "kamatFt": 19291,
+      "premiumAmount": 1382400,
+      "terminalSavingsFt": 6009691
+    },
+    {
+      "contractAmount": 9800000,
+      "monthlyDeposit": 49000,
+      "totalDeposits": 4704000,
+      "kamatFt": 19686,
+      "premiumAmount": 1411200,
+      "terminalSavingsFt": 6134886
+    },
+    {
+      "contractAmount": 10000000,
+      "monthlyDeposit": 50000,
+      "totalDeposits": 4800000,
+      "kamatFt": 20095,
+      "premiumAmount": 1440000,
+      "terminalSavingsFt": 6260095
+    },
+    {
+      "contractAmount": 10200000,
+      "monthlyDeposit": 51000,
+      "totalDeposits": 4896000,
+      "kamatFt": 20500,
+      "premiumAmount": 1468800,
+      "terminalSavingsFt": 6385300
+    },
+    {
+      "contractAmount": 10400000,
+      "monthlyDeposit": 52000,
+      "totalDeposits": 4992000,
+      "kamatFt": 20898,
+      "premiumAmount": 1497600,
+      "terminalSavingsFt": 6510498
+    },
+    {
+      "contractAmount": 10600000,
+      "monthlyDeposit": 53000,
+      "totalDeposits": 5088000,
+      "kamatFt": 21304,
+      "premiumAmount": 1526400,
+      "terminalSavingsFt": 6635704
+    },
+    {
+      "contractAmount": 10800000,
+      "monthlyDeposit": 54000,
+      "totalDeposits": 5184000,
+      "kamatFt": 21704,
+      "premiumAmount": 1555200,
+      "terminalSavingsFt": 6760904
+    },
+    {
+      "contractAmount": 11000000,
+      "monthlyDeposit": 55000,
+      "totalDeposits": 5280000,
+      "kamatFt": 22106,
+      "premiumAmount": 1584000,
+      "terminalSavingsFt": 6886106
+    },
+    {
+      "contractAmount": 11200000,
+      "monthlyDeposit": 56000,
+      "totalDeposits": 5376000,
+      "kamatFt": 22511,
+      "premiumAmount": 1612800,
+      "terminalSavingsFt": 7011311
+    },
+    {
+      "contractAmount": 11400000,
+      "monthlyDeposit": 57000,
+      "totalDeposits": 5472000,
+      "kamatFt": 22909,
+      "premiumAmount": 1641600,
+      "terminalSavingsFt": 7136509
+    },
+    {
+      "contractAmount": 11600000,
+      "monthlyDeposit": 58000,
+      "totalDeposits": 5568000,
+      "kamatFt": 23310,
+      "premiumAmount": 1670400,
+      "terminalSavingsFt": 7261710
+    },
+    {
+      "contractAmount": 11800000,
+      "monthlyDeposit": 59000,
+      "totalDeposits": 5664000,
+      "kamatFt": 23714,
+      "premiumAmount": 1699200,
+      "terminalSavingsFt": 7386914
+    },
+    {
+      "contractAmount": 12000000,
+      "monthlyDeposit": 60000,
+      "totalDeposits": 5760000,
+      "kamatFt": 24120,
+      "premiumAmount": 1728000,
+      "terminalSavingsFt": 7512120
+    },
+    {
+      "contractAmount": 12200000,
+      "monthlyDeposit": 61000,
+      "totalDeposits": 5856000,
+      "kamatFt": 24519,
+      "premiumAmount": 1756800,
+      "terminalSavingsFt": 7637319
+    },
+    {
+      "contractAmount": 12400000,
+      "monthlyDeposit": 62000,
+      "totalDeposits": 5952000,
+      "kamatFt": 24919,
+      "premiumAmount": 1785600,
+      "terminalSavingsFt": 7762519
+    },
+    {
+      "contractAmount": 12600000,
+      "monthlyDeposit": 63000,
+      "totalDeposits": 6048000,
+      "kamatFt": 25324,
+      "premiumAmount": 1814400,
+      "terminalSavingsFt": 7887724
+    },
+    {
+      "contractAmount": 12800000,
+      "monthlyDeposit": 64000,
+      "totalDeposits": 6144000,
+      "kamatFt": 25725,
+      "premiumAmount": 1843200,
+      "terminalSavingsFt": 8012925
+    },
+    {
+      "contractAmount": 13000000,
+      "monthlyDeposit": 65000,
+      "totalDeposits": 6240000,
+      "kamatFt": 26116,
+      "premiumAmount": 1872000,
+      "terminalSavingsFt": 8138116
+    },
+    {
+      "contractAmount": 13200000,
+      "monthlyDeposit": 66000,
+      "totalDeposits": 6336000,
+      "kamatFt": 26517,
+      "premiumAmount": 1900800,
+      "terminalSavingsFt": 8263317
+    },
+    {
+      "contractAmount": 13400000,
+      "monthlyDeposit": 67000,
+      "totalDeposits": 6432000,
+      "kamatFt": 26930,
+      "premiumAmount": 1929600,
+      "terminalSavingsFt": 8388530
+    },
+    {
+      "contractAmount": 13600000,
+      "monthlyDeposit": 68000,
+      "totalDeposits": 6528000,
+      "kamatFt": 27330,
+      "premiumAmount": 1958400,
+      "terminalSavingsFt": 8513730
+    },
+    {
+      "contractAmount": 13800000,
+      "monthlyDeposit": 69000,
+      "totalDeposits": 6624000,
+      "kamatFt": 27732,
+      "premiumAmount": 1987200,
+      "terminalSavingsFt": 8638932
+    },
+    {
+      "contractAmount": 14000000,
+      "monthlyDeposit": 70000,
+      "totalDeposits": 6720000,
+      "kamatFt": 28135,
+      "premiumAmount": 2016000,
+      "terminalSavingsFt": 8764135
+    },
+    {
+      "contractAmount": 14200000,
+      "monthlyDeposit": 71000,
+      "totalDeposits": 6816000,
+      "kamatFt": 28536,
+      "premiumAmount": 2044800,
+      "terminalSavingsFt": 8889336
+    },
+    {
+      "contractAmount": 14400000,
+      "monthlyDeposit": 72000,
+      "totalDeposits": 6912000,
+      "kamatFt": 28937,
+      "premiumAmount": 2073600,
+      "terminalSavingsFt": 9014537
+    },
+    {
+      "contractAmount": 14600000,
+      "monthlyDeposit": 73000,
+      "totalDeposits": 7008000,
+      "kamatFt": 29339,
+      "premiumAmount": 2102400,
+      "terminalSavingsFt": 9139739
+    },
+    {
+      "contractAmount": 14800000,
+      "monthlyDeposit": 74000,
+      "totalDeposits": 7104000,
+      "kamatFt": 29743,
+      "premiumAmount": 2131200,
+      "terminalSavingsFt": 9264943
+    },
+    {
+      "contractAmount": 15000000,
+      "monthlyDeposit": 75000,
+      "totalDeposits": 7200000,
+      "kamatFt": 30148,
+      "premiumAmount": 2160000,
+      "terminalSavingsFt": 9390148
+    },
+    {
+      "contractAmount": 15200000,
+      "monthlyDeposit": 76000,
+      "totalDeposits": 7296000,
+      "kamatFt": 30539,
+      "premiumAmount": 2188800,
+      "terminalSavingsFt": 9515339
+    },
+    {
+      "contractAmount": 15400000,
+      "monthlyDeposit": 77000,
+      "totalDeposits": 7392000,
+      "kamatFt": 30952,
+      "premiumAmount": 2217600,
+      "terminalSavingsFt": 9640552
+    },
+    {
+      "contractAmount": 15600000,
+      "monthlyDeposit": 78000,
+      "totalDeposits": 7488000,
+      "kamatFt": 31349,
+      "premiumAmount": 2246400,
+      "terminalSavingsFt": 9765749
+    },
+    {
+      "contractAmount": 15800000,
+      "monthlyDeposit": 79000,
+      "totalDeposits": 7584000,
+      "kamatFt": 31752,
+      "premiumAmount": 2275200,
+      "terminalSavingsFt": 9890952
+    },
+    {
+      "contractAmount": 16000000,
+      "monthlyDeposit": 80000,
+      "totalDeposits": 7680000,
+      "kamatFt": 32150,
+      "premiumAmount": 2304000,
+      "terminalSavingsFt": 10016150
+    },
+    {
+      "contractAmount": 16200000,
+      "monthlyDeposit": 81000,
+      "totalDeposits": 7776000,
+      "kamatFt": 32555,
+      "premiumAmount": 2332800,
+      "terminalSavingsFt": 10141355
+    },
+    {
+      "contractAmount": 16400000,
+      "monthlyDeposit": 82000,
+      "totalDeposits": 7872000,
+      "kamatFt": 32961,
+      "premiumAmount": 2361600,
+      "terminalSavingsFt": 10266561
+    },
+    {
+      "contractAmount": 16600000,
+      "monthlyDeposit": 83000,
+      "totalDeposits": 7968000,
+      "kamatFt": 33360,
+      "premiumAmount": 2390400,
+      "terminalSavingsFt": 10391760
+    },
+    {
+      "contractAmount": 16800000,
+      "monthlyDeposit": 84000,
+      "totalDeposits": 8064000,
+      "kamatFt": 33759,
+      "premiumAmount": 2419200,
+      "terminalSavingsFt": 10516959
+    },
+    {
+      "contractAmount": 17000000,
+      "monthlyDeposit": 85000,
+      "totalDeposits": 8160000,
+      "kamatFt": 34166,
+      "premiumAmount": 2448000,
+      "terminalSavingsFt": 10642166
+    },
+    {
+      "contractAmount": 17200000,
+      "monthlyDeposit": 86000,
+      "totalDeposits": 8256000,
+      "kamatFt": 34563,
+      "premiumAmount": 2476800,
+      "terminalSavingsFt": 10767363
+    },
+    {
+      "contractAmount": 17400000,
+      "monthlyDeposit": 87000,
+      "totalDeposits": 8352000,
+      "kamatFt": 34968,
+      "premiumAmount": 2505600,
+      "terminalSavingsFt": 10892568
+    },
+    {
+      "contractAmount": 17600000,
+      "monthlyDeposit": 88000,
+      "totalDeposits": 8448000,
+      "kamatFt": 35367,
+      "premiumAmount": 2534400,
+      "terminalSavingsFt": 11017767
+    },
+    {
+      "contractAmount": 17800000,
+      "monthlyDeposit": 89000,
+      "totalDeposits": 8544000,
+      "kamatFt": 35770,
+      "premiumAmount": 2563200,
+      "terminalSavingsFt": 11142970
+    },
+    {
+      "contractAmount": 18000000,
+      "monthlyDeposit": 90000,
+      "totalDeposits": 8640000,
+      "kamatFt": 36180,
+      "premiumAmount": 2592000,
+      "terminalSavingsFt": 11268180
+    },
+    {
+      "contractAmount": 18200000,
+      "monthlyDeposit": 91000,
+      "totalDeposits": 8736000,
+      "kamatFt": 36573,
+      "premiumAmount": 2620800,
+      "terminalSavingsFt": 11393373
+    },
+    {
+      "contractAmount": 18400000,
+      "monthlyDeposit": 92000,
+      "totalDeposits": 8832000,
+      "kamatFt": 36974,
+      "premiumAmount": 2649600,
+      "terminalSavingsFt": 11518574
+    },
+    {
+      "contractAmount": 18600000,
+      "monthlyDeposit": 93000,
+      "totalDeposits": 8928000,
+      "kamatFt": 37380,
+      "premiumAmount": 2678400,
+      "terminalSavingsFt": 11643780
+    },
+    {
+      "contractAmount": 18800000,
+      "monthlyDeposit": 94000,
+      "totalDeposits": 9024000,
+      "kamatFt": 37778,
+      "premiumAmount": 2707200,
+      "terminalSavingsFt": 11768978
+    },
+    {
+      "contractAmount": 19000000,
+      "monthlyDeposit": 95000,
+      "totalDeposits": 9120000,
+      "kamatFt": 38185,
+      "premiumAmount": 2736000,
+      "terminalSavingsFt": 11894185
+    },
+    {
+      "contractAmount": 19200000,
+      "monthlyDeposit": 96000,
+      "totalDeposits": 9216000,
+      "kamatFt": 38576,
+      "premiumAmount": 2764800,
+      "terminalSavingsFt": 12019376
+    },
+    {
+      "contractAmount": 19400000,
+      "monthlyDeposit": 97000,
+      "totalDeposits": 9312000,
+      "kamatFt": 38989,
+      "premiumAmount": 2793600,
+      "terminalSavingsFt": 12144589
+    },
+    {
+      "contractAmount": 19600000,
+      "monthlyDeposit": 98000,
+      "totalDeposits": 9408000,
+      "kamatFt": 39384,
+      "premiumAmount": 2822400,
+      "terminalSavingsFt": 12269784
+    },
+    {
+      "contractAmount": 19800000,
+      "monthlyDeposit": 99000,
+      "totalDeposits": 9504000,
+      "kamatFt": 39794,
+      "premiumAmount": 2851200,
+      "terminalSavingsFt": 12394994
+    },
+    {
+      "contractAmount": 20000000,
+      "monthlyDeposit": 100000,
+      "totalDeposits": 9600000,
+      "kamatFt": 40192,
+      "premiumAmount": 2880000,
+      "terminalSavingsFt": 12520192
+    }
+  ]
+}

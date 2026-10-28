@@ -80,7 +80,7 @@ Acceptance criteria
 - [x] Narrow-viewport compose mode presents add/edit in a dedicated form step with explicit Save / Cancel and returns to browse after success.
 - [x] Add entry uses progressive type selection before showing instrument/cash-flow fields.
 - [x] Narrow viewports can reach range controls and the cumulative chart without scrolling past long composer UI.
-- [x] Date inputs stay within their form grid cell before and after a value is selected (including iOS Safari native date controls).
+- [x] Date inputs stay within their form grid cell and match sibling control size whether empty or after a value is selected (including iOS Safari native date controls).
 - [x] Primary actions remain touch-friendly; delete confirms; successful add/edit shows brief feedback.
 - [x] Users can create one-time and recurring cash-flow definitions through the page controls.
 - [x] Users can view and delete existing one-time and recurring cash-flow definitions, and changes are reflected immediately in the UI state.

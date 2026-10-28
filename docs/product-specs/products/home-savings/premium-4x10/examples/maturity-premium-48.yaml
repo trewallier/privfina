@@ -4,7 +4,8 @@ exampleId: maturity-premium-48
 title: Maturity Premium — 48 months housing purpose (withdrawn Premium 4x10)
 description: >
   Continuous saving through month 48 inside saleWindow. Premium 10%.
-  startDate last marketed day 2025-07-31.
+  startDate last marketed day 2025-07-31 (first deposit ÁSZF-exempt from tárgyhó-12;
+  subsequent credits clamp to day 12).
 
 inputs:
   monthlyDeposit: 20000

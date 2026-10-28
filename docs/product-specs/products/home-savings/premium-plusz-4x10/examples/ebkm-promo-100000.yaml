@@ -1,0 +1,27 @@
+specVersion: v2alpha1
+productId: home-savings.premium-plusz-4x10.standard
+exampleId: ebkm-promo-100000
+title: EBKM lock — promo fixed opening fee, 100 000 HUF/month
+description: >
+  Published unified deposit rate indicator (EBKM) from OTP Home Savings marketed
+  products Hirdetmény (effective 2025-09-30) for withdrawn PRÉMIUM PLUSZ 4x10:
+  continuous monthly deposit 100.000 Ft, account fee 350 HUF/month, fixed 25.000 Ft promo opening fee.
+
+inputs:
+  monthlyDeposit: 100000
+  termMonths: 48
+  startDate: 2025-10-01
+  housingPurpose: true
+  openingFeeMode: promo-fixed-25000
+
+expected:
+  accountFeeMonthly: 350
+  ebkmPctWithPremium: 4.02
+  ebkmPctWithoutPremium: -0.3
+  engineEbkmPctWithPremium: 4.02
+  engineEbkmPctWithoutPremium: -0.3
+
+notes:
+  - "Source: https://www.otpbank.hu/static/otplakastakarek/sw/file/ltp_h_ertekesitett_20250930.pdf (A promo table)."
+  - Late-sale cohort account fee 350 Ft/hó; startDate on/after 2025-09-30 inside saleWindow.
+  - "ADR 0031 ÁSZF packaging: allocation-period account fees + interest to lastDepositMonth+3 day-1."

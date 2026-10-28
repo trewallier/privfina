@@ -1,0 +1,424 @@
+{
+  "N": 91,
+  "deltaMonthlyFt": 1000,
+  "startDate": "2025-09-04",
+  "note": "DFT of I/monthly ratio; AC = mean-removed; amplitude = |X[k]|/N; phase = atan2(im,re) degrees. Period Ft = (N/k)*1000.",
+  "golden": {
+    "mean": 0.4019173805657505,
+    "top": [
+      {
+        "k": 30,
+        "cyclesPerRecord": 30,
+        "cyclesPerStep": 0.32967032967032966,
+        "periodSteps": 3.033333333333333,
+        "periodFt": 3033.333333333333,
+        "amp": 0.00001824765919966045,
+        "phaseRad": 3.017397585302263,
+        "phaseDeg": 172.88414675078548,
+        "re": -0.000018107110262149174,
+        "im": 0.0000022604477922139132
+      },
+      {
+        "k": 14,
+        "cyclesPerRecord": 14,
+        "cyclesPerStep": 0.15384615384615385,
+        "periodSteps": 6.5,
+        "periodFt": 6500,
+        "amp": 0.000014026467334522378,
+        "phaseRad": -0.4152271299155476,
+        "phaseDeg": -23.790762083491202,
+        "re": 0.000012834564350915967,
+        "im": -0.000005658245647603177
+      },
+      {
+        "k": 34,
+        "cyclesPerRecord": 34,
+        "cyclesPerStep": 0.37362637362637363,
+        "periodSteps": 2.676470588235294,
+        "periodFt": 2676.470588235294,
+        "amp": 0.000013564039878852464,
+        "phaseRad": 0.5340608582914205,
+        "phaseDeg": 30.59943318323273,
+        "re": 0.000011675207485645887,
+        "im": 0.000006904542562850796
+      },
+      {
+        "k": 10,
+        "cyclesPerRecord": 10,
+        "cyclesPerStep": 0.10989010989010989,
+        "periodSteps": 9.1,
+        "periodFt": 9100,
+        "amp": 0.000012761435236517308,
+        "phaseRad": 1.5624437443269996,
+        "phaseDeg": 89.52143227655453,
+        "re": 1.0658970082864192e-7,
+        "im": 0.000012760990084296078
+      },
+      {
+        "k": 33,
+        "cyclesPerRecord": 33,
+        "cyclesPerStep": 0.3626373626373626,
+        "periodSteps": 2.757575757575758,
+        "periodFt": 2757.575757575758,
+        "amp": 0.000012682061306597074,
+        "phaseRad": 1.96131064971469,
+        "phaseDeg": 112.3748225427131,
+        "re": -0.000004827605031680498,
+        "im": 0.00001172727200342773
+      },
+      {
+        "k": 19,
+        "cyclesPerRecord": 19,
+        "cyclesPerStep": 0.2087912087912088,
+        "periodSteps": 4.7894736842105265,
+        "periodFt": 4789.473684210527,
+        "amp": 0.000012540134145937561,
+        "phaseRad": -1.9297300019760442,
+        "phaseDeg": -110.56538471299933,
+        "re": -0.000004405048954493835,
+        "im": -0.000011740975602845871
+      },
+      {
+        "k": 29,
+        "cyclesPerRecord": 29,
+        "cyclesPerStep": 0.31868131868131866,
+        "periodSteps": 3.1379310344827585,
+        "periodFt": 3137.9310344827586,
+        "amp": 0.000012255915402569908,
+        "phaseRad": -2.4897860075924143,
+        "phaseDeg": -142.65423012577247,
+        "re": -0.000009743319674601694,
+        "im": -0.000007434728244762535
+      },
+      {
+        "k": 28,
+        "cyclesPerRecord": 28,
+        "cyclesPerStep": 0.3076923076923077,
+        "periodSteps": 3.25,
+        "periodFt": 3250,
+        "amp": 0.0000121256303481917,
+        "phaseRad": -2.341087686419025,
+        "phaseDeg": -134.13444390185649,
+        "re": -0.00000844361453794344,
+        "im": -0.000008702659643788086
+      }
+    ],
+    "firstDiffTop": [
+      {
+        "k": 30,
+        "amp": 0.00003083887579789089,
+        "phaseDeg": -62.76572268756103,
+        "periodSteps": 3,
+        "periodFt": 3000
+      },
+      {
+        "k": 33,
+        "amp": 0.00002783489160224302,
+        "phaseDeg": -117.34682961211286,
+        "periodSteps": 2.727272727272727,
+        "periodFt": 2727.272727272727
+      },
+      {
+        "k": 36,
+        "amp": 0.000024207036786929704,
+        "phaseDeg": 152.75723585389363,
+        "periodSteps": 2.5,
+        "periodFt": 2500
+      },
+      {
+        "k": 35,
+        "amp": 0.000024010938739136947,
+        "phaseDeg": 159.82256408015195,
+        "periodSteps": 2.5714285714285716,
+        "periodFt": 2571.4285714285716
+      },
+      {
+        "k": 29,
+        "amp": 0.000023219016246621662,
+        "phaseDeg": -4.782011199794303,
+        "periodSteps": 3.103448275862069,
+        "periodFt": 3103.448275862069
+      }
+    ]
+  },
+  "engine": {
+    "mean": 0.4019199705334029,
+    "top": [
+      {
+        "k": 4,
+        "cyclesPerRecord": 4,
+        "cyclesPerStep": 0.04395604395604396,
+        "periodSteps": 22.75,
+        "periodFt": 22750,
+        "amp": 0.000007323533134890874,
+        "phaseRad": -3.09980444196344,
+        "phaseDeg": -177.60571184041044,
+        "re": -0.000007317139688528442,
+        "im": -3.059482904127008e-7
+      },
+      {
+        "k": 5,
+        "cyclesPerRecord": 5,
+        "cyclesPerStep": 0.054945054945054944,
+        "periodSteps": 18.2,
+        "periodFt": 18200,
+        "amp": 0.000007074631990862353,
+        "phaseRad": 1.5547373731482108,
+        "phaseDeg": 89.07988973264868,
+        "re": 1.1360630407355431e-7,
+        "im": 0.000007073719772072383
+      },
+      {
+        "k": 3,
+        "cyclesPerRecord": 3,
+        "cyclesPerStep": 0.03296703296703297,
+        "periodSteps": 30.333333333333332,
+        "periodFt": 30333.333333333332,
+        "amp": 0.0000066171748619137225,
+        "phaseRad": -2.5854729770938354,
+        "phaseDeg": -148.13668963260093,
+        "re": -0.000005620032130944937,
+        "im": -0.0000034931707659788694
+      },
+      {
+        "k": 9,
+        "cyclesPerRecord": 9,
+        "cyclesPerStep": 0.0989010989010989,
+        "periodSteps": 10.11111111111111,
+        "periodFt": 10111.111111111111,
+        "amp": 0.000004358325425387414,
+        "phaseRad": 2.366140534267867,
+        "phaseDeg": 135.56986634837853,
+        "re": -0.000003112300260241484,
+        "im": 0.000003050997804600844
+      },
+      {
+        "k": 29,
+        "cyclesPerRecord": 29,
+        "cyclesPerStep": 0.31868131868131866,
+        "periodSteps": 3.1379310344827585,
+        "periodFt": 3137.9310344827586,
+        "amp": 0.000004356511621247204,
+        "phaseRad": 0.20834002973745608,
+        "phaseDeg": 11.937004407586299,
+        "re": 0.0000042623046901539556,
+        "im": 9.01083921925998e-7
+      },
+      {
+        "k": 25,
+        "cyclesPerRecord": 25,
+        "cyclesPerStep": 0.27472527472527475,
+        "periodSteps": 3.64,
+        "periodFt": 3640,
+        "amp": 0.000004013310105353843,
+        "phaseRad": 0.06308678736931261,
+        "phaseDeg": 3.614606659300842,
+        "re": 0.000004005326381568059,
+        "im": 2.530189298258005e-7
+      },
+      {
+        "k": 19,
+        "cyclesPerRecord": 19,
+        "cyclesPerStep": 0.2087912087912088,
+        "periodSteps": 4.7894736842105265,
+        "periodFt": 4789.473684210527,
+        "amp": 0.000003607835184469205,
+        "phaseRad": 2.287718316334795,
+        "phaseDeg": 131.07660424075834,
+        "re": -0.0000023705911951948097,
+        "im": 0.0000027197007378678246
+      },
+      {
+        "k": 24,
+        "cyclesPerRecord": 24,
+        "cyclesPerStep": 0.26373626373626374,
+        "periodSteps": 3.7916666666666665,
+        "periodFt": 3791.6666666666665,
+        "amp": 0.000003514997215593677,
+        "phaseRad": 1.3564270392482536,
+        "phaseDeg": 77.71754456635101,
+        "re": 7.477495571408175e-7,
+        "im": 0.000003434541603391494
+      }
+    ],
+    "firstDiffTop": [
+      {
+        "k": 29,
+        "amp": 0.000007829340493840468,
+        "phaseDeg": 126.07763182083904,
+        "periodSteps": 3.103448275862069,
+        "periodFt": 3103.448275862069
+      },
+      {
+        "k": 24,
+        "amp": 0.000006254394086166699,
+        "phaseDeg": -159.53627487321737,
+        "periodSteps": 3.75,
+        "periodFt": 3750
+      },
+      {
+        "k": 30,
+        "amp": 0.000004336301802330361,
+        "phaseDeg": 89.62336667251492,
+        "periodSteps": 3,
+        "periodFt": 3000
+      },
+      {
+        "k": 25,
+        "amp": 0.0000040931210541659195,
+        "phaseDeg": 123.3797877201091,
+        "periodSteps": 3.6,
+        "periodFt": 3600
+      },
+      {
+        "k": 19,
+        "amp": 0.000004073726513069776,
+        "phaseDeg": -115.94348524586647,
+        "periodSteps": 4.7368421052631575,
+        "periodFt": 4736.8421052631575
+      }
+    ]
+  },
+  "compare": [
+    {
+      "k": 3,
+      "periodFt": 30333,
+      "ampG": 0.000007411,
+      "ampE": 0.000006617,
+      "ampRatio_EoverG": 0.893,
+      "phaseG_deg": 177.4,
+      "phaseE_deg": -148.1,
+      "dPhase_EminusG_deg": 34.4
+    },
+    {
+      "k": 4,
+      "periodFt": 22750,
+      "ampG": 0.000005023,
+      "ampE": 0.000007324,
+      "ampRatio_EoverG": 1.458,
+      "phaseG_deg": 92.1,
+      "phaseE_deg": -177.6,
+      "dPhase_EminusG_deg": 90.3
+    },
+    {
+      "k": 5,
+      "periodFt": 18200,
+      "ampG": 0.00001067,
+      "ampE": 0.000007075,
+      "ampRatio_EoverG": 0.663,
+      "phaseG_deg": 67.8,
+      "phaseE_deg": 89.1,
+      "dPhase_EminusG_deg": 21.3
+    },
+    {
+      "k": 9,
+      "periodFt": 10111,
+      "ampG": 0.000004581,
+      "ampE": 0.000004358,
+      "ampRatio_EoverG": 0.951,
+      "phaseG_deg": -45.2,
+      "phaseE_deg": 135.6,
+      "dPhase_EminusG_deg": -179.3
+    },
+    {
+      "k": 10,
+      "periodFt": 9100,
+      "ampG": 0.00001276,
+      "ampE": 0.000003384,
+      "ampRatio_EoverG": 0.265,
+      "phaseG_deg": 89.5,
+      "phaseE_deg": 75.4,
+      "dPhase_EminusG_deg": -14.1
+    },
+    {
+      "k": 14,
+      "periodFt": 6500,
+      "ampG": 0.00001403,
+      "ampE": 0.000002993,
+      "ampRatio_EoverG": 0.213,
+      "phaseG_deg": -23.8,
+      "phaseE_deg": 129.1,
+      "dPhase_EminusG_deg": 152.9
+    },
+    {
+      "k": 19,
+      "periodFt": 4789,
+      "ampG": 0.00001254,
+      "ampE": 0.000003608,
+      "ampRatio_EoverG": 0.288,
+      "phaseG_deg": -110.6,
+      "phaseE_deg": 131.1,
+      "dPhase_EminusG_deg": -118.4
+    },
+    {
+      "k": 24,
+      "periodFt": 3792,
+      "ampG": 0.00001117,
+      "ampE": 0.000003515,
+      "ampRatio_EoverG": 0.315,
+      "phaseG_deg": -12.1,
+      "phaseE_deg": 77.7,
+      "dPhase_EminusG_deg": 89.8
+    },
+    {
+      "k": 25,
+      "periodFt": 3640,
+      "ampG": 0.00000427,
+      "ampE": 0.000004013,
+      "ampRatio_EoverG": 0.94,
+      "phaseG_deg": -1.5,
+      "phaseE_deg": 3.6,
+      "dPhase_EminusG_deg": 5.2
+    },
+    {
+      "k": 28,
+      "periodFt": 3250,
+      "ampG": 0.00001213,
+      "ampE": 9.417e-7,
+      "ampRatio_EoverG": 0.078,
+      "phaseG_deg": -134.1,
+      "phaseE_deg": 31.6,
+      "dPhase_EminusG_deg": 165.7
+    },
+    {
+      "k": 29,
+      "periodFt": 3138,
+      "ampG": 0.00001226,
+      "ampE": 0.000004357,
+      "ampRatio_EoverG": 0.355,
+      "phaseG_deg": -142.7,
+      "phaseE_deg": 11.9,
+      "dPhase_EminusG_deg": 154.6
+    },
+    {
+      "k": 30,
+      "periodFt": 3033,
+      "ampG": 0.00001825,
+      "ampE": 0.000002436,
+      "ampRatio_EoverG": 0.133,
+      "phaseG_deg": 172.9,
+      "phaseE_deg": -58.1,
+      "dPhase_EminusG_deg": 129.1
+    },
+    {
+      "k": 33,
+      "periodFt": 2758,
+      "ampG": 0.00001268,
+      "ampE": 2.664e-7,
+      "ampRatio_EoverG": 0.021,
+      "phaseG_deg": 112.4,
+      "phaseE_deg": -94.5,
+      "dPhase_EminusG_deg": 153.2
+    },
+    {
+      "k": 34,
+      "periodFt": 2676,
+      "ampG": 0.00001356,
+      "ampE": 0.0000011,
+      "ampRatio_EoverG": 0.081,
+      "phaseG_deg": 30.6,
+      "phaseE_deg": 134.8,
+      "dPhase_EminusG_deg": 104.2
+    }
+  ]
+}

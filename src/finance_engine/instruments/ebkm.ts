@@ -210,22 +210,36 @@ export function calculateEbkmFromLegs(input: {
 }
 
 /**
- * OTP General Terms and Conditions (ÁSZF) §22 (contracts from 2017-07-01):
+ * OTP General Terms and Conditions (ÁSZF) §22:
  * earliest customer payout falls in the calendar month after min. savings time
- * + a 2-month allocation period (kiutalási időszak). For continuous monthly
- * deposits this is modeled as the **first calendar day** of the month three
- * months after the last-deposit month (conventional day-1 settlement marker
- * inside the payment month).
+ * + the kiutalási időszak (§22 (4): 2 months on/after 2017-07-01, else 3).
+ * For continuous monthly deposits this is modeled as the **first calendar day**
+ * of that payment month (`lastDepositMonth + kiutalasiPeriodMonths + 1`).
+ * Post-cutover default → month +3 day-1.
  *
  * Day-1 marker alone (retargeting schedule terminal amounts) left promo-20k
  * 0.01 past half-up; commercially-usable packaging uses
  * {@link buildHomeSavingsAszfEbkmCashFlows} (allocation-period account fees +
  * interest to this payout date) rather than a fitted settlement day.
  */
-export function resolveHomeSavingsEbkmPayoutDate(lastDepositDateIso: string): string {
+export function resolveHomeSavingsEbkmPayoutDate(
+  lastDepositDateIso: string,
+  options?: { kiutalasiPeriodMonths?: number }
+): string {
+  const kiutalasi =
+    options?.kiutalasiPeriodMonths !== undefined && options?.kiutalasiPeriodMonths !== null
+      ? Number(options.kiutalasiPeriodMonths)
+      : 2
+  if (!Number.isInteger(kiutalasi) || kiutalasi < 0) {
+    throw new Error('kiutalasiPeriodMonths must be a non-negative integer.')
+  }
   const lastDeposit = parseIsoDate(lastDepositDateIso)
+  // §22 (1): payment in the month after the kiutalási időszak ends.
+  const monthOffset = kiutalasi + 1
   return formatIsoDate(
-    new Date(Date.UTC(lastDeposit.getUTCFullYear(), lastDeposit.getUTCMonth() + 3, 1))
+    new Date(
+      Date.UTC(lastDeposit.getUTCFullYear(), lastDeposit.getUTCMonth() + monthOffset, 1)
+    )
   )
 }
 
@@ -244,7 +258,11 @@ export function buildEbkmLegsFromHomeSavingsCashFlows(
     /** When present, "Monthly deposit" labels anchor ÁSZF last-deposit month. */
     description?: string
   }>,
-  options: { retargetTerminalPayout?: boolean; lastDepositDate?: string } = {}
+  options: {
+    retargetTerminalPayout?: boolean
+    lastDepositDate?: string
+    kiutalasiPeriodMonths?: number
+  } = {}
 ): { deposits: EbkmLeg[]; payouts: EbkmLeg[] } {
   const retargetTerminalPayout = options.retargetTerminalPayout !== false
   const deposits: EbkmLeg[] = []
@@ -292,7 +310,9 @@ export function buildEbkmLegsFromHomeSavingsCashFlows(
         'EBKM payout retarget requires a last-deposit date (Monthly deposit label, lastDepositDate option, or outflow fallback).'
       )
     }
-    payouts[0].date = resolveHomeSavingsEbkmPayoutDate(anchor)
+    payouts[0].date = resolveHomeSavingsEbkmPayoutDate(anchor, {
+      kiutalasiPeriodMonths: options.kiutalasiPeriodMonths
+    })
   }
 
   return { deposits, payouts }

@@ -11,6 +11,7 @@ import {
   calculateEbkmFromHomeSavingsInstrument,
   generateHomeSavingsInstrumentCashFlows,
   resolveContractAmountFromMonthlyDeposit,
+  resolveHomeSavingsDepositDayOfMonth,
   resolveHomeSavingsPremiumRatePct,
   resolveHomeSavingsSchedule,
   resolveKiutalasiPeriodMonths,
@@ -265,6 +266,11 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
   if (productSpec.saleWindow) {
     assertStartDateInSaleWindow(specInputs.startDate, productSpec.saleWindow)
   }
+  // ÁSZF/USZ: first deposit is exempt from tárgyhó-12; regular subsequent day ≤12.
+  const depositDayOfMonth = resolveHomeSavingsDepositDayOfMonth({
+    startDate: specInputs.startDate,
+    depositDayOfMonth: specInputs.depositDayOfMonth
+  })
 
   const accountFeeMonthly = resolveHomeSavingsAccountFeeMonthly(productSpec)
   const accountOpeningFee = resolveHomeSavingsOpeningFee(productSpec, specInputs)
@@ -279,7 +285,9 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
             DEFAULT_HOME_SAVINGS_DEPOSIT_INTEREST_ANNUAL_RATE_PCT
         )
 
+  // ÁSZF §22 (4) from contract startDate wins over YAML alloc−eval when present.
   const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    startDate: specInputs.startDate,
     evaluationMinMonths: productSpec.engine.evaluationMinMonths,
     allocationMinMonths: productSpec.engine.allocationMinMonths
   })
@@ -288,7 +296,7 @@ export function mapHomeSavingsSpecInputsToInstrumentInput(
     monthlyDeposit: specInputs.monthlyDeposit,
     termMonths: specInputs.termMonths,
     startDate: specInputs.startDate,
-    depositDayOfMonth: specInputs.depositDayOfMonth,
+    depositDayOfMonth,
     accountFeeMonthly,
     accountOpeningFee,
     housingPurpose: specInputs.housingPurpose,

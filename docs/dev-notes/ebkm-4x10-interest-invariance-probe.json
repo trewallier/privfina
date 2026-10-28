@@ -1,0 +1,2458 @@
+{
+  "generatedAt": "2026-10-27T06:23:10.397Z",
+  "note": "Probe-only results; variants B/C/D/E/F are experimental and not production engine.",
+  "scoreboard": [
+    {
+      "cell": "premium-4x10/ebkm-standard-20000",
+      "role": "residual",
+      "published": {
+        "withPremium": 3.23,
+        "withoutPremium": -1.04
+      },
+      "byVariant": {
+        "A": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.22/-1.03",
+            "3.23/-1.03",
+            "3.24/-1.03",
+            "3.24/-1.04",
+            "3.25/-1.04",
+            "3.26/-1.04",
+            "3.27/-1.05",
+            "3.28/-1.05",
+            "3.29/-1.05",
+            "3.29/-1.06",
+            "3.3/-1.06",
+            "3.31/-1.06",
+            "3.32/-1.06",
+            "3.32/-1.07",
+            "3.33/-1.07"
+          ],
+          "exampleDayMatch": false
+        },
+        "H": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.22/-1.03"
+          ],
+          "exampleDayMatch": false
+        },
+        "B": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.22/-1.03",
+            "3.23/-1.03",
+            "3.24/-1.03",
+            "3.24/-1.04",
+            "3.25/-1.04",
+            "3.26/-1.04",
+            "3.27/-1.05",
+            "3.28/-1.05",
+            "3.29/-1.05",
+            "3.29/-1.06",
+            "3.3/-1.06",
+            "3.31/-1.06",
+            "3.32/-1.06",
+            "3.32/-1.07",
+            "3.33/-1.07"
+          ],
+          "exampleDayMatch": false
+        },
+        "C": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.22/-1.03",
+            "3.23/-1.03",
+            "3.24/-1.04",
+            "3.25/-1.04",
+            "3.26/-1.04",
+            "3.27/-1.05",
+            "3.28/-1.05",
+            "3.29/-1.05",
+            "3.3/-1.05",
+            "3.3/-1.06",
+            "3.31/-1.06",
+            "3.32/-1.06",
+            "3.33/-1.07"
+          ],
+          "exampleDayMatch": false
+        },
+        "D": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.22/-1.03"
+          ],
+          "exampleDayMatch": false
+        },
+        "E": {
+          "invarianceScore": 0.036,
+          "daysMatchBoth": "1/28",
+          "uniquePairs": [
+            "3.21/-1.04",
+            "3.22/-1.04",
+            "3.23/-1.04",
+            "3.23/-1.05",
+            "3.24/-1.05",
+            "3.25/-1.05",
+            "3.26/-1.06",
+            "3.27/-1.06",
+            "3.28/-1.06",
+            "3.29/-1.06",
+            "3.29/-1.07",
+            "3.3/-1.07",
+            "3.31/-1.07",
+            "3.32/-1.07",
+            "3.32/-1.08"
+          ],
+          "exampleDayMatch": false
+        },
+        "F": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.22/-1.03",
+            "3.23/-1.03",
+            "3.24/-1.03",
+            "3.24/-1.04",
+            "3.25/-1.04",
+            "3.26/-1.04",
+            "3.27/-1.05",
+            "3.28/-1.05",
+            "3.29/-1.05",
+            "3.29/-1.06",
+            "3.3/-1.06",
+            "3.31/-1.06",
+            "3.32/-1.06",
+            "3.32/-1.07",
+            "3.33/-1.07"
+          ],
+          "exampleDayMatch": false
+        },
+        "G": {
+          "invarianceScore": 0.071,
+          "daysMatchBoth": "2/28",
+          "uniquePairs": [
+            "3.22/-1.03",
+            "3.23/-1.04",
+            "3.24/-1.04",
+            "3.25/-1.04",
+            "3.26/-1.05",
+            "3.27/-1.05",
+            "3.28/-1.05",
+            "3.28/-1.06",
+            "3.29/-1.06",
+            "3.3/-1.06",
+            "3.31/-1.06",
+            "3.31/-1.07",
+            "3.32/-1.07",
+            "3.33/-1.07"
+          ],
+          "exampleDayMatch": false
+        }
+      }
+    },
+    {
+      "cell": "premium-4x10/ebkm-standard-50000",
+      "role": "control",
+      "published": {
+        "withPremium": 3.44,
+        "withoutPremium": -0.83
+      },
+      "byVariant": {
+        "A": {
+          "invarianceScore": 0.071,
+          "daysMatchBoth": "2/28",
+          "uniquePairs": [
+            "3.43/-0.83",
+            "3.44/-0.83",
+            "3.45/-0.83",
+            "3.46/-0.83",
+            "3.46/-0.84",
+            "3.47/-0.84",
+            "3.48/-0.84",
+            "3.49/-0.84",
+            "3.5/-0.84",
+            "3.5/-0.85",
+            "3.51/-0.85",
+            "3.52/-0.85",
+            "3.53/-0.85",
+            "3.53/-0.86",
+            "3.54/-0.86"
+          ],
+          "exampleDayMatch": true
+        },
+        "H": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.43/-0.83"
+          ],
+          "exampleDayMatch": false
+        },
+        "B": {
+          "invarianceScore": 0.071,
+          "daysMatchBoth": "2/28",
+          "uniquePairs": [
+            "3.43/-0.83",
+            "3.44/-0.83",
+            "3.45/-0.83",
+            "3.46/-0.83",
+            "3.46/-0.84",
+            "3.47/-0.84",
+            "3.48/-0.84",
+            "3.49/-0.84",
+            "3.5/-0.84",
+            "3.5/-0.85",
+            "3.51/-0.85",
+            "3.52/-0.85",
+            "3.53/-0.85",
+            "3.53/-0.86",
+            "3.54/-0.86"
+          ],
+          "exampleDayMatch": true
+        },
+        "C": {
+          "invarianceScore": 0.071,
+          "daysMatchBoth": "2/28",
+          "uniquePairs": [
+            "3.43/-0.83",
+            "3.44/-0.83",
+            "3.45/-0.83",
+            "3.46/-0.83",
+            "3.46/-0.84",
+            "3.47/-0.84",
+            "3.48/-0.84",
+            "3.49/-0.84",
+            "3.5/-0.84",
+            "3.5/-0.85",
+            "3.51/-0.85",
+            "3.52/-0.85",
+            "3.53/-0.85",
+            "3.54/-0.85",
+            "3.55/-0.86"
+          ],
+          "exampleDayMatch": true
+        },
+        "D": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.43/-0.83"
+          ],
+          "exampleDayMatch": false
+        },
+        "E": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.42/-0.84",
+            "3.43/-0.84",
+            "3.44/-0.84",
+            "3.45/-0.84",
+            "3.45/-0.85",
+            "3.46/-0.85",
+            "3.47/-0.85",
+            "3.48/-0.85",
+            "3.49/-0.85",
+            "3.49/-0.86",
+            "3.5/-0.86",
+            "3.51/-0.86",
+            "3.52/-0.86",
+            "3.53/-0.86",
+            "3.54/-0.87"
+          ],
+          "exampleDayMatch": false
+        },
+        "F": {
+          "invarianceScore": 0.071,
+          "daysMatchBoth": "2/28",
+          "uniquePairs": [
+            "3.43/-0.83",
+            "3.44/-0.83",
+            "3.45/-0.83",
+            "3.46/-0.83",
+            "3.46/-0.84",
+            "3.47/-0.84",
+            "3.48/-0.84",
+            "3.49/-0.84",
+            "3.5/-0.84",
+            "3.5/-0.85",
+            "3.51/-0.85",
+            "3.52/-0.85",
+            "3.53/-0.85",
+            "3.53/-0.86",
+            "3.54/-0.86"
+          ],
+          "exampleDayMatch": true
+        },
+        "G": {
+          "invarianceScore": 0.107,
+          "daysMatchBoth": "3/28",
+          "uniquePairs": [
+            "3.43/-0.83",
+            "3.44/-0.83",
+            "3.45/-0.84",
+            "3.46/-0.84",
+            "3.47/-0.84",
+            "3.48/-0.84",
+            "3.48/-0.85",
+            "3.49/-0.85",
+            "3.5/-0.85",
+            "3.51/-0.85",
+            "3.52/-0.86",
+            "3.53/-0.86",
+            "3.54/-0.86"
+          ],
+          "exampleDayMatch": true
+        }
+      }
+    },
+    {
+      "cell": "premium-plusz-4x10/ebkm-standard-100000",
+      "role": "residual",
+      "published": {
+        "withPremium": 3.27,
+        "withoutPremium": -0.98
+      },
+      "byVariant": {
+        "A": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.27/-0.97",
+            "3.28/-0.97",
+            "3.28/-0.98",
+            "3.29/-0.98",
+            "3.3/-0.98",
+            "3.31/-0.99",
+            "3.32/-0.99",
+            "3.33/-0.99",
+            "3.34/-1",
+            "3.35/-1",
+            "3.36/-1",
+            "3.37/-1.01",
+            "3.38/-1.01"
+          ],
+          "exampleDayMatch": false
+        },
+        "H": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.27/-0.97"
+          ],
+          "exampleDayMatch": false
+        },
+        "B": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.27/-0.97",
+            "3.28/-0.97",
+            "3.28/-0.98",
+            "3.29/-0.98",
+            "3.3/-0.98",
+            "3.31/-0.99",
+            "3.32/-0.99",
+            "3.33/-0.99",
+            "3.34/-1",
+            "3.35/-1",
+            "3.36/-1",
+            "3.37/-1.01",
+            "3.38/-1.01"
+          ],
+          "exampleDayMatch": false
+        },
+        "C": {
+          "invarianceScore": 0.036,
+          "daysMatchBoth": "1/28",
+          "uniquePairs": [
+            "3.27/-0.97",
+            "3.27/-0.98",
+            "3.28/-0.98",
+            "3.29/-0.98",
+            "3.3/-0.98",
+            "3.31/-0.99",
+            "3.32/-0.99",
+            "3.33/-0.99",
+            "3.34/-0.99",
+            "3.34/-1",
+            "3.35/-1",
+            "3.36/-1",
+            "3.37/-1",
+            "3.37/-1.01",
+            "3.38/-1.01"
+          ],
+          "exampleDayMatch": false
+        },
+        "D": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.27/-0.97"
+          ],
+          "exampleDayMatch": false
+        },
+        "E": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.26/-0.98",
+            "3.27/-0.99",
+            "3.28/-0.99",
+            "3.29/-0.99",
+            "3.3/-1",
+            "3.31/-1",
+            "3.32/-1",
+            "3.33/-1",
+            "3.33/-1.01",
+            "3.34/-1.01",
+            "3.35/-1.01",
+            "3.36/-1.01",
+            "3.36/-1.02",
+            "3.37/-1.02"
+          ],
+          "exampleDayMatch": false
+        },
+        "F": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "3.27/-0.97",
+            "3.28/-0.97",
+            "3.28/-0.98",
+            "3.29/-0.98",
+            "3.3/-0.98",
+            "3.31/-0.99",
+            "3.32/-0.99",
+            "3.33/-0.99",
+            "3.34/-1",
+            "3.35/-1",
+            "3.36/-1",
+            "3.37/-1.01",
+            "3.38/-1.01"
+          ],
+          "exampleDayMatch": false
+        },
+        "G": {
+          "invarianceScore": 0.071,
+          "daysMatchBoth": "2/28",
+          "uniquePairs": [
+            "3.27/-0.98",
+            "3.28/-0.98",
+            "3.29/-0.98",
+            "3.29/-0.99",
+            "3.3/-0.99",
+            "3.31/-0.99",
+            "3.32/-0.99",
+            "3.32/-1",
+            "3.33/-1",
+            "3.34/-1",
+            "3.35/-1",
+            "3.35/-1.01",
+            "3.36/-1.01",
+            "3.37/-1.01",
+            "3.38/-1.01"
+          ],
+          "exampleDayMatch": true
+        }
+      }
+    },
+    {
+      "cell": "premium-plusz-4x10/ebkm-standard-20000",
+      "role": "control",
+      "published": {
+        "withPremium": 2.64,
+        "withoutPremium": -1.6
+      },
+      "byVariant": {
+        "A": {
+          "invarianceScore": 0.107,
+          "daysMatchBoth": "3/28",
+          "uniquePairs": [
+            "2.64/-1.6",
+            "2.65/-1.61",
+            "2.66/-1.61",
+            "2.66/-1.62",
+            "2.67/-1.62",
+            "2.68/-1.62",
+            "2.68/-1.63",
+            "2.69/-1.63",
+            "2.69/-1.64",
+            "2.7/-1.64",
+            "2.71/-1.64",
+            "2.71/-1.65",
+            "2.72/-1.65",
+            "2.72/-1.66",
+            "2.73/-1.66"
+          ],
+          "exampleDayMatch": true
+        },
+        "H": {
+          "invarianceScore": 1,
+          "daysMatchBoth": "28/28",
+          "uniquePairs": [
+            "2.64/-1.6"
+          ],
+          "exampleDayMatch": true
+        },
+        "B": {
+          "invarianceScore": 0.107,
+          "daysMatchBoth": "3/28",
+          "uniquePairs": [
+            "2.64/-1.6",
+            "2.65/-1.61",
+            "2.66/-1.61",
+            "2.66/-1.62",
+            "2.67/-1.62",
+            "2.68/-1.63",
+            "2.69/-1.63",
+            "2.69/-1.64",
+            "2.7/-1.64",
+            "2.71/-1.64",
+            "2.71/-1.65",
+            "2.72/-1.65",
+            "2.72/-1.66",
+            "2.73/-1.66"
+          ],
+          "exampleDayMatch": true
+        },
+        "C": {
+          "invarianceScore": 0.071,
+          "daysMatchBoth": "2/28",
+          "uniquePairs": [
+            "2.64/-1.6",
+            "2.64/-1.61",
+            "2.65/-1.61",
+            "2.66/-1.61",
+            "2.66/-1.62",
+            "2.67/-1.62",
+            "2.68/-1.63",
+            "2.69/-1.63",
+            "2.69/-1.64",
+            "2.7/-1.64",
+            "2.71/-1.64",
+            "2.71/-1.65",
+            "2.72/-1.65",
+            "2.73/-1.66"
+          ],
+          "exampleDayMatch": true
+        },
+        "D": {
+          "invarianceScore": 1,
+          "daysMatchBoth": "28/28",
+          "uniquePairs": [
+            "2.64/-1.6"
+          ],
+          "exampleDayMatch": true
+        },
+        "E": {
+          "invarianceScore": 0,
+          "daysMatchBoth": "0/28",
+          "uniquePairs": [
+            "2.63/-1.61",
+            "2.64/-1.62",
+            "2.65/-1.62",
+            "2.65/-1.63",
+            "2.66/-1.63",
+            "2.67/-1.63",
+            "2.67/-1.64",
+            "2.68/-1.64",
+            "2.69/-1.65",
+            "2.7/-1.65",
+            "2.7/-1.66",
+            "2.71/-1.66",
+            "2.72/-1.67"
+          ],
+          "exampleDayMatch": false
+        },
+        "F": {
+          "invarianceScore": 0.107,
+          "daysMatchBoth": "3/28",
+          "uniquePairs": [
+            "2.64/-1.6",
+            "2.65/-1.61",
+            "2.66/-1.61",
+            "2.66/-1.62",
+            "2.67/-1.62",
+            "2.68/-1.62",
+            "2.68/-1.63",
+            "2.69/-1.63",
+            "2.69/-1.64",
+            "2.7/-1.64",
+            "2.71/-1.64",
+            "2.71/-1.65",
+            "2.72/-1.65",
+            "2.72/-1.66",
+            "2.73/-1.66"
+          ],
+          "exampleDayMatch": true
+        },
+        "G": {
+          "invarianceScore": 0.036,
+          "daysMatchBoth": "1/28",
+          "uniquePairs": [
+            "2.64/-1.6",
+            "2.64/-1.61",
+            "2.65/-1.61",
+            "2.65/-1.62",
+            "2.66/-1.62",
+            "2.67/-1.62",
+            "2.67/-1.63",
+            "2.68/-1.63",
+            "2.68/-1.64",
+            "2.69/-1.64",
+            "2.7/-1.64",
+            "2.7/-1.65",
+            "2.71/-1.65",
+            "2.71/-1.66",
+            "2.72/-1.66"
+          ],
+          "exampleDayMatch": true
+        }
+      }
+    }
+  ],
+  "hInvarianceChecks": [
+    {
+      "cell": "premium-4x10/ebkm-standard-20000",
+      "scenarioStarts": [
+        "2025-07-01",
+        "2025-07-01",
+        "2025-07-01"
+      ],
+      "interests": [
+        2154,
+        2154,
+        2154
+      ],
+      "terminals": [
+        962154,
+        962154,
+        962154
+      ],
+      "ebkms": [
+        -1.03,
+        -1.03,
+        -1.03
+      ],
+      "invariant": true
+    },
+    {
+      "cell": "premium-plusz-4x10/ebkm-standard-100000",
+      "scenarioStarts": [
+        "2025-10-01",
+        "2025-10-01",
+        "2025-10-01"
+      ],
+      "interests": [
+        10769,
+        10769,
+        10769
+      ],
+      "terminals": [
+        4810769,
+        4810769,
+        4810769
+      ],
+      "ebkms": [
+        -0.97,
+        -0.97,
+        -0.97
+      ],
+      "invariant": true
+    }
+  ],
+  "regressions": {
+    "premium-8x30/ebkm-standard-20000": {
+      "A": {
+        "match": true,
+        "withPremium": 5.54,
+        "withoutPremium": -0.56
+      },
+      "H": {
+        "match": false,
+        "withPremium": 5.5,
+        "withoutPremium": -0.56
+      },
+      "B": {
+        "match": true,
+        "withPremium": 5.54,
+        "withoutPremium": -0.56
+      },
+      "C": {
+        "match": true,
+        "withPremium": 5.54,
+        "withoutPremium": -0.56
+      },
+      "D": {
+        "match": false,
+        "withPremium": 5.5,
+        "withoutPremium": -0.56
+      },
+      "E": {
+        "match": false,
+        "withPremium": 5.53,
+        "withoutPremium": -0.57
+      },
+      "F": {
+        "match": true,
+        "withPremium": 5.54,
+        "withoutPremium": -0.56
+      },
+      "G": {
+        "match": false,
+        "withPremium": 5.53,
+        "withoutPremium": -0.56
+      }
+    },
+    "premium-plusz-8x30/ebkm-standard-20000": {
+      "A": {
+        "match": true,
+        "withPremium": 5.31,
+        "withoutPremium": -0.79
+      },
+      "H": {
+        "match": false,
+        "withPremium": 5.27,
+        "withoutPremium": -0.79
+      },
+      "B": {
+        "match": true,
+        "withPremium": 5.31,
+        "withoutPremium": -0.79
+      },
+      "C": {
+        "match": true,
+        "withPremium": 5.31,
+        "withoutPremium": -0.79
+      },
+      "D": {
+        "match": false,
+        "withPremium": 5.27,
+        "withoutPremium": -0.79
+      },
+      "E": {
+        "match": false,
+        "withPremium": 5.3,
+        "withoutPremium": -0.8
+      },
+      "F": {
+        "match": true,
+        "withPremium": 5.31,
+        "withoutPremium": -0.79
+      },
+      "G": {
+        "match": true,
+        "withPremium": 5.31,
+        "withoutPremium": -0.79
+      }
+    },
+    "premium-plusz-10x30/ebkm-standard-20000": {
+      "A": {
+        "match": true,
+        "withPremium": 4.12,
+        "withoutPremium": -0.77
+      },
+      "H": {
+        "match": false,
+        "withPremium": 4.1,
+        "withoutPremium": -0.77
+      },
+      "B": {
+        "match": true,
+        "withPremium": 4.12,
+        "withoutPremium": -0.77
+      },
+      "C": {
+        "match": true,
+        "withPremium": 4.12,
+        "withoutPremium": -0.77
+      },
+      "D": {
+        "match": false,
+        "withPremium": 4.1,
+        "withoutPremium": -0.77
+      },
+      "E": {
+        "match": false,
+        "withPremium": 4.11,
+        "withoutPremium": -0.78
+      },
+      "F": {
+        "match": true,
+        "withPremium": 4.12,
+        "withoutPremium": -0.77
+      },
+      "G": {
+        "match": false,
+        "withPremium": 4.11,
+        "withoutPremium": -0.77
+      }
+    }
+  },
+  "residualDayMatrices": [
+    {
+      "cell": "premium-4x10/ebkm-standard-20000",
+      "variant": "A",
+      "exampleStart": "2025-07-02",
+      "published": {
+        "withPremium": 3.23,
+        "withoutPremium": -1.04
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 2,
+          "with": 3.23,
+          "without": -1.03,
+          "interestWo": 2153,
+          "match": false
+        },
+        {
+          "day": 3,
+          "with": 3.23,
+          "without": -1.03,
+          "interestWo": 2149,
+          "match": false
+        },
+        {
+          "day": 4,
+          "with": 3.24,
+          "without": -1.03,
+          "interestWo": 2146,
+          "match": false
+        },
+        {
+          "day": 5,
+          "with": 3.24,
+          "without": -1.04,
+          "interestWo": 2145,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.24,
+          "without": -1.04,
+          "interestWo": 2141,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.25,
+          "without": -1.04,
+          "interestWo": 2138,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.25,
+          "without": -1.04,
+          "interestWo": 2137,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.26,
+          "without": -1.04,
+          "interestWo": 2133,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.26,
+          "without": -1.04,
+          "interestWo": 2130,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.26,
+          "without": -1.04,
+          "interestWo": 2129,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2125,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2122,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2121,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.28,
+          "without": -1.05,
+          "interestWo": 2117,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.28,
+          "without": -1.05,
+          "interestWo": 2114,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.29,
+          "without": -1.05,
+          "interestWo": 2113,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.29,
+          "without": -1.05,
+          "interestWo": 2109,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.29,
+          "without": -1.06,
+          "interestWo": 2106,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.3,
+          "without": -1.06,
+          "interestWo": 2105,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.3,
+          "without": -1.06,
+          "interestWo": 2101,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.31,
+          "without": -1.06,
+          "interestWo": 2098,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.31,
+          "without": -1.06,
+          "interestWo": 2097,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.31,
+          "without": -1.06,
+          "interestWo": 2093,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.32,
+          "without": -1.06,
+          "interestWo": 2090,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.32,
+          "without": -1.07,
+          "interestWo": 2089,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.33,
+          "without": -1.07,
+          "interestWo": 2085,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.33,
+          "without": -1.07,
+          "interestWo": 2082,
+          "match": false
+        }
+      ]
+    },
+    {
+      "cell": "premium-4x10/ebkm-standard-20000",
+      "variant": "H",
+      "exampleStart": "2025-07-02",
+      "published": {
+        "withPremium": 3.23,
+        "withoutPremium": -1.04
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 2,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 3,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 4,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 5,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2154,
+          "match": false
+        }
+      ]
+    },
+    {
+      "cell": "premium-4x10/ebkm-standard-20000",
+      "variant": "B",
+      "exampleStart": "2025-07-02",
+      "published": {
+        "withPremium": 3.23,
+        "withoutPremium": -1.04
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2153,
+          "match": false
+        },
+        {
+          "day": 2,
+          "with": 3.23,
+          "without": -1.03,
+          "interestWo": 2151,
+          "match": false
+        },
+        {
+          "day": 3,
+          "with": 3.23,
+          "without": -1.03,
+          "interestWo": 2147,
+          "match": false
+        },
+        {
+          "day": 4,
+          "with": 3.24,
+          "without": -1.03,
+          "interestWo": 2145,
+          "match": false
+        },
+        {
+          "day": 5,
+          "with": 3.24,
+          "without": -1.04,
+          "interestWo": 2143,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.24,
+          "without": -1.04,
+          "interestWo": 2140,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.25,
+          "without": -1.04,
+          "interestWo": 2137,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.25,
+          "without": -1.04,
+          "interestWo": 2135,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.26,
+          "without": -1.04,
+          "interestWo": 2132,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.26,
+          "without": -1.04,
+          "interestWo": 2129,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.26,
+          "without": -1.04,
+          "interestWo": 2128,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2124,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2121,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2120,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.28,
+          "without": -1.05,
+          "interestWo": 2116,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.28,
+          "without": -1.05,
+          "interestWo": 2113,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.29,
+          "without": -1.05,
+          "interestWo": 2112,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.29,
+          "without": -1.05,
+          "interestWo": 2108,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.29,
+          "without": -1.06,
+          "interestWo": 2106,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.3,
+          "without": -1.06,
+          "interestWo": 2104,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.3,
+          "without": -1.06,
+          "interestWo": 2100,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.31,
+          "without": -1.06,
+          "interestWo": 2098,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.31,
+          "without": -1.06,
+          "interestWo": 2096,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.31,
+          "without": -1.06,
+          "interestWo": 2093,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.32,
+          "without": -1.06,
+          "interestWo": 2090,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.32,
+          "without": -1.07,
+          "interestWo": 2088,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.33,
+          "without": -1.07,
+          "interestWo": 2085,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.33,
+          "without": -1.07,
+          "interestWo": 2082,
+          "match": false
+        }
+      ]
+    },
+    {
+      "cell": "premium-4x10/ebkm-standard-20000",
+      "variant": "G",
+      "exampleStart": "2025-07-02",
+      "published": {
+        "withPremium": 3.23,
+        "withoutPremium": -1.04
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2071,
+          "match": false
+        },
+        {
+          "day": 2,
+          "with": 3.22,
+          "without": -1.03,
+          "interestWo": 2070,
+          "match": false
+        },
+        {
+          "day": 3,
+          "with": 3.23,
+          "without": -1.04,
+          "interestWo": 2066,
+          "match": true
+        },
+        {
+          "day": 4,
+          "with": 3.23,
+          "without": -1.04,
+          "interestWo": 2063,
+          "match": true
+        },
+        {
+          "day": 5,
+          "with": 3.24,
+          "without": -1.04,
+          "interestWo": 2062,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.24,
+          "without": -1.04,
+          "interestWo": 2058,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.24,
+          "without": -1.04,
+          "interestWo": 2055,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.25,
+          "without": -1.04,
+          "interestWo": 2054,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.25,
+          "without": -1.04,
+          "interestWo": 2050,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.26,
+          "without": -1.05,
+          "interestWo": 2047,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.26,
+          "without": -1.05,
+          "interestWo": 2046,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.26,
+          "without": -1.05,
+          "interestWo": 2042,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2039,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.27,
+          "without": -1.05,
+          "interestWo": 2038,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.28,
+          "without": -1.05,
+          "interestWo": 2034,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.28,
+          "without": -1.05,
+          "interestWo": 2031,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.28,
+          "without": -1.06,
+          "interestWo": 2030,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.29,
+          "without": -1.06,
+          "interestWo": 2026,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.29,
+          "without": -1.06,
+          "interestWo": 2023,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.3,
+          "without": -1.06,
+          "interestWo": 2022,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.3,
+          "without": -1.06,
+          "interestWo": 2018,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.3,
+          "without": -1.06,
+          "interestWo": 2015,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.31,
+          "without": -1.06,
+          "interestWo": 2014,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.31,
+          "without": -1.07,
+          "interestWo": 2010,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.32,
+          "without": -1.07,
+          "interestWo": 2007,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.32,
+          "without": -1.07,
+          "interestWo": 2006,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.32,
+          "without": -1.07,
+          "interestWo": 2002,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.33,
+          "without": -1.07,
+          "interestWo": 1999,
+          "match": false
+        }
+      ]
+    },
+    {
+      "cell": "premium-plusz-4x10/ebkm-standard-100000",
+      "variant": "A",
+      "exampleStart": "2025-10-01",
+      "published": {
+        "withPremium": 3.27,
+        "withoutPremium": -0.98
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 2,
+          "with": 3.28,
+          "without": -0.97,
+          "interestWo": 10756,
+          "match": false
+        },
+        {
+          "day": 3,
+          "with": 3.28,
+          "without": -0.98,
+          "interestWo": 10742,
+          "match": false
+        },
+        {
+          "day": 4,
+          "with": 3.28,
+          "without": -0.98,
+          "interestWo": 10728,
+          "match": false
+        },
+        {
+          "day": 5,
+          "with": 3.29,
+          "without": -0.98,
+          "interestWo": 10716,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.29,
+          "without": -0.98,
+          "interestWo": 10702,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.3,
+          "without": -0.98,
+          "interestWo": 10688,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.3,
+          "without": -0.98,
+          "interestWo": 10675,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.3,
+          "without": -0.98,
+          "interestWo": 10662,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.31,
+          "without": -0.99,
+          "interestWo": 10648,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.31,
+          "without": -0.99,
+          "interestWo": 10635,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.32,
+          "without": -0.99,
+          "interestWo": 10622,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.32,
+          "without": -0.99,
+          "interestWo": 10608,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.32,
+          "without": -0.99,
+          "interestWo": 10595,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.33,
+          "without": -0.99,
+          "interestWo": 10582,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.33,
+          "without": -0.99,
+          "interestWo": 10568,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.33,
+          "without": -0.99,
+          "interestWo": 10555,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.34,
+          "without": -1,
+          "interestWo": 10542,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.34,
+          "without": -1,
+          "interestWo": 10528,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.35,
+          "without": -1,
+          "interestWo": 10515,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.35,
+          "without": -1,
+          "interestWo": 10502,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.36,
+          "without": -1,
+          "interestWo": 10488,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.36,
+          "without": -1,
+          "interestWo": 10475,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.36,
+          "without": -1,
+          "interestWo": 10462,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.37,
+          "without": -1.01,
+          "interestWo": 10448,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.37,
+          "without": -1.01,
+          "interestWo": 10435,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.38,
+          "without": -1.01,
+          "interestWo": 10422,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.38,
+          "without": -1.01,
+          "interestWo": 10408,
+          "match": false
+        }
+      ]
+    },
+    {
+      "cell": "premium-plusz-4x10/ebkm-standard-100000",
+      "variant": "H",
+      "exampleStart": "2025-10-01",
+      "published": {
+        "withPremium": 3.27,
+        "withoutPremium": -0.98
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 2,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 3,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 4,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 5,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10769,
+          "match": false
+        }
+      ]
+    },
+    {
+      "cell": "premium-plusz-4x10/ebkm-standard-100000",
+      "variant": "B",
+      "exampleStart": "2025-10-01",
+      "published": {
+        "withPremium": 3.27,
+        "withoutPremium": -0.98
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.27,
+          "without": -0.97,
+          "interestWo": 10760,
+          "match": false
+        },
+        {
+          "day": 2,
+          "with": 3.28,
+          "without": -0.97,
+          "interestWo": 10748,
+          "match": false
+        },
+        {
+          "day": 3,
+          "with": 3.28,
+          "without": -0.98,
+          "interestWo": 10733,
+          "match": false
+        },
+        {
+          "day": 4,
+          "with": 3.28,
+          "without": -0.98,
+          "interestWo": 10720,
+          "match": false
+        },
+        {
+          "day": 5,
+          "with": 3.29,
+          "without": -0.98,
+          "interestWo": 10708,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.29,
+          "without": -0.98,
+          "interestWo": 10694,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.3,
+          "without": -0.98,
+          "interestWo": 10681,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.3,
+          "without": -0.98,
+          "interestWo": 10668,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.3,
+          "without": -0.98,
+          "interestWo": 10655,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.31,
+          "without": -0.99,
+          "interestWo": 10642,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.31,
+          "without": -0.99,
+          "interestWo": 10629,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.31,
+          "without": -0.99,
+          "interestWo": 10616,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.32,
+          "without": -0.99,
+          "interestWo": 10603,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.32,
+          "without": -0.99,
+          "interestWo": 10590,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.33,
+          "without": -0.99,
+          "interestWo": 10577,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.33,
+          "without": -0.99,
+          "interestWo": 10564,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.33,
+          "without": -0.99,
+          "interestWo": 10551,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.34,
+          "without": -1,
+          "interestWo": 10538,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.34,
+          "without": -1,
+          "interestWo": 10525,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.35,
+          "without": -1,
+          "interestWo": 10512,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.35,
+          "without": -1,
+          "interestWo": 10498,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.36,
+          "without": -1,
+          "interestWo": 10485,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.36,
+          "without": -1,
+          "interestWo": 10472,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.36,
+          "without": -1,
+          "interestWo": 10459,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.37,
+          "without": -1.01,
+          "interestWo": 10446,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.37,
+          "without": -1.01,
+          "interestWo": 10433,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.38,
+          "without": -1.01,
+          "interestWo": 10420,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.38,
+          "without": -1.01,
+          "interestWo": 10407,
+          "match": false
+        }
+      ]
+    },
+    {
+      "cell": "premium-plusz-4x10/ebkm-standard-100000",
+      "variant": "G",
+      "exampleStart": "2025-10-01",
+      "published": {
+        "withPremium": 3.27,
+        "withoutPremium": -0.98
+      },
+      "days": [
+        {
+          "day": 1,
+          "with": 3.27,
+          "without": -0.98,
+          "interestWo": 10368,
+          "match": true
+        },
+        {
+          "day": 2,
+          "with": 3.27,
+          "without": -0.98,
+          "interestWo": 10355,
+          "match": true
+        },
+        {
+          "day": 3,
+          "with": 3.28,
+          "without": -0.98,
+          "interestWo": 10341,
+          "match": false
+        },
+        {
+          "day": 4,
+          "with": 3.28,
+          "without": -0.98,
+          "interestWo": 10327,
+          "match": false
+        },
+        {
+          "day": 5,
+          "with": 3.28,
+          "without": -0.98,
+          "interestWo": 10315,
+          "match": false
+        },
+        {
+          "day": 6,
+          "with": 3.29,
+          "without": -0.98,
+          "interestWo": 10301,
+          "match": false
+        },
+        {
+          "day": 7,
+          "with": 3.29,
+          "without": -0.99,
+          "interestWo": 10287,
+          "match": false
+        },
+        {
+          "day": 8,
+          "with": 3.3,
+          "without": -0.99,
+          "interestWo": 10274,
+          "match": false
+        },
+        {
+          "day": 9,
+          "with": 3.3,
+          "without": -0.99,
+          "interestWo": 10261,
+          "match": false
+        },
+        {
+          "day": 10,
+          "with": 3.3,
+          "without": -0.99,
+          "interestWo": 10247,
+          "match": false
+        },
+        {
+          "day": 11,
+          "with": 3.31,
+          "without": -0.99,
+          "interestWo": 10234,
+          "match": false
+        },
+        {
+          "day": 12,
+          "with": 3.31,
+          "without": -0.99,
+          "interestWo": 10221,
+          "match": false
+        },
+        {
+          "day": 13,
+          "with": 3.32,
+          "without": -0.99,
+          "interestWo": 10207,
+          "match": false
+        },
+        {
+          "day": 14,
+          "with": 3.32,
+          "without": -0.99,
+          "interestWo": 10194,
+          "match": false
+        },
+        {
+          "day": 15,
+          "with": 3.32,
+          "without": -1,
+          "interestWo": 10181,
+          "match": false
+        },
+        {
+          "day": 16,
+          "with": 3.33,
+          "without": -1,
+          "interestWo": 10167,
+          "match": false
+        },
+        {
+          "day": 17,
+          "with": 3.33,
+          "without": -1,
+          "interestWo": 10154,
+          "match": false
+        },
+        {
+          "day": 18,
+          "with": 3.34,
+          "without": -1,
+          "interestWo": 10141,
+          "match": false
+        },
+        {
+          "day": 19,
+          "with": 3.34,
+          "without": -1,
+          "interestWo": 10127,
+          "match": false
+        },
+        {
+          "day": 20,
+          "with": 3.34,
+          "without": -1,
+          "interestWo": 10114,
+          "match": false
+        },
+        {
+          "day": 21,
+          "with": 3.35,
+          "without": -1,
+          "interestWo": 10101,
+          "match": false
+        },
+        {
+          "day": 22,
+          "with": 3.35,
+          "without": -1.01,
+          "interestWo": 10087,
+          "match": false
+        },
+        {
+          "day": 23,
+          "with": 3.36,
+          "without": -1.01,
+          "interestWo": 10074,
+          "match": false
+        },
+        {
+          "day": 24,
+          "with": 3.36,
+          "without": -1.01,
+          "interestWo": 10061,
+          "match": false
+        },
+        {
+          "day": 25,
+          "with": 3.36,
+          "without": -1.01,
+          "interestWo": 10047,
+          "match": false
+        },
+        {
+          "day": 26,
+          "with": 3.37,
+          "without": -1.01,
+          "interestWo": 10034,
+          "match": false
+        },
+        {
+          "day": 27,
+          "with": 3.37,
+          "without": -1.01,
+          "interestWo": 10021,
+          "match": false
+        },
+        {
+          "day": 28,
+          "with": 3.38,
+          "without": -1.01,
+          "interestWo": 10007,
+          "match": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+{
+  "source": {
+    "document": "Tarifatabla_Premium_Plusz_8x30_20250930 (internal, not committed)",
+    "effectiveFrom": "2025-09-30",
+    "product": "premium-plusz-8x30",
+    "column": "Kamat (Ft)",
+    "rows": 91,
+    "monthlyDepositRange": [
+      10000,
+      100000
+    ]
+  },
+  "method": {
+    "engine": "calculateHomeSavingsFromProductSpec / resolveHomeSavingsSchedule depositInterest",
+    "packaging": "OTP/\u00c1SZF maturity payout (lastDeposit month + 2 \u2192 day-1); interest through day before payout",
+    "note": "Tariff does not state startDate; saleWindow day sweep finds best calendar alignment at 2025-09-04."
+  },
+  "bestAlignment": {
+    "startDate": "2025-09-04",
+    "mode": "schedule/maturity",
+    "exact": 14,
+    "n": 91,
+    "absMean": 2.4615384615384617,
+    "absMedian": 2,
+    "absMax": 11,
+    "absMin": 0,
+    "signedMean": 0.21978021978021978,
+    "relMeanAbs": 0.0001485188452561332,
+    "relMaxAbs": 0.0010486302267662866
+  },
+  "canonicalTariffDate_2025_09_30": {
+    "startDate": "2025-09-30",
+    "exact": 0,
+    "n": 91,
+    "absMean": 120.48351648351648,
+    "absMedian": 121,
+    "absMax": 221,
+    "absMin": 23,
+    "signedMean": -120.48351648351648,
+    "relMeanAbs": 0.005449514405295807,
+    "relMaxAbs": 0.006216328222130129
+  },
+  "bestEvery10k": [
+    {
+      "monthly": 10000,
+      "goldenKamat": 4020,
+      "engineKamat": 4019,
+      "dAbs": -1,
+      "dRel": -0.0002487562189054726,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 20000,
+      "goldenKamat": 8040,
+      "engineKamat": 8039,
+      "dAbs": -1,
+      "dRel": -0.0001243781094527363,
+      "dTerm": -1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 30000,
+      "goldenKamat": 12060,
+      "engineKamat": 12056,
+      "dAbs": -4,
+      "dRel": -0.0003316749585406302,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 40000,
+      "goldenKamat": 16074,
+      "engineKamat": 16076,
+      "dAbs": 2,
+      "dRel": 0.00012442453651860148,
+      "dTerm": 2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 50000,
+      "goldenKamat": 20095,
+      "engineKamat": 20096,
+      "dAbs": 1,
+      "dRel": 4.976362279173924e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 60000,
+      "goldenKamat": 24120,
+      "engineKamat": 24116,
+      "dAbs": -4,
+      "dRel": -0.0001658374792703151,
+      "dTerm": -4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 70000,
+      "goldenKamat": 28135,
+      "engineKamat": 28133,
+      "dAbs": -2,
+      "dRel": -7.108583614714768e-05,
+      "dTerm": -2,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 80000,
+      "goldenKamat": 32150,
+      "engineKamat": 32154,
+      "dAbs": 4,
+      "dRel": 0.0001244167962674961,
+      "dTerm": 4,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 90000,
+      "goldenKamat": 36180,
+      "engineKamat": 36174,
+      "dAbs": -6,
+      "dRel": -0.0001658374792703151,
+      "dTerm": -6,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 100000,
+      "goldenKamat": 40192,
+      "engineKamat": 40193,
+      "dAbs": 1,
+      "dRel": 2.4880573248407645e-05,
+      "dTerm": 1,
+      "premiumMatch": true,
+      "depositsMatch": true
+    }
+  ],
+  "canonicalEvery10k": [
+    {
+      "monthly": 10000,
+      "goldenKamat": 4020,
+      "engineKamat": 3997,
+      "dAbs": -23,
+      "dRel": -0.0057213930348258705,
+      "dTerm": -23,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 20000,
+      "goldenKamat": 8040,
+      "engineKamat": 7996,
+      "dAbs": -44,
+      "dRel": -0.005472636815920398,
+      "dTerm": -44,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 30000,
+      "goldenKamat": 12060,
+      "engineKamat": 11991,
+      "dAbs": -69,
+      "dRel": -0.0057213930348258705,
+      "dTerm": -69,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 40000,
+      "goldenKamat": 16074,
+      "engineKamat": 15988,
+      "dAbs": -86,
+      "dRel": -0.005350255070299863,
+      "dTerm": -86,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 50000,
+      "goldenKamat": 20095,
+      "engineKamat": 19986,
+      "dAbs": -109,
+      "dRel": -0.005424234884299577,
+      "dTerm": -109,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 60000,
+      "goldenKamat": 24120,
+      "engineKamat": 23985,
+      "dAbs": -135,
+      "dRel": -0.005597014925373134,
+      "dTerm": -135,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 70000,
+      "goldenKamat": 28135,
+      "engineKamat": 27982,
+      "dAbs": -153,
+      "dRel": -0.005438066465256798,
+      "dTerm": -153,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 80000,
+      "goldenKamat": 32150,
+      "engineKamat": 31978,
+      "dAbs": -172,
+      "dRel": -0.005349922239502333,
+      "dTerm": -172,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 90000,
+      "goldenKamat": 36180,
+      "engineKamat": 35975,
+      "dAbs": -205,
+      "dRel": -0.005666113875069099,
+      "dTerm": -205,
+      "premiumMatch": true,
+      "depositsMatch": true
+    },
+    {
+      "monthly": 100000,
+      "goldenKamat": 40192,
+      "engineKamat": 39972,
+      "dAbs": -220,
+      "dRel": -0.005473726114649681,
+      "dTerm": -220,
+      "premiumMatch": true,
+      "depositsMatch": true
+    }
+  ]
+}

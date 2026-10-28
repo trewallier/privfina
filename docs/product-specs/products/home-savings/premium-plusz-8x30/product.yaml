@@ -41,7 +41,9 @@ pricing:
   notes:
     - >
       Sources: Hirdetmény marketed products 2025-09-30 (promo + EBKM with 350 Ft/hó
-      account fee); USZ Melléklet PRÉMIUM PLUSZ table (evaluation 96 / allocation 98;
+      account fee)
+      (https://www.otpbank.hu/static/otplakastakarek/sw/file/ltp_h_ertekesitett_20250930.pdf);
+      USZ Melléklet PRÉMIUM PLUSZ table (evaluation 96 / allocation 98;
       savings 5.000‰; contract 2 000 000–20 000 000 Ft). Withdrawn from sale 2026-08-03.
     - Default account fee 350 Ft/hó (late-sale EBKM packaging). Earlier 150 Ft/hó optional later.
     - OTP Premium 30% at maturity from month 96 with housing-purpose use (single band).
@@ -204,4 +206,9 @@ ui:
         - ebkmPct
 
 exampleRefs:
+  - examples/ebkm-promo-100000.yaml
+  - examples/ebkm-promo-20000.yaml
+  - examples/ebkm-standard-100000.yaml
+  - examples/ebkm-standard-20000.yaml
   - examples/maturity-premium-96.yaml
+  - examples/tariff-kamat-20250930.json

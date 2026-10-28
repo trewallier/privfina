@@ -1,0 +1,1523 @@
+{
+  "startDate": "2025-09-04",
+  "rows": 91,
+  "compareRule": "Δ = Math.round(engineTotalInterest) − tariff Kamat (Ft)",
+  "modes": {
+    "cap-and-final": "round pending to N dp at each year-cap and at terminal",
+    "cap-only-final0": "round to N dp at year-caps; terminal leftover always whole Ft"
+  },
+  "results": [
+    {
+      "decimals": 0,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 14,
+      "absMean": 2.4615384615384617,
+      "absMedian": 2,
+      "absMax": 11,
+      "signedMean": 0.21978021978021978,
+      "relMeanAbs": 0.0001485188452561332,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8039,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12056,
+          "engineRaw": 12056,
+          "d": -4
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16076,
+          "engineRaw": 16076,
+          "d": 2
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24116,
+          "engineRaw": 24116,
+          "d": -4
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28133,
+          "engineRaw": 28133,
+          "d": -2
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36174,
+          "engineRaw": 36174,
+          "d": -6
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40193,
+          "engineRaw": 40193,
+          "d": 1
+        }
+      ]
+    },
+    {
+      "decimals": 1,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 9,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.2967032967032967,
+      "relMeanAbs": 0.00014258884305080988,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.3,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.599999999999,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.7,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.8,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.3,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.600000000002,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.6,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.3,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 2,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.27472527472527475,
+      "relMeanAbs": 0.00014361651617122436,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.2300000000005,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8038,
+          "engineRaw": 8038.46,
+          "d": -2
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.65,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.87,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.1,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.32,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.549999999996,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.770000000004,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36172.97,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.2,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 3,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.27472527472527475,
+      "relMeanAbs": 0.00014361651617122436,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.2200000000003,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8038,
+          "engineRaw": 8038.4400000000005,
+          "d": -2
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.662000000002,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.880000000001,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.099,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.32,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.540999999997,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.759,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36172.98,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.200000000004,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 4,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.27472527472527475,
+      "relMeanAbs": 0.00014361651617122436,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.22,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8038,
+          "engineRaw": 8038.439899999999,
+          "d": -2
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.6599,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.8801,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.0999,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.319900000002,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.539799999995,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.7599,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36172.98,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.19989999999,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 5,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.27472527472527475,
+      "relMeanAbs": 0.00014361651617122436,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.21999,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8038,
+          "engineRaw": 8038.43997,
+          "d": -2
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.65996,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.87993,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.09994,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.319919999998,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.53991,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.759899999997,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36172.979869999996,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.19987,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 6,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.27472527472527475,
+      "relMeanAbs": 0.00014361651617122436,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.2199870000004,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8038,
+          "engineRaw": 8038.439974000001,
+          "d": -2
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.659959999999,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.879946000001,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.099933999998,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.319919999998,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.539905999998,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.759893000002,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36172.979879,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.199867,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 7,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.27472527472527475,
+      "relMeanAbs": 0.00014361651617122436,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.2199867,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8038,
+          "engineRaw": 8038.439973299999,
+          "d": -2
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.65996,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.879946399999,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.0999331,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.3199197,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.539906500002,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.7598929,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36172.9798796,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.1998662,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 8,
+      "mode": "cap-and-final",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.3626373626373627,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.27472527472527475,
+      "relMeanAbs": 0.00014361651617122436,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019.21998662,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8038,
+          "engineRaw": 8038.43997324,
+          "d": -2
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.659959859999,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.879946489998,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.0999331,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.31991972,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28135,
+          "engineRaw": 28134.539906340004,
+          "d": 0
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32153.759892969996,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36172.97987959,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192.19986622,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 0,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 14,
+      "absMean": 2.4615384615384617,
+      "absMedian": 2,
+      "absMax": 11,
+      "signedMean": 0.21978021978021978,
+      "relMeanAbs": 0.0001485188452561332,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8039,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12056,
+          "engineRaw": 12056,
+          "d": -4
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16076,
+          "engineRaw": 16076,
+          "d": 2
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24116,
+          "engineRaw": 24116,
+          "d": -4
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28133,
+          "engineRaw": 28133,
+          "d": -2
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36174,
+          "engineRaw": 36174,
+          "d": -6
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40193,
+          "engineRaw": 40193,
+          "d": 1
+        }
+      ]
+    },
+    {
+      "decimals": 1,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 11,
+      "absMean": 2.4175824175824174,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.3076923076923077,
+      "relMeanAbs": 0.00014536711384168793,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4019,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.9,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.7,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.5,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.4,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.3,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.300000000003,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40192,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 2,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 13,
+      "absMean": 2.4065934065934065,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.25274725274725274,
+      "relMeanAbs": 0.00014499080174397276,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4018.9000000000005,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.8,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.67,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.560000000001,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.46,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.35,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.249999999996,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154.140000000003,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173.020000000004,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40191.92,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 3,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 13,
+      "absMean": 2.4065934065934065,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.25274725274725274,
+      "relMeanAbs": 0.00014499080174397276,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4018.8920000000003,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.784000000001,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.677000000001,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.567000000001,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.458,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.351,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.243,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154.132999999998,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173.026000000005,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40191.918000000005,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 4,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 13,
+      "absMean": 2.4065934065934065,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.25274725274725274,
+      "relMeanAbs": 0.00014499080174397276,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4018.8918,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.783399999999,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.6752,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.5671,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.4587,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.3505,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.242099999996,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154.134000000002,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173.0258,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40191.917499999996,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 5,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 13,
+      "absMean": 2.4065934065934065,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.25274725274725274,
+      "relMeanAbs": 0.00014499080174397276,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4018.8917500000002,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.783490000001,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.67524,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.56697,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.45874,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.350469999998,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.24222,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154.13397,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173.0257,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40191.91746,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 6,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 13,
+      "absMean": 2.4065934065934065,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.25274725274725274,
+      "relMeanAbs": 0.00014499080174397276,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4018.8917460000002,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.7834920000005,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.675237,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.566982,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.458728999998,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.350474,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.242219,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154.133965,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173.02571,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40191.917457,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 7,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 13,
+      "absMean": 2.4065934065934065,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.25274725274725274,
+      "relMeanAbs": 0.00014499080174397276,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4018.8917457,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.783491299999,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.6752371,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.566982499999,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.4587282,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.3504738,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.2422196,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154.1339651,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173.0257108,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40191.9174564,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "decimals": 8,
+      "mode": "cap-only-final0",
+      "startDate": "2025-09-04",
+      "exact": 13,
+      "absMean": 2.4065934065934065,
+      "absMedian": 2,
+      "absMax": 10,
+      "signedMean": 0.25274725274725274,
+      "relMeanAbs": 0.00014499080174397276,
+      "relMaxAbs": 0.0010486302267662866,
+      "sampleEvery10k": [
+        {
+          "monthly": 10000,
+          "golden": 4020,
+          "engineFt": 4019,
+          "engineRaw": 4018.89174564,
+          "d": -1
+        },
+        {
+          "monthly": 20000,
+          "golden": 8040,
+          "engineFt": 8039,
+          "engineRaw": 8038.78349128,
+          "d": -1
+        },
+        {
+          "monthly": 30000,
+          "golden": 12060,
+          "engineFt": 12058,
+          "engineRaw": 12057.675236919998,
+          "d": -2
+        },
+        {
+          "monthly": 40000,
+          "golden": 16074,
+          "engineFt": 16077,
+          "engineRaw": 16076.566982569999,
+          "d": 3
+        },
+        {
+          "monthly": 50000,
+          "golden": 20095,
+          "engineFt": 20096,
+          "engineRaw": 20096.45872821,
+          "d": 1
+        },
+        {
+          "monthly": 60000,
+          "golden": 24120,
+          "engineFt": 24115,
+          "engineRaw": 24115.35047385,
+          "d": -5
+        },
+        {
+          "monthly": 70000,
+          "golden": 28135,
+          "engineFt": 28134,
+          "engineRaw": 28134.242219490003,
+          "d": -1
+        },
+        {
+          "monthly": 80000,
+          "golden": 32150,
+          "engineFt": 32154,
+          "engineRaw": 32154.133965139998,
+          "d": 4
+        },
+        {
+          "monthly": 90000,
+          "golden": 36180,
+          "engineFt": 36173,
+          "engineRaw": 36173.02571078,
+          "d": -7
+        },
+        {
+          "monthly": 100000,
+          "golden": 40192,
+          "engineFt": 40192,
+          "engineRaw": 40191.91745643,
+          "d": 0
+        }
+      ]
+    }
+  ]
+}

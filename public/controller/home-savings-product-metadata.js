@@ -1,8 +1,11 @@
 /**
- * Commercial home-savings composer catalog: current Premium Plus 10x30 (embedded
- * fully-spec-backed) plus withdrawn Premium / Premium Plus módozatok (§5f).
- * Keep YAML ↔ embedded parity via `tests/home-savings-product-spec-parity.test.ts`
- * for 10x30; withdrawn specs mirrored in `home-savings-withdrawn-product-specs.js`.
+ * Commercial home-savings composer catalog (§5e/§5f):
+ * - Premium Plus 10x30 — fully-spec-backed (`home-savings-product-spec.js`;
+ *   `tests/home-savings-product-spec-parity.test.ts`)
+ * - Withdrawn Premium / Premium Plus 8x30 — fully-spec-backed
+ * - Withdrawn Premium / Premium Plus 4x10 — schedule-usable (pinned EBKM residual)
+ * Withdrawn embeds: `home-savings-withdrawn-product-specs.js`
+ * (`tests/home-savings-withdrawn-product-spec-parity.test.ts`).
  */
 import { HOME_SAVINGS_PREMIUM_PLUSZ_10X30_PRODUCT_SPEC } from './home-savings-product-spec.js'
 import { HOME_SAVINGS_WITHDRAWN_PRODUCT_SPECS } from './home-savings-withdrawn-product-specs.js'
@@ -112,6 +115,11 @@ function openingFeeModeLabel(mode) {
  * UI/composer sale-window check. Soft when `saleWindow` is absent (legacy
  * bundles). When a window is present, requires a valid `from` and enforces the
  * same inclusive bounds as engine `assertStartDateInSaleWindow`.
+ */
+/**
+ * Sale-window bounds only. ÁSZF first deposit is exempt from tárgyhó-12 (due by
+ * day 12 of the month after offer signing), so startDate may be any calendar
+ * day in the window. Subsequent credit-day clamping lives in the engine.
  */
 function assertComposerStartDateInSaleWindow(startDate, saleWindow) {
   if (!saleWindow) {

@@ -1,0 +1,52 @@
+{
+  "question": "equal 30-day months vs 8x30 tariff Kamat (Ft)",
+  "rows": 91,
+  "results": {
+    "act": {
+      "label": "calendar 2025-09-04",
+      "exact": 14,
+      "absMean": 2.4615384615384617,
+      "absMed": 2,
+      "absMax": 11,
+      "signed": 0.21978021978021978,
+      "relMean": 0.0001485188452561332
+    },
+    "period30_termPlus1": {
+      "label": "30/360 term+1",
+      "exact": 0,
+      "absMean": 276.3626373626374,
+      "absMed": 275,
+      "absMax": 502,
+      "signed": -276.3626373626374,
+      "relMean": 0.012494246008966838
+    },
+    "period30_termPlus2": {
+      "label": "30/360 term+2",
+      "exact": 0,
+      "absMean": 165.4065934065934,
+      "absMed": 164,
+      "absMax": 301,
+      "signed": 165.4065934065934,
+      "relMean": 0.00749306226871593
+    },
+    "synth_day12_kiut3": {
+      "label": "synth30 day12 kiut3",
+      "exact": 12,
+      "absMean": 3.6373626373626373,
+      "absMed": 3,
+      "absMax": 13,
+      "signed": 3.2637362637362637,
+      "relMean": 0.00019050740095922155
+    },
+    "synth_day1_kiut2": {
+      "label": "synth30 day1 kiut2",
+      "exact": 0,
+      "absMean": 276.6043956043956,
+      "absMed": 276,
+      "absMax": 503,
+      "signed": -276.6043956043956,
+      "relMean": 0.012510477716802594
+    }
+  },
+  "verdict": "Equal 30-day month period model is a worse fit than calendar ACT/360 (mean |Δ| ~165–276 Ft vs ~2.5 Ft). Synthetic 30-day calendar only approaches tariff when forced to day=12 + kiut=3 (mean |Δ| ~3.6 Ft), still slightly worse than calendar ACT/360 at 2025-09-04."
+}

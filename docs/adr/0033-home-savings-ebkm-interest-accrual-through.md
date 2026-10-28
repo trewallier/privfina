@@ -24,5 +24,5 @@ Related: 0031 (EBKM verification), ROADMAP §5f, `docs/dev-notes/ebkm-4x10-inter
 ## Consequences
 
 - Do not ship production `engine.ebkmInterestAccrualThrough` wiring or 4x10 `otp-maturity-payout` YAML for promotion.
-- Catalog / harness / ownership stay on the #95 lock: 8x30 commercially-usable; 4x10 residual pins remain.
+- Catalog / harness / ownership stay on the #95 lock for interest/EBKM packaging: 4x10 residual pins remain (schedule-usable). Withdrawn 8x30 may promote to fully-spec-backed once embedded parity lands (does not reopen this hybrid).
 - If a later slice finds an external citation for a distinct interest-end rule, open a new ADR rather than resurrecting this hybrid as-is.

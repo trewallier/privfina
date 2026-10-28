@@ -155,9 +155,9 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Schema/YAML: `saleWindow` on home-savings products; author `premium-4x10`, `premium-8x30`, `premium-plusz-4x10`, `premium-plusz-8x30`; add `saleWindow` to 10x30 (`from: 2026-08-03`, `to: null`).
 - [x] Engine: `assertStartDateInSaleWindow` + parameterized Premium bands / `promo-fixed-<Ft>` opening fees from YAML → **calc-aligned** examples inside each window.
 - [x] Commercial composer: picker lists withdrawn products with historical hint; date min/max = sale window; default start = last day of window (never today; first deposit ÁSZF-exempt from tárgyhó-12) → **schedule-usable**.
-- [x] EBKM vs archived Hirdetmény goldens (ADR 0031) → **commercially-usable** per product (can trail): Premium 8x30 4/4 and Premium Plus 8x30 8/8 green; Premium 4x10 (3/4) and Premium Plus 4x10 (7/8) keep a pinned 0.01 without-Premium residual under shared ÁSZF packaging (no productCode fork) and stay schedule-usable.
+- [x] EBKM vs archived Hirdetmény goldens (ADR 0031) → **commercially-usable** per product (can trail): Premium 8x30 4/4 and Premium Plus 8x30 8/8 green; Premium 4x10 (3/4) and Premium Plus 4x10 (7/8) keep a pinned 0.01 without-Premium residual under shared ÁSZF packaging (no productCode fork) and stay schedule-usable (ADR 0033 hybrid rejected).
 - [x] Lock accepted deposit-interest model (ACT/360 calendar + whole-Ft year-cap/`Math.round`) and harness tolerances: OTP 10x30 web maturity **≤4 Ft**; internal Plus 8x30 tariff `Kamat` **≤11 Ft** @ witness `startDate` 2025-09-04 (`tariff-kamat-20250930.json`). Probe write-up: `docs/dev-notes/ebkm-4x10-interest-invariance-probe.md`.
-- [ ] Embedded frontend spec parity → **fully-spec-backed** (can trail; withdrawn specs live in `home-savings-withdrawn-product-specs.js`).
+- [x] Embedded frontend spec parity → **fully-spec-backed** for Premium / Premium Plus 8x30 (`home-savings-withdrawn-product-specs.js`); 4x10 embed stays schedule-usable identity/engine/saleWindow/fees until the EBKM residual closes.
 
 Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f slice)
 - [ ] Close remaining 4x10 without-Premium 0.01 EBKM residuals without ADR 0033 hybrid / day shopping (interest path already within tariff tolerance — packaging / K-assembly investigation).

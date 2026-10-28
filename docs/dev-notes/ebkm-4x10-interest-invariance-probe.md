@@ -4,9 +4,9 @@ Status: **closed — accepted model locked; interest fine-tuning deferred**
 
 Date: 2026-10-27 … 2026-10-28 (Europe/Budapest)
 
-Related: ROADMAP §5f, ADR 0031, ADR 0033 / PR #94 review, `scripts/probe-home-savings-ebkm-startdate.ts`, machine output `ebkm-4x10-interest-invariance-probe.json`, harness `tests/home-savings-plusz-8x30-tariff-kamat.test.ts`
+Related: ROADMAP §5f, ADR 0031, ADR 0033 (**rejected** — PR #94 reshape / #95 probe), `scripts/probe-home-savings-ebkm-startdate.ts`, machine output `ebkm-4x10-interest-invariance-probe.json`, harness `tests/home-savings-plusz-8x30-tariff-kamat.test.ts`
 
-Branch base: stacks on PR #93 (`cursor/5f-withdrawn-ltp-ebkm-e4dc`) so withdrawn EBKM examples exist; variant **G** is implemented experimentally in the probe (production ADR 0033 enum not required).
+Branch base: stacks on PR #93 (`cursor/5f-withdrawn-ltp-ebkm-e4dc`) so withdrawn EBKM examples exist; variant **G** is implemented experimentally in the probe only (production ADR 0033 enum rejected — do not ship).
 
 ## Accepted model (production)
 

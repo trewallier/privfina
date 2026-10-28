@@ -113,6 +113,11 @@ function openingFeeModeLabel(mode) {
  * bundles). When a window is present, requires a valid `from` and enforces the
  * same inclusive bounds as engine `assertStartDateInSaleWindow`.
  */
+/**
+ * Sale-window bounds only. ÁSZF first deposit is exempt from tárgyhó-12 (due by
+ * day 12 of the month after offer signing), so startDate may be any calendar
+ * day in the window. Subsequent credit-day clamping lives in the engine.
+ */
 function assertComposerStartDateInSaleWindow(startDate, saleWindow) {
   if (!saleWindow) {
     return

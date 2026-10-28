@@ -89,6 +89,7 @@ function mapHomeSavingsSpecInputsToBundleInput(specInputs, options = {}) {
   const accountOpeningFee = resolveHomeSavingsOpeningFee(product, specInputs)
   const contractAmount = resolveHomeSavingsContractAmount(product, specInputs)
   const kiutalasiPeriodMonths = resolveKiutalasiPeriodMonths({
+    startDate: String(specInputs.startDate),
     evaluationMinMonths: product.evaluationMinMonths,
     allocationMinMonths: product.allocationMinMonths
   })

@@ -370,9 +370,9 @@
       }
 
       /*
-        iOS Safari sizes native date controls by intrinsic chrome and ignores width:100%
-        until appearance is reset. Drum-roll picker still opens on tap after appearance:none.
-        Label clip keeps any residual overflow inside the .row grid cell.
+        iOS Safari: appearance:none lets width:100% apply (avoids overflow after select).
+        Empty dates then collapse unless the WebKit edit/value area fills the host.
+        Keep host height aligned with other padded inputs; clip labels as a safety net.
       */
       input[type="date"] {
         display: block;
@@ -380,6 +380,8 @@
         width: 100%;
         max-width: 100%;
         min-width: 0;
+        /* padding 8px + ~1.25em line matches sibling text/select controls */
+        min-height: calc(1.25em + 16px + 2px);
         overflow: hidden;
         line-height: 1.25;
         -webkit-appearance: none;
@@ -388,11 +390,14 @@
 
       input[type="date"]::-webkit-datetime-edit,
       input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-        min-width: 0;
+        display: inline-flex;
+        width: 100%;
+        min-width: 100%;
         max-width: 100%;
       }
 
       input[type="date"]::-webkit-date-and-time-value {
+        min-width: 100%;
         text-align: left;
       }
 

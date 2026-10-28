@@ -66,10 +66,10 @@ Inventory (by product)
   - Specs under `docs/product-specs/products/home-savings/{premium-8x30,premium-plusz-8x30}/`
   - Composer catalog: `public/controller/home-savings-withdrawn-product-specs.js`
   - Harness: `tests/home-savings-withdrawn-ebkm-verification.test.ts`
-- Withdrawn OTP Premium 4x10 / Premium Plus 4x10 — **schedule-usable** / EBKM residual trails (ROADMAP §5f)
+- Withdrawn OTP Premium 4x10 / Premium Plus 4x10 — **schedule-usable** / ADR 0031 EBKM with pinned 0.01 without-Premium residual (ROADMAP §5f; ADR 0033 hybrid rejected)
   - Specs under `docs/product-specs/products/home-savings/{premium-4x10,premium-plusz-4x10}/`
   - Composer catalog: `public/controller/home-savings-withdrawn-product-specs.js`
-  - Engine: parameterized Premium bands + `assertStartDateInSaleWindow` + clamped monthly anniversary dates (no productCode forks); 0.01 without-Premium EBKM residual pinned
+  - Engine: parameterized Premium bands + `assertStartDateInSaleWindow` + clamped monthly anniversary dates (no productCode forks; no `otp-maturity-payout` interest-end)
 
 Current cleanup priority
 ------------------------

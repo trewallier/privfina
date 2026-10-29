@@ -219,7 +219,8 @@ function applyHomeSavingsFieldChrome(form, product) {
         required: resolveHomeSavingsFieldRequired(meta, product),
         role: meta.role || 'input',
         helpId: `${meta.inputId}-help`,
-        labelClassName: 'home-savings-field-label'
+        // Reuse the HTML `.field-label` spans so chrome does not insert a second title.
+        labelClassName: 'field-label'
       },
       input
     )

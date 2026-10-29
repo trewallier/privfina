@@ -842,6 +842,21 @@
         font-weight: 700;
         color: var(--ink);
         cursor: pointer;
+        /* Override generic `button` / `button:hover` accent fill (iOS sticky :hover). */
+        -webkit-tap-highlight-color: transparent;
+        appearance: none;
+        -webkit-appearance: none;
+      }
+
+      .folder-toggle:hover,
+      .folder-toggle:focus,
+      .folder-toggle:focus-visible,
+      .folder-toggle:active {
+        background: transparent;
+        color: var(--ink);
+        border-color: transparent;
+        outline: none;
+        box-shadow: none;
       }
 
       .folder-chevron {

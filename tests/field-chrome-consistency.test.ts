@@ -12,6 +12,10 @@ import {
   COMMERCIAL_LOAN_FIELD_CHROME,
   resolveCommercialLoanFieldRequired
 } from '../public/controller/commercial-loan-field-help.js'
+import {
+  HOME_SAVINGS_FIELD_CHROME,
+  resolveHomeSavingsFieldRequired
+} from '../public/controller/home-savings-field-help.js'
 
 function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
@@ -143,5 +147,37 @@ describe('loan composer required/optional/calculated chrome', () => {
         graceRequired: false
       })
     ).toBe(false)
+  })
+})
+
+describe('home-savings composer required/optional/calculated chrome', () => {
+  const homeSavingsFieldHelpSrc = readRepoFile('public/controller/home-savings-field-help.js')
+  const homeSavingsFormSrc = readRepoFile('public/controller/home-savings-form.js')
+  const indexHtml = readRepoFile('public/index.html')
+
+  it('applies shared applyFieldChrome in the home-savings composer', () => {
+    expect(homeSavingsFieldHelpSrc).toContain("from './field-chrome.js'")
+    expect(homeSavingsFieldHelpSrc).toContain('applyFieldChrome(')
+    expect(homeSavingsFormSrc).toContain('applyHomeSavingsFieldChrome(form, product)')
+    expect(indexHtml).toMatch(/\.label-title\s+\.home-savings-field-label/)
+  })
+
+  it('marks home-savings fields required/optional/calculated consistently', () => {
+    const byId = Object.fromEntries(
+      HOME_SAVINGS_FIELD_CHROME.map((entry) => [entry.inputId, entry])
+    )
+
+    expect(byId['home-savings-monthly-deposit'].required).toBe(true)
+    expect(byId['home-savings-contract-amount'].required).toBe(false)
+    expect(byId['home-savings-label'].required).toBe(false)
+    expect(byId['home-savings-opening-fee-preview'].role).toBe('output')
+    expect(byId['home-savings-ebkm-preview'].role).toBe('output')
+    expect(byId['home-savings-housing-purpose'].required).toBe(true)
+
+    expect(resolveHomeSavingsFieldRequired(byId['home-savings-term-months'], {})).toBe(true)
+    expect(HOME_SAVINGS_FIELD_CHROME.filter((entry) => entry.role === 'output')).toHaveLength(8)
+    expect(HOME_SAVINGS_FIELD_CHROME.every((entry) => entry.inputId.startsWith('home-savings-'))).toBe(
+      true
+    )
   })
 })

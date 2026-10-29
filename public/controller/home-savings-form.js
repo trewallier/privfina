@@ -3,9 +3,9 @@ import {
   defaultStartDateForSaleWindow,
   findHomeSavingsProduct,
   formatHomeSavingsAvailabilityHint,
-  formatOpeningFeeModeHelp,
   openingFeeModeLabel
 } from './home-savings-product-metadata.js'
+import { applyHomeSavingsFieldChrome } from './home-savings-field-help.js'
 import { parseMoneyAmount } from './money-format.js'
 
 function assertOpeningFeeModeForDeposit(product, openingFeeMode, monthlyDeposit) {
@@ -144,8 +144,6 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
   const housingInput = form.querySelector('#home-savings-housing-purpose')
   const openingFeeSelect = form.querySelector('#home-savings-opening-fee-mode')
   const startDateInput = form.querySelector('#home-savings-start-date')
-  const openingFeeHelp = form.querySelector('#home-savings-opening-fee-mode-help p')
-  const termHelp = form.querySelector('#home-savings-term-months-help p')
 
   if (depositInput && (force || !depositInput.value)) {
     depositInput.value = String(product.defaultMonthlyDeposit)
@@ -161,9 +159,6 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
     termInput.min = String(product.defaultTermMonths)
     termInput.max = String(product.defaultTermMonths)
   }
-  if (termHelp) {
-    termHelp.textContent = `Fixed at ${product.defaultTermMonths} months for this módozat. Early sell / shorter terms are out of scope for now.`
-  }
   if (housingInput && (force || !form.dataset.housingTouched)) {
     housingInput.checked = Boolean(product.defaultHousingPurpose)
   }
@@ -174,9 +169,6 @@ function applyHomeSavingsProductDefaults({ form, product, force = false }) {
   populateHomeSavingsOpeningFeeModes(openingFeeSelect, product)
   if (force && openingFeeSelect) {
     openingFeeSelect.value = product.defaultOpeningFeeMode
-  }
-  if (openingFeeHelp) {
-    openingFeeHelp.textContent = formatOpeningFeeModeHelp(product)
   }
 
   applyHomeSavingsSaleWindowToDateInput(startDateInput, product, force)
@@ -194,6 +186,7 @@ function applyHomeSavingsProductSelection({
   }
 
   applyHomeSavingsProductDefaults({ form, product, force: forceDefaults })
+  applyHomeSavingsFieldChrome(form, product)
   renderHomeSavingsHints({
     product,
     availabilityElement

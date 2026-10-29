@@ -151,6 +151,7 @@ Acceptance criteria
 - [x] Progressive type picker / toolbar exposes home-savings; editing a catalog-backed home-savings bundle opens the commercial home-savings composer.
 - [x] Schedule-usable home-savings path create/edit/preview/persist stamps `productId` / `productSpecVersion` and charts customer outflows (opening fee, deposits, account fees) plus terminal Premium inflow on the OTP-packaging maturity payout date when housing purpose is assumed.
 - [x] Commercial home-savings UX surfaces opening-fee mode (promo deposit-band + loyalty detail in the field info chip), account fee, Premium previews, housing-purpose chip (Premium requires housing purpose), fixed módozat term, total-account-fees chip (monthly fee × term; excludes opening fee), and a single ÁSZF-packaged EBKM preview (ADR 0031; no dual-lane UI). Early sell / shorter terms remain out of scope.
+- [x] Commercial home-savings composer marks inputs/outputs with the shared required / optional / calculated field chrome (same pattern as commercial loan).
 - [x] Published EBKM goldens (20 000 and 100 000 HUF/month; promo and 1% opening-fee tables; with/without Premium) pass engine verification (ÁSZF EBKM packaging: allocation-period account fees + interest to lastDepositMonth+3 day-1; 8/8 Hirdetmény cells; commercially-usable).
 - [x] Home-savings embedded frontend product-spec module parity with YAML → fully-spec-backed (`public/controller/home-savings-product-spec.js`).
 - [ ] LTP home loan / bridging loan remains out of scope for ROADMAP §5e (deferred).

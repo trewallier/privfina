@@ -6,7 +6,8 @@
 import {
   buildHomeSavingsProductOptions,
   findHomeSavingsProduct,
-  findHomeSavingsProductById
+  findHomeSavingsProductById,
+  formatDepositBoundsHelp
 } from './home-savings-product-metadata.js'
 import {
   applyHomeSavingsProductSelection,
@@ -17,16 +18,6 @@ import {
   calculateHomeSavingsScheduleFromSpecInputs
 } from './home-savings-calculation-adapter.js'
 import { setFormStatus } from './field-chrome.js'
-
-function formatDepositBoundsHelp(product) {
-  const min = Number(product?.minMonthlyDeposit)
-  const max = Number(product?.maxMonthlyDeposit)
-  if (!Number.isFinite(min) || !Number.isFinite(max)) {
-    return 'Contractual monthly deposit for the selected product.'
-  }
-  const formatBound = (value) => value.toLocaleString('hu-HU')
-  return `Contractual monthly deposit (${formatBound(min)}–${formatBound(max)} Ft).`
-}
 
 function createHomeSavingsComposerHost({
   resolveHomeSavingsSchedule,
@@ -47,9 +38,6 @@ function createHomeSavingsComposerHost({
   const cancelButton = document.getElementById('home-savings-cancel-edit')
   const availabilityHint = document.getElementById('home-savings-availability-hint')
   const formStatus = document.getElementById('home-savings-form-status')
-  const monthlyDepositHelp = document.querySelector(
-    '#home-savings-monthly-deposit-help p'
-  )
   const previewInputs = {
     openingFee: document.getElementById('home-savings-opening-fee-preview'),
     accountFeeMonthly: document.getElementById('home-savings-account-fee-monthly-preview'),
@@ -67,25 +55,17 @@ function createHomeSavingsComposerHost({
     setFormStatus(formStatus, message, level)
   }
 
-  function syncDepositHelp(product) {
-    if (!monthlyDepositHelp || !product) {
-      return
-    }
-    monthlyDepositHelp.textContent = formatDepositBoundsHelp(product)
-  }
-
   function syncProductUi({ forceDefaults = false } = {}) {
     if (!form || !productInput) {
       return
     }
 
-    const product = applyHomeSavingsProductSelection({
+    applyHomeSavingsProductSelection({
       form,
       productCode: productInput.value,
       availabilityElement: availabilityHint,
       forceDefaults
     })
-    syncDepositHelp(product)
   }
 
   function clearPreview() {

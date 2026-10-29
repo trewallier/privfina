@@ -132,6 +132,16 @@ function formatHomeSavingsAvailabilityHint(saleWindow) {
   return ''
 }
 
+function formatDepositBoundsHelp(product) {
+  const min = Number(product?.minMonthlyDeposit)
+  const max = Number(product?.maxMonthlyDeposit)
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return 'Contractual monthly deposit for the selected product.'
+  }
+  const formatBound = (value) => value.toLocaleString('hu-HU')
+  return `Contractual monthly deposit (${formatBound(min)}–${formatBound(max)} Ft).`
+}
+
 /**
  * Opening-fee mode info-chip body. Promo deposit bands come from the product
  * catalog (`openingFeeModeDepositBands`); loyalty lives here, not under the picker.
@@ -224,6 +234,7 @@ export {
   openingFeeModeLabel,
   todayIsoInBudapest,
   formatHomeSavingsAvailabilityHint,
+  formatDepositBoundsHelp,
   formatOpeningFeeModeHelp,
   assertComposerStartDateInSaleWindow,
   defaultStartDateForSaleWindow

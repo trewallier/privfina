@@ -1,0 +1,6 @@
+# Workflow and supply-chain config changes always need maintainer review (ADR 0007).
+.github/workflows/ @trewallier
+.github/dependabot.yml @trewallier
+.github/CODEOWNERS @trewallier
+SECURITY.md @trewallier
+docs/dev-playbooks/ci-and-supply-chain.md @trewallier

@@ -170,8 +170,10 @@ Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.
 - [ ] Define Node package management and update strategy (ADR required)
 - [x] Add GitHub Actions CI/CD workflows for build, test, and deploy
-- [ ] Define supply-chain security policy: dependency audits, lockfiles, signing, and vulnerability scanning
+- [x] Harden PR CI vs Pages deploy (read-only `ci.yml`, official Pages Actions deploy, SHA-pinned Actions) per ADR 0007 — playbook: [`docs/dev-playbooks/ci-and-supply-chain.md`](docs/dev-playbooks/ci-and-supply-chain.md)
+- [x] Define supply-chain security policy: Dependabot (npm + Actions), CodeQL, lockfile + `npm ci`, `SECURITY.md` / private reporting; signing deferred with Node package ADR
 - [ ] Document update strategy and release process (patch/minor/major cadence)
+- [ ] Maintainer: flip Pages source to GitHub Actions, enable branch protection requiring `validate` (+ CodeQL `Analyze`), secret scanning / push protection, then delete obsolete `gh-pages` branch (checklist in CI playbook)
 
 #### 6a) Vite bundler — single browser calculation surface (ADR 0017 → 0032)
 Goal: ship one calculation surface so the GitHub Pages SPA imports TypeScript from `src/finance_engine/` via Vite and dual-surface formula copies under `public/` can be deleted (`instruments.js`, `loan-fees.js`, `thm.js`, `eval-cache.js`, BMAP helper mirrors). Static Pages hosting unchanged (ADR 0003). WASM remains §8.

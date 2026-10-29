@@ -32,6 +32,7 @@ Human-oriented hubs: [`README.md`](README.md), [`docs/README.md`](docs/README.md
 | Next work slice / PR framing | [`ROADMAP.md`](ROADMAP.md) + [`.github/prompts/next-roadmap-item.prompt.md`](.github/prompts/next-roadmap-item.prompt.md) |
 | Spec scenario / AC | [`.github/prompts/update-spec.prompt.md`](.github/prompts/update-spec.prompt.md) → [`docs/spec.md`](docs/spec.md) |
 | Formula ownership / dual TS↔JS surface | [`docs/formula-ownership-audit.md`](docs/formula-ownership-audit.md) |
+| CI / Pages deploy / supply-chain | [`docs/dev-playbooks/ci-and-supply-chain.md`](docs/dev-playbooks/ci-and-supply-chain.md) + [ADR 0007](docs/adr/0007-security-basics-public-repo-workflows-guardrails.md) |
 
 ## Verify
 

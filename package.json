@@ -5,6 +5,9 @@
   "description": "Browser-hosted cash-flow modeling engine for personal finance planning.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

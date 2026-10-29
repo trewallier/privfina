@@ -72,6 +72,7 @@ Assumptions
 
 Acceptance criteria
 - [ ] Static app deployment is feasible on GitHub Pages, with all runtime behavior in client-side assets.
+- [x] Pull requests targeting `master` run a least-privilege CI validation job (`validate`: install, test, library build, SPA build) separate from Pages deploy; deploy runs only on `master` pushes with official Pages Actions (ADR 0007 / ROADMAP §6 / [`docs/dev-playbooks/ci-and-supply-chain.md`](dev-playbooks/ci-and-supply-chain.md)).
 - [x] Users can create any number of cash flows through the page controls.
 - [x] The main UI separates cash-flow management and visualization into distinct workspace sections.
 - [x] Flow creation boxes are collapsible and can be hidden when not in use to focus on configured flows and chart output.

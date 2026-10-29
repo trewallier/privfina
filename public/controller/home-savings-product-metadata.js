@@ -111,6 +111,70 @@ function openingFeeModeLabel(mode) {
   return mode
 }
 
+/** Europe/Budapest calendar YYYY-MM-DD (avoids UTC off-by-one near midnight). */
+function todayIsoInBudapest(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Budapest',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date)
+}
+
+/**
+ * Composer availability line under the product picker.
+ * Withdrawn offerings: "Unavailable since {to}". Still marketed: empty string.
+ */
+function formatHomeSavingsAvailabilityHint(saleWindow) {
+  if (saleWindow?.to != null && saleWindow.to !== '') {
+    return `Unavailable since ${saleWindow.to}`
+  }
+  return ''
+}
+
+function formatDepositBoundsHelp(product) {
+  const min = Number(product?.minMonthlyDeposit)
+  const max = Number(product?.maxMonthlyDeposit)
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return 'Contractual monthly deposit for the selected product.'
+  }
+  const formatBound = (value) => value.toLocaleString('hu-HU')
+  return `Contractual monthly deposit (${formatBound(min)}–${formatBound(max)} Ft).`
+}
+
+/**
+ * Opening-fee mode info-chip body. Promo deposit bands come from the product
+ * catalog (`openingFeeModeDepositBands`); loyalty lives here, not under the picker.
+ */
+function formatOpeningFeeModeHelp(product) {
+  const bands = product?.openingFeeModeDepositBands || {}
+  const formatBound = (value) => Number(value).toLocaleString('hu-HU')
+  const lines = [
+    'Standard 1% of contractual amount is always available.',
+    'Promo modes require a 48-month loyalty commitment (Hűség).'
+  ]
+  const half = bands['promo-half-percent']
+  if (half) {
+    lines.push(
+      `Promo 0.5% applies when monthly deposit is ${formatBound(half.min)}–${formatBound(half.max)} Ft.`
+    )
+  }
+  for (const [mode, band] of Object.entries(bands)) {
+    const fixedMatch = /^promo-fixed-(\d+)$/.exec(mode)
+    if (!fixedMatch || !band) {
+      continue
+    }
+    const amount = Number(fixedMatch[1]).toLocaleString('hu-HU')
+    lines.push(
+      `Promo fixed ${amount} Ft applies when monthly deposit is ${formatBound(band.min)}–${formatBound(band.max)} Ft.`
+    )
+  }
+  if (!half && Object.keys(bands).length === 0) {
+    lines.push('This offering has no promo opening-fee table (standard 1% only).')
+  }
+  return lines.join(' ')
+}
+
 /**
  * UI/composer sale-window check. Soft when `saleWindow` is absent (legacy
  * bundles). When a window is present, requires a valid `from` and enforces the
@@ -155,8 +219,7 @@ function defaultStartDateForSaleWindow(saleWindow) {
   if (saleWindow.to) {
     return saleWindow.to
   }
-  const today = new Date()
-  const iso = today.toISOString().slice(0, 10)
+  const iso = todayIsoInBudapest()
   return iso < saleWindow.from ? saleWindow.from : iso
 }
 
@@ -169,6 +232,10 @@ export {
   findHomeSavingsProductById,
   resolveHomeSavingsReadinessHint,
   openingFeeModeLabel,
+  todayIsoInBudapest,
+  formatHomeSavingsAvailabilityHint,
+  formatDepositBoundsHelp,
+  formatOpeningFeeModeHelp,
   assertComposerStartDateInSaleWindow,
   defaultStartDateForSaleWindow
 }

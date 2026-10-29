@@ -128,6 +128,8 @@ Schedule-usable review follow-ups (before / with commercially-usable; from PR #8
 - [x] Assert hand-authored `HOME_SAVINGS_PRODUCTS` metadata against product YAML (rates, fees, promo bands, migrationStatus).
 - [x] Extract commercial home-savings composer host from `app-controller.js` (god-controller; securities partially did this).
 - [x] Lock OTP product-page calculator fee / Premium / contract / at-maturity as authoritative; implement OTP-aligned allocation maturity payout dating (`resolveHomeSavingsMaturityPayoutDate`); pin ≤4 Ft engine residuals with packaging caveat.
+- [x] Composer UX declutter: short picker labels (no sale-window dates), “Unavailable since …” (or hidden) under picker, fixed módozat term, Budapest-local start-date default + saleWindow min/max, housing-purpose / opening-fee / total-account-fees info chips (early sell still out of scope).
+- [x] Home-savings field chrome parity with commercial loan: required / optional / calculated markers on all composer inputs and calculated outputs (`home-savings-field-help.js` + `applyFieldChrome`).
 
 Deferred (explicitly out of scope for §5e)
 - [ ] OTP Home Savings LTP home loan / bridging loan (fee-schedule THM representative examples for Premium Plus 10x30). Prefer reuse of `mortgage-loan` + ADR 0024 patterns in a later epic; new ADR only if that reuse fails.

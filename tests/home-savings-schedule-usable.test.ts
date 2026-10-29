@@ -7,6 +7,7 @@ import {
   buildHomeSavingsProductOptions,
   findHomeSavingsProduct,
   findHomeSavingsProductById,
+  formatHomeSavingsAvailabilityHint,
   resolveHomeSavingsReadinessHint
 } from '../public/controller/home-savings-product-metadata.js'
 import { mapFormDataToHomeSavingsSpecInputs } from '../public/controller/home-savings-form.js'
@@ -65,6 +66,17 @@ describe('home-savings schedule-usable metadata', () => {
     expect(
       findHomeSavingsProductById('home-savings.premium-plusz-8x30.standard')?.displayName
     ).toBe('OTP Home Savings Premium Plus 8x30 (Lakástakarék PRÉMIUM PLUSZ 8x30)')
+    expect(
+      findHomeSavingsProductById('home-savings.premium-plusz-4x10.standard')?.displayName
+    ).toBe('OTP Home Savings Premium Plus 4x10 (Lakástakarék PRÉMIUM PLUSZ 4x10)')
+    expect(
+      findHomeSavingsProductById('home-savings.premium-4x10.standard')?.displayName
+    ).toBe('OTP Home Savings Premium 4x10 (Lakástakarék PRÉMIUM 4x10)')
+    expect(buildHomeSavingsProductOptions().some((o) => /start \d{4}/.test(o.label))).toBe(false)
+    expect(formatHomeSavingsAvailabilityHint({ from: '2025-08-01', to: '2026-08-02' })).toBe(
+      'Unavailable since 2026-08-02'
+    )
+    expect(formatHomeSavingsAvailabilityHint({ from: '2026-08-03', to: null })).toBe('')
     expect(resolveHomeSavingsReadinessHint('schedule-usable')).toMatch(/schedule-usable/)
   })
 

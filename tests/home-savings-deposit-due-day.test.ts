@@ -65,6 +65,17 @@ describe('home-savings ÁSZF deposit due-by day (tárgyhó 12.)', () => {
     ).toBe('2025-07-31')
   })
 
+  it('composer default start for open saleWindow uses Europe/Budapest today (clamped to from)', () => {
+    const open = { from: '2026-08-03', to: null as string | null }
+    const result = defaultStartDateForSaleWindow(open)
+    expect(result >= open.from).toBe(true)
+    expect(/^\d{4}-\d{2}-\d{2}$/.test(result)).toBe(true)
+    // Withdrawn path still prefers the last available day, never "today".
+    expect(defaultStartDateForSaleWindow({ from: '2025-08-01', to: '2026-08-02' })).toBe(
+      '2026-08-02'
+    )
+  })
+
   it('product-spec mapping accepts startDate after day 12 inside saleWindow', () => {
     const schema = JSON.parse(readRepo(DEFAULT_PRODUCT_SCHEMA_PATH))
     const product = loadHomeSavingsProductSpec(

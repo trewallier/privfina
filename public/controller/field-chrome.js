@@ -22,13 +22,30 @@ function ensureLabelTitle(label) {
   return title
 }
 
+const FIELD_LABEL_CLASS_SELECTOR =
+  '.field-label, .loan-field-label, .commercial-loan-field-label, .home-savings-field-label, .dkj-field-label, .pmap-field-label, .bmap-field-label'
+
 function ensureFieldLabelSpan(title, className = 'field-label') {
   let span = title.querySelector(`.${className}`)
   if (!span) {
-    span = document.createElement('span')
-    span.className = className
-    title.insertBefore(span, title.firstChild)
+    // Reuse a pre-existing label span that used a different class (avoids
+    // duplicated visible titles when HTML ships `.field-label` and chrome asks
+    // for `.home-savings-field-label`, etc.).
+    span = title.querySelector(FIELD_LABEL_CLASS_SELECTOR)
+    if (span) {
+      span.className = className
+    } else {
+      span = document.createElement('span')
+      span.className = className
+      title.insertBefore(span, title.firstChild)
+    }
   }
+
+  title.querySelectorAll(FIELD_LABEL_CLASS_SELECTOR).forEach((node) => {
+    if (node !== span) {
+      node.remove()
+    }
+  })
   return span
 }
 

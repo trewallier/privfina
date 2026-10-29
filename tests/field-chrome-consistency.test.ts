@@ -76,6 +76,16 @@ describe('info-chip size consistency', () => {
   it('prevents role markers from shrinking in the label row', () => {
     expect(extractCssRuleBody(css, '.field-role-marker')).toMatch(/flex-shrink:\s*0/)
   })
+
+  it('keeps folder-toggle free of accent fill / sticky iOS hover tint', () => {
+    expect(extractCssRuleBody(css, '.folder-toggle')).toMatch(/background:\s*transparent/)
+    expect(extractCssRuleBody(css, '.folder-toggle')).toMatch(
+      /-webkit-tap-highlight-color:\s*transparent/
+    )
+    expect(css).toMatch(
+      /\.folder-toggle:(?:hover|focus|focus-visible|active)[\s\S]*?background:\s*transparent/
+    )
+  })
 })
 
 describe('loan composer required/optional/calculated chrome', () => {
@@ -159,7 +169,8 @@ describe('home-savings composer required/optional/calculated chrome', () => {
     expect(homeSavingsFieldHelpSrc).toContain("from './field-chrome.js'")
     expect(homeSavingsFieldHelpSrc).toContain('applyFieldChrome(')
     expect(homeSavingsFormSrc).toContain('applyHomeSavingsFieldChrome(form, product)')
-    expect(indexHtml).toMatch(/\.label-title\s+\.home-savings-field-label/)
+    expect(homeSavingsFieldHelpSrc).toMatch(/labelClassName:\s*'field-label'/)
+    expect(indexHtml).toMatch(/home-savings[\s\S]*class="field-label"/)
   })
 
   it('marks home-savings fields required/optional/calculated consistently', () => {
@@ -179,5 +190,11 @@ describe('home-savings composer required/optional/calculated chrome', () => {
     expect(HOME_SAVINGS_FIELD_CHROME.every((entry) => entry.inputId.startsWith('home-savings-'))).toBe(
       true
     )
+  })
+
+  it('dedupes field-label spans when chrome class differs from HTML class', () => {
+    const fieldChromeSrc = readRepoFile('public/controller/field-chrome.js')
+    expect(fieldChromeSrc).toContain('FIELD_LABEL_CLASS_SELECTOR')
+    expect(fieldChromeSrc).toMatch(/node\.remove\(\)/)
   })
 })

@@ -87,8 +87,8 @@ Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read
 2. **GitHub App setup (required before first successful push):**
    1. Create a GitHub App with **Contents: Read and write** on this repository (no metadata beyond what push needs).
    2. Install the App on `trewallier/privfina`.
-   3. Store **App ID** in Actions variable `MARKET_DATA_APP_ID` and the **private key** in secret `MARKET_DATA_APP_PRIVATE_KEY`.
-   4. On the **`market-data` branch ruleset**, add the App as a **bypass actor** for `creation` / `update` (ruleset currently blocks force-push/deletion and restricts updates). Without bypass, App pushes will fail closed.
+   3. Store both as repository **secrets**: `MARKET_DATA_APP_ID` (numeric App ID) and `MARKET_DATA_APP_PRIVATE_KEY` (PEM). The App ID is not highly sensitive, but keeping it next to the key avoids a vars/secrets split.
+   4. On the **`market-data` branch ruleset**, add the App as a bypass actor with mode **`exempt`** (Integration). Required so the App can create/update the branch despite `creation` / `update` rules; humans stay non-bypass (`current_user_can_bypass: never` is expected).
 3. Auth hygiene: do not put tokens on `git remote` argv; use checkout credentials or `extraheader`. **`commit-push.sh` unsets `http.https://github.com/.extraheader` on exit**. Never upload the `market-data` worktree as an artifact.
 4. Prefer **single-line** `run:` steps. TS via pinned **`tsx`** (`npx tsx tools/market-data/cli.ts …`). Git glue via `tools/market-data/scripts/*.sh`. Paths via **env vars**.
 5. Exit conventions: local `ingest` → `0` updated / `2` unchanged / `1` error; `ci-ingest` → `0` on success with `changed` on `GITHUB_OUTPUT`.

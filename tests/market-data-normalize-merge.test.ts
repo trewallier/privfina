@@ -7,7 +7,7 @@ import { buildCatalogUrl, buildNetworkRatesUrl } from '../tools/market-data/fetc
 import { loadMarketTree } from '../tools/market-data/io.ts'
 import { emptyMarketTree, mergeSnapshot } from '../tools/market-data/merge.ts'
 import { NormalizeError, normalizeAkkSnapshots } from '../tools/market-data/normalize.ts'
-import { publishMarketData } from '../tools/market-data/publish.ts'
+import { ingestMarketData } from '../tools/market-data/ingest.ts'
 import type { AkkEnvelope } from '../tools/market-data/types.ts'
 
 const fixturesDir = path.join(
@@ -94,13 +94,13 @@ describe('mergeSnapshot', () => {
   })
 })
 
-describe('publishMarketData (fixture / disk)', () => {
-  it('writes schemaVersion 1 tree and is a no-op on second identical publish', async () => {
+describe('ingestMarketData (fixture / disk)', () => {
+  it('writes schemaVersion 1 tree and is a no-op on second identical ingest', async () => {
     const catalog = await loadFixture('catalog.json')
     const rates = await loadFixture('network-rates.json')
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'privfina-market-'))
     try {
-      const first = await publishMarketData({
+      const first = await ingestMarketData({
         root: tmp,
         rawDir: path.join(tmp, 'raw'),
         catalog,
@@ -114,7 +114,7 @@ describe('publishMarketData (fixture / disk)', () => {
       )
       expect(JSON.parse(seriesText).schemaVersion).toBe(1)
 
-      const second = await publishMarketData({
+      const second = await ingestMarketData({
         root: tmp,
         rawDir: path.join(tmp, 'raw'),
         catalog,

@@ -1,4 +1,5 @@
 import { familyFromSecurityType } from './families.ts'
+import { toSeriesId } from './ids.ts'
 import {
   FAMILIES,
   type AkkEnvelope,
@@ -49,7 +50,6 @@ function asNumber(value: unknown, field: string, rowId: string): number | null {
 function isoDate(value: unknown): string | null {
   const s = asString(value)
   if (!s) return null
-  // Accept YYYY-MM-DD or datetime prefix.
   const m = /^(\d{4}-\d{2}-\d{2})/.exec(s)
   return m ? m[1] : null
 }
@@ -62,24 +62,26 @@ function emptyByFamily(): NormalizedSnapshot['byFamily'] {
   }
 }
 
-function seriesIdFromRow(row: AkkRow): string | null {
+function rawLabelFromRow(row: AkkRow): string | null {
   return asString(row.longName) ?? asString(row.name)
 }
 
 function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
   const family = familyFromSecurityType(row.securityType)
   if (!family) return null
-  const id = seriesIdFromRow(row)
-  if (!id) return null
+  const label = rawLabelFromRow(row)
+  if (!label) return null
+  const id = toSeriesId(label)
   const mat = isoDate(row.maturityDate)
   const status: SeriesRecord['status'] =
     asOf && mat && mat < asOf ? 'matured' : 'active'
   const face = asNumber(row.faceValue, 'faceValue', id)
   const prem = asNumber(row.coupon, 'coupon', id)
+  const displayName = asString(row.name) ?? label
   const rec: SeriesRecord = {
     id,
     isin: asString(row.isin),
-    name: asString(row.name) ?? id,
+    name: displayName,
     issue: isoDate(row.issueDate),
     mat,
     ccy: asString(row.currency),
@@ -95,8 +97,9 @@ function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
 function mapQuoteRow(row: AkkRow): { family: FamilyCode; id: string; row: QuoteRow } | null {
   const family = familyFromSecurityType(row.securityType)
   if (!family) return null
-  const id = seriesIdFromRow(row)
-  if (!id) return null
+  const label = rawLabelFromRow(row)
+  if (!label) return null
+  const id = toSeriesId(label)
   const d = isoDate(row.settleDate)
   if (!d) {
     throw new NormalizeError(`Missing settleDate on network-rate row ${id}`)
@@ -114,7 +117,8 @@ function mapQuoteRow(row: AkkRow): { family: FamilyCode; id: string; row: QuoteR
 
 /**
  * Build a normalized snapshot from ÁKK catalog + network-rate envelopes.
- * Hot series = ids present in network rates (quoted), optionally filtered by maturity vs asOf.
+ * Series list in the snapshot is the **currently quoted** set only; merge accumulates history.
+ * Catalog join misses for quoted ids fail hard (commercial past-calc needs metadata).
  */
 export function normalizeAkkSnapshots(
   catalog: AkkEnvelope,
@@ -149,38 +153,25 @@ export function normalizeAkkSnapshots(
     catalogById.set(mapped.id, mapped)
   }
 
-  // Hot series: quoted ids; join catalog when present; synthesize minimal series from quote row otherwise.
+  const joinMisses: string[] = []
   const seen = new Set<string>()
   for (const family of FAMILIES) {
     for (const q of byFamily[family].quotes) {
       if (seen.has(q.id)) continue
       seen.add(q.id)
       const fromCatalog = catalogById.get(q.id)
-      if (fromCatalog) {
-        byFamily[family].series.push({ ...fromCatalog, status: 'active' })
-      } else {
-        byFamily[family].series.push({
-          id: q.id,
-          isin: null,
-          name: q.id,
-          issue: null,
-          mat: null,
-          ccy: null,
-          status: 'active'
-        })
+      if (!fromCatalog) {
+        joinMisses.push(q.id)
+        continue
       }
+      byFamily[family].series.push({ ...fromCatalog, status: 'active' })
     }
     byFamily[family].series.sort((a, b) => a.id.localeCompare(b.id))
   }
 
-  const joinMisses: string[] = []
-  for (const id of quotedIds) {
-    if (!catalogById.has(id)) joinMisses.push(id)
-  }
-  const missRate = quotedIds.size === 0 ? 1 : joinMisses.length / quotedIds.size
-  if (missRate > 0.25) {
+  if (joinMisses.length > 0) {
     throw new NormalizeError(
-      `Catalog∩quotes join miss rate too high (${joinMisses.length}/${quotedIds.size}): ${joinMisses.slice(0, 5).join(', ')}`
+      `Catalog join miss for quoted series (${joinMisses.length}): ${joinMisses.slice(0, 8).join(', ')}`
     )
   }
 

@@ -10,7 +10,7 @@ import {
   clearGithubHttpsExtraheader,
   ensureDataClone
 } from '../tools/market-data/ensure-data-clone.ts'
-import { publishMarketData } from '../tools/market-data/publish.ts'
+import { ingestMarketData } from '../tools/market-data/ingest.ts'
 import type { AkkEnvelope } from '../tools/market-data/types.ts'
 import { ValidateError, assertPublishedTree } from '../tools/market-data/validate.ts'
 
@@ -80,7 +80,7 @@ describe('assertPublishedTree', () => {
     const rates = await loadFixture('network-rates.json')
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'privfina-validate-'))
     try {
-      await publishMarketData({
+      await ingestMarketData({
         root: tmp,
         rawDir: path.join(tmp, 'raw'),
         catalog,
@@ -126,7 +126,7 @@ describe('ensureDataClone + commitAndPush', () => {
       expect(headerBefore.status).toBe(0)
       expect(headerBefore.stdout.length).toBeGreaterThan(0)
 
-      await publishMarketData({
+      await ingestMarketData({
         root: clone,
         rawDir: path.join(tmp, 'raw'),
         catalog,

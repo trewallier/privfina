@@ -5,29 +5,33 @@ Normalize and publish compact ÁKK government-security market JSON under `data/m
 ## Commands
 
 ```bash
-# Live fetch into a working tree (writes ephemeral raw under .tmp-market-data/; gitignored)
-npm run market-data:publish -- publish --root . --raw-dir .tmp-market-data
+# Live ingest into a working tree (ephemeral raw under .tmp-market-data/; gitignored)
+npm run market-data:ingest -- --root . --raw-dir .tmp-market-data
 
-# Offline from fixture envelopes (tests / dry-run)
-npm run market-data:publish -- publish --root /tmp/out \
+# Offline from fixture envelopes
+npm run market-data:ingest -- --root /tmp/out \
   --catalog tests/fixtures/market-data/catalog.json \
   --rates tests/fixtures/market-data/network-rates.json
 
-# CI helpers used by .github/workflows/market-data.yml (single-line run steps)
-npm run market-data:publish -- ci-ingest --out-root /tmp/out --baseline-root /tmp/baseline --raw-dir /tmp/raw
-npm run market-data:publish -- validate-tree --root /tmp/out
-npm run market-data:publish -- ensure-data-clone --path /tmp/market-data --branch market-data --repository owner/repo
-npm run market-data:publish -- commit-push --path /tmp/market-data --branch market-data --no-push
+# CI helpers (.github/workflows/market-data.yml — single-line run steps)
+npx tsx tools/market-data/cli.ts ci-ingest
+npx tsx tools/market-data/cli.ts validate-tree
+npx tsx tools/market-data/cli.ts resolve-branch
+bash tools/market-data/scripts/ensure-clone.sh
+bash tools/market-data/scripts/commit-push.sh
 ```
 
-`publish` exit codes: `0` updated, `2` unchanged, `1` error.  
-`ci-ingest` always exits `0` on success and sets `changed` / `as_of` on `GITHUB_OUTPUT`.
+Exit codes: `ingest` → `0` updated / `2` unchanged / `1` error.  
+`ci-ingest` → `0` on success; sets `changed` / `as_of` on `GITHUB_OUTPUT`.
 
-## Layout
+## Domain rules
 
-See ADR 0034. Hot families: `dkj`, `pmap`, `bmap`. Two ÁKK GETs per ingest run (catalog + combined network rates). Never commit raw API payloads.
+- **Canonical ids**: `toSeriesId` slug is map key = `quotes/<id>.json` = `QuotesFile.id`. Display text stays on `name`.
+- **Accumulating `series.json`**: never drop an id with quote history; status is `active` | `matured` | `delisted`.
+- **Same-day quotes**: identical `(id, settleDate)` → skip; different values → fail ingest.
+- **Catalog join**: quoted series without a catalog row fail (no `isin: null` stubs).
 
 ## Workflow security
 
-- **ingest** job: `contents: read` only; network to ÁKK; uploads an artifact when digests change.
-- **publish** job: `contents: write` only when `changed=true`; re-validates schema + digests; applies the artifact to the `market-data` branch; no ÁKK calls; clears HTTPS auth extraheader after push.
+- **ingest** job: `contents: read`; ÁKK only; artifact when digests change.
+- **push** job: GitHub App installation token only; `validate-tree` before commit; clears HTTPS auth extraheader after push.

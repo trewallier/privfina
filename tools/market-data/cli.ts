@@ -2,28 +2,31 @@
 /**
  * Market-data CLI (ADR 0034 / ROADMAP §6b).
  *
- * Exit codes for `publish`: 0 updated, 2 unchanged, 1 error.
- * Exit codes for `ci-ingest` / `ensure-data-clone` / `commit-push`: 0 success, 1 error
- * (`ci-ingest` records changed=true|false on GITHUB_OUTPUT).
+ * Exit codes:
+ * - `ingest`: 0 updated, 2 unchanged, 1 error
+ * - `ci-ingest`: 0 on success (changed via GITHUB_OUTPUT), 1 error
+ * - other commands: 0 success, 1 error
  */
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { runCiIngest } from './ci-ingest.ts'
 import { commitAndPush } from './commit-push.ts'
 import { ensureDataClone } from './ensure-data-clone.ts'
-import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, publishMarketData } from './publish.ts'
+import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
+import { resolveBranch } from './resolve-branch.ts'
 import type { AkkEnvelope } from './types.ts'
 import { assertPublishedTree } from './validate.ts'
 
 function printHelp(): void {
   process.stdout.write(`Usage:
-  market-data publish --root <repo-or-v1> [--previous-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
+  market-data ingest --root <repo-or-v1> [--previous-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
   market-data validate-tree --root <repo-or-v1>
+  market-data resolve-branch --repository <owner/repo> --branch <name>
   market-data ensure-data-clone --path <dir> --branch <name> --repository <owner/repo>
   market-data commit-push --path <dir> --branch <name> [--no-push]
 
-Exit codes: publish 0/2/1; other commands 0/1
+Exit codes: ingest 0/2/1; ci-ingest 0/1 (changed on GITHUB_OUTPUT); other commands 0/1
 `)
 }
 
@@ -64,12 +67,13 @@ async function main(argv: string[]): Promise<number> {
     return EXIT_UPDATED
   }
 
-  if (cmd === 'publish') {
+  // Legacy alias
+  if (cmd === 'publish' || cmd === 'ingest') {
     const root = getFlag(rest, '--root') ?? process.cwd()
     const previousRoot = getFlag(rest, '--previous-root')
     const rawDir = getFlag(rest, '--raw-dir') ?? path.join(process.cwd(), '.tmp-market-data')
     const envelopes = await loadOptionalEnvelopes(rest)
-    const report = await publishMarketData({
+    const report = await ingestMarketData({
       root,
       previousRoot,
       rawDir,
@@ -106,7 +110,6 @@ async function main(argv: string[]): Promise<number> {
       networkRates: envelopes.networkRates
     })
     process.stdout.write(`${JSON.stringify({ changed: result.changed, asOf: result.asOf })}\n`)
-    // Workflow treats any success as exit 0; changed is gated via GITHUB_OUTPUT.
     return EXIT_UPDATED
   }
 
@@ -121,6 +124,19 @@ async function main(argv: string[]): Promise<number> {
         families: tree.manifest?.families ?? []
       })}\n`
     )
+    return EXIT_UPDATED
+  }
+
+  if (cmd === 'resolve-branch') {
+    const repository =
+      getFlag(rest, '--repository') ?? process.env.GITHUB_REPOSITORY ?? undefined
+    const branch =
+      getFlag(rest, '--branch') ?? process.env.MARKET_DATA_BRANCH ?? 'market-data'
+    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
+    if (!repository) throw new Error('--repository or GITHUB_REPOSITORY is required')
+    if (!token) throw new Error('GITHUB_TOKEN is required for resolve-branch')
+    const result = await resolveBranch({ repository, branch, token })
+    process.stdout.write(`${JSON.stringify(result)}\n`)
     return EXIT_UPDATED
   }
 

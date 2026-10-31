@@ -1,6 +1,7 @@
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { canonicalJson } from './digests.ts'
+import { assertSeriesId } from './ids.ts'
 import { emptyMarketTree, type FamilyTreeState, type MarketTreeState } from './merge.ts'
 import {
   FAMILIES,
@@ -51,8 +52,13 @@ export async function loadMarketTree(root: string): Promise<MarketTreeState> {
       for (const name of files) {
         if (!name.endsWith('.json')) continue
         const id = name.slice(0, -'.json'.length)
+        assertSeriesId(id)
         const q = await readJsonIfExists<QuotesFile>(path.join(quotesDir, name))
-        if (q) quotes[id] = q
+        if (!q) continue
+        if (q.id !== id) {
+          throw new Error(`Quote file ${name} id mismatch: body.id=${q.id}`)
+        }
+        quotes[id] = q
       }
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code
@@ -83,10 +89,13 @@ async function writeFamily(v1: string, family: FamilyCode, fam: FamilyTreeState)
   await writeFile(path.join(famDir, 'series.json'), canonicalJson(fam.series), 'utf8')
   await writeFile(path.join(famDir, 'latest.json'), canonicalJson(fam.latest), 'utf8')
   for (const [id, q] of Object.entries(fam.quotes)) {
+    assertSeriesId(id)
+    if (q.id !== id) {
+      throw new Error(`Quote map key ${id} !== body.id ${q.id}`)
+    }
     if (q.cols.length !== QUOTE_COLS.length) {
       throw new Error(`Invalid quote cols for ${family}/${id}`)
     }
-    const safeId = id.replace(/[^A-Za-z0-9._-]/g, '_')
-    await writeFile(path.join(quotesDir, `${safeId}.json`), canonicalJson(q), 'utf8')
+    await writeFile(path.join(quotesDir, `${id}.json`), canonicalJson(q), 'utf8')
   }
 }

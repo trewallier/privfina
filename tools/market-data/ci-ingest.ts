@@ -1,4 +1,4 @@
-import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, publishMarketData } from './publish.ts'
+import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import { writeGithubOutput } from './github-output.ts'
 import type { AkkEnvelope } from './types.ts'
 
@@ -24,7 +24,7 @@ export interface CiIngestResult {
  * `changed` / `as_of` are written to GITHUB_OUTPUT for job outputs + artifact gating.
  */
 export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestResult> {
-  const report = await publishMarketData({
+  const report = await ingestMarketData({
     root: options.outRoot,
     previousRoot: options.baselineRoot,
     rawDir: options.rawDir,

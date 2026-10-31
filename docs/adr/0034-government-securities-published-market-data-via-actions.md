@@ -38,10 +38,11 @@ data/market/v1/
 ```
 
 - Family folder names match SPA `productCode` (`dkj` | `pmap` | `bmap`). Columnar quote files use short keys (`d`, `bid`, `ask`, `by`, `ay`, `ai`).
-- Tooling lives under `tools/market-data/`. Workflow: `.github/workflows/market-data.yml` with ADR 0007 least privilege and a **read/write job split**:
-  - **`ingest`**: `contents: read` only; contacts ÁKK; writes `GITHUB_OUTPUT` + uploads a published-tree artifact when digests change (`persist-credentials: false` on checkouts).
-  - **`publish`**: `contents: write` only when `changed=true`; applies the artifact to `market-data`, re-runs `validate-tree` (schema + manifest digests) before commit, then pushes; does **not** call ÁKK.
-  - Multistep git/Node logic lives in tested CLI commands (`ci-ingest`, `validate-tree`, `ensure-data-clone`, `commit-push`); workflow `run:` steps stay single-line and take paths from env vars. Auth `extraheader` is cleared after push; the `market-data` worktree is never uploaded as an artifact. No PR to the default branch; no full app `validate` on data pushes.
+- Tooling lives under `tools/market-data/`. Workflow: `.github/workflows/market-data.yml` with ADR 0007 least privilege and a **read / App-push job split**:
+  - **`ingest`**: `contents: read` only; contacts ÁKK; fail-closed branch resolve (404 = missing, other errors fail); uploads a published-tree artifact when digests change.
+  - **`push`**: when `changed=true`, mints a **GitHub App installation token** (not `GITHUB_TOKEN`) to checkout/create `market-data`, re-runs `validate-tree` (schema + digests) before commit, then pushes; does **not** call ÁKK.
+  - Series ids are canonical slugs (map key = filename = `QuotesFile.id`); `series.json` accumulates with `active` / `matured` / `delisted`; same-day quote conflicts fail ingest.
+  - CLI/TS via pinned `tsx`; git glue via `tools/market-data/scripts/*.sh`. Auth `extraheader` cleared after push; never artifact the `market-data` worktree.
 - Later slices (not this decision’s first ingest): Pages deploy materializes the tip of `market-data` into the site tree for same-origin SPA `fetch`; SPA loader + commercial composer series picker / auto-fill. Do **not** bundle market JSON into the Vite graph.
 - Optional `refs/inflation.json` / `refs/dkj-base.json` are deferred until sources are chosen.
 

@@ -10,11 +10,14 @@ export const QUOTE_COLS = ['d', 'bid', 'ask', 'by', 'ay', 'ai'] as const
 export type QuoteCol = (typeof QUOTE_COLS)[number]
 export type QuoteRow = [string, number | null, number | null, number | null, number | null, number | null]
 
-export type SeriesStatus = 'active' | 'matured'
+/** active = currently quoted; matured = past maturity; delisted = not quoted, not matured. */
+export type SeriesStatus = 'active' | 'matured' | 'delisted'
 
 export interface SeriesRecord {
+  /** Canonical slug: map key, quotes/<id>.json basename, QuotesFile.id. */
   id: string
   isin: string | null
+  /** Display / source label (may contain accents or spaces). */
   name: string
   issue: string | null
   mat: string | null

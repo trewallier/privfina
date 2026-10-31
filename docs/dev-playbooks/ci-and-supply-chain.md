@@ -9,7 +9,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 | CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`** | top-level deny; job `contents: read` |
 | CodeQL | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) | same + weekly schedule | **`Analyze`** | top-level deny; job `contents`/`actions` read + `security-events: write` |
 | Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
-| Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`publish`** (write) | top-level deny; ingest `contents: read` only (ÁKK fetch); publish `contents: write` only when digests changed; no PR to default branch; skips full app `validate` (ADR 0034 / ROADMAP §6b) |
+| Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`push`** (App token) | top-level deny; ingest `contents: read` (ÁKK fetch); push uses GitHub App installation token only; no PR to default branch; skips full app `validate` (ADR 0034 / ROADMAP §6b) |
 
 ### Workflow invariants (all pipelines)
 
@@ -79,19 +79,23 @@ Node **≥ 22** (`engines` in [`package.json`](../../package.json)).
 
 ### E. Market-data ingest (ADR 0034)
 
-Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read-only, and raise write only on the job that commits ([secure use / token permissions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-secrets)).
+Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read-only ([secure use / token permissions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-secrets)). The **`push` job must not use `GITHUB_TOKEN` for writes** — it mints a **GitHub App installation token** instead.
 
 1. Workflow [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) is **two jobs**:
-   - **`ingest`** (`contents: read`): checkout tools + optional `market-data` baseline with `persist-credentials: false`, call ÁKK, write staged tree under `out/`, emit `changed` / `as_of` via `GITHUB_OUTPUT`, upload `market-data-v1` artifact only when changed.
-   - **`publish`** (`contents: write`, `if: changed`): download artifact, **`validate-tree`** (schema + manifest digests), ensure/push the `market-data` branch. **Does not call ÁKK** and does not run during unchanged digests.
-2. Do not embed tokens in `git remote` URLs on argv; rely on `actions/checkout` `persist-credentials` or `http.https://github.com/.extraheader` (same pattern as checkout) inside tested CLI helpers. **`commit-push` unsets the extraheader afterward**; never upload the `market-data` worktree as an artifact.
-3. Prefer **single-line** `run:` steps that call `tools/market-data/cli.ts` (`ci-ingest`, `validate-tree`, `ensure-data-clone`, `commit-push`). Pass paths via **env vars** (not `${{ }}` interpolation inside `run:`) for consistency with GitHub script-injection guidance. Keep git/merge logic in tested modules — avoid untested multiline workflow scripts.
-4. Do not commit raw ÁKK responses; CLI writes ephemeral raw under a gitignored temp path.
-5. Unchanged digests / empty new settles must exit green without a commit (publish job skipped).
-6. First-run: missing `market-data` uses `continue-on-error` checkout + orphan create; push is non-`--force`. `concurrency.cancel-in-progress: false` avoids overlapping pushes. Smoke with `workflow_dispatch` after merge.
-7. Pages materialization of `data/market/` into the deploy artifact is a follow-on §6b slice — not required for ingest to land.
-8. Local maintainer dry-run: `npm run market-data:publish -- --help` (see `tools/market-data/`).
-9. Optional later: GitHub Actions **workflow dependency lockfiles** (stronger than SHA pins alone).
+   - **`ingest`** (`contents: read`): resolve whether `market-data` exists (API; fail-closed on non-404 errors), checkout baseline only when it exists (no blind `continue-on-error`), call ÁKK, stage tree under `out/`, emit `changed` / `as_of`, upload artifact when changed.
+   - **`push`** (`if: changed`): App token → resolve branch → checkout or orphan-init → download artifact → **`validate-tree`** (schema + digests) → bash `commit-push.sh`. **Does not call ÁKK.**
+2. **GitHub App setup (required before first successful push):**
+   1. Create a GitHub App with **Contents: Read and write** on this repository (no metadata beyond what push needs).
+   2. Install the App on `trewallier/privfina`.
+   3. Store **App ID** in Actions variable `MARKET_DATA_APP_ID` and the **private key** in secret `MARKET_DATA_APP_PRIVATE_KEY`.
+   4. On the **`market-data` branch ruleset**, add the App as a **bypass actor** for `creation` / `update` (ruleset currently blocks force-push/deletion and restricts updates). Without bypass, App pushes will fail closed.
+3. Auth hygiene: do not put tokens on `git remote` argv; use checkout credentials or `extraheader`. **`commit-push.sh` unsets `http.https://github.com/.extraheader` on exit**. Never upload the `market-data` worktree as an artifact.
+4. Prefer **single-line** `run:` steps. TS via pinned **`tsx`** (`npx tsx tools/market-data/cli.ts …`). Git glue via `tools/market-data/scripts/*.sh`. Paths via **env vars**.
+5. Exit conventions: local `ingest` → `0` updated / `2` unchanged / `1` error; `ci-ingest` → `0` on success with `changed` on `GITHUB_OUTPUT`.
+6. Unchanged digests → green, `push` skipped. Push is non-`--force`. `concurrency.cancel-in-progress: false`. Smoke with `workflow_dispatch` after merge + App setup.
+7. Pages materialization of `data/market/` is a follow-on §6b slice.
+8. Local dry-run: `npm run market-data:ingest -- --help`.
+9. Optional later: Actions **workflow dependency lockfiles**; enforce CODEOWNERS required reviews on `.github/workflows/**` when multi-maintainer review is available.
 
 ## Explicit non-goals (for now)
 

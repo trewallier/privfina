@@ -1,4 +1,5 @@
 import { digestCanonical } from './digests.ts'
+import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import type { MarketTreeState } from './merge.ts'
 import { FAMILIES, QUOTE_COLS, SCHEMA_VERSION, type ManifestFile } from './types.ts'
@@ -26,9 +27,30 @@ export function validateMarketTree(tree: MarketTreeState): void {
     if (Object.keys(fam.latest.quotes).length === 0) {
       throw new ValidateError(`Required family ${family} has empty latest.json`)
     }
+    const seriesIds = new Set<string>()
+    for (const s of fam.series.series) {
+      try {
+        assertSeriesId(s.id)
+      } catch (err) {
+        throw new ValidateError(
+          `Non-canonical series id in ${family}: ${err instanceof Error ? err.message : String(err)}`
+        )
+      }
+      seriesIds.add(s.id)
+    }
     for (const [id, q] of Object.entries(fam.quotes)) {
+      try {
+        assertSeriesId(id)
+      } catch (err) {
+        throw new ValidateError(
+          `Non-canonical quote key in ${family}: ${err instanceof Error ? err.message : String(err)}`
+        )
+      }
       if (q.id !== id) throw new ValidateError(`Quote id mismatch ${family}/${id}`)
       if (q.family !== family) throw new ValidateError(`Quote family mismatch ${family}/${id}`)
+      if (!seriesIds.has(id)) {
+        throw new ValidateError(`Quote history for ${family}/${id} missing from series.json`)
+      }
       if (q.cols.join(',') !== QUOTE_COLS.join(',')) {
         throw new ValidateError(`Quote cols mismatch ${family}/${id}`)
       }

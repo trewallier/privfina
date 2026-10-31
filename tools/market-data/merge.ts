@@ -1,3 +1,4 @@
+import { assertSeriesId } from './ids.ts'
 import { digestCanonical } from './digests.ts'
 import {
   FAMILIES,
@@ -11,8 +12,16 @@ import {
   type QuotesFile,
   type QuoteRow,
   type SeriesFile,
-  type SeriesRecord
+  type SeriesRecord,
+  type SeriesStatus
 } from './types.ts'
+
+export class MergeError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'MergeError'
+  }
+}
 
 export interface FamilyTreeState {
   series: SeriesFile
@@ -42,6 +51,7 @@ function emptySeries(family: FamilyCode): SeriesFile {
 }
 
 function emptyQuotes(family: FamilyCode, id: string): QuotesFile {
+  assertSeriesId(id)
   return { schemaVersion: SCHEMA_VERSION, id, family, cols: QUOTE_COLS, rows: [] }
 }
 
@@ -56,16 +66,63 @@ export function emptyMarketTree(): MarketTreeState {
   }
 }
 
-function quoteKey(row: QuoteRow): string {
-  return row[0]
+function quoteRowsEqual(a: QuoteRow, b: QuoteRow): boolean {
+  return a.length === b.length && a.every((v, i) => Object.is(v, b[i]))
 }
 
 function toLatestQuote(row: QuoteRow): LatestQuote {
   return { d: row[0], bid: row[1], ask: row[2], by: row[3], ay: row[4], ai: row[5] }
 }
 
-function seriesFingerprint(series: SeriesRecord[]): string {
-  return digestCanonical(series)
+function resolveStatus(
+  rec: SeriesRecord,
+  quoted: boolean,
+  asOf: string | null
+): SeriesStatus {
+  if (quoted) return 'active'
+  if (asOf && rec.mat && rec.mat < asOf) return 'matured'
+  return 'delisted'
+}
+
+/**
+ * Accumulate series: keep every known id (esp. those with quote history), upsert fields,
+ * set status from whether the id is in today's quoted set.
+ */
+export function accumulateSeries(
+  previous: SeriesRecord[],
+  incoming: SeriesRecord[],
+  quotedIds: Set<string>,
+  quoteIdsWithHistory: Set<string>,
+  asOf: string | null
+): SeriesRecord[] {
+  const byId = new Map<string, SeriesRecord>()
+  for (const s of previous) {
+    assertSeriesId(s.id)
+    byId.set(s.id, { ...s })
+  }
+  for (const s of incoming) {
+    assertSeriesId(s.id)
+    const prev = byId.get(s.id)
+    byId.set(s.id, prev ? { ...prev, ...s } : { ...s })
+  }
+  // Guarantee a series row for every quotes file on disk / in tree.
+  for (const id of quoteIdsWithHistory) {
+    if (!byId.has(id)) {
+      byId.set(id, {
+        id,
+        isin: null,
+        name: id,
+        issue: null,
+        mat: null,
+        ccy: null,
+        status: 'delisted'
+      })
+    }
+  }
+  for (const [id, rec] of byId) {
+    rec.status = resolveStatus(rec, quotedIds.has(id), asOf)
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id))
 }
 
 function rebuildLatest(quotes: Record<string, QuotesFile>): LatestFile {
@@ -120,7 +177,8 @@ function digestsEqual(a: ManifestFile | null, b: ManifestFile): boolean {
 
 /**
  * Merge a normalized snapshot into an existing market tree (append-first).
- * Does not rewrite historical quote rows; skips duplicate (id, d).
+ * Same (id, settleDate) + identical values → skip; same date + different values → fail.
+ * series.json accumulates; statuses mark active / matured / delisted.
  */
 export function mergeSnapshot(
   previous: MarketTreeState,
@@ -138,38 +196,50 @@ export function mergeSnapshot(
 
   let appendedRows = 0
   let skippedDuplicates = 0
+  const asOf = snapshot.asOf
 
   for (const family of FAMILIES) {
     const fam = tree.families[family]
     const incoming = snapshot.byFamily[family]
-
-    const nextSeries = incoming.series.map((s) => ({ ...s }))
-    const prevFp = seriesFingerprint(fam.series.series)
-    const nextFp = seriesFingerprint(nextSeries)
-    if (prevFp !== nextFp) {
-      fam.series = { schemaVersion: SCHEMA_VERSION, family, series: nextSeries }
-    }
+    const quotedIds = new Set(incoming.quotes.map((q) => q.id))
 
     for (const q of incoming.quotes) {
+      assertSeriesId(q.id)
       let file = fam.quotes[q.id]
       if (!file) {
         file = emptyQuotes(family, q.id)
         fam.quotes[q.id] = file
       }
-      const existing = new Set(file.rows.map(quoteKey))
-      if (existing.has(quoteKey(q.row))) {
-        skippedDuplicates += 1
-        continue
+      const existing = file.rows.find((r) => r[0] === q.row[0])
+      if (existing) {
+        if (quoteRowsEqual(existing, q.row)) {
+          skippedDuplicates += 1
+          continue
+        }
+        throw new MergeError(
+          `Same-day quote conflict for ${family}/${q.id} on ${q.row[0]}: kept ${JSON.stringify(existing)}, got ${JSON.stringify(q.row)}`
+        )
       }
       file.rows.push([...q.row] as QuoteRow)
       file.rows.sort((a, b) => a[0].localeCompare(b[0]))
       appendedRows += 1
     }
 
+    fam.series = {
+      schemaVersion: SCHEMA_VERSION,
+      family,
+      series: accumulateSeries(
+        fam.series.series,
+        incoming.series,
+        quotedIds,
+        new Set(Object.keys(fam.quotes)),
+        asOf
+      )
+    }
+
     fam.latest = rebuildLatest(fam.quotes)
   }
 
-  const asOf = snapshot.asOf
   const generatedAt = options?.generatedAt ?? new Date().toISOString()
   const manifest = buildManifest(tree, asOf, generatedAt)
   const changed = !digestsEqual(previous.manifest, manifest)

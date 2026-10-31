@@ -74,6 +74,10 @@ Docs-as-code keeps design, specification, and architecture next to the code.
 - **PR traceability:** Link the relevant `docs/spec.md` section and `ROADMAP.md` item; link an ADR when the change is architectural.
 - **Product migration statuses** (`spec-only` → `inputs-driven` → `calc-aligned` → `fully-spec-backed`) are defined only in the [product catalog](docs/product-specs/PRODUCT_CATALOG.md)—do not redefine them elsewhere.
 
+## Data storage notice
+
+All planning data entered in the SPA is stored in the browser’s `localStorage` **in plaintext by design** ([ADR 0004](docs/adr/0004-use-unsynced-browser-storage-for-v1-with-export-import.md)). Other scripts running in the same browser may be able to read it. **Do not enter personally identifiable information (PII).** Use at your own risk. Export/import JSON remains the durability and portability path; encryption is deferred (see ROADMAP §7 and [`SECURITY.md`](SECURITY.md)).
+
 ## Direction Notes
 
 - v1 targets GitHub Pages static hosting with no backend runtime.

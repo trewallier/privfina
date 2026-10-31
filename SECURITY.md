@@ -22,6 +22,10 @@ Out of scope:
 - Issues that require a compromised browser extension or malware on the user's machine
 - Denial of service against GitHub Pages or GitHub Actions infrastructure
 
+## Accepted risks
+
+- **Plaintext browser storage (ADR 0004):** cash-flow planning JSON is stored unencrypted in `localStorage` so users can inspect, export, and import data on a static GitHub Pages host. Encryption and a storage port are deferred to ROADMAP §7. XSS that could exfiltrate that data without user action remains **in scope** above.
+
 ## Maintainer expectations
 
 - Never commit secrets, API keys, tokens, or private keys

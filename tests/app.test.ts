@@ -646,7 +646,20 @@ describe('browser recurrence validation helpers', () => {
   })
 
   it('renders an informative empty state for range without flows', () => {
-    const container = { innerHTML: '' }
+    const emptyNode = { textContent: '' }
+    const container = {
+      get innerHTML() {
+        return `<div class="empty">${emptyNode.textContent}</div>`
+      },
+      set innerHTML(value) {
+        if (value === '<div class="empty"></div>') {
+          emptyNode.textContent = ''
+        }
+      },
+      querySelector(selector: string) {
+        return selector === '.empty' ? emptyNode : null
+      }
+    }
 
     renderChart([], container, {
       startDate: '2024-01-01',

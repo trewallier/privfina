@@ -2,8 +2,10 @@
  * Slice A residual diagnostics (ADR 0031). Prints invert-solve ΔFt and
  * sensitivity / hypothesis results.
  *
- * Not a promotion gate — soft asserts only (line counts). The 8/8 Hirdetmény
- * bar lives in `home-savings-ebkm-verification.test.ts`.
+ * Exploratory only — excluded from regular CI (`npm test`). Run via
+ * `npm run test:exploratory`. Not a promotion gate — soft asserts only
+ * (line counts). The 8/8 Hirdetmény bar lives in
+ * `tests/home-savings-ebkm-verification.test.ts`.
  *
  * Packaging baselines:
  * - Invert-solve uses production ÁSZF flows (`buildHomeSavingsAszfEbkmCashFlows`).
@@ -28,9 +30,9 @@ import {
   resolveHomeSavingsMaturityPayoutDate,
   resolveHomeSavingsOpeningFee,
   type HomeSavingsSpecInputs
-} from '../src/finance_engine/engine'
-import { CashFlowDirection } from '../src/finance_engine/models'
-import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../src/finance_engine/product_specs/loader'
+} from '../../src/finance_engine/engine'
+import { CashFlowDirection } from '../../src/finance_engine/models'
+import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../../src/finance_engine/product_specs/loader'
 
 function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')

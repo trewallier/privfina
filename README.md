@@ -40,12 +40,15 @@ Browser-hosted personal finance planning for static deployment on GitHub Pages: 
 
 ```bash
 npm install
-npm test
-npm run build        # Vite SPA → dist-web/ (GitHub Pages artifact)
-npm run build:lib    # tsc library/types → dist/
+npm test                 # product / regression suite
+npm run test:exploratory # optional EBKM diagnosis probes (not in CI)
+npm run build            # Vite SPA → dist-web/ (GitHub Pages artifact)
+npm run build:lib        # tsc library/types → dist/
 ```
 
-Default branch: `master`. Local SPA: `npm run dev` (Vite; project base `/privfina/`).
+Default branch: `master` (workflows key off the repository default branch, not a hard-coded name). Node ≥ 22. Local SPA: `npm run dev` (Vite; project base `/privfina/`).
+
+Pull requests must pass the **`validate`** CI job (and CodeQL once required) before merge. Workflow security and maintainer setup: [`docs/dev-playbooks/ci-and-supply-chain.md`](docs/dev-playbooks/ci-and-supply-chain.md); vulnerability reporting: [`SECURITY.md`](SECURITY.md).
 
 ## Documentation & Decision Workflow
 
@@ -64,6 +67,8 @@ Docs-as-code keeps design, specification, and architecture next to the code.
 | Add / promote a product | [`docs/dev-playbooks/product-lifecycle.md`](docs/dev-playbooks/product-lifecycle.md) |
 | Formula ↔ code map | [`docs/formula-ownership-audit.md`](docs/formula-ownership-audit.md) |
 | Sequencing | [`ROADMAP.md`](ROADMAP.md) |
+| CI / supply-chain / Pages deploy | [`docs/dev-playbooks/ci-and-supply-chain.md`](docs/dev-playbooks/ci-and-supply-chain.md) |
+| Security reporting | [`SECURITY.md`](SECURITY.md) |
 
 - **When to update:** Vision/Spec/ADR when scope, acceptance criteria, or architecture change. Create a new ADR when an accepted architectural decision changes (do not edit accepted ADRs).
 - **PR traceability:** Link the relevant `docs/spec.md` section and `ROADMAP.md` item; link an ADR when the change is architectural.

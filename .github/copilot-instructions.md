@@ -8,6 +8,7 @@ These instructions aim to make repository assistance consistent and traceable.
 - Require explicit traceability: each PR should reference the `docs/spec.md` section and the related `ROADMAP.md` item; if architectural, reference the ADR in `docs/adr/`.
 - Encourage using the `.github/prompts/` helpers to scaffold ADRs and spec updates.
 - For product add/promote workflows, follow [`docs/dev-playbooks/product-lifecycle.md`](../docs/dev-playbooks/product-lifecycle.md).
+- For CI / Pages deploy / supply-chain changes, follow [`docs/dev-playbooks/ci-and-supply-chain.md`](../docs/dev-playbooks/ci-and-supply-chain.md) and ADR 0007 (SHA-pin Actions; never `pull_request_target`; no secrets in the repo).
 - Note: this repository uses `master` as the default branch.
 
 ## Commit Format Preference

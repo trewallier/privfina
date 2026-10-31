@@ -14,6 +14,8 @@ Start at the root [`AGENTS.md`](../AGENTS.md) (agents) or [`README.md`](../READM
 | Product registry + migration statuses | [`product-specs/PRODUCT_CATALOG.md`](product-specs/PRODUCT_CATALOG.md) |
 | Spec authoring conventions | [`product-specs/README.md`](product-specs/README.md) |
 | Add or promote a product (checklist) | [`dev-playbooks/product-lifecycle.md`](dev-playbooks/product-lifecycle.md) |
+| CI, Pages deploy, supply-chain | [`dev-playbooks/ci-and-supply-chain.md`](dev-playbooks/ci-and-supply-chain.md) |
+| Security reporting | [`../SECURITY.md`](../SECURITY.md) |
 | Formula ↔ code inventory | [`formula-ownership-audit.md`](formula-ownership-audit.md) |
 | Home-savings interest event timeline (worked example) | [`dev-notes/home-savings-interest-timeline-worked-example.md`](dev-notes/home-savings-interest-timeline-worked-example.md) |
 | Home-savings interest / EBKM probe (accepted model + tolerances) | [`dev-notes/ebkm-4x10-interest-invariance-probe.md`](dev-notes/ebkm-4x10-interest-invariance-probe.md) |

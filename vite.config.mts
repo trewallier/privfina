@@ -31,6 +31,11 @@ export default defineConfig({
   test: {
     root: repoRoot,
     environment: 'node',
-    include: ['tests/**/*.test.ts']
+    // Product / regression suite only. EBKM diagnosis probes live under
+    // tests/exploratory/ and run via `npm run test:exploratory`.
+    include: ['tests/**/*.test.ts'],
+    exclude: process.env.VITEST_EXPLORATORY
+      ? ['**/node_modules/**', '**/dist/**']
+      : ['**/node_modules/**', '**/dist/**', 'tests/exploratory/**']
   }
 })

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   buildCommercialInvestmentProductOptions,
   buildSpecBackedInvestmentSubtypeUiConfig,
-  resolveCommercialInvestmentReadinessHint,
   findCommercialInvestmentProduct
 } from '../public/controller/investment-product-metadata.js'
 import { buildGenericBondSubtypeUiConfig } from '../public/controller/generic-bond-presentation.js'
@@ -26,15 +25,6 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(optionByValue.get('dkj')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(options.every((entry) => entry.available)).toBe(true)
-  })
-
-  it('resolves readiness hints for government-security ladder statuses', () => {
-    expect(resolveCommercialInvestmentReadinessHint('fully-spec-backed')).toMatch(/fully-spec-backed/)
-    expect(resolveCommercialInvestmentReadinessHint('commercially-usable')).toMatch(
-      /commercially-usable/
-    )
-    expect(resolveCommercialInvestmentReadinessHint('schedule-usable')).toMatch(/schedule-usable/)
-    expect(resolveCommercialInvestmentReadinessHint('spec-only')).toMatch(/spec-only/)
   })
 
   it('finds commercial products by treasury product code', () => {

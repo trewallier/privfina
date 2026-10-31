@@ -65,7 +65,8 @@ describe('investment field help and dedicated hosts', () => {
 
   it('hosts DKJ/PMAP/BMAP on the commercial investment form', () => {
     expect(commercialFormHtml).toContain('id="commercial-investment-product"')
-    expect(commercialFormHtml).toContain('id="commercial-investment-readiness-hint"')
+    expect(commercialFormHtml).not.toContain('id="commercial-investment-readiness-hint"')
+    expect(commercialFormHtml).not.toMatch(/Readiness:\s*fully-spec-backed/)
     expect(commercialFormHtml).toContain('id="investment-dkj-wrap"')
     expect(commercialFormHtml).toContain('id="investment-pmap-wrap"')
     expect(commercialFormHtml).toContain('id="investment-bmap-wrap"')

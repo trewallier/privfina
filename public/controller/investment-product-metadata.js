@@ -58,25 +58,6 @@ function buildSpecBackedInvestmentSubtypeOptions() {
   return buildCommercialInvestmentProductOptions()
 }
 
-function resolveCommercialInvestmentReadinessHint(migrationStatus) {
-  switch (migrationStatus) {
-    case 'fully-spec-backed':
-      return 'Readiness: fully-spec-backed — YAML, composer hosts, adapters, and examples are aligned.'
-    case 'commercially-usable':
-      return 'Readiness: commercially-usable — commercial composer UX is wired for this offering.'
-    case 'schedule-usable':
-      return 'Readiness: schedule-usable — customer cash flows can be composed and persisted.'
-    case 'calc-aligned':
-      return 'Readiness: calc-aligned — engine aligned; commercial composer may still be incomplete.'
-    case 'inputs-driven':
-      return 'Readiness: inputs-driven — form inputs follow the spec; calculations may lag.'
-    case 'spec-only':
-      return 'Readiness: spec-only — product YAML exists; composer wiring is not ready yet.'
-    default:
-      return migrationStatus ? `Readiness: ${migrationStatus}` : ''
-  }
-}
-
 function findCommercialInvestmentProduct(productCode) {
   return FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS.find((entry) => entry.subtype === productCode) || null
 }
@@ -168,7 +149,6 @@ export {
   buildSpecBackedInvestmentSubtypeOptions,
   buildCommercialInvestmentProductOptions,
   buildSpecBackedInvestmentSubtypeUiConfig,
-  resolveCommercialInvestmentReadinessHint,
   findCommercialInvestmentProduct,
   inputLabel,
   inputRequired,

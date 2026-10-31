@@ -129,7 +129,8 @@ Acceptance criteria
 - [x] Investment composer marks required, optional, and calculated fields, and shows form-local validation when save/preview fails (not only the distant storage status).
 - [x] Catalog investment products (DKJ, PMÁP, BMÁP) render dedicated hosts whose field names/types/help match product-spec YAML (no semantic remapping onto unrelated generic controls).
 - [x] Simplified investment composer lists only generic bond subtypes; ÁKK / government-security products are absent from that subtype picker (ADR 0027 / ROADMAP §5d).
-- [x] Commercial investment composer box exists with a treasury product picker over catalog `government-security` codes (DKJ, PMÁP, BMÁP) and shows a readiness hint for the selected product.
+- [x] Commercial investment composer box exists with a treasury product picker over catalog `government-security` codes (DKJ, PMÁP, BMÁP). Catalog migration status stays in product metadata / docs — not shown as user-facing readiness copy on the form.
+- [x] Commercial PMÁP / BMÁP purchase date defaults to the browser’s current local calendar date when empty (create / product switch); edit keeps a persisted purchase date.
 - [x] Editing a catalog-backed investment bundle opens the commercial investment composer; editing a generic bond opens the simplified investment composer.
 - [x] ADR 0027 records government-security readiness meanings and the commercial vs simplified investment composer split (loan THM three-check does not apply).
 - [x] Commercial loan inputs and preview outputs provide clickable info icons with help copy aligned to product-spec field descriptions.

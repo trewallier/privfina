@@ -118,7 +118,6 @@ import {
 import { calculatePmapFromSpecInputs } from './controller/pmap-calculation-adapter.js'
 import {
   buildCommercialInvestmentProductOptions,
-  resolveCommercialInvestmentReadinessHint,
   findCommercialInvestmentProduct
 } from './controller/investment-product-metadata.js'
 import { createHomeSavingsComposerHost } from './controller/home-savings-composer-host.js'
@@ -235,9 +234,6 @@ function initController() {
   const homeSavingsBox = document.getElementById('home-savings-box')
   const commercialInvestmentProductInput = document.getElementById(
     'commercial-investment-product'
-  )
-  const commercialInvestmentReadinessHint = document.getElementById(
-    'commercial-investment-readiness-hint'
   )
   const commercialInvestmentMarketRow = document.getElementById(
     'commercial-investment-market-row'
@@ -1161,17 +1157,27 @@ function initController() {
     syncCommercialInvestmentPreview()
   }
 
+  function browserTodayIso(date = new Date()) {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  function ensureDefaultPurchaseDate(input) {
+    if (!input) {
+      return
+    }
+    if (!String(input.value || '').trim()) {
+      input.value = browserTodayIso()
+    }
+  }
+
   function applyCommercialInvestmentProductUi(productCode) {
     setCommercialInvestmentFamilyTitle()
     clearCommercialInvestmentFormErrors()
 
     const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
-    const product = findCommercialInvestmentProduct(code)
-    if (commercialInvestmentReadinessHint) {
-      commercialInvestmentReadinessHint.textContent = resolveCommercialInvestmentReadinessHint(
-        product?.migrationStatus
-      )
-    }
 
     void refreshCommercialMarketFamily(code)
 
@@ -1224,6 +1230,7 @@ function initController() {
         bmapForm: commercialInvestmentForm,
         bmapBox: commercialInvestmentBox
       })
+      ensureDefaultPurchaseDate(bmapPurchaseDateInput)
       setElementVisible(commercialInvestmentDiscountYieldWrap, false)
       setElementVisible(commercialInvestmentDiscountCurrentValueWrap, false)
       setElementVisible(commercialInvestmentInflationScheduleWrap, false)
@@ -1252,6 +1259,7 @@ function initController() {
         investmentForm: commercialInvestmentForm,
         investmentBox: commercialInvestmentBox
       })
+      ensureDefaultPurchaseDate(pmapPurchaseDateInput)
       setElementVisible(commercialInvestmentDiscountYieldWrap, false)
       setElementVisible(commercialInvestmentDiscountCurrentValueWrap, false)
       setElementVisible(commercialInvestmentInflationScheduleWrap, true)

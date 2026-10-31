@@ -10,8 +10,13 @@ export const EXIT_ERROR = 1
 export const EXIT_UNCHANGED = 2
 
 export interface PublishOptions {
-  /** Repo root or path containing data/market/v1 (or the v1 dir itself). */
+  /** Output repo root or path containing data/market/v1 (or the v1 dir itself). */
   root: string
+  /**
+   * Optional baseline tree to load before merge (e.g. tip of `market-data`).
+   * Defaults to `root` when omitted.
+   */
+  previousRoot?: string
   rawDir: string
   /** Skip network; use provided envelopes (tests / offline). */
   catalog?: AkkEnvelope
@@ -39,7 +44,7 @@ export async function publishMarketData(options: PublishOptions): Promise<Publis
   }
 
   const snapshot = normalizeAkkSnapshots(catalog, networkRates)
-  const previous = await loadMarketTree(options.root)
+  const previous = await loadMarketTree(options.previousRoot ?? options.root)
   const merged = mergeSnapshot(previous, snapshot, { generatedAt: options.generatedAt })
   validateMarketTree(merged.tree)
 

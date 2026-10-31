@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:exploratory": "VITEST_EXPLORATORY=1 vitest run tests/exploratory",
     "market-data:publish": "node --experimental-strip-types tools/market-data/cli.ts",
+    "market-data:ci-ingest": "node --experimental-strip-types tools/market-data/cli.ts ci-ingest",
     "clean": "rm -rf dist dist-web"
   },
   "dependencies": {

@@ -220,8 +220,8 @@ data/market/v1/
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0034: Actions-only ÁKK contact, `market-data` branch, schemaVersion 1 layout, append-first merge, out-of-scope browser→ÁKK.
-- [x] `tools/market-data/` CLI: fetch (2 GETs) → normalize → merge/publish under `data/market/v1/`; Vitest fixtures for normalize/merge (no live captures in git).
-- [x] `.github/workflows/market-data.yml`: schedule + `workflow_dispatch`, concurrency, digest-gated push to `market-data`, fail on hard errors / empty required family.
+- [x] `tools/market-data/` CLI: fetch (2 GETs) → normalize → merge/ingest under `data/market/v1/` (canonical ids, accumulating series, same-day conflict fail); Vitest fixtures (no live captures in git).
+- [x] `.github/workflows/market-data.yml`: `ingest` (read) + `push` (GitHub App token); fail-closed branch resolve; `validate-tree` before commit; pinned `tsx` + bash git helpers.
 - [ ] Confirm or defer `refs/inflation.json` / `refs/dkj-base.json` sources (PMÁP inflation base / BMÁP DKJ-base).
 - [ ] Pages deploy materializes tip of `market-data` into the site artifact under `data/market/` (same-origin SPA `fetch`).
 - [ ] Contract fixture + SPA runtime loader (`manifest` → `series` → `latest` → optional `quotes/<id>`); session cache; manual-entry degrade when files missing.

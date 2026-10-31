@@ -14,6 +14,7 @@
     "build:lib": "tsc -p tsconfig.json",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:exploratory": "VITEST_EXPLORATORY=1 vitest run tests/exploratory",
     "clean": "rm -rf dist dist-web"
   },
   "dependencies": {

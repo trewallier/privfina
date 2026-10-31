@@ -2,14 +2,12 @@
 # Required status check name: validate
 name: CI
 
-permissions:
-  contents: read
+# Deny all by default; jobs grant only what they need (ADR 0007).
+permissions: {}
 
 on:
   pull_request:
-    branches: [master]
   push:
-    branches: [master]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -17,12 +15,19 @@ concurrency:
 
 jobs:
   validate:
+    # Triggers cannot express "default branch" dynamically; filter here instead of hardcoding master.
+    if: >-
+      (github.event_name == 'pull_request' && github.base_ref == github.event.repository.default_branch) ||
+      (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 1
 
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

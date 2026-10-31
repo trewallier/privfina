@@ -2,6 +2,9 @@
  * Rounding-direction theory vs 4x10 residuals (see
  * docs/dev-notes/ebkm-rounding-theory-compare.md).
  *
+ * Exploratory only — excluded from regular CI (`npm test`). Run via
+ * `npm run test:exploratory`. Statutory half-up locks live in `tests/ebkm.test.ts`.
+ *
  * Engine already uses half-up away from zero. Residuals are not on *.xx5;
  * algebraic half-up matches engine on locked YAML starts; always-ceil regresses.
  */
@@ -14,8 +17,8 @@ import {
   loadHomeSavingsProductSpec,
   mapHomeSavingsSpecInputsToInstrumentInput,
   roundEbkmPercent
-} from '../src/finance_engine/engine'
-import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../src/finance_engine/product_specs/loader'
+} from '../../src/finance_engine/engine'
+import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../../src/finance_engine/product_specs/loader'
 
 function readRepo(rel: string): string {
   return readFileSync(resolve(process.cwd(), rel), 'utf8')

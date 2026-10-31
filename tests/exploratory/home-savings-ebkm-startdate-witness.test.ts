@@ -1,6 +1,10 @@
 /**
  * StartDate witness search for withdrawn home-savings EBKM goldens.
  *
+ * Exploratory only — excluded from regular CI (`npm test`). Run via
+ * `npm run test:exploratory`. Full saleWindow search is for diagnosis, not a
+ * live product gate (see `tests/home-savings-withdrawn-ebkm-verification.test.ts`).
+ *
  * Finding (see docs/dev-notes/ebkm-4x10-interest-invariance-probe.md):
  * capitalization and ÁSZF/OTP payout markers are month day-1, while deposits
  * follow the contract start day-of-month — so rounded EBKM is startDate-sensitive.
@@ -25,9 +29,9 @@ import {
   loadHomeSavingsProductSpec,
   type HomeSavingsProductSpec,
   type HomeSavingsSpecInputs
-} from '../src/finance_engine/engine'
-import { daysInMonthUtc, formatIsoDate, parseIsoDate } from '../src/finance_engine/date_utils'
-import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../src/finance_engine/product_specs/loader'
+} from '../../src/finance_engine/engine'
+import { daysInMonthUtc, formatIsoDate, parseIsoDate } from '../../src/finance_engine/date_utils'
+import { DEFAULT_PRODUCT_SCHEMA_PATH } from '../../src/finance_engine/product_specs/loader'
 
 function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')

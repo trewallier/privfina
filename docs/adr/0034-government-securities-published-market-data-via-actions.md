@@ -43,13 +43,13 @@ data/market/v1/
   - **`push`**: when `changed=true`, mints a **GitHub App installation token** (not `GITHUB_TOKEN`) to checkout/create `market-data`, re-runs `validate-tree` (schema + digests) before commit, then pushes; does **not** call ÁKK.
   - Series ids are canonical slugs (map key = filename = `QuotesFile.id`); `series.json` accumulates with `active` / `matured` / `delisted`; same-day quote conflicts fail ingest.
   - CLI/TS via pinned `tsx`; git glue via `tools/market-data/scripts/*.sh`. Auth `extraheader` cleared after push; never artifact the `market-data` worktree.
-- Later slices (not this decision’s first ingest): Pages deploy materializes the tip of `market-data` into the site tree for same-origin SPA `fetch`; SPA loader + commercial composer series picker / auto-fill. Do **not** bundle market JSON into the Vite graph.
-- Optional `refs/inflation.json` / `refs/dkj-base.json` are deferred until sources are chosen.
+- Pages deploy materializes the tip of `market-data` into `dist-web/data/market/v1/` for same-origin SPA `fetch` (soft-fail if the data branch is missing). The SPA loads that tree at runtime via `public/controller/market-data-loader.js` and auto-fills the commercial investment composer from published series/quotes. Do **not** bundle market JSON into the Vite graph.
+- Optional `refs/inflation.json` / `refs/dkj-base.json` remain **deferred for v1**; PMÁP `previousYearAverageInflationPct` and BMÁP `dkjBaseYieldPct` stay manual until a later slice names a source.
 
 ## Consequences
 
 - Product code history stays free of daily quote churn; data history lives on `market-data`.
-- Browser never calls ÁKK; ADR 0006’s browser `fetch` targets GitHub Pages (or configured) published JSON once materialization lands.
+- Browser never calls ÁKK; ADR 0006’s browser `fetch` targets GitHub Pages published JSON under `/privfina/data/market/v1/` after deploy materialization.
 - Maintainers can re-run ingest via `workflow_dispatch` without fabricating history ÁKK does not return in a single snapshot.
 - Raw intake dumps and experiment captures remain untracked (see `.gitignore`).
 - A separate data repo remains an escape hatch if published size or CI noise grows.

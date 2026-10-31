@@ -1,6 +1,6 @@
 # Data Directory
 
-This directory holds documentation for export artifacts and is the planned home for published market-data paths once Pages materialization lands. Runtime user persistence for v1 remains browser-local storage plus export/import JSON.
+This directory holds documentation for export artifacts. Published government-security market JSON lives on the **`market-data`** branch and is copied into the Pages artifact at deploy time (`dist-web/data/market/v1/`). Runtime user persistence for v1 remains browser-local storage plus export/import JSON.
 
 ## Notes
 
@@ -9,7 +9,7 @@ This directory holds documentation for export artifacts and is the planned home 
 - Schema v5 adds `data.listStatus` (folder names/collapsed flags and configured-flow item order); older exports migrate in with an empty `listStatus` that the app reconciles against known flow ids.
 - When schema versions change, the app warns users and recommends exporting a fresh backup file.
 - Instrument-bundle imports trust stored `generatedFlows` and only fill lineage metadata on upgrade (see ADR 0018).
-- Government-securities published market JSON accumulates on the **`market-data`** branch under `data/market/v1/` (ADR 0034 / ROADMAP §6b). Raw ÁKK responses stay untracked.
+- Government-securities published market JSON accumulates on the **`market-data`** branch under `data/market/v1/` (ADR 0034 / ROADMAP §6b). Deploy materializes that tip into the site for same-origin SPA `fetch`. Raw ÁKK responses stay untracked.
 - Local intake scratch under `data/intake/**/raw/` and `temp/` is gitignored.
 
 ## Reference

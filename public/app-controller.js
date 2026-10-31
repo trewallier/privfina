@@ -134,6 +134,12 @@ import {
   parseMoneyAmount,
   bindMoneyAmountInputs
 } from './controller/money-format.js'
+import {
+  createMarketDataLoader,
+  findQuoteRowBySettleDate,
+  latestQuoteForId
+} from './controller/market-data-loader.js'
+import { buildMarketAutofillPatch } from './controller/market-data-autofill.js'
 
 const INVESTMENT_FAMILY_TITLE = 'Simplified Investment'
 const COMMERCIAL_INVESTMENT_FAMILY_TITLE = 'Commercial Investment'
@@ -233,9 +239,33 @@ function initController() {
   const commercialInvestmentReadinessHint = document.getElementById(
     'commercial-investment-readiness-hint'
   )
+  const commercialInvestmentMarketRow = document.getElementById(
+    'commercial-investment-market-row'
+  )
+  const commercialInvestmentSeriesInput = document.getElementById(
+    'commercial-investment-series'
+  )
+  const commercialInvestmentSettleDateInput = document.getElementById(
+    'commercial-investment-settle-date'
+  )
+  const commercialInvestmentUpdateQuoteButton = document.getElementById(
+    'commercial-investment-update-quote'
+  )
+  const commercialInvestmentMarketHint = document.getElementById(
+    'commercial-investment-market-hint'
+  )
   const commercialInvestmentFormStatus = document.getElementById(
     'commercial-investment-form-status'
   )
+  const marketDataLoader = createMarketDataLoader()
+  let commercialMarketFamilyState = {
+    family: null,
+    series: [],
+    latest: null,
+    available: false,
+    asOf: null
+  }
+  let commercialMarketApplyToken = 0
   const commercialInvestmentDiscountYieldWrap = document.getElementById(
     'commercial-investment-discount-yield-wrap'
   )
@@ -871,6 +901,266 @@ function initController() {
     setCommercialInvestmentFormStatus(textMessage, 'error')
   }
 
+  function setCommercialMarketHint(message, visible = Boolean(message)) {
+    if (!commercialInvestmentMarketHint) {
+      return
+    }
+    commercialInvestmentMarketHint.textContent = message || ''
+    commercialInvestmentMarketHint.hidden = !visible
+  }
+
+  function setCommercialMarketRowVisible(visible) {
+    if (commercialInvestmentMarketRow) {
+      commercialInvestmentMarketRow.hidden = !visible
+    }
+    if (!visible) {
+      setCommercialMarketHint('', false)
+    }
+  }
+
+  function readCommercialMarketCurrentFields(family) {
+    if (!commercialInvestmentForm) {
+      return {}
+    }
+    if (family === 'dkj') {
+      return {
+        faceValue: commercialInvestmentForm.querySelector('#dkj-face-value')?.value || '',
+        purchasePricePct:
+          commercialInvestmentForm.querySelector('#dkj-purchase-price-pct')?.value || '',
+        termMonths: commercialInvestmentForm.querySelector('#dkj-term-months')?.value || '',
+        settlementDate: commercialInvestmentForm.querySelector('#dkj-settlement-date')?.value || '',
+        maturityDate: commercialInvestmentForm.querySelector('#dkj-maturity-date')?.value || '',
+        remainingDays: commercialInvestmentForm.querySelector('#dkj-remaining-days')?.value || ''
+      }
+    }
+    if (family === 'pmap') {
+      return {
+        principal: commercialInvestmentForm.querySelector('#pmap-principal')?.value || '',
+        interestPremiumPct:
+          commercialInvestmentForm.querySelector('#pmap-interest-premium-pct')?.value || '',
+        previousYearAverageInflationPct:
+          commercialInvestmentForm.querySelector('#pmap-previous-year-inflation-pct')?.value || '',
+        startDate: commercialInvestmentForm.querySelector('#pmap-start-date')?.value || '',
+        purchaseDate: commercialInvestmentForm.querySelector('#pmap-purchase-date')?.value || '',
+        issueDate: commercialInvestmentForm.querySelector('#pmap-issue-date')?.value || '',
+        firstCouponDate:
+          commercialInvestmentForm.querySelector('#pmap-first-coupon-date')?.value || ''
+      }
+    }
+    if (family === 'bmap') {
+      return {
+        principal: commercialInvestmentForm.querySelector('#bmap-principal')?.value || '',
+        dkjBaseYieldPct:
+          commercialInvestmentForm.querySelector('#bmap-dkj-base-yield-pct')?.value || '',
+        interestPremiumPct:
+          commercialInvestmentForm.querySelector('#bmap-interest-premium-pct')?.value || '',
+        startDate: commercialInvestmentForm.querySelector('#bmap-start-date')?.value || '',
+        purchaseDate: commercialInvestmentForm.querySelector('#bmap-purchase-date')?.value || '',
+        issueDate: commercialInvestmentForm.querySelector('#bmap-issue-date')?.value || '',
+        firstCouponDate:
+          commercialInvestmentForm.querySelector('#bmap-first-coupon-date')?.value || ''
+      }
+    }
+    return {}
+  }
+
+  function applyCommercialMarketFields(family, fields) {
+    if (!commercialInvestmentForm || !fields) {
+      return
+    }
+    const setters = {
+      dkj: {
+        purchasePricePct: '#dkj-purchase-price-pct',
+        termMonths: '#dkj-term-months',
+        settlementDate: '#dkj-settlement-date',
+        maturityDate: '#dkj-maturity-date',
+        remainingDays: '#dkj-remaining-days'
+      },
+      pmap: {
+        interestPremiumPct: '#pmap-interest-premium-pct',
+        startDate: '#pmap-start-date',
+        issueDate: '#pmap-issue-date'
+      },
+      bmap: {
+        interestPremiumPct: '#bmap-interest-premium-pct',
+        startDate: '#bmap-start-date',
+        issueDate: '#bmap-issue-date'
+      }
+    }
+    const map = setters[family]
+    if (!map) {
+      return
+    }
+    Object.entries(fields).forEach(([name, value]) => {
+      const selector = map[name]
+      if (!selector) {
+        return
+      }
+      const input = commercialInvestmentForm.querySelector(selector)
+      if (!input) {
+        return
+      }
+      input.value = value == null ? '' : String(value)
+      input.dataset.marketSourced = 'true'
+      input.title = 'Filled from published market data'
+    })
+  }
+
+  function rebuildCommercialMarketSeriesOptions(selectedId = '') {
+    if (!commercialInvestmentSeriesInput) {
+      return
+    }
+    const previous = selectedId || commercialInvestmentSeriesInput.value || ''
+    commercialInvestmentSeriesInput.innerHTML = ''
+    const manual = document.createElement('option')
+    manual.value = ''
+    manual.textContent = 'Manual entry'
+    commercialInvestmentSeriesInput.appendChild(manual)
+
+    commercialMarketFamilyState.series.forEach((entry) => {
+      const option = document.createElement('option')
+      option.value = entry.id
+      option.textContent = entry.name || entry.id
+      commercialInvestmentSeriesInput.appendChild(option)
+    })
+
+    const available = new Set(
+      commercialMarketFamilyState.series.map((entry) => entry.id)
+    )
+    commercialInvestmentSeriesInput.value = available.has(previous) ? previous : ''
+  }
+
+  function resetCommercialMarketControls() {
+    commercialMarketFamilyState = {
+      family: null,
+      series: [],
+      latest: null,
+      available: false,
+      asOf: null
+    }
+    rebuildCommercialMarketSeriesOptions('')
+    if (commercialInvestmentSettleDateInput) {
+      commercialInvestmentSettleDateInput.value = ''
+    }
+    setCommercialMarketRowVisible(false)
+  }
+
+  async function refreshCommercialMarketFamily(productCode, { preserveSeriesId = '' } = {}) {
+    const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
+    const token = ++commercialMarketApplyToken
+    const loaded = await marketDataLoader.loadFamily(code)
+    if (token !== commercialMarketApplyToken) {
+      return
+    }
+
+    commercialMarketFamilyState = {
+      family: code,
+      series: loaded.series || [],
+      latest: loaded.latest,
+      available: Boolean(loaded.available),
+      asOf: loaded.asOf
+    }
+
+    if (!commercialMarketFamilyState.available) {
+      resetCommercialMarketControls()
+      setCommercialMarketHint(
+        'Published market data unavailable — enter fields manually.',
+        true
+      )
+      if (commercialInvestmentMarketRow) {
+        commercialInvestmentMarketRow.hidden = false
+      }
+      if (commercialInvestmentSeriesInput) {
+        commercialInvestmentSeriesInput.disabled = true
+      }
+      if (commercialInvestmentSettleDateInput) {
+        commercialInvestmentSettleDateInput.disabled = true
+      }
+      if (commercialInvestmentUpdateQuoteButton) {
+        commercialInvestmentUpdateQuoteButton.disabled = true
+      }
+      return
+    }
+
+    if (commercialInvestmentSeriesInput) {
+      commercialInvestmentSeriesInput.disabled = false
+    }
+    if (commercialInvestmentSettleDateInput) {
+      commercialInvestmentSettleDateInput.disabled = false
+    }
+    if (commercialInvestmentUpdateQuoteButton) {
+      commercialInvestmentUpdateQuoteButton.disabled = false
+    }
+
+    setCommercialMarketRowVisible(true)
+    rebuildCommercialMarketSeriesOptions(preserveSeriesId)
+    const asOfLabel = commercialMarketFamilyState.asOf
+      ? `Market data as of ${commercialMarketFamilyState.asOf}`
+      : 'Market data loaded'
+    setCommercialMarketHint(`${asOfLabel}. Amount and purchase date are never auto-filled.`, true)
+
+    if (commercialInvestmentSeriesInput?.value) {
+      await applyCommercialMarketSelection({ mode: 'fill-empty' })
+    } else if (commercialInvestmentSettleDateInput) {
+      commercialInvestmentSettleDateInput.value = commercialMarketFamilyState.asOf || ''
+    }
+  }
+
+  async function resolveCommercialMarketQuote(seriesId, settleDate) {
+    const family = commercialMarketFamilyState.family
+    if (!family || !seriesId) {
+      return null
+    }
+
+    const latest = latestQuoteForId(commercialMarketFamilyState.latest?.quotes, seriesId)
+    if (!settleDate || (latest && latest.d === settleDate)) {
+      return latest
+    }
+
+    const quotesFile = await marketDataLoader.loadQuotes(family, seriesId)
+    return findQuoteRowBySettleDate(quotesFile, settleDate) || latest
+  }
+
+  async function applyCommercialMarketSelection({ mode = 'fill-empty' } = {}) {
+    const family = commercialMarketFamilyState.family
+    const seriesId = commercialInvestmentSeriesInput?.value || ''
+    if (!family || !seriesId) {
+      return
+    }
+
+    const series =
+      commercialMarketFamilyState.series.find((entry) => entry.id === seriesId) || null
+    let settleDate = commercialInvestmentSettleDateInput?.value || ''
+    if (!settleDate) {
+      const latest = latestQuoteForId(commercialMarketFamilyState.latest?.quotes, seriesId)
+      settleDate = latest?.d || commercialMarketFamilyState.asOf || ''
+      if (commercialInvestmentSettleDateInput && settleDate) {
+        commercialInvestmentSettleDateInput.value = settleDate
+      }
+    }
+
+    const quote = await resolveCommercialMarketQuote(seriesId, settleDate)
+    const patch = buildMarketAutofillPatch({
+      family,
+      series,
+      quote,
+      current: readCommercialMarketCurrentFields(family),
+      mode
+    })
+    applyCommercialMarketFields(family, patch.fields)
+    if (patch.sourced.length > 0) {
+      const label =
+        mode === 'force-quote'
+          ? `Updated from market quote: ${patch.sourced.join(', ')}.`
+          : `Auto-filled from market data: ${patch.sourced.join(', ')}.`
+      setCommercialMarketHint(
+        `${label} Amount and purchase date are never auto-filled.`,
+        true
+      )
+    }
+    syncCommercialInvestmentPreview()
+  }
+
   function applyCommercialInvestmentProductUi(productCode) {
     setCommercialInvestmentFamilyTitle()
     clearCommercialInvestmentFormErrors()
@@ -882,6 +1172,8 @@ function initController() {
         product?.migrationStatus
       )
     }
+
+    void refreshCommercialMarketFamily(code)
 
     const isBmap = code === 'bmap'
     const isDkj = code === 'dkj'
@@ -1071,6 +1363,7 @@ function initController() {
     if (commercialInvestmentProductInput && commercialInvestmentProductInput.options.length > 0) {
       commercialInvestmentProductInput.value = commercialInvestmentProductInput.options[0].value
     }
+    resetCommercialMarketControls()
     applyCommercialInvestmentProductUi()
     closeInvestmentInfoPopup()
     if (commercialInvestmentSubmitButton) {
@@ -1726,8 +2019,43 @@ function initController() {
   }
   if (commercialInvestmentProductInput) {
     commercialInvestmentProductInput.addEventListener('change', () => {
+      if (commercialInvestmentSeriesInput) {
+        commercialInvestmentSeriesInput.value = ''
+      }
+      if (commercialInvestmentSettleDateInput) {
+        commercialInvestmentSettleDateInput.value = ''
+      }
       applyCommercialInvestmentProductUi(commercialInvestmentProductInput.value)
       syncCommercialInvestmentPreview()
+    })
+  }
+  if (commercialInvestmentSeriesInput) {
+    commercialInvestmentSeriesInput.addEventListener('change', () => {
+      void applyCommercialMarketSelection({ mode: 'fill-empty' })
+    })
+  }
+  if (commercialInvestmentSettleDateInput) {
+    commercialInvestmentSettleDateInput.addEventListener('change', () => {
+      if (!commercialInvestmentSeriesInput?.value) {
+        return
+      }
+      void applyCommercialMarketSelection({ mode: 'fill-empty' })
+    })
+  }
+  if (commercialInvestmentUpdateQuoteButton) {
+    commercialInvestmentUpdateQuoteButton.addEventListener('click', () => {
+      if (!commercialInvestmentSeriesInput?.value) {
+        setCommercialMarketHint('Select a market series before updating from the latest quote.', true)
+        return
+      }
+      const latest = latestQuoteForId(
+        commercialMarketFamilyState.latest?.quotes,
+        commercialInvestmentSeriesInput.value
+      )
+      if (latest?.d && commercialInvestmentSettleDateInput) {
+        commercialInvestmentSettleDateInput.value = latest.d
+      }
+      void applyCommercialMarketSelection({ mode: 'force-quote' })
     })
   }
 

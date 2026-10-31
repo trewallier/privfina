@@ -43,6 +43,35 @@ jobs:
       - name: Build SPA (Vite)
         run: npm run build
 
+      # Same-origin SPA fetch of published market JSON (ADR 0034 / ROADMAP §6b).
+      # Soft-fail: missing market-data branch must not block product Pages deploys.
+      - name: Checkout market-data tip
+        id: market_data_checkout
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: market-data
+          path: market-data-tree
+          sparse-checkout: data/market/v1
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Materialize market data into Pages artifact
+        if: steps.market_data_checkout.outcome == 'success'
+        run: |
+          if [ -d market-data-tree/data/market/v1 ]; then
+            mkdir -p dist-web/data/market
+            cp -a market-data-tree/data/market/v1 dist-web/data/market/
+            echo "Materialized data/market/v1 into dist-web"
+          else
+            echo "::warning::market-data tip checked out but data/market/v1 is missing; SPA will degrade to manual entry"
+          fi
+
+      - name: Warn when market-data materialization skipped
+        if: steps.market_data_checkout.outcome != 'success'
+        run: echo "::warning::market-data branch unavailable; Pages artifact ships without data/market/v1 (SPA manual-entry degrade)"
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

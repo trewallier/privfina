@@ -8,7 +8,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 | --- | --- | --- | --- | --- |
 | CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`** | top-level deny; job `contents: read` |
 | CodeQL | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) | same + weekly schedule | **`Analyze`** | top-level deny; job `contents`/`actions` read + `security-events: write` |
-| Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
+| Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build (+ materialize `market-data` tip) + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
 | Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`push`** (App token) | top-level deny; ingest `contents: read` (ÁKK fetch); push uses GitHub App installation token only; no PR to default branch; skips full app `validate` (ADR 0034 / ROADMAP §6b) |
 
 ### Workflow invariants (all pipelines)
@@ -93,9 +93,10 @@ Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read
 4. Prefer **single-line** `run:` steps. TS via pinned **`tsx`** (`npx tsx tools/market-data/cli.ts …`) for fetch/normalize/merge/validate. **Git glue is bash-only** (`tools/market-data/scripts/ensure-clone.sh`, `commit-push.sh`) — no parallel TypeScript commit path. Commit identity is `privfina-market-data[bot]` (App id email), not `github-actions[bot]`. Paths via **env vars**.
 5. Exit conventions: local `ingest` → `0` updated / `2` unchanged / `1` error; `ci-ingest` → `0` on success with `changed` on `GITHUB_OUTPUT`.
 6. Unchanged digests → green, `push` skipped. Push is non-`--force`. `concurrency.cancel-in-progress: false`. Smoke with `workflow_dispatch` after merge + App setup.
-7. Pages materialization of `data/market/` is a follow-on §6b slice.
+7. **Pages materialization (ROADMAP §6b):** `deploy.yml` checks out the `market-data` tip (sparse `data/market/v1`) after the Vite build and copies it into `dist-web/data/market/v1/` for same-origin SPA `fetch`. Soft-fail with a warning if the branch or tree is missing so product Pages still deploys; the SPA degrades to manual entry.
 8. Local dry-run: `npm run market-data:ingest -- --help`.
 9. Optional later: Actions **workflow dependency lockfiles**; enforce CODEOWNERS required reviews on `.github/workflows/**` when multi-maintainer review is available.
+10. Optional later: Actions sources for deferred `refs/inflation.json` / `refs/dkj-base.json` (PMÁP inflation / BMÁP DKJ-base remain manual in v1).
 
 ## Explicit non-goals (for now)
 

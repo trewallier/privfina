@@ -71,7 +71,7 @@ Assumptions
 - Instrument bundle generation must be finite at save time; salary/subscription instrument mode therefore requires an end condition.
 - v1 cumulative summary assumes a single account context where all included inflows and outflows are netted into one running balance.
 - Multi-account support is explicitly out of scope for the current implementation and treated as future enhancement.
-- Official ÁKK endpoints are contacted only by GitHub Actions for published market data; the browser loads GitHub-hosted published JSON (once Pages materialization lands).
+- Official ÁKK endpoints are contacted only by GitHub Actions for published market data; the browser loads GitHub-hosted published JSON from the Pages artifact (`/privfina/data/market/v1/`).
 - Raw ÁKK API payloads are not tracked in git; only compact `data/market/v1/` outputs accumulate on the `market-data` branch.
 - Market-data history is append-first on `(series id, settleDate)`; unchanged digests produce no commit.
 
@@ -104,11 +104,13 @@ Acceptance criteria
 - [x] User data persists between browser sessions using browser storage, and export/import JSON can back up and restore state.
 - [x] Export/import JSON includes explicit schema versioning; schema changes trigger warnings and preserve a migration path for backward compatibility.
 - [x] The calculation engine exposes a clean interface to UI/controller code.
-- [ ] External macro data can be fetched using browser `fetch` and normalized through an adapter layer under CORS constraints.
+- [x] External published market data can be fetched using browser `fetch` and normalized through an adapter layer (GitHub Pages same-origin JSON; ADR 0034 / ROADMAP §6b).
 - [x] Scheduled (and manually dispatchable) GitHub Actions ingest fetches ÁKK catalog + network rates (2 GETs for v1 families), normalizes to schemaVersion 1 under `data/market/v1/`, and pushes the `market-data` branch only when digests change (ADR 0034 / ROADMAP §6b).
 - [x] Market-data normalize/merge rules are covered by fixture tests (append-first, dedupe, required-family empty fails); raw captures are not committed.
-- [ ] Pages deploy materializes `data/market/v1/` into the site for same-origin SPA `fetch` (follow-on §6b).
-- [ ] SPA loads published market JSON at runtime (not bundled) for commercial investment series listing / auto-fill (follow-on §6b).
+- [x] Pages deploy materializes `data/market/v1/` into the site for same-origin SPA `fetch` (ROADMAP §6b); soft-fail if `market-data` is unavailable so product Pages still ships.
+- [x] SPA loads published market JSON at runtime (not bundled) for commercial investment series listing / auto-fill (session cache; manual-entry degrade when files missing).
+- [x] Commercial investment composer offers a market series picker and optional quote settle date; auto-fills non-amount fields from published mapping; never clobbers amount or purchase date; edit path uses explicit “Update from latest quote”.
+- [x] Online path populates non-amount commercial investment fields from published market data; offline / missing-data path stays usable with manual entry; browser never calls official ÁKK endpoints.
 - [x] Salary instrument supports two schedule modes: predefined custom rule (default) and cron-like rule.
 - [x] Salary custom rule generates monthly inflow on the last working day on or before a configured target day (default 10).
 - [x] Salary instrument explicitly omits tax handling in v1 and documents tax rules as future enhancement.

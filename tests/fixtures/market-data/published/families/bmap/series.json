@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "family": "bmap",
+  "series": [
+    {
+      "id": "A280322N17",
+      "isin": "HU0000403423",
+      "name": "2028/N",
+      "issue": "2017-10-03",
+      "mat": "2028-03-22",
+      "ccy": "HUF",
+      "face": 1,
+      "iType": "FLOAT",
+      "status": "active",
+      "prem": 1.5,
+      "ref": "HUF DKJ 12M LAST 4AUC"
+    }
+  ]
+}

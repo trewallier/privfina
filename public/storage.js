@@ -26,6 +26,8 @@ function loadList(key) {
 
 function saveList(key, value) {
   // QuotaExceededError is unhandled here; §7 adds user-visible recovery.
+  // Intentional plaintext browser storage (ADR 0004); encryption deferred to ROADMAP §7.
+  // codeql[js/clear-text-storage-of-sensitive-data]
   localStorage.setItem(key, JSON.stringify(value))
 }
 
@@ -44,6 +46,8 @@ function loadObject(key) {
 }
 
 function saveObject(key, value) {
+  // Intentional plaintext browser storage (ADR 0004); encryption deferred to ROADMAP §7.
+  // codeql[js/clear-text-storage-of-sensitive-data]
   localStorage.setItem(key, JSON.stringify(value))
 }
 

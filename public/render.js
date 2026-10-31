@@ -590,7 +590,10 @@ function renderChart(series, container, options = {}) {
 
   if (!series.length) {
     const rangeMessage = startDate && endDate ? `${startDate} to ${endDate}` : 'the selected date range'
-    container.innerHTML = `<div class="empty">No cash flows in ${rangeMessage}. Cumulative total remains ${formatAxisAmount(0)}.</div>`
+    const message = `No cash flows in ${rangeMessage}. Cumulative total remains ${formatAxisAmount(0)}.`
+    // Constant HTML shell only; put dynamic text via textContent (CodeQL js/xss-through-dom).
+    container.innerHTML = '<div class="empty"></div>'
+    container.querySelector('.empty').textContent = message
     return
   }
 

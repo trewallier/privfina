@@ -1977,7 +1977,8 @@ function initController() {
     const startDate = startInput.value
     const endDate = endInput.value
     if (!startDate || !endDate || startDate > endDate) {
-      chart.innerHTML = '<div class="empty">Select a valid date range.</div>'
+      chart.innerHTML = '<div class="empty"></div>'
+      chart.querySelector('.empty').textContent = 'Select a valid date range.'
       return
     }
 
@@ -1998,7 +1999,9 @@ function initController() {
         endDate
       })
     } catch (error) {
-      chart.innerHTML = `<div class="empty">${error.message}</div>`
+      // Constant HTML shell only; error text via textContent (CodeQL js/xss-through-exception).
+      chart.innerHTML = '<div class="empty"></div>'
+      chart.querySelector('.empty').textContent = error.message
     }
   }
 

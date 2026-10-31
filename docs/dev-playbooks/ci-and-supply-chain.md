@@ -9,6 +9,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 | CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`** | top-level deny; job `contents: read` |
 | CodeQL | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) | same + weekly schedule | **`Analyze`** | top-level deny; job `contents`/`actions` read + `security-events: write` |
 | Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
+| Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`push`** (App token) | top-level deny; ingest `contents: read` (ÁKK fetch); push uses GitHub App installation token only; no PR to default branch; skips full app `validate` (ADR 0034 / ROADMAP §6b) |
 
 ### Workflow invariants (all pipelines)
 
@@ -76,9 +77,30 @@ npm run test:exploratory # optional EBKM diagnosis probes only
 
 Node **≥ 22** (`engines` in [`package.json`](../../package.json)).
 
+### E. Market-data ingest (ADR 0034)
+
+Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read-only ([secure use / token permissions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-secrets)). The **`push` job must not use `GITHUB_TOKEN` for writes** — it mints a **GitHub App installation token** instead.
+
+1. Workflow [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) is **two jobs**:
+   - **`ingest`** (`contents: read`): resolve whether `market-data` exists (API; fail-closed on non-404 errors), checkout baseline only when it exists (no blind `continue-on-error`), call ÁKK, stage tree under `out/`, emit `changed` / `as_of`, upload artifact when changed.
+   - **`push`** (`if: changed`): App token → resolve branch → checkout or orphan-init → download artifact → **`validate-tree`** (schema + digests) → bash `commit-push.sh`. **Does not call ÁKK.**
+2. **GitHub App setup (required before first successful push):**
+   1. Create a GitHub App with **Contents: Read and write** on this repository (no metadata beyond what push needs).
+   2. Install the App on `trewallier/privfina`.
+   3. Store both as repository **secrets**: `MARKET_DATA_APP_ID` (numeric App ID) and `MARKET_DATA_APP_PRIVATE_KEY` (PEM). The App ID is not highly sensitive, but keeping it next to the key avoids a vars/secrets split.
+   4. On the **`market-data` branch ruleset**, add the App as a bypass actor with mode **`exempt`** (Integration). Required so the App can create/update the branch despite `creation` / `update` rules; humans stay non-bypass (`current_user_can_bypass: never` is expected).
+3. Auth hygiene: do not put tokens on `git remote` argv; use checkout credentials or `extraheader`. **`commit-push.sh` unsets `http.https://github.com/.extraheader` on exit**. Never upload the `market-data` worktree as an artifact.
+4. Prefer **single-line** `run:` steps. TS via pinned **`tsx`** (`npx tsx tools/market-data/cli.ts …`) for fetch/normalize/merge/validate. **Git glue is bash-only** (`tools/market-data/scripts/ensure-clone.sh`, `commit-push.sh`) — no parallel TypeScript commit path. Commit identity is `privfina-market-data[bot]` (App id email), not `github-actions[bot]`. Paths via **env vars**.
+5. Exit conventions: local `ingest` → `0` updated / `2` unchanged / `1` error; `ci-ingest` → `0` on success with `changed` on `GITHUB_OUTPUT`.
+6. Unchanged digests → green, `push` skipped. Push is non-`--force`. `concurrency.cancel-in-progress: false`. Smoke with `workflow_dispatch` after merge + App setup.
+7. Pages materialization of `data/market/` is a follow-on §6b slice.
+8. Local dry-run: `npm run market-data:ingest -- --help`.
+9. Optional later: Actions **workflow dependency lockfiles**; enforce CODEOWNERS required reviews on `.github/workflows/**` when multi-maintainer review is available.
+
 ## Explicit non-goals (for now)
 
 - ESLint/Prettier as a CI gate (add only after a repo lint config exists)
 - Hard-failing `npm audit` in CI (Dependabot + CodeQL cover the policy without advisory churn gates)
 - Running `scripts/*` research probes or `tests/exploratory/*` in CI
 - Self-hosted runners
+- Running the market-data ingest job on every default-branch push

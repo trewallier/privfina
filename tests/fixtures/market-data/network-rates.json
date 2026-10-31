@@ -1,0 +1,48 @@
+{
+  "meta": { "function": "getNetworkRates", "status": "OK", "message": null },
+  "fields": [],
+  "data": [
+    {
+      "longName": "D261125",
+      "name": "D261125",
+      "securityType": "DKJ",
+      "settleDate": "2026-11-02",
+      "bidPrice": 99.615,
+      "askPrice": null,
+      "bidYield": 6.05,
+      "askYield": null,
+      "accruedInterest": 0,
+      "issueDate": "2026-07-29",
+      "maturityDate": "2026-11-25",
+      "currency": "HUF"
+    },
+    {
+      "longName": "A270324I22",
+      "name": "2027/I",
+      "securityType": "PMÁP",
+      "settleDate": "2026-11-02",
+      "bidPrice": 100.12,
+      "askPrice": 100.25,
+      "bidYield": 4.1,
+      "askYield": 4.0,
+      "accruedInterest": 1.2,
+      "issueDate": "2022-01-21",
+      "maturityDate": "2027-03-24",
+      "currency": "HUF"
+    },
+    {
+      "longName": "A280322N17",
+      "name": "2028/N",
+      "securityType": "BMÁP",
+      "settleDate": "2026-11-02",
+      "bidPrice": 101.5,
+      "askPrice": 101.7,
+      "bidYield": 5.2,
+      "askYield": 5.1,
+      "accruedInterest": 0.5,
+      "issueDate": "2017-10-03",
+      "maturityDate": "2028-03-22",
+      "currency": "HUF"
+    }
+  ]
+}

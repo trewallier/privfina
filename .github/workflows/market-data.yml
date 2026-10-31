@@ -1,0 +1,165 @@
+# Scheduled ÁKK → compact data/market/v1 on the market-data branch (ADR 0034 / ROADMAP §6b).
+#
+# Security split:
+# - ingest: contents:read; contacts ÁKK; never holds a write token
+# - push: GitHub App installation token only (not GITHUB_TOKEN) for market-data checkout/push
+# Paths via env; single-line run: steps; TS via pinned tsx (not --experimental-strip-types).
+name: Market data ingest
+
+permissions: {}
+
+on:
+  schedule:
+    - cron: "30 17 * * 1-5"
+  workflow_dispatch:
+
+concurrency:
+  group: market-data-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.ingest.outputs.changed }}
+      as_of: ${{ steps.ingest.outputs.as_of }}
+      baseline_exists: ${{ steps.resolve_baseline.outputs.exists }}
+    steps:
+      - name: Checkout default branch (tools)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: app
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Resolve market-data baseline branch
+        id: resolve_baseline
+        working-directory: app
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MARKET_DATA_BRANCH: market-data
+        run: npx tsx tools/market-data/cli.ts resolve-branch
+
+      - name: Checkout market-data baseline
+        if: steps.resolve_baseline.outputs.exists == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: market-data
+          path: baseline
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Fetch, normalize, and stage published tree
+        id: ingest
+        working-directory: app
+        env:
+          MARKET_BASELINE_ROOT: ${{ github.workspace }}/baseline
+          MARKET_OUT_ROOT: ${{ github.workspace }}/out
+          MARKET_RAW_DIR: ${{ runner.temp }}/akk-raw
+        run: npx tsx tools/market-data/cli.ts ci-ingest
+
+      - name: Upload published market-data artifact
+        if: steps.ingest.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: market-data-v1
+          path: out/data/market/v1
+          if-no-files-found: error
+          retention-days: 7
+
+  push:
+    needs: ingest
+    if: needs.ingest.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    # GITHUB_TOKEN stays read-only; write access comes from the App installation token.
+    permissions:
+      contents: read
+    steps:
+      - name: Mint GitHub App token
+        id: app_token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ secrets.MARKET_DATA_APP_ID }}
+          private-key: ${{ secrets.MARKET_DATA_APP_PRIVATE_KEY }}
+
+      - name: Checkout default branch (tools)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: app
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Resolve market-data branch (App token)
+        id: resolve_data
+        working-directory: app
+        env:
+          GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MARKET_DATA_BRANCH: market-data
+        run: npx tsx tools/market-data/cli.ts resolve-branch
+
+      - name: Checkout market-data branch
+        if: steps.resolve_data.outputs.exists == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: market-data
+          path: market-data
+          token: ${{ steps.app_token.outputs.token }}
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Ensure market-data clone is pushable
+        working-directory: app
+        env:
+          GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MARKET_DATA_PATH: ${{ github.workspace }}/market-data
+          MARKET_DATA_BRANCH: market-data
+          MARKET_BRANCH_EXISTS: ${{ steps.resolve_data.outputs.exists }}
+          MARKET_DATA_APP_ID: ${{ secrets.MARKET_DATA_APP_ID }}
+          MARKET_DATA_GIT_NAME: privfina-market-data[bot]
+        run: bash tools/market-data/scripts/ensure-clone.sh
+
+      - name: Download published market-data artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: market-data-v1
+          path: market-data/data/market/v1
+
+      - name: Re-validate published tree before commit
+        working-directory: app
+        env:
+          MARKET_TREE_ROOT: ${{ github.workspace }}/market-data
+        run: npx tsx tools/market-data/cli.ts validate-tree
+
+      - name: Commit and push market-data tip
+        working-directory: app
+        env:
+          MARKET_DATA_PATH: ${{ github.workspace }}/market-data
+          MARKET_DATA_BRANCH: market-data
+        run: bash tools/market-data/scripts/commit-push.sh

@@ -15,6 +15,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:exploratory": "VITEST_EXPLORATORY=1 vitest run tests/exploratory",
+    "market-data:ingest": "tsx tools/market-data/cli.ts ingest",
+    "market-data:ci-ingest": "tsx tools/market-data/cli.ts ci-ingest",
+    "market-data:publish": "tsx tools/market-data/cli.ts ingest",
     "clean": "rm -rf dist dist-web"
   },
   "dependencies": {
@@ -23,6 +26,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.3",
     "vitest": "^5.0.5"

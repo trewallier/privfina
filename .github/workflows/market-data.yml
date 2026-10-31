@@ -1,0 +1,95 @@
+# Scheduled ÁKK → compact data/market/v1 on the market-data branch (ADR 0034 / ROADMAP §6b).
+# Does not run full app validate; does not open PRs to the default branch.
+name: Market data ingest
+
+# Deny all by default; jobs grant only what they need (ADR 0007).
+permissions: {}
+
+on:
+  schedule:
+    # ~17:30 UTC weekdays — after typical quote publish; settleDate comes from the API response.
+    - cron: "30 17 * * 1-5"
+  workflow_dispatch:
+
+concurrency:
+  group: market-data-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout default branch (tools)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: app
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Prepare market-data worktree
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$REPO" market-data >/dev/null 2>&1; then
+            git clone --depth 1 --branch market-data "$REPO" market-data
+          else
+            mkdir market-data
+            cd market-data
+            git init
+            git checkout --orphan market-data
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config user.name "github-actions[bot]"
+            git commit --allow-empty -m "chore: init market-data branch"
+          fi
+
+      - name: Fetch, normalize, and publish
+        id: publish
+        working-directory: app
+        run: |
+          set -euo pipefail
+          set +e
+          node --experimental-strip-types tools/market-data/cli.ts publish \
+            --root "${GITHUB_WORKSPACE}/market-data" \
+            --raw-dir "${RUNNER_TEMP}/akk-raw"
+          code=$?
+          set -e
+          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 0 ] || [ "$code" -eq 2 ]; then
+            exit 0
+          fi
+          exit "$code"
+
+      - name: Commit and push when digests changed
+        if: steps.publish.outputs.exit_code == '0'
+        working-directory: market-data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add data/market/v1
+          if git diff --staged --quiet; then
+            echo "No staged changes after publish exit 0; skipping push."
+            exit 0
+          fi
+          ASOF=$(node -e "const m=require('./data/market/v1/manifest.json'); process.stdout.write(m.asOf||'unknown')")
+          git commit -m "market-data: asOf ${ASOF}"
+          git remote remove origin 2>/dev/null || true
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git push -u origin HEAD:market-data

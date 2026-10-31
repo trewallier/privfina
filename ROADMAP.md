@@ -166,7 +166,8 @@ Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f
 - [ ] Optional: exact 1 Ft match to internal 8x30 tariff `Kamat` (fillér caps, alternate day-count, etc.); do not retune production rounding without a new ADR/slice.
 
 ### 6) Platform, Data Integrations, And Operations
-- [ ] v1: external data fetch adapter (mock first; real endpoints later)
+- [ ] v1: external data fetch adapter (mock first; real endpoints later) — browser consumes GitHub-hosted published market JSON from §6b once Pages materialization lands (ADR 0034); not live ÁKK
+
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.
 - [ ] Define Node package management and update strategy (ADR required)
 - [x] Add GitHub Actions CI/CD workflows for build, test, and deploy
@@ -196,6 +197,44 @@ Plan slices (implement in order; each slice should stay PR-sized)
 
 Out of scope for §6a
 - WASM / Rust/Go rewrite (§8); storage port (§7); React rewrite; full YAML-in-browser product loading; blocking on §5e commercially-usable.
+
+#### 6b) Government securities published-data pipeline (ADR 0034)
+Goal: accumulate the **minimum public market data** the static SPA needs to list Hungarian government securities (current and past) and auto-fill pricing, by querying official ÁKK sources on a schedule from GitHub Actions and persisting compact published JSON on GitHub. Official ÁKK endpoints are contacted **only by Actions**, once per day; afterward the SPA (and any later tooling) reuses GitHub-hosted files without calling those sources again. The SPA loads published JSON at **runtime via `fetch`** (same-origin Pages URL)—**not** bundled into the JS build. Complements §6 “external data fetch adapter” (browser consumes published JSON, not ÁKK).
+
+Constraints
+- v1 families only: `dkj` | `pmap` | `bmap` (SPA `productCode` folders).
+- Daily budget: **2** ÁKK GETs (`getSecurityWithOutstanding` + combined `getNetworkRates`); do not loop per offering.
+- Persist only `data/market/v1/` on the `market-data` branch; never commit raw API payloads.
+- Append-first `(id, settleDate)`; empty/unchanged settles → success, no commit.
+- Least-privilege workflow per ADR 0007; data-branch pushes skip full app `validate`.
+
+Published layout (on `market-data`, later copied to Pages as `/privfina/data/market/…`):
+
+```text
+data/market/v1/
+  manifest.json
+  families/{dkj,pmap,bmap}/series.json
+  families/{dkj,pmap,bmap}/latest.json
+  families/{dkj,pmap,bmap}/quotes/<id>.json
+```
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0034: Actions-only ÁKK contact, `market-data` branch, schemaVersion 1 layout, append-first merge, out-of-scope browser→ÁKK.
+- [x] `tools/market-data/` CLI: fetch (2 GETs) → normalize → merge/publish under `data/market/v1/`; Vitest fixtures for normalize/merge (no live captures in git).
+- [x] `.github/workflows/market-data.yml`: schedule + `workflow_dispatch`, concurrency, digest-gated push to `market-data`, fail on hard errors / empty required family.
+- [ ] Confirm or defer `refs/inflation.json` / `refs/dkj-base.json` sources (PMÁP inflation base / BMÁP DKJ-base).
+- [ ] Pages deploy materializes tip of `market-data` into the site artifact under `data/market/` (same-origin SPA `fetch`).
+- [ ] Contract fixture + SPA runtime loader (`manifest` → `series` → `latest` → optional `quotes/<id>`); session cache; manual-entry degrade when files missing.
+- [ ] Commercial investment composer: series picker + optional settle-date control; auto-fill from published mapping; never clobber amount / purchase date.
+- [ ] Acceptance: online path populates non-amount fields; offline path stays usable; no official ÁKK calls from the browser.
+
+Out of scope for §6b
+- Live CORS fetches from the browser to ÁKK or tertiary retail sites.
+- Storing raw API/xlsx payloads in git.
+- Full matured outstanding dump in hot `series.json`.
+- Auto-authoring product-spec YAML from market data.
+- Bundling market JSON into the SPA JavaScript build.
+- Time-partitioning quote files (revisit only if measured size warrants).
 
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).

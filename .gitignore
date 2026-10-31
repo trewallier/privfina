@@ -4,6 +4,14 @@ data/*.db
 data/*.sqlite
 *privfina-export*.json
 
+# Offline / ephemeral intake dumps (never commit)
+*.xlsx
+*.xls
+data/intake/**/raw/**
+data/intake/**/staged/**
+temp/
+.tmp-market-data/
+
 # Allow documentation and templates in data/ to be committed
 !data/README.md
 !data/*.template.json
@@ -51,3 +59,4 @@ dist-web/
 # OS
 .DS_Store
 .env
+privfina/

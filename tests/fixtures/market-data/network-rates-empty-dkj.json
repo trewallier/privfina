@@ -1,0 +1,28 @@
+{
+  "meta": { "function": "getNetworkRates", "status": "OK", "message": null },
+  "fields": [],
+  "data": [
+    {
+      "longName": "A270324I22",
+      "name": "2027/I",
+      "securityType": "PMÁP",
+      "settleDate": "2026-11-02",
+      "bidPrice": 100.12,
+      "askPrice": 100.25,
+      "bidYield": 4.1,
+      "askYield": 4.0,
+      "accruedInterest": 1.2
+    },
+    {
+      "longName": "A280322N17",
+      "name": "2028/N",
+      "securityType": "BMÁP",
+      "settleDate": "2026-11-02",
+      "bidPrice": 101.5,
+      "askPrice": 101.7,
+      "bidYield": 5.2,
+      "askYield": 5.1,
+      "accruedInterest": 0.5
+    }
+  ]
+}

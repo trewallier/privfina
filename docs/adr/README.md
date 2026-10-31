@@ -30,6 +30,7 @@ Recent decisions
 - `0031-ebkm-verification-for-home-savings.md` — EBKM verification bar for commercially-usable home-savings offerings.
 - `0032-vite-browser-bundler-and-single-calculation-surface.md` — Vite as Pages SPA bundler (`dist-web`); browser imports `@finance_engine`; retire dual-surface formula copies.
 - `0033-home-savings-ebkm-interest-accrual-through.md` — **rejected** (PR #95 / #94): hybrid OTP-maturity interest end for 4x10 residuals is packaging fit only; not adopted without an external citation.
+- `0034-government-securities-published-market-data-via-actions.md` — ÁKK market data via GitHub Actions only; compact JSON on `market-data` branch; SPA later fetches Pages-hosted files (ROADMAP §6b).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

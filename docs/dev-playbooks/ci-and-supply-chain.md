@@ -9,6 +9,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 | CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`** | top-level deny; job `contents: read` |
 | CodeQL | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) | same + weekly schedule | **`Analyze`** | top-level deny; job `contents`/`actions` read + `security-events: write` |
 | Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
+| Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | ingest → push `market-data` | top-level deny; job `contents: write` only; no PR to default branch; skips full app `validate` (ADR 0034 / ROADMAP §6b) |
 
 ### Workflow invariants (all pipelines)
 
@@ -76,9 +77,18 @@ npm run test:exploratory # optional EBKM diagnosis probes only
 
 Node **≥ 22** (`engines` in [`package.json`](../../package.json)).
 
+### E. Market-data ingest (ADR 0034)
+
+1. Workflow [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) pushes **only** to the `market-data` branch under `data/market/v1/`.
+2. Do not commit raw ÁKK responses; CLI writes ephemeral raw under a gitignored temp path.
+3. Unchanged digests / empty new settles must exit green without a commit.
+4. Pages materialization of `data/market/` into the deploy artifact is a follow-on §6b slice — not required for ingest to land.
+5. Local maintainer dry-run: `npm run market-data:publish -- --help` (see `tools/market-data/`).
+
 ## Explicit non-goals (for now)
 
 - ESLint/Prettier as a CI gate (add only after a repo lint config exists)
 - Hard-failing `npm audit` in CI (Dependabot + CodeQL cover the policy without advisory churn gates)
 - Running `scripts/*` research probes or `tests/exploratory/*` in CI
 - Self-hosted runners
+- Running the market-data ingest job on every default-branch push

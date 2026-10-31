@@ -1,0 +1,58 @@
+{
+  "meta": { "function": "getSecurityWithOutstanding", "status": "OK", "message": null },
+  "fields": [],
+  "data": [
+    {
+      "longName": "D261125",
+      "name": "D261125",
+      "isin": "HU0000525000",
+      "securityType": "DKJ",
+      "issueDate": "2026-07-29",
+      "maturityDate": "2026-11-25",
+      "faceValue": 10000,
+      "interestType": "FIX",
+      "currency": "HUF",
+      "coupon": 0,
+      "referenceCurve": null
+    },
+    {
+      "longName": "A270324I22",
+      "name": "2027/I",
+      "isin": "HU0000405584",
+      "securityType": "PMÁP",
+      "issueDate": "2022-01-21",
+      "maturityDate": "2027-03-24",
+      "faceValue": 1000,
+      "interestType": "FLOAT",
+      "currency": "HUF",
+      "coupon": null,
+      "referenceCurve": "HUF CPI"
+    },
+    {
+      "longName": "A280322N17",
+      "name": "2028/N",
+      "isin": "HU0000403423",
+      "securityType": "BMÁP",
+      "issueDate": "2017-10-03",
+      "maturityDate": "2028-03-22",
+      "faceValue": 1,
+      "interestType": "FLOAT",
+      "currency": "HUF",
+      "coupon": null,
+      "referenceCurve": "HUF DKJ 12M LAST 4AUC"
+    },
+    {
+      "longName": "D200101",
+      "name": "D200101",
+      "isin": "HU0000000001",
+      "securityType": "DKJ",
+      "issueDate": "2019-01-01",
+      "maturityDate": "2020-01-01",
+      "faceValue": 10000,
+      "interestType": "FIX",
+      "currency": "HUF",
+      "coupon": 0,
+      "referenceCurve": null
+    }
+  ]
+}

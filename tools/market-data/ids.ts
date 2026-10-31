@@ -7,10 +7,38 @@ const UNSAFE = /[^A-Za-z0-9._-]+/g
 const MULTI_UNDERSCORE = /_+/g
 const EDGE_UNDERSCORE = /^_+|_+$/g
 
+/** Common Hungarian diacritics → ASCII (ÁKK labels / longNames). */
+const HU_TRANSLIT: Record<string, string> = {
+  Á: 'A',
+  á: 'a',
+  É: 'E',
+  é: 'e',
+  Í: 'I',
+  í: 'i',
+  Ó: 'O',
+  ó: 'o',
+  Ö: 'O',
+  ö: 'o',
+  Ő: 'O',
+  ő: 'o',
+  Ú: 'U',
+  ú: 'u',
+  Ü: 'U',
+  ü: 'u',
+  Ű: 'U',
+  ű: 'u'
+}
+
+function transliterateHu(raw: string): string {
+  let out = ''
+  for (const ch of raw) {
+    out += HU_TRANSLIT[ch] ?? ch
+  }
+  return out
+}
+
 function slugify(raw: string): string {
   return raw
-    .normalize('NFC')
-    .trim()
     .replace(UNSAFE, '_')
     .replace(MULTI_UNDERSCORE, '_')
     .replace(EDGE_UNDERSCORE, '')
@@ -22,7 +50,7 @@ export function toSeriesId(raw: string): string {
   if (!nfc) {
     throw new Error('Cannot derive series id from empty name')
   }
-  const slug = slugify(nfc)
+  const slug = slugify(transliterateHu(nfc))
   if (!slug) {
     throw new Error(`Cannot derive series id from ${JSON.stringify(raw)}`)
   }

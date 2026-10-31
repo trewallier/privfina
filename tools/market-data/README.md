@@ -17,6 +17,7 @@ npm run market-data:ingest -- --root /tmp/out \
 npx tsx tools/market-data/cli.ts ci-ingest
 npx tsx tools/market-data/cli.ts validate-tree
 npx tsx tools/market-data/cli.ts resolve-branch
+# Git glue is bash-only (no parallel TypeScript path):
 bash tools/market-data/scripts/ensure-clone.sh
 bash tools/market-data/scripts/commit-push.sh
 ```
@@ -26,7 +27,7 @@ Exit codes: `ingest` → `0` updated / `2` unchanged / `1` error.
 
 ## Domain rules
 
-- **Canonical ids**: `toSeriesId` slug is map key = `quotes/<id>.json` = `QuotesFile.id`. Display text stays on `name`.
+- **Canonical ids**: `toSeriesId` transliterates Hungarian diacritics then slugifies; map key = `quotes/<id>.json` = `QuotesFile.id`. Display text stays on `name`.
 - **Accumulating `series.json`**: never drop an id with quote history; status is `active` | `matured` | `delisted`.
 - **Same-day quotes**: identical `(id, settleDate)` → skip; different values → fail ingest.
 - **Catalog join**: quoted series without a catalog row fail (no `isin: null` stubs).

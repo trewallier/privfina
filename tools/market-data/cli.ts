@@ -6,12 +6,12 @@
  * - `ingest`: 0 updated, 2 unchanged, 1 error
  * - `ci-ingest`: 0 on success (changed via GITHUB_OUTPUT), 1 error
  * - other commands: 0 success, 1 error
+ *
+ * Git clone/commit/push live in `tools/market-data/scripts/*.sh` (workflow path).
  */
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { runCiIngest } from './ci-ingest.ts'
-import { commitAndPush } from './commit-push.ts'
-import { ensureDataClone } from './ensure-data-clone.ts'
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import { resolveBranch } from './resolve-branch.ts'
 import type { AkkEnvelope } from './types.ts'
@@ -23,8 +23,8 @@ function printHelp(): void {
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
   market-data validate-tree --root <repo-or-v1>
   market-data resolve-branch --repository <owner/repo> --branch <name>
-  market-data ensure-data-clone --path <dir> --branch <name> --repository <owner/repo>
-  market-data commit-push --path <dir> --branch <name> [--no-push]
+
+Git (workflow): bash tools/market-data/scripts/ensure-clone.sh | commit-push.sh
 
 Exit codes: ingest 0/2/1; ci-ingest 0/1 (changed on GITHUB_OUTPUT); other commands 0/1
 `)
@@ -34,10 +34,6 @@ function getFlag(args: string[], name: string): string | undefined {
   const idx = args.indexOf(name)
   if (idx === -1) return undefined
   return args[idx + 1]
-}
-
-function hasFlag(args: string[], name: string): boolean {
-  return args.includes(name)
 }
 
 async function loadEnvelope(filePath: string): Promise<AkkEnvelope> {
@@ -67,7 +63,6 @@ async function main(argv: string[]): Promise<number> {
     return EXIT_UPDATED
   }
 
-  // Legacy alias
   if (cmd === 'publish' || cmd === 'ingest') {
     const root = getFlag(rest, '--root') ?? process.cwd()
     const previousRoot = getFlag(rest, '--previous-root')
@@ -140,29 +135,11 @@ async function main(argv: string[]): Promise<number> {
     return EXIT_UPDATED
   }
 
-  if (cmd === 'ensure-data-clone') {
-    const clonePath = getFlag(rest, '--path') ?? process.env.MARKET_DATA_PATH
-    const branch = getFlag(rest, '--branch') ?? process.env.MARKET_DATA_BRANCH ?? 'market-data'
-    const repository =
-      getFlag(rest, '--repository') ?? process.env.GITHUB_REPOSITORY ?? undefined
-    if (!clonePath) throw new Error('--path or MARKET_DATA_PATH is required')
-    if (!repository) throw new Error('--repository or GITHUB_REPOSITORY is required')
-    const result = await ensureDataClone({ path: clonePath, branch, repository })
-    process.stdout.write(`${JSON.stringify(result)}\n`)
-    return EXIT_UPDATED
-  }
-
-  if (cmd === 'commit-push') {
-    const clonePath = getFlag(rest, '--path') ?? process.env.MARKET_DATA_PATH
-    const branch = getFlag(rest, '--branch') ?? process.env.MARKET_DATA_BRANCH ?? 'market-data'
-    if (!clonePath) throw new Error('--path or MARKET_DATA_PATH is required')
-    const result = await commitAndPush({
-      path: clonePath,
-      branch,
-      noPush: hasFlag(rest, '--no-push')
-    })
-    process.stdout.write(`${JSON.stringify(result)}\n`)
-    return EXIT_UPDATED
+  if (cmd === 'ensure-data-clone' || cmd === 'commit-push') {
+    process.stderr.write(
+      `Removed: '${cmd}' TypeScript path deleted — use bash tools/market-data/scripts/*.sh\n`
+    )
+    return EXIT_ERROR
   }
 
   process.stderr.write(`Unknown command: ${cmd}\n`)

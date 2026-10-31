@@ -23,10 +23,20 @@ describe('market-data bash git helpers', () => {
           MARKET_DATA_BRANCH: 'market-data',
           MARKET_BRANCH_EXISTS: 'false',
           GITHUB_REPOSITORY: 'example/privfina',
-          GITHUB_TOKEN: 'test-token-not-for-push'
+          GITHUB_TOKEN: 'test-token-not-for-push',
+          MARKET_DATA_APP_ID: '12345',
+          MARKET_DATA_GIT_NAME: 'privfina-market-data[bot]'
         }
       })
       expect(ensure.status, ensure.stderr).toBe(0)
+      const identity = spawnSync('git', ['config', '--get', 'user.email'], {
+        cwd: clone,
+        encoding: 'utf8'
+      })
+      expect(identity.stdout.trim()).toBe(
+        '12345+privfina-market-data[bot]@users.noreply.github.com'
+      )
+      expect(identity.stdout).not.toContain('github-actions')
 
       const v1 = path.join(clone, 'data/market/v1')
       await mkdir(v1, { recursive: true })

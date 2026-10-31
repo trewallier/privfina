@@ -36,6 +36,13 @@ else
   exit 1
 fi
 
-git -C "${MARKET_DATA_PATH}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git -C "${MARKET_DATA_PATH}" config user.name "github-actions[bot]"
-echo "{\"path\":\"${MARKET_DATA_PATH}\",\"branch\":\"${BRANCH}\",\"exists\":\"${MARKET_BRANCH_EXISTS}\"}"
+# Commit identity matches App auth (not github-actions[bot]). Override via env when App slug differs.
+GIT_NAME="${MARKET_DATA_GIT_NAME:-privfina-market-data[bot]}"
+if [[ -n "${MARKET_DATA_APP_ID:-}" ]]; then
+  GIT_EMAIL="${MARKET_DATA_GIT_EMAIL:-${MARKET_DATA_APP_ID}+privfina-market-data[bot]@users.noreply.github.com}"
+else
+  GIT_EMAIL="${MARKET_DATA_GIT_EMAIL:-privfina-market-data[bot]@users.noreply.github.com}"
+fi
+git -C "${MARKET_DATA_PATH}" config user.name "${GIT_NAME}"
+git -C "${MARKET_DATA_PATH}" config user.email "${GIT_EMAIL}"
+echo "{\"path\":\"${MARKET_DATA_PATH}\",\"branch\":\"${BRANCH}\",\"exists\":\"${MARKET_BRANCH_EXISTS}\",\"gitName\":\"${GIT_NAME}\"}"

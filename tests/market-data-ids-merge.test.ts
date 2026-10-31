@@ -14,10 +14,11 @@ import type { AkkEnvelope, SeriesRecord } from '../tools/market-data/types.ts'
 import { SCHEMA_VERSION } from '../tools/market-data/types.ts'
 
 describe('toSeriesId', () => {
-  it('slugifies accents and spaces into a stable canonical id', () => {
-    expect(toSeriesId('PMÁP 2030/I')).toBe('PM_P_2030_I')
+  it('transliterates Hungarian diacritics then slugifies spaces/punctuation', () => {
+    expect(toSeriesId('PMÁP 2030/I')).toBe('PMAP_2030_I')
+    expect(toSeriesId('Bónusz 2028/N')).toBe('Bonusz_2028_N')
     expect(toSeriesId('  D261125  ')).toBe('D261125')
-    expect(isCanonicalSeriesId('PM_P_2030_I')).toBe(true)
+    expect(isCanonicalSeriesId('PMAP_2030_I')).toBe(true)
     expect(isCanonicalSeriesId('PMÁP 2030/I')).toBe(false)
   })
 })
@@ -27,7 +28,7 @@ describe('id load/write round-trip', () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'privfina-id-rt-'))
     try {
       const id = toSeriesId('Bónusz 2028/N')
-      expect(id).toBe('B_nusz_2028_N')
+      expect(id).toBe('Bonusz_2028_N')
       const tree = emptyMarketTree()
       tree.families.bmap.series = {
         schemaVersion: SCHEMA_VERSION,

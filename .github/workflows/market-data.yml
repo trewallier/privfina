@@ -141,6 +141,8 @@ jobs:
           MARKET_DATA_PATH: ${{ github.workspace }}/market-data
           MARKET_DATA_BRANCH: market-data
           MARKET_BRANCH_EXISTS: ${{ steps.resolve_data.outputs.exists }}
+          MARKET_DATA_APP_ID: ${{ secrets.MARKET_DATA_APP_ID }}
+          MARKET_DATA_GIT_NAME: privfina-market-data[bot]
         run: bash tools/market-data/scripts/ensure-clone.sh
 
       - name: Download published market-data artifact

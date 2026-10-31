@@ -90,7 +90,7 @@ Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read
    3. Store both as repository **secrets**: `MARKET_DATA_APP_ID` (numeric App ID) and `MARKET_DATA_APP_PRIVATE_KEY` (PEM). The App ID is not highly sensitive, but keeping it next to the key avoids a vars/secrets split.
    4. On the **`market-data` branch ruleset**, add the App as a bypass actor with mode **`exempt`** (Integration). Required so the App can create/update the branch despite `creation` / `update` rules; humans stay non-bypass (`current_user_can_bypass: never` is expected).
 3. Auth hygiene: do not put tokens on `git remote` argv; use checkout credentials or `extraheader`. **`commit-push.sh` unsets `http.https://github.com/.extraheader` on exit**. Never upload the `market-data` worktree as an artifact.
-4. Prefer **single-line** `run:` steps. TS via pinned **`tsx`** (`npx tsx tools/market-data/cli.ts …`). Git glue via `tools/market-data/scripts/*.sh`. Paths via **env vars**.
+4. Prefer **single-line** `run:` steps. TS via pinned **`tsx`** (`npx tsx tools/market-data/cli.ts …`) for fetch/normalize/merge/validate. **Git glue is bash-only** (`tools/market-data/scripts/ensure-clone.sh`, `commit-push.sh`) — no parallel TypeScript commit path. Commit identity is `privfina-market-data[bot]` (App id email), not `github-actions[bot]`. Paths via **env vars**.
 5. Exit conventions: local `ingest` → `0` updated / `2` unchanged / `1` error; `ci-ingest` → `0` on success with `changed` on `GITHUB_OUTPUT`.
 6. Unchanged digests → green, `push` skipped. Push is non-`--force`. `concurrency.cancel-in-progress: false`. Smoke with `workflow_dispatch` after merge + App setup.
 7. Pages materialization of `data/market/` is a follow-on §6b slice.

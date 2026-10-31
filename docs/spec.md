@@ -10,6 +10,7 @@ Glossary
 - Adapter layer: browser-side normalization layer that converts external macro data into a shape the calculation engine consumes.
 - Calculation engine: isolated browser-side module that computes cash flows, aggregates, and analytics.
 - Cumulative cash-flow diagram: chart showing running total over a selected date range.
+- Published market data: compact GitHub-hosted JSON under `data/market/v1/` (schemaVersion 1) produced by scheduled Actions from official ÁKK sources (ADR 0034 / ROADMAP §6b).
 
 Scenarios / Use-cases
 - Cash-flow management page: users can add, view, edit, and delete any number of cash flows.
@@ -51,6 +52,7 @@ Scenarios / Use-cases
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
 - Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): published tariff notice (Hirdetmény) mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
 - Configured-flow folders: users can organize flows into flat collapsible folders (no nested folders), rename folders, drag items into/out of folders (mouse drag-and-drop or touch long-press), and reorder items; folder collapsed state and item order persist in `listStatus` and round-trip through export/import.
+- Government-securities market-data ingest (ROADMAP §6b / ADR 0034): maintainers (via GitHub Actions) refresh published DKJ/PMÁP/BMÁP catalog and daily network quotes without contacting ÁKK from the browser.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -69,6 +71,9 @@ Assumptions
 - Instrument bundle generation must be finite at save time; salary/subscription instrument mode therefore requires an end condition.
 - v1 cumulative summary assumes a single account context where all included inflows and outflows are netted into one running balance.
 - Multi-account support is explicitly out of scope for the current implementation and treated as future enhancement.
+- Official ÁKK endpoints are contacted only by GitHub Actions for published market data; the browser loads GitHub-hosted published JSON (once Pages materialization lands).
+- Raw ÁKK API payloads are not tracked in git; only compact `data/market/v1/` outputs accumulate on the `market-data` branch.
+- Market-data history is append-first on `(series id, settleDate)`; unchanged digests produce no commit.
 
 Acceptance criteria
 - [ ] Static app deployment is feasible on GitHub Pages, with all runtime behavior in client-side assets.
@@ -100,6 +105,10 @@ Acceptance criteria
 - [x] Export/import JSON includes explicit schema versioning; schema changes trigger warnings and preserve a migration path for backward compatibility.
 - [x] The calculation engine exposes a clean interface to UI/controller code.
 - [ ] External macro data can be fetched using browser `fetch` and normalized through an adapter layer under CORS constraints.
+- [x] Scheduled (and manually dispatchable) GitHub Actions ingest fetches ÁKK catalog + network rates (2 GETs for v1 families), normalizes to schemaVersion 1 under `data/market/v1/`, and pushes the `market-data` branch only when digests change (ADR 0034 / ROADMAP §6b).
+- [x] Market-data normalize/merge rules are covered by fixture tests (append-first, dedupe, required-family empty fails); raw captures are not committed.
+- [ ] Pages deploy materializes `data/market/v1/` into the site for same-origin SPA `fetch` (follow-on §6b).
+- [ ] SPA loads published market JSON at runtime (not bundled) for commercial investment series listing / auto-fill (follow-on §6b).
 - [x] Salary instrument supports two schedule modes: predefined custom rule (default) and cron-like rule.
 - [x] Salary custom rule generates monthly inflow on the last working day on or before a configured target day (default 10).
 - [x] Salary instrument explicitly omits tax handling in v1 and documents tax rules as future enhancement.
@@ -202,6 +211,7 @@ How to use this file
 
 Design alignment
 - For engine implementation guidance and evaluation strategy rationale, see `DESIGN.md`. Use `docs/adr/` for recorded architecture decisions that affect evaluation strategy and scope.
+- For government-securities published market data (Actions ingest, `market-data` branch, schemaVersion 1), see `docs/adr/0034-government-securities-published-market-data-via-actions.md` and ROADMAP §6b.
 
 Investment Formula Canonical Source
 -----------------------------------

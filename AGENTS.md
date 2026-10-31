@@ -7,7 +7,7 @@ Start here. Prefer linking to authoritative docs over inventing parallel process
 1. [`ROADMAP.md`](ROADMAP.md) — pick the next PR-sized slice
 2. [`docs/source-of-truth-ownership.md`](docs/source-of-truth-ownership.md) — where each kind of information belongs
 3. [`docs/product-specs/PRODUCT_CATALOG.md`](docs/product-specs/PRODUCT_CATALOG.md) — product registry and migration statuses
-4. Relevant ADR(s) under [`docs/adr/`](docs/adr/) (recent: 0017 calculation surface, 0020 schema v2, 0023–0026 readiness / three-check commercially-usable, 0027 securities composer, 0028–0031 home-savings, 0032 Vite bundler, 0033 rejected EBKM hybrid)
+4. Relevant ADR(s) under [`docs/adr/`](docs/adr/) (recent: 0017 calculation surface, 0020 schema v2, 0023–0026 readiness / three-check commercially-usable, 0027 securities composer, 0028–0031 home-savings, 0032 Vite bundler, 0033 rejected EBKM hybrid, 0034 published market data via Actions)
 5. [`DESIGN.md`](DESIGN.md) — domain concepts and investment formulas only; product detail lives in YAML once cataloged
 6. [`docs/spec.md`](docs/spec.md) — scenarios and acceptance criteria to satisfy in the PR
 7. Code under `src/finance_engine/` (primitives + `product_specs/`) and `public/` (UI/adapters) per ownership rules

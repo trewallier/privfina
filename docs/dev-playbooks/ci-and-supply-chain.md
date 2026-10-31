@@ -9,6 +9,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 | CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`** | top-level deny; job `contents: read` |
 | CodeQL | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) | same + weekly schedule | **`Analyze`** | top-level deny; job `contents`/`actions` read + `security-events: write` |
 | Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
+| Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`publish`** (write) | top-level deny; ingest `contents: read` only (ÁKK fetch); publish `contents: write` only when digests changed; no PR to default branch; skips full app `validate` (ADR 0034 / ROADMAP §6b) |
 
 ### Workflow invariants (all pipelines)
 
@@ -76,9 +77,24 @@ npm run test:exploratory # optional EBKM diagnosis probes only
 
 Node **≥ 22** (`engines` in [`package.json`](../../package.json)).
 
+### E. Market-data ingest (ADR 0034)
+
+Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read-only, and raise write only on the job that commits ([secure use / token permissions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-secrets)).
+
+1. Workflow [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) is **two jobs**:
+   - **`ingest`** (`contents: read`): checkout tools + optional `market-data` baseline with `persist-credentials: false`, call ÁKK, write staged tree under `out/`, emit `changed` / `as_of` via `GITHUB_OUTPUT`, upload `market-data-v1` artifact only when changed.
+   - **`publish`** (`contents: write`, `if: changed`): download artifact, ensure/push the `market-data` branch. **Does not call ÁKK** and does not run during unchanged digests.
+2. Do not embed tokens in `git remote` URLs on argv; rely on `actions/checkout` `persist-credentials` or `http.https://github.com/.extraheader` (same pattern as checkout) inside tested CLI helpers.
+3. Prefer **single-line** `run:` steps that call `tools/market-data/cli.ts` (`ci-ingest`, `ensure-data-clone`, `commit-push`). Keep git/merge logic in those tested modules — avoid untested multiline workflow scripts.
+4. Do not commit raw ÁKK responses; CLI writes ephemeral raw under a gitignored temp path.
+5. Unchanged digests / empty new settles must exit green without a commit (publish job skipped).
+6. Pages materialization of `data/market/` into the deploy artifact is a follow-on §6b slice — not required for ingest to land.
+7. Local maintainer dry-run: `npm run market-data:publish -- --help` (see `tools/market-data/`).
+
 ## Explicit non-goals (for now)
 
 - ESLint/Prettier as a CI gate (add only after a repo lint config exists)
 - Hard-failing `npm audit` in CI (Dependabot + CodeQL cover the policy without advisory churn gates)
 - Running `scripts/*` research probes or `tests/exploratory/*` in CI
 - Self-hosted runners
+- Running the market-data ingest job on every default-branch push

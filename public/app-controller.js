@@ -1009,8 +1009,11 @@ function initController() {
   }
 
   /**
-   * Rebuild series <select>. Pass `''` / `null` to force Manual entry.
-   * Omit the argument (undefined) to keep the current selection when still listed.
+   * Rebuild series <select>.
+   * - Pass `''` / `null` to force Manual entry.
+   * - Omit the argument (undefined) only when calling this helper directly to keep
+   *   the current selection. `refreshCommercialMarketFamily` always passes an
+   *   explicit id and defaults to `''` (force Manual) so stale picks cannot clobber.
    */
   function rebuildCommercialMarketSeriesOptions(selectedId) {
     if (!commercialInvestmentSeriesInput) {
@@ -1125,10 +1128,8 @@ function initController() {
 
     setCommercialMarketRowVisible(true)
     syncCommercialMarketQuoteControls(code)
-    // Explicit preserveSeriesId (including '') — never fall back to a stale select value.
-    rebuildCommercialMarketSeriesOptions(
-      preserveSeriesId === undefined ? undefined : preserveSeriesId
-    )
+    // Always explicit: default preserveSeriesId '' forces Manual entry.
+    rebuildCommercialMarketSeriesOptions(preserveSeriesId)
     const asOfLabel = commercialMarketFamilyState.asOf
       ? `Market data as of ${commercialMarketFamilyState.asOf}`
       : 'Market data loaded'

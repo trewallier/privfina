@@ -122,6 +122,8 @@ export function buildMarketAutofillPatch({
       setIfAllowed('remainingDays', remaining, { quoteField: true })
     }
   } else if (family === 'pmap' || family === 'bmap') {
+    // Quote bid/ask are not mapped yet (inflation / DKJ-base stay manual via deferred
+    // refs/*). Settle-date / “Update from latest quote” UI is DKJ-only for v1.
     if (series?.prem != null && Number.isFinite(Number(series.prem))) {
       setIfAllowed('interestPremiumPct', Number(series.prem))
     }

@@ -44,9 +44,19 @@ jobs:
         run: npm run build
 
       # Same-origin SPA fetch of published market JSON (ADR 0034 / ROADMAP §6b).
-      # Soft-fail: missing market-data branch must not block product Pages deploys.
+      # Resolve first (ingest-style); soft-fail missing branch / resolve errors so product Pages still ships.
+      - name: Resolve market-data branch
+        id: resolve_market_data
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MARKET_DATA_BRANCH: market-data
+        run: npx tsx tools/market-data/cli.ts resolve-branch
+
       - name: Checkout market-data tip
         id: market_data_checkout
+        if: steps.resolve_market_data.outcome == 'success' && steps.resolve_market_data.outputs.exists == 'true'
         continue-on-error: true
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -69,8 +79,8 @@ jobs:
           fi
 
       - name: Warn when market-data materialization skipped
-        if: steps.market_data_checkout.outcome != 'success'
-        run: echo "::warning::market-data branch unavailable; Pages artifact ships without data/market/v1 (SPA manual-entry degrade)"
+        if: steps.resolve_market_data.outcome != 'success' || steps.resolve_market_data.outputs.exists != 'true' || steps.market_data_checkout.outcome != 'success'
+        run: echo "::warning::market-data tip not materialized; Pages artifact ships without data/market/v1 (SPA manual-entry degrade)"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

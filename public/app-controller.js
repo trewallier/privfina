@@ -139,6 +139,12 @@ import {
   latestQuoteForId
 } from './controller/market-data-loader.js'
 import { buildMarketAutofillPatch } from './controller/market-data-autofill.js'
+import {
+  browserTodayIso,
+  ensureDefaultPurchaseDateValue,
+  familyUsesQuoteSettleControls,
+  resolveSeriesSelectValue
+} from './controller/market-data-composer.js'
 
 const INVESTMENT_FAMILY_TITLE = 'Simplified Investment'
 const COMMERCIAL_INVESTMENT_FAMILY_TITLE = 'Commercial Investment'
@@ -1002,11 +1008,15 @@ function initController() {
     })
   }
 
-  function rebuildCommercialMarketSeriesOptions(selectedId = '') {
+  /**
+   * Rebuild series <select>. Pass `''` / `null` to force Manual entry.
+   * Omit the argument (undefined) to keep the current selection when still listed.
+   */
+  function rebuildCommercialMarketSeriesOptions(selectedId) {
     if (!commercialInvestmentSeriesInput) {
       return
     }
-    const previous = selectedId || commercialInvestmentSeriesInput.value || ''
+    const currentValue = commercialInvestmentSeriesInput.value || ''
     commercialInvestmentSeriesInput.innerHTML = ''
     const manual = document.createElement('option')
     manual.value = ''
@@ -1020,10 +1030,39 @@ function initController() {
       commercialInvestmentSeriesInput.appendChild(option)
     })
 
-    const available = new Set(
-      commercialMarketFamilyState.series.map((entry) => entry.id)
+    const available = commercialMarketFamilyState.series.map((entry) => entry.id)
+    commercialInvestmentSeriesInput.value = resolveSeriesSelectValue(
+      selectedId,
+      currentValue,
+      available
     )
-    commercialInvestmentSeriesInput.value = available.has(previous) ? previous : ''
+  }
+
+  function clearCommercialMarketSelection() {
+    if (commercialInvestmentSeriesInput) {
+      commercialInvestmentSeriesInput.value = ''
+    }
+    if (commercialInvestmentSettleDateInput) {
+      commercialInvestmentSettleDateInput.value = ''
+    }
+  }
+
+  function syncCommercialMarketQuoteControls(family) {
+    const showQuoteControls = familyUsesQuoteSettleControls(family)
+    const settleWrap = document.getElementById('commercial-investment-settle-date-wrap')
+    const updateWrap = document.getElementById('commercial-investment-update-quote-wrap')
+    if (settleWrap) {
+      settleWrap.hidden = !showQuoteControls
+    }
+    if (updateWrap) {
+      updateWrap.hidden = !showQuoteControls
+    }
+    if (commercialInvestmentSettleDateInput) {
+      commercialInvestmentSettleDateInput.disabled = !showQuoteControls
+    }
+    if (commercialInvestmentUpdateQuoteButton) {
+      commercialInvestmentUpdateQuoteButton.disabled = !showQuoteControls
+    }
   }
 
   function resetCommercialMarketControls() {
@@ -1035,13 +1074,15 @@ function initController() {
       asOf: null
     }
     rebuildCommercialMarketSeriesOptions('')
-    if (commercialInvestmentSettleDateInput) {
-      commercialInvestmentSettleDateInput.value = ''
-    }
+    clearCommercialMarketSelection()
+    syncCommercialMarketQuoteControls(null)
     setCommercialMarketRowVisible(false)
   }
 
-  async function refreshCommercialMarketFamily(productCode, { preserveSeriesId = '' } = {}) {
+  async function refreshCommercialMarketFamily(
+    productCode,
+    { preserveSeriesId = '' } = {}
+  ) {
     const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
     const token = ++commercialMarketApplyToken
     const loaded = await marketDataLoader.loadFamily(code)
@@ -1081,15 +1122,13 @@ function initController() {
     if (commercialInvestmentSeriesInput) {
       commercialInvestmentSeriesInput.disabled = false
     }
-    if (commercialInvestmentSettleDateInput) {
-      commercialInvestmentSettleDateInput.disabled = false
-    }
-    if (commercialInvestmentUpdateQuoteButton) {
-      commercialInvestmentUpdateQuoteButton.disabled = false
-    }
 
     setCommercialMarketRowVisible(true)
-    rebuildCommercialMarketSeriesOptions(preserveSeriesId)
+    syncCommercialMarketQuoteControls(code)
+    // Explicit preserveSeriesId (including '') — never fall back to a stale select value.
+    rebuildCommercialMarketSeriesOptions(
+      preserveSeriesId === undefined ? undefined : preserveSeriesId
+    )
     const asOfLabel = commercialMarketFamilyState.asOf
       ? `Market data as of ${commercialMarketFamilyState.asOf}`
       : 'Market data loaded'
@@ -1097,7 +1136,11 @@ function initController() {
 
     if (commercialInvestmentSeriesInput?.value) {
       await applyCommercialMarketSelection({ mode: 'fill-empty' })
-    } else if (commercialInvestmentSettleDateInput) {
+    } else if (
+      familyUsesQuoteSettleControls(code) &&
+      commercialInvestmentSettleDateInput &&
+      !String(commercialInvestmentSettleDateInput.value || '').trim()
+    ) {
       commercialInvestmentSettleDateInput.value = commercialMarketFamilyState.asOf || ''
     }
   }
@@ -1157,20 +1200,8 @@ function initController() {
     syncCommercialInvestmentPreview()
   }
 
-  function browserTodayIso(date = new Date()) {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
   function ensureDefaultPurchaseDate(input) {
-    if (!input) {
-      return
-    }
-    if (!String(input.value || '').trim()) {
-      input.value = browserTodayIso()
-    }
+    ensureDefaultPurchaseDateValue(input, browserTodayIso())
   }
 
   function applyCommercialInvestmentProductUi(productCode) {
@@ -1669,6 +1700,9 @@ function initController() {
     commercialInvestmentForm.querySelector('#commercial-investment-description').value =
       config.description || ''
 
+    // Same as product change: never let a mid-create series selection autofill
+    // overwrite persisted bundle fields after async market refresh.
+    clearCommercialMarketSelection()
     applyCommercialInvestmentProductUi(productCode)
 
     if (productCode === 'bmap') {

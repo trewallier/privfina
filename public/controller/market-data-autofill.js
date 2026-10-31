@@ -74,16 +74,26 @@ export function buildMarketAutofillPatch({
   const fields = {}
   const sourced = []
   const forceQuote = mode === 'force-quote'
+  // Series-driven fields always refresh on series pick: HTML <select> defaults
+  // (e.g. termMonths=3) are never blank, so fill-empty alone would skip them.
+  const seriesDriven = new Set([
+    'maturityDate',
+    'termMonths',
+    'interestPremiumPct',
+    'issueDate',
+    'startDate'
+  ])
 
   function setIfAllowed(name, value, { quoteField = false } = {}) {
     if (value == null || value === '') {
       return
     }
     const existing = current[name]
-    if (!forceQuote && !isBlank(existing)) {
-      return
-    }
-    if (forceQuote && !quoteField && !isBlank(existing)) {
+    if (forceQuote) {
+      if (!quoteField && !isBlank(existing)) {
+        return
+      }
+    } else if (!seriesDriven.has(name) && !isBlank(existing)) {
       return
     }
     fields[name] = value

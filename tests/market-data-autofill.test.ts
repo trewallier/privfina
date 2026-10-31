@@ -53,7 +53,7 @@ describe('market-data-autofill', () => {
     )
   })
 
-  it('does not clobber non-empty fields in fill-empty mode', () => {
+  it('refreshes series-driven fields but does not clobber non-empty quote fields', () => {
     const { fields } = buildMarketAutofillPatch({
       family: 'dkj',
       series: { issue: '2025-12-23', mat: '2026-12-23' },
@@ -68,7 +68,12 @@ describe('market-data-autofill', () => {
       mode: 'fill-empty'
     })
 
-    expect(fields).toEqual({})
+    // Series pick always aligns maturity/term with the chosen offering (select
+    // defaults are never blank). Quote-backed fields stay user-owned when set.
+    expect(fields).toEqual({
+      maturityDate: '2026-12-23',
+      termMonths: 12
+    })
   })
 
   it('force-quote updates quote fields only', () => {

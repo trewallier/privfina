@@ -6,8 +6,13 @@ import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import { runCiIngest } from '../tools/market-data/ci-ingest.ts'
 import { commitAndPush } from '../tools/market-data/commit-push.ts'
-import { ensureDataClone } from '../tools/market-data/ensure-data-clone.ts'
+import {
+  clearGithubHttpsExtraheader,
+  ensureDataClone
+} from '../tools/market-data/ensure-data-clone.ts'
+import { publishMarketData } from '../tools/market-data/publish.ts'
 import type { AkkEnvelope } from '../tools/market-data/types.ts'
+import { ValidateError, assertPublishedTree } from '../tools/market-data/validate.ts'
 
 const fixturesDir = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -69,8 +74,39 @@ describe('runCiIngest', () => {
   })
 })
 
+describe('assertPublishedTree', () => {
+  it('accepts a freshly published tree and rejects tampered digests', async () => {
+    const catalog = await loadFixture('catalog.json')
+    const rates = await loadFixture('network-rates.json')
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'privfina-validate-'))
+    try {
+      await publishMarketData({
+        root: tmp,
+        rawDir: path.join(tmp, 'raw'),
+        catalog,
+        networkRates: rates,
+        generatedAt: '2026-11-02T18:00:00+01:00'
+      })
+      const tree = await assertPublishedTree(tmp)
+      expect(tree.manifest?.asOf).toBe('2026-11-02')
+
+      const manifestPath = path.join(tmp, 'data/market/v1/manifest.json')
+      const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as {
+        digests: Record<string, string>
+      }
+      manifest.digests['families/dkj/latest.json'] = 'deadbeef'
+      await writeFile(manifestPath, `${JSON.stringify(manifest)}\n`, 'utf8')
+      await expect(assertPublishedTree(tmp)).rejects.toBeInstanceOf(ValidateError)
+    } finally {
+      await rm(tmp, { recursive: true, force: true })
+    }
+  })
+})
+
 describe('ensureDataClone + commitAndPush', () => {
-  it('creates an orphan clone, commits staged market files without push', async () => {
+  it('creates an orphan clone, commits staged market files, and clears auth extraheader', async () => {
+    const catalog = await loadFixture('catalog.json')
+    const rates = await loadFixture('network-rates.json')
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'privfina-ci-push-'))
     const clone = path.join(tmp, 'market-data')
     try {
@@ -82,13 +118,22 @@ describe('ensureDataClone + commitAndPush', () => {
       })
       expect(ensured.created).toBe(true)
 
-      const v1 = path.join(clone, 'data/market/v1')
-      await mkdir(v1, { recursive: true })
-      await writeFile(
-        path.join(v1, 'manifest.json'),
-        `${JSON.stringify({ schemaVersion: 1, asOf: '2026-11-02', digests: {} })}\n`,
-        'utf8'
+      const headerBefore = spawnSync(
+        'git',
+        ['config', '--get', 'http.https://github.com/.extraheader'],
+        { cwd: clone, encoding: 'utf8' }
       )
+      expect(headerBefore.status).toBe(0)
+      expect(headerBefore.stdout.length).toBeGreaterThan(0)
+
+      await publishMarketData({
+        root: clone,
+        rawDir: path.join(tmp, 'raw'),
+        catalog,
+        networkRates: rates,
+        generatedAt: '2026-11-02T18:00:00+01:00'
+      })
+      await assertPublishedTree(clone)
 
       const again = await ensureDataClone({
         path: clone,
@@ -106,6 +151,14 @@ describe('ensureDataClone + commitAndPush', () => {
       expect(result.committed).toBe(true)
       expect(result.pushed).toBe(false)
       expect(result.message).toBe('market-data: asOf 2026-11-02')
+      expect(result.authCleared).toBe(true)
+
+      const headerAfter = spawnSync(
+        'git',
+        ['config', '--get', 'http.https://github.com/.extraheader'],
+        { cwd: clone, encoding: 'utf8' }
+      )
+      expect(headerAfter.status).not.toBe(0)
 
       const log = spawnSync('git', ['log', '-1', '--pretty=%s'], {
         cwd: clone,
@@ -120,6 +173,9 @@ describe('ensureDataClone + commitAndPush', () => {
         noPush: true
       })
       expect(noop.committed).toBe(false)
+
+      // Idempotent clear when key is already absent.
+      expect(() => clearGithubHttpsExtraheader(clone)).not.toThrow()
     } finally {
       await rm(tmp, { recursive: true, force: true })
     }

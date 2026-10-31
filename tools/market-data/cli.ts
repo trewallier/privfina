@@ -13,11 +13,13 @@ import { commitAndPush } from './commit-push.ts'
 import { ensureDataClone } from './ensure-data-clone.ts'
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, publishMarketData } from './publish.ts'
 import type { AkkEnvelope } from './types.ts'
+import { assertPublishedTree } from './validate.ts'
 
 function printHelp(): void {
   process.stdout.write(`Usage:
   market-data publish --root <repo-or-v1> [--previous-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
+  market-data validate-tree --root <repo-or-v1>
   market-data ensure-data-clone --path <dir> --branch <name> --repository <owner/repo>
   market-data commit-push --path <dir> --branch <name> [--no-push]
 
@@ -87,10 +89,14 @@ async function main(argv: string[]): Promise<number> {
   }
 
   if (cmd === 'ci-ingest') {
-    const outRoot = getFlag(rest, '--out-root')
-    if (!outRoot) throw new Error('--out-root is required')
-    const baselineRoot = getFlag(rest, '--baseline-root')
-    const rawDir = getFlag(rest, '--raw-dir') ?? path.join(process.cwd(), '.tmp-market-data')
+    const outRoot = getFlag(rest, '--out-root') ?? process.env.MARKET_OUT_ROOT
+    if (!outRoot) throw new Error('--out-root or MARKET_OUT_ROOT is required')
+    const baselineRoot =
+      getFlag(rest, '--baseline-root') ?? process.env.MARKET_BASELINE_ROOT ?? undefined
+    const rawDir =
+      getFlag(rest, '--raw-dir') ??
+      process.env.MARKET_RAW_DIR ??
+      path.join(process.cwd(), '.tmp-market-data')
     const envelopes = await loadOptionalEnvelopes(rest)
     const result = await runCiIngest({
       outRoot,
@@ -104,11 +110,26 @@ async function main(argv: string[]): Promise<number> {
     return EXIT_UPDATED
   }
 
+  if (cmd === 'validate-tree') {
+    const root = getFlag(rest, '--root') ?? process.env.MARKET_TREE_ROOT
+    if (!root) throw new Error('--root or MARKET_TREE_ROOT is required')
+    const tree = await assertPublishedTree(root)
+    process.stdout.write(
+      `${JSON.stringify({
+        ok: true,
+        asOf: tree.manifest?.asOf ?? null,
+        families: tree.manifest?.families ?? []
+      })}\n`
+    )
+    return EXIT_UPDATED
+  }
+
   if (cmd === 'ensure-data-clone') {
-    const clonePath = getFlag(rest, '--path')
-    const branch = getFlag(rest, '--branch') ?? 'market-data'
-    const repository = getFlag(rest, '--repository') ?? process.env.GITHUB_REPOSITORY
-    if (!clonePath) throw new Error('--path is required')
+    const clonePath = getFlag(rest, '--path') ?? process.env.MARKET_DATA_PATH
+    const branch = getFlag(rest, '--branch') ?? process.env.MARKET_DATA_BRANCH ?? 'market-data'
+    const repository =
+      getFlag(rest, '--repository') ?? process.env.GITHUB_REPOSITORY ?? undefined
+    if (!clonePath) throw new Error('--path or MARKET_DATA_PATH is required')
     if (!repository) throw new Error('--repository or GITHUB_REPOSITORY is required')
     const result = await ensureDataClone({ path: clonePath, branch, repository })
     process.stdout.write(`${JSON.stringify(result)}\n`)
@@ -116,9 +137,9 @@ async function main(argv: string[]): Promise<number> {
   }
 
   if (cmd === 'commit-push') {
-    const clonePath = getFlag(rest, '--path')
-    const branch = getFlag(rest, '--branch') ?? 'market-data'
-    if (!clonePath) throw new Error('--path is required')
+    const clonePath = getFlag(rest, '--path') ?? process.env.MARKET_DATA_PATH
+    const branch = getFlag(rest, '--branch') ?? process.env.MARKET_DATA_BRANCH ?? 'market-data'
+    if (!clonePath) throw new Error('--path or MARKET_DATA_PATH is required')
     const result = await commitAndPush({
       path: clonePath,
       branch,

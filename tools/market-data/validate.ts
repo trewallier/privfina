@@ -1,5 +1,7 @@
-import { FAMILIES, QUOTE_COLS, SCHEMA_VERSION, type ManifestFile } from './types.ts'
+import { digestCanonical } from './digests.ts'
+import { loadMarketTree } from './io.ts'
 import type { MarketTreeState } from './merge.ts'
+import { FAMILIES, QUOTE_COLS, SCHEMA_VERSION, type ManifestFile } from './types.ts'
 
 export class ValidateError extends Error {
   constructor(message: string) {
@@ -37,6 +39,47 @@ export function validateMarketTree(tree: MarketTreeState): void {
       }
     }
   }
+  verifyManifestDigests(tree)
+}
+
+/** Recompute file digests and require an exact match to manifest.digests. */
+export function verifyManifestDigests(tree: MarketTreeState): void {
+  if (!tree.manifest) {
+    throw new ValidateError('Missing manifest')
+  }
+  const expected = computeTreeDigests(tree)
+  const actual = tree.manifest.digests
+  const keys = new Set([...Object.keys(expected), ...Object.keys(actual)])
+  for (const key of keys) {
+    if (expected[key] !== actual[key]) {
+      throw new ValidateError(
+        `Digest mismatch for ${key}: manifest=${actual[key] ?? 'missing'} recomputed=${expected[key] ?? 'missing'}`
+      )
+    }
+  }
+}
+
+export function computeTreeDigests(tree: MarketTreeState): Record<string, string> {
+  const digests: Record<string, string> = {}
+  for (const family of FAMILIES) {
+    const fam = tree.families[family]
+    digests[`families/${family}/series.json`] = digestCanonical(fam.series)
+    digests[`families/${family}/latest.json`] = digestCanonical(fam.latest)
+    for (const [id, q] of Object.entries(fam.quotes)) {
+      digests[`families/${family}/quotes/${id}.json`] = digestCanonical(q)
+    }
+  }
+  return digests
+}
+
+/**
+ * Defense-in-depth for the publish job: load a tree from disk, run schema checks,
+ * and verify manifest digests before commit/push. Does not contact ÁKK.
+ */
+export async function assertPublishedTree(root: string): Promise<MarketTreeState> {
+  const tree = await loadMarketTree(root)
+  validateMarketTree(tree)
+  return tree
 }
 
 function validateManifest(manifest: ManifestFile): void {

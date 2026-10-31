@@ -15,6 +15,7 @@ npm run market-data:publish -- publish --root /tmp/out \
 
 # CI helpers used by .github/workflows/market-data.yml (single-line run steps)
 npm run market-data:publish -- ci-ingest --out-root /tmp/out --baseline-root /tmp/baseline --raw-dir /tmp/raw
+npm run market-data:publish -- validate-tree --root /tmp/out
 npm run market-data:publish -- ensure-data-clone --path /tmp/market-data --branch market-data --repository owner/repo
 npm run market-data:publish -- commit-push --path /tmp/market-data --branch market-data --no-push
 ```
@@ -29,4 +30,4 @@ See ADR 0034. Hot families: `dkj`, `pmap`, `bmap`. Two ÁKK GETs per ingest run 
 ## Workflow security
 
 - **ingest** job: `contents: read` only; network to ÁKK; uploads an artifact when digests change.
-- **publish** job: `contents: write` only when `changed=true`; applies the artifact to the `market-data` branch; no ÁKK calls.
+- **publish** job: `contents: write` only when `changed=true`; re-validates schema + digests; applies the artifact to the `market-data` branch; no ÁKK calls; clears HTTPS auth extraheader after push.

@@ -83,13 +83,15 @@ Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read
 
 1. Workflow [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) is **two jobs**:
    - **`ingest`** (`contents: read`): checkout tools + optional `market-data` baseline with `persist-credentials: false`, call ÁKK, write staged tree under `out/`, emit `changed` / `as_of` via `GITHUB_OUTPUT`, upload `market-data-v1` artifact only when changed.
-   - **`publish`** (`contents: write`, `if: changed`): download artifact, ensure/push the `market-data` branch. **Does not call ÁKK** and does not run during unchanged digests.
-2. Do not embed tokens in `git remote` URLs on argv; rely on `actions/checkout` `persist-credentials` or `http.https://github.com/.extraheader` (same pattern as checkout) inside tested CLI helpers.
-3. Prefer **single-line** `run:` steps that call `tools/market-data/cli.ts` (`ci-ingest`, `ensure-data-clone`, `commit-push`). Keep git/merge logic in those tested modules — avoid untested multiline workflow scripts.
+   - **`publish`** (`contents: write`, `if: changed`): download artifact, **`validate-tree`** (schema + manifest digests), ensure/push the `market-data` branch. **Does not call ÁKK** and does not run during unchanged digests.
+2. Do not embed tokens in `git remote` URLs on argv; rely on `actions/checkout` `persist-credentials` or `http.https://github.com/.extraheader` (same pattern as checkout) inside tested CLI helpers. **`commit-push` unsets the extraheader afterward**; never upload the `market-data` worktree as an artifact.
+3. Prefer **single-line** `run:` steps that call `tools/market-data/cli.ts` (`ci-ingest`, `validate-tree`, `ensure-data-clone`, `commit-push`). Pass paths via **env vars** (not `${{ }}` interpolation inside `run:`) for consistency with GitHub script-injection guidance. Keep git/merge logic in tested modules — avoid untested multiline workflow scripts.
 4. Do not commit raw ÁKK responses; CLI writes ephemeral raw under a gitignored temp path.
 5. Unchanged digests / empty new settles must exit green without a commit (publish job skipped).
-6. Pages materialization of `data/market/` into the deploy artifact is a follow-on §6b slice — not required for ingest to land.
-7. Local maintainer dry-run: `npm run market-data:publish -- --help` (see `tools/market-data/`).
+6. First-run: missing `market-data` uses `continue-on-error` checkout + orphan create; push is non-`--force`. `concurrency.cancel-in-progress: false` avoids overlapping pushes. Smoke with `workflow_dispatch` after merge.
+7. Pages materialization of `data/market/` into the deploy artifact is a follow-on §6b slice — not required for ingest to land.
+8. Local maintainer dry-run: `npm run market-data:publish -- --help` (see `tools/market-data/`).
+9. Optional later: GitHub Actions **workflow dependency lockfiles** (stronger than SHA pins alone).
 
 ## Explicit non-goals (for now)
 

@@ -99,3 +99,20 @@ export async function ensureDataClone(options: EnsureDataCloneOptions): Promise<
 
   return { created, path: dir, branch: options.branch }
 }
+
+const EXTRAHEADER_KEY = 'http.https://github.com/.extraheader'
+
+/** Unset checkout / ensure-data-clone auth header so the token is not left in `.git/config`. */
+export function clearGithubHttpsExtraheader(
+  clonePath: string,
+  runGit: typeof runGitCommand = runGitCommand
+): void {
+  const dir = path.resolve(clonePath)
+  // `--unset-all` exits 5 when the key is absent; treat that as success.
+  const result = runGit(['config', '--unset-all', EXTRAHEADER_KEY], dir)
+  if (result.status !== 0 && result.status !== 5) {
+    throw new Error(
+      `Failed to unset ${EXTRAHEADER_KEY} (${result.status}): ${result.stderr || result.stdout}`
+    )
+  }
+}

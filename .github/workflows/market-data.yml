@@ -4,6 +4,7 @@
 # - ingest: contents:read only; contacts ÁKK; never holds a write token
 # - publish: contents:write; consumes the ingest artifact only; does not call ÁKK
 # Multistep git/Node logic lives in tested tools/market-data CLI commands (no multiline run: blocks).
+# Paths are passed via env (not interpolated into run:) per GitHub script-injection guidance.
 name: Market data ingest
 
 # Deny all by default; jobs grant only what they need (ADR 0007).
@@ -53,7 +54,11 @@ jobs:
       - name: Fetch, normalize, and stage published tree
         id: ingest
         working-directory: app
-        run: node --experimental-strip-types tools/market-data/cli.ts ci-ingest --baseline-root "${{ github.workspace }}/baseline" --out-root "${{ github.workspace }}/out" --raw-dir "${{ runner.temp }}/akk-raw"
+        env:
+          MARKET_BASELINE_ROOT: ${{ github.workspace }}/baseline
+          MARKET_OUT_ROOT: ${{ github.workspace }}/out
+          MARKET_RAW_DIR: ${{ runner.temp }}/akk-raw
+        run: node --experimental-strip-types tools/market-data/cli.ts ci-ingest
 
       - name: Upload published market-data artifact
         if: steps.ingest.outputs.changed == 'true'
@@ -88,12 +93,19 @@ jobs:
           persist-credentials: true
           fetch-depth: 1
 
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
       - name: Ensure market-data clone is pushable
         working-directory: app
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: node --experimental-strip-types tools/market-data/cli.ts ensure-data-clone --path "${{ github.workspace }}/market-data" --branch market-data --repository "${{ github.repository }}"
+          MARKET_DATA_PATH: ${{ github.workspace }}/market-data
+          MARKET_DATA_BRANCH: market-data
+        run: node --experimental-strip-types tools/market-data/cli.ts ensure-data-clone
 
       - name: Download published market-data artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -101,13 +113,16 @@ jobs:
           name: market-data-v1
           path: market-data/data/market/v1
 
-      - name: Set up Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: "22"
+      - name: Re-validate published tree before commit
+        working-directory: app
+        env:
+          MARKET_TREE_ROOT: ${{ github.workspace }}/market-data
+        run: node --experimental-strip-types tools/market-data/cli.ts validate-tree
 
       - name: Commit and push market-data tip
         working-directory: app
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node --experimental-strip-types tools/market-data/cli.ts commit-push --path "${{ github.workspace }}/market-data" --branch market-data
+          MARKET_DATA_PATH: ${{ github.workspace }}/market-data
+          MARKET_DATA_BRANCH: market-data
+        run: node --experimental-strip-types tools/market-data/cli.ts commit-push

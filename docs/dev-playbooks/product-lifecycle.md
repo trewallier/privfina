@@ -53,14 +53,14 @@ Frontend may stay below schedule-usable.
 4. Bump catalog status → **`commercially-usable`**.
 
 ### Government securities
-1. Ensure the offering appears on the **commercial investment** product picker with readiness hint from catalog status.
+1. Ensure the offering appears on the **commercial investment** product picker. Track catalog migration status in PRODUCT_CATALOG / metadata — do **not** surface readiness ladders as user-facing form copy.
 2. Dedicated field hosts, labels/help from product YAML, and calculated previews wired for that security.
 3. Examples/adapters match published product numbers; no dual-lane display.
 4. Do **not** require ADR 0024 THM three-check unless a later ADR adds a securities verification harness.
 5. Bump catalog status → **`commercially-usable`**.
 
 ### Home savings
-1. Ensure the offering appears on the **commercial home-savings** product picker with readiness hint from catalog status.
+1. Ensure the offering appears on the **commercial home-savings** product picker. Prefer availability / sale-window copy for users; keep catalog migration status in metadata rather than “Readiness: …” form banners.
 2. Fees / Premium tiers / loyalty hints and EBKM preview wired from product YAML.
 3. Engine EBKM matches published tariff notice (Hirdetmény) goldens for locked examples (ADR 0031); no dual-lane display.
 4. Do **not** require ADR 0024 THM three-check.

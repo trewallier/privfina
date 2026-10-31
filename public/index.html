@@ -215,6 +215,12 @@
         min-width: 0;
       }
 
+      .field-action-wrap {
+        display: flex;
+        align-items: flex-end;
+        padding-bottom: 0.15rem;
+      }
+
       .field-help-static {
         margin: 0.35rem 0 0.75rem;
         padding: 0.55rem 0.7rem;
@@ -2017,7 +2023,30 @@
                       </div>
                     </label>
                   </div>
-                  <p id="commercial-investment-readiness-hint" class="field-help-static"></p>
+                  <div id="commercial-investment-market-row" class="row" hidden>
+                    <label id="commercial-investment-series-wrap">
+                      <span class="label-title"><span class="field-label">Market series</span> <button type="button" class="info-chip" data-help-button="commercial-investment-series-help" aria-label="Market series help">i</button></span>
+                      <select id="commercial-investment-series" name="marketSeriesId">
+                        <option value="">Manual entry</option>
+                      </select>
+                      <div id="commercial-investment-series-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-series-help" aria-label="Close">x</button>
+                        <p>Published ÁKK offering from GitHub-hosted market data. Selecting a series auto-fills non-amount fields when empty. Amount and purchase date stay manual.</p>
+                      </div>
+                    </label>
+                    <label id="commercial-investment-settle-date-wrap">
+                      <span class="label-title"><span class="field-label">Quote settle date</span> <button type="button" class="info-chip" data-help-button="commercial-investment-settle-date-help" aria-label="Quote settle date help">i</button></span>
+                      <input id="commercial-investment-settle-date" name="marketSettleDate" type="date" />
+                      <div id="commercial-investment-settle-date-help" class="field-help" hidden>
+                        <button type="button" class="field-help-close" data-help-close="commercial-investment-settle-date-help" aria-label="Close">x</button>
+                        <p>Optional. Defaults to the latest published settle date. Change to load that day’s quote for the selected series when history is available.</p>
+                      </div>
+                    </label>
+                    <div id="commercial-investment-update-quote-wrap" class="field-action-wrap">
+                      <button id="commercial-investment-update-quote" type="button" class="secondary">Update from latest quote</button>
+                    </div>
+                  </div>
+                  <p id="commercial-investment-market-hint" class="field-help-static" hidden></p>
 
                   <div id="commercial-investment-shared-meta-row" class="row">
                     <label id="commercial-investment-label-wrap">

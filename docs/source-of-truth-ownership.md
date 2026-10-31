@@ -17,7 +17,7 @@
 | **Product-specific generators** | Engine code parameterized by spec | Hardcoded product branches; use specs to drive generators instead |
 | **Rendering & interaction** | UI code (`public/app*.js`, `public/controller/`) | Product definitions (derive field labels, order, visibility from specs) |
 | **UI field metadata** | Product spec (labels, help text, grouping, visibility rules) | Hardcoded in forms; maintain parity with specs |
-| **Published government-security market data** | `data/market/v1/` on the `market-data` branch (schema + merge: ADR 0034; tooling: `tools/market-data/`) | Raw ÁKK API payloads in git; browser calls to ÁKK; product YAML auto-authoring |
+| **Published government-security market data** | `data/market/v1/` on the `market-data` branch (schema + merge: ADR 0034; tooling: `tools/market-data/`); Pages artifact copy for SPA `fetch`; browser loader `public/controller/market-data-loader.js` | Raw ÁKK API payloads in git; browser calls to ÁKK; bundling market JSON into the Vite graph; product YAML auto-authoring |
 | **Architectural rationale** | ADRs (`docs/adr/`) | Code comments; design docs should not duplicate ADR decisions |
 | **Domain concepts & vision** | DESIGN.md, docs/vision.md, docs/spec.md | Product-specific details (use product specs for those) |
 | **Acceptance criteria** | Product spec examples + `docs/spec.md` scenarios | Test code only; examples are the contract |

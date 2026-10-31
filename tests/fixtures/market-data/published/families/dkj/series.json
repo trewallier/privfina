@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "family": "dkj",
+  "series": [
+    {
+      "id": "D261125",
+      "isin": "HU0000525316",
+      "name": "D261125",
+      "issue": "2026-07-29",
+      "mat": "2026-11-25",
+      "ccy": "HUF",
+      "face": 10000,
+      "iType": "FIX",
+      "status": "active"
+    },
+    {
+      "id": "D261223",
+      "isin": "HU0000525241",
+      "name": "D261223",
+      "issue": "2025-12-23",
+      "mat": "2026-12-23",
+      "ccy": "HUF",
+      "face": 10000,
+      "iType": "FIX",
+      "status": "active"
+    },
+    {
+      "id": "DOLD000",
+      "isin": null,
+      "name": "DOLD000",
+      "issue": "2020-01-01",
+      "mat": "2020-12-31",
+      "ccy": "HUF",
+      "face": 10000,
+      "status": "matured"
+    }
+  ]
+}

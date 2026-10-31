@@ -20,7 +20,7 @@ This roadmap is intentionally incremental and dependency-ordered. Completed base
 - [x] Refine discount bond contract: mandatory issue/due/transaction dates plus price and face value; keep yield/current_value as derived fields and reserve optional pre-maturity sale date/value for future scope.
 - [x] Refine inflation-linked bond contract: mandatory issue/due/transaction dates, annual spread, and period inflation inputs; derive annual maturity schedule and accrual factors from financial date markers.
 - [x] Investment field UX: form-local validation, required/optional/calculated markers, dedicated DKJ/PMAP hosts matching YAML, spec-sourced help (ADR 0016 presentation gap).
-- [x] Split ÁKK / government-security offerings onto a commercial investment composer (product picker + readiness hints); keep generic bonds on simplified investment (ADR 0027).
+- [x] Split ÁKK / government-security offerings onto a commercial investment composer (product picker); keep generic bonds on simplified investment (ADR 0027). Catalog readiness stays in metadata/docs, not user-facing form copy.
 
 ### 3) Bundle Persistence And Compatibility
 - [x] Implement pre-save bounded flow-bundle generation for instrument workflows and persist bundle lineage metadata.
@@ -100,7 +100,7 @@ Goal: mirror the simplified vs commercial loan split for investments. Catalog `g
 
 Plan slices
 - [x] ADR 0027: composer split + government-security readiness meanings (`schedule-usable` / `commercially-usable` / `fully-spec-backed`).
-- [x] Commercial investment box + treasury product picker (DKJ, PMÁP, BMÁP) with readiness hint; move dedicated hosts off simplified investment.
+- [x] Commercial investment box + treasury product picker (DKJ, PMÁP, BMÁP); move dedicated hosts off simplified investment.
 - [x] Edit routing: catalog-backed investment bundles open commercial composer; generic subtypes open simplified.
 - [x] Catalog / lifecycle / spec / ownership docs document securities readiness beside loans for future ÁKK additions.
 
@@ -166,7 +166,7 @@ Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f
 - [ ] Optional: exact 1 Ft match to internal 8x30 tariff `Kamat` (fillér caps, alternate day-count, etc.); do not retune production rounding without a new ADR/slice.
 
 ### 6) Platform, Data Integrations, And Operations
-- [ ] v1: external data fetch adapter (mock first; real endpoints later) — browser consumes GitHub-hosted published market JSON from §6b once Pages materialization lands (ADR 0034); not live ÁKK
+- [x] v1: external data fetch adapter — browser loads GitHub-hosted published market JSON via §6b SPA loader (ADR 0034); not live ÁKK
 
 - [ ] Add import and export helpers for CSV or spreadsheet workflows.
 - [ ] Define Node package management and update strategy (ADR required)
@@ -222,11 +222,12 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0034: Actions-only ÁKK contact, `market-data` branch, schemaVersion 1 layout, append-first merge, out-of-scope browser→ÁKK.
 - [x] `tools/market-data/` CLI: fetch (2 GETs) → normalize → merge/ingest under `data/market/v1/` (canonical ids, accumulating series, same-day conflict fail); Vitest fixtures (no live captures in git).
 - [x] `.github/workflows/market-data.yml`: `ingest` (read) + `push` (GitHub App token); fail-closed branch resolve; `validate-tree` before commit; pinned `tsx` + bash git helpers.
-- [ ] Confirm or defer `refs/inflation.json` / `refs/dkj-base.json` sources (PMÁP inflation base / BMÁP DKJ-base).
-- [ ] Pages deploy materializes tip of `market-data` into the site artifact under `data/market/` (same-origin SPA `fetch`).
-- [ ] Contract fixture + SPA runtime loader (`manifest` → `series` → `latest` → optional `quotes/<id>`); session cache; manual-entry degrade when files missing.
-- [ ] Commercial investment composer: series picker + optional settle-date control; auto-fill from published mapping; never clobber amount / purchase date.
-- [ ] Acceptance: online path populates non-amount fields; offline path stays usable; no official ÁKK calls from the browser.
+- [x] Defer `refs/inflation.json` / `refs/dkj-base.json` for v1 — PMÁP inflation base and BMÁP DKJ-base stay manual until a later slice names a source.
+- [x] Pages deploy materializes tip of `market-data` into the site artifact under `data/market/` (same-origin SPA `fetch`; soft-fail if branch missing).
+- [x] Contract fixture + SPA runtime loader (`manifest` → `series` → `latest` → optional `quotes/<id>`); session cache; manual-entry degrade when files missing.
+- [x] Commercial investment composer: series picker + optional settle-date control; auto-fill from published mapping; never clobber amount / purchase date.
+- [x] Acceptance (code / preview): online path populates non-amount fields; offline path stays usable; no official ÁKK calls from the browser; edit path does not autofill without an explicit series pick.
+- [ ] Maintainer after merge: confirm live Pages serves `/privfina/data/market/v1/manifest.json` (deploy materialization).
 
 Out of scope for §6b
 - Live CORS fetches from the browser to ÁKK or tertiary retail sites.

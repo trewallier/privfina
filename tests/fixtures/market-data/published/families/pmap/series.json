@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "family": "pmap",
+  "series": [
+    {
+      "id": "A270324I22",
+      "isin": "HU0000405584",
+      "name": "2027/I",
+      "issue": "2022-01-21",
+      "mat": "2027-03-24",
+      "ccy": "HUF",
+      "face": 1000,
+      "iType": "FLOAT",
+      "status": "active",
+      "prem": 0.75,
+      "ref": "HUF CPI"
+    }
+  ]
+}

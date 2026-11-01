@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import type { RetailInterestFile } from './types.ts'
 
 /** Stable JSON for hashing (sorted object keys; arrays keep order). */
 export function canonicalJson(value: unknown): string {
@@ -23,4 +24,24 @@ export function sha256Hex(text: string): string {
 
 export function digestCanonical(value: unknown): string {
   return sha256Hex(canonicalJson(value))
+}
+
+/**
+ * Retail-interest digest payload excludes `generatedAt` so a fresh ingest stamp
+ * alone does not force a market-data commit (ADR 0036 / §6b digest-gated no-op).
+ */
+export function retailInterestContentForDigest(file: RetailInterestFile): {
+  schemaVersion: RetailInterestFile['schemaVersion']
+  asOf: RetailInterestFile['asOf']
+  rows: RetailInterestFile['rows']
+} {
+  return {
+    schemaVersion: file.schemaVersion,
+    asOf: file.asOf,
+    rows: file.rows
+  }
+}
+
+export function digestRetailInterest(file: RetailInterestFile): string {
+  return digestCanonical(retailInterestContentForDigest(file))
 }

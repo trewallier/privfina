@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Market-data CLI (ADR 0034 / 0035 / ROADMAP §6b–§6c).
+ * Market-data CLI (ADR 0034 / 0035 / 0036 / ROADMAP §6b–§6d).
  *
  * Exit codes:
  * - `ingest`: 0 updated, 2 unchanged, 1 error
@@ -21,8 +21,10 @@ function printHelp(): void {
   process.stdout.write(`Usage:
   market-data ingest --root <repo-or-v1> [--previous-root <path>] [--raw-dir <dir>]
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
+      [--retail-interest <json>] [--skip-retail-interest]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>]
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
+      [--retail-interest <json>] [--skip-retail-interest]
   market-data validate-tree --root <repo-or-v1>
   market-data resolve-branch --repository <owner/repo> --branch <name>
 
@@ -66,6 +68,8 @@ async function loadOptionalSources(args: string[]): Promise<{
   networkRates?: AkkEnvelope
   allampapirPrices?: Record<string, AllampapirEnvelope>
   skipAllampapir?: boolean
+  retailInterestEnvelope?: AllampapirEnvelope
+  skipRetailInterest?: boolean
 }> {
   const catalogPath = getFlag(args, '--catalog')
   const ratesPath = getFlag(args, '--rates')
@@ -77,11 +81,20 @@ async function loadOptionalSources(args: string[]): Promise<{
   if (skipAllampapir && allampapirDir) {
     throw new Error('Use either --allampapir-dir or --skip-allampapir, not both.')
   }
+  const retailInterestPath = getFlag(args, '--retail-interest')
+  const skipRetailInterest = hasFlag(args, '--skip-retail-interest')
+  if (skipRetailInterest && retailInterestPath) {
+    throw new Error('Use either --retail-interest or --skip-retail-interest, not both.')
+  }
   return {
     catalog: catalogPath ? await loadEnvelope(catalogPath) : undefined,
     networkRates: ratesPath ? await loadEnvelope(ratesPath) : undefined,
     allampapirPrices: allampapirDir ? await loadAllampapirDir(allampapirDir) : undefined,
-    skipAllampapir
+    skipAllampapir,
+    retailInterestEnvelope: retailInterestPath
+      ? ((await loadEnvelope(retailInterestPath)) as AllampapirEnvelope)
+      : undefined,
+    skipRetailInterest
   }
 }
 
@@ -104,7 +117,9 @@ async function main(argv: string[]): Promise<number> {
       catalog: sources.catalog,
       networkRates: sources.networkRates,
       allampapirPrices: sources.allampapirPrices,
-      skipAllampapir: sources.skipAllampapir
+      skipAllampapir: sources.skipAllampapir,
+      retailInterestEnvelope: sources.retailInterestEnvelope,
+      skipRetailInterest: sources.skipRetailInterest
     })
     process.stdout.write(
       `${JSON.stringify({
@@ -112,7 +127,8 @@ async function main(argv: string[]): Promise<number> {
         asOf: report.asOf,
         appendedRows: report.appendedRows,
         skippedDuplicates: report.skippedDuplicates,
-        marketRoot: report.marketRoot
+        marketRoot: report.marketRoot,
+        retailInterestUpdated: report.retailInterestUpdated
       })}\n`
     )
     return report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -135,7 +151,9 @@ async function main(argv: string[]): Promise<number> {
       catalog: sources.catalog,
       networkRates: sources.networkRates,
       allampapirPrices: sources.allampapirPrices,
-      skipAllampapir: sources.skipAllampapir
+      skipAllampapir: sources.skipAllampapir,
+      retailInterestEnvelope: sources.retailInterestEnvelope,
+      skipRetailInterest: sources.skipRetailInterest
     })
     process.stdout.write(`${JSON.stringify({ changed: result.changed, asOf: result.asOf })}\n`)
     return EXIT_UPDATED

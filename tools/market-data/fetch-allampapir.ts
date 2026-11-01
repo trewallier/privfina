@@ -11,12 +11,16 @@ export interface FetchAllampapirOptions {
   backoffMs?: number
   baseUrl?: string
   userAgent?: string
+  /** Reuse an existing CSRF session when chaining retailInterest in the same run. */
+  session?: CsrfSession
 }
 
 export interface FetchAllampapirResult {
   papersMeta: AllampapirEnvelope
   pricesByPaper: Record<string, AllampapirEnvelope>
   papers: string[]
+  /** CSRF jar used for this fetch — pass to retailInterest to avoid a second bootstrap. */
+  session: CsrfSession
 }
 
 const DEFAULT_UA =
@@ -249,8 +253,9 @@ export async function fetchAllampapirSnapshots(
   const backoffMs = options.backoffMs ?? 1000
   const baseUrl = (options.baseUrl ?? ALLAMPAPIR_BASE_URL).replace(/\/$/, '')
   const userAgent = options.userAgent ?? DEFAULT_UA
-  const jar = new CookieJar()
-  const session = new CsrfSession(baseUrl, jar, fetchImpl, userAgent)
+  const session =
+    options.session ??
+    new CsrfSession(baseUrl, new CookieJar(), fetchImpl, userAgent)
 
   await mkdir(options.rawDir, { recursive: true })
 
@@ -317,5 +322,5 @@ export async function fetchAllampapirSnapshots(
     pricesByPaper[paper] = envelope
   }
 
-  return { papersMeta: metaResult.envelope, pricesByPaper, papers }
+  return { papersMeta: metaResult.envelope, pricesByPaper, papers, session }
 }

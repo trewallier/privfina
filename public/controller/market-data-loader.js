@@ -1,6 +1,7 @@
 /**
- * Runtime loader for published government-security market JSON (ADR 0034 / ROADMAP §6b).
- * Fetches same-origin Pages files under data/market/v1/ — never ÁKK.
+ * Runtime loader for published government-security market JSON
+ * (ADR 0034 / 0035 / 0036 / ROADMAP §6b–§6d).
+ * Fetches same-origin Pages files under data/market/v1/ — never official market hosts.
  */
 
 export const MARKET_SCHEMA_VERSION = 1
@@ -73,6 +74,16 @@ function validateQuotesFile(data, id) {
   return data
 }
 
+function validateRetailInterestFile(data) {
+  if (!isPlainObject(data) || data.schemaVersion !== MARKET_SCHEMA_VERSION) {
+    return null
+  }
+  if (!Array.isArray(data.rows)) {
+    return null
+  }
+  return data
+}
+
 async function fetchJson(url, fetchImpl) {
   const response = await fetchImpl(url, { credentials: 'same-origin' })
   if (!response.ok) {
@@ -113,6 +124,9 @@ export function createMarketDataLoader(options = {}) {
       async loadQuotes() {
         return null
       },
+      async loadRetailInterest() {
+        return null
+      },
       clearCache() {
         sessionCache.clear()
       }
@@ -125,6 +139,21 @@ export function createMarketDataLoader(options = {}) {
     async loadManifest() {
       try {
         return await cachedFetch(joinUrl(baseUrl, 'manifest.json'), fetchImpl, validateManifest)
+      } catch {
+        return null
+      }
+    },
+
+    /**
+     * Lakossági kamatok refs (ADR 0036). Soft-null when missing.
+     * @returns {Promise<object|null>}
+     */
+    async loadRetailInterest() {
+      try {
+        const manifest = await this.loadManifest()
+        const relative =
+          manifest?.refs?.retailInterest || 'refs/retail-interest.json'
+        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validateRetailInterestFile)
       } catch {
         return null
       }

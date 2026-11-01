@@ -1,9 +1,10 @@
 import { assertSeriesId } from './ids.ts'
-import { digestCanonical } from './digests.ts'
+import { digestCanonical, digestRetailInterest } from './digests.ts'
 import {
   FAMILIES,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
+  RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
   type FamilyCode,
   type LatestFile,
@@ -12,6 +13,7 @@ import {
   type NormalizedSnapshot,
   type QuotesFile,
   type QuoteRow,
+  type RetailInterestFile,
   type SeriesFile,
   type SeriesRecord,
   type SeriesStatus
@@ -33,6 +35,8 @@ export interface FamilyTreeState {
 export interface MarketTreeState {
   manifest: ManifestFile | null
   families: Record<FamilyCode, FamilyTreeState>
+  /** Lakossági kamatok refs (ADR 0036); null when never ingested. */
+  retailInterest: RetailInterestFile | null
 }
 
 export interface MergeResult {
@@ -67,7 +71,7 @@ export function emptyMarketTree(): MarketTreeState {
       quotes: {}
     }
   }
-  return { manifest: null, families }
+  return { manifest: null, families, retailInterest: null }
 }
 
 function quoteRowsEqual(a: QuoteRow, b: QuoteRow): boolean {
@@ -175,7 +179,12 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
       digests[`families/${family}/quotes/${id}.json`] = digestCanonical(q)
     }
   }
-  return {
+  const refs: ManifestFile['refs'] = {}
+  if (tree.retailInterest) {
+    refs.retailInterest = RETAIL_INTEREST_REF_PATH
+    digests[RETAIL_INTEREST_REF_PATH] = digestRetailInterest(tree.retailInterest)
+  }
+  const manifest: ManifestFile = {
     schemaVersion: SCHEMA_VERSION,
     asOf,
     generatedAt,
@@ -183,6 +192,10 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     paths,
     digests
   }
+  if (Object.keys(refs).length > 0) {
+    manifest.refs = refs
+  }
+  return manifest
 }
 
 function digestsEqual(a: ManifestFile | null, b: ManifestFile): boolean {
@@ -203,11 +216,24 @@ function digestsEqual(a: ManifestFile | null, b: ManifestFile): boolean {
 export function mergeSnapshot(
   previous: MarketTreeState,
   snapshot: NormalizedSnapshot,
-  options?: { generatedAt?: string; allowSameDayRewrite?: boolean }
+  options?: {
+    generatedAt?: string
+    allowSameDayRewrite?: boolean
+    /** When provided (including empty rows), replace retail-interest refs. When omitted, keep previous. */
+    retailInterest?: RetailInterestFile | null
+  }
 ): MergeResult {
   const tree: MarketTreeState = {
     manifest: previous.manifest,
-    families: {} as Record<FamilyCode, FamilyTreeState>
+    families: {} as Record<FamilyCode, FamilyTreeState>,
+    retailInterest: previous.retailInterest
+      ? {
+          schemaVersion: previous.retailInterest.schemaVersion,
+          asOf: previous.retailInterest.asOf,
+          generatedAt: previous.retailInterest.generatedAt,
+          rows: previous.retailInterest.rows.map((r) => ({ ...r }))
+        }
+      : null
   }
   for (const family of FAMILIES) {
     tree.families[family] = cloneFamily(previous.families[family])
@@ -265,6 +291,32 @@ export function mergeSnapshot(
     }
 
     fam.latest = rebuildLatest(fam.quotes)
+  }
+
+  if (options && 'retailInterest' in options) {
+    const incoming = options.retailInterest
+    if (
+      incoming &&
+      previous.retailInterest &&
+      digestRetailInterest(incoming) === digestRetailInterest(previous.retailInterest)
+    ) {
+      // Content unchanged: keep previous generatedAt so the on-disk file stays stable.
+      tree.retailInterest = {
+        schemaVersion: previous.retailInterest.schemaVersion,
+        asOf: previous.retailInterest.asOf,
+        generatedAt: previous.retailInterest.generatedAt,
+        rows: previous.retailInterest.rows.map((r) => ({ ...r }))
+      }
+    } else {
+      tree.retailInterest = incoming
+        ? {
+            schemaVersion: incoming.schemaVersion,
+            asOf: incoming.asOf,
+            generatedAt: incoming.generatedAt,
+            rows: incoming.rows.map((r) => ({ ...r }))
+          }
+        : null
+    }
   }
 
   const generatedAt = options?.generatedAt ?? new Date().toISOString()

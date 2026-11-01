@@ -17,8 +17,12 @@
       "latest": "families/bmap/latest.json"
     }
   },
+  "refs": {
+    "retailInterest": "refs/retail-interest.json"
+  },
   "digests": {
     "families/dkj/series.json": "fixture",
-    "families/dkj/latest.json": "fixture"
+    "families/dkj/latest.json": "fixture",
+    "refs/retail-interest.json": "fixture"
   }
 }

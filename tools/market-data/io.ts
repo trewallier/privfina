@@ -5,10 +5,12 @@ import { assertSeriesId } from './ids.ts'
 import { emptyMarketTree, type FamilyTreeState, type MarketTreeState } from './merge.ts'
 import {
   FAMILIES,
+  INFLATION_REF_PATH,
   QUOTE_COLS,
   RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
   type FamilyCode,
+  type InflationFile,
   type LatestFile,
   type ManifestFile,
   type QuotesFile,
@@ -72,6 +74,9 @@ export async function loadMarketTree(root: string): Promise<MarketTreeState> {
   const retailPath =
     tree.manifest?.refs?.retailInterest ?? RETAIL_INTEREST_REF_PATH
   tree.retailInterest = await readJsonIfExists<RetailInterestFile>(path.join(v1, retailPath))
+
+  const inflationPath = tree.manifest?.refs?.inflation ?? INFLATION_REF_PATH
+  tree.inflation = await readJsonIfExists<InflationFile>(path.join(v1, inflationPath))
   return tree
 }
 
@@ -92,6 +97,13 @@ export async function writeMarketTree(root: string, tree: MarketTreeState): Prom
     const abs = path.join(v1, rel)
     await mkdir(path.dirname(abs), { recursive: true })
     await writeFile(abs, canonicalJson(tree.retailInterest), 'utf8')
+  }
+
+  if (tree.inflation) {
+    const rel = tree.manifest.refs?.inflation ?? INFLATION_REF_PATH
+    const abs = path.join(v1, rel)
+    await mkdir(path.dirname(abs), { recursive: true })
+    await writeFile(abs, canonicalJson(tree.inflation), 'utf8')
   }
 }
 

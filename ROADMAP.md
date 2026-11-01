@@ -222,7 +222,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0034: Actions-only ÁKK contact, `market-data` branch, schemaVersion 1 layout, append-first merge, out-of-scope browser→ÁKK.
 - [x] `tools/market-data/` CLI: fetch (2 GETs) → normalize → merge/ingest under `data/market/v1/` (canonical ids, accumulating series, same-day conflict fail); Vitest fixtures (no live captures in git).
 - [x] `.github/workflows/market-data.yml`: `ingest` (read) + `push` (GitHub App token); fail-closed branch resolve; `validate-tree` before commit; pinned `tsx` + bash git helpers.
-- [x] Defer `refs/inflation.json` / `refs/dkj-base.json` for v1 — PMÁP inflation base and BMÁP DKJ-base stay manual until a later slice names a source.
+- [x] Defer `refs/dkj-base.json` for v1 — BMÁP DKJ-base stays manual until a later slice names a source (`refs/inflation.json` delivered in §6e / ADR 0037).
 - [x] Pages deploy materializes tip of `market-data` into the site artifact under `data/market/` (same-origin SPA `fetch`; soft-fail if branch missing).
 - [x] Contract fixture + SPA runtime loader (`manifest` → `series` → `latest` → optional `quotes/<id>`); session cache; manual-entry degrade when files missing.
 - [x] Commercial investment composer: series picker + optional settle-date control; auto-fill from published mapping; never clobber amount / purchase date.
@@ -237,7 +237,7 @@ Out of scope for §6b
 - Auto-authoring product-spec YAML from market data.
 - Bundling market JSON into the SPA JavaScript build.
 - Time-partitioning quote files (revisit only if measured size warrants).
-- Authoring `refs/inflation.json` / `refs/dkj-base.json` (still deferred; temporary quote-yield fill is UI-only).
+- Authoring `refs/dkj-base.json` (still deferred; temporary quote-yield fill is UI-only for BMÁP/PMÁP until consumers wire inflation refs).
 
 #### 6c) Dual-source ÁKK + allampapir.hu ingest (ADR 0035)
 Goal: enrich published `data/market/v1/` with Magyar Államkincstár retail network prices from allampapir.hu in the **same** scheduled Actions run as ÁKK, merge overlapping DKJ/PMÁP/BMÁP quotes (treasury-prefer for bid/ask), and publish every available paper family for later SPA use — still one digest-gated commit to `market-data`.
@@ -281,6 +281,25 @@ Out of scope for §6d
 - Replacing dual-source **price** ingest (ADR 0035).
 - Auto-authoring product YAML; `refs/inflation.json` / `refs/dkj-base.json`.
 - Browser CORS; XLSX as primary source.
+
+#### 6e) KSH inflation refs — STADAT ara0040 (ADR 0037)
+Goal: publish Hungarian CPI **Összesen** from KSH STADAT table 1.2.1.2 into `data/market/v1/refs/inflation.json` in the **same** scheduled Actions run as ÁKK + allampapir, append-only with hard fail on historical revisions, so later slices can drive PMÁP inflation inputs and CI sanity checks.
+
+Constraints
+- Actions-only contact to `ksh.hu`; prefer **CSV** URL (`ara0040.csv`) over HTML parsing; no XLSX dependency.
+- schemaVersion 1 additive refs; `unit: pct_change` (index − 100); series `yoy` | `mom` | `ytdFromDec` | `ytdYoy` + derived `annualAverage`.
+- Append-first `(series, ym)`; identical skip; different pct → fail ingest. Digest excludes `generatedAt`.
+- Daily cron; write only when digests change. Ingest-only this slice (no SPA / PMÁP autofill / rate sanity CI).
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0037 + ROADMAP / ownership / spec / CI playbook / market-data README.
+- [x] `tools/market-data/`: fetch-ksh-inflation + normalize + immutable merge + validate digests; Vitest fixtures.
+- [x] Wire `ingest` / `ci-ingest` / CLI / daily `market-data.yml` schedule; Pages materialization already sparse-copies `refs/`.
+
+Out of scope for §6e
+- SPA loader or composer inflation display; replacing temporary PMÁP `0 + askYield` autofill.
+- CI assert PMÁP effective ≈ premium + KSH annual average.
+- Category / nyugdíjas columns; `refs/dkj-base.json`; browser CORS to ksh.hu.
 
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).

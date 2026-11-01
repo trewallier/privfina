@@ -1,13 +1,15 @@
-import { digestCanonical, digestRetailInterest } from './digests.ts'
+import { digestCanonical, digestInflation, digestRetailInterest } from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import { publishedFamilies, type MarketTreeState } from './merge.ts'
 import {
+  INFLATION_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
   type FamilyCode,
+  type InflationSeriesKey,
   type ManifestFile
 } from './types.ts'
 
@@ -78,6 +80,11 @@ export function validateMarketTree(tree: MarketTreeState): void {
   } else if (tree.manifest.refs?.retailInterest || tree.manifest.digests[RETAIL_INTEREST_REF_PATH]) {
     throw new ValidateError('manifest references retail-interest but file is missing')
   }
+  if (tree.inflation) {
+    validateInflation(tree)
+  } else if (tree.manifest.refs?.inflation || tree.manifest.digests[INFLATION_REF_PATH]) {
+    throw new ValidateError('manifest references inflation but file is missing')
+  }
   verifyManifestDigests(tree)
 }
 
@@ -116,6 +123,62 @@ function validateRetailInterest(tree: MarketTreeState): void {
   }
 }
 
+const INFLATION_SERIES_KEYS: InflationSeriesKey[] = ['yoy', 'mom', 'ytdFromDec', 'ytdYoy']
+
+function validateInflation(tree: MarketTreeState): void {
+  const file = tree.inflation
+  if (!file) return
+  if (file.schemaVersion !== SCHEMA_VERSION) {
+    throw new ValidateError('inflation schemaVersion must be 1')
+  }
+  if (file.metric !== 'cpi_total' || file.unit !== 'pct_change') {
+    throw new ValidateError('inflation metric/unit must be cpi_total / pct_change')
+  }
+  if (!file.source || file.source.id !== 'ksh-stadat-ara0040') {
+    throw new ValidateError('inflation.source.id must be ksh-stadat-ara0040')
+  }
+  for (const key of INFLATION_SERIES_KEYS) {
+    const block = file.series?.[key]
+    if (!block) throw new ValidateError(`inflation.series missing ${key}`)
+    if (!Array.isArray(block.rows)) {
+      throw new ValidateError(`inflation.series.${key}.rows must be an array`)
+    }
+    for (const row of block.rows) {
+      if (!Array.isArray(row) || row.length !== 2) {
+        throw new ValidateError(`Bad inflation row shape in ${key}`)
+      }
+      const [ym, pct] = row
+      if (typeof ym !== 'string' || !/^\d{4}-\d{2}$/.test(ym)) {
+        throw new ValidateError(`Bad inflation ym in ${key}: ${String(ym)}`)
+      }
+      if (typeof pct !== 'number' || !Number.isFinite(pct)) {
+        throw new ValidateError(`Bad inflation pct in ${key} ${ym}`)
+      }
+    }
+  }
+  if (!Array.isArray(file.annualAverage?.rows)) {
+    throw new ValidateError('inflation.annualAverage.rows must be an array')
+  }
+  for (const row of file.annualAverage.rows) {
+    if (!Array.isArray(row) || row.length !== 2) {
+      throw new ValidateError('Bad inflation annualAverage row shape')
+    }
+    const [year, pct] = row
+    if (typeof year !== 'string' || !/^\d{4}$/.test(year)) {
+      throw new ValidateError(`Bad inflation annualAverage year: ${String(year)}`)
+    }
+    if (typeof pct !== 'number' || !Number.isFinite(pct)) {
+      throw new ValidateError(`Bad inflation annualAverage pct for ${year}`)
+    }
+  }
+  const refPath = tree.manifest?.refs?.inflation
+  if (refPath && refPath !== INFLATION_REF_PATH) {
+    throw new ValidateError(
+      `manifest.refs.inflation must be ${INFLATION_REF_PATH}, got ${refPath}`
+    )
+  }
+}
+
 /** Recompute file digests and require an exact match to manifest.digests. */
 export function verifyManifestDigests(tree: MarketTreeState): void {
   if (!tree.manifest) {
@@ -146,6 +209,9 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
   }
   if (tree.retailInterest) {
     digests[RETAIL_INTEREST_REF_PATH] = digestRetailInterest(tree.retailInterest)
+  }
+  if (tree.inflation) {
+    digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
   }
   return digests
 }

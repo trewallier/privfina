@@ -33,6 +33,7 @@ Recent decisions
 - `0034-government-securities-published-market-data-via-actions.md` — ÁKK market data via GitHub Actions only; compact JSON on `market-data` branch; SPA later fetches Pages-hosted files (ROADMAP §6b).
 - `0035-dual-source-akk-allampapir-market-data.md` — same workflow also fetches allampapir.hu (CSRF); combine ÁKK + treasury retail quotes; extended optional families (ROADMAP §6c).
 - `0036-allampapir-retail-interest-kamatok.md` — same workflow also fetches Lakossági kamatok (`retailInterest`); publishes `refs/retail-interest.json` with period rates + `offered` (ROADMAP §6d).
+- `0037-ksh-inflation-published-refs.md` — same workflow also fetches KSH STADAT ara0040 CSV; publishes append-only `refs/inflation.json` CPI total (ROADMAP §6e).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

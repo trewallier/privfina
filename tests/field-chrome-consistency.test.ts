@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { INFO_CHIP_SIZE_PX } from '../public/controller/field-chrome.js'
+import { applyFieldChrome, INFO_CHIP_SIZE_PX } from '../public/controller/field-chrome.js'
 import {
   FIXED_RATE_LOAN_FRONTEND_FIELD_ADAPTER,
   FIXED_RATE_LOAN_OUTPUT_FIELD_ADAPTER,
@@ -75,6 +75,21 @@ describe('info-chip size consistency', () => {
 
   it('prevents role markers from shrinking in the label row', () => {
     expect(extractCssRuleBody(css, '.field-role-marker')).toMatch(/flex-shrink:\s*0/)
+  })
+
+  it('defines auto and unavailable role-marker styles', () => {
+    expect(extractCssRuleBody(css, ".field-role-marker[data-role='auto']")).toMatch(
+      /background:\s*#eef8f1/
+    )
+    expect(extractCssRuleBody(css, ".field-role-marker[data-role='unavailable']")).toMatch(
+      /background:\s*#fff3ea/
+    )
+  })
+
+  it('keeps a shared form-control min-height and date calendar affordance', () => {
+    expect(css).toMatch(/--form-control-min-height:\s*calc\(1\.25em \+ 16px \+ 2px\)/)
+    expect(css).toMatch(/min-height:\s*var\(--form-control-min-height\)/)
+    expect(css).toMatch(/input\[type="date"\]::-webkit-calendar-picker-indicator/)
   })
 
   it('keeps folder-toggle free of accent fill / sticky iOS hover tint', () => {
@@ -196,5 +211,15 @@ describe('home-savings composer required/optional/calculated chrome', () => {
     const fieldChromeSrc = readRepoFile('public/controller/field-chrome.js')
     expect(fieldChromeSrc).toContain('FIELD_LABEL_CLASS_SELECTOR')
     expect(fieldChromeSrc).toMatch(/node\.remove\(\)/)
+  })
+
+  it('supports auto and unavailable markers in applyFieldChrome source', () => {
+    const fieldChromeSrc = readRepoFile('public/controller/field-chrome.js')
+    expect(fieldChromeSrc).toContain("marker.textContent = 'auto'")
+    expect(fieldChromeSrc).toContain("marker.textContent = 'unavailable'")
+    expect(fieldChromeSrc).toContain("marker.dataset.role = 'auto'")
+    expect(fieldChromeSrc).toContain("marker.dataset.role = 'unavailable'")
+    // Keep import used for future DOM chrome tests.
+    expect(typeof applyFieldChrome).toBe('function')
   })
 })

@@ -45,7 +45,7 @@ export function ensureDefaultPurchaseDateValue(input, todayIso = browserTodayIso
 
 /**
  * Quote settle-date + “Update from latest quote” map to DKJ price fields today.
- * PMÁP/BMÁP autofill uses series premium/issue only (refs/* deferred).
+ * PMÁP/BMÁP use series + temporary quote-yield (0+effective) fill; settle UI stays DKJ-only.
  * @param {string|null|undefined} family
  */
 export function familyUsesQuoteSettleControls(family) {

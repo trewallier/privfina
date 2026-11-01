@@ -41,7 +41,7 @@ describe('market-data-loader', () => {
     clearMarketDataSessionCache()
   })
 
-  it('loads manifest → series → latest for a family and filters active series', async () => {
+  it('loads manifest → series → latest for a family including past statuses', async () => {
     const loader = createMarketDataLoader({
       baseUrl: '/privfina/',
       fetchImpl: createFixtureFetch()
@@ -54,7 +54,8 @@ describe('market-data-loader', () => {
     const family = await loader.loadFamily('dkj')
     expect(family.available).toBe(true)
     expect(family.asOf).toBe('2026-11-02')
-    expect(family.series.map((row) => row.id)).toEqual(['D261125', 'D261223'])
+    expect(family.series.map((row) => row.id)).toEqual(['D261125', 'D261223', 'DOLD000'])
+    expect(family.series.find((row) => row.id === 'DOLD000')?.status).toBe('matured')
     expect(family.latest?.quotes.D261223.ask).toBe(99.3512)
   })
 

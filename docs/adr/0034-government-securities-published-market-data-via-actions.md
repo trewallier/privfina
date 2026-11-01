@@ -53,6 +53,8 @@ data/market/v1/
 - Maintainers can re-run ingest via `workflow_dispatch` without fabricating history ÁKK does not return in a single snapshot.
 - Raw intake dumps and experiment captures remain untracked (see `.gitignore`).
 - A separate data repo remains an escape hatch if published size or CI noise grows.
+- Commercial investment autofill (SPA) may temporarily map BMÁP/PMÁP quote ask yield (else bid yield) into `0 + effective` interest inputs until dedicated `refs/inflation.json` / `refs/dkj-base.json` exist — that UI mapping does **not** close the deferred-refs decision above.
+- Series picker availability labels may use a name-year + issue month/day heuristic (Europe/Budapest) until Államkincstár sale-window data is published; market-sourced inputs use an `auto` field-chrome marker (Manual entry restores required/optional).
 
 ## Out of scope
 

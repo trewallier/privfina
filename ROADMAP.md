@@ -228,6 +228,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Commercial investment composer: series picker + optional settle-date control; auto-fill from published mapping; never clobber amount / purchase date.
 - [x] Acceptance (code / preview): online path populates non-amount fields; offline path stays usable; no official ÁKK calls from the browser; edit path does not autofill without an explicit series pick.
 - [ ] Maintainer after merge: confirm live Pages serves `/privfina/data/market/v1/manifest.json` (deploy materialization).
+- [x] Commercial investment market UX follow-up: series change refreshes DKJ remaining days + BMÁP/PMÁP first-coupon / temporary `0 + askYield` rates; picker lists past + available (name-year + issue M/D heuristic until Államkincstár sale windows); `auto` / `unavailable` field chrome; uniform control heights; desktop native date-picker affordance; drop autofill field-list hint.
 
 Out of scope for §6b
 - Live CORS fetches from the browser to ÁKK or tertiary retail sites.
@@ -236,6 +237,7 @@ Out of scope for §6b
 - Auto-authoring product-spec YAML from market data.
 - Bundling market JSON into the SPA JavaScript build.
 - Time-partitioning quote files (revisit only if measured size warrants).
+- Authoring `refs/inflation.json` / `refs/dkj-base.json` (still deferred; temporary quote-yield fill is UI-only).
 
 #### 6c) Dual-source ÁKK + allampapir.hu ingest (ADR 0035)
 Goal: enrich published `data/market/v1/` with Magyar Államkincstár retail network prices from allampapir.hu in the **same** scheduled Actions run as ÁKK, merge overlapping DKJ/PMÁP/BMÁP quotes (treasury-prefer for bid/ask), and publish every available paper family for later SPA use — still one digest-gated commit to `market-data`.

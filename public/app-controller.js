@@ -138,7 +138,12 @@ import {
   findQuoteRowBySettleDate,
   latestQuoteForId
 } from './controller/market-data-loader.js'
-import { buildMarketAutofillPatch } from './controller/market-data-autofill.js'
+import {
+  MARKET_MARKETABLE_REQUIRED_FIELDS,
+  budapestTodayIso,
+  buildMarketAutofillPatch,
+  formatSeriesAvailabilityLabel
+} from './controller/market-data-autofill.js'
 import {
   browserTodayIso,
   ensureDefaultPurchaseDateValue,
@@ -966,11 +971,8 @@ function initController() {
     return {}
   }
 
-  function applyCommercialMarketFields(family, fields) {
-    if (!commercialInvestmentForm || !fields) {
-      return
-    }
-    const setters = {
+  function commercialMarketFieldSelectors(family) {
+    const maps = {
       dkj: {
         purchasePricePct: '#dkj-purchase-price-pct',
         termMonths: '#dkj-term-months',
@@ -980,16 +982,143 @@ function initController() {
       },
       pmap: {
         interestPremiumPct: '#pmap-interest-premium-pct',
+        previousYearAverageInflationPct: '#pmap-previous-year-inflation-pct',
         startDate: '#pmap-start-date',
-        issueDate: '#pmap-issue-date'
+        issueDate: '#pmap-issue-date',
+        firstCouponDate: '#pmap-first-coupon-date'
       },
       bmap: {
+        dkjBaseYieldPct: '#bmap-dkj-base-yield-pct',
         interestPremiumPct: '#bmap-interest-premium-pct',
         startDate: '#bmap-start-date',
-        issueDate: '#bmap-issue-date'
+        issueDate: '#bmap-issue-date',
+        firstCouponDate: '#bmap-first-coupon-date'
       }
     }
-    const map = setters[family]
+    return maps[family] || null
+  }
+
+  function reapplyCommercialProductFieldChrome(family) {
+    if (!commercialInvestmentForm) {
+      return
+    }
+    if (family === 'bmap') {
+      applyBmapSpecToForm({
+        bmapForm: commercialInvestmentForm,
+        bmapBox: commercialInvestmentBox
+      })
+    } else if (family === 'dkj') {
+      applyDkjSpecToForm({
+        investmentForm: commercialInvestmentForm,
+        investmentBox: commercialInvestmentBox
+      })
+    } else if (family === 'pmap') {
+      applyPmapSpecToForm({
+        investmentForm: commercialInvestmentForm,
+        investmentBox: commercialInvestmentBox
+      })
+    }
+  }
+
+  function markCommercialMarketFieldChrome(
+    family,
+    input,
+    { auto = false, unavailable = false } = {}
+  ) {
+    if (!input) {
+      return
+    }
+    const label = input.closest('label')
+    if (!label) {
+      return
+    }
+    const title = label.querySelector('.label-title')
+    const labelSpan =
+      title?.querySelector(
+        '.field-label, .dkj-field-label, .pmap-field-label, .bmap-field-label'
+      ) || null
+    const help = label.querySelector('.field-help p')
+    const labelClassName =
+      labelSpan?.className ||
+      (family === 'dkj'
+        ? 'dkj-field-label'
+        : family === 'pmap'
+          ? 'pmap-field-label'
+          : family === 'bmap'
+            ? 'bmap-field-label'
+            : 'field-label')
+    applyFieldChrome(
+      label,
+      {
+        label: labelSpan?.textContent?.trim() || input.name || 'Field',
+        description: help?.textContent || '',
+        required: Boolean(input.required) || input.hasAttribute('required'),
+        role: 'input',
+        auto,
+        unavailable,
+        helpId: input.id ? `${input.id}-help` : undefined,
+        labelClassName
+      },
+      input
+    )
+  }
+
+  function clearCommercialMarketSourcedFields(family) {
+    const map = commercialMarketFieldSelectors(family)
+    if (!commercialInvestmentForm || !map) {
+      return
+    }
+    Object.values(map).forEach((selector) => {
+      const input = commercialInvestmentForm.querySelector(selector)
+      if (!input) {
+        return
+      }
+      delete input.dataset.marketSourced
+      input.removeAttribute('title')
+    })
+    reapplyCommercialProductFieldChrome(family)
+  }
+
+  function syncCommercialMarketFieldChrome(family, sourcedNames = []) {
+    const map = commercialMarketFieldSelectors(family)
+    if (!commercialInvestmentForm || !map) {
+      return
+    }
+    const sourced = new Set(sourcedNames)
+    const marketable = MARKET_MARKETABLE_REQUIRED_FIELDS[family] || []
+    reapplyCommercialProductFieldChrome(family)
+
+    marketable.forEach((name) => {
+      const selector = map[name]
+      if (!selector) {
+        return
+      }
+      const input = commercialInvestmentForm.querySelector(selector)
+      if (!input) {
+        return
+      }
+      const isSourced = sourced.has(name)
+      const empty = !String(input.value ?? '').trim()
+      if (isSourced) {
+        input.dataset.marketSourced = 'true'
+        input.title = 'Filled from published market data'
+        markCommercialMarketFieldChrome(family, input, { auto: true })
+      } else if (empty) {
+        delete input.dataset.marketSourced
+        input.title = 'Not available from published market data'
+        markCommercialMarketFieldChrome(family, input, { unavailable: true })
+      } else {
+        delete input.dataset.marketSourced
+        input.removeAttribute('title')
+      }
+    })
+  }
+
+  function applyCommercialMarketFields(family, fields) {
+    if (!commercialInvestmentForm || !fields) {
+      return
+    }
+    const map = commercialMarketFieldSelectors(family)
     if (!map) {
       return
     }
@@ -1026,10 +1155,16 @@ function initController() {
     manual.textContent = 'Manual entry'
     commercialInvestmentSeriesInput.appendChild(manual)
 
+    const todayIso = budapestTodayIso() || browserTodayIso()
     commercialMarketFamilyState.series.forEach((entry) => {
       const option = document.createElement('option')
       option.value = entry.id
-      option.textContent = entry.name || entry.id
+      option.textContent = formatSeriesAvailabilityLabel(entry, todayIso)
+      option.dataset.availability = formatSeriesAvailabilityLabel(entry, todayIso).endsWith(
+        'available'
+      )
+        ? 'available'
+        : 'past'
       commercialInvestmentSeriesInput.appendChild(option)
     })
 
@@ -1133,16 +1268,19 @@ function initController() {
     const asOfLabel = commercialMarketFamilyState.asOf
       ? `Market data as of ${commercialMarketFamilyState.asOf}`
       : 'Market data loaded'
-    setCommercialMarketHint(`${asOfLabel}. Amount and purchase date are never auto-filled.`, true)
+    setCommercialMarketHint(asOfLabel, true)
 
     if (commercialInvestmentSeriesInput?.value) {
       await applyCommercialMarketSelection({ mode: 'fill-empty' })
-    } else if (
-      familyUsesQuoteSettleControls(code) &&
-      commercialInvestmentSettleDateInput &&
-      !String(commercialInvestmentSettleDateInput.value || '').trim()
-    ) {
-      commercialInvestmentSettleDateInput.value = commercialMarketFamilyState.asOf || ''
+    } else {
+      clearCommercialMarketSourcedFields(code)
+      if (
+        familyUsesQuoteSettleControls(code) &&
+        commercialInvestmentSettleDateInput &&
+        !String(commercialInvestmentSettleDateInput.value || '').trim()
+      ) {
+        commercialInvestmentSettleDateInput.value = commercialMarketFamilyState.asOf || ''
+      }
     }
   }
 
@@ -1164,7 +1302,18 @@ function initController() {
   async function applyCommercialMarketSelection({ mode = 'fill-empty' } = {}) {
     const family = commercialMarketFamilyState.family
     const seriesId = commercialInvestmentSeriesInput?.value || ''
-    if (!family || !seriesId) {
+    if (!family) {
+      return
+    }
+    if (!seriesId) {
+      clearCommercialMarketSourcedFields(family)
+      const asOfLabel = commercialMarketFamilyState.asOf
+        ? `Market data as of ${commercialMarketFamilyState.asOf}`
+        : commercialMarketFamilyState.available
+          ? 'Market data loaded'
+          : ''
+      setCommercialMarketHint(asOfLabel, Boolean(asOfLabel))
+      syncCommercialInvestmentPreview()
       return
     }
 
@@ -1187,17 +1336,22 @@ function initController() {
       current: readCommercialMarketCurrentFields(family),
       mode
     })
-    applyCommercialMarketFields(family, patch.fields)
-    if (patch.sourced.length > 0) {
-      const label =
-        mode === 'force-quote'
-          ? `Updated from market quote: ${patch.sourced.join(', ')}.`
-          : `Auto-filled from market data: ${patch.sourced.join(', ')}.`
-      setCommercialMarketHint(
-        `${label} Amount and purchase date are never auto-filled.`,
-        true
-      )
+    const fieldMap = commercialMarketFieldSelectors(family)
+    if (fieldMap && commercialInvestmentForm) {
+      Object.values(fieldMap).forEach((selector) => {
+        const input = commercialInvestmentForm.querySelector(selector)
+        if (input) {
+          delete input.dataset.marketSourced
+          input.removeAttribute('title')
+        }
+      })
     }
+    applyCommercialMarketFields(family, patch.fields)
+    syncCommercialMarketFieldChrome(family, patch.sourced)
+    const asOfLabel = commercialMarketFamilyState.asOf
+      ? `Market data as of ${commercialMarketFamilyState.asOf}`
+      : 'Market data loaded'
+    setCommercialMarketHint(asOfLabel, true)
     syncCommercialInvestmentPreview()
   }
 

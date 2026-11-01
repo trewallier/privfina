@@ -20,6 +20,8 @@
         --shadow: 0 20px 40px -30px rgba(26, 35, 50, 0.48);
         /* Keep in sync with INFO_CHIP_SIZE_PX in public/controller/field-chrome.js */
         --info-chip-size: 18px;
+        /* Shared form control height (padding 8px + ~1.25em line + border). */
+        --form-control-min-height: calc(1.25em + 16px + 2px);
       }
 
       * {
@@ -367,19 +369,23 @@
       }
 
       input,
-      select {
+      select,
+      textarea {
         border: 1px solid var(--border);
         padding: 8px 10px;
         background: #fff;
         width: 100%;
         max-width: 100%;
         min-width: 0;
+        box-sizing: border-box;
+        min-height: var(--form-control-min-height);
+        line-height: 1.25;
       }
 
       /*
         iOS Safari: appearance:none lets width:100% apply (avoids overflow after select).
         Empty dates then collapse unless the WebKit edit/value area fills the host.
-        Keep host height aligned with other padded inputs; clip labels as a safety net.
+        Keep host height aligned with sibling controls; restore calendar affordance on desktop.
       */
       input[type="date"] {
         display: block;
@@ -387,24 +393,33 @@
         width: 100%;
         max-width: 100%;
         min-width: 0;
-        /* padding 8px + ~1.25em line matches sibling text/select controls */
-        min-height: calc(1.25em + 16px + 2px);
+        min-height: var(--form-control-min-height);
         overflow: hidden;
         line-height: 1.25;
         -webkit-appearance: none;
         appearance: none;
       }
 
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        display: block;
+        opacity: 1;
+        cursor: pointer;
+        width: 1.15em;
+        height: 1.15em;
+        margin-left: 0.35em;
+        flex-shrink: 0;
+      }
+
       input[type="date"]::-webkit-datetime-edit,
       input[type="date"]::-webkit-datetime-edit-fields-wrapper {
         display: inline-flex;
-        width: 100%;
-        min-width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
         max-width: 100%;
       }
 
       input[type="date"]::-webkit-date-and-time-value {
-        min-width: 100%;
+        min-width: 0;
         text-align: left;
       }
 
@@ -735,6 +750,18 @@
         color: #5b6573;
         border-color: #d0d6df;
         background: #f4f6f9;
+      }
+
+      .field-role-marker[data-role='auto'] {
+        color: #116530;
+        border-color: #9dceb0;
+        background: #eef8f1;
+      }
+
+      .field-role-marker[data-role='unavailable'] {
+        color: #8a3b12;
+        border-color: #e0b08a;
+        background: #fff3ea;
       }
 
       .field-role-marker[data-role='output'],

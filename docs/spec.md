@@ -112,6 +112,10 @@ Acceptance criteria
 - [x] SPA loads published market JSON at runtime (not bundled) for commercial investment series listing / auto-fill (session cache; manual-entry degrade when files missing).
 - [x] Commercial investment composer offers a market series picker and optional quote settle date; auto-fills non-amount fields from published mapping; never clobbers amount or purchase date; edit path uses explicit “Update from latest quote”.
 - [x] Online path populates non-amount commercial investment fields from published market data; offline / missing-data path stays usable with manual entry; browser never calls official ÁKK endpoints.
+- [x] Commercial investment market series change refreshes DKJ remaining days and BMÁP/PMÁP first-coupon date; when quote ask/bid yield is present, BMÁP/PMÁP temporarily fill `0 + effective` interest (base 0, premium = yield) instead of leaving rate bases empty.
+- [x] Commercial investment market series picker lists active and past offerings and labels each as available vs past using the year in the paper name plus the issue month/day (Europe/Budapest; refine later with Államkincstár sale data).
+- [x] Commercial investment fields autofilled from market data show an `auto` chrome marker (Manual entry restores `required` / `optional`); fields still missing from the published mapping after a series pick show `unavailable`; the under-selector autofill field-list hint is removed.
+- [x] Site-wide form controls (`input` / `select` / `textarea` / calculated readouts) share one fixed control height so label text length does not change control height; native `type="date"` keeps a desktop calendar-picker affordance.
 - [x] Salary instrument supports two schedule modes: predefined custom rule (default) and cron-like rule.
 - [x] Salary custom rule generates monthly inflow on the last working day on or before a configured target day (default 10).
 - [x] Salary instrument explicitly omits tax handling in v1 and documents tax rules as future enhancement.

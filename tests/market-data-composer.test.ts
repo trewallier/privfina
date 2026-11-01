@@ -74,4 +74,16 @@ describe('commercial investment UI markup contracts', () => {
     expect(appController).toContain('ensureDefaultPurchaseDate(pmapPurchaseDateInput)')
     expect(appController).toContain('ensureDefaultPurchaseDate(bmapPurchaseDateInput)')
   })
+
+  it('wires availability labels, auto chrome sync, and omits autofill field-list hints', () => {
+    expect(appController).toContain('formatSeriesAvailabilityLabel')
+    expect(appController).toContain('syncCommercialMarketFieldChrome')
+    expect(appController).toContain('clearCommercialMarketSourcedFields')
+    expect(appController).not.toContain('Auto-filled from market data:')
+    expect(appController).toContain("firstCouponDate: '#bmap-first-coupon-date'")
+    expect(appController).toContain("dkjBaseYieldPct: '#bmap-dkj-base-yield-pct'")
+    expect(appController).toContain(
+      "previousYearAverageInflationPct: '#pmap-previous-year-inflation-pct'"
+    )
+  })
 })

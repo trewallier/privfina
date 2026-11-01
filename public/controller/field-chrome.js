@@ -189,14 +189,45 @@ function applyFieldChrome(label, meta, input = null) {
   const control = input || label.querySelector('input, select, textarea')
   if (control) {
     if (role === 'output' || role === 'derived') {
-      control.readOnly = true
+      setControlMarketReadonly(control, true)
       control.required = false
-    } else if (isAuto || isUnavailable) {
+    } else if (isAuto) {
       control.required = false
-    } else if (typeof meta.required === 'boolean') {
-      control.required = meta.required
+      setControlMarketReadonly(control, true)
+    } else if (isUnavailable) {
+      control.required = false
+      setControlMarketReadonly(control, false)
+    } else {
+      setControlMarketReadonly(control, false)
+      if (typeof meta.required === 'boolean') {
+        control.required = meta.required
+      }
     }
   }
+}
+
+/**
+ * Mark autofilled controls read-only without disabling <select> (FormData must still submit).
+ * @param {HTMLElement} control
+ * @param {boolean} readonly
+ */
+function setControlMarketReadonly(control, readonly) {
+  if (!control) {
+    return
+  }
+  if (control.tagName === 'SELECT') {
+    control.style.pointerEvents = readonly ? 'none' : ''
+    control.tabIndex = readonly ? -1 : 0
+    if (readonly) {
+      control.setAttribute('aria-readonly', 'true')
+      control.dataset.marketReadonly = 'true'
+    } else {
+      control.removeAttribute('aria-readonly')
+      delete control.dataset.marketReadonly
+    }
+    return
+  }
+  control.readOnly = Boolean(readonly)
 }
 
 /**

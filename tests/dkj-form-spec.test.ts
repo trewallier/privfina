@@ -28,12 +28,18 @@ describe('dkj frontend form metadata seam', () => {
     const orderedNames = orderedSpecFields(DKJ_PRODUCT_SPEC).map((field) => field.name)
     expect(orderedNames).toEqual([
       'faceValue',
+      'settlementDate',
       'purchasePricePct',
       'termMonths',
-      'settlementDate',
-      'maturityDate',
-      'remainingDays'
+      'remainingDays',
+      'maturityDate'
     ])
+  })
+
+  it('exposes denominationUnit matching the product YAML', () => {
+    const loadedSpec = loadDkjProductSpecYamlFromFiles() as any
+    expect(DKJ_PRODUCT_SPEC.denominationUnit).toBe(10000)
+    expect(loadedSpec.denominationUnit).toBe(10000)
   })
 
   it('maps DKJ fields onto dedicated host controls named like YAML', () => {

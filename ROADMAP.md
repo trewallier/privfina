@@ -229,6 +229,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Acceptance (code / preview): online path populates non-amount fields; offline path stays usable; no official ÁKK calls from the browser; edit path does not autofill without an explicit series pick.
 - [ ] Maintainer after merge: confirm live Pages serves `/privfina/data/market/v1/manifest.json` (deploy materialization).
 - [x] Commercial investment market UX follow-up: series change refreshes DKJ remaining days + BMÁP/PMÁP first-coupon / temporary `0 + askYield` rates; picker lists past + available (name-year + issue M/D heuristic until Államkincstár sale windows); `auto` / `unavailable` field chrome; uniform control heights; desktop native date-picker affordance; drop autofill field-list hint.
+- [x] Commercial investment UX restructure: fixed field rows (amount+purchase/settlement, rates or DKJ price+term, issue/start/coupon or DKJ remaining+maturity); remove quote settle date + Update-from-latest; autofill on series or purchase/settlement change with always-overwrite sourced fields, nearest-date clamp (purchase/settlement never `auto`), reset to Manual when no quote data; `auto` fields read-only; `denominationUnit` increment + default face/principal.
 
 Out of scope for §6b
 - Live CORS fetches from the browser to ÁKK or tertiary retail sites.

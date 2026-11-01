@@ -108,7 +108,7 @@ assumptions:
   - The investor receives face value at maturity.
   - DKJ may be purchased below par, at par, or above par depending on issuance or market price.
   - DKJ maturity buckets are represented as 3, 6, and 12 months for this product type.
-  - Denomination unit is 10,000 HUF.
+  - Denomination unit is 10,000 HUF; commercial composer face value defaults to that unit and accepts only multiples of it.
   - Issuance is modeled as auction-based.
   - Principal is repaid at maturity in one amount.
   - Annualized yield calculations use a 360-day convention consistent with the official DKJ formula.
@@ -122,11 +122,11 @@ ui:
       title: DKJ Inputs
       fieldNames:
         - faceValue
+        - settlementDate
         - purchasePricePct
         - termMonths
-        - settlementDate
-        - maturityDate
         - remainingDays
+        - maturityDate
 
 exampleRefs:
   - ./examples/nominal-case.yaml

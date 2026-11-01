@@ -133,7 +133,7 @@ assumptions:
   - Annual coupon rate is effective inflation base plus fixed premium.
   - Effective inflation base is max(previous-year-average-inflation, 0).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
-  - PMAP denomination unit is 1 HUF.
+  - PMAP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
   - The first coupon period may differ from a regular annual period.
   - The issuer does not redeem PMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
@@ -148,11 +148,11 @@ ui:
       title: PMAP Inputs
       fieldNames:
         - principal
-        - interestPremiumPct
-        - previousYearAverageInflationPct
-        - startDate
         - purchaseDate
+        - previousYearAverageInflationPct
+        - interestPremiumPct
         - issueDate
+        - startDate
         - firstCouponDate
 
 exampleRefs:

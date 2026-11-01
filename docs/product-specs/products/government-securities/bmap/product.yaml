@@ -135,7 +135,7 @@ assumptions:
   - Effective DKJ base yield is max(raw DKJ-based rate, 0).
   - The DKJ-based rate is conceptually tied to the last four successful 3-month DKJ auctions used for rate-setting.
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
-  - BMAP denomination unit is 1 HUF.
+  - BMAP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
   - BMAP uses a 360-day convention for accrued-interest and period coupon calculations.
   - The issuer does not redeem BMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
@@ -150,11 +150,11 @@ ui:
       title: BMAP Inputs
       fieldNames:
         - principal
+        - purchaseDate
         - dkjBaseYieldPct
         - interestPremiumPct
-        - startDate
-        - purchaseDate
         - issueDate
+        - startDate
         - firstCouponDate
 
 exampleRefs:

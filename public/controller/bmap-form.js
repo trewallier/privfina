@@ -5,7 +5,7 @@ import {
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
 import { getBmapFieldHelp } from './investment-field-help.js'
-import { parseMoneyAmount } from './money-format.js'
+import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const BMAP_PRODUCT_SPEC = {
   specVersion: 'v2alpha1',
@@ -14,6 +14,7 @@ const BMAP_PRODUCT_SPEC = {
   variant: 'bmap',
   productCode: 'bmap',
   displayName: 'Bonus Hungarian Government Security (BMÁP)',
+  denominationUnit: 1,
   inputs: [
     {
       name: 'principal',
@@ -141,11 +142,11 @@ const BMAP_PRODUCT_SPEC = {
         title: 'BMAP Inputs',
         fieldNames: [
           'principal',
+          'purchaseDate',
           'dkjBaseYieldPct',
           'interestPremiumPct',
-          'startDate',
-          'purchaseDate',
           'issueDate',
+          'startDate',
           'firstCouponDate'
         ]
       }
@@ -180,6 +181,13 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
       input.type = 'text'
       input.setAttribute('inputmode', 'decimal')
       input.classList.add('money-amount')
+      if (field.name === 'principal') {
+        applyDenominationToMoneyInput(input, {
+          denominationUnit: BMAP_PRODUCT_SPEC.denominationUnit,
+          minimum: field.constraints?.minimum,
+          setDefaultIfEmpty: true
+        })
+      }
     } else {
       input.type = toInputType(field)
     }

@@ -4,7 +4,6 @@ import { resolve } from 'path'
 import {
   browserTodayIso,
   ensureDefaultPurchaseDateValue,
-  familyUsesQuoteSettleControls,
   resolveSeriesSelectValue
 } from '../public/controller/market-data-composer.js'
 
@@ -40,12 +39,6 @@ describe('market-data-composer helpers', () => {
     expect(ensureDefaultPurchaseDateValue(filled, '2026-11-01')).toBe(false)
     expect(filled.value).toBe('2026-06-15')
   })
-
-  it('limits quote settle controls to DKJ (PMÁP/BMÁP use series fields only)', () => {
-    expect(familyUsesQuoteSettleControls('dkj')).toBe(true)
-    expect(familyUsesQuoteSettleControls('pmap')).toBe(false)
-    expect(familyUsesQuoteSettleControls('bmap')).toBe(false)
-  })
 })
 
 describe('commercial investment UI markup contracts', () => {
@@ -56,6 +49,27 @@ describe('commercial investment UI markup contracts', () => {
     expect(indexHtml).not.toContain('commercial-investment-readiness-hint')
     expect(indexHtml).not.toMatch(/Readiness:\s*fully-spec-backed/)
     expect(appController).not.toContain('resolveCommercialInvestmentReadinessHint')
+  })
+
+  it('removes quote settle date and update-from-latest controls', () => {
+    expect(indexHtml).not.toContain('commercial-investment-settle-date')
+    expect(indexHtml).not.toContain('Update from latest quote')
+    expect(appController).not.toContain('familyUsesQuoteSettleControls')
+    expect(appController).not.toContain('commercialInvestmentSettleDateInput')
+    expect(appController).not.toContain('commercialInvestmentUpdateQuoteButton')
+  })
+
+  it('uses fixed product field rows for amount, rates, and dates', () => {
+    expect(indexHtml).toContain('id="investment-dkj-wrap"')
+    expect(indexHtml).toMatch(
+      /id="dkj-face-value-wrap"[\s\S]*?id="dkj-settlement-date-wrap"[\s\S]*?id="dkj-purchase-price-pct-wrap"[\s\S]*?id="dkj-term-months-wrap"[\s\S]*?id="dkj-remaining-days-wrap"[\s\S]*?id="dkj-maturity-date-wrap"/
+    )
+    expect(indexHtml).toMatch(
+      /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-previous-year-inflation-pct-wrap"[\s\S]*?id="pmap-interest-premium-pct-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-start-date-wrap"[\s\S]*?id="pmap-first-coupon-date-wrap"/
+    )
+    expect(indexHtml).toMatch(
+      /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-dkj-base-yield-pct-wrap"[\s\S]*?id="bmap-interest-premium-pct-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-start-date-wrap"[\s\S]*?id="bmap-first-coupon-date-wrap"/
+    )
   })
 
   it('clears market series selection at the start of commercial investment edit', () => {
@@ -75,10 +89,13 @@ describe('commercial investment UI markup contracts', () => {
     expect(appController).toContain('ensureDefaultPurchaseDate(bmapPurchaseDateInput)')
   })
 
-  it('wires availability labels, auto chrome sync, and omits autofill field-list hints', () => {
+  it('wires series + purchase/settlement autofill and auto chrome sync', () => {
     expect(appController).toContain('formatSeriesAvailabilityLabel')
     expect(appController).toContain('syncCommercialMarketFieldChrome')
     expect(appController).toContain('clearCommercialMarketSourcedFields')
+    expect(appController).toContain('bindCommercialPurchaseSettlementAutofill')
+    expect(appController).toContain('decideMarketAutofillAction')
+    expect(appController).toContain('resolveQuoteForPurchaseDate')
     expect(appController).not.toContain('Auto-filled from market data:')
     expect(appController).toContain("firstCouponDate: '#bmap-first-coupon-date'")
     expect(appController).toContain("dkjBaseYieldPct: '#bmap-dkj-base-yield-pct'")

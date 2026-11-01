@@ -5,7 +5,7 @@ import {
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
 import { getDkjFieldHelp } from './investment-field-help.js'
-import { parseMoneyAmount } from './money-format.js'
+import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const DKJ_PRODUCT_SPEC = {
   specVersion: 'v2alpha1',
@@ -14,6 +14,7 @@ const DKJ_PRODUCT_SPEC = {
   variant: 'dkj',
   productCode: 'dkj',
   displayName: 'Discount Treasury Bond (DKJ)',
+  denominationUnit: 10000,
   inputs: [
     {
       name: 'faceValue',
@@ -118,11 +119,11 @@ const DKJ_PRODUCT_SPEC = {
         title: 'DKJ Inputs',
         fieldNames: [
           'faceValue',
+          'settlementDate',
           'purchasePricePct',
           'termMonths',
-          'settlementDate',
-          'maturityDate',
-          'remainingDays'
+          'remainingDays',
+          'maturityDate'
         ]
       }
     ]
@@ -203,6 +204,13 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
       input.type = 'text'
       input.setAttribute('inputmode', 'decimal')
       input.classList.add('money-amount')
+      if (field.name === 'faceValue') {
+        applyDenominationToMoneyInput(input, {
+          denominationUnit: DKJ_PRODUCT_SPEC.denominationUnit,
+          minimum: field.constraints?.minimum,
+          setDefaultIfEmpty: true
+        })
+      }
     } else {
       input.type = toInputType(field)
       input.classList.remove('money-amount')

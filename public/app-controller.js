@@ -135,20 +135,20 @@ import {
 } from './controller/money-format.js'
 import {
   createMarketDataLoader,
-  findQuoteRowBySettleDate,
-  latestQuoteForId
+  latestQuoteForId,
+  resolveQuoteForPurchaseDate
 } from './controller/market-data-loader.js'
 import {
   MARKET_MARKETABLE_REQUIRED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
+  decideMarketAutofillAction,
   findRetailInterestForSeries,
   formatSeriesAvailabilityLabel
 } from './controller/market-data-autofill.js'
 import {
   browserTodayIso,
   ensureDefaultPurchaseDateValue,
-  familyUsesQuoteSettleControls,
   resolveSeriesSelectValue
 } from './controller/market-data-composer.js'
 
@@ -252,12 +252,6 @@ function initController() {
   )
   const commercialInvestmentSeriesInput = document.getElementById(
     'commercial-investment-series'
-  )
-  const commercialInvestmentSettleDateInput = document.getElementById(
-    'commercial-investment-settle-date'
-  )
-  const commercialInvestmentUpdateQuoteButton = document.getElementById(
-    'commercial-investment-update-quote'
   )
   const commercialInvestmentMarketHint = document.getElementById(
     'commercial-investment-market-hint'
@@ -978,7 +972,6 @@ function initController() {
       dkj: {
         purchasePricePct: '#dkj-purchase-price-pct',
         termMonths: '#dkj-term-months',
-        settlementDate: '#dkj-settlement-date',
         maturityDate: '#dkj-maturity-date',
         remainingDays: '#dkj-remaining-days'
       },
@@ -998,6 +991,22 @@ function initController() {
       }
     }
     return maps[family] || null
+  }
+
+  function commercialPurchaseOrSettlementInput(family) {
+    if (!commercialInvestmentForm) {
+      return null
+    }
+    if (family === 'dkj') {
+      return commercialInvestmentForm.querySelector('#dkj-settlement-date')
+    }
+    if (family === 'pmap') {
+      return commercialInvestmentForm.querySelector('#pmap-purchase-date')
+    }
+    if (family === 'bmap') {
+      return commercialInvestmentForm.querySelector('#bmap-purchase-date')
+    }
+    return null
   }
 
   function reapplyCommercialProductFieldChrome(family) {
@@ -1180,27 +1189,6 @@ function initController() {
     if (commercialInvestmentSeriesInput) {
       commercialInvestmentSeriesInput.value = ''
     }
-    if (commercialInvestmentSettleDateInput) {
-      commercialInvestmentSettleDateInput.value = ''
-    }
-  }
-
-  function syncCommercialMarketQuoteControls(family) {
-    const showQuoteControls = familyUsesQuoteSettleControls(family)
-    const settleWrap = document.getElementById('commercial-investment-settle-date-wrap')
-    const updateWrap = document.getElementById('commercial-investment-update-quote-wrap')
-    if (settleWrap) {
-      settleWrap.hidden = !showQuoteControls
-    }
-    if (updateWrap) {
-      updateWrap.hidden = !showQuoteControls
-    }
-    if (commercialInvestmentSettleDateInput) {
-      commercialInvestmentSettleDateInput.disabled = !showQuoteControls
-    }
-    if (commercialInvestmentUpdateQuoteButton) {
-      commercialInvestmentUpdateQuoteButton.disabled = !showQuoteControls
-    }
   }
 
   function resetCommercialMarketControls() {
@@ -1214,7 +1202,6 @@ function initController() {
     }
     rebuildCommercialMarketSeriesOptions('')
     clearCommercialMarketSelection()
-    syncCommercialMarketQuoteControls(null)
     setCommercialMarketRowVisible(false)
   }
 
@@ -1253,12 +1240,7 @@ function initController() {
       if (commercialInvestmentSeriesInput) {
         commercialInvestmentSeriesInput.disabled = true
       }
-      if (commercialInvestmentSettleDateInput) {
-        commercialInvestmentSettleDateInput.disabled = true
-      }
-      if (commercialInvestmentUpdateQuoteButton) {
-        commercialInvestmentUpdateQuoteButton.disabled = true
-      }
+      clearCommercialMarketSourcedFields(code)
       return
     }
 
@@ -1267,7 +1249,6 @@ function initController() {
     }
 
     setCommercialMarketRowVisible(true)
-    syncCommercialMarketQuoteControls(code)
     // Always explicit: default preserveSeriesId '' forces Manual entry.
     rebuildCommercialMarketSeriesOptions(preserveSeriesId)
     const asOfLabel = commercialMarketFamilyState.asOf
@@ -1276,35 +1257,28 @@ function initController() {
     setCommercialMarketHint(asOfLabel, true)
 
     if (commercialInvestmentSeriesInput?.value) {
-      await applyCommercialMarketSelection({ mode: 'fill-empty' })
+      await applyCommercialMarketSelection()
     } else {
       clearCommercialMarketSourcedFields(code)
-      if (
-        familyUsesQuoteSettleControls(code) &&
-        commercialInvestmentSettleDateInput &&
-        !String(commercialInvestmentSettleDateInput.value || '').trim()
-      ) {
-        commercialInvestmentSettleDateInput.value = commercialMarketFamilyState.asOf || ''
-      }
     }
   }
 
-  async function resolveCommercialMarketQuote(seriesId, settleDate) {
+  async function resolveCommercialMarketQuoteLookup(seriesId, requestedDate) {
     const family = commercialMarketFamilyState.family
     if (!family || !seriesId) {
       return null
     }
 
     const latest = latestQuoteForId(commercialMarketFamilyState.latest?.quotes, seriesId)
-    if (!settleDate || (latest && latest.d === settleDate)) {
-      return latest
-    }
-
     const quotesFile = await marketDataLoader.loadQuotes(family, seriesId)
-    return findQuoteRowBySettleDate(quotesFile, settleDate) || latest
+    return resolveQuoteForPurchaseDate({
+      requestedDate,
+      latestQuote: latest,
+      quotesFile
+    })
   }
 
-  async function applyCommercialMarketSelection({ mode = 'fill-empty' } = {}) {
+  async function applyCommercialMarketSelection() {
     const family = commercialMarketFamilyState.family
     const seriesId = commercialInvestmentSeriesInput?.value || ''
     if (!family) {
@@ -1324,22 +1298,40 @@ function initController() {
 
     const series =
       commercialMarketFamilyState.series.find((entry) => entry.id === seriesId) || null
-    let settleDate = commercialInvestmentSettleDateInput?.value || ''
-    if (!settleDate) {
-      const latest = latestQuoteForId(commercialMarketFamilyState.latest?.quotes, seriesId)
-      settleDate = latest?.d || commercialMarketFamilyState.asOf || ''
-      if (commercialInvestmentSettleDateInput && settleDate) {
-        commercialInvestmentSettleDateInput.value = settleDate
+    const dateInput = commercialPurchaseOrSettlementInput(family)
+    const requestedDate = String(dateInput?.value || '').trim()
+    const lookup = await resolveCommercialMarketQuoteLookup(seriesId, requestedDate)
+
+    if (decideMarketAutofillAction(lookup) === 'reset-manual') {
+      if (commercialInvestmentSeriesInput) {
+        commercialInvestmentSeriesInput.value = ''
       }
+      clearCommercialMarketSourcedFields(family)
+      setCommercialMarketHint(
+        'No published quote data for the selected series/period — switched to Manual entry.',
+        true
+      )
+      syncCommercialInvestmentPreview()
+      return
     }
 
-    const quote = await resolveCommercialMarketQuote(seriesId, settleDate)
+    // Clamp purchase/settlement to the nearest valid quote date; never mark it auto.
+    if (dateInput && lookup.clamped && lookup.date && dateInput.value !== lookup.date) {
+      dateInput.value = lookup.date
+    }
+
+    const current = readCommercialMarketCurrentFields(family)
+    if (family === 'dkj' && dateInput) {
+      current.settlementDate = dateInput.value
+    } else if ((family === 'pmap' || family === 'bmap') && dateInput) {
+      current.purchaseDate = dateInput.value
+    }
+
     const patch = buildMarketAutofillPatch({
       family,
       series,
-      quote,
-      current: readCommercialMarketCurrentFields(family),
-      mode
+      quote: lookup.quote,
+      current
     })
     const fieldMap = commercialMarketFieldSelectors(family)
     if (fieldMap && commercialInvestmentForm) {
@@ -1373,7 +1365,11 @@ function initController() {
             maximumFractionDigits: 3
           })}%${retailRow?.offered ? ' · offered' : ''}`
         : ''
-    setCommercialMarketHint(`${asOfLabel}${rateHint}`, true)
+    const clampHint =
+      lookup.clamped && lookup.date
+        ? ` · Purchase/settlement clamped to ${lookup.date}`
+        : ''
+    setCommercialMarketHint(`${asOfLabel}${clampHint}${rateHint}`, true)
     syncCommercialInvestmentPreview()
   }
 
@@ -2241,42 +2237,30 @@ function initController() {
       if (commercialInvestmentSeriesInput) {
         commercialInvestmentSeriesInput.value = ''
       }
-      if (commercialInvestmentSettleDateInput) {
-        commercialInvestmentSettleDateInput.value = ''
-      }
       applyCommercialInvestmentProductUi(commercialInvestmentProductInput.value)
       syncCommercialInvestmentPreview()
     })
   }
   if (commercialInvestmentSeriesInput) {
     commercialInvestmentSeriesInput.addEventListener('change', () => {
-      void applyCommercialMarketSelection({ mode: 'fill-empty' })
+      void applyCommercialMarketSelection()
     })
   }
-  if (commercialInvestmentSettleDateInput) {
-    commercialInvestmentSettleDateInput.addEventListener('change', () => {
+
+  function bindCommercialPurchaseSettlementAutofill(input) {
+    if (!input) {
+      return
+    }
+    input.addEventListener('change', () => {
       if (!commercialInvestmentSeriesInput?.value) {
         return
       }
-      void applyCommercialMarketSelection({ mode: 'fill-empty' })
+      void applyCommercialMarketSelection()
     })
   }
-  if (commercialInvestmentUpdateQuoteButton) {
-    commercialInvestmentUpdateQuoteButton.addEventListener('click', () => {
-      if (!commercialInvestmentSeriesInput?.value) {
-        setCommercialMarketHint('Select a market series before updating from the latest quote.', true)
-        return
-      }
-      const latest = latestQuoteForId(
-        commercialMarketFamilyState.latest?.quotes,
-        commercialInvestmentSeriesInput.value
-      )
-      if (latest?.d && commercialInvestmentSettleDateInput) {
-        commercialInvestmentSettleDateInput.value = latest.d
-      }
-      void applyCommercialMarketSelection({ mode: 'force-quote' })
-    })
-  }
+  bindCommercialPurchaseSettlementAutofill(dkjSettlementDateInput)
+  bindCommercialPurchaseSettlementAutofill(pmapPurchaseDateInput)
+  bindCommercialPurchaseSettlementAutofill(bmapPurchaseDateInput)
 
   bindLoanPreviewEvents({
     principalInput: loanPrincipalInput,

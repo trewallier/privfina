@@ -1,9 +1,18 @@
+import { combineSnapshots } from './combine.ts'
 import { fetchAkkSnapshots } from './fetch-akk.ts'
+import { fetchAllampapirSnapshots } from './fetch-allampapir.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
 import { normalizeAkkSnapshots } from './normalize.ts'
-import type { AkkEnvelope } from './types.ts'
+import { normalizeAllampapirSnapshots } from './normalize-allampapir.ts'
+import {
+  emptyNormalizedByFamily,
+  type AkkEnvelope,
+  type AllampapirEnvelope,
+  type NormalizedSnapshot
+} from './types.ts'
 import { validateMarketTree } from './validate.ts'
+import path from 'node:path'
 
 /** Exit: success with changes. */
 export const EXIT_UPDATED = 0
@@ -24,9 +33,17 @@ export interface IngestOptions {
    */
   previousRoot?: string
   rawDir: string
-  /** Skip network; use provided envelopes (tests / offline). */
+  /** Skip ÁKK network; use provided envelopes (tests / offline). */
   catalog?: AkkEnvelope
   networkRates?: AkkEnvelope
+  /**
+   * Skip allampapir network; use provided per-paper envelopes (and optional meta).
+   * When omitted with live ÁKK, allampapir is fetched. When omitted with fixture ÁKK,
+   * an empty allampapir snapshot is combined (ÁKK-only offline).
+   */
+  allampapirPrices?: Record<string, AllampapirEnvelope>
+  /** When true, do not fetch allampapir even if prices fixtures omitted. */
+  skipAllampapir?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -34,30 +51,56 @@ export interface IngestOptions {
 export interface IngestReport extends MergeResult {
   root: string
   marketRoot: string
+  dualSource: boolean
 }
 
-/** Fetch (optional) → normalize → merge → validate → write when changed. */
+function emptyAllampapirSnapshot(): NormalizedSnapshot {
+  return { asOf: null, byFamily: emptyNormalizedByFamily() }
+}
+
+/** Fetch (optional) → normalize → combine → merge → validate → write when changed. */
 export async function ingestMarketData(options: IngestOptions): Promise<IngestReport> {
   let catalog = options.catalog
   let networkRates = options.networkRates
 
   if (!catalog || !networkRates) {
     const fetched = await fetchAkkSnapshots({
-      rawDir: options.rawDir,
+      rawDir: path.join(options.rawDir, 'akk'),
       fetchImpl: options.fetchImpl
     })
     catalog = fetched.catalog
     networkRates = fetched.networkRates
   }
 
-  const snapshot = normalizeAkkSnapshots(catalog, networkRates)
+  const akkSnapshot = normalizeAkkSnapshots(catalog, networkRates, {
+    requireFamilies: false
+  })
+
+  let allampapirSnapshot: NormalizedSnapshot
+  if (options.allampapirPrices) {
+    allampapirSnapshot = normalizeAllampapirSnapshots(options.allampapirPrices)
+  } else if (options.skipAllampapir || (options.catalog && options.networkRates)) {
+    // Offline ÁKK-only fixtures: empty treasury side; combine still enforces required families.
+    allampapirSnapshot = emptyAllampapirSnapshot()
+  } else {
+    const fetched = await fetchAllampapirSnapshots({
+      rawDir: path.join(options.rawDir, 'allampapir'),
+      fetchImpl: options.fetchImpl
+    })
+    allampapirSnapshot = normalizeAllampapirSnapshots(fetched.pricesByPaper)
+  }
+
+  const combined = combineSnapshots(akkSnapshot, allampapirSnapshot)
   const previous = await loadMarketTree(options.previousRoot ?? options.root)
-  const merged = mergeSnapshot(previous, snapshot, { generatedAt: options.generatedAt })
+  // Dual-source combined rows may rewrite same settleDate vs an ÁKK-only baseline (cutover).
+  const merged = mergeSnapshot(previous, combined.snapshot, {
+    generatedAt: options.generatedAt,
+    allowSameDayRewrite: combined.dualSource
+  })
   validateMarketTree(merged.tree)
 
   if (merged.changed) {
     await writeMarketTree(options.root, merged.tree)
-    // Defense-in-depth: re-load and validate what we wrote.
     const written = await loadMarketTree(options.root)
     validateMarketTree(written)
   }
@@ -65,7 +108,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   return {
     ...merged,
     root: options.root,
-    marketRoot: marketRoot(options.root)
+    marketRoot: marketRoot(options.root),
+    dualSource: combined.dualSource
   }
 }
 

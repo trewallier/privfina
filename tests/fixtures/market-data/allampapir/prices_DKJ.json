@@ -1,0 +1,48 @@
+{
+  "message": "ok",
+  "status": true,
+  "code": 200,
+  "data": {
+    "settle_date": "2026.11.02",
+    "papermeta": {
+      "description": "fixture",
+      "smalltext": ""
+    },
+    "data": [
+      {
+        "name": "D261125",
+        "longName": "D261125",
+        "rawName": "D261125",
+        "securityType": "DKJ",
+        "settleDate": "2026.11.02",
+        "issueDate": "2026.07.29",
+        "maturityDate": "2026.11.25",
+        "currency": "HUF",
+        "bidPrice": "99,6150",
+        "askPrice": "",
+        "bidYield": "6,05",
+        "askYield": "",
+        "accruedInterest": 0,
+        "coupon": 0,
+        "green": false
+      },
+      {
+        "name": "D261223",
+        "longName": "D261223",
+        "rawName": "D261223",
+        "securityType": "DKJ",
+        "settleDate": "2026.11.02",
+        "issueDate": "2025.12.23",
+        "maturityDate": "2026.12.23",
+        "currency": "HUF",
+        "bidPrice": "99,1502",
+        "askPrice": "99,3512",
+        "bidYield": "6,05",
+        "askYield": "4,61",
+        "accruedInterest": 0,
+        "coupon": 0,
+        "green": false
+      }
+    ]
+  }
+}

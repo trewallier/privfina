@@ -1,0 +1,48 @@
+{
+  "message": "ok",
+  "status": true,
+  "code": 200,
+  "data": {
+    "settle_date": "2026.11.02",
+    "papermeta": {
+      "description": "fixture",
+      "smalltext": ""
+    },
+    "data": [
+      {
+        "name": "2032/S_BABA",
+        "longName": "A321202S13",
+        "rawName": "2032/S_BABA",
+        "securityType": "BABA",
+        "settleDate": "2026.11.02",
+        "issueDate": "2013.12.02",
+        "maturityDate": "2032.12.02",
+        "currency": "HUF",
+        "bidPrice": "100,0000",
+        "askPrice": "100,0000",
+        "bidYield": "",
+        "askYield": "",
+        "accruedInterest": "6,1493",
+        "coupon": null,
+        "green": false
+      },
+      {
+        "name": "2033/S_BABA",
+        "longName": "A330201S14",
+        "rawName": "2033/S_BABA",
+        "securityType": "BABA",
+        "settleDate": "2026.11.02",
+        "issueDate": "2014.02.03",
+        "maturityDate": "2033.02.01",
+        "currency": "HUF",
+        "bidPrice": "100,0000",
+        "askPrice": "100,0000",
+        "bidYield": "",
+        "askYield": "",
+        "accruedInterest": "5,5551",
+        "coupon": null,
+        "green": false
+      }
+    ]
+  }
+}

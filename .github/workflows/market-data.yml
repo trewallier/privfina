@@ -1,7 +1,8 @@
-# Scheduled ÁKK → compact data/market/v1 on the market-data branch (ADR 0034 / ROADMAP §6b).
+# Scheduled ÁKK + allampapir.hu → compact data/market/v1 on the market-data branch
+# (ADR 0034 / 0035 / ROADMAP §6b–§6c).
 #
 # Security split:
-# - ingest: contents:read; contacts ÁKK; never holds a write token
+# - ingest: contents:read; contacts ÁKK + allampapir.hu; never holds a write token
 # - push: GitHub App installation token only (not GITHUB_TOKEN) for market-data checkout/push
 # Paths via env; single-line run: steps; TS via pinned tsx (not --experimental-strip-types).
 name: Market data ingest
@@ -69,7 +70,7 @@ jobs:
         env:
           MARKET_BASELINE_ROOT: ${{ github.workspace }}/baseline
           MARKET_OUT_ROOT: ${{ github.workspace }}/out
-          MARKET_RAW_DIR: ${{ runner.temp }}/akk-raw
+          MARKET_RAW_DIR: ${{ runner.temp }}/market-raw
         run: npx tsx tools/market-data/cli.ts ci-ingest
 
       - name: Upload published market-data artifact

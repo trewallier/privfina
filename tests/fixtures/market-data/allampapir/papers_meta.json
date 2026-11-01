@@ -1,0 +1,100 @@
+{
+  "message": "ok",
+  "status": true,
+  "code": 200,
+  "data": {
+    "papers": {
+      "MAPP": {
+        "name": "Magyar Állampapír<br>Plusz",
+        "fields": [
+          "name",
+          "maturityDate",
+          "bidPrice",
+          "bidYield",
+          "bidEhmYield",
+          "askPrice",
+          "askYield",
+          "askEhmYield",
+          "accruedInterest"
+        ]
+      },
+      "MAP": {
+        "name": "Magyar<br>Államkötvények",
+        "fields": [
+          "name",
+          "issueDate",
+          "maturityDate",
+          "bidPrice",
+          "bidYield",
+          "bidEhmYield",
+          "askPrice",
+          "askYield",
+          "askEhmYield",
+          "accruedInterest"
+        ]
+      },
+      "1MAP": {
+        "name": "Egyéves<br>Magyar Állampapír",
+        "fields": [
+          "name",
+          "maturityDate",
+          "maturityInDays",
+          "bidPrice",
+          "bidEhmYield",
+          "coupon",
+          "accruedInterest"
+        ]
+      },
+      "BABA": {
+        "name": "Babakötvény",
+        "fields": [
+          "name",
+          "maturityDate",
+          "bidPrice",
+          "bidYield",
+          "bidEhmYield",
+          "askPrice",
+          "askYield",
+          "askEhmYield",
+          "accruedInterest"
+        ]
+      },
+      "DKJ": {
+        "name": "Diszkont<br>Kincstárjegy",
+        "fields": [
+          "name",
+          "maturityDate",
+          "maturityInDays",
+          "bidPrice",
+          "bidYield",
+          "bidEhmYield",
+          "askPrice",
+          "askYield",
+          "askEhmYield"
+        ]
+      },
+      "EMAP": {
+        "name": "Euróban kibocsátott<br>Magyar Állampapírok",
+        "fields": [
+          "name",
+          "maturityDate",
+          "bidPrice",
+          "bidYield",
+          "bidEhmYield",
+          "askPrice",
+          "askYield",
+          "askEhmYield",
+          "accruedInterest"
+        ]
+      }
+    },
+    "prices": {
+      "settle_date": "2026.11.02",
+      "data": [],
+      "papermeta": {
+        "description": "",
+        "smalltext": ""
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { digestCanonical } from './digests.ts'
 import {
   FAMILIES,
   QUOTE_COLS,
+  REQUIRED_FAMILIES,
   SCHEMA_VERSION,
   type FamilyCode,
   type LatestFile,
@@ -40,6 +41,8 @@ export interface MergeResult {
   asOf: string | null
   appendedRows: number
   skippedDuplicates: number
+  /** Same-day rows replaced when `allowSameDayRewrite` (dual-source cutover). */
+  rewrittenRows: number
 }
 
 function emptyLatest(): LatestFile {
@@ -56,14 +59,15 @@ function emptyQuotes(family: FamilyCode, id: string): QuotesFile {
 }
 
 export function emptyMarketTree(): MarketTreeState {
-  return {
-    manifest: null,
-    families: {
-      dkj: { series: emptySeries('dkj'), latest: emptyLatest(), quotes: {} },
-      pmap: { series: emptySeries('pmap'), latest: emptyLatest(), quotes: {} },
-      bmap: { series: emptySeries('bmap'), latest: emptyLatest(), quotes: {} }
+  const families = {} as Record<FamilyCode, FamilyTreeState>
+  for (const family of FAMILIES) {
+    families[family] = {
+      series: emptySeries(family),
+      latest: emptyLatest(),
+      quotes: {}
     }
   }
+  return { manifest: null, families }
 }
 
 function quoteRowsEqual(a: QuoteRow, b: QuoteRow): boolean {
@@ -105,7 +109,6 @@ export function accumulateSeries(
     const prev = byId.get(s.id)
     byId.set(s.id, prev ? { ...prev, ...s } : { ...s })
   }
-  // Guarantee a series row for every quotes file on disk / in tree.
   for (const id of quoteIdsWithHistory) {
     if (!byId.has(id)) {
       byId.set(id, {
@@ -141,10 +144,26 @@ function rebuildLatest(quotes: Record<string, QuotesFile>): LatestFile {
   return latest
 }
 
+/** Required families always published; optional only when they have series or quote history. */
+export function publishedFamilies(tree: MarketTreeState): FamilyCode[] {
+  const out: FamilyCode[] = []
+  for (const family of FAMILIES) {
+    const fam = tree.families[family]
+    const required = (REQUIRED_FAMILIES as readonly string[]).includes(family)
+    const hasContent =
+      fam.series.series.length > 0 ||
+      Object.keys(fam.quotes).length > 0 ||
+      Object.keys(fam.latest.quotes).length > 0
+    if (required || hasContent) out.push(family)
+  }
+  return out
+}
+
 function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: string): ManifestFile {
   const digests: Record<string, string> = {}
   const paths = {} as ManifestFile['paths']
-  for (const family of FAMILIES) {
+  const families = publishedFamilies(tree)
+  for (const family of families) {
     const fam = tree.families[family]
     paths[family] = {
       series: `families/${family}/series.json`,
@@ -160,7 +179,7 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     schemaVersion: SCHEMA_VERSION,
     asOf,
     generatedAt,
-    families: [...FAMILIES],
+    families,
     paths,
     digests
   }
@@ -177,30 +196,32 @@ function digestsEqual(a: ManifestFile | null, b: ManifestFile): boolean {
 
 /**
  * Merge a normalized snapshot into an existing market tree (append-first).
- * Same (id, settleDate) + identical values → skip; same date + different values → fail.
+ * Same (id, settleDate) + identical values → skip; same date + different values → fail
+ * unless `allowSameDayRewrite` (dual-source combined snapshot / ÁKK-only → treasury cutover).
  * series.json accumulates; statuses mark active / matured / delisted.
  */
 export function mergeSnapshot(
   previous: MarketTreeState,
   snapshot: NormalizedSnapshot,
-  options?: { generatedAt?: string }
+  options?: { generatedAt?: string; allowSameDayRewrite?: boolean }
 ): MergeResult {
   const tree: MarketTreeState = {
     manifest: previous.manifest,
-    families: {
-      dkj: cloneFamily(previous.families.dkj),
-      pmap: cloneFamily(previous.families.pmap),
-      bmap: cloneFamily(previous.families.bmap)
-    }
+    families: {} as Record<FamilyCode, FamilyTreeState>
+  }
+  for (const family of FAMILIES) {
+    tree.families[family] = cloneFamily(previous.families[family])
   }
 
   let appendedRows = 0
   let skippedDuplicates = 0
+  let rewrittenRows = 0
+  const allowSameDayRewrite = options?.allowSameDayRewrite === true
   const asOf = snapshot.asOf
 
   for (const family of FAMILIES) {
     const fam = tree.families[family]
-    const incoming = snapshot.byFamily[family]
+    const incoming = snapshot.byFamily[family] ?? { series: [], quotes: [] }
     const quotedIds = new Set(incoming.quotes.map((q) => q.id))
 
     for (const q of incoming.quotes) {
@@ -210,10 +231,16 @@ export function mergeSnapshot(
         file = emptyQuotes(family, q.id)
         fam.quotes[q.id] = file
       }
-      const existing = file.rows.find((r) => r[0] === q.row[0])
-      if (existing) {
+      const existingIdx = file.rows.findIndex((r) => r[0] === q.row[0])
+      if (existingIdx >= 0) {
+        const existing = file.rows[existingIdx]
         if (quoteRowsEqual(existing, q.row)) {
           skippedDuplicates += 1
+          continue
+        }
+        if (allowSameDayRewrite) {
+          file.rows[existingIdx] = [...q.row] as QuoteRow
+          rewrittenRows += 1
           continue
         }
         throw new MergeError(
@@ -245,7 +272,7 @@ export function mergeSnapshot(
   const changed = !digestsEqual(previous.manifest, manifest)
   tree.manifest = manifest
 
-  return { tree, changed, asOf, appendedRows, skippedDuplicates }
+  return { tree, changed, asOf, appendedRows, skippedDuplicates, rewrittenRows }
 }
 
 function cloneFamily(fam: FamilyTreeState): FamilyTreeState {

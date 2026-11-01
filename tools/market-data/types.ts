@@ -1,10 +1,33 @@
-/** schemaVersion 1 published market-data shapes (ADR 0034). */
+/** schemaVersion 1 published market-data shapes (ADR 0034 / 0035). */
 
 export const SCHEMA_VERSION = 1 as const
 
-export type FamilyCode = 'dkj' | 'pmap' | 'bmap'
+export type FamilyCode =
+  | 'dkj'
+  | 'pmap'
+  | 'bmap'
+  | 'fixmap'
+  | 'ktv'
+  | 'mapp'
+  | 'baba'
+  | 'emap'
+  | 'omap'
 
-export const FAMILIES: readonly FamilyCode[] = ['dkj', 'pmap', 'bmap'] as const
+/** All published family folders (required + optional). */
+export const FAMILIES: readonly FamilyCode[] = [
+  'dkj',
+  'pmap',
+  'bmap',
+  'fixmap',
+  'ktv',
+  'mapp',
+  'baba',
+  'emap',
+  'omap'
+] as const
+
+/** Must have ≥1 quote after ÁKK + allampapir combine. */
+export const REQUIRED_FAMILIES: readonly FamilyCode[] = ['dkj', 'pmap', 'bmap'] as const
 
 export const QUOTE_COLS = ['d', 'bid', 'ask', 'by', 'ay', 'ai'] as const
 export type QuoteCol = (typeof QUOTE_COLS)[number]
@@ -69,8 +92,9 @@ export interface ManifestFile {
   schemaVersion: typeof SCHEMA_VERSION
   asOf: string | null
   generatedAt: string
+  /** Required families plus optional families that have content. */
   families: FamilyCode[]
-  paths: Record<FamilyCode, ManifestFamilyPaths>
+  paths: Partial<Record<FamilyCode, ManifestFamilyPaths>>
   digests: Record<string, string>
 }
 
@@ -83,6 +107,21 @@ export interface AkkEnvelope {
   data?: AkkRow[]
 }
 
+/** Loose allampapir.hu JSON envelopes. */
+export type AllampapirRow = Record<string, unknown>
+
+export interface AllampapirEnvelope {
+  message?: string
+  status?: boolean
+  code?: number
+  data?: Record<string, unknown> | null
+}
+
+export interface AllampapirPaperMeta {
+  name?: string
+  fields?: string[]
+}
+
 export interface NormalizedSnapshot {
   asOf: string | null
   byFamily: Record<
@@ -92,4 +131,12 @@ export interface NormalizedSnapshot {
       quotes: Array<{ id: string; row: QuoteRow }>
     }
   >
+}
+
+export function emptyNormalizedByFamily(): NormalizedSnapshot['byFamily'] {
+  const byFamily = {} as NormalizedSnapshot['byFamily']
+  for (const family of FAMILIES) {
+    byFamily[family] = { series: [], quotes: [] }
+  }
+  return byFamily
 }

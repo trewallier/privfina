@@ -10,7 +10,7 @@ Glossary
 - Adapter layer: browser-side normalization layer that converts external macro data into a shape the calculation engine consumes.
 - Calculation engine: isolated browser-side module that computes cash flows, aggregates, and analytics.
 - Cumulative cash-flow diagram: chart showing running total over a selected date range.
-- Published market data: compact GitHub-hosted JSON under `data/market/v1/` (schemaVersion 1) produced by scheduled Actions from official ÁKK sources (ADR 0034 / ROADMAP §6b).
+- Published market data: compact GitHub-hosted JSON under `data/market/v1/` (schemaVersion 1) produced by scheduled Actions from ÁKK and allampapir.hu (ADR 0034 / 0035 / ROADMAP §6b–§6c).
 
 Scenarios / Use-cases
 - Cash-flow management page: users can add, view, edit, and delete any number of cash flows.
@@ -52,7 +52,7 @@ Scenarios / Use-cases
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
 - Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): published tariff notice (Hirdetmény) mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
 - Configured-flow folders: users can organize flows into flat collapsible folders (no nested folders), rename folders, drag items into/out of folders (mouse drag-and-drop or touch long-press), and reorder items; folder collapsed state and item order persist in `listStatus` and round-trip through export/import.
-- Government-securities market-data ingest (ROADMAP §6b / ADR 0034): maintainers (via GitHub Actions) refresh published DKJ/PMÁP/BMÁP catalog and daily network quotes without contacting ÁKK from the browser.
+- Government-securities market-data ingest (ROADMAP §6b–§6c / ADR 0034 / 0035): maintainers (via GitHub Actions) refresh published catalog and daily network quotes from ÁKK and allampapir.hu without contacting those hosts from the browser.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -71,8 +71,8 @@ Assumptions
 - Instrument bundle generation must be finite at save time; salary/subscription instrument mode therefore requires an end condition.
 - v1 cumulative summary assumes a single account context where all included inflows and outflows are netted into one running balance.
 - Multi-account support is explicitly out of scope for the current implementation and treated as future enhancement.
-- Official ÁKK endpoints are contacted only by GitHub Actions for published market data; the browser loads GitHub-hosted published JSON from the Pages artifact (`/privfina/data/market/v1/`).
-- Raw ÁKK API payloads are not tracked in git; only compact `data/market/v1/` outputs accumulate on the `market-data` branch.
+- Official ÁKK and allampapir.hu endpoints are contacted only by GitHub Actions for published market data; the browser loads GitHub-hosted published JSON from the Pages artifact (`/privfina/data/market/v1/`).
+- Raw ÁKK / allampapir API payloads are not tracked in git; only compact `data/market/v1/` outputs accumulate on the `market-data` branch.
 - Market-data history is append-first on `(series id, settleDate)`; unchanged digests produce no commit.
 
 Acceptance criteria
@@ -106,7 +106,8 @@ Acceptance criteria
 - [x] The calculation engine exposes a clean interface to UI/controller code.
 - [x] External published market data can be fetched using browser `fetch` and normalized through an adapter layer (GitHub Pages same-origin JSON; ADR 0034 / ROADMAP §6b).
 - [x] Scheduled (and manually dispatchable) GitHub Actions ingest fetches ÁKK catalog + network rates (2 GETs for v1 families), normalizes to schemaVersion 1 under `data/market/v1/`, and pushes the `market-data` branch only when digests change (ADR 0034 / ROADMAP §6b).
-- [x] Market-data normalize/merge rules are covered by fixture tests (append-first, dedupe, required-family empty fails); raw captures are not committed.
+- [x] Same ingest also fetches allampapir.hu (CSRF + all `data.papers` prices), combines with ÁKK (treasury-prefer same-day quotes), publishes required + optional families, and writes one merged tree to `market-data` when digests change (ADR 0035 / ROADMAP §6c).
+- [x] Market-data normalize/merge/combine rules are covered by fixture tests (append-first, dedupe, required-family empty fails, treasury-prefer dual-source); raw captures are not committed.
 - [x] Pages deploy materializes `data/market/v1/` into the site for same-origin SPA `fetch` (ROADMAP §6b); soft-fail if `market-data` is unavailable so product Pages still ships.
 - [x] SPA loads published market JSON at runtime (not bundled) for commercial investment series listing / auto-fill (session cache; manual-entry degrade when files missing).
 - [x] Commercial investment composer offers a market series picker and optional quote settle date; auto-fills non-amount fields from published mapping; never clobbers amount or purchase date; edit path uses explicit “Update from latest quote”.
@@ -214,7 +215,7 @@ How to use this file
 
 Design alignment
 - For engine implementation guidance and evaluation strategy rationale, see `DESIGN.md`. Use `docs/adr/` for recorded architecture decisions that affect evaluation strategy and scope.
-- For government-securities published market data (Actions ingest, `market-data` branch, schemaVersion 1), see `docs/adr/0034-government-securities-published-market-data-via-actions.md` and ROADMAP §6b.
+- For government-securities published market data (Actions ingest, `market-data` branch, schemaVersion 1), see `docs/adr/0034-government-securities-published-market-data-via-actions.md`, `docs/adr/0035-dual-source-akk-allampapir-market-data.md`, and ROADMAP §6b–§6c.
 
 Investment Formula Canonical Source
 -----------------------------------

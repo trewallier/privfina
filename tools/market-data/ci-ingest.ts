@@ -1,6 +1,6 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import { writeGithubOutput } from './github-output.ts'
-import type { AkkEnvelope } from './types.ts'
+import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 
 export interface CiIngestOptions {
   outRoot: string
@@ -8,6 +8,8 @@ export interface CiIngestOptions {
   rawDir: string
   catalog?: AkkEnvelope
   networkRates?: AkkEnvelope
+  allampapirPrices?: Record<string, AllampapirEnvelope>
+  skipAllampapir?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -30,6 +32,8 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     rawDir: options.rawDir,
     catalog: options.catalog,
     networkRates: options.networkRates,
+    allampapirPrices: options.allampapirPrices,
+    skipAllampapir: options.skipAllampapir,
     fetchImpl: options.fetchImpl,
     generatedAt: options.generatedAt
   })

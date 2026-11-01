@@ -10,8 +10,21 @@ import {
   mergeSnapshot
 } from '../tools/market-data/merge.ts'
 import { NormalizeError, normalizeAkkSnapshots } from '../tools/market-data/normalize.ts'
-import type { AkkEnvelope, SeriesRecord } from '../tools/market-data/types.ts'
-import { SCHEMA_VERSION } from '../tools/market-data/types.ts'
+import type { AkkEnvelope, NormalizedSnapshot, SeriesRecord } from '../tools/market-data/types.ts'
+import { SCHEMA_VERSION, emptyNormalizedByFamily } from '../tools/market-data/types.ts'
+
+function snapshotWith(
+  asOf: string,
+  partial: Partial<NormalizedSnapshot['byFamily']>
+): NormalizedSnapshot {
+  const byFamily = emptyNormalizedByFamily()
+  for (const [family, value] of Object.entries(partial) as Array<
+    [keyof NormalizedSnapshot['byFamily'], NormalizedSnapshot['byFamily'][keyof NormalizedSnapshot['byFamily']]]
+  >) {
+    byFamily[family] = value
+  }
+  return { asOf, byFamily }
+}
 
 describe('toSeriesId', () => {
   it('transliterates Hungarian diacritics then slugifies spaces/punctuation', () => {

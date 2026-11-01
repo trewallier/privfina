@@ -237,6 +237,28 @@ Out of scope for §6b
 - Bundling market JSON into the SPA JavaScript build.
 - Time-partitioning quote files (revisit only if measured size warrants).
 
+#### 6c) Dual-source ÁKK + allampapir.hu ingest (ADR 0035)
+Goal: enrich published `data/market/v1/` with Magyar Államkincstár retail network prices from allampapir.hu in the **same** scheduled Actions run as ÁKK, merge overlapping DKJ/PMÁP/BMÁP quotes (treasury-prefer for bid/ask), and publish every available paper family for later SPA use — still one digest-gated commit to `market-data`.
+
+Constraints
+- Actions-only contact for both ÁKK and allampapir.hu; browser must not call either host.
+- CSRF bootstrap + `get_papers_with_prices` + `get_prices` per key in `data.papers` (no fixed allowlist); soft-ok empty/404 papers.
+- schemaVersion 1 quote columns unchanged (`d,bid,ask,by,ay,ai`); required families `dkj|pmap|bmap`; optional `fixmap|ktv|mapp|baba|emap|omap`.
+- Combine before merge; ÁKK catalog wins identity fields; allampapir wins conflicting same-day quote numerics.
+- Persist only compact published JSON; never commit raw payloads or papermeta HTML.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0035: dual-source fetch, CSRF, extended families, treasury-prefer combine, single merged push.
+- [x] `tools/market-data/`: fetch-allampapir + normalize + combine; extend FamilyCode / REQUIRED_FAMILIES; Vitest fixtures.
+- [x] Wire `ingest` / `ci-ingest` / workflow raw dir; one artifact → one `market-data` commit (job split unchanged).
+- [x] Docs: ownership, spec, CI playbook, market-data README.
+
+Out of scope for §6c
+- SPA composer/loader for new optional families.
+- Publishing EHM yields, green flags, or papermeta.
+- Browser CORS to allampapir.hu.
+- Auto-authoring product-spec YAML from market data.
+
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).
 

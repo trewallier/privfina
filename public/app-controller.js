@@ -1026,17 +1026,14 @@ function initController() {
   }
 
   function commercialPurchaseOrSettlementInput(family) {
-    if (!commercialInvestmentForm) {
-      return null
-    }
     if (family === 'dkj') {
-      return commercialInvestmentForm.querySelector('#dkj-settlement-date')
+      return dkjSettlementDateInput
     }
     if (family === 'pmap') {
-      return commercialInvestmentForm.querySelector('#pmap-purchase-date')
+      return pmapPurchaseDateInput
     }
     if (family === 'bmap') {
-      return commercialInvestmentForm.querySelector('#bmap-purchase-date')
+      return bmapPurchaseDateInput
     }
     return null
   }

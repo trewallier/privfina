@@ -5,10 +5,6 @@
 
 const TERM_BUCKETS = [3, 6, 12]
 
-function isBlank(value) {
-  return value == null || String(value).trim() === ''
-}
-
 function parseIsoDateUtc(value) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
     return null
@@ -292,8 +288,7 @@ export function marketableFieldsMissingFromPatch(family, sourcedNames = []) {
  *   family: 'dkj'|'pmap'|'bmap',
  *   series: object|null|undefined,
  *   quote: object|null|undefined,
- *   current?: Record<string, string|number|null|undefined>,
- *   mode?: string
+ *   current?: Record<string, string|number|null|undefined>
  * }} args
  * @returns {{ fields: Record<string, string|number>, sourced: string[] }}
  */

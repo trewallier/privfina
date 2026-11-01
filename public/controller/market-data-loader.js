@@ -157,11 +157,12 @@ export function createMarketDataLoader(options = {}) {
           cachedFetch(joinUrl(baseUrl, paths.latest), fetchImpl, validateLatestFile)
         ])
 
-        const activeSeries = seriesFile.series.filter((row) => row && row.status === 'active')
+        // Include active / matured / delisted so the composer can label available vs past.
+        const listedSeries = (seriesFile.series || []).filter((row) => row && row.id)
         return {
-          series: activeSeries,
+          series: listedSeries,
           latest: latestFile,
-          available: activeSeries.length > 0,
+          available: listedSeries.length > 0,
           asOf: latestFile.asOf || manifest.asOf || null
         }
       } catch {

@@ -17,6 +17,17 @@ function parseIsoDateUtc(value) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+function formatIsoDateUtc(date) {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function addMonthsUtc(date, months) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, date.getUTCDate()))
+}
+
 export function deriveTermMonths(issue, mat) {
   const start = parseIsoDateUtc(issue)
   const end = parseIsoDateUtc(mat)
@@ -39,6 +50,34 @@ export function deriveRemainingDays(settlementDate, maturityDate) {
   return Math.round((end.getTime() - start.getTime()) / 86400000)
 }
 
+/**
+ * First coupon on the maturity month/day schedule at/after issue.
+ * @param {string|null|undefined} issue
+ * @param {string|null|undefined} mat
+ * @param {number} frequencyMonths 12 = annual (PMÁP), 3 = quarterly (BMÁP)
+ */
+export function deriveFirstCouponDate(issue, mat, frequencyMonths) {
+  const issueDate = parseIsoDateUtc(issue)
+  const matDate = parseIsoDateUtc(mat)
+  const step = Number(frequencyMonths)
+  if (!issueDate || !matDate || !Number.isFinite(step) || step <= 0) {
+    return null
+  }
+
+  let candidate = new Date(
+    Date.UTC(issueDate.getUTCFullYear(), matDate.getUTCMonth(), matDate.getUTCDate())
+  )
+  let guard = 0
+  while (candidate.getTime() < issueDate.getTime() && guard < 48) {
+    candidate = addMonthsUtc(candidate, step)
+    guard += 1
+  }
+  if (candidate.getTime() < issueDate.getTime()) {
+    return null
+  }
+  return formatIsoDateUtc(candidate)
+}
+
 export function pickPurchasePricePct(quote) {
   if (!quote) {
     return null
@@ -50,6 +89,94 @@ export function pickPurchasePricePct(quote) {
     return Number(quote.bid)
   }
   return null
+}
+
+/** Prefer ask yield, else bid yield (temporary BMÁP/PMÁP effective interest). */
+export function pickEffectiveInterestPct(quote) {
+  if (!quote) {
+    return null
+  }
+  if (quote.ay != null && Number.isFinite(Number(quote.ay))) {
+    return Number(quote.ay)
+  }
+  if (quote.by != null && Number.isFinite(Number(quote.by))) {
+    return Number(quote.by)
+  }
+  return null
+}
+
+/**
+ * Maturity year from paper display name: `2027/I` or DKJ `D261223` → 2026.
+ * @param {string|null|undefined} name
+ */
+export function parseSeriesNameYear(name) {
+  const text = String(name || '').trim()
+  const yearMatch = text.match(/^(\d{4})\b/)
+  if (yearMatch) {
+    return Number(yearMatch[1])
+  }
+  const dkjMatch = text.match(/^D(\d{2})(\d{2})(\d{2})$/i)
+  if (dkjMatch) {
+    return 2000 + Number(dkjMatch[1])
+  }
+  return null
+}
+
+/**
+ * Last-available date heuristic: year from name + issue month/day.
+ * @param {{ name?: string, issue?: string|null }|null|undefined} series
+ */
+export function deriveLastAvailabilityDate(series) {
+  if (!series) {
+    return null
+  }
+  const year = parseSeriesNameYear(series.name)
+  const issue = parseIsoDateUtc(series.issue)
+  if (year == null || !issue) {
+    return null
+  }
+  const month = String(issue.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(issue.getUTCDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * @param {{ name?: string, issue?: string|null }|null|undefined} series
+ * @param {string} todayIso Europe/Budapest calendar day
+ */
+export function isSeriesAvailableOn(series, todayIso) {
+  const last = deriveLastAvailabilityDate(series)
+  if (!last || !/^\d{4}-\d{2}-\d{2}$/.test(String(todayIso || ''))) {
+    return false
+  }
+  return String(todayIso) <= last
+}
+
+/** Europe/Budapest calendar YYYY-MM-DD. */
+export function budapestTodayIso(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Budapest',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date)
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+  if (!year || !month || !day) {
+    return null
+  }
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * @param {{ name?: string, id?: string, issue?: string|null }|null|undefined} series
+ * @param {string} [todayIso]
+ */
+export function formatSeriesAvailabilityLabel(series, todayIso = budapestTodayIso()) {
+  const name = String(series?.name || series?.id || '').trim() || 'Series'
+  const available = isSeriesAvailableOn(series, todayIso)
+  return available ? `${name} — available` : `${name} — past`
 }
 
 /**
@@ -79,9 +206,13 @@ export function buildMarketAutofillPatch({
   const seriesDriven = new Set([
     'maturityDate',
     'termMonths',
+    'remainingDays',
     'interestPremiumPct',
+    'dkjBaseYieldPct',
+    'previousYearAverageInflationPct',
     'issueDate',
-    'startDate'
+    'startDate',
+    'firstCouponDate'
   ])
 
   function setIfAllowed(name, value, { quoteField = false } = {}) {
@@ -119,17 +250,33 @@ export function buildMarketAutofillPatch({
     const maturity = fields.maturityDate ?? current.maturityDate
     const remaining = deriveRemainingDays(settlement, maturity)
     if (remaining != null) {
-      setIfAllowed('remainingDays', remaining, { quoteField: true })
+      setIfAllowed('remainingDays', remaining)
     }
   } else if (family === 'pmap' || family === 'bmap') {
-    // Quote bid/ask are not mapped yet (inflation / DKJ-base stay manual via deferred
-    // refs/*). Settle-date / “Update from latest quote” UI is DKJ-only for v1.
-    if (series?.prem != null && Number.isFinite(Number(series.prem))) {
+    // Temporary: when quote yield exists, fill 0 + effective interest into base+premium
+    // until refs/inflation.json and refs/dkj-base.json land. Settle UI stays DKJ-only.
+    const effective = pickEffectiveInterestPct(quote)
+    if (effective != null) {
+      if (family === 'bmap') {
+        setIfAllowed('dkjBaseYieldPct', 0)
+      } else {
+        setIfAllowed('previousYearAverageInflationPct', 0)
+      }
+      setIfAllowed('interestPremiumPct', effective)
+    } else if (series?.prem != null && Number.isFinite(Number(series.prem))) {
       setIfAllowed('interestPremiumPct', Number(series.prem))
     }
     if (series?.issue) {
       setIfAllowed('issueDate', series.issue)
       setIfAllowed('startDate', series.issue)
+    }
+    const firstCoupon = deriveFirstCouponDate(
+      series?.issue,
+      series?.mat,
+      family === 'bmap' ? 3 : 12
+    )
+    if (firstCoupon) {
+      setIfAllowed('firstCouponDate', firstCoupon)
     }
   }
 
@@ -142,3 +289,28 @@ export const MARKET_AUTOFILL_PROTECTED_FIELDS = Object.freeze([
   'faceValue',
   'purchaseDate'
 ])
+
+/** Required marketable inputs (excludes protected amount / purchase date). */
+export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
+  dkj: Object.freeze([
+    'purchasePricePct',
+    'termMonths',
+    'settlementDate',
+    'maturityDate',
+    'remainingDays'
+  ]),
+  pmap: Object.freeze([
+    'interestPremiumPct',
+    'previousYearAverageInflationPct',
+    'startDate',
+    'issueDate',
+    'firstCouponDate'
+  ]),
+  bmap: Object.freeze([
+    'dkjBaseYieldPct',
+    'interestPremiumPct',
+    'startDate',
+    'issueDate',
+    'firstCouponDate'
+  ])
+})

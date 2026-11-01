@@ -147,9 +147,19 @@ function applyFieldChrome(label, meta, input = null) {
   })
 
   const marker = ensureRoleMarker(title)
+  const isAuto = Boolean(meta.auto) || meta.marker === 'auto'
+  const isUnavailable = Boolean(meta.unavailable) || meta.marker === 'unavailable'
   if (role === 'output' || role === 'derived') {
     marker.textContent = 'calculated'
     marker.dataset.role = role
+    marker.hidden = false
+  } else if (isAuto) {
+    marker.textContent = 'auto'
+    marker.dataset.role = 'auto'
+    marker.hidden = false
+  } else if (isUnavailable) {
+    marker.textContent = 'unavailable'
+    marker.dataset.role = 'unavailable'
     marker.hidden = false
   } else if (meta.required) {
     marker.textContent = 'required'
@@ -165,13 +175,23 @@ function applyFieldChrome(label, meta, input = null) {
   ensureHelpBlock(label, helpId, meta.description || '')
 
   label.classList.toggle('field-role-output', role === 'output' || role === 'derived')
-  label.classList.toggle('field-role-required', Boolean(meta.required) && role === 'input')
-  label.classList.toggle('field-role-optional', !meta.required && role === 'input')
+  label.classList.toggle(
+    'field-role-required',
+    Boolean(meta.required) && role === 'input' && !isAuto && !isUnavailable
+  )
+  label.classList.toggle(
+    'field-role-optional',
+    !meta.required && role === 'input' && !isAuto && !isUnavailable
+  )
+  label.classList.toggle('field-role-auto', isAuto && role === 'input')
+  label.classList.toggle('field-role-unavailable', isUnavailable && role === 'input')
 
   const control = input || label.querySelector('input, select, textarea')
   if (control) {
     if (role === 'output' || role === 'derived') {
       control.readOnly = true
+      control.required = false
+    } else if (isAuto || isUnavailable) {
       control.required = false
     } else if (typeof meta.required === 'boolean') {
       control.required = meta.required

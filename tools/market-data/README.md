@@ -29,10 +29,10 @@ Exit codes: `ingest` → `0` updated / `2` unchanged / `1` error.
 ## Domain rules
 
 - **Canonical ids**: `toSeriesId` transliterates Hungarian diacritics then slugifies; map key = `quotes/<id>.json` = `QuotesFile.id`. Display text stays on `name`.
-- **Sources**: ÁKK (2 GETs) + allampapir.hu (CSRF → all `data.papers` → `get_prices`). Combine before merge: ÁKK wins catalog identity; allampapir wins conflicting same-day quote numerics.
+- **Sources**: ÁKK (2 GETs) + allampapir.hu (CSRF once per jar → all `data.papers` → `get_prices`). Combine before merge: join prefer shared ISIN else `longName` id; ÁKK wins catalog identity; allampapir wins conflicting same-day quote numerics.
 - **Families**: required `dkj` | `pmap` | `bmap`; optional `fixmap` | `ktv` | `mapp` | `baba` | `emap` | `omap`.
 - **Accumulating `series.json`**: never drop an id with quote history; status is `active` | `matured` | `delisted`.
-- **Same-day quotes**: identical `(id, settleDate)` → skip; different values → fail ingest (after dual-source combine).
+- **Same-day quotes**: identical `(id, settleDate)` → skip. Different values → fail for ÁKK-only merges; **rewrite** when dual-source (`allowSameDayRewrite`) so an ÁKK-only baseline can cut over on the same settleDate.
 - **Catalog join**: ÁKK-quoted series without a catalog row fail. Allampapir-only families build series from price rows (`isin` may be null).
 
 ## Workflow security

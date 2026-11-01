@@ -41,6 +41,8 @@ export interface MergeResult {
   asOf: string | null
   appendedRows: number
   skippedDuplicates: number
+  /** Same-day rows replaced when `allowSameDayRewrite` (dual-source cutover). */
+  rewrittenRows: number
 }
 
 function emptyLatest(): LatestFile {
@@ -194,13 +196,14 @@ function digestsEqual(a: ManifestFile | null, b: ManifestFile): boolean {
 
 /**
  * Merge a normalized snapshot into an existing market tree (append-first).
- * Same (id, settleDate) + identical values → skip; same date + different values → fail.
+ * Same (id, settleDate) + identical values → skip; same date + different values → fail
+ * unless `allowSameDayRewrite` (dual-source combined snapshot / ÁKK-only → treasury cutover).
  * series.json accumulates; statuses mark active / matured / delisted.
  */
 export function mergeSnapshot(
   previous: MarketTreeState,
   snapshot: NormalizedSnapshot,
-  options?: { generatedAt?: string }
+  options?: { generatedAt?: string; allowSameDayRewrite?: boolean }
 ): MergeResult {
   const tree: MarketTreeState = {
     manifest: previous.manifest,
@@ -212,6 +215,8 @@ export function mergeSnapshot(
 
   let appendedRows = 0
   let skippedDuplicates = 0
+  let rewrittenRows = 0
+  const allowSameDayRewrite = options?.allowSameDayRewrite === true
   const asOf = snapshot.asOf
 
   for (const family of FAMILIES) {
@@ -226,10 +231,16 @@ export function mergeSnapshot(
         file = emptyQuotes(family, q.id)
         fam.quotes[q.id] = file
       }
-      const existing = file.rows.find((r) => r[0] === q.row[0])
-      if (existing) {
+      const existingIdx = file.rows.findIndex((r) => r[0] === q.row[0])
+      if (existingIdx >= 0) {
+        const existing = file.rows[existingIdx]
         if (quoteRowsEqual(existing, q.row)) {
           skippedDuplicates += 1
+          continue
+        }
+        if (allowSameDayRewrite) {
+          file.rows[existingIdx] = [...q.row] as QuoteRow
+          rewrittenRows += 1
           continue
         }
         throw new MergeError(
@@ -261,7 +272,7 @@ export function mergeSnapshot(
   const changed = !digestsEqual(previous.manifest, manifest)
   tree.manifest = manifest
 
-  return { tree, changed, asOf, appendedRows, skippedDuplicates }
+  return { tree, changed, asOf, appendedRows, skippedDuplicates, rewrittenRows }
 }
 
 function cloneFamily(fam: FamilyTreeState): FamilyTreeState {

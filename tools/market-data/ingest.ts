@@ -51,6 +51,7 @@ export interface IngestOptions {
 export interface IngestReport extends MergeResult {
   root: string
   marketRoot: string
+  dualSource: boolean
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -89,9 +90,13 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     allampapirSnapshot = normalizeAllampapirSnapshots(fetched.pricesByPaper)
   }
 
-  const snapshot = combineSnapshots(akkSnapshot, allampapirSnapshot)
+  const combined = combineSnapshots(akkSnapshot, allampapirSnapshot)
   const previous = await loadMarketTree(options.previousRoot ?? options.root)
-  const merged = mergeSnapshot(previous, snapshot, { generatedAt: options.generatedAt })
+  // Dual-source combined rows may rewrite same settleDate vs an ÁKK-only baseline (cutover).
+  const merged = mergeSnapshot(previous, combined.snapshot, {
+    generatedAt: options.generatedAt,
+    allowSameDayRewrite: combined.dualSource
+  })
   validateMarketTree(merged.tree)
 
   if (merged.changed) {
@@ -103,7 +108,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   return {
     ...merged,
     root: options.root,
-    marketRoot: marketRoot(options.root)
+    marketRoot: marketRoot(options.root),
+    dualSource: combined.dualSource
   }
 }
 

@@ -24,9 +24,11 @@ Related: 0003 (static GitHub Pages), 0006 (browser fetch adapter), 0007 (workflo
   - `POST /api/networkRate/get_prices` per paper; soft-ok HTTP 404 or zero rows; hard-fail CSRF / unexpected shapes.
 - ÁKK two-GET budget from ADR 0034 remains the **ÁKK-only** portion; allampapir adds CSRF + metadata + per-paper POSTs in the same run.
 - Normalize both sources to schemaVersion 1 snapshots; **combine before merge**:
-  - Join on `longName` → `toSeriesId` (unchanged).
+  - Join prefer shared **ISIN** when both sides have one (canonical series id stays the ÁKK `toSeriesId(longName)`); else fall back to `toSeriesId(longName|name|rawName)`.
   - Series: ÁKK catalog wins for `isin` / `face` / `iType` / `prem` / `ref` when present; fill gaps from allampapir row metadata.
   - Same-day quotes: per-column prefer non-null; if both non-null and differ, **prefer allampapir** for `bid` / `ask` / `by` / `ay` / `ai` (treasury retail; SPA buy = ask).
+- **ÁKK-only → dual-source cutover:** when the combined snapshot includes allampapir quotes (`dualSource`), `mergeSnapshot` may **rewrite** an existing same `(id, settleDate)` row if cells differ (null→ask fills, treasury-prefer numerics). Digest change → one commit. ÁKK-only / empty-allampapir merges keep strict append-first conflict fail. After cutover, identical re-ingests skip; further same-day dual-source changes also rewrite (combined row is authoritative for that settle).
+- CSRF: bootstrap **once** per cookie jar; refresh only on HTTP 403 / `csrf_failed`. Retry CSRF, network, and HTTP 5xx; do not retry hard 4xx / shape errors.
 - Extended family folders (still schemaVersion 1): `dkj`, `pmap`, `bmap` (required non-empty after combine), plus optional `fixmap`, `ktv`, `mapp`, `baba`, `emap`, `omap` (1MAP). Route MAP paper rows by `securityType`.
 - Publish only compact quote columns `d,bid,ask,by,ay,ai` and minimal series fields. Do **not** publish EHM yields, `green`, `papermeta`, or raw API payloads.
 - “Offered for buy” is derivable from non-null `ask` on `latest` / quote rows — no separate published flag.
@@ -35,9 +37,10 @@ Related: 0003 (static GitHub Pages), 0006 (browser fetch adapter), 0007 (workflo
 
 ## Consequences
 
+- First dual-source run against a same-day ÁKK-only `market-data` tip upgrades quotes in place (ask fill / treasury prefer) instead of failing `MergeError`.
 - DKJ/PMÁP/BMÁP ask fill improves from treasury retail without changing SPA contracts for existing families.
 - Optional families accumulate on `market-data` for later catalog/composer work.
-- Ingest depends on allampapir CSRF; failures fail the job (except soft-empty papers).
+- Ingest depends on allampapir CSRF; failures fail the job (except soft-empty papers). Misaligned longNames without shared ISIN remain a silent quality miss (two series ids).
 - Validate enforces non-empty `latest` only for required families (`dkj` / `pmap` / `bmap`).
 
 ## Out of scope

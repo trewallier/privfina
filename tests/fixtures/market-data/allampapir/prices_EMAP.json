@@ -1,0 +1,48 @@
+{
+  "message": "ok",
+  "status": true,
+  "code": 200,
+  "data": {
+    "settle_date": "2026.11.02",
+    "papermeta": {
+      "description": "fixture",
+      "smalltext": ""
+    },
+    "data": [
+      {
+        "name": "2026/X_EUR",
+        "longName": "C261127X21",
+        "rawName": "2026/X_EUR",
+        "securityType": "PEMÁP",
+        "settleDate": "2026.11.02",
+        "issueDate": "2021.06.08",
+        "maturityDate": "2026.11.27",
+        "currency": "EUR",
+        "bidPrice": "99,0000",
+        "askPrice": "",
+        "bidYield": "",
+        "askYield": "",
+        "accruedInterest": "1,3178",
+        "coupon": null,
+        "green": false
+      },
+      {
+        "name": "2029/U_EUR",
+        "longName": "C291025U26",
+        "rawName": "2029/U_EUR",
+        "securityType": "EMÁP",
+        "settleDate": "2026.11.02",
+        "issueDate": "2026.01.27",
+        "maturityDate": "2029.10.25",
+        "currency": "EUR",
+        "bidPrice": "99,0000",
+        "askPrice": "100,0000",
+        "bidYield": "",
+        "askYield": "",
+        "accruedInterest": "0,0587",
+        "coupon": null,
+        "green": false
+      }
+    ]
+  }
+}

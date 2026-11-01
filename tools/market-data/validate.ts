@@ -1,8 +1,14 @@
 import { digestCanonical } from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
-import type { MarketTreeState } from './merge.ts'
-import { FAMILIES, QUOTE_COLS, SCHEMA_VERSION, type ManifestFile } from './types.ts'
+import { publishedFamilies, type MarketTreeState } from './merge.ts'
+import {
+  QUOTE_COLS,
+  REQUIRED_FAMILIES,
+  SCHEMA_VERSION,
+  type FamilyCode,
+  type ManifestFile
+} from './types.ts'
 
 export class ValidateError extends Error {
   constructor(message: string) {
@@ -16,15 +22,20 @@ export function validateMarketTree(tree: MarketTreeState): void {
     throw new ValidateError('Missing manifest')
   }
   validateManifest(tree.manifest)
-  for (const family of FAMILIES) {
+  const families = tree.manifest.families
+  for (const family of families) {
     const fam = tree.families[family]
+    if (!fam) {
+      throw new ValidateError(`Missing family state for ${family}`)
+    }
     if (fam.series.schemaVersion !== SCHEMA_VERSION) {
       throw new ValidateError(`Bad series schemaVersion for ${family}`)
     }
     if (fam.series.family !== family) {
       throw new ValidateError(`series.family mismatch for ${family}`)
     }
-    if (Object.keys(fam.latest.quotes).length === 0) {
+    const required = (REQUIRED_FAMILIES as readonly string[]).includes(family)
+    if (required && Object.keys(fam.latest.quotes).length === 0) {
       throw new ValidateError(`Required family ${family} has empty latest.json`)
     }
     const seriesIds = new Set<string>()
@@ -83,7 +94,8 @@ export function verifyManifestDigests(tree: MarketTreeState): void {
 
 export function computeTreeDigests(tree: MarketTreeState): Record<string, string> {
   const digests: Record<string, string> = {}
-  for (const family of FAMILIES) {
+  const families = tree.manifest?.families ?? publishedFamilies(tree)
+  for (const family of families) {
     const fam = tree.families[family]
     digests[`families/${family}/series.json`] = digestCanonical(fam.series)
     digests[`families/${family}/latest.json`] = digestCanonical(fam.latest)
@@ -96,7 +108,7 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
 
 /**
  * Defense-in-depth for the publish job: load a tree from disk, run schema checks,
- * and verify manifest digests before commit/push. Does not contact ÁKK.
+ * and verify manifest digests before commit/push. Does not contact ÁKK or allampapir.
  */
 export async function assertPublishedTree(root: string): Promise<MarketTreeState> {
   const tree = await loadMarketTree(root)
@@ -108,11 +120,13 @@ function validateManifest(manifest: ManifestFile): void {
   if (manifest.schemaVersion !== SCHEMA_VERSION) {
     throw new ValidateError('manifest.schemaVersion must be 1')
   }
-  for (const family of FAMILIES) {
+  for (const family of REQUIRED_FAMILIES) {
     if (!manifest.families.includes(family)) {
-      throw new ValidateError(`manifest missing family ${family}`)
+      throw new ValidateError(`manifest missing required family ${family}`)
     }
-    if (!manifest.paths[family]) {
+  }
+  for (const family of manifest.families) {
+    if (!manifest.paths[family as FamilyCode]) {
       throw new ValidateError(`manifest.paths missing ${family}`)
     }
   }

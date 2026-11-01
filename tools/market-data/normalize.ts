@@ -1,7 +1,8 @@
 import { familyFromSecurityType } from './families.ts'
 import { toSeriesId } from './ids.ts'
 import {
-  FAMILIES,
+  REQUIRED_FAMILIES,
+  emptyNormalizedByFamily,
   type AkkEnvelope,
   type AkkRow,
   type FamilyCode,
@@ -52,14 +53,6 @@ function isoDate(value: unknown): string | null {
   if (!s) return null
   const m = /^(\d{4}-\d{2}-\d{2})/.exec(s)
   return m ? m[1] : null
-}
-
-function emptyByFamily(): NormalizedSnapshot['byFamily'] {
-  return {
-    dkj: { series: [], quotes: [] },
-    pmap: { series: [], quotes: [] },
-    bmap: { series: [], quotes: [] }
-  }
 }
 
 function rawLabelFromRow(row: AkkRow): string | null {
@@ -119,16 +112,19 @@ function mapQuoteRow(row: AkkRow): { family: FamilyCode; id: string; row: QuoteR
  * Build a normalized snapshot from ÁKK catalog + network-rate envelopes.
  * Series list in the snapshot is the **currently quoted** set only; merge accumulates history.
  * Catalog join misses for quoted ids fail hard (commercial past-calc needs metadata).
+ * Required-family emptiness is enforced after dual-source combine (ADR 0035), not here —
+ * but ÁKK-only callers still require the three core families.
  */
 export function normalizeAkkSnapshots(
   catalog: AkkEnvelope,
   networkRates: AkkEnvelope,
-  options?: { asOf?: string | null }
+  options?: { asOf?: string | null; requireFamilies?: boolean }
 ): NormalizedSnapshot {
   const catalogRows = catalog.data ?? []
   const rateRows = networkRates.data ?? []
+  const requireFamilies = options?.requireFamilies ?? true
 
-  const byFamily = emptyByFamily()
+  const byFamily = emptyNormalizedByFamily()
   const quotedIds = new Set<string>()
   let asOf: string | null = options?.asOf ?? null
 
@@ -140,9 +136,11 @@ export function normalizeAkkSnapshots(
     if (!asOf || mapped.row[0] > asOf) asOf = mapped.row[0]
   }
 
-  for (const family of FAMILIES) {
-    if (byFamily[family].quotes.length === 0) {
-      throw new NormalizeError(`Required family ${family} has zero network-rate rows`)
+  if (requireFamilies) {
+    for (const family of REQUIRED_FAMILIES) {
+      if (byFamily[family].quotes.length === 0) {
+        throw new NormalizeError(`Required family ${family} has zero network-rate rows`)
+      }
     }
   }
 
@@ -155,7 +153,7 @@ export function normalizeAkkSnapshots(
 
   const joinMisses: string[] = []
   const seen = new Set<string>()
-  for (const family of FAMILIES) {
+  for (const family of REQUIRED_FAMILIES) {
     for (const q of byFamily[family].quotes) {
       if (seen.has(q.id)) continue
       seen.add(q.id)

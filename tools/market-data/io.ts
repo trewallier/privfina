@@ -77,7 +77,7 @@ export async function writeMarketTree(root: string, tree: MarketTreeState): Prom
   }
   await writeFile(path.join(v1, 'manifest.json'), canonicalJson(tree.manifest), 'utf8')
 
-  for (const family of FAMILIES) {
+  for (const family of tree.manifest.families) {
     await writeFamily(v1, family, tree.families[family])
   }
 }

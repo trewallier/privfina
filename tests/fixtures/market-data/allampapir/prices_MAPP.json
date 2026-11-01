@@ -1,0 +1,50 @@
+{
+  "message": "ok",
+  "status": true,
+  "code": 200,
+  "data": {
+    "settle_date": "2026.11.02",
+    "papermeta": {
+      "description": "fixture",
+      "smalltext": ""
+    },
+    "data": [
+      {
+        "name": "N2026/45",
+        "longName": "N261108",
+        "rawName": "N2026/45",
+        "securityType": "MÁP Plusz",
+        "settleDate": "2026.11.02",
+        "issueDate": "2021.11.08",
+        "maturityDate": "2026.11.08",
+        "currency": "HUF",
+        "bidPrice": "99,0000",
+        "askPrice": "",
+        "bidYield": "88,40",
+        "askYield": "",
+        "accruedInterest": "5,9014",
+        "coupon": "6,00 %",
+        "coupon_val": 6,
+        "green": false
+      },
+      {
+        "name": "2031/M6",
+        "longName": "A311127M26",
+        "rawName": "2031/M6",
+        "securityType": "MÁPP_T",
+        "settleDate": "2026.11.02",
+        "issueDate": "2026.10.02",
+        "maturityDate": "2031.11.27",
+        "currency": "HUF",
+        "bidPrice": "99,0000",
+        "askPrice": "100,0000",
+        "bidYield": "5,69",
+        "askYield": "5,46",
+        "accruedInterest": "0,4247",
+        "coupon": "5,00 %",
+        "coupon_val": 5,
+        "green": false
+      }
+    ]
+  }
+}

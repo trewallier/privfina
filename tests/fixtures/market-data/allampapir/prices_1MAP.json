@@ -1,0 +1,13 @@
+{
+  "message": "ok",
+  "status": true,
+  "code": 200,
+  "data": {
+    "settle_date": "2026.11.02",
+    "papermeta": {
+      "description": "fixture",
+      "smalltext": ""
+    },
+    "data": []
+  }
+}

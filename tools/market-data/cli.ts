@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Market-data CLI (ADR 0034 / ROADMAP §6b).
+ * Market-data CLI (ADR 0034 / 0035 / ROADMAP §6b–§6c).
  *
  * Exit codes:
  * - `ingest`: 0 updated, 2 unchanged, 1 error
@@ -9,18 +9,20 @@
  *
  * Git clone/commit/push live in `tools/market-data/scripts/*.sh` (workflow path).
  */
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { runCiIngest } from './ci-ingest.ts'
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import { resolveBranch } from './resolve-branch.ts'
-import type { AkkEnvelope } from './types.ts'
+import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 import { assertPublishedTree } from './validate.ts'
 
 function printHelp(): void {
   process.stdout.write(`Usage:
-  market-data ingest --root <repo-or-v1> [--previous-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
-  market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>] [--catalog <json>] [--rates <json>]
+  market-data ingest --root <repo-or-v1> [--previous-root <path>] [--raw-dir <dir>]
+      [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
+  market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>]
+      [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
   market-data validate-tree --root <repo-or-v1>
   market-data resolve-branch --repository <owner/repo> --branch <name>
 
@@ -36,23 +38,50 @@ function getFlag(args: string[], name: string): string | undefined {
   return args[idx + 1]
 }
 
+function hasFlag(args: string[], name: string): boolean {
+  return args.includes(name)
+}
+
 async function loadEnvelope(filePath: string): Promise<AkkEnvelope> {
   const text = await readFile(filePath, 'utf8')
   return JSON.parse(text) as AkkEnvelope
 }
 
-async function loadOptionalEnvelopes(args: string[]): Promise<{
+async function loadAllampapirDir(
+  dir: string
+): Promise<Record<string, AllampapirEnvelope>> {
+  const entries = await readdir(dir)
+  const prices: Record<string, AllampapirEnvelope> = {}
+  for (const name of entries) {
+    const m = /^prices_(.+)\.json$/i.exec(name)
+    if (!m) continue
+    const text = await readFile(path.join(dir, name), 'utf8')
+    prices[m[1]] = JSON.parse(text) as AllampapirEnvelope
+  }
+  return prices
+}
+
+async function loadOptionalSources(args: string[]): Promise<{
   catalog?: AkkEnvelope
   networkRates?: AkkEnvelope
+  allampapirPrices?: Record<string, AllampapirEnvelope>
+  skipAllampapir?: boolean
 }> {
   const catalogPath = getFlag(args, '--catalog')
   const ratesPath = getFlag(args, '--rates')
   if ((catalogPath && !ratesPath) || (!catalogPath && ratesPath)) {
     throw new Error('Provide both --catalog and --rates, or neither for live fetch.')
   }
+  const allampapirDir = getFlag(args, '--allampapir-dir')
+  const skipAllampapir = hasFlag(args, '--skip-allampapir')
+  if (skipAllampapir && allampapirDir) {
+    throw new Error('Use either --allampapir-dir or --skip-allampapir, not both.')
+  }
   return {
     catalog: catalogPath ? await loadEnvelope(catalogPath) : undefined,
-    networkRates: ratesPath ? await loadEnvelope(ratesPath) : undefined
+    networkRates: ratesPath ? await loadEnvelope(ratesPath) : undefined,
+    allampapirPrices: allampapirDir ? await loadAllampapirDir(allampapirDir) : undefined,
+    skipAllampapir
   }
 }
 
@@ -67,13 +96,15 @@ async function main(argv: string[]): Promise<number> {
     const root = getFlag(rest, '--root') ?? process.cwd()
     const previousRoot = getFlag(rest, '--previous-root')
     const rawDir = getFlag(rest, '--raw-dir') ?? path.join(process.cwd(), '.tmp-market-data')
-    const envelopes = await loadOptionalEnvelopes(rest)
+    const sources = await loadOptionalSources(rest)
     const report = await ingestMarketData({
       root,
       previousRoot,
       rawDir,
-      catalog: envelopes.catalog,
-      networkRates: envelopes.networkRates
+      catalog: sources.catalog,
+      networkRates: sources.networkRates,
+      allampapirPrices: sources.allampapirPrices,
+      skipAllampapir: sources.skipAllampapir
     })
     process.stdout.write(
       `${JSON.stringify({
@@ -96,13 +127,15 @@ async function main(argv: string[]): Promise<number> {
       getFlag(rest, '--raw-dir') ??
       process.env.MARKET_RAW_DIR ??
       path.join(process.cwd(), '.tmp-market-data')
-    const envelopes = await loadOptionalEnvelopes(rest)
+    const sources = await loadOptionalSources(rest)
     const result = await runCiIngest({
       outRoot,
       baselineRoot,
       rawDir,
-      catalog: envelopes.catalog,
-      networkRates: envelopes.networkRates
+      catalog: sources.catalog,
+      networkRates: sources.networkRates,
+      allampapirPrices: sources.allampapirPrices,
+      skipAllampapir: sources.skipAllampapir
     })
     process.stdout.write(`${JSON.stringify({ changed: result.changed, asOf: result.asOf })}\n`)
     return EXIT_UPDATED

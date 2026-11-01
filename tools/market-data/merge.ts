@@ -3,6 +3,7 @@ import { digestCanonical } from './digests.ts'
 import {
   FAMILIES,
   QUOTE_COLS,
+  REQUIRED_FAMILIES,
   SCHEMA_VERSION,
   type FamilyCode,
   type LatestFile,
@@ -56,14 +57,15 @@ function emptyQuotes(family: FamilyCode, id: string): QuotesFile {
 }
 
 export function emptyMarketTree(): MarketTreeState {
-  return {
-    manifest: null,
-    families: {
-      dkj: { series: emptySeries('dkj'), latest: emptyLatest(), quotes: {} },
-      pmap: { series: emptySeries('pmap'), latest: emptyLatest(), quotes: {} },
-      bmap: { series: emptySeries('bmap'), latest: emptyLatest(), quotes: {} }
+  const families = {} as Record<FamilyCode, FamilyTreeState>
+  for (const family of FAMILIES) {
+    families[family] = {
+      series: emptySeries(family),
+      latest: emptyLatest(),
+      quotes: {}
     }
   }
+  return { manifest: null, families }
 }
 
 function quoteRowsEqual(a: QuoteRow, b: QuoteRow): boolean {
@@ -105,7 +107,6 @@ export function accumulateSeries(
     const prev = byId.get(s.id)
     byId.set(s.id, prev ? { ...prev, ...s } : { ...s })
   }
-  // Guarantee a series row for every quotes file on disk / in tree.
   for (const id of quoteIdsWithHistory) {
     if (!byId.has(id)) {
       byId.set(id, {
@@ -141,10 +142,26 @@ function rebuildLatest(quotes: Record<string, QuotesFile>): LatestFile {
   return latest
 }
 
+/** Required families always published; optional only when they have series or quote history. */
+export function publishedFamilies(tree: MarketTreeState): FamilyCode[] {
+  const out: FamilyCode[] = []
+  for (const family of FAMILIES) {
+    const fam = tree.families[family]
+    const required = (REQUIRED_FAMILIES as readonly string[]).includes(family)
+    const hasContent =
+      fam.series.series.length > 0 ||
+      Object.keys(fam.quotes).length > 0 ||
+      Object.keys(fam.latest.quotes).length > 0
+    if (required || hasContent) out.push(family)
+  }
+  return out
+}
+
 function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: string): ManifestFile {
   const digests: Record<string, string> = {}
   const paths = {} as ManifestFile['paths']
-  for (const family of FAMILIES) {
+  const families = publishedFamilies(tree)
+  for (const family of families) {
     const fam = tree.families[family]
     paths[family] = {
       series: `families/${family}/series.json`,
@@ -160,7 +177,7 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     schemaVersion: SCHEMA_VERSION,
     asOf,
     generatedAt,
-    families: [...FAMILIES],
+    families,
     paths,
     digests
   }
@@ -187,11 +204,10 @@ export function mergeSnapshot(
 ): MergeResult {
   const tree: MarketTreeState = {
     manifest: previous.manifest,
-    families: {
-      dkj: cloneFamily(previous.families.dkj),
-      pmap: cloneFamily(previous.families.pmap),
-      bmap: cloneFamily(previous.families.bmap)
-    }
+    families: {} as Record<FamilyCode, FamilyTreeState>
+  }
+  for (const family of FAMILIES) {
+    tree.families[family] = cloneFamily(previous.families[family])
   }
 
   let appendedRows = 0
@@ -200,7 +216,7 @@ export function mergeSnapshot(
 
   for (const family of FAMILIES) {
     const fam = tree.families[family]
-    const incoming = snapshot.byFamily[family]
+    const incoming = snapshot.byFamily[family] ?? { series: [], quotes: [] }
     const quotedIds = new Set(incoming.quotes.map((q) => q.id))
 
     for (const q of incoming.quotes) {

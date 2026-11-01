@@ -1,20 +1,24 @@
 import { combineSnapshots } from './combine.ts'
 import { fetchAkkSnapshots } from './fetch-akk.ts'
 import { CsrfSession, fetchAllampapirSnapshots } from './fetch-allampapir.ts'
+import { fetchKshInflationCsv } from './fetch-ksh-inflation.ts'
 import { fetchRetailInterestSnapshots } from './fetch-retail-interest.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
 import { normalizeAkkSnapshots } from './normalize.ts'
 import { normalizeAllampapirSnapshots } from './normalize-allampapir.ts'
+import { normalizeKshInflationCsv } from './normalize-ksh-inflation.ts'
 import { normalizeRetailInterestEnvelope } from './normalize-retail-interest.ts'
 import {
   emptyNormalizedByFamily,
   type AkkEnvelope,
   type AllampapirEnvelope,
+  type InflationFile,
   type NormalizedSnapshot,
   type RetailInterestFile
 } from './types.ts'
 import { validateMarketTree } from './validate.ts'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
 /** Exit: success with changes. */
@@ -54,6 +58,15 @@ export interface IngestOptions {
   retailInterestEnvelope?: AllampapirEnvelope
   /** Skip only retailInterest fetch/replace (keep previous refs). */
   skipRetailInterest?: boolean
+  /**
+   * Offline KSH ara0040 CSV path. When omitted with fixture ÁKK / skip,
+   * previous inflation refs are kept. Live runs always fetch KSH CSV (hard-fail).
+   */
+  inflationCsvPath?: string
+  /** Raw CSV bytes (tests); takes precedence over inflationCsvPath. */
+  inflationCsvBytes?: Uint8Array
+  /** Skip only inflation fetch/merge (keep previous refs). */
+  skipInflation?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -65,6 +78,7 @@ export interface IngestReport extends MergeResult {
   retailInterestUpdated: boolean
   /** True when live retailInterest fetch failed and previous refs were kept. */
   retailInterestSoftFailed: boolean
+  inflationUpdated: boolean
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -136,6 +150,25 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     }
   }
 
+  /** undefined = keep previous; file = append-first merge. */
+  let inflationUpdate: InflationFile | undefined
+  if (options.inflationCsvBytes) {
+    inflationUpdate = normalizeKshInflationCsv(options.inflationCsvBytes, { generatedAt })
+  } else if (options.inflationCsvPath) {
+    const bytes = new Uint8Array(await readFile(options.inflationCsvPath))
+    inflationUpdate = normalizeKshInflationCsv(bytes, { generatedAt })
+  } else if (!options.skipInflation && !offlineAkk) {
+    // Live / non-fixture runs: hard-fail on KSH fetch or normalize (ADR 0037).
+    const fetched = await fetchKshInflationCsv({
+      rawDir: path.join(options.rawDir, 'ksh'),
+      fetchImpl: options.fetchImpl
+    })
+    inflationUpdate = normalizeKshInflationCsv(fetched.csvBytes, {
+      generatedAt,
+      csvUrl: fetched.csvUrl
+    })
+  }
+
   const combined = combineSnapshots(akkSnapshot, allampapirSnapshot)
   const previous = await loadMarketTree(options.previousRoot ?? options.root)
   // Dual-source combined rows may rewrite same settleDate vs an ÁKK-only baseline (cutover).
@@ -145,6 +178,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   }
   if (retailInterestUpdate !== undefined) {
     mergeOptions.retailInterest = retailInterestUpdate
+  }
+  if (inflationUpdate !== undefined) {
+    mergeOptions.inflation = inflationUpdate
   }
   const merged = mergeSnapshot(previous, combined.snapshot, mergeOptions)
   validateMarketTree(merged.tree)
@@ -161,7 +197,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     marketRoot: marketRoot(options.root),
     dualSource: combined.dualSource,
     retailInterestUpdated: retailInterestUpdate !== undefined,
-    retailInterestSoftFailed
+    retailInterestSoftFailed,
+    inflationUpdated: inflationUpdate !== undefined
   }
 }
 

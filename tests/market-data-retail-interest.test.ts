@@ -269,6 +269,13 @@ describe('retail interest merge + ingest', () => {
           headers: { 'content-type': 'application/json' }
         })
       }
+      if (url.includes('ara0040.csv')) {
+        const csv = readFileSync(path.join(fixtureRoot, 'inflation/ara0040-sample.csv'))
+        return new Response(csv, {
+          status: 200,
+          headers: { 'content-type': 'application/octet-stream' }
+        })
+      }
       return new Response('nope', { status: 404 })
     }
 

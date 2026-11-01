@@ -1,12 +1,15 @@
 import { assertSeriesId } from './ids.ts'
-import { digestCanonical, digestRetailInterest } from './digests.ts'
+import { digestCanonical, digestInflation, digestRetailInterest } from './digests.ts'
+import { mergeInflationFile } from './merge-inflation.ts'
 import {
   FAMILIES,
+  INFLATION_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
   type FamilyCode,
+  type InflationFile,
   type LatestFile,
   type LatestQuote,
   type ManifestFile,
@@ -37,6 +40,8 @@ export interface MarketTreeState {
   families: Record<FamilyCode, FamilyTreeState>
   /** Lakossági kamatok refs (ADR 0036); null when never ingested. */
   retailInterest: RetailInterestFile | null
+  /** KSH CPI Összesen refs (ADR 0037); null when never ingested. */
+  inflation: InflationFile | null
 }
 
 export interface MergeResult {
@@ -47,6 +52,8 @@ export interface MergeResult {
   skippedDuplicates: number
   /** Same-day rows replaced when `allowSameDayRewrite` (dual-source cutover). */
   rewrittenRows: number
+  /** Inflation month/year rows appended this merge. */
+  inflationAppendedRows: number
 }
 
 function emptyLatest(): LatestFile {
@@ -71,7 +78,7 @@ export function emptyMarketTree(): MarketTreeState {
       quotes: {}
     }
   }
-  return { manifest: null, families, retailInterest: null }
+  return { manifest: null, families, retailInterest: null, inflation: null }
 }
 
 function quoteRowsEqual(a: QuoteRow, b: QuoteRow): boolean {
@@ -184,6 +191,10 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     refs.retailInterest = RETAIL_INTEREST_REF_PATH
     digests[RETAIL_INTEREST_REF_PATH] = digestRetailInterest(tree.retailInterest)
   }
+  if (tree.inflation) {
+    refs.inflation = INFLATION_REF_PATH
+    digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
+  }
   const manifest: ManifestFile = {
     schemaVersion: SCHEMA_VERSION,
     asOf,
@@ -221,6 +232,11 @@ export function mergeSnapshot(
     allowSameDayRewrite?: boolean
     /** When provided (including empty rows), replace retail-interest refs. When omitted, keep previous. */
     retailInterest?: RetailInterestFile | null
+    /**
+     * When provided, append-first merge into inflation refs (historical conflicts fail).
+     * When omitted, keep previous inflation.
+     */
+    inflation?: InflationFile | null
   }
 ): MergeResult {
   const tree: MarketTreeState = {
@@ -233,7 +249,8 @@ export function mergeSnapshot(
           generatedAt: previous.retailInterest.generatedAt,
           rows: previous.retailInterest.rows.map((r) => ({ ...r }))
         }
-      : null
+      : null,
+    inflation: previous.inflation ? structuredClone(previous.inflation) : null
   }
   for (const family of FAMILIES) {
     tree.families[family] = cloneFamily(previous.families[family])
@@ -242,6 +259,7 @@ export function mergeSnapshot(
   let appendedRows = 0
   let skippedDuplicates = 0
   let rewrittenRows = 0
+  let inflationAppendedRows = 0
   const allowSameDayRewrite = options?.allowSameDayRewrite === true
   const asOf = snapshot.asOf
 
@@ -319,12 +337,32 @@ export function mergeSnapshot(
     }
   }
 
+  if (options && 'inflation' in options) {
+    const incoming = options.inflation
+    if (incoming) {
+      const mergedInf = mergeInflationFile(previous.inflation, incoming)
+      tree.inflation = mergedInf.file
+      inflationAppendedRows = mergedInf.appendedRows
+      skippedDuplicates += mergedInf.skippedDuplicates
+    } else {
+      tree.inflation = null
+    }
+  }
+
   const generatedAt = options?.generatedAt ?? new Date().toISOString()
   const manifest = buildManifest(tree, asOf, generatedAt)
   const changed = !digestsEqual(previous.manifest, manifest)
   tree.manifest = manifest
 
-  return { tree, changed, asOf, appendedRows, skippedDuplicates, rewrittenRows }
+  return {
+    tree,
+    changed,
+    asOf,
+    appendedRows,
+    skippedDuplicates,
+    rewrittenRows,
+    inflationAppendedRows
+  }
 }
 
 function cloneFamily(fam: FamilyTreeState): FamilyTreeState {

@@ -12,6 +12,9 @@ export interface CiIngestOptions {
   skipAllampapir?: boolean
   retailInterestEnvelope?: AllampapirEnvelope
   skipRetailInterest?: boolean
+  inflationCsvPath?: string
+  inflationCsvBytes?: Uint8Array
+  skipInflation?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -38,6 +41,9 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     skipAllampapir: options.skipAllampapir,
     retailInterestEnvelope: options.retailInterestEnvelope,
     skipRetailInterest: options.skipRetailInterest,
+    inflationCsvPath: options.inflationCsvPath,
+    inflationCsvBytes: options.inflationCsvBytes,
+    skipInflation: options.skipInflation,
     fetchImpl: options.fetchImpl,
     generatedAt: options.generatedAt
   })

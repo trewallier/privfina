@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { RetailInterestFile } from './types.ts'
+import type { InflationFile, RetailInterestFile } from './types.ts'
 
 /** Stable JSON for hashing (sorted object keys; arrays keep order). */
 export function canonicalJson(value: unknown): string {
@@ -44,4 +44,17 @@ export function retailInterestContentForDigest(file: RetailInterestFile): {
 
 export function digestRetailInterest(file: RetailInterestFile): string {
   return digestCanonical(retailInterestContentForDigest(file))
+}
+
+/**
+ * Inflation digest excludes `generatedAt` so a fresh stamp alone does not force
+ * a market-data commit (ADR 0037 / digest-gated no-op).
+ */
+export function inflationContentForDigest(file: InflationFile): Omit<InflationFile, 'generatedAt'> {
+  const { generatedAt: _generatedAt, ...rest } = file
+  return rest
+}
+
+export function digestInflation(file: InflationFile): string {
+  return digestCanonical(inflationContentForDigest(file))
 }

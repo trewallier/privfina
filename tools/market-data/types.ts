@@ -88,9 +88,10 @@ export interface ManifestFamilyPaths {
   latest: string
 }
 
-/** Path hints for additive refs files (ADR 0036 retail interest; deferred inflation/DKJ-base). */
+/** Path hints for additive refs files (ADR 0036 retail interest; ADR 0037 inflation; deferred DKJ-base). */
 export interface ManifestRefsPaths {
   retailInterest?: string
+  inflation?: string
 }
 
 export interface ManifestFile {
@@ -138,6 +139,58 @@ export interface RetailInterestFile {
 
 /** Published path for retail interest refs (ADR 0036). */
 export const RETAIL_INTEREST_REF_PATH = 'refs/retail-interest.json' as const
+
+/** CPI series keys published from KSH STADAT ara0040 (ADR 0037). */
+export type InflationSeriesKey = 'yoy' | 'mom' | 'ytdFromDec' | 'ytdYoy'
+
+/** One monthly CPI observation: [YYYY-MM, pct_change]. */
+export type InflationMonthRow = [string, number]
+
+/** One calendar-year average: [YYYY, pct_change]. */
+export type InflationYearRow = [string, number]
+
+export interface InflationSeriesBlock {
+  /** Verbatim KSH section base label. */
+  kshBase: string
+  cols: ['ym', 'pct']
+  rows: InflationMonthRow[]
+}
+
+export interface InflationAnnualAverage {
+  derivedFrom: 'ytdYoy:januar-december'
+  cols: ['year', 'pct']
+  rows: InflationYearRow[]
+}
+
+export interface InflationSourceMeta {
+  id: 'ksh-stadat-ara0040'
+  table: '1.2.1.2'
+  pageUrl: string
+  csvUrl: string
+}
+
+/**
+ * Published KSH CPI total (Összesen) refs (ADR 0037).
+ * Values are percent change (KSH index − 100).
+ */
+export interface InflationFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  source: InflationSourceMeta
+  asOf: string | null
+  generatedAt: string
+  metric: 'cpi_total'
+  unit: 'pct_change'
+  series: Record<InflationSeriesKey, InflationSeriesBlock>
+  annualAverage: InflationAnnualAverage
+}
+
+/** Published path for inflation refs (ADR 0037). */
+export const INFLATION_REF_PATH = 'refs/inflation.json' as const
+
+export const KSH_ARA0040_PAGE_URL =
+  'https://www.ksh.hu/stadat_files/ara/hu/ara0040.html' as const
+export const KSH_ARA0040_CSV_URL =
+  'https://www.ksh.hu/stadat_files/ara/hu/ara0040.csv' as const
 
 /** Loose ÁKK row (catalog or network rates). */
 export type AkkRow = Record<string, unknown>

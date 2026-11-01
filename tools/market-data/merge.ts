@@ -1,5 +1,5 @@
 import { assertSeriesId } from './ids.ts'
-import { digestCanonical } from './digests.ts'
+import { digestCanonical, digestRetailInterest } from './digests.ts'
 import {
   FAMILIES,
   QUOTE_COLS,
@@ -182,7 +182,7 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
   const refs: ManifestFile['refs'] = {}
   if (tree.retailInterest) {
     refs.retailInterest = RETAIL_INTEREST_REF_PATH
-    digests[RETAIL_INTEREST_REF_PATH] = digestCanonical(tree.retailInterest)
+    digests[RETAIL_INTEREST_REF_PATH] = digestRetailInterest(tree.retailInterest)
   }
   const manifest: ManifestFile = {
     schemaVersion: SCHEMA_VERSION,
@@ -294,14 +294,29 @@ export function mergeSnapshot(
   }
 
   if (options && 'retailInterest' in options) {
-    tree.retailInterest = options.retailInterest
-      ? {
-          schemaVersion: options.retailInterest.schemaVersion,
-          asOf: options.retailInterest.asOf,
-          generatedAt: options.retailInterest.generatedAt,
-          rows: options.retailInterest.rows.map((r) => ({ ...r }))
-        }
-      : null
+    const incoming = options.retailInterest
+    if (
+      incoming &&
+      previous.retailInterest &&
+      digestRetailInterest(incoming) === digestRetailInterest(previous.retailInterest)
+    ) {
+      // Content unchanged: keep previous generatedAt so the on-disk file stays stable.
+      tree.retailInterest = {
+        schemaVersion: previous.retailInterest.schemaVersion,
+        asOf: previous.retailInterest.asOf,
+        generatedAt: previous.retailInterest.generatedAt,
+        rows: previous.retailInterest.rows.map((r) => ({ ...r }))
+      }
+    } else {
+      tree.retailInterest = incoming
+        ? {
+            schemaVersion: incoming.schemaVersion,
+            asOf: incoming.asOf,
+            generatedAt: incoming.generatedAt,
+            rows: incoming.rows.map((r) => ({ ...r }))
+          }
+        : null
+    }
   }
 
   const generatedAt = options?.generatedAt ?? new Date().toISOString()

@@ -143,8 +143,7 @@ import {
   budapestTodayIso,
   buildMarketAutofillPatch,
   findRetailInterestForSeries,
-  formatSeriesAvailabilityLabel,
-  pickRetailPeriodRate
+  formatSeriesAvailabilityLabel
 } from './controller/market-data-autofill.js'
 import {
   browserTodayIso,
@@ -1163,14 +1162,9 @@ function initController() {
     commercialMarketFamilyState.series.forEach((entry) => {
       const option = document.createElement('option')
       option.value = entry.id
-      option.textContent = formatSeriesAvailabilityLabel(entry, todayIso, retailInterest)
-      option.dataset.availability = formatSeriesAvailabilityLabel(
-        entry,
-        todayIso,
-        retailInterest
-      ).endsWith('available')
-        ? 'available'
-        : 'past'
+      const label = formatSeriesAvailabilityLabel(entry, todayIso, retailInterest)
+      option.textContent = label
+      option.dataset.availability = label.endsWith('available') ? 'available' : 'past'
       commercialInvestmentSeriesInput.appendChild(option)
     })
 
@@ -1364,24 +1358,20 @@ function initController() {
       : 'Market data loaded'
     // Period kamat from Lakossági kamatok is informational (combined coupon).
     // Never map into interestPremiumPct for PMÁP/BMÁP (ADR 0036).
-    const periodRate = pickRetailPeriodRate(
-      series,
-      commercialMarketFamilyState.retailInterest
-    )
     const retailRow = findRetailInterestForSeries(
       commercialMarketFamilyState.retailInterest,
       series
     )
+    const periodRate =
+      retailRow?.rate != null && Number.isFinite(Number(retailRow.rate))
+        ? Number(retailRow.rate)
+        : null
     const rateHint =
       periodRate != null
-        ? ` · Treasury period kamat ${periodRate.toLocaleString('hu-HU', {
+        ? ` · Period kamat (info) ${periodRate.toLocaleString('hu-HU', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 3
-          })}%${retailRow?.offered ? ' (offered)' : ''}${
-            family === 'pmap' || family === 'bmap'
-              ? ' — not interest premium'
-              : ''
-          }`
+          })}%${retailRow?.offered ? ' · offered' : ''}`
         : ''
     setCommercialMarketHint(`${asOfLabel}${rateHint}`, true)
     syncCommercialInvestmentPreview()

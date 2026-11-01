@@ -33,7 +33,8 @@ function asNumber(value: unknown): number | null {
   }
   if (typeof value === 'string') {
     const t = value.trim().replace(/\s/g, '').replace(/%$/g, '').replace(',', '.')
-    // Stepped coupons like "4,50 - 5,75 %" → take first number only when parse fails as whole.
+    // Pragmatic v1: stepped display strings like "4,50 - 5,75 %" publish the first band
+    // only (rate_val is preferred when present). This is NOT full schedule support.
     if (t.includes('-')) {
       const first = t.split('-')[0]?.trim()
       if (first) {

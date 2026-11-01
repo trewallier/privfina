@@ -1,6 +1,6 @@
 import { combineSnapshots } from './combine.ts'
 import { fetchAkkSnapshots } from './fetch-akk.ts'
-import { fetchAllampapirSnapshots } from './fetch-allampapir.ts'
+import { CsrfSession, fetchAllampapirSnapshots } from './fetch-allampapir.ts'
 import { fetchRetailInterestSnapshots } from './fetch-retail-interest.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
@@ -49,7 +49,7 @@ export interface IngestOptions {
   skipAllampapir?: boolean
   /**
    * Offline retailInterest get_all_data envelope. When omitted with fixture ÁKK / skip,
-   * previous refs are kept. Live runs always refresh retail interest.
+   * previous refs are kept. Live runs refresh retail interest (soft-fail on errors).
    */
   retailInterestEnvelope?: AllampapirEnvelope
   /** Skip only retailInterest fetch/replace (keep previous refs). */
@@ -63,10 +63,19 @@ export interface IngestReport extends MergeResult {
   marketRoot: string
   dualSource: boolean
   retailInterestUpdated: boolean
+  /** True when live retailInterest fetch failed and previous refs were kept. */
+  retailInterestSoftFailed: boolean
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
   return { asOf: null, byFamily: emptyNormalizedByFamily() }
+}
+
+function logRetailInterestSoftFail(err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err)
+  console.error(
+    `[market-data] retailInterest soft-fail; keeping previous refs and continuing price publish: ${message}`
+  )
 }
 
 /** Fetch (optional) → normalize → combine → merge → validate → write when changed. */
@@ -90,6 +99,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   })
 
   let allampapirSnapshot: NormalizedSnapshot
+  let allampapirSession: CsrfSession | undefined
   if (options.allampapirPrices) {
     allampapirSnapshot = normalizeAllampapirSnapshots(options.allampapirPrices)
   } else if (options.skipAllampapir || offlineAkk) {
@@ -101,20 +111,29 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
       fetchImpl: options.fetchImpl
     })
     allampapirSnapshot = normalizeAllampapirSnapshots(fetched.pricesByPaper)
+    allampapirSession = fetched.session
   }
 
   /** undefined = keep previous; file = replace (including empty rows). */
   let retailInterestUpdate: RetailInterestFile | undefined
+  let retailInterestSoftFailed = false
   if (options.retailInterestEnvelope) {
     retailInterestUpdate = normalizeRetailInterestEnvelope(options.retailInterestEnvelope, {
       generatedAt
     })
   } else if (!options.skipRetailInterest && !options.skipAllampapir && !offlineAkk) {
-    const fetched = await fetchRetailInterestSnapshots({
-      rawDir: path.join(options.rawDir, 'allampapir'),
-      fetchImpl: options.fetchImpl
-    })
-    retailInterestUpdate = normalizeRetailInterestEnvelope(fetched.envelope, { generatedAt })
+    try {
+      const fetched = await fetchRetailInterestSnapshots({
+        rawDir: path.join(options.rawDir, 'allampapir'),
+        fetchImpl: options.fetchImpl,
+        session: allampapirSession
+      })
+      retailInterestUpdate = normalizeRetailInterestEnvelope(fetched.envelope, { generatedAt })
+    } catch (err) {
+      // Soft-fail: kamatok outage must not block ÁKK / price publishes (ADR 0036).
+      logRetailInterestSoftFail(err)
+      retailInterestSoftFailed = true
+    }
   }
 
   const combined = combineSnapshots(akkSnapshot, allampapirSnapshot)
@@ -141,7 +160,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     root: options.root,
     marketRoot: marketRoot(options.root),
     dualSource: combined.dualSource,
-    retailInterestUpdated: retailInterestUpdate !== undefined
+    retailInterestUpdated: retailInterestUpdate !== undefined,
+    retailInterestSoftFailed
   }
 }
 

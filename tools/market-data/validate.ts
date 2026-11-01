@@ -1,4 +1,4 @@
-import { digestCanonical } from './digests.ts'
+import { digestCanonical, digestRetailInterest } from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import { publishedFamilies, type MarketTreeState } from './merge.ts'
@@ -108,9 +108,11 @@ function validateRetailInterest(tree: MarketTreeState): void {
       throw new ValidateError(`retail-interest offered must be boolean for ${row.id}`)
     }
   }
-  const pathHint = tree.manifest?.refs?.retailInterest ?? RETAIL_INTEREST_REF_PATH
-  if (tree.manifest?.refs?.retailInterest && tree.manifest.refs.retailInterest !== pathHint) {
-    throw new ValidateError('manifest.refs.retailInterest path mismatch')
+  const refPath = tree.manifest?.refs?.retailInterest
+  if (refPath && refPath !== RETAIL_INTEREST_REF_PATH) {
+    throw new ValidateError(
+      `manifest.refs.retailInterest must be ${RETAIL_INTEREST_REF_PATH}, got ${refPath}`
+    )
   }
 }
 
@@ -143,7 +145,7 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
     }
   }
   if (tree.retailInterest) {
-    digests[RETAIL_INTEREST_REF_PATH] = digestCanonical(tree.retailInterest)
+    digests[RETAIL_INTEREST_REF_PATH] = digestRetailInterest(tree.retailInterest)
   }
   return digests
 }

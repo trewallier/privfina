@@ -1,13 +1,9 @@
 /**
  * Map published market series + quote into commercial investment form fields.
- * Never returns amount fields (principal / faceValue) or purchaseDate.
+ * Never returns amount fields (principal / faceValue) or purchase/settlement dates.
  */
 
 const TERM_BUCKETS = [3, 6, 12]
-
-function isBlank(value) {
-  return value == null || String(value).trim() === ''
-}
 
 function parseIsoDateUtc(value) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
@@ -242,126 +238,17 @@ export function formatSeriesAvailabilityLabel(
   return available ? `${name} — available` : `${name} — past`
 }
 
-/**
- * Build a patch of form field values from market data.
- *
- * @param {{
- *   family: 'dkj'|'pmap'|'bmap',
- *   series: object|null|undefined,
- *   quote: object|null|undefined,
- *   current?: Record<string, string|number|null|undefined>,
- *   mode?: 'fill-empty'|'force-quote'
- * }} args
- * @returns {{ fields: Record<string, string|number>, sourced: string[] }}
- */
-export function buildMarketAutofillPatch({
-  family,
-  series,
-  quote,
-  current = {},
-  mode = 'fill-empty'
-} = {}) {
-  const fields = {}
-  const sourced = []
-  const forceQuote = mode === 'force-quote'
-  // Series-driven fields always refresh on series pick: HTML <select> defaults
-  // (e.g. termMonths=3) are never blank, so fill-empty alone would skip them.
-  const seriesDriven = new Set([
-    'maturityDate',
-    'termMonths',
-    'remainingDays',
-    'interestPremiumPct',
-    'dkjBaseYieldPct',
-    'previousYearAverageInflationPct',
-    'issueDate',
-    'startDate',
-    'firstCouponDate'
-  ])
-
-  function setIfAllowed(name, value, { quoteField = false } = {}) {
-    if (value == null || value === '') {
-      return
-    }
-    const existing = current[name]
-    if (forceQuote) {
-      if (!quoteField && !isBlank(existing)) {
-        return
-      }
-    } else if (!seriesDriven.has(name) && !isBlank(existing)) {
-      return
-    }
-    fields[name] = value
-    sourced.push(name)
-  }
-
-  if (family === 'dkj') {
-    if (series?.mat) {
-      setIfAllowed('maturityDate', series.mat)
-    }
-    const termMonths = deriveTermMonths(series?.issue, series?.mat)
-    if (termMonths != null) {
-      setIfAllowed('termMonths', termMonths)
-    }
-    if (quote?.d) {
-      setIfAllowed('settlementDate', quote.d, { quoteField: true })
-    }
-    const price = pickPurchasePricePct(quote)
-    if (price != null) {
-      setIfAllowed('purchasePricePct', price, { quoteField: true })
-    }
-    const settlement = fields.settlementDate ?? current.settlementDate
-    const maturity = fields.maturityDate ?? current.maturityDate
-    const remaining = deriveRemainingDays(settlement, maturity)
-    if (remaining != null) {
-      setIfAllowed('remainingDays', remaining)
-    }
-  } else if (family === 'pmap' || family === 'bmap') {
-    // Temporary: when quote yield exists, fill 0 + effective interest into base+premium
-    // until refs/inflation.json and refs/dkj-base.json land. Settle UI stays DKJ-only.
-    const effective = pickEffectiveInterestPct(quote)
-    if (effective != null) {
-      if (family === 'bmap') {
-        setIfAllowed('dkjBaseYieldPct', 0)
-      } else {
-        setIfAllowed('previousYearAverageInflationPct', 0)
-      }
-      setIfAllowed('interestPremiumPct', effective)
-    } else if (series?.prem != null && Number.isFinite(Number(series.prem))) {
-      setIfAllowed('interestPremiumPct', Number(series.prem))
-    }
-    if (series?.issue) {
-      setIfAllowed('issueDate', series.issue)
-      setIfAllowed('startDate', series.issue)
-    }
-    const firstCoupon = deriveFirstCouponDate(
-      series?.issue,
-      series?.mat,
-      family === 'bmap' ? 3 : 12
-    )
-    if (firstCoupon) {
-      setIfAllowed('firstCouponDate', firstCoupon)
-    }
-  }
-
-  return { fields, sourced }
-}
-
-/** Fields that must never be overwritten by market autofill. */
+/** Fields that must never be overwritten / marked auto by market autofill. */
 export const MARKET_AUTOFILL_PROTECTED_FIELDS = Object.freeze([
   'principal',
   'faceValue',
-  'purchaseDate'
+  'purchaseDate',
+  'settlementDate'
 ])
 
-/** Required marketable inputs (excludes protected amount / purchase date). */
+/** Required marketable inputs (excludes protected amount / purchase/settlement date). */
 export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
-  dkj: Object.freeze([
-    'purchasePricePct',
-    'termMonths',
-    'settlementDate',
-    'maturityDate',
-    'remainingDays'
-  ]),
+  dkj: Object.freeze(['purchasePricePct', 'termMonths', 'maturityDate', 'remainingDays']),
   pmap: Object.freeze([
     'interestPremiumPct',
     'previousYearAverageInflationPct',
@@ -377,3 +264,100 @@ export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
     'firstCouponDate'
   ])
 })
+
+/**
+ * Marketable field names that should be cleared before applying a new patch
+ * so series switches cannot leave stale rates looking user-entered.
+ *
+ * @param {'dkj'|'pmap'|'bmap'} family
+ * @param {Iterable<string>} sourcedNames
+ * @returns {string[]}
+ */
+export function marketableFieldsMissingFromPatch(family, sourcedNames = []) {
+  const sourced = sourcedNames instanceof Set ? sourcedNames : new Set(sourcedNames || [])
+  const marketable = MARKET_MARKETABLE_REQUIRED_FIELDS[family] || []
+  return marketable.filter((name) => !sourced.has(name))
+}
+
+/**
+ * Build a patch of form field values from market data.
+ * Always overwrites sourced (auto) fields when values are available.
+ * Never returns amount or purchase/settlement date fields.
+ *
+ * @param {{
+ *   family: 'dkj'|'pmap'|'bmap',
+ *   series: object|null|undefined,
+ *   quote: object|null|undefined,
+ *   current?: Record<string, string|number|null|undefined>
+ * }} args
+ * @returns {{ fields: Record<string, string|number>, sourced: string[] }}
+ */
+export function buildMarketAutofillPatch({
+  family,
+  series,
+  quote,
+  current = {}
+} = {}) {
+  const fields = {}
+  const sourced = []
+  const protectedNames = new Set(MARKET_AUTOFILL_PROTECTED_FIELDS)
+
+  function setField(name, value) {
+    if (value == null || value === '') {
+      return
+    }
+    if (protectedNames.has(name)) {
+      return
+    }
+    fields[name] = value
+    sourced.push(name)
+  }
+
+  if (family === 'dkj') {
+    if (series?.mat) {
+      setField('maturityDate', series.mat)
+    }
+    const termMonths = deriveTermMonths(series?.issue, series?.mat)
+    if (termMonths != null) {
+      setField('termMonths', termMonths)
+    }
+    const price = pickPurchasePricePct(quote)
+    if (price != null) {
+      setField('purchasePricePct', price)
+    }
+    const settlement = current.settlementDate
+    const maturity = fields.maturityDate ?? current.maturityDate
+    const remaining = deriveRemainingDays(settlement, maturity)
+    if (remaining != null) {
+      setField('remainingDays', remaining)
+    }
+  } else if (family === 'pmap' || family === 'bmap') {
+    // Temporary: when quote yield exists, fill 0 + effective interest into base+premium
+    // until refs/inflation.json and refs/dkj-base.json land.
+    const effective = pickEffectiveInterestPct(quote)
+    if (effective != null) {
+      if (family === 'bmap') {
+        setField('dkjBaseYieldPct', 0)
+      } else {
+        setField('previousYearAverageInflationPct', 0)
+      }
+      setField('interestPremiumPct', effective)
+    } else if (series?.prem != null && Number.isFinite(Number(series.prem))) {
+      setField('interestPremiumPct', Number(series.prem))
+    }
+    if (series?.issue) {
+      setField('issueDate', series.issue)
+      setField('startDate', series.issue)
+    }
+    const firstCoupon = deriveFirstCouponDate(
+      series?.issue,
+      series?.mat,
+      family === 'bmap' ? 3 : 12
+    )
+    if (firstCoupon) {
+      setField('firstCouponDate', firstCoupon)
+    }
+  }
+
+  return { fields, sourced }
+}

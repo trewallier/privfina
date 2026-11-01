@@ -183,6 +183,19 @@
         max-width: 100%;
       }
 
+      #investment-dkj-wrap,
+      #investment-pmap-wrap,
+      #investment-bmap-wrap {
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      /* Autofilled <select>s stay enabled for FormData; block pointer interaction. */
+      select.control-market-readonly {
+        pointer-events: none;
+      }
+
       .row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
@@ -2058,20 +2071,9 @@
                       </select>
                       <div id="commercial-investment-series-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="commercial-investment-series-help" aria-label="Close">x</button>
-                        <p>Published ÁKK offering from GitHub-hosted market data. Selecting a series auto-fills non-amount fields when empty. Amount and purchase date stay manual.</p>
+                        <p>Published ÁKK offering from GitHub-hosted market data. Selecting a series auto-fills non-amount fields from the quote for the purchase/settlement date. Amount stays manual; purchase/settlement stays editable (clamped to the nearest valid quote date when needed). Missing quote data resets to Manual entry.</p>
                       </div>
                     </label>
-                    <label id="commercial-investment-settle-date-wrap">
-                      <span class="label-title"><span class="field-label">Quote settle date</span> <button type="button" class="info-chip" data-help-button="commercial-investment-settle-date-help" aria-label="Quote settle date help">i</button></span>
-                      <input id="commercial-investment-settle-date" name="marketSettleDate" type="date" />
-                      <div id="commercial-investment-settle-date-help" class="field-help" hidden>
-                        <button type="button" class="field-help-close" data-help-close="commercial-investment-settle-date-help" aria-label="Close">x</button>
-                        <p>Optional. Defaults to the latest published settle date. Change to load that day’s quote for the selected series when history is available.</p>
-                      </div>
-                    </label>
-                    <div id="commercial-investment-update-quote-wrap" class="field-action-wrap">
-                      <button id="commercial-investment-update-quote" type="button" class="secondary">Update from latest quote</button>
-                    </div>
                   </div>
                   <p id="commercial-investment-market-hint" class="field-help-static" hidden></p>
 
@@ -2108,6 +2110,12 @@
                         <span class="label-title"><span class="dkj-field-label">Face Value</span></span>
                         <input id="dkj-face-value" name="faceValue" class="money-amount" type="text" inputmode="decimal" required />
                       </label>
+                      <label id="dkj-settlement-date-wrap">
+                        <span class="label-title"><span class="dkj-field-label">Settlement Date</span></span>
+                        <input id="dkj-settlement-date" name="settlementDate" type="date" required />
+                      </label>
+                    </div>
+                    <div class="row">
                       <label id="dkj-purchase-price-pct-wrap">
                         <span class="label-title"><span class="dkj-field-label">Purchase Price Percent</span></span>
                         <input id="dkj-purchase-price-pct" name="purchasePricePct" type="number" min="0" max="200" step="0.01" required />
@@ -2120,17 +2128,15 @@
                           <option value="12">12</option>
                         </select>
                       </label>
-                      <label id="dkj-settlement-date-wrap">
-                        <span class="label-title"><span class="dkj-field-label">Settlement Date</span></span>
-                        <input id="dkj-settlement-date" name="settlementDate" type="date" required />
+                    </div>
+                    <div class="row">
+                      <label id="dkj-remaining-days-wrap">
+                        <span class="label-title"><span class="dkj-field-label">Remaining Days</span></span>
+                        <input id="dkj-remaining-days" name="remainingDays" type="number" min="1" step="1" />
                       </label>
                       <label id="dkj-maturity-date-wrap">
                         <span class="label-title"><span class="dkj-field-label">Maturity Date</span></span>
                         <input id="dkj-maturity-date" name="maturityDate" type="date" />
-                      </label>
-                      <label id="dkj-remaining-days-wrap">
-                        <span class="label-title"><span class="dkj-field-label">Remaining Days</span></span>
-                        <input id="dkj-remaining-days" name="remainingDays" type="number" min="1" step="1" />
                       </label>
                     </div>
                   </div>
@@ -2141,27 +2147,29 @@
                         <span class="label-title"><span class="pmap-field-label">Principal</span></span>
                         <input id="pmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
                       </label>
-                      <label id="pmap-interest-premium-pct-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Interest Premium</span></span>
-                        <input id="pmap-interest-premium-pct" name="interestPremiumPct" type="number" min="0" max="100" step="0.01" required />
-                      </label>
-                      <label id="pmap-previous-year-inflation-pct-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Previous Year Average Inflation</span></span>
-                        <input id="pmap-previous-year-inflation-pct" name="previousYearAverageInflationPct" type="number" min="-100" max="100" step="0.01" required />
-                      </label>
-                      <label id="pmap-start-date-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Start Date</span></span>
-                        <input id="pmap-start-date" name="startDate" type="date" required />
-                      </label>
                       <label id="pmap-purchase-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">Purchase Date</span></span>
                         <input id="pmap-purchase-date" name="purchaseDate" type="date" />
                       </label>
                     </div>
                     <div class="row">
+                      <label id="pmap-previous-year-inflation-pct-wrap">
+                        <span class="label-title"><span class="pmap-field-label">Previous Year Average Inflation</span></span>
+                        <input id="pmap-previous-year-inflation-pct" name="previousYearAverageInflationPct" type="number" min="-100" max="100" step="0.01" required />
+                      </label>
+                      <label id="pmap-interest-premium-pct-wrap">
+                        <span class="label-title"><span class="pmap-field-label">Interest Premium</span></span>
+                        <input id="pmap-interest-premium-pct" name="interestPremiumPct" type="number" min="0" max="100" step="0.01" required />
+                      </label>
+                    </div>
+                    <div class="row">
                       <label id="pmap-issue-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">Issue Date</span></span>
                         <input id="pmap-issue-date" name="issueDate" type="date" />
+                      </label>
+                      <label id="pmap-start-date-wrap">
+                        <span class="label-title"><span class="pmap-field-label">Start Date</span></span>
+                        <input id="pmap-start-date" name="startDate" type="date" required />
                       </label>
                       <label id="pmap-first-coupon-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">First Coupon Date</span></span>
@@ -2176,6 +2184,12 @@
                         <span class="label-title"><span id="bmap-principal-label" class="bmap-field-label">Principal</span></span>
                         <input id="bmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
                       </label>
+                      <label id="bmap-purchase-date-wrap">
+                        <span class="label-title"><span id="bmap-purchase-date-label" class="bmap-field-label">Purchase Date</span></span>
+                        <input id="bmap-purchase-date" name="purchaseDate" type="date" />
+                      </label>
+                    </div>
+                    <div class="row">
                       <label id="bmap-dkj-base-yield-pct-wrap">
                         <span class="label-title"><span id="bmap-dkj-base-yield-pct-label" class="bmap-field-label">DKJ Base Yield</span></span>
                         <input id="bmap-dkj-base-yield-pct" name="dkjBaseYieldPct" type="number" min="-100" max="100" step="0.01" required />
@@ -2184,19 +2198,15 @@
                         <span class="label-title"><span id="bmap-interest-premium-pct-label" class="bmap-field-label">Interest Premium</span></span>
                         <input id="bmap-interest-premium-pct" name="interestPremiumPct" type="number" min="0" max="100" step="0.01" required />
                       </label>
-                      <label id="bmap-start-date-wrap">
-                        <span class="label-title"><span id="bmap-start-date-label" class="bmap-field-label">Start Date</span></span>
-                        <input id="bmap-start-date" name="startDate" type="date" required />
-                      </label>
-                      <label id="bmap-purchase-date-wrap">
-                        <span class="label-title"><span id="bmap-purchase-date-label" class="bmap-field-label">Purchase Date</span></span>
-                        <input id="bmap-purchase-date" name="purchaseDate" type="date" />
-                      </label>
                     </div>
                     <div class="row">
                       <label id="bmap-issue-date-wrap">
                         <span class="label-title"><span id="bmap-issue-date-label" class="bmap-field-label">Issue Date</span></span>
                         <input id="bmap-issue-date" name="issueDate" type="date" />
+                      </label>
+                      <label id="bmap-start-date-wrap">
+                        <span class="label-title"><span id="bmap-start-date-label" class="bmap-field-label">Start Date</span></span>
+                        <input id="bmap-start-date" name="startDate" type="date" required />
                       </label>
                       <label id="bmap-first-coupon-date-wrap">
                         <span class="label-title"><span id="bmap-first-coupon-date-label" class="bmap-field-label">First Coupon Date</span></span>

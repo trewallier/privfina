@@ -7,7 +7,7 @@ import {
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
 import { getPmapFieldHelp } from './investment-field-help.js'
-import { parseMoneyAmount } from './money-format.js'
+import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const PMAP_FRONTEND_FIELD_ADAPTER = {
   principal: { inputId: 'pmap-principal', formName: 'principal' },
@@ -45,7 +45,11 @@ function queryFormInput(form, adapter) {
   )
 }
 
-function applyPmapSpecToForm({ investmentForm, investmentBox }) {
+function applyPmapSpecToForm({
+  investmentForm,
+  investmentBox,
+  setAmountDefaultIfEmpty = false
+} = {}) {
   void investmentBox
   if (!investmentForm) return
 
@@ -62,6 +66,14 @@ function applyPmapSpecToForm({ investmentForm, investmentBox }) {
       input.type = 'text'
       input.setAttribute('inputmode', 'decimal')
       input.classList.add('money-amount')
+      if (field.name === 'principal') {
+        // Only seed defaults on create paths; edit populate must run after this apply.
+        applyDenominationToMoneyInput(input, {
+          denominationUnit: PMAP_PRODUCT_SPEC.denominationUnit,
+          minimum: field.constraints?.minimum,
+          setDefaultIfEmpty: setAmountDefaultIfEmpty
+        })
+      }
     } else {
       input.type = toInputType(field)
     }

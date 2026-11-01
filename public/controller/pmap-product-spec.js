@@ -5,6 +5,7 @@ const PMAP_PRODUCT_SPEC = {
   variant: 'pmap',
   productCode: 'pmap',
   displayName: 'Premium Hungarian Government Security (PMÁP)',
+  denominationUnit: 1,
   inputs: [
     {
       name: 'principal',
@@ -132,11 +133,11 @@ const PMAP_PRODUCT_SPEC = {
         title: 'PMAP Inputs',
         fieldNames: [
           'principal',
-          'interestPremiumPct',
-          'previousYearAverageInflationPct',
-          'startDate',
           'purchaseDate',
+          'previousYearAverageInflationPct',
+          'interestPremiumPct',
           'issueDate',
+          'startDate',
           'firstCouponDate'
         ]
       }

@@ -30,13 +30,19 @@ describe('pmap frontend form metadata seam', () => {
     const orderedNames = orderedSpecFields(PMAP_PRODUCT_SPEC).map((field) => field.name)
     expect(orderedNames).toEqual([
       'principal',
-      'interestPremiumPct',
-      'previousYearAverageInflationPct',
-      'startDate',
       'purchaseDate',
+      'previousYearAverageInflationPct',
+      'interestPremiumPct',
       'issueDate',
+      'startDate',
       'firstCouponDate'
     ])
+  })
+
+  it('exposes denominationUnit matching the product YAML', () => {
+    const loadedSpec = loadPmapProductSpecYamlFromFiles() as any
+    expect(PMAP_PRODUCT_SPEC.denominationUnit).toBe(1)
+    expect(loadedSpec.denominationUnit).toBe(1)
   })
 
   it('maps PMAP fields onto dedicated host controls named like YAML', () => {

@@ -189,14 +189,61 @@ function applyFieldChrome(label, meta, input = null) {
   const control = input || label.querySelector('input, select, textarea')
   if (control) {
     if (role === 'output' || role === 'derived') {
-      control.readOnly = true
+      setControlMarketReadonly(control, true)
       control.required = false
-    } else if (isAuto || isUnavailable) {
+    } else if (isAuto) {
       control.required = false
-    } else if (typeof meta.required === 'boolean') {
-      control.required = meta.required
+      setControlMarketReadonly(control, true)
+    } else if (isUnavailable) {
+      control.required = false
+      setControlMarketReadonly(control, false)
+    } else {
+      setControlMarketReadonly(control, false)
+      if (typeof meta.required === 'boolean') {
+        control.required = meta.required
+      }
     }
   }
+}
+
+/**
+ * Mark autofilled controls read-only without disabling <select>.
+ * Selects stay enabled so FormData still includes them; interaction is blocked via
+ * `.control-market-readonly` (pointer-events) + aria-readonly instead of `disabled`.
+ * @param {HTMLElement} control
+ * @param {boolean} readonly
+ */
+function setControlMarketReadonly(control, readonly) {
+  if (!control) {
+    return
+  }
+  if (control.tagName === 'SELECT') {
+    if (readonly) {
+      if (control.dataset.savedTabIndex === undefined) {
+        control.dataset.savedTabIndex = control.hasAttribute('tabindex')
+          ? String(control.tabIndex)
+          : ''
+      }
+      control.tabIndex = -1
+      control.classList.add('control-market-readonly')
+      control.setAttribute('aria-readonly', 'true')
+      control.dataset.marketReadonly = 'true'
+    } else {
+      control.classList.remove('control-market-readonly')
+      control.removeAttribute('aria-readonly')
+      delete control.dataset.marketReadonly
+      if (control.dataset.savedTabIndex !== undefined) {
+        if (control.dataset.savedTabIndex === '') {
+          control.removeAttribute('tabindex')
+        } else {
+          control.tabIndex = Number(control.dataset.savedTabIndex)
+        }
+        delete control.dataset.savedTabIndex
+      }
+    }
+    return
+  }
+  control.readOnly = Boolean(readonly)
 }
 
 /**

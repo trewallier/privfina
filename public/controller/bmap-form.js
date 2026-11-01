@@ -5,7 +5,7 @@ import {
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
 import { getBmapFieldHelp } from './investment-field-help.js'
-import { parseMoneyAmount } from './money-format.js'
+import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const BMAP_PRODUCT_SPEC = {
   specVersion: 'v2alpha1',
@@ -14,6 +14,7 @@ const BMAP_PRODUCT_SPEC = {
   variant: 'bmap',
   productCode: 'bmap',
   displayName: 'Bonus Hungarian Government Security (BMÁP)',
+  denominationUnit: 1,
   inputs: [
     {
       name: 'principal',
@@ -141,11 +142,11 @@ const BMAP_PRODUCT_SPEC = {
         title: 'BMAP Inputs',
         fieldNames: [
           'principal',
+          'purchaseDate',
           'dkjBaseYieldPct',
           'interestPremiumPct',
-          'startDate',
-          'purchaseDate',
           'issueDate',
+          'startDate',
           'firstCouponDate'
         ]
       }
@@ -163,7 +164,7 @@ const BMAP_FRONTEND_FIELD_ADAPTER = {
   firstCouponDate: { inputId: 'bmap-first-coupon-date' }
 }
 
-function applyBmapSpecToForm({ bmapForm, bmapBox }) {
+function applyBmapSpecToForm({ bmapForm, bmapBox, setAmountDefaultIfEmpty = false } = {}) {
   void bmapBox
   if (!bmapForm) return
 
@@ -180,6 +181,14 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
       input.type = 'text'
       input.setAttribute('inputmode', 'decimal')
       input.classList.add('money-amount')
+      if (field.name === 'principal') {
+        // Only seed defaults on create paths; edit populate must run after this apply.
+        applyDenominationToMoneyInput(input, {
+          denominationUnit: BMAP_PRODUCT_SPEC.denominationUnit,
+          minimum: field.constraints?.minimum,
+          setDefaultIfEmpty: setAmountDefaultIfEmpty
+        })
+      }
     } else {
       input.type = toInputType(field)
     }

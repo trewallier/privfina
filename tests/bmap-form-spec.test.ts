@@ -30,13 +30,19 @@ describe('bmap frontend form metadata seam', () => {
     const orderedNames = orderedSpecFields(BMAP_PRODUCT_SPEC).map((field) => field.name)
     expect(orderedNames).toEqual([
       'principal',
+      'purchaseDate',
       'dkjBaseYieldPct',
       'interestPremiumPct',
-      'startDate',
-      'purchaseDate',
       'issueDate',
+      'startDate',
       'firstCouponDate'
     ])
+  })
+
+  it('exposes denominationUnit matching the product YAML', () => {
+    const loadedSpec = loadBmapProductSpecYamlFromFiles() as any
+    expect(BMAP_PRODUCT_SPEC.denominationUnit).toBe(1)
+    expect(loadedSpec.denominationUnit).toBe(1)
   })
 
   it('keeps adapter mapping minimal while preserving BMAP DOM wiring', () => {

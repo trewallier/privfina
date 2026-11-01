@@ -228,6 +228,14 @@ export function clearMarketDataSessionCache() {
   sessionCache.clear()
 }
 
+function quoteRowToObject(cols, row) {
+  const out = {}
+  cols.forEach((col, index) => {
+    out[col] = row[index] ?? null
+  })
+  return out
+}
+
 /**
  * Pick a quote row for settleDate from a QuotesFile, or null.
  * @param {{ cols: string[], rows: unknown[][] }|null|undefined} quotesFile
@@ -246,11 +254,104 @@ export function findQuoteRowBySettleDate(quotesFile, settleDate) {
   if (!row) {
     return null
   }
-  const out = {}
-  cols.forEach((col, index) => {
-    out[col] = row[index] ?? null
+  return quoteRowToObject(cols, row)
+}
+
+/**
+ * Nearest quote row by absolute day distance to settleDate (exact match preferred).
+ * @param {{ cols: string[], rows: unknown[][] }|null|undefined} quotesFile
+ * @param {string} settleDate
+ * @returns {{ quote: object, date: string, clamped: boolean }|null}
+ */
+export function findNearestQuoteRow(quotesFile, settleDate) {
+  if (!quotesFile || !Array.isArray(quotesFile.rows) || quotesFile.rows.length === 0) {
+    return null
+  }
+  const cols = quotesFile.cols || []
+  const dIndex = cols.indexOf('d')
+  if (dIndex < 0) {
+    return null
+  }
+
+  const exact = settleDate ? findQuoteRowBySettleDate(quotesFile, settleDate) : null
+  if (exact) {
+    return { quote: exact, date: settleDate, clamped: false }
+  }
+
+  const targetMs = settleDate && /^\d{4}-\d{2}-\d{2}$/.test(settleDate)
+    ? Date.parse(`${settleDate}T00:00:00Z`)
+    : NaN
+
+  let best = null
+  let bestDate = null
+  let bestDistance = Number.POSITIVE_INFINITY
+
+  quotesFile.rows.forEach((entry) => {
+    if (!Array.isArray(entry)) {
+      return
+    }
+    const date = entry[dIndex]
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(String(date))) {
+      return
+    }
+    const ms = Date.parse(`${date}T00:00:00Z`)
+    if (Number.isNaN(ms)) {
+      return
+    }
+    const distance = Number.isNaN(targetMs) ? 0 : Math.abs(ms - targetMs)
+    if (distance < bestDistance || (distance === bestDistance && String(date) > String(bestDate))) {
+      bestDistance = distance
+      bestDate = String(date)
+      best = quoteRowToObject(cols, entry)
+    }
   })
-  return out
+
+  if (!best || !bestDate) {
+    return null
+  }
+  return {
+    quote: best,
+    date: bestDate,
+    clamped: !settleDate || bestDate !== settleDate
+  }
+}
+
+/**
+ * Resolve a quote for purchase/settlement date using latest + optional quotes history.
+ * Clamps to the nearest available quote date when the requested date is missing.
+ *
+ * @param {{
+ *   requestedDate?: string|null,
+ *   latestQuote?: object|null,
+ *   quotesFile?: { cols: string[], rows: unknown[][] }|null
+ * }} args
+ * @returns {{ quote: object, date: string, clamped: boolean }|null}
+ */
+export function resolveQuoteForPurchaseDate({
+  requestedDate = '',
+  latestQuote = null,
+  quotesFile = null
+} = {}) {
+  const wanted = String(requestedDate || '').trim()
+
+  if (wanted && latestQuote?.d === wanted) {
+    return { quote: latestQuote, date: wanted, clamped: false }
+  }
+
+  const nearest = findNearestQuoteRow(quotesFile, wanted)
+  if (nearest) {
+    return nearest
+  }
+
+  if (latestQuote?.d) {
+    return {
+      quote: latestQuote,
+      date: String(latestQuote.d),
+      clamped: !wanted || wanted !== String(latestQuote.d)
+    }
+  }
+
+  return null
 }
 
 /**

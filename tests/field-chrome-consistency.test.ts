@@ -222,4 +222,19 @@ describe('home-savings composer required/optional/calculated chrome', () => {
     // Keep import used for future DOM chrome tests.
     expect(typeof applyFieldChrome).toBe('function')
   })
+
+  it('makes auto-populated inputs read-only while keeping selects FormData-safe', () => {
+    const fieldChromeSrc = readRepoFile('public/controller/field-chrome.js')
+    const css = extractStyleBlock(readRepoFile('public/index.html'))
+    expect(fieldChromeSrc).toContain('function setControlMarketReadonly')
+    expect(fieldChromeSrc).toContain('setControlMarketReadonly(control, true)')
+    expect(fieldChromeSrc).toContain('control.readOnly = Boolean(readonly)')
+    expect(fieldChromeSrc).toContain("control.tagName === 'SELECT'")
+    expect(fieldChromeSrc).toContain("control.classList.add('control-market-readonly')")
+    expect(fieldChromeSrc).toContain('dataset.savedTabIndex')
+    expect(fieldChromeSrc).not.toContain('style.pointerEvents')
+    expect(extractCssRuleBody(css, 'select.control-market-readonly')).toMatch(
+      /pointer-events:\s*none/
+    )
+  })
 })

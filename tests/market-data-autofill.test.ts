@@ -3,6 +3,7 @@ import {
   MARKET_AUTOFILL_PROTECTED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
+  marketableFieldsMissingFromPatch,
   deriveFirstCouponDate,
   deriveLastAvailabilityDate,
   deriveRemainingDays,
@@ -103,7 +104,7 @@ describe('market-data-autofill', () => {
     ).toBe(true)
   })
 
-  it('fills empty DKJ fields from series + quote without touching amounts', () => {
+  it('always overwrites DKJ auto fields without sourcing settlement or amounts', () => {
     const { fields, sourced } = buildMarketAutofillPatch({
       family: 'dkj',
       series: {
@@ -113,70 +114,33 @@ describe('market-data-autofill', () => {
         status: 'active'
       },
       quote: { d: '2026-11-02', bid: 99.15, ask: 99.35, by: 6.05, ay: 4.61, ai: 0 },
-      current: { faceValue: '100000', purchasePricePct: '', settlementDate: '' },
-      mode: 'fill-empty'
-    })
-
-    expect(fields).toMatchObject({
-      maturityDate: '2026-12-23',
-      termMonths: 12,
-      settlementDate: '2026-11-02',
-      purchasePricePct: 99.35,
-      remainingDays: 51
-    })
-    expect(fields).not.toHaveProperty('faceValue')
-    expect(sourced).toEqual(
-      expect.arrayContaining([
-        'maturityDate',
-        'termMonths',
-        'settlementDate',
-        'purchasePricePct',
-        'remainingDays'
-      ])
-    )
-  })
-
-  it('refreshes series-driven DKJ fields including remaining days on series change', () => {
-    const { fields } = buildMarketAutofillPatch({
-      family: 'dkj',
-      series: { issue: '2025-12-23', mat: '2026-12-23' },
-      quote: { d: '2026-11-02', ask: 99.35, bid: 99.15 },
       current: {
-        maturityDate: '2027-01-01',
+        faceValue: '100000',
         purchasePricePct: '95',
-        settlementDate: '2026-10-01',
+        settlementDate: '2026-11-02',
         termMonths: '6',
+        maturityDate: '2027-01-01',
         remainingDays: '30'
-      },
-      mode: 'fill-empty'
+      }
     })
 
     expect(fields).toEqual({
       maturityDate: '2026-12-23',
       termMonths: 12,
-      remainingDays: deriveRemainingDays('2026-10-01', '2026-12-23')
+      purchasePricePct: 99.35,
+      remainingDays: 51
     })
-    expect(fields.remainingDays).toBe(83)
-  })
-
-  it('force-quote updates quote fields only', () => {
-    const { fields } = buildMarketAutofillPatch({
-      family: 'dkj',
-      series: { issue: '2025-12-23', mat: '2026-12-23' },
-      quote: { d: '2026-11-02', ask: 99.35, bid: 99.15 },
-      current: {
-        maturityDate: '2027-01-01',
-        purchasePricePct: '95',
-        settlementDate: '2026-10-01',
-        faceValue: '250000'
-      },
-      mode: 'force-quote'
-    })
-
-    expect(fields.purchasePricePct).toBe(99.35)
-    expect(fields.settlementDate).toBe('2026-11-02')
-    expect(fields).not.toHaveProperty('maturityDate')
     expect(fields).not.toHaveProperty('faceValue')
+    expect(fields).not.toHaveProperty('settlementDate')
+    expect(sourced).toEqual(
+      expect.arrayContaining([
+        'maturityDate',
+        'termMonths',
+        'purchasePricePct',
+        'remainingDays'
+      ])
+    )
+    expect(sourced).not.toContain('settlementDate')
   })
 
   it('maps PMÁP / BMÁP to temporary 0 + ask yield and first coupon', () => {
@@ -223,7 +187,57 @@ describe('market-data-autofill', () => {
     expect(bmap.fields.firstCouponDate).toBe('2017-12-22')
   })
 
-  it('documents protected amount / purchase-date fields', () => {
-    expect(MARKET_AUTOFILL_PROTECTED_FIELDS).toEqual(['principal', 'faceValue', 'purchaseDate'])
+  it('documents protected amount / purchase-settlement fields', () => {
+    expect(MARKET_AUTOFILL_PROTECTED_FIELDS).toEqual([
+      'principal',
+      'faceValue',
+      'purchaseDate',
+      'settlementDate'
+    ])
+  })
+
+  it('lists marketable fields missing from a new patch so series switches can clear stale rates', () => {
+    expect(
+      marketableFieldsMissingFromPatch('bmap', ['issueDate', 'startDate', 'firstCouponDate'])
+    ).toEqual(['dkjBaseYieldPct', 'interestPremiumPct'])
+    expect(marketableFieldsMissingFromPatch('dkj', ['maturityDate', 'termMonths', 'purchasePricePct', 'remainingDays'])).toEqual(
+      []
+    )
+    expect(marketableFieldsMissingFromPatch('pmap', [])).toEqual([
+      'interestPremiumPct',
+      'previousYearAverageInflationPct',
+      'startDate',
+      'issueDate',
+      'firstCouponDate'
+    ])
+  })
+
+  it('overwrites rates on series switch and leaves missing yield fields out of the patch', () => {
+    const withYield = buildMarketAutofillPatch({
+      family: 'bmap',
+      series: { issue: '2017-10-03', mat: '2028-03-22', prem: 1.5 },
+      quote: { d: '2026-11-02', ask: 101.7, bid: 101.5, ay: 5.1, by: 5.2 },
+      current: {}
+    })
+    expect(withYield.fields.interestPremiumPct).toBe(5.1)
+    expect(withYield.fields.dkjBaseYieldPct).toBe(0)
+
+    const withoutYield = buildMarketAutofillPatch({
+      family: 'bmap',
+      series: { issue: '2018-01-01', mat: '2029-03-22' },
+      quote: { d: '2026-11-02', ask: 100, bid: 99.9, ay: null, by: null },
+      current: {
+        dkjBaseYieldPct: '0',
+        interestPremiumPct: '5.1',
+        issueDate: '2017-10-03',
+        startDate: '2017-10-03',
+        firstCouponDate: '2017-12-22'
+      }
+    })
+    expect(withoutYield.fields).not.toHaveProperty('dkjBaseYieldPct')
+    expect(withoutYield.fields).not.toHaveProperty('interestPremiumPct')
+    expect(marketableFieldsMissingFromPatch('bmap', withoutYield.sourced)).toEqual(
+      expect.arrayContaining(['dkjBaseYieldPct', 'interestPremiumPct'])
+    )
   })
 })

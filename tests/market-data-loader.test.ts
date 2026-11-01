@@ -5,8 +5,10 @@ import { readdirSync } from 'fs'
 import {
   clearMarketDataSessionCache,
   createMarketDataLoader,
+  findNearestQuoteRow,
   findQuoteRowBySettleDate,
-  latestQuoteForId
+  latestQuoteForId,
+  resolveQuoteForPurchaseDate
 } from '../public/controller/market-data-loader.js'
 
 const FIXTURE_ROOT = resolve(process.cwd(), 'tests/fixtures/market-data/published')
@@ -77,6 +79,50 @@ describe('market-data-loader', () => {
       ai: 0
     })
     expect(latestQuoteForId({ D261223: { d: '2026-11-02', bid: 1, ask: 2, by: null, ay: null, ai: 0 } }, 'D261223')?.ask).toBe(2)
+  })
+
+  it('finds the nearest quote date and resolves purchase-date clamp', async () => {
+    const loader = createMarketDataLoader({
+      baseUrl: '/privfina/data/market/v1/',
+      fetchImpl: createFixtureFetch()
+    })
+    const quotes = await loader.loadQuotes('dkj', 'D261223')
+    // 2026-11-01 is equidistant from 10-31 and 11-02; tie-break prefers the later date.
+    const nearest = findNearestQuoteRow(quotes, '2026-11-01')
+    expect(nearest?.date).toBe('2026-11-02')
+    expect(nearest?.clamped).toBe(true)
+    expect(nearest?.quote.ask).toBe(99.3512)
+
+    const before = findNearestQuoteRow(quotes, '2026-10-30')
+    expect(before?.date).toBe('2026-10-31')
+    expect(before?.clamped).toBe(true)
+
+    const exact = resolveQuoteForPurchaseDate({
+      requestedDate: '2026-10-31',
+      latestQuote: { d: '2026-11-02', ask: 99.35 },
+      quotesFile: quotes
+    })
+    expect(exact).toEqual({
+      quote: expect.objectContaining({ d: '2026-10-31', ask: 99.2 }),
+      date: '2026-10-31',
+      clamped: false
+    })
+
+    const clamped = resolveQuoteForPurchaseDate({
+      requestedDate: '2020-01-01',
+      latestQuote: { d: '2026-11-02', ask: 99.35 },
+      quotesFile: quotes
+    })
+    expect(clamped?.clamped).toBe(true)
+    expect(clamped?.date).toBeTruthy()
+
+    expect(
+      resolveQuoteForPurchaseDate({
+        requestedDate: '2026-11-02',
+        latestQuote: null,
+        quotesFile: { cols: ['d'], rows: [] }
+      })
+    ).toBeNull()
   })
 
   it('loads retail-interest refs when present', async () => {

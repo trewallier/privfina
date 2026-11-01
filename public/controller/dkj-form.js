@@ -179,7 +179,11 @@ function addMonthsToIsoDate(dateIso, months) {
   return target.toISOString().slice(0, 10)
 }
 
-function applyDkjSpecToForm({ investmentForm, investmentBox }) {
+function applyDkjSpecToForm({
+  investmentForm,
+  investmentBox,
+  setAmountDefaultIfEmpty = false
+} = {}) {
   void investmentBox
   if (!investmentForm) return
 
@@ -205,10 +209,11 @@ function applyDkjSpecToForm({ investmentForm, investmentBox }) {
       input.setAttribute('inputmode', 'decimal')
       input.classList.add('money-amount')
       if (field.name === 'faceValue') {
+        // Only seed defaults on create paths; edit populate must run after this apply.
         applyDenominationToMoneyInput(input, {
           denominationUnit: DKJ_PRODUCT_SPEC.denominationUnit,
           minimum: field.constraints?.minimum,
-          setDefaultIfEmpty: true
+          setDefaultIfEmpty: setAmountDefaultIfEmpty
         })
       }
     } else {

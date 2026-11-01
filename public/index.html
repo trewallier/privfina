@@ -191,6 +191,11 @@
         min-width: 0;
       }
 
+      /* Autofilled <select>s stay enabled for FormData; block pointer interaction. */
+      select.control-market-readonly {
+        pointer-events: none;
+      }
+
       .row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));

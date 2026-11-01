@@ -83,6 +83,30 @@ function defaultDenominationAmount(denominationUnit, options = {}) {
   return snapToDenomination(null, denominationUnit, options)
 }
 
+/**
+ * True when value is a finite multiple of denominationUnit and meets minimum.
+ * Used on submit; blur path snaps instead.
+ *
+ * @param {unknown} value
+ * @param {number|string|null|undefined} denominationUnit
+ * @param {{ minimum?: number|string|null|undefined }} [options]
+ */
+function isMultipleOfDenomination(value, denominationUnit, { minimum } = {}) {
+  const unit = Number(denominationUnit)
+  const step = Number.isFinite(unit) && unit > 0 ? unit : 1
+  let min = Number(minimum)
+  if (!Number.isFinite(min) || min <= 0) {
+    min = step
+  }
+  const alignedMin = Math.ceil(min / step) * step
+  const numeric = typeof value === 'number' ? value : parseMoneyAmount(value)
+  if (!Number.isFinite(numeric) || numeric < alignedMin) {
+    return false
+  }
+  const quotient = numeric / step
+  return Math.abs(quotient - Math.round(quotient)) < 1e-9
+}
+
 function bindMoneyAmountInput(input) {
   if (!input || input.dataset.moneyBound === '1') {
     return
@@ -175,6 +199,7 @@ export {
   parseMoneyAmount,
   snapToDenomination,
   defaultDenominationAmount,
+  isMultipleOfDenomination,
   applyDenominationToMoneyInput,
   bindMoneyAmountInput,
   bindMoneyAmountInputs

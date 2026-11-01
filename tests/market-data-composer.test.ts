@@ -89,13 +89,21 @@ describe('commercial investment UI markup contracts', () => {
     expect(appController).toContain('ensureDefaultPurchaseDate(bmapPurchaseDateInput)')
   })
 
-  it('wires series + purchase/settlement autofill and auto chrome sync', () => {
+  it('wires series + purchase/settlement autofill, stale clear, and apply-token guard', () => {
     expect(appController).toContain('formatSeriesAvailabilityLabel')
     expect(appController).toContain('syncCommercialMarketFieldChrome')
     expect(appController).toContain('clearCommercialMarketSourcedFields')
+    expect(appController).toContain('clearMarketableFieldsMissingFromPatch')
+    expect(appController).toContain('marketableFieldsMissingFromPatch')
     expect(appController).toContain('bindCommercialPurchaseSettlementAutofill')
-    expect(appController).toContain('decideMarketAutofillAction')
     expect(appController).toContain('resolveQuoteForPurchaseDate')
+    expect(appController).toContain('assertCommercialInvestmentDenomination')
+    expect(appController).toContain('commercialMarketApplyToken')
+    expect(appController).toMatch(
+      /async function applyCommercialMarketSelection\(\) \{[\s\S]*?const token = \+\+commercialMarketApplyToken/
+    )
+    expect(appController).not.toContain('decideMarketAutofillAction')
+    expect(appController).not.toContain('preserveSeriesId')
     expect(appController).not.toContain('Auto-filled from market data:')
     expect(appController).toContain("firstCouponDate: '#bmap-first-coupon-date'")
     expect(appController).toContain("dkjBaseYieldPct: '#bmap-dkj-base-yield-pct'")

@@ -131,6 +131,7 @@ import {
 import {
   formatMoneyAmount,
   parseMoneyAmount,
+  isMultipleOfDenomination,
   bindMoneyAmountInputs
 } from './controller/money-format.js'
 import {
@@ -142,9 +143,9 @@ import {
   MARKET_MARKETABLE_REQUIRED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
-  decideMarketAutofillAction,
   findRetailInterestForSeries,
-  formatSeriesAvailabilityLabel
+  formatSeriesAvailabilityLabel,
+  marketableFieldsMissingFromPatch
 } from './controller/market-data-autofill.js'
 import {
   browserTodayIso,
@@ -904,6 +905,37 @@ function initController() {
     setCommercialInvestmentFormStatus(textMessage, 'error')
   }
 
+  /**
+   * Blur snaps amounts to denominationUnit; submit still rejects non-multiples
+   * (e.g. paste + Enter without blur).
+   */
+  function assertCommercialInvestmentDenomination(productCode, formData) {
+    if (productCode === 'dkj') {
+      const unit = DKJ_PRODUCT_SPEC.denominationUnit
+      const faceValue = formData.get('faceValue')
+      if (
+        !isMultipleOfDenomination(faceValue, unit, {
+          minimum: unit
+        })
+      ) {
+        throw new Error(`Face value must be a multiple of ${formatMoneyAmount(unit, { fractionDigits: 0 })} HUF.`)
+      }
+      return
+    }
+    if (productCode === 'pmap' || productCode === 'bmap') {
+      const unit =
+        productCode === 'pmap'
+          ? PMAP_PRODUCT_SPEC.denominationUnit
+          : BMAP_PRODUCT_SPEC.denominationUnit
+      const principal = formData.get('principal')
+      if (!isMultipleOfDenomination(principal, unit, { minimum: unit })) {
+        throw new Error(
+          `Principal must be a multiple of ${formatMoneyAmount(unit, { fractionDigits: 0 })} HUF.`
+        )
+      }
+    }
+  }
+
   function setCommercialMarketHint(message, visible = Boolean(message)) {
     if (!commercialInvestmentMarketHint) {
       return
@@ -1148,12 +1180,31 @@ function initController() {
     })
   }
 
+  /** Empty marketable inputs not present in the new patch so series switches cannot leave stale rates. */
+  function clearMarketableFieldsMissingFromPatch(family, sourcedNames = []) {
+    const map = commercialMarketFieldSelectors(family)
+    if (!commercialInvestmentForm || !map) {
+      return
+    }
+    marketableFieldsMissingFromPatch(family, sourcedNames).forEach((name) => {
+      const selector = map[name]
+      if (!selector) {
+        return
+      }
+      const input = commercialInvestmentForm.querySelector(selector)
+      if (!input) {
+        return
+      }
+      input.value = ''
+      delete input.dataset.marketSourced
+      input.removeAttribute('title')
+    })
+  }
+
   /**
    * Rebuild series <select>.
    * - Pass `''` / `null` to force Manual entry.
-   * - Omit the argument (undefined) only when calling this helper directly to keep
-   *   the current selection. `refreshCommercialMarketFamily` always passes an
-   *   explicit id and defaults to `''` (force Manual) so stale picks cannot clobber.
+   * - Omit the argument (undefined) to keep the current selection when still available.
    */
   function rebuildCommercialMarketSeriesOptions(selectedId) {
     if (!commercialInvestmentSeriesInput) {
@@ -1205,10 +1256,7 @@ function initController() {
     setCommercialMarketRowVisible(false)
   }
 
-  async function refreshCommercialMarketFamily(
-    productCode,
-    { preserveSeriesId = '' } = {}
-  ) {
+  async function refreshCommercialMarketFamily(productCode) {
     const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
     const token = ++commercialMarketApplyToken
     const [loaded, retailInterest] = await Promise.all([
@@ -1249,18 +1297,13 @@ function initController() {
     }
 
     setCommercialMarketRowVisible(true)
-    // Always explicit: default preserveSeriesId '' forces Manual entry.
-    rebuildCommercialMarketSeriesOptions(preserveSeriesId)
+    // Product/family refresh always forces Manual entry.
+    rebuildCommercialMarketSeriesOptions('')
     const asOfLabel = commercialMarketFamilyState.asOf
       ? `Market data as of ${commercialMarketFamilyState.asOf}`
       : 'Market data loaded'
     setCommercialMarketHint(asOfLabel, true)
-
-    if (commercialInvestmentSeriesInput?.value) {
-      await applyCommercialMarketSelection()
-    } else {
-      clearCommercialMarketSourcedFields(code)
-    }
+    clearCommercialMarketSourcedFields(code)
   }
 
   async function resolveCommercialMarketQuoteLookup(seriesId, requestedDate) {
@@ -1279,6 +1322,7 @@ function initController() {
   }
 
   async function applyCommercialMarketSelection() {
+    const token = ++commercialMarketApplyToken
     const family = commercialMarketFamilyState.family
     const seriesId = commercialInvestmentSeriesInput?.value || ''
     if (!family) {
@@ -1301,14 +1345,22 @@ function initController() {
     const dateInput = commercialPurchaseOrSettlementInput(family)
     const requestedDate = String(dateInput?.value || '').trim()
     const lookup = await resolveCommercialMarketQuoteLookup(seriesId, requestedDate)
+    if (token !== commercialMarketApplyToken) {
+      return
+    }
+    if (commercialInvestmentSeriesInput?.value !== seriesId) {
+      return
+    }
 
-    if (decideMarketAutofillAction(lookup) === 'reset-manual') {
+    // Manual reset when the series has no quote history / latest at all (nearest-date
+    // clamp still applies when any history exists for a mismatched purchase date).
+    if (!lookup?.quote) {
       if (commercialInvestmentSeriesInput) {
         commercialInvestmentSeriesInput.value = ''
       }
       clearCommercialMarketSourcedFields(family)
       setCommercialMarketHint(
-        'No published quote data for the selected series/period — switched to Manual entry.',
+        'No published quote history for the selected series — switched to Manual entry.',
         true
       )
       syncCommercialInvestmentPreview()
@@ -1333,16 +1385,7 @@ function initController() {
       quote: lookup.quote,
       current
     })
-    const fieldMap = commercialMarketFieldSelectors(family)
-    if (fieldMap && commercialInvestmentForm) {
-      Object.values(fieldMap).forEach((selector) => {
-        const input = commercialInvestmentForm.querySelector(selector)
-        if (input) {
-          delete input.dataset.marketSourced
-          input.removeAttribute('title')
-        }
-      })
-    }
+    clearMarketableFieldsMissingFromPatch(family, patch.sourced)
     applyCommercialMarketFields(family, patch.fields)
     syncCommercialMarketFieldChrome(family, patch.sourced)
     const asOfLabel = commercialMarketFamilyState.asOf
@@ -1426,13 +1469,17 @@ function initController() {
       input.required = false
     })
 
+    // Seed face/principal defaults only on create; edit populate overwrites afterward.
+    const setAmountDefaultIfEmpty = !editingCommercialInvestmentId
+
     if (isBmap) {
       bmapInputs.forEach((input) => {
         if (input) input.disabled = false
       })
       applyBmapSpecToForm({
         bmapForm: commercialInvestmentForm,
-        bmapBox: commercialInvestmentBox
+        bmapBox: commercialInvestmentBox,
+        setAmountDefaultIfEmpty
       })
       ensureDefaultPurchaseDate(bmapPurchaseDateInput)
       setElementVisible(commercialInvestmentDiscountYieldWrap, false)
@@ -1447,7 +1494,8 @@ function initController() {
       })
       applyDkjSpecToForm({
         investmentForm: commercialInvestmentForm,
-        investmentBox: commercialInvestmentBox
+        investmentBox: commercialInvestmentBox,
+        setAmountDefaultIfEmpty
       })
       setElementVisible(commercialInvestmentDiscountYieldWrap, true)
       setElementVisible(commercialInvestmentDiscountCurrentValueWrap, true)
@@ -1461,7 +1509,8 @@ function initController() {
       })
       applyPmapSpecToForm({
         investmentForm: commercialInvestmentForm,
-        investmentBox: commercialInvestmentBox
+        investmentBox: commercialInvestmentBox,
+        setAmountDefaultIfEmpty
       })
       ensureDefaultPurchaseDate(pmapPurchaseDateInput)
       setElementVisible(commercialInvestmentDiscountYieldWrap, false)
@@ -3004,6 +3053,8 @@ function initController() {
                 ?.createdAt
             : undefined
         }
+
+        assertCommercialInvestmentDenomination(productCode, formData)
 
         let bundle
         if (productCode === 'bmap') {

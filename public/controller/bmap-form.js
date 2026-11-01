@@ -164,7 +164,7 @@ const BMAP_FRONTEND_FIELD_ADAPTER = {
   firstCouponDate: { inputId: 'bmap-first-coupon-date' }
 }
 
-function applyBmapSpecToForm({ bmapForm, bmapBox }) {
+function applyBmapSpecToForm({ bmapForm, bmapBox, setAmountDefaultIfEmpty = false } = {}) {
   void bmapBox
   if (!bmapForm) return
 
@@ -182,10 +182,11 @@ function applyBmapSpecToForm({ bmapForm, bmapBox }) {
       input.setAttribute('inputmode', 'decimal')
       input.classList.add('money-amount')
       if (field.name === 'principal') {
+        // Only seed defaults on create paths; edit populate must run after this apply.
         applyDenominationToMoneyInput(input, {
           denominationUnit: BMAP_PRODUCT_SPEC.denominationUnit,
           minimum: field.constraints?.minimum,
-          setDefaultIfEmpty: true
+          setDefaultIfEmpty: setAmountDefaultIfEmpty
         })
       }
     } else {

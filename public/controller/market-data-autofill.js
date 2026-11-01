@@ -270,15 +270,17 @@ export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
 })
 
 /**
- * Decide whether market autofill can proceed for a series + lookup result.
- * @param {{ quote: object|null|undefined, clampedDate?: string|null }} lookup
- * @returns {'apply'|'reset-manual'}
+ * Marketable field names that should be cleared before applying a new patch
+ * so series switches cannot leave stale rates looking user-entered.
+ *
+ * @param {'dkj'|'pmap'|'bmap'} family
+ * @param {Iterable<string>} sourcedNames
+ * @returns {string[]}
  */
-export function decideMarketAutofillAction(lookup) {
-  if (!lookup || !lookup.quote) {
-    return 'reset-manual'
-  }
-  return 'apply'
+export function marketableFieldsMissingFromPatch(family, sourcedNames = []) {
+  const sourced = sourcedNames instanceof Set ? sourcedNames : new Set(sourcedNames || [])
+  const marketable = MARKET_MARKETABLE_REQUIRED_FIELDS[family] || []
+  return marketable.filter((name) => !sourced.has(name))
 }
 
 /**

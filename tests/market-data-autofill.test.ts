@@ -3,7 +3,7 @@ import {
   MARKET_AUTOFILL_PROTECTED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
-  decideMarketAutofillAction,
+  marketableFieldsMissingFromPatch,
   deriveFirstCouponDate,
   deriveLastAvailabilityDate,
   deriveRemainingDays,
@@ -196,11 +196,48 @@ describe('market-data-autofill', () => {
     ])
   })
 
-  it('resets to manual when lookup has no quote', () => {
-    expect(decideMarketAutofillAction(null)).toBe('reset-manual')
-    expect(decideMarketAutofillAction({ quote: null })).toBe('reset-manual')
-    expect(decideMarketAutofillAction({ quote: { d: '2026-11-02' }, clamped: false })).toBe(
-      'apply'
+  it('lists marketable fields missing from a new patch so series switches can clear stale rates', () => {
+    expect(
+      marketableFieldsMissingFromPatch('bmap', ['issueDate', 'startDate', 'firstCouponDate'])
+    ).toEqual(['dkjBaseYieldPct', 'interestPremiumPct'])
+    expect(marketableFieldsMissingFromPatch('dkj', ['maturityDate', 'termMonths', 'purchasePricePct', 'remainingDays'])).toEqual(
+      []
+    )
+    expect(marketableFieldsMissingFromPatch('pmap', [])).toEqual([
+      'interestPremiumPct',
+      'previousYearAverageInflationPct',
+      'startDate',
+      'issueDate',
+      'firstCouponDate'
+    ])
+  })
+
+  it('overwrites rates on series switch and leaves missing yield fields out of the patch', () => {
+    const withYield = buildMarketAutofillPatch({
+      family: 'bmap',
+      series: { issue: '2017-10-03', mat: '2028-03-22', prem: 1.5 },
+      quote: { d: '2026-11-02', ask: 101.7, bid: 101.5, ay: 5.1, by: 5.2 },
+      current: {}
+    })
+    expect(withYield.fields.interestPremiumPct).toBe(5.1)
+    expect(withYield.fields.dkjBaseYieldPct).toBe(0)
+
+    const withoutYield = buildMarketAutofillPatch({
+      family: 'bmap',
+      series: { issue: '2018-01-01', mat: '2029-03-22' },
+      quote: { d: '2026-11-02', ask: 100, bid: 99.9, ay: null, by: null },
+      current: {
+        dkjBaseYieldPct: '0',
+        interestPremiumPct: '5.1',
+        issueDate: '2017-10-03',
+        startDate: '2017-10-03',
+        firstCouponDate: '2017-12-22'
+      }
+    })
+    expect(withoutYield.fields).not.toHaveProperty('dkjBaseYieldPct')
+    expect(withoutYield.fields).not.toHaveProperty('interestPremiumPct')
+    expect(marketableFieldsMissingFromPatch('bmap', withoutYield.sourced)).toEqual(
+      expect.arrayContaining(['dkjBaseYieldPct', 'interestPremiumPct'])
     )
   })
 })

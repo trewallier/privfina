@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   defaultDenominationAmount,
   formatMoneyAmount,
+  isMultipleOfDenomination,
   snapToDenomination
 } from '../public/controller/money-format.js'
 
@@ -25,5 +26,15 @@ describe('money-format denomination helpers', () => {
   it('formats snapped defaults for empty money inputs', () => {
     expect(formatMoneyAmount(defaultDenominationAmount(10000))).toBe('10 000.00')
     expect(formatMoneyAmount(defaultDenominationAmount(1))).toBe('1.00')
+  })
+
+  it('validates exact denomination multiples for submit (blur snaps separately)', () => {
+    expect(isMultipleOfDenomination(10000, 10000)).toBe(true)
+    expect(isMultipleOfDenomination(20000, 10000)).toBe(true)
+    expect(isMultipleOfDenomination(14000, 10000)).toBe(false)
+    expect(isMultipleOfDenomination('10 000', 10000)).toBe(true)
+    expect(isMultipleOfDenomination(1, 1)).toBe(true)
+    expect(isMultipleOfDenomination(0, 10000)).toBe(false)
+    expect(isMultipleOfDenomination('', 10000)).toBe(false)
   })
 })

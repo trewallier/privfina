@@ -39,6 +39,12 @@ describe('pmap frontend form metadata seam', () => {
     ])
   })
 
+  it('exposes denominationUnit matching the product YAML', () => {
+    const loadedSpec = loadPmapProductSpecYamlFromFiles() as any
+    expect(PMAP_PRODUCT_SPEC.denominationUnit).toBe(1)
+    expect(loadedSpec.denominationUnit).toBe(1)
+  })
+
   it('maps PMAP fields onto dedicated host controls named like YAML', () => {
     expect(PMAP_FRONTEND_FIELD_ADAPTER.interestPremiumPct).toEqual({
       inputId: 'pmap-interest-premium-pct',

@@ -207,7 +207,9 @@ function applyFieldChrome(label, meta, input = null) {
 }
 
 /**
- * Mark autofilled controls read-only without disabling <select> (FormData must still submit).
+ * Mark autofilled controls read-only without disabling <select>.
+ * Selects stay enabled so FormData still includes them; interaction is blocked via
+ * `.control-market-readonly` (pointer-events) + aria-readonly instead of `disabled`.
  * @param {HTMLElement} control
  * @param {boolean} readonly
  */
@@ -216,14 +218,28 @@ function setControlMarketReadonly(control, readonly) {
     return
   }
   if (control.tagName === 'SELECT') {
-    control.style.pointerEvents = readonly ? 'none' : ''
-    control.tabIndex = readonly ? -1 : 0
     if (readonly) {
+      if (control.dataset.savedTabIndex === undefined) {
+        control.dataset.savedTabIndex = control.hasAttribute('tabindex')
+          ? String(control.tabIndex)
+          : ''
+      }
+      control.tabIndex = -1
+      control.classList.add('control-market-readonly')
       control.setAttribute('aria-readonly', 'true')
       control.dataset.marketReadonly = 'true'
     } else {
+      control.classList.remove('control-market-readonly')
       control.removeAttribute('aria-readonly')
       delete control.dataset.marketReadonly
+      if (control.dataset.savedTabIndex !== undefined) {
+        if (control.dataset.savedTabIndex === '') {
+          control.removeAttribute('tabindex')
+        } else {
+          control.tabIndex = Number(control.dataset.savedTabIndex)
+        }
+        delete control.dataset.savedTabIndex
+      }
     }
     return
   }

@@ -39,6 +39,12 @@ describe('bmap frontend form metadata seam', () => {
     ])
   })
 
+  it('exposes denominationUnit matching the product YAML', () => {
+    const loadedSpec = loadBmapProductSpecYamlFromFiles() as any
+    expect(BMAP_PRODUCT_SPEC.denominationUnit).toBe(1)
+    expect(loadedSpec.denominationUnit).toBe(1)
+  })
+
   it('keeps adapter mapping minimal while preserving BMAP DOM wiring', () => {
     expect(BMAP_FRONTEND_FIELD_ADAPTER.principal.inputId).toBe('bmap-principal')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.dkjBaseYieldPct.inputId).toBe('bmap-dkj-base-yield-pct')

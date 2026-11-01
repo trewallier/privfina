@@ -10,6 +10,8 @@ export interface CiIngestOptions {
   networkRates?: AkkEnvelope
   allampapirPrices?: Record<string, AllampapirEnvelope>
   skipAllampapir?: boolean
+  retailInterestEnvelope?: AllampapirEnvelope
+  skipRetailInterest?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -34,6 +36,8 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     networkRates: options.networkRates,
     allampapirPrices: options.allampapirPrices,
     skipAllampapir: options.skipAllampapir,
+    retailInterestEnvelope: options.retailInterestEnvelope,
+    skipRetailInterest: options.skipRetailInterest,
     fetchImpl: options.fetchImpl,
     generatedAt: options.generatedAt
   })

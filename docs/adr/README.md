@@ -32,6 +32,7 @@ Recent decisions
 - `0033-home-savings-ebkm-interest-accrual-through.md` — **rejected** (PR #95 / #94): hybrid OTP-maturity interest end for 4x10 residuals is packaging fit only; not adopted without an external citation.
 - `0034-government-securities-published-market-data-via-actions.md` — ÁKK market data via GitHub Actions only; compact JSON on `market-data` branch; SPA later fetches Pages-hosted files (ROADMAP §6b).
 - `0035-dual-source-akk-allampapir-market-data.md` — same workflow also fetches allampapir.hu (CSRF); combine ÁKK + treasury retail quotes; extended optional families (ROADMAP §6c).
+- `0036-allampapir-retail-interest-kamatok.md` — same workflow also fetches Lakossági kamatok (`retailInterest`); publishes `refs/retail-interest.json` with period rates + `offered` (ROADMAP §6d).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

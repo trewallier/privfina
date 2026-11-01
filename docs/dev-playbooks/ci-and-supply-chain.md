@@ -9,7 +9,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 | CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`** | top-level deny; job `contents: read` |
 | CodeQL | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) | same + weekly schedule | **`Analyze`** | top-level deny; job `contents`/`actions` read + `security-events: write` |
 | Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build (+ materialize `market-data` tip) + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
-| Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`push`** (App token) | top-level deny; ingest `contents: read` (ÁKK + allampapir.hu fetch); push uses GitHub App installation token only; no PR to default branch; skips full app `validate` (ADR 0034 / 0035 / ROADMAP §6b–§6c) |
+| Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | weekday schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`push`** (App token) | top-level deny; ingest `contents: read` (ÁKK + allampapir.hu prices + retailInterest kamatok); push uses GitHub App installation token only; no PR to default branch; skips full app `validate` (ADR 0034 / 0035 / 0036 / ROADMAP §6b–§6d) |
 
 ### Workflow invariants (all pipelines)
 
@@ -77,12 +77,12 @@ npm run test:exploratory # optional EBKM diagnosis probes only
 
 Node **≥ 22** (`engines` in [`package.json`](../../package.json)).
 
-### E. Market-data ingest (ADR 0034 / 0035)
+### E. Market-data ingest (ADR 0034 / 0035 / 0036)
 
 Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read-only ([secure use / token permissions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-secrets)). The **`push` job must not use `GITHUB_TOKEN` for writes** — it mints a **GitHub App installation token** instead.
 
 1. Workflow [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) is **two jobs**:
-   - **`ingest`** (`contents: read`): resolve whether `market-data` exists (API; fail-closed on non-404 errors), checkout baseline only when it exists (no blind `continue-on-error`), call ÁKK (2 GETs) **and** allampapir.hu (CSRF + papers + per-paper prices), combine → stage tree under `out/`, emit `changed` / `as_of`, upload artifact when changed.
+   - **`ingest`** (`contents: read`): resolve whether `market-data` exists (API; fail-closed on non-404 errors), checkout baseline only when it exists (no blind `continue-on-error`), call ÁKK (2 GETs) **and** allampapir.hu (CSRF + papers + per-paper prices **and** `retailInterest/get_all_data` for Lakossági kamatok), combine prices → merge retail-interest refs → stage tree under `out/`, emit `changed` / `as_of`, upload artifact when changed.
    - **`push`** (`if: changed`): App token → resolve branch → checkout or orphan-init → download artifact → **`validate-tree`** (schema + digests) → bash `commit-push.sh`. **Does not call ÁKK or allampapir.hu.**
 2. **GitHub App setup (required before first successful push):**
    1. Create a GitHub App with **Contents: Read and write** on this repository (no metadata beyond what push needs).
@@ -96,7 +96,7 @@ Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read
 7. **Pages materialization (ROADMAP §6b):** `deploy.yml` resolves whether `market-data` exists (same `resolve-branch` helper as ingest), checks out that tip only when present (sparse `data/market/v1`), and copies it into `dist-web/data/market/v1/` for same-origin SPA `fetch`. Soft-fail with a warning if resolve/checkout/tree is unavailable so product Pages still deploys; the SPA degrades to manual entry. After merge to the default branch, confirm `GET /privfina/data/market/v1/manifest.json` returns 200 on the live site.
 8. Local dry-run: `npm run market-data:ingest -- --help`.
 9. Optional later: Actions **workflow dependency lockfiles**; enforce CODEOWNERS required reviews on `.github/workflows/**` when multi-maintainer review is available.
-10. Optional later: Actions sources for deferred `refs/inflation.json` / `refs/dkj-base.json` (PMÁP inflation / BMÁP DKJ-base remain manual in v1).
+10. Optional later: Actions sources for deferred `refs/inflation.json` / `refs/dkj-base.json` (PMÁP inflation / BMÁP DKJ-base remain manual in v1). `refs/retail-interest.json` (ADR 0036 / ROADMAP §6d) is published from `retailInterest` JSON — not from the kamatok XLSX download.
 
 ## Explicit non-goals (for now)
 

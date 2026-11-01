@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-10-01",
+  "generatedAt": "2026-11-01T12:00:00.000Z",
+  "rows": [
+    {
+      "id": "2027_J",
+      "family": "pmap",
+      "series": "2027/J",
+      "type": "PMÁP",
+      "rate": 4.5,
+      "ehm": null,
+      "from": "2026-07-17",
+      "to": "2027-02-20",
+      "offered": true,
+      "mat": "2027-01-27"
+    },
+    {
+      "id": "2027_N",
+      "family": "bmap",
+      "series": "2027/N",
+      "type": "BMÁP",
+      "rate": 5.47,
+      "ehm": null,
+      "from": "2026-09-22",
+      "to": "2026-12-21",
+      "offered": false,
+      "mat": "2027-05-26"
+    },
+    {
+      "id": "D261223",
+      "family": "dkj",
+      "series": "D261223",
+      "type": "DKJ",
+      "rate": null,
+      "ehm": null,
+      "from": "2025-12-23",
+      "to": null,
+      "offered": true
+    }
+  ]
+}

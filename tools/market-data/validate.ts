@@ -5,6 +5,7 @@ import { publishedFamilies, type MarketTreeState } from './merge.ts'
 import {
   QUOTE_COLS,
   REQUIRED_FAMILIES,
+  RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
   type FamilyCode,
   type ManifestFile
@@ -72,7 +73,45 @@ export function validateMarketTree(tree: MarketTreeState): void {
       }
     }
   }
+  if (tree.retailInterest) {
+    validateRetailInterest(tree)
+  } else if (tree.manifest.refs?.retailInterest || tree.manifest.digests[RETAIL_INTEREST_REF_PATH]) {
+    throw new ValidateError('manifest references retail-interest but file is missing')
+  }
   verifyManifestDigests(tree)
+}
+
+function validateRetailInterest(tree: MarketTreeState): void {
+  const file = tree.retailInterest
+  if (!file) return
+  if (file.schemaVersion !== SCHEMA_VERSION) {
+    throw new ValidateError('retail-interest schemaVersion must be 1')
+  }
+  if (!Array.isArray(file.rows)) {
+    throw new ValidateError('retail-interest.rows must be an array')
+  }
+  for (const row of file.rows) {
+    try {
+      assertSeriesId(row.id)
+    } catch (err) {
+      throw new ValidateError(
+        `Non-canonical retail-interest id: ${err instanceof Error ? err.message : String(err)}`
+      )
+    }
+    if (!row.from || !/^\d{4}-\d{2}-\d{2}$/.test(row.from)) {
+      throw new ValidateError(`Bad retail-interest from date for ${row.id}`)
+    }
+    if (row.to != null && !/^\d{4}-\d{2}-\d{2}$/.test(row.to)) {
+      throw new ValidateError(`Bad retail-interest to date for ${row.id}`)
+    }
+    if (typeof row.offered !== 'boolean') {
+      throw new ValidateError(`retail-interest offered must be boolean for ${row.id}`)
+    }
+  }
+  const pathHint = tree.manifest?.refs?.retailInterest ?? RETAIL_INTEREST_REF_PATH
+  if (tree.manifest?.refs?.retailInterest && tree.manifest.refs.retailInterest !== pathHint) {
+    throw new ValidateError('manifest.refs.retailInterest path mismatch')
+  }
 }
 
 /** Recompute file digests and require an exact match to manifest.digests. */
@@ -102,6 +141,9 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
     for (const [id, q] of Object.entries(fam.quotes)) {
       digests[`families/${family}/quotes/${id}.json`] = digestCanonical(q)
     }
+  }
+  if (tree.retailInterest) {
+    digests[RETAIL_INTEREST_REF_PATH] = digestCanonical(tree.retailInterest)
   }
   return digests
 }

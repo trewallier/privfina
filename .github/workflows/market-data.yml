@@ -1,8 +1,9 @@
 # Scheduled ÁKK + allampapir.hu → compact data/market/v1 on the market-data branch
-# (ADR 0034 / 0035 / ROADMAP §6b–§6c).
+# (ADR 0034 / 0035 / 0036 / ROADMAP §6b–§6d).
 #
 # Security split:
-# - ingest: contents:read; contacts ÁKK + allampapir.hu; never holds a write token
+# - ingest: contents:read; contacts ÁKK + allampapir.hu (prices + retailInterest kamatok);
+#   never holds a write token
 # - push: GitHub App installation token only (not GITHUB_TOKEN) for market-data checkout/push
 # Paths via env; single-line run: steps; TS via pinned tsx (not --experimental-strip-types).
 name: Market data ingest

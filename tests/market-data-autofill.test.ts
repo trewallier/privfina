@@ -7,11 +7,14 @@ import {
   deriveLastAvailabilityDate,
   deriveRemainingDays,
   deriveTermMonths,
+  findRetailInterestForSeries,
   formatSeriesAvailabilityLabel,
   isSeriesAvailableOn,
+  isSeriesOfferedInRetailInterest,
   parseSeriesNameYear,
   pickEffectiveInterestPct,
-  pickPurchasePricePct
+  pickPurchasePricePct,
+  pickRetailPeriodRate
 } from '../public/controller/market-data-autofill.js'
 
 describe('market-data-autofill', () => {
@@ -60,6 +63,44 @@ describe('market-data-autofill', () => {
       '2020/A — past'
     )
     expect(budapestTodayIso(new Date('2026-11-01T12:00:00Z'))).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('prefers retail-interest offered over name-year heuristic', () => {
+    const retail = {
+      rows: [
+        {
+          id: '2027_J',
+          series: '2027/J',
+          offered: true,
+          rate: 4.5,
+          from: '2026-07-17',
+          to: '2027-02-20'
+        },
+        {
+          id: '2020_A',
+          series: '2020/A',
+          offered: false,
+          rate: 3,
+          from: '2019-01-01',
+          to: '2019-12-31'
+        }
+      ]
+    }
+    expect(isSeriesOfferedInRetailInterest({ name: '2027/J', id: 'A270127J22' }, retail)).toBe(
+      true
+    )
+    expect(isSeriesAvailableOn({ name: '2020/A', issue: '2015-03-01' }, '2018-01-01', retail)).toBe(
+      false
+    )
+    expect(
+      formatSeriesAvailabilityLabel({ name: '2027/J', issue: '2022-09-30' }, '2026-11-01', retail)
+    ).toBe('2027/J — available')
+    expect(pickRetailPeriodRate({ name: '2027/J' }, retail)).toBe(4.5)
+    expect(findRetailInterestForSeries(retail, { name: '2027/J' })?.offered).toBe(true)
+    // Unmatched series still uses heuristic
+    expect(
+      isSeriesAvailableOn({ name: '2028/N', issue: '2017-10-03' }, '2026-11-01', retail)
+    ).toBe(true)
   })
 
   it('fills empty DKJ fields from series + quote without touching amounts', () => {

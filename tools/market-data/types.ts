@@ -88,6 +88,11 @@ export interface ManifestFamilyPaths {
   latest: string
 }
 
+/** Path hints for additive refs files (ADR 0036 retail interest; deferred inflation/DKJ-base). */
+export interface ManifestRefsPaths {
+  retailInterest?: string
+}
+
 export interface ManifestFile {
   schemaVersion: typeof SCHEMA_VERSION
   asOf: string | null
@@ -95,8 +100,44 @@ export interface ManifestFile {
   /** Required families plus optional families that have content. */
   families: FamilyCode[]
   paths: Partial<Record<FamilyCode, ManifestFamilyPaths>>
+  /** Optional refs paths (e.g. Lakossági kamatok). */
+  refs?: ManifestRefsPaths
   digests: Record<string, string>
 }
+
+/** One Lakossági kamatok period declaration (ADR 0036). */
+export interface RetailInterestRow {
+  /** Canonical id from short series name (`toSeriesId`). */
+  id: string
+  /** Mapped family, or null when type/place is outside published families (e.g. KTJ). */
+  family: FamilyCode | null
+  /** Short series label from kamatok (`2029/Q2`, `KTJ_I`, …). */
+  series: string
+  /** Source product type label (`FixMÁP`, `PMÁP`, …). */
+  type: string
+  /** Period kamat mértéke % (combined coupon for PMÁP/BMÁP — not interest premium). */
+  rate: number | null
+  /** EHM % when published. */
+  ehm: number | null
+  /** Validity start ISO date. */
+  from: string
+  /** Validity end ISO date, or null when open-ended. */
+  to: string | null
+  /** Currently offered for subscription (`underIssue`). */
+  offered: boolean
+  /** Maturity ISO date when known. */
+  mat?: string | null
+}
+
+export interface RetailInterestFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  asOf: string | null
+  generatedAt: string
+  rows: RetailInterestRow[]
+}
+
+/** Published path for retail interest refs (ADR 0036). */
+export const RETAIL_INTEREST_REF_PATH = 'refs/retail-interest.json' as const
 
 /** Loose ÁKK row (catalog or network rates). */
 export type AkkRow = Record<string, unknown>

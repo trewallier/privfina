@@ -142,7 +142,9 @@ import {
   MARKET_MARKETABLE_REQUIRED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
-  formatSeriesAvailabilityLabel
+  findRetailInterestForSeries,
+  formatSeriesAvailabilityLabel,
+  pickRetailPeriodRate
 } from './controller/market-data-autofill.js'
 import {
   browserTodayIso,
@@ -270,7 +272,8 @@ function initController() {
     series: [],
     latest: null,
     available: false,
-    asOf: null
+    asOf: null,
+    retailInterest: null
   }
   let commercialMarketApplyToken = 0
   const commercialInvestmentDiscountYieldWrap = document.getElementById(
@@ -1156,13 +1159,16 @@ function initController() {
     commercialInvestmentSeriesInput.appendChild(manual)
 
     const todayIso = budapestTodayIso() || browserTodayIso()
+    const retailInterest = commercialMarketFamilyState.retailInterest
     commercialMarketFamilyState.series.forEach((entry) => {
       const option = document.createElement('option')
       option.value = entry.id
-      option.textContent = formatSeriesAvailabilityLabel(entry, todayIso)
-      option.dataset.availability = formatSeriesAvailabilityLabel(entry, todayIso).endsWith(
-        'available'
-      )
+      option.textContent = formatSeriesAvailabilityLabel(entry, todayIso, retailInterest)
+      option.dataset.availability = formatSeriesAvailabilityLabel(
+        entry,
+        todayIso,
+        retailInterest
+      ).endsWith('available')
         ? 'available'
         : 'past'
       commercialInvestmentSeriesInput.appendChild(option)
@@ -1209,7 +1215,8 @@ function initController() {
       series: [],
       latest: null,
       available: false,
-      asOf: null
+      asOf: null,
+      retailInterest: null
     }
     rebuildCommercialMarketSeriesOptions('')
     clearCommercialMarketSelection()
@@ -1223,7 +1230,10 @@ function initController() {
   ) {
     const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
     const token = ++commercialMarketApplyToken
-    const loaded = await marketDataLoader.loadFamily(code)
+    const [loaded, retailInterest] = await Promise.all([
+      marketDataLoader.loadFamily(code),
+      marketDataLoader.loadRetailInterest()
+    ])
     if (token !== commercialMarketApplyToken) {
       return
     }
@@ -1233,7 +1243,8 @@ function initController() {
       series: loaded.series || [],
       latest: loaded.latest,
       available: Boolean(loaded.available),
-      asOf: loaded.asOf
+      asOf: loaded.asOf,
+      retailInterest
     }
 
     if (!commercialMarketFamilyState.available) {
@@ -1351,7 +1362,28 @@ function initController() {
     const asOfLabel = commercialMarketFamilyState.asOf
       ? `Market data as of ${commercialMarketFamilyState.asOf}`
       : 'Market data loaded'
-    setCommercialMarketHint(asOfLabel, true)
+    // Period kamat from Lakossági kamatok is informational (combined coupon).
+    // Never map into interestPremiumPct for PMÁP/BMÁP (ADR 0036).
+    const periodRate = pickRetailPeriodRate(
+      series,
+      commercialMarketFamilyState.retailInterest
+    )
+    const retailRow = findRetailInterestForSeries(
+      commercialMarketFamilyState.retailInterest,
+      series
+    )
+    const rateHint =
+      periodRate != null
+        ? ` · Treasury period kamat ${periodRate.toLocaleString('hu-HU', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 3
+          })}%${retailRow?.offered ? ' (offered)' : ''}${
+            family === 'pmap' || family === 'bmap'
+              ? ' — not interest premium'
+              : ''
+          }`
+        : ''
+    setCommercialMarketHint(`${asOfLabel}${rateHint}`, true)
     syncCommercialInvestmentPreview()
   }
 

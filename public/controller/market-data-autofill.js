@@ -141,10 +141,68 @@ export function deriveLastAvailabilityDate(series) {
 }
 
 /**
+ * Match published retail-interest rows to a market series (name preferred; id fallback).
+ * Prefers offered=true periods, else the latest `from`.
+ * @param {{ rows?: Array<object> }|null|undefined} retailInterest
+ * @param {{ name?: string, id?: string }|null|undefined} series
+ */
+export function findRetailInterestForSeries(retailInterest, series) {
+  const rows = retailInterest?.rows
+  if (!Array.isArray(rows) || !series) {
+    return null
+  }
+  const name = String(series.name || '').trim()
+  const id = String(series.id || '').trim()
+  const candidates = rows.filter((row) => {
+    if (!row) return false
+    if (name && row.series === name) return true
+    if (id && (row.id === id || row.series === id)) return true
+    return false
+  })
+  if (candidates.length === 0) {
+    return null
+  }
+  const offered = candidates.filter((row) => row.offered === true)
+  const pool = offered.length > 0 ? offered : candidates
+  return pool.reduce((best, row) => {
+    if (!best) return row
+    return String(row.from || '') > String(best.from || '') ? row : best
+  }, null)
+}
+
+/**
+ * @returns {boolean|null} true/false from treasury offered; null when refs missing/unmatched
+ */
+export function isSeriesOfferedInRetailInterest(series, retailInterest) {
+  const row = findRetailInterestForSeries(retailInterest, series)
+  if (!row) {
+    return null
+  }
+  return row.offered === true
+}
+
+/**
+ * Period kamat mértéke from retail interest (combined coupon — not interest premium).
+ * @returns {number|null}
+ */
+export function pickRetailPeriodRate(series, retailInterest) {
+  const row = findRetailInterestForSeries(retailInterest, series)
+  if (!row || row.rate == null || !Number.isFinite(Number(row.rate))) {
+    return null
+  }
+  return Number(row.rate)
+}
+
+/**
  * @param {{ name?: string, issue?: string|null }|null|undefined} series
  * @param {string} todayIso Europe/Budapest calendar day
+ * @param {{ rows?: Array<object> }|null|undefined} [retailInterest]
  */
-export function isSeriesAvailableOn(series, todayIso) {
+export function isSeriesAvailableOn(series, todayIso, retailInterest = null) {
+  const offered = isSeriesOfferedInRetailInterest(series, retailInterest)
+  if (offered != null) {
+    return offered
+  }
   const last = deriveLastAvailabilityDate(series)
   if (!last || !/^\d{4}-\d{2}-\d{2}$/.test(String(todayIso || ''))) {
     return false
@@ -172,10 +230,15 @@ export function budapestTodayIso(date = new Date()) {
 /**
  * @param {{ name?: string, id?: string, issue?: string|null }|null|undefined} series
  * @param {string} [todayIso]
+ * @param {{ rows?: Array<object> }|null|undefined} [retailInterest]
  */
-export function formatSeriesAvailabilityLabel(series, todayIso = budapestTodayIso()) {
+export function formatSeriesAvailabilityLabel(
+  series,
+  todayIso = budapestTodayIso(),
+  retailInterest = null
+) {
   const name = String(series?.name || series?.id || '').trim() || 'Series'
-  const available = isSeriesAvailableOn(series, todayIso)
+  const available = isSeriesAvailableOn(series, todayIso, retailInterest)
   return available ? `${name} — available` : `${name} — past`
 }
 

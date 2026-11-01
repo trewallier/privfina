@@ -260,6 +260,27 @@ Out of scope for §6c
 - Publishing EHM yields, green flags, or papermeta.
 - Browser CORS to allampapir.hu.
 - Auto-authoring product-spec YAML from market data.
+- Lakossági kamatok / retailInterest period rates and `underIssue` (see §6d).
+
+#### 6d) allampapir retail interest — Lakossági kamatok (ADR 0036)
+Goal: publish Magyar Államkincstár **period interest declarations** and **currently offered** flags from allampapir.hu `/kamatok` (`retailInterest` JSON) into `data/market/v1/refs/retail-interest.json` in the **same** scheduled Actions run as ÁKK + network prices, so SPA availability / rate display can stop relying on name-year heuristics and missing `prem`.
+
+Constraints
+- Actions-only contact; browser must not call allampapir.hu.
+- CSRF + `POST /api/retailInterest/get_all_data` (JSON primary). Do **not** use XLSX as production source (`underIssue` missing; no spreadsheet parser in-repo).
+- schemaVersion 1 additive refs path; full replace on digest change; never overload PMÁP/BMÁP `series.prem` with period coupons.
+- Persist only compact published JSON; never commit raw API / xlsx payloads.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0036 + ROADMAP / ownership / spec / CI playbook / market-data README.
+- [x] `tools/market-data/`: fetch-retail-interest + normalize + merge into tree + validate digests; Vitest fixtures.
+- [x] Wire `ingest` / `ci-ingest` / workflow; Pages materialization already sparse-copies `data/market/v1` (includes `refs/`).
+- [x] SPA loader + available/past labels from `offered`; period kamat shown informationally (PMÁP/BMÁP never mapped into interest premium); FixMÁP hosts remain a later optional-family slice.
+
+Out of scope for §6d
+- Replacing dual-source **price** ingest (ADR 0035).
+- Auto-authoring product YAML; `refs/inflation.json` / `refs/dkj-base.json`.
+- Browser CORS; XLSX as primary source.
 
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).

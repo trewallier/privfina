@@ -6,11 +6,13 @@ import { emptyMarketTree, type FamilyTreeState, type MarketTreeState } from './m
 import {
   FAMILIES,
   QUOTE_COLS,
+  RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
   type FamilyCode,
   type LatestFile,
   type ManifestFile,
   type QuotesFile,
+  type RetailInterestFile,
   type SeriesFile
 } from './types.ts'
 
@@ -66,6 +68,10 @@ export async function loadMarketTree(root: string): Promise<MarketTreeState> {
     }
     tree.families[family] = { series, latest, quotes }
   }
+
+  const retailPath =
+    tree.manifest?.refs?.retailInterest ?? RETAIL_INTEREST_REF_PATH
+  tree.retailInterest = await readJsonIfExists<RetailInterestFile>(path.join(v1, retailPath))
   return tree
 }
 
@@ -79,6 +85,13 @@ export async function writeMarketTree(root: string, tree: MarketTreeState): Prom
 
   for (const family of tree.manifest.families) {
     await writeFamily(v1, family, tree.families[family])
+  }
+
+  if (tree.retailInterest) {
+    const rel = tree.manifest.refs?.retailInterest ?? RETAIL_INTEREST_REF_PATH
+    const abs = path.join(v1, rel)
+    await mkdir(path.dirname(abs), { recursive: true })
+    await writeFile(abs, canonicalJson(tree.retailInterest), 'utf8')
   }
 }
 

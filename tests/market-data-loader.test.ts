@@ -79,6 +79,17 @@ describe('market-data-loader', () => {
     expect(latestQuoteForId({ D261223: { d: '2026-11-02', bid: 1, ask: 2, by: null, ay: null, ai: 0 } }, 'D261223')?.ask).toBe(2)
   })
 
+  it('loads retail-interest refs when present', async () => {
+    const loader = createMarketDataLoader({
+      baseUrl: '/privfina/',
+      fetchImpl: createFixtureFetch()
+    })
+    const retail = await loader.loadRetailInterest()
+    expect(retail?.schemaVersion).toBe(1)
+    expect(retail?.rows.some((row) => row.offered === true)).toBe(true)
+    expect(retail?.rows.find((row) => row.series === '2027/J')?.rate).toBe(4.5)
+  })
+
   it('soft-degrades when published files are missing', async () => {
     const loader = createMarketDataLoader({
       baseUrl: '/privfina/',
@@ -93,6 +104,7 @@ describe('market-data-loader', () => {
       available: false,
       asOf: null
     })
+    expect(await loader.loadRetailInterest()).toBeNull()
   })
 
   it('caches repeated fetches within the session', async () => {

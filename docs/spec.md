@@ -10,7 +10,7 @@ Glossary
 - Adapter layer: browser-side normalization layer that converts external macro data into a shape the calculation engine consumes.
 - Calculation engine: isolated browser-side module that computes cash flows, aggregates, and analytics.
 - Cumulative cash-flow diagram: chart showing running total over a selected date range.
-- Published market data: compact GitHub-hosted JSON under `data/market/v1/` (schemaVersion 1) produced by scheduled Actions from ÁKK and allampapir.hu (ADR 0034 / 0035 / ROADMAP §6b–§6c).
+- Published market data: compact GitHub-hosted JSON under `data/market/v1/` (schemaVersion 1) produced by scheduled Actions from ÁKK and allampapir.hu (ADR 0034 / 0035 / 0036 / ROADMAP §6b–§6d), including Lakossági kamatok refs.
 
 Scenarios / Use-cases
 - Cash-flow management page: users can add, view, edit, and delete any number of cash flows.
@@ -52,7 +52,7 @@ Scenarios / Use-cases
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
 - Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): published tariff notice (Hirdetmény) mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
 - Configured-flow folders: users can organize flows into flat collapsible folders (no nested folders), rename folders, drag items into/out of folders (mouse drag-and-drop or touch long-press), and reorder items; folder collapsed state and item order persist in `listStatus` and round-trip through export/import.
-- Government-securities market-data ingest (ROADMAP §6b–§6c / ADR 0034 / 0035): maintainers (via GitHub Actions) refresh published catalog and daily network quotes from ÁKK and allampapir.hu without contacting those hosts from the browser.
+- Government-securities market-data ingest (ROADMAP §6b–§6d / ADR 0034 / 0035 / 0036): maintainers (via GitHub Actions) refresh published catalog, daily network quotes, and Lakossági kamatok retail interest from ÁKK and allampapir.hu without contacting those hosts from the browser.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -107,13 +107,14 @@ Acceptance criteria
 - [x] External published market data can be fetched using browser `fetch` and normalized through an adapter layer (GitHub Pages same-origin JSON; ADR 0034 / ROADMAP §6b).
 - [x] Scheduled (and manually dispatchable) GitHub Actions ingest fetches ÁKK catalog + network rates (2 GETs for v1 families), normalizes to schemaVersion 1 under `data/market/v1/`, and pushes the `market-data` branch only when digests change (ADR 0034 / ROADMAP §6b).
 - [x] Same ingest also fetches allampapir.hu (CSRF + all `data.papers` prices), combines with ÁKK (treasury-prefer same-day quotes), publishes required + optional families, and writes one merged tree to `market-data` when digests change (ADR 0035 / ROADMAP §6c).
-- [x] Market-data normalize/merge/combine rules are covered by fixture tests (append-first, dedupe, required-family empty fails, treasury-prefer dual-source); raw captures are not committed.
+- [x] Same ingest also fetches allampapir.hu Lakossági kamatok (`retailInterest/get_all_data`), publishes `refs/retail-interest.json` (period rates + `offered` ← `underIssue`), and includes that digest in the manifest (ADR 0036 / ROADMAP §6d). Period coupons are not written into PMÁP/BMÁP `series.prem`.
+- [x] Market-data normalize/merge/combine rules are covered by fixture tests (append-first, dedupe, required-family empty fails, treasury-prefer dual-source, retail-interest normalize); raw captures are not committed.
 - [x] Pages deploy materializes `data/market/v1/` into the site for same-origin SPA `fetch` (ROADMAP §6b); soft-fail if `market-data` is unavailable so product Pages still ships.
 - [x] SPA loads published market JSON at runtime (not bundled) for commercial investment series listing / auto-fill (session cache; manual-entry degrade when files missing).
 - [x] Commercial investment composer offers a market series picker and optional quote settle date; auto-fills non-amount fields from published mapping; never clobbers amount or purchase date; edit path uses explicit “Update from latest quote”.
 - [x] Online path populates non-amount commercial investment fields from published market data; offline / missing-data path stays usable with manual entry; browser never calls official ÁKK endpoints.
 - [x] Commercial investment market series change refreshes DKJ remaining days and BMÁP/PMÁP first-coupon date; when quote ask/bid yield is present, BMÁP/PMÁP temporarily fill `0 + effective` interest (base 0, premium = yield) instead of leaving rate bases empty.
-- [x] Commercial investment market series picker lists active and past offerings and labels each as available vs past using the year in the paper name plus the issue month/day (Europe/Budapest; refine later with Államkincstár sale data).
+- [x] Commercial investment market series picker lists active and past offerings and labels each as available vs past; when `refs/retail-interest.json` is present, prefer treasury `offered` (`underIssue`) over the name-year + issue month/day heuristic (Europe/Budapest).
 - [x] Commercial investment fields autofilled from market data show an `auto` chrome marker (Manual entry restores `required` / `optional`); fields still missing from the published mapping after a series pick show `unavailable`; the under-selector autofill field-list hint is removed.
 - [x] Site-wide form controls (`input` / `select` / `textarea` / calculated readouts) share one fixed control height so label text length does not change control height; native `type="date"` keeps a desktop calendar-picker affordance.
 - [x] Salary instrument supports two schedule modes: predefined custom rule (default) and cron-like rule.
@@ -219,7 +220,7 @@ How to use this file
 
 Design alignment
 - For engine implementation guidance and evaluation strategy rationale, see `DESIGN.md`. Use `docs/adr/` for recorded architecture decisions that affect evaluation strategy and scope.
-- For government-securities published market data (Actions ingest, `market-data` branch, schemaVersion 1), see `docs/adr/0034-government-securities-published-market-data-via-actions.md`, `docs/adr/0035-dual-source-akk-allampapir-market-data.md`, and ROADMAP §6b–§6c.
+- For government-securities published market data (Actions ingest, `market-data` branch, schemaVersion 1), see `docs/adr/0034-government-securities-published-market-data-via-actions.md`, `docs/adr/0035-dual-source-akk-allampapir-market-data.md`, `docs/adr/0036-allampapir-retail-interest-kamatok.md`, and ROADMAP §6b–§6d.
 
 Investment Formula Canonical Source
 -----------------------------------

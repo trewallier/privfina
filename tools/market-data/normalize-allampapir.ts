@@ -28,10 +28,11 @@ function asString(value: unknown): string | null {
   return null
 }
 
+/** Plain-text label: drop markup; strip residual angle brackets (CodeQL-safe). */
 function stripHtml(value: string): string {
   return value
     .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
+    .replace(/[<>]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 }

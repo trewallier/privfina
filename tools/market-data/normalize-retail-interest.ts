@@ -206,6 +206,55 @@ function seriesMatchesRetail(series: SeriesRecord, row: RetailInterestRow): bool
   return false
 }
 
+/**
+ * Legacy tip rows (schemaVersion 1 / ADR 0036) published a singular `rate`.
+ * ADR 0038 uses `rates` (multi-band). Accept either when lifting / joining.
+ */
+export type LegacyRetailInterestRow = Omit<RetailInterestRow, 'rates'> & {
+  rates?: Array<number | null>
+  rate?: number | null
+}
+
+/** On-disk / tip retail-interest before `rate` → `rates` coercion. */
+export type LegacyRetailInterestFile = {
+  schemaVersion: number
+  asOf: string | null
+  generatedAt: string
+  rows: LegacyRetailInterestRow[]
+}
+
+function coerceRates(row: LegacyRetailInterestRow): Array<number | null> {
+  if (Array.isArray(row.rates)) {
+    return row.rates.length > 0 ? row.rates : [null]
+  }
+  if ('rate' in row) {
+    const rate = row.rate
+    if (rate == null) return [null]
+    if (typeof rate === 'number' && Number.isFinite(rate)) return [rate]
+    return [null]
+  }
+  return [null]
+}
+
+/** Coerce a tip / in-memory retail row to the ADR 0038 `rates` shape. */
+export function coerceRetailInterestRow(row: LegacyRetailInterestRow): RetailInterestRow {
+  const { rate: _legacyRate, rates: _legacyRates, ...rest } = row
+  return {
+    ...rest,
+    rates: coerceRates(row)
+  }
+}
+
+/** Coerce a whole retail-interest file (v1 tip `rate` → v2 `rates`). */
+export function coerceRetailInterestFile(file: LegacyRetailInterestFile): RetailInterestFile {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    asOf: file.asOf,
+    generatedAt: file.generatedAt,
+    rows: file.rows.map(coerceRetailInterestRow)
+  }
+}
+
 function couponRowsFromRetail(row: RetailInterestRow): CouponRow[] {
   const rates = row.rates.length > 0 ? row.rates : [null]
   return rates.map((rate) => [row.from, row.to, rate] as CouponRow)
@@ -217,14 +266,17 @@ function couponRowsFromRetail(row: RetailInterestRow): CouponRow[] {
  * Unmatched retail rows with a family may only write under `toSeriesId(label)` when that
  * id already exists in the series list (never invent orphan coupon files).
  * Multi-band `rates` expand to distinct coupon rows with the same from/to.
+ * Accepts legacy singular `rate` rows from the v1 tip (coerced to `rates`).
  */
 export function joinRetailInterestToCoupons(
-  retail: RetailInterestFile | null | undefined,
+  retail: RetailInterestFile | LegacyRetailInterestFile | null | undefined,
   seriesByFamily: Partial<Record<FamilyCode, readonly SeriesRecord[]>>
 ): RetailCouponsJoinResult {
   const couponsByFamily: Partial<Record<FamilyCode, Record<string, CouponsFile>>> = {}
   const offeredById: Record<string, boolean> = {}
   if (!retail) return { couponsByFamily, offeredById }
+
+  const coerced = coerceRetailInterestFile(retail)
 
   const knownIds = new Set<string>()
   const flatSeries: Array<{ family: FamilyCode; series: SeriesRecord }> = []
@@ -242,7 +294,7 @@ export function joinRetailInterestToCoupons(
   /** Track the latest retail period (by `from`) that contributed offered for each series id. */
   const offeredFromById: Record<string, string> = {}
 
-  for (const row of retail.rows) {
+  for (const row of coerced.rows) {
     if (!row.family) continue
 
     let matched: { family: FamilyCode; series: SeriesRecord } | null = null

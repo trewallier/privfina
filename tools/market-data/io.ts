@@ -3,7 +3,10 @@ import path from 'node:path'
 import { canonicalJson } from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { emptyMarketTree, type FamilyTreeState, type MarketTreeState } from './merge.ts'
-import { joinRetailInterestToCoupons } from './normalize-retail-interest.ts'
+import {
+  coerceRetailInterestFile,
+  joinRetailInterestToCoupons
+} from './normalize-retail-interest.ts'
 import {
   FAMILIES,
   INFLATION_REF_PATH,
@@ -178,10 +181,11 @@ async function loadTreeAtPath(
     : null
 
   // Internal-only: load flat retail-interest when present (v1 tip) for coupon lift.
+  // Coerce ADR 0036 singular `rate` → ADR 0038 `rates` so join/merge never see undefined.
   const retailPath = tree.manifest?.refs?.retailInterest ?? 'refs/retail-interest.json'
   const retail = await readJsonIfExists<RetailInterestFile>(path.join(rootDir, retailPath))
   if (retail) {
-    tree.retailInterest = options?.forceSchemaVersion ? bumpSchemaVersion(retail) : retail
+    tree.retailInterest = coerceRetailInterestFile(retail)
   }
   return tree
 }

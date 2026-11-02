@@ -325,7 +325,6 @@ Out of scope for §6f
 - `refs/dkj-base.json`; commercial inflation+premium composition as composer inputs.
 - Auto-authoring product YAML; browser CORS to market hosts.
 - Commercial composers for FixMÁP and other optional families (§6g).
-- End-to-end SPA `couponSchedule` wire-through (commercial path intentionally flat-hold rate until §6g).
 
 #### 6g) Additional government securities on commercial composer (subsequent)
 Goal: add catalog product specs and commercial investment hosts for families already (or newly) published on the market-data branch, reusing ADR 0038 v2 series/coupon shapes.

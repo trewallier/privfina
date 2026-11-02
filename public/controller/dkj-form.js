@@ -1,3 +1,4 @@
+import { deriveDkjRemainingDays } from '@finance_engine/instruments/day_count'
 import {
   toInputType,
   applyNumericConstraints,
@@ -316,15 +317,6 @@ function mapFormDataToDkjSpecInputs(formData) {
   }
 }
 
-function calendarDaysBetween(settlementDate, maturityDate) {
-  const start = new Date(`${settlementDate}T00:00:00Z`)
-  const end = new Date(`${maturityDate}T00:00:00Z`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
-    return undefined
-  }
-  return Math.floor((end.getTime() - start.getTime()) / 86400000)
-}
-
 function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
   const purchasePrice = (specInputs.faceValue * specInputs.purchasePricePct) / 100
   const settlementDate = String(specInputs.settlementDate || '').trim()
@@ -337,7 +329,7 @@ function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     specInputs.remainingDays !== null &&
     specInputs.remainingDays !== ''
       ? Number(specInputs.remainingDays)
-      : calendarDaysBetween(settlementDate, maturityDate)
+      : deriveDkjRemainingDays(settlementDate, maturityDate) ?? undefined
 
   return {
     id: meta.id,

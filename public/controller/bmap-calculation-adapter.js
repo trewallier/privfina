@@ -103,6 +103,9 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
           ? String(specInputs.firstCouponDate).trim() || undefined
           : undefined,
       dayCountConvention: specInputs.dayCountConvention || 'ACT/360',
+      couponSchedule: Array.isArray(specInputs.couponSchedule)
+        ? specInputs.couponSchedule
+        : undefined,
       purchaseAmount: calculated.purchaseAmount,
       accruedInterestAmount: calculated.accruedInterestAmount,
       category: extras.category || 'investment',

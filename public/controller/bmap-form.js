@@ -205,6 +205,17 @@ function setBmapFieldVisibility(investmentForm, visible) {
   }
 }
 
+function parseCouponScheduleField(raw) {
+  const text = String(raw || '').trim()
+  if (!text) return undefined
+  try {
+    const parsed = JSON.parse(text)
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function mapFormDataToBmapSpecInputs(formData) {
   return {
     principal: parseMoneyAmount(formData.get('principal')),
@@ -214,7 +225,8 @@ function mapFormDataToBmapSpecInputs(formData) {
     maturityDate: String(formData.get('maturityDate') || '').trim(),
     startDate: String(formData.get('startDate') || '').trim() || undefined,
     firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
-    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined
+    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
+    couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))
   }
 }
 

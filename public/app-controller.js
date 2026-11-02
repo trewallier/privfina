@@ -99,7 +99,10 @@ import {
   setBmapFieldVisibility,
   mapFormDataToBmapSpecInputs
 } from './controller/bmap-form.js'
-import { generateBmapInstrumentBundleFromSpecInputs } from './controller/bmap-calculation-adapter.js'
+import {
+  calculateBmapFromSpecInputs,
+  generateBmapInstrumentBundleFromSpecInputs
+} from './controller/bmap-calculation-adapter.js'
 import {
   DKJ_PRODUCT_SPEC,
   applyDkjSpecToForm,
@@ -1013,14 +1016,16 @@ function initController() {
         maturityDate: '#pmap-maturity-date',
         startDate: '#pmap-start-date',
         issueDate: '#pmap-issue-date',
-        firstCouponDate: '#pmap-first-coupon-date'
+        firstCouponDate: '#pmap-first-coupon-date',
+        couponSchedule: '#pmap-coupon-schedule'
       },
       bmap: {
         annualCouponRatePct: '#bmap-annual-coupon-rate-pct',
         maturityDate: '#bmap-maturity-date',
         startDate: '#bmap-start-date',
         issueDate: '#bmap-issue-date',
-        firstCouponDate: '#bmap-first-coupon-date'
+        firstCouponDate: '#bmap-first-coupon-date',
+        couponSchedule: '#bmap-coupon-schedule'
       }
     }
     return maps[family] || null
@@ -1172,9 +1177,15 @@ function initController() {
       if (!input) {
         return
       }
-      input.value = value == null ? '' : String(value)
+      if (name === 'couponSchedule') {
+        input.value = Array.isArray(value) ? JSON.stringify(value) : ''
+      } else {
+        input.value = value == null ? '' : String(value)
+      }
       input.dataset.marketSourced = 'true'
-      input.title = 'Filled from published market data'
+      if (input.type !== 'hidden') {
+        input.title = 'Filled from published market data'
+      }
     })
   }
 
@@ -1753,6 +1764,8 @@ function initController() {
     mapFormDataToDkjSpecInputs,
     calculatePmapFromSpecInputs,
     mapFormDataToPmapSpecInputs,
+    calculateBmapFromSpecInputs,
+    mapFormDataToBmapSpecInputs,
     onPreviewError: (message) => {
       applyInvestmentFieldValidity(commercialInvestmentForm, message)
       setCommercialInvestmentFormStatus(message, 'warning')
@@ -1947,6 +1960,11 @@ function initController() {
       commercialInvestmentForm.querySelector('#bmap-issue-date').value = migrated.issueDate || ''
       commercialInvestmentForm.querySelector('#bmap-first-coupon-date').value =
         migrated.firstCouponDate || ''
+      commercialInvestmentForm.querySelector('#bmap-coupon-schedule').value = Array.isArray(
+        migrated.couponSchedule
+      )
+        ? JSON.stringify(migrated.couponSchedule)
+        : ''
     } else if (productCode === 'dkj') {
       commercialInvestmentForm.querySelector('#dkj-face-value').value =
         config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
@@ -1979,6 +1997,11 @@ function initController() {
       commercialInvestmentForm.querySelector('#pmap-issue-date').value = migrated.issueDate || ''
       commercialInvestmentForm.querySelector('#pmap-first-coupon-date').value =
         migrated.firstCouponDate || migrated.couponPeriod || ''
+      commercialInvestmentForm.querySelector('#pmap-coupon-schedule').value = Array.isArray(
+        migrated.couponSchedule
+      )
+        ? JSON.stringify(migrated.couponSchedule)
+        : ''
     }
 
     commercialInvestmentSubmitButton.textContent = 'Save Commercial Investment'

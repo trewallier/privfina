@@ -126,6 +126,17 @@ function setPmapFieldVisibility(investmentForm, visible) {
   }
 }
 
+function parseCouponScheduleField(raw) {
+  const text = String(raw || '').trim()
+  if (!text) return undefined
+  try {
+    const parsed = JSON.parse(text)
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function mapFormDataToPmapSpecInputs(formData) {
   return {
     principal: parseMoneyAmount(formData.get('principal')),
@@ -135,7 +146,8 @@ function mapFormDataToPmapSpecInputs(formData) {
     maturityDate: String(formData.get('maturityDate') || '').trim(),
     startDate: String(formData.get('startDate') || '').trim() || undefined,
     firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
-    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined
+    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
+    couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))
   }
 }
 
@@ -167,7 +179,8 @@ function mapPmapSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     annualCouponRatePct: specInputs.annualCouponRatePct,
     startDate: specInputs.startDate,
     firstCouponDate: specInputs.firstCouponDate,
-    dayCountConvention: specInputs.dayCountConvention
+    dayCountConvention: specInputs.dayCountConvention,
+    couponSchedule: specInputs.couponSchedule
   }
 }
 

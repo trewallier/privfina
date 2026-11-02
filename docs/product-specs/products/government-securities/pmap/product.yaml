@@ -88,7 +88,7 @@ inputs:
     label: Coupon Schedule
     required: false
     unit: text
-    description: Optional interest periods. Each row needs a start date; end date and rate may be empty for future unknown periods. Commercial autofill currently uses the flat yearly rate until family composers land (§6g).
+    description: Optional interest periods. Each row needs a start date; end date and rate may be empty for future unknown periods. Commercial autofill maps published coupons into this schedule for accrued interest and cash-flow skips.
     constraints:
       items:
         type: object
@@ -138,7 +138,7 @@ assumptions:
   - Default day-count for accrued interest is ACT/360 unless overridden per series or input.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - The first coupon period may differ from a regular annual period.
-  - When a couponSchedule is supplied, periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the commercial path holds the flat yearly rate through maturity (ADR 0038 / §6g follow-up).
+  - When a couponSchedule is supplied (including from published market coupons autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
   - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem PMAP before maturity.
   - Primary-market acquisition is limited to natural persons.

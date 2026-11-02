@@ -12,8 +12,12 @@ import {
 import { fetchRetailInterestSnapshots } from '../tools/market-data/fetch-retail-interest.ts'
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
 import { emptyMarketTree, mergeSnapshot } from '../tools/market-data/merge.ts'
-import { normalizeRetailInterestEnvelope } from '../tools/market-data/normalize-retail-interest.ts'
-import { RETAIL_INTEREST_REF_PATH, type AllampapirEnvelope } from '../tools/market-data/types.ts'
+import {
+  joinRetailInterestToCoupons,
+  normalizeRetailInterestEnvelope,
+  parseRetailRateBands
+} from '../tools/market-data/normalize-retail-interest.ts'
+import { type AllampapirEnvelope, type SeriesRecord } from '../tools/market-data/types.ts'
 import { validateMarketTree } from '../tools/market-data/validate.ts'
 import { normalizeAkkSnapshots } from '../tools/market-data/normalize.ts'
 import { readFileSync } from 'node:fs'
@@ -33,22 +37,29 @@ afterEach(async () => {
   }
 })
 
-describe('retail interest normalize (ADR 0036)', () => {
-  it('maps family from type/place and keeps KTJ family null', () => {
+describe('retail interest normalize (ADR 0036 / 0038)', () => {
+  it('maps family from type/place including KTJ / 2MÁP stubs', () => {
     expect(familyFromRetailInterest('FixMÁP', 'FIX_MAP')).toBe('fixmap')
     expect(familyFromRetailInterest('PMÁP', 'PMAP')).toBe('pmap')
     expect(familyFromRetailInterest('MÁP Plusz', 'MAPP')).toBe('mapp')
     expect(familyFromRetailInterest('nyomdai MÁP Plusz', 'MAPP_F')).toBe('mapp')
-    expect(familyFromRetailInterest('KTJ I', 'KTJ')).toBeNull()
+    expect(familyFromRetailInterest('KTJ I', 'KTJ')).toBe('ktj')
+    expect(familyFromRetailInterest('2MÁP', '2MAP')).toBe('map2')
   })
 
-  it('normalizes get_all_data fixture without touching prem semantics', () => {
+  it('parses stepped rate bands without collapsing to the first value', () => {
+    expect(parseRetailRateBands(null, '4,50 - 5,75')).toEqual([4.5, 5.75])
+    expect(parseRetailRateBands(5, '5,00 - 6,00 %')).toEqual([5, 6])
+    expect(parseRetailRateBands(5.5, '5,50 %')).toEqual([5.5])
+  })
+
+  it('normalizes get_all_data fixture into multi-band rates (no prem)', () => {
     const envelope = loadJson<AllampapirEnvelope>('retail-interest/get_all_data.json')
     const file = normalizeRetailInterestEnvelope(envelope, {
       generatedAt: '2026-11-01T12:00:00.000Z'
     })
 
-    expect(file.schemaVersion).toBe(1)
+    expect(file.schemaVersion).toBe(2)
     expect(file.asOf).toBe('2026-10-01')
     expect(file.rows.length).toBe(7)
 
@@ -56,7 +67,7 @@ describe('retail interest normalize (ADR 0036)', () => {
     expect(fixOffered).toMatchObject({
       id: '2029_Q2',
       family: 'fixmap',
-      rate: 5.5,
+      rates: [5.5],
       ehm: 5.62,
       from: '2026-10-01',
       to: null,
@@ -71,22 +82,36 @@ describe('retail interest normalize (ADR 0036)', () => {
     const pmap = file.rows.find((r) => r.series === '2036/I1')
     expect(pmap).toMatchObject({
       family: 'pmap',
-      rate: 4.5,
+      rates: [4.5],
       offered: true
     })
 
     const ktj = file.rows.find((r) => r.series === 'KTJ_I')
-    expect(ktj?.family).toBeNull()
+    expect(ktj?.family).toBe('ktj')
     expect(ktj?.offered).toBe(true)
 
     const mapp = file.rows.find((r) => r.series === '2031/M6')
-    expect(mapp?.rate).toBe(5)
+    // Stepped "5,00 - 6,00 %" → both bands (never first-band-only).
+    expect(mapp?.rates).toEqual([5, 6])
     expect(mapp?.family).toBe('mapp')
   })
 })
 
-describe('retail interest merge + ingest', () => {
-  it('full-replaces refs and digests when retail interest changes', () => {
+describe('retail interest join → coupons + merge', () => {
+  function seedJoinableSeries(): SeriesRecord {
+    return {
+      id: '2029_Q2',
+      isin: null,
+      name: '2029/Q2',
+      issue: '2026-10-01',
+      mat: '2029-10-25',
+      ccy: 'HUF',
+      status: 'active',
+      dayCount: 'ACT/360'
+    }
+  }
+
+  it('joins kamatok onto series ids and digests coupons (not refs)', () => {
     const envelope = loadJson<AllampapirEnvelope>('retail-interest/get_all_data.json')
     const retail = normalizeRetailInterestEnvelope(envelope, {
       generatedAt: '2026-11-01T12:00:00.000Z'
@@ -96,18 +121,25 @@ describe('retail interest merge + ingest', () => {
     const snapshot = normalizeAkkSnapshots(catalog as never, rates as never, {
       requireFamilies: false
     })
+    snapshot.byFamily.fixmap.series.push(seedJoinableSeries())
 
     const first = mergeSnapshot(emptyMarketTree(), snapshot, {
       generatedAt: '2026-11-01T12:00:00.000Z',
       retailInterest: retail
     })
     expect(first.changed).toBe(true)
+    expect(first.tree.manifest?.refs?.retailInterest).toBeUndefined()
+    expect(first.tree.manifest?.digests['refs/retail-interest.json']).toBeUndefined()
+
+    const coupon = first.tree.families.fixmap.coupons['2029_Q2']
+    expect(coupon?.rows).toEqual([['2026-10-01', null, 5.5]])
+    expect(first.tree.manifest?.digests['families/fixmap/coupons/2029_Q2.json']).toBeTruthy()
+    expect(
+      first.tree.families.fixmap.series.series.find((s) => s.id === '2029_Q2')?.offered
+    ).toBe(true)
     expect(first.tree.retailInterest?.rows).toHaveLength(7)
-    expect(first.tree.manifest?.refs?.retailInterest).toBe(RETAIL_INTEREST_REF_PATH)
-    expect(first.tree.manifest?.digests[RETAIL_INTEREST_REF_PATH]).toBeTruthy()
     validateMarketTree(first.tree)
 
-    // Same rows + different generatedAt must not change digests / force a commit.
     const stampedLater = {
       ...retail,
       generatedAt: '2026-11-02T08:00:00.000Z'
@@ -118,15 +150,16 @@ describe('retail interest merge + ingest', () => {
       retailInterest: stampedLater
     })
     expect(same.changed).toBe(false)
-    expect(same.tree.retailInterest?.generatedAt).toBe(
-      first.tree.retailInterest!.generatedAt
-    )
+    expect(same.tree.retailInterest?.generatedAt).toBe(first.tree.retailInterest!.generatedAt)
+    expect(same.tree.families.fixmap.coupons['2029_Q2']?.rows).toEqual([
+      ['2026-10-01', null, 5.5]
+    ])
 
     const updatedRetail = {
       ...retail,
       generatedAt: '2026-11-01T13:00:00.000Z',
       rows: retail.rows.map((r) =>
-        r.series === '2029/Q2' ? { ...r, rate: 5.75 } : { ...r }
+        r.series === '2029/Q2' ? { ...r, rates: [5.75] } : { ...r, rates: [...r.rates] }
       )
     }
     const changed = mergeSnapshot(first.tree, snapshot, {
@@ -134,10 +167,142 @@ describe('retail interest merge + ingest', () => {
       retailInterest: updatedRetail
     })
     expect(changed.changed).toBe(true)
-    expect(changed.tree.retailInterest?.rows.find((r) => r.series === '2029/Q2')?.rate).toBe(5.75)
+    expect(changed.tree.families.fixmap.coupons['2029_Q2']?.rows).toEqual([
+      ['2026-10-01', null, 5.75]
+    ])
   })
 
-  it('keeps previous retail interest when offline without envelope', async () => {
+  it('joinRetailInterestToCoupons expands multi-band rates into distinct rows', () => {
+    const retail = {
+      schemaVersion: 2 as const,
+      asOf: '2026-10-01',
+      generatedAt: '2026-11-01T12:00:00.000Z',
+      rows: [
+        {
+          id: '2029_Q2',
+          family: 'fixmap' as const,
+          series: '2029/Q2',
+          type: 'FixMÁP',
+          rates: [4.5, 5.75],
+          ehm: null,
+          from: '2026-10-01',
+          to: null,
+          offered: true
+        }
+      ]
+    }
+    const joined = joinRetailInterestToCoupons(retail, {
+      fixmap: [seedJoinableSeries()]
+    })
+    expect(joined.couponsByFamily.fixmap?.['2029_Q2']?.rows).toEqual([
+      ['2026-10-01', null, 4.5],
+      ['2026-10-01', null, 5.75]
+    ])
+  })
+
+  it('offeredById prefers the latest period (max from), not input order alone', () => {
+    const retail = {
+      schemaVersion: 2 as const,
+      asOf: '2026-11-01',
+      generatedAt: '2026-11-01T12:00:00.000Z',
+      rows: [
+        {
+          id: '2029_Q2',
+          family: 'fixmap' as const,
+          series: '2029/Q2',
+          type: 'FixMÁP',
+          rates: [5.5],
+          ehm: null,
+          from: '2026-10-01',
+          to: '2026-10-31',
+          offered: true
+        },
+        {
+          id: '2029_Q2',
+          family: 'fixmap' as const,
+          series: '2029/Q2',
+          type: 'FixMÁP',
+          rates: [5.75],
+          ehm: null,
+          from: '2026-11-01',
+          to: null,
+          offered: false
+        },
+        {
+          id: '2029_Q2',
+          family: 'fixmap' as const,
+          series: '2029/Q2',
+          type: 'FixMÁP',
+          rates: [5.0],
+          ehm: null,
+          from: '2026-09-01',
+          to: '2026-09-30',
+          offered: true
+        }
+      ]
+    }
+    const joined = joinRetailInterestToCoupons(retail, {
+      fixmap: [seedJoinableSeries()]
+    })
+    expect(joined.offeredById['2029_Q2']).toBe(false)
+  })
+
+  it('treats empty successful retailInterest as soft-fail when prior coupons exist', async () => {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-ri-empty-'))
+    tmpDirs.push(tmp)
+    const envelope = loadJson<AllampapirEnvelope>('retail-interest/get_all_data.json')
+
+    await ingestMarketData({
+      root: tmp,
+      rawDir: path.join(tmp, 'raw1'),
+      catalog: loadJson('catalog.json'),
+      networkRates: loadJson('network-rates.json'),
+      allampapirPrices: {
+        DKJ: loadJson('allampapir/prices_DKJ.json'),
+        MAP: loadJson('allampapir/prices_MAP.json'),
+        MAPP: loadJson('allampapir/prices_MAPP.json'),
+        BABA: loadJson('allampapir/prices_BABA.json'),
+        EMAP: loadJson('allampapir/prices_EMAP.json'),
+        '1MAP': loadJson('allampapir/prices_1MAP.json')
+      },
+      retailInterestEnvelope: envelope,
+      generatedAt: '2026-11-01T12:00:00.000Z'
+    })
+
+    const couponPath = path.join(
+      tmp,
+      'data/market/v2/families/mapp/coupons/A311127M26.json'
+    )
+    const kept = JSON.parse(await readFile(couponPath, 'utf8'))
+
+    const emptyEnvelope: AllampapirEnvelope = {
+      status: true,
+      message: 'ok',
+      data: { data: [] }
+    }
+    const emptied = await ingestMarketData({
+      root: tmp,
+      previousRoot: tmp,
+      rawDir: path.join(tmp, 'raw2'),
+      catalog: loadJson('catalog.json'),
+      networkRates: loadJson('network-rates.json'),
+      allampapirPrices: {
+        DKJ: loadJson('allampapir/prices_DKJ.json'),
+        MAP: loadJson('allampapir/prices_MAP.json'),
+        MAPP: loadJson('allampapir/prices_MAPP.json'),
+        BABA: loadJson('allampapir/prices_BABA.json'),
+        EMAP: loadJson('allampapir/prices_EMAP.json'),
+        '1MAP': loadJson('allampapir/prices_1MAP.json')
+      },
+      retailInterestEnvelope: emptyEnvelope,
+      generatedAt: '2026-11-01T14:00:00.000Z'
+    })
+    expect(emptied.retailInterestSoftFailed).toBe(true)
+    expect(emptied.retailInterestUpdated).toBe(false)
+    expect(JSON.parse(await readFile(couponPath, 'utf8'))).toEqual(kept)
+  })
+
+  it('keeps previous coupons when offline without envelope', async () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-ri-'))
     tmpDirs.push(tmp)
     const envelope = loadJson<AllampapirEnvelope>('retail-interest/get_all_data.json')
@@ -161,19 +326,30 @@ describe('retail interest merge + ingest', () => {
     expect(seeded.changed).toBe(true)
     expect(seeded.retailInterestUpdated).toBe(true)
 
-    const published = JSON.parse(
-      await readFile(path.join(tmp, 'data/market/v1', RETAIL_INTEREST_REF_PATH), 'utf8')
+    // 2031/M6 from MAPP prices joins onto A311127M26
+    const couponPath = path.join(
+      tmp,
+      'data/market/v2/families/mapp/coupons/A311127M26.json'
     )
-    expect(published.rows.some((r: { offered: boolean }) => r.offered)).toBe(true)
-    // Ensure we did not stuff period coupons into series.prem via this path
-    const pmapSeries = JSON.parse(
-      await readFile(path.join(tmp, 'data/market/v1/families/pmap/series.json'), 'utf8')
+    const publishedCoupon = JSON.parse(await readFile(couponPath, 'utf8'))
+    expect(publishedCoupon.rows).toEqual([
+      ['2026-10-01', null, 5],
+      ['2026-10-01', null, 6]
+    ])
+
+    const mappSeries = JSON.parse(
+      await readFile(path.join(tmp, 'data/market/v2/families/mapp/series.json'), 'utf8')
     )
-    for (const s of pmapSeries.series) {
-      if (s.name === '2036/I1' || s.id === '2036_I1') {
-        expect(s.prem == null || s.prem !== 4.5).toBe(true)
-      }
-    }
+    const m6 = mappSeries.series.find(
+      (s: { name: string; id: string }) => s.name === '2031/M6' || s.id === 'A311127M26'
+    )
+    expect(m6?.offered).toBe(true)
+    expect(m6).not.toHaveProperty('prem')
+
+    // Flat refs must not be written
+    await expect(
+      readFile(path.join(tmp, 'data/market/v2/refs/retail-interest.json'), 'utf8')
+    ).rejects.toMatchObject({ code: 'ENOENT' })
 
     const again = await ingestMarketData({
       root: tmp,
@@ -194,10 +370,8 @@ describe('retail interest merge + ingest', () => {
     })
     expect(again.retailInterestUpdated).toBe(false)
     expect(again.retailInterestSoftFailed).toBe(false)
-    const publishedAgain = JSON.parse(
-      await readFile(path.join(tmp, 'data/market/v1', RETAIL_INTEREST_REF_PATH), 'utf8')
-    )
-    expect(publishedAgain.generatedAt).toBe(published.generatedAt)
+    const publishedAgain = JSON.parse(await readFile(couponPath, 'utf8'))
+    expect(publishedAgain).toEqual(publishedCoupon)
   })
 
   it('soft-fails live retailInterest and still publishes the price tree', async () => {
@@ -224,6 +398,12 @@ describe('retail interest merge + ingest', () => {
       retailInterestEnvelope: envelope,
       generatedAt: '2026-11-01T12:00:00.000Z'
     })
+
+    const couponPath = path.join(
+      tmp,
+      'data/market/v2/families/mapp/coupons/A311127M26.json'
+    )
+    const keptBefore = JSON.parse(await readFile(couponPath, 'utf8'))
 
     const fetchImpl: typeof fetch = async (input) => {
       const url = String(input)
@@ -288,16 +468,13 @@ describe('retail interest merge + ingest', () => {
     })
     expect(report.retailInterestSoftFailed).toBe(true)
     expect(report.retailInterestUpdated).toBe(false)
-    const kept = JSON.parse(
-      await readFile(path.join(tmp, 'data/market/v1', RETAIL_INTEREST_REF_PATH), 'utf8')
-    )
-    expect(kept.generatedAt).toBe('2026-11-01T12:00:00.000Z')
-    expect(kept.rows.length).toBe(7)
-    // Price tree remains valid even though retailInterest soft-failed.
+    const kept = JSON.parse(await readFile(couponPath, 'utf8'))
+    expect(kept).toEqual(keptBefore)
     const { loadMarketTree } = await import('../tools/market-data/io.ts')
     const tree = await loadMarketTree(tmp)
     validateMarketTree(tree)
-    expect(tree.retailInterest?.rows).toHaveLength(7)
+    // Stepped kamatok "5,00 - 6,00 %" → two coupon rows with the same from/to.
+    expect(tree.families.mapp.coupons.A311127M26?.rows).toHaveLength(2)
     expect(Object.keys(tree.families.dkj.latest.quotes).length).toBeGreaterThan(0)
   })
 })

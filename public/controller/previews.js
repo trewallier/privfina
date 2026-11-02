@@ -140,6 +140,8 @@ function createInvestmentPreviewSync({
   mapFormDataToDkjSpecInputs,
   calculatePmapFromSpecInputs,
   mapFormDataToPmapSpecInputs,
+  calculateBmapFromSpecInputs,
+  mapFormDataToBmapSpecInputs,
   onPreviewError,
   onPreviewSuccess,
   extraInputs = []
@@ -187,9 +189,11 @@ function createInvestmentPreviewSync({
         const specInputs = mapFormDataToPmapSpecInputs(new FormData(form))
         const preview = calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
 
-        purchasePreviewInput.value = '—'
-        maturityPreviewInput.value = formatMoneyAmount(preview.redemptionValue)
-        gainPreviewInput.value = '—'
+        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount)
+        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal)
+        gainPreviewInput.value = formatMoneyAmount(
+          Number(specInputs.principal) - Number(preview.purchaseAmount)
+        )
         if (discountYieldPreviewInput) {
           discountYieldPreviewInput.value = '—'
         }
@@ -197,7 +201,7 @@ function createInvestmentPreviewSync({
           discountCurrentValuePreviewInput.value = '—'
         }
         if (inflationSchedulePreviewInput) {
-          inflationSchedulePreviewInput.value = `${preview.couponPaymentFrequency} coupon, ${preview.annualCouponRatePct.toFixed(4)}%`
+          inflationSchedulePreviewInput.value = `${preview.annualCouponRatePct.toFixed(4)}%`
         }
         if (typeof onPreviewSuccess === 'function') {
           onPreviewSuccess()
@@ -205,8 +209,31 @@ function createInvestmentPreviewSync({
         return
       }
 
-      if (subtype === 'bmap') {
-        clearPreviews()
+      if (
+        subtype === 'bmap' &&
+        typeof calculateBmapFromSpecInputs === 'function' &&
+        typeof mapFormDataToBmapSpecInputs === 'function' &&
+        form
+      ) {
+        const specInputs = mapFormDataToBmapSpecInputs(new FormData(form))
+        const preview = calculateBmapFromSpecInputs(specInputs, {
+          createInvestmentMaturityPreview
+        })
+
+        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount)
+        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal)
+        gainPreviewInput.value = formatMoneyAmount(
+          Number(specInputs.principal) - Number(preview.purchaseAmount)
+        )
+        if (discountYieldPreviewInput) {
+          discountYieldPreviewInput.value = '—'
+        }
+        if (discountCurrentValuePreviewInput) {
+          discountCurrentValuePreviewInput.value = '—'
+        }
+        if (inflationSchedulePreviewInput) {
+          inflationSchedulePreviewInput.value = `${preview.annualCouponRatePct.toFixed(4)}%`
+        }
         if (typeof onPreviewSuccess === 'function') {
           onPreviewSuccess()
         }

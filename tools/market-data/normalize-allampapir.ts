@@ -1,6 +1,7 @@
 import { familyFromAllampapirPaper } from './families.ts'
 import { toSeriesId } from './ids.ts'
 import {
+  defaultDayCountForFamily,
   emptyNormalizedByFamily,
   type AllampapirEnvelope,
   type AllampapirRow,
@@ -84,11 +85,13 @@ function mapSeriesFromRow(
   const label = rawLabelFromRow(row)
   if (!label) return null
   const id = toSeriesId(label)
+  const rawMat = asString(row.maturityDate)
   const mat = isoDate(row.maturityDate)
+  if (rawMat && !mat) {
+    throw new AllampapirNormalizeError(`Unparseable maturityDate on allampapir row ${id}: ${rawMat}`)
+  }
   const status: SeriesRecord['status'] =
     asOf && mat && mat < asOf ? 'matured' : 'active'
-  const prem =
-    asNumber(row.coupon_val, 'coupon_val', id) ?? asNumber(row.coupon, 'coupon', id)
   const rec: SeriesRecord = {
     id,
     isin: asString(row.isin),
@@ -96,10 +99,9 @@ function mapSeriesFromRow(
     issue: isoDate(row.issueDate),
     mat,
     ccy: asString(row.currency),
-    status
+    status,
+    dayCount: defaultDayCountForFamily(family)
   }
-  if (prem != null && prem !== 0) rec.prem = prem
-  void family
   return rec
 }
 
@@ -140,6 +142,7 @@ function envelopeRows(envelope: AllampapirEnvelope): AllampapirRow[] {
 /**
  * Normalize allampapir papers_meta + per-paper get_prices envelopes.
  * Empty papers (0 rows) are soft-ok. Non-empty rows with unmappable family fail closed.
+ * Does not write `prem` (ADR 0038); coupon schedules come from retailInterest → coupons/.
  */
 export function normalizeAllampapirSnapshots(
   pricesByPaper: Record<string, AllampapirEnvelope>,

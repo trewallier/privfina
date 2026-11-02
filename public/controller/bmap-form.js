@@ -4,11 +4,10 @@ import {
   orderedSpecFields
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
-import { getBmapFieldHelp } from './investment-field-help.js'
 import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const BMAP_PRODUCT_SPEC = {
-  specVersion: 'v2alpha1',
+  specVersion: 'v2alpha2',
   id: 'government-security.bmap.standard',
   family: 'government-security',
   variant: 'bmap',
@@ -22,50 +21,52 @@ const BMAP_PRODUCT_SPEC = {
       label: 'Principal',
       required: true,
       unit: 'currency',
-      description: 'Invested nominal amount.',
+      description: 'Face amount you invest in forints (HUF).',
       constraints: { minimum: 1 }
     },
     {
-      name: 'dkjBaseYieldPct',
+      name: 'annualCouponRatePct',
       type: 'number',
-      label: 'DKJ Base Yield',
+      label: 'Annual Coupon Rate',
       required: true,
       unit: 'percent',
-      description: 'Base yield derived from 3-month DKJ auction averages.',
-      constraints: { minimum: -100, maximum: 100 }
-    },
-    {
-      name: 'interestPremiumPct',
-      type: 'number',
-      label: 'Interest Premium',
-      required: true,
-      unit: 'percent',
-      description: 'Fixed premium added on top of the DKJ-based yield.',
+      description:
+        'Yearly interest rate for the current period, as published (already combined; not base plus premium).',
       constraints: { minimum: 0, maximum: 100 }
-    },
-    {
-      name: 'startDate',
-      type: 'string',
-      label: 'Start Date',
-      required: true,
-      unit: 'date',
-      description: 'Investment start date in ISO format.'
     },
     {
       name: 'purchaseDate',
       type: 'string',
       label: 'Purchase Date',
-      required: false,
+      required: true,
       unit: 'date',
-      description: 'Purchase or valuation date in ISO format, used for accrued-interest-related calculations.'
+      description:
+        'Date when the purchase is accounted for (YYYY-MM-DD). Used to compute interest already earned.'
     },
     {
       name: 'issueDate',
       type: 'string',
       label: 'Issue Date',
+      required: true,
+      unit: 'date',
+      description: 'Date this series was issued (YYYY-MM-DD).'
+    },
+    {
+      name: 'maturityDate',
+      type: 'string',
+      label: 'Maturity Date',
+      required: true,
+      unit: 'date',
+      description:
+        'Date the bond repays principal (YYYY-MM-DD). Taken from the series; not invented by the calculator.'
+    },
+    {
+      name: 'startDate',
+      type: 'string',
+      label: 'Start Date',
       required: false,
       unit: 'date',
-      description: 'Issue date of the BMAP series in ISO format.'
+      description: 'Optional holding start (YYYY-MM-DD). Defaults to the issue date when omitted.'
     },
     {
       name: 'firstCouponDate',
@@ -73,7 +74,18 @@ const BMAP_PRODUCT_SPEC = {
       label: 'First Coupon Date',
       required: false,
       unit: 'date',
-      description: 'First coupon payment date in ISO format if known.'
+      description:
+        'First interest payment date (YYYY-MM-DD) when you are not supplying a full coupon schedule.'
+    },
+    {
+      name: 'dayCountConvention',
+      type: 'string',
+      label: 'Day Count Convention',
+      required: false,
+      unit: 'text',
+      description:
+        'How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).',
+      constraints: { enum: ['ACT/360', 'ACT/365F', '30E/360'] }
     }
   ],
   outputs: [
@@ -83,31 +95,7 @@ const BMAP_PRODUCT_SPEC = {
       label: 'Annual Coupon Rate',
       required: true,
       unit: 'percent',
-      description: 'Annual coupon rate for the current period, equal to effective DKJ base plus premium.'
-    },
-    {
-      name: 'couponPaymentFrequency',
-      type: 'string',
-      label: 'Coupon Payment Frequency',
-      required: true,
-      unit: 'text',
-      description: 'Frequency of coupon payments.'
-    },
-    {
-      name: 'effectiveDkjBaseYieldPct',
-      type: 'number',
-      label: 'Effective DKJ Base Yield',
-      required: true,
-      unit: 'percent',
-      description: 'DKJ coupon base after applying the 0% floor.'
-    },
-    {
-      name: 'periodCouponRatePct',
-      type: 'number',
-      label: 'Period Coupon Rate',
-      required: false,
-      unit: 'percent',
-      description: 'Coupon amount or rate applicable to the current coupon period using the 360-day convention.'
+      description: 'Yearly interest rate applied for the current period.'
     },
     {
       name: 'accruedInterestAmount',
@@ -115,7 +103,8 @@ const BMAP_PRODUCT_SPEC = {
       label: 'Accrued Interest',
       required: false,
       unit: 'currency',
-      description: 'Interest accrued from issue or previous coupon date to purchase or valuation date.'
+      description:
+        'Interest already earned from the previous coupon (or issue) through the purchase date.'
     },
     {
       name: 'purchaseAmount',
@@ -123,15 +112,7 @@ const BMAP_PRODUCT_SPEC = {
       label: 'Purchase Amount',
       required: false,
       unit: 'currency',
-      description: 'Purchase amount based on principal plus accrued interest, where applicable.'
-    },
-    {
-      name: 'redemptionValue',
-      type: 'number',
-      label: 'Redemption Value',
-      required: true,
-      unit: 'currency',
-      description: 'Principal repaid at maturity.'
+      description: 'Total paid at purchase — principal plus accrued interest when applicable.'
     }
   ],
   ui: {
@@ -143,11 +124,12 @@ const BMAP_PRODUCT_SPEC = {
         fieldNames: [
           'principal',
           'purchaseDate',
-          'dkjBaseYieldPct',
-          'interestPremiumPct',
+          'annualCouponRatePct',
           'issueDate',
+          'maturityDate',
           'startDate',
-          'firstCouponDate'
+          'firstCouponDate',
+          'dayCountConvention'
         ]
       }
     ]
@@ -156,11 +138,11 @@ const BMAP_PRODUCT_SPEC = {
 
 const BMAP_FRONTEND_FIELD_ADAPTER = {
   principal: { inputId: 'bmap-principal' },
-  dkjBaseYieldPct: { inputId: 'bmap-dkj-base-yield-pct' },
-  interestPremiumPct: { inputId: 'bmap-interest-premium-pct' },
-  startDate: { inputId: 'bmap-start-date' },
+  annualCouponRatePct: { inputId: 'bmap-annual-coupon-rate-pct' },
   purchaseDate: { inputId: 'bmap-purchase-date' },
   issueDate: { inputId: 'bmap-issue-date' },
+  maturityDate: { inputId: 'bmap-maturity-date' },
+  startDate: { inputId: 'bmap-start-date' },
   firstCouponDate: { inputId: 'bmap-first-coupon-date' }
 }
 
@@ -203,7 +185,7 @@ function applyBmapSpecToForm({ bmapForm, bmapBox, setAmountDefaultIfEmpty = fals
         label,
         {
           label: field.label,
-          description: field.description || getBmapFieldHelp(field.name),
+          description: field.description || '',
           required: Boolean(field.required),
           role: 'input',
           helpId: `${adapter.inputId}-help`,
@@ -223,15 +205,28 @@ function setBmapFieldVisibility(investmentForm, visible) {
   }
 }
 
+function parseCouponScheduleField(raw) {
+  const text = String(raw || '').trim()
+  if (!text) return undefined
+  try {
+    const parsed = JSON.parse(text)
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function mapFormDataToBmapSpecInputs(formData) {
   return {
     principal: parseMoneyAmount(formData.get('principal')),
-    dkjBaseYieldPct: Number(formData.get('dkjBaseYieldPct')),
-    interestPremiumPct: Number(formData.get('interestPremiumPct')),
-    startDate: String(formData.get('startDate') || '').trim(),
-    purchaseDate: String(formData.get('purchaseDate') || '').trim() || undefined,
-    issueDate: String(formData.get('issueDate') || '').trim() || undefined,
-    firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined
+    annualCouponRatePct: Number(formData.get('annualCouponRatePct')),
+    purchaseDate: String(formData.get('purchaseDate') || '').trim(),
+    issueDate: String(formData.get('issueDate') || '').trim(),
+    maturityDate: String(formData.get('maturityDate') || '').trim(),
+    startDate: String(formData.get('startDate') || '').trim() || undefined,
+    firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
+    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
+    couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))
   }
 }
 

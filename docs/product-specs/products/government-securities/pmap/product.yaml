@@ -1,11 +1,11 @@
-specVersion: v2alpha1
+specVersion: v2alpha2
 kind: financial-product
 id: government-security.pmap.standard
 family: government-security
 variant: pmap
 productCode: pmap
 displayName: Premium Hungarian Government Security (PMÁP)
-description: Hungarian retail government bond with inflation-linked variable coupon and annual interest payment.
+description: Hungarian retail government bond with an inflation-linked variable coupon, paid once a year.
 
 category: retail-government-bond
 denominationCurrency: HUF
@@ -25,57 +25,87 @@ inputs:
     label: Principal
     required: true
     unit: currency
-    description: Invested nominal amount.
+    description: Face amount you invest in forints (HUF).
     constraints:
       minimum: 1
 
-  - name: interestPremiumPct
+  - name: annualCouponRatePct
     type: number
-    label: Interest Premium
+    label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Fixed premium added on top of the inflation base.
+    description: Yearly interest rate for the current period, as published (already combined; not inflation plus premium).
     constraints:
       minimum: 0
       maximum: 100
 
-  - name: previousYearAverageInflationPct
-    type: number
-    label: Previous Year Average Inflation
-    required: true
-    unit: percent
-    description: Official annual average inflation for the previous calendar year.
-    constraints:
-      minimum: -100
-      maximum: 100
-
-  - name: startDate
-    type: string
-    label: Start Date
-    required: true
-    unit: date
-    description: Investment start date in ISO format.
-
   - name: purchaseDate
     type: string
     label: Purchase Date
-    required: false
+    required: true
     unit: date
-    description: Purchase or valuation date in ISO format, used for accrued-interest-related calculations.
+    description: Date when the purchase is accounted for (YYYY-MM-DD). Used to compute interest already earned.
 
   - name: issueDate
     type: string
     label: Issue Date
+    required: true
+    unit: date
+    description: Date this series was issued (YYYY-MM-DD).
+
+  - name: maturityDate
+    type: string
+    label: Maturity Date
+    required: true
+    unit: date
+    description: Date the bond repays principal (YYYY-MM-DD). Taken from the series; not invented by the calculator.
+
+  - name: startDate
+    type: string
+    label: Start Date
     required: false
     unit: date
-    description: Issue date of the PMAP series in ISO format.
+    description: Optional holding start (YYYY-MM-DD). Defaults to the issue date when omitted.
 
   - name: firstCouponDate
     type: string
     label: First Coupon Date
     required: false
     unit: date
-    description: First coupon payment date in ISO format if known.
+    description: First interest payment date (YYYY-MM-DD) when you are not supplying a full coupon schedule.
+
+  - name: dayCountConvention
+    type: string
+    label: Day Count Convention
+    required: false
+    unit: text
+    description: How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).
+    constraints:
+      enum: [ACT/360, ACT/365F, 30E/360]
+
+  - name: couponSchedule
+    type: array
+    label: Coupon Schedule
+    required: false
+    unit: text
+    description: Optional interest periods. Each row needs a start date; end date and rate may be empty for future unknown periods. Commercial autofill maps published coupons into this schedule for accrued interest and cash-flow skips.
+    constraints:
+      items:
+        type: object
+        additionalProperties: false
+        required: [from]
+        properties:
+          from:
+            type: string
+            format: date
+            description: Period start (YYYY-MM-DD).
+          to:
+            type: ["string", "null"]
+            format: date
+            description: Period end (YYYY-MM-DD), or null when open-ended.
+          rate:
+            type: ["number", "null"]
+            description: Annual coupon percent for the period, or null when not yet published.
 
 outputs:
   - name: annualCouponRatePct
@@ -83,63 +113,38 @@ outputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Coupon rate for the current annual interest period.
-
-  - name: couponPaymentFrequency
-    type: string
-    label: Coupon Payment Frequency
-    required: true
-    unit: text
-    description: Frequency of coupon payments.
-
-  - name: effectiveInflationBasePct
-    type: number
-    label: Effective Inflation Base
-    required: true
-    unit: percent
-    description: Inflation base after applying the 0% floor for zero or negative inflation.
-
-  - name: periodCouponRatePct
-    type: number
-    label: Period Coupon Rate
-    required: false
-    unit: percent
-    description: Coupon rate applicable to the current coupon period or first irregular period.
+    description: Yearly interest rate applied for the current period.
 
   - name: accruedInterestAmount
     type: number
     label: Accrued Interest
     required: false
     unit: currency
-    description: Interest accrued from issue or previous coupon date to purchase/valuation date.
+    description: Interest already earned from the previous coupon (or issue) through the purchase date.
 
   - name: purchaseAmount
     type: number
     label: Purchase Amount
     required: false
     unit: currency
-    description: Purchase amount based on principal plus accrued interest, where applicable.
-
-  - name: redemptionValue
-    type: number
-    label: Redemption Value
-    required: true
-    unit: currency
-    description: Principal repaid at maturity.
+    description: Total paid at purchase — principal plus accrued interest when applicable.
 
 assumptions:
   - PMAP is modeled as an annual-pay inflation-linked retail bond.
-  - Product-term intent in this pilot is 10 years.
-  - Annual coupon rate is effective inflation base plus fixed premium.
-  - Effective inflation base is max(previous-year-average-inflation, 0).
+  - Commercial inputs use the published effective period coupon rate; inflation base + premium composition is not required for composer autofill.
+  - Coupon payment frequency is annual (product-type constant; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - PMAP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
+  - Default day-count for accrued interest is ACT/360 unless overridden per series or input.
+  - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - The first coupon period may differ from a regular annual period.
+  - When a couponSchedule is supplied (including from published market coupons autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
+  - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem PMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
   - Collateral-purpose transfer is out of scope and restricted by the official product rules.
-  - This spec remains a product-type model and does not attempt to encode every live series edge case.
-  - Inflation data sourcing is future work; examples use explicit input values.
+  - Using `refs/inflation.json` plus a published premium for verification remains future optional work.
+  - Breaking input contract vs pre-ADR-0038 shapes is stamped as specVersion v2alpha2; saved bundles with inflation+premium migrate on edit.
 
 ui:
   formTitle: Premium Hungarian Government Security (PMÁP)
@@ -149,11 +154,12 @@ ui:
       fieldNames:
         - principal
         - purchaseDate
-        - previousYearAverageInflationPct
-        - interestPremiumPct
+        - annualCouponRatePct
         - issueDate
+        - maturityDate
         - startDate
         - firstCouponDate
+        - dayCountConvention
 
 exampleRefs:
   - ./examples/nominal-case.yaml

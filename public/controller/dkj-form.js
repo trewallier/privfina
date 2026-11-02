@@ -1,14 +1,14 @@
+import { deriveDkjRemainingDays } from '@finance_engine/instruments/day_count'
 import {
   toInputType,
   applyNumericConstraints,
   orderedSpecFields
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
-import { getDkjFieldHelp } from './investment-field-help.js'
 import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const DKJ_PRODUCT_SPEC = {
-  specVersion: 'v2alpha1',
+  specVersion: 'v2alpha2',
   id: 'government-security.dkj.standard',
   family: 'government-security',
   variant: 'dkj',
@@ -22,7 +22,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Face Value',
       required: true,
       unit: 'currency',
-      description: 'Nominal value repaid at maturity.',
+      description: 'Amount repaid at maturity in forints (HUF).',
       constraints: { minimum: 10000 }
     },
     {
@@ -31,7 +31,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Purchase Price Percent',
       required: true,
       unit: 'percent',
-      description: 'Purchase price as percentage of face value.',
+      description: 'Price paid as a percent of face value (for example 99.5 means below par).',
       constraints: { minimum: 0, maximum: 200 }
     },
     {
@@ -40,7 +40,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Term Bucket in Months',
       required: true,
       unit: 'months',
-      description: 'Product-type maturity bucket for DKJ.',
+      description: 'Official DKJ term bucket (3, 6, or 12 months). Does not invent a maturity date.',
       constraints: { enum: [3, 6, 12] }
     },
     {
@@ -49,24 +49,26 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Settlement Date',
       required: true,
       unit: 'date',
-      description: 'Settlement date in ISO format.'
+      description: 'Date the purchase settles (YYYY-MM-DD).'
     },
     {
       name: 'maturityDate',
       type: 'string',
       label: 'Maturity Date',
-      required: false,
+      required: true,
       unit: 'date',
-      description: 'Maturity date in ISO format, if known.'
+      description:
+        'Date face value is repaid (YYYY-MM-DD). Required — the calculator does not invent it from the term bucket.'
     },
     {
-      name: 'remainingDays',
-      type: 'integer',
-      label: 'Remaining Days',
+      name: 'dayCountConvention',
+      type: 'string',
+      label: 'Day Count Convention',
       required: false,
-      unit: 'days',
-      description: 'Days remaining from settlement to maturity, used for annualized yield calculation.',
-      constraints: { minimum: 1 }
+      unit: 'text',
+      description:
+        'Year length used when annualizing return. Defaults to actual days over a 360-day year (ACT/360).',
+      constraints: { enum: ['ACT/360', 'ACT/365F', '30E/360'] }
     }
   ],
   outputs: [
@@ -76,7 +78,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Purchase Amount',
       required: true,
       unit: 'currency',
-      description: 'Amount paid for the security at purchase.'
+      description: 'Cash paid at settlement.'
     },
     {
       name: 'redemptionValue',
@@ -84,7 +86,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Redemption Value',
       required: true,
       unit: 'currency',
-      description: 'Face value repaid at maturity.'
+      description: 'Face amount repaid at maturity.'
     },
     {
       name: 'grossGain',
@@ -92,7 +94,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Gross Gain',
       required: true,
       unit: 'currency',
-      description: 'Difference between redemption value and purchase amount.'
+      description: 'Redemption value minus purchase amount.'
     },
     {
       name: 'simpleReturnPct',
@@ -100,7 +102,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Simple Return',
       required: false,
       unit: 'percent',
-      description: 'Gross gain relative to purchase amount.'
+      description: 'Gross gain as a percent of the purchase amount.'
     },
     {
       name: 'annualizedYieldPct',
@@ -108,7 +110,16 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Annualized Yield',
       required: true,
       unit: 'percent',
-      description: 'Annualized yield calculated using remaining days and the official discount-bill convention.'
+      description:
+        'Holding-period return scaled to a yearly rate using remaining days and the day-count year length.'
+    },
+    {
+      name: 'remainingDays',
+      type: 'integer',
+      label: 'Remaining Days',
+      required: false,
+      unit: 'days',
+      description: 'Calendar days from settlement to maturity, used for the yearly yield.'
     }
   ],
   ui: {
@@ -122,8 +133,8 @@ const DKJ_PRODUCT_SPEC = {
           'settlementDate',
           'purchasePricePct',
           'termMonths',
-          'remainingDays',
-          'maturityDate'
+          'maturityDate',
+          'dayCountConvention'
         ]
       }
     ]
@@ -168,15 +179,6 @@ function queryFormInput(form, adapter) {
     form.querySelector(`#${adapter.inputId}`) ||
     (adapter.legacyInputId ? form.querySelector(`#${adapter.legacyInputId}`) : null)
   )
-}
-
-function addMonthsToIsoDate(dateIso, months) {
-  const source = new Date(`${dateIso}T00:00:00Z`)
-  if (Number.isNaN(source.getTime())) return ''
-  const target = new Date(
-    Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + months, source.getUTCDate())
-  )
-  return target.toISOString().slice(0, 10)
 }
 
 function applyDkjSpecToForm({
@@ -231,7 +233,7 @@ function applyDkjSpecToForm({
         label,
         {
           label: field.label,
-          description: field.description || getDkjFieldHelp(field.name),
+          description: field.description || '',
           required: Boolean(field.required),
           role: 'input',
           helpId: `${adapter.inputId}-help`,
@@ -241,6 +243,30 @@ function applyDkjSpecToForm({
       )
     }
   })
+
+  // remainingDays is derived (settlement → maturity), not a primary input.
+  const remainingAdapter = DKJ_FRONTEND_FIELD_ADAPTER.remainingDays
+  const remainingInput = investmentForm.querySelector(`#${remainingAdapter.inputId}`)
+  if (remainingInput) {
+    remainingInput.name = remainingAdapter.formName
+    remainingInput.readOnly = true
+    const remainingOutput = DKJ_PRODUCT_SPEC.outputs.find((field) => field.name === 'remainingDays')
+    const remainingLabel = remainingInput.closest('label')
+    if (remainingLabel) {
+      applyFieldChrome(
+        remainingLabel,
+        {
+          label: remainingOutput?.label || 'Remaining Days',
+          description: remainingOutput?.description || '',
+          required: false,
+          role: 'derived',
+          helpId: `${remainingAdapter.inputId}-help`,
+          labelClassName: 'dkj-field-label'
+        },
+        remainingInput
+      )
+    }
+  }
 
   DKJ_PRODUCT_SPEC.outputs.forEach((field) => {
     const adapter = DKJ_OUTPUT_PREVIEW_ADAPTER[field.name]
@@ -253,7 +279,7 @@ function applyDkjSpecToForm({
       label,
       {
         label: field.label,
-        description: field.description || getDkjFieldHelp(field.name),
+        description: field.description || '',
         required: false,
         role: 'output',
         helpId,
@@ -282,7 +308,9 @@ function mapFormDataToDkjSpecInputs(formData) {
     settlementDate: String(
       formData.get('settlementDate') || formData.get('transactionDate') || ''
     ).trim(),
-    maturityDate: String(formData.get('maturityDate') || formData.get('dueDate') || '').trim() || undefined,
+    maturityDate: String(formData.get('maturityDate') || formData.get('dueDate') || '').trim(),
+    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
+    // Derived autofill target; adapter re-derives when omitted.
     remainingDays: String(formData.get('remainingDays') || '').trim()
       ? Number(formData.get('remainingDays'))
       : undefined
@@ -292,9 +320,16 @@ function mapFormDataToDkjSpecInputs(formData) {
 function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
   const purchasePrice = (specInputs.faceValue * specInputs.purchasePricePct) / 100
   const settlementDate = String(specInputs.settlementDate || '').trim()
-  const maturityDate =
-    String(specInputs.maturityDate || '').trim() ||
-    addMonthsToIsoDate(settlementDate, specInputs.termMonths)
+  const maturityDate = String(specInputs.maturityDate || '').trim()
+  if (!maturityDate) {
+    throw new Error('maturityDate is required.')
+  }
+  const remainingDays =
+    specInputs.remainingDays !== undefined &&
+    specInputs.remainingDays !== null &&
+    specInputs.remainingDays !== ''
+      ? Number(specInputs.remainingDays)
+      : deriveDkjRemainingDays(settlementDate, maturityDate) ?? undefined
 
   return {
     id: meta.id,
@@ -319,7 +354,7 @@ function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     description: meta.description,
     createdAt: meta.createdAt,
     termMonths: specInputs.termMonths,
-    remainingDays: specInputs.remainingDays,
+    remainingDays,
     purchasePricePct: specInputs.purchasePricePct
   }
 }

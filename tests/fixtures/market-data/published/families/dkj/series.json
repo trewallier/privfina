@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "family": "dkj",
   "series": [
     {
@@ -11,7 +11,8 @@
       "ccy": "HUF",
       "face": 10000,
       "iType": "FIX",
-      "status": "active"
+      "status": "active",
+      "dayCount": "ACT/360"
     },
     {
       "id": "D261223",
@@ -22,7 +23,9 @@
       "ccy": "HUF",
       "face": 10000,
       "iType": "FIX",
-      "status": "active"
+      "status": "active",
+      "dayCount": "ACT/360",
+      "offered": true
     },
     {
       "id": "DOLD000",
@@ -32,7 +35,8 @@
       "mat": "2020-12-31",
       "ccy": "HUF",
       "face": 10000,
-      "status": "matured"
+      "status": "matured",
+      "dayCount": "ACT/360"
     }
   ]
 }

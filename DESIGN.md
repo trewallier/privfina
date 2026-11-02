@@ -56,12 +56,13 @@ The current implementation includes the common `CashFlow` model plus instrument 
 
 ### Product Specification Schema (v2)
 
-- Active validation contract: `docs/product-specs/schema/v2/` with `specVersion: v2alpha1`.
+- Active validation contract: `docs/product-specs/schema/v2/` with `specVersion: v2alpha1` (baseline) or `v2alpha2` (ADR 0038 government securities).
 - Schema v1 is frozen; do not add new loan/mortgage commercial fields there.
 - Product identity: free-form `variant` (label) plus required `productCode` (stable id such as `csok-plusz` or `dkj`).
 - Families: `loan`, `mortgage-loan`, `government-security`, `home-savings`. Mortgage products keep `engine.instrumentType: loan` so they reuse loan amortization primitives. Home-savings products use `engine.instrumentType: home-savings` (ADR 0028 / 0029).
 - Commercial constructs (optional on a product): `subsidy`, `fees`, `discounts`, `loanPurposes`, `eligibilityRules`, and `pricing`. Prefer these over new top-level one-off fields.
-- Legacy government-security top-level fields (`issuanceModel`, `rateSettingRule`, …) remain valid in v2alpha1; full relocation into `pricing` alone is deferred.
+- Legacy government-security top-level fields (`issuanceModel`, `rateSettingRule`, …) remain valid in v2; full relocation into `pricing` alone is deferred.
+- Commercial ÁKK retail path (DKJ / PMÁP / BMÁP) uses ADR 0038 effective-rate inputs + real maturities + published `couponSchedule` from `data/market/v2/` (`specVersion: v2alpha2`), not the generic inflation+spread sketch below.
 - Engine code stays primitive-focused (ADR 0015); schema readiness does not by itself implement subsidized cash-flow math.
 
 ### Instrument Design

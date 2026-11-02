@@ -1,71 +1,124 @@
+/**
+ * PMÁP commercial calculation adapter (ADR 0032 / 0038).
+ * Rate / accrued / coupon math from `@finance_engine/instruments/pmap`.
+ */
+import {
+  derivePmapRateOutputs,
+  derivePmapAccruedInterestAmount,
+  generatePmapAnnualCouponFlows
+} from '@finance_engine/instruments/pmap'
+import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
+import { PMAP_PRODUCT_SPEC } from './pmap-form.js'
 
+function calculatePmapFromSpecInputs(specInputs, options) {
+  void options
+  const principal = toNonNegativeNumber(specInputs.principal, 'principal')
+  const rateOutputs = derivePmapRateOutputs(specInputs)
+  const accruedInterestAmount = derivePmapAccruedInterestAmount(
+    specInputs,
+    rateOutputs.annualCouponRatePct
+  )
+  const purchaseAmount = principal + accruedInterestAmount
+  return {
+    ...rateOutputs,
+    accruedInterestAmount,
+    purchaseAmount: toFiniteNumber(purchaseAmount, 'purchaseAmount')
+  }
+}
+
+/** @deprecated Kept for tests that still pass a preview factory; unused for rate math. */
 function mapPmapSpecInputsToLegacyInvestmentInput(specInputs) {
   const principal = toNonNegativeNumber(specInputs.principal, 'principal')
-  const interestPremiumPct = toFiniteNumber(specInputs.interestPremiumPct, 'interestPremiumPct')
-  const prevYearInflationPct = toFiniteNumber(
-    specInputs.previousYearAverageInflationPct,
-    'previousYearAverageInflationPct'
-  )
-
-  const startDate = String(specInputs.startDate || '').trim()
-  const purchaseDate = typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
-  const issueDate = typeof specInputs.issueDate === 'string' ? String(specInputs.issueDate).trim() : ''
-
-  // PMAP pilot assumes a 10-year term by product assumption
-  const start = new Date(startDate)
-  const maturity = new Date(Date.UTC(start.getUTCFullYear() + 10, start.getUTCMonth(), start.getUTCDate()))
-  const maturityIso = maturity.toISOString().slice(0, 10)
-
-  // Effective inflation base is floored at 0
-  const effectiveInflationBase = Math.max(prevYearInflationPct, 0)
-
-  // Populate yearlyInflation entries for the maturity years with the floored value
-  const yearlyInflation = []
-  for (let y = start.getUTCFullYear() + 1; y <= start.getUTCFullYear() + 10; y += 1) {
-    yearlyInflation.push({ year: y, rate: effectiveInflationBase })
-  }
-
+  const issueDate = String(specInputs.issueDate || '').trim()
+  const startDate = String(specInputs.startDate || '').trim() || issueDate
+  const purchaseDate =
+    typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
+  const maturityDate = String(specInputs.maturityDate || '').trim()
+  const annualCouponRatePct = Number(specInputs.annualCouponRatePct)
   return {
     subtype: 'inflation-linked-bond',
     principal,
-    purchasePrice: undefined,
     issueDate: issueDate || startDate,
     transactionDate: purchaseDate || startDate,
-    dueDate: maturityIso,
-    spreadRate: interestPremiumPct / 100,
-    yearlyInflation,
-    // Public UI/preview expects a `yearlyInflationRaw` string with decimal rates like "2027:0.044"
-    yearlyInflationRaw: yearlyInflation
-      .map((e) => `${e.year}:${Number(e.rate) / 100}`)
-      .join(', ')
+    dueDate: maturityDate,
+    spreadRate: annualCouponRatePct / 100,
+    yearlyInflation: [],
+    yearlyInflationRaw: ''
   }
 }
 
-function mapLegacyPmapPreviewToSpecOutputs(legacyPreview, specInputs) {
-  void legacyPreview
-  const effectiveInflationBasePct = Math.max(Number(specInputs.previousYearAverageInflationPct), 0)
-  const interestPremiumPct = Number(specInputs.interestPremiumPct)
-  const annualCouponRatePct = effectiveInflationBasePct + interestPremiumPct
-  const principal = toNonNegativeNumber(specInputs.principal, 'principal')
-
-  return {
-    effectiveInflationBasePct,
-    annualCouponRatePct,
-    couponPaymentFrequency: 'annual',
-    redemptionValue: principal
-  }
+function mapLegacyPmapPreviewToSpecOutputs(_legacyPreview, specInputs) {
+  return calculatePmapFromSpecInputs(specInputs)
 }
 
-function calculatePmapFromSpecInputs(specInputs, options) {
-  const createInvestmentMaturityPreview = options?.createInvestmentMaturityPreview
-  if (typeof createInvestmentMaturityPreview !== 'function') {
-    throw new Error('createInvestmentMaturityPreview function is required.')
-  }
+function generatePmapInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
+  const calculated = calculatePmapFromSpecInputs(specInputs)
+  const flows = generatePmapAnnualCouponFlows(
+    specInputs,
+    calculated.purchaseAmount,
+    calculated.annualCouponRatePct
+  ).map((flow) => ({
+    date: flow.date,
+    amount: flow.amount,
+    direction: flow.direction === 'outflow' ? 'outflow' : 'inflow',
+    category: flow.category || 'investment',
+    description: flow.description || 'PMAP'
+  }))
+  const issueDateIso = String(specInputs.issueDate || '').trim()
+  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
+  const purchaseDateIso =
+    typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
+  const maturityDateIso = String(specInputs.maturityDate || '').trim()
 
-  const legacyInput = mapPmapSpecInputsToLegacyInvestmentInput(specInputs)
-  const legacyPreview = createInvestmentMaturityPreview(legacyInput)
-  return mapLegacyPmapPreviewToSpecOutputs(legacyPreview, specInputs)
+  return normalizeInstrumentBundle({
+    id: extras.id || `pmap-${Date.now()}`,
+    instrumentType: 'investment',
+    label: extras.label || PMAP_PRODUCT_SPEC.ui.formTitle,
+    productId: PMAP_PRODUCT_SPEC.id,
+    productSpecVersion: PMAP_PRODUCT_SPEC.specVersion,
+    config: {
+      productId: PMAP_PRODUCT_SPEC.id,
+      productSpecVersion: PMAP_PRODUCT_SPEC.specVersion,
+      subtype: 'pmap',
+      principal: calculated.purchaseAmount - calculated.accruedInterestAmount,
+      annualCouponRatePct: calculated.annualCouponRatePct,
+      startDate: startDateIso,
+      purchaseDate: purchaseDateIso || undefined,
+      issueDate: issueDateIso || undefined,
+      maturityDate: maturityDateIso,
+      firstCouponDate:
+        typeof specInputs.firstCouponDate === 'string'
+          ? String(specInputs.firstCouponDate).trim() || undefined
+          : undefined,
+      dayCountConvention: specInputs.dayCountConvention || 'ACT/360',
+      couponSchedule: Array.isArray(specInputs.couponSchedule)
+        ? specInputs.couponSchedule
+        : undefined,
+      purchaseAmount: calculated.purchaseAmount,
+      accruedInterestAmount: calculated.accruedInterestAmount,
+      category: extras.category || 'investment',
+      description: extras.description
+    },
+    preview: {
+      purchaseAmount: calculated.purchaseAmount,
+      maturityAmount: toNonNegativeNumber(specInputs.principal, 'principal'),
+      gainAmount:
+        toNonNegativeNumber(specInputs.principal, 'principal') - calculated.purchaseAmount,
+      subtype: 'pmap',
+      annualCouponRatePct: calculated.annualCouponRatePct,
+      accruedInterestAmount: calculated.accruedInterestAmount
+    },
+    generatedFlows: flows,
+    createdAt: extras.createdAt,
+    updatedAt: new Date().toISOString()
+  })
 }
 
-export { mapPmapSpecInputsToLegacyInvestmentInput, mapLegacyPmapPreviewToSpecOutputs, calculatePmapFromSpecInputs }
+export {
+  mapPmapSpecInputsToLegacyInvestmentInput,
+  mapLegacyPmapPreviewToSpecOutputs,
+  calculatePmapFromSpecInputs,
+  generatePmapInstrumentBundleFromSpecInputs,
+  createInvestmentMaturityPreview
+}

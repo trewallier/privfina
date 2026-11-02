@@ -1,10 +1,10 @@
 /**
  * Runtime loader for published government-security market JSON
- * (ADR 0034 / 0035 / 0036 / ROADMAP §6b–§6d).
- * Fetches same-origin Pages files under data/market/v1/ — never official market hosts.
+ * (ADR 0034 / 0035 / 0036 / 0038 / ROADMAP §6b–§6f).
+ * Fetches same-origin Pages files under data/market/v2/ — never official market hosts.
  */
 
-export const MARKET_SCHEMA_VERSION = 1
+export const MARKET_SCHEMA_VERSION = 2
 export const MARKET_FAMILIES = Object.freeze(['dkj', 'pmap', 'bmap'])
 
 const sessionCache = new Map()
@@ -12,16 +12,16 @@ const sessionCache = new Map()
 function resolveBaseUrl(baseUrl) {
   if (baseUrl != null && String(baseUrl).trim() !== '') {
     const trimmed = String(baseUrl).replace(/\/?$/, '/')
-    return trimmed.endsWith('data/market/v1/')
+    return trimmed.endsWith('data/market/v2/')
       ? trimmed
-      : `${trimmed}data/market/v1/`
+      : `${trimmed}data/market/v2/`
   }
   const viteBase =
     typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL
       ? String(import.meta.env.BASE_URL)
       : '/'
   const normalized = viteBase.endsWith('/') ? viteBase : `${viteBase}/`
-  return `${normalized}data/market/v1/`
+  return `${normalized}data/market/v2/`
 }
 
 function joinUrl(base, relativePath) {
@@ -74,11 +74,11 @@ function validateQuotesFile(data, id) {
   return data
 }
 
-function validateRetailInterestFile(data) {
+function validateCouponsFile(data, id) {
   if (!isPlainObject(data) || data.schemaVersion !== MARKET_SCHEMA_VERSION) {
     return null
   }
-  if (!Array.isArray(data.rows)) {
+  if (data.id !== id || !Array.isArray(data.cols) || !Array.isArray(data.rows)) {
     return null
   }
   return data
@@ -124,6 +124,10 @@ export function createMarketDataLoader(options = {}) {
       async loadQuotes() {
         return null
       },
+      async loadCoupons() {
+        return null
+      },
+      /** @deprecated Schema v2 publishes coupons/; always soft-null. */
       async loadRetailInterest() {
         return null
       },
@@ -145,18 +149,31 @@ export function createMarketDataLoader(options = {}) {
     },
 
     /**
-     * Lakossági kamatok refs (ADR 0036). Soft-null when missing.
+     * Per-series coupon schedule (ADR 0038). Soft-null when missing.
+     * @param {'dkj'|'pmap'|'bmap'} family
+     * @param {string} id
      * @returns {Promise<object|null>}
      */
-    async loadRetailInterest() {
+    async loadCoupons(family, id) {
+      if (!MARKET_FAMILIES.includes(family) || !id) {
+        return null
+      }
       try {
-        const manifest = await this.loadManifest()
-        const relative =
-          manifest?.refs?.retailInterest || 'refs/retail-interest.json'
-        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validateRetailInterestFile)
+        const relative = `families/${family}/coupons/${encodeURIComponent(id)}.json`
+        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, (data) =>
+          validateCouponsFile(data, id)
+        )
       } catch {
         return null
       }
+    },
+
+    /**
+     * @deprecated Flat refs/retail-interest.json retired in schemaVersion 2.
+     * @returns {Promise<null>}
+     */
+    async loadRetailInterest() {
+      return null
     },
 
     /**

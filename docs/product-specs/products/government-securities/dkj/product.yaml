@@ -1,4 +1,4 @@
-specVersion: v2alpha1
+specVersion: v2alpha2
 kind: financial-product
 id: government-security.dkj.standard
 family: government-security
@@ -21,7 +21,7 @@ inputs:
     label: Face Value
     required: true
     unit: currency
-    description: Nominal value repaid at maturity.
+    description: Amount repaid at maturity in forints (HUF).
     constraints:
       minimum: 10000
 
@@ -30,7 +30,7 @@ inputs:
     label: Purchase Price Percent
     required: true
     unit: percent
-    description: Purchase price as percentage of face value.
+    description: Price paid as a percent of face value (for example 99.5 means below par).
     constraints:
       minimum: 0
       maximum: 200
@@ -40,7 +40,7 @@ inputs:
     label: Term Bucket in Months
     required: true
     unit: months
-    description: Product-type maturity bucket for DKJ.
+    description: Official DKJ term bucket (3, 6, or 12 months). Does not invent a maturity date.
     constraints:
       enum: [3, 6, 12]
 
@@ -49,23 +49,23 @@ inputs:
     label: Settlement Date
     required: true
     unit: date
-    description: Settlement date in ISO format.
+    description: Date the purchase settles (YYYY-MM-DD).
 
   - name: maturityDate
     type: string
     label: Maturity Date
-    required: false
+    required: true
     unit: date
-    description: Maturity date in ISO format, if known.
+    description: Date face value is repaid (YYYY-MM-DD). Required — the calculator does not invent it from the term bucket.
 
-  - name: remainingDays
-    type: integer
-    label: Remaining Days
+  - name: dayCountConvention
+    type: string
+    label: Day Count Convention
     required: false
-    unit: days
-    description: Days remaining from settlement to maturity, used for annualized yield calculation.
+    unit: text
+    description: Year length used when annualizing return. Defaults to actual days over a 360-day year (ACT/360).
     constraints:
-      minimum: 1
+      enum: [ACT/360, ACT/365F, 30E/360]
 
 outputs:
   - name: purchaseAmount
@@ -73,47 +73,56 @@ outputs:
     label: Purchase Amount
     required: true
     unit: currency
-    description: Amount paid for the security at purchase.
+    description: Cash paid at settlement.
 
   - name: redemptionValue
     type: number
     label: Redemption Value
     required: true
     unit: currency
-    description: Face value repaid at maturity.
+    description: Face amount repaid at maturity.
 
   - name: grossGain
     type: number
     label: Gross Gain
     required: true
     unit: currency
-    description: Difference between redemption value and purchase amount.
+    description: Redemption value minus purchase amount.
 
   - name: simpleReturnPct
     type: number
     label: Simple Return
     required: false
     unit: percent
-    description: Gross gain relative to purchase amount.
+    description: Gross gain as a percent of the purchase amount.
 
   - name: annualizedYieldPct
     type: number
     label: Annualized Yield
     required: true
     unit: percent
-    description: Annualized yield calculated using remaining days and the official discount-bill convention.
+    description: Holding-period return scaled to a yearly rate using remaining days and the day-count year length.
+
+  - name: remainingDays
+    type: integer
+    label: Remaining Days
+    required: false
+    unit: days
+    description: Calendar days from settlement to maturity, used for the yearly yield.
 
 assumptions:
   - DKJ is modeled as a non-coupon treasury bill.
   - The investor receives face value at maturity.
   - DKJ may be purchased below par, at par, or above par depending on issuance or market price.
-  - DKJ maturity buckets are represented as 3, 6, and 12 months for this product type.
+  - DKJ maturity buckets are represented as 3, 6, and 12 months for this product type; maturityDate remains a required input.
   - Denomination unit is 10,000 HUF; commercial composer face value defaults to that unit and accepts only multiples of it.
   - Issuance is modeled as auction-based.
   - Principal is repaid at maturity in one amount.
-  - Annualized yield calculations use a 360-day convention consistent with the official DKJ formula.
+  - Remaining days are derived from settlementDate and maturityDate (not a primary stored input).
+  - Annualized yield uses finance_engine day-count helpers; dayCountConvention selects the year denominator (default 360).
   - The issuer does not redeem DKJ before maturity.
-  - Secondary-market pricing and series-level auction data are out of scope for this first product-type spec.
+  - Secondary-market pricing and series-level auction data come from published market JSON when available.
+  - Breaking input contract vs pre-ADR-0038 shapes is stamped as specVersion v2alpha2.
 
 ui:
   formTitle: Discount Treasury Bond (DKJ)
@@ -125,8 +134,8 @@ ui:
         - settlementDate
         - purchasePricePct
         - termMonths
-        - remainingDays
         - maturityDate
+        - dayCountConvention
 
 exampleRefs:
   - ./examples/nominal-case.yaml

@@ -34,6 +34,7 @@ Recent decisions
 - `0035-dual-source-akk-allampapir-market-data.md` — same workflow also fetches allampapir.hu (CSRF); combine ÁKK + treasury retail quotes; extended optional families (ROADMAP §6c).
 - `0036-allampapir-retail-interest-kamatok.md` — same workflow also fetches Lakossági kamatok (`retailInterest`); publishes `refs/retail-interest.json` with period rates + `offered` (ROADMAP §6d).
 - `0037-ksh-inflation-published-refs.md` — same workflow also fetches KSH STADAT ara0040 CSV; publishes append-only `refs/inflation.json` CPI total (ROADMAP §6e).
+- `0038-government-securities-market-schema-v2-and-effective-rate-inputs.md` — `data/market/v2/` schemaVersion 2 (coupons/<id>, dayCount, offered, drop `prem`); commercial DKJ/PMÁP/BMÁP effective-rate + real maturity inputs (ROADMAP §6f).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

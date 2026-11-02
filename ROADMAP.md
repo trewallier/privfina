@@ -302,6 +302,48 @@ Out of scope for §6e
 - CI assert PMÁP effective ≈ premium + KSH annual average.
 - Category / nyugdíjas columns; `refs/dkj-base.json`; browser CORS to ksh.hu.
 
+#### 6f) Government securities schema v2 — effective rates, coupons, real maturity (ADR 0038)
+Goal: align published market JSON and DKJ/PMÁP/BMÁP product inputs with ingested reality — effective period rates, real maturities, optional future coupon rates, series-level day-count — and cut the SPA over to `data/market/v2/`.
+
+Constraints
+- Docs/ADR and product YAML update **before** engine/UI behavior changes.
+- Publish under `data/market/v2/` schemaVersion 2; after cutover reject schemaVersion 1 (soft-fail if tree missing).
+- No `if (productCode === …)` in core generators (ADR 0015); math in `src/finance_engine/` first (ADR 0017).
+- Do not invent coupon cash flows for periods with undefined rates; do not invent BMÁP/PMÁP maturity (+6y/+10y).
+- Optional-family composers stay out of this slice (§6g).
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0038 + ROADMAP / ownership / spec / CI playbook / market-data README + government-securities extension matrix stub.
+- [x] Product YAML + examples: effective `annualCouponRatePct`, required `maturityDate`, optional `couponSchedule` / `dayCountConvention`; slim outputs; DKJ `remainingDays` derived; **specVersion v2alpha2** for the breaking input contract.
+- [x] `tools/market-data/` v2: drop `prem`; `coupons/<id>.json` with nullable / multi-band rates; `dayCount` / `offered`; canonical id join; `ktj` / `map2` routing stubs; fixtures + validate.
+- [x] Engine + adapters: shared day-count/accrued (prior-coupon accrual start); schedule null/gap skip; DKJ remaining-days + ACT/360 annualization in `finance_engine`; retire invented term years; Vitest.
+- [x] SPA loader/autofill/forms hard-cut to v2; drop `0 + askYield` premium mapping; Pages materialization of `data/market/v2/`; schema-owned plain-language field help; bundle edit migration (base+premium → effective rate).
+- [x] Cutover hardening: v1→v2 baseline lift on first ingest; prune-on-publish (`rm -rf` v2 before artifact extract + orphan prune in `writeMarketTree`); empty retailInterest soft-fail.
+- [ ] **Close §6f only after live cutover:** `workflow_dispatch` market-data → tip has `data/market/v2/manifest.json` → Pages serves `/privfina/data/market/v2/manifest.json`. Until then: **code complete; cutover pending**.
+
+Out of scope for §6f
+- `refs/dkj-base.json`; commercial inflation+premium composition as composer inputs.
+- Auto-authoring product YAML; browser CORS to market hosts.
+- Commercial composers for FixMÁP and other optional families (§6g).
+
+#### 6g) Additional government securities on commercial composer (subsequent)
+Goal: add catalog product specs and commercial investment hosts for families already (or newly) published on the market-data branch, reusing ADR 0038 v2 series/coupon shapes.
+
+Candidates (inclusion matrix lives in `docs/product-specs/products/government-securities/README.md`):
+- `fixmap` (FixMÁP), `mapp` (MÁP Plusz), `baba`, `emap` / possible `pemap` split, `omap` (1MÁP), `ktv`, plus newly routable `ktj` and `map2` (2MÁP).
+
+Constraints
+- Product YAML + examples before engine/UI; no core generator `productCode` forks.
+- Reuse v2 coupons/`dayCount`/`offered`; do not revive `series.prem` or base+premium required inputs unless a product truly publishes a split.
+
+Plan slices
+- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable on commercial investment picker.
+- [ ] Decide PEMÁP vs EMÁP family split if product rules diverge.
+- [ ] SPA series picker + autofill per family; parity tests.
+
+Out of scope for §6g until named
+- Live auction DKJ-base derivation; non-ÁKK retail products outside published families.
+
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).
 

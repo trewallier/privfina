@@ -31,8 +31,8 @@ describe('dkj frontend form metadata seam', () => {
       'settlementDate',
       'purchasePricePct',
       'termMonths',
-      'remainingDays',
-      'maturityDate'
+      'maturityDate',
+      'dayCountConvention'
     ])
   })
 
@@ -53,18 +53,21 @@ describe('dkj frontend form metadata seam', () => {
     })
     expect(DKJ_FRONTEND_FIELD_ADAPTER.termMonths.inputId).toBe('dkj-term-months')
     expect(DKJ_FRONTEND_FIELD_ADAPTER.settlementDate.formName).toBe('settlementDate')
+    expect(DKJ_FRONTEND_FIELD_ADAPTER.maturityDate.inputId).toBe('dkj-maturity-date')
     expect(DKJ_FRONTEND_FIELD_ADAPTER.remainingDays.inputId).toBe('dkj-remaining-days')
   })
 
-  it('keeps DKJ termMonths enum and remainingDays minimum constraints aligned with spec', () => {
+  it('keeps DKJ termMonths enum and required maturityDate aligned with spec', () => {
     const loadedSpec = loadDkjProductSpecYamlFromFiles() as any
     const loadedByName = new Map(loadedSpec.inputs.map((field: any) => [field.name, field]))
 
     expect(DKJ_PRODUCT_SPEC.inputs.find((field) => field.name === 'termMonths')?.constraints).toEqual(
       loadedByName.get('termMonths')?.constraints
     )
-    expect(
-      DKJ_PRODUCT_SPEC.inputs.find((field) => field.name === 'remainingDays')?.constraints
-    ).toEqual(loadedByName.get('remainingDays')?.constraints)
+    expect(DKJ_PRODUCT_SPEC.inputs.find((field) => field.name === 'maturityDate')?.required).toBe(
+      true
+    )
+    expect(loadedByName.get('maturityDate')?.required).toBe(true)
+    expect(DKJ_PRODUCT_SPEC.outputs.find((field) => field.name === 'remainingDays')).toBeDefined()
   })
 })

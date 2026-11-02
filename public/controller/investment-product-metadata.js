@@ -126,7 +126,8 @@ function buildSpecBackedInvestmentSubtypeUiConfig() {
   return {
     bmap: buildDedicatedHostSubtypeUiConfig(BMAP_PRODUCT_SPEC, {
       hostId: 'investment-bmap-wrap',
-      annualRateNote: 'BMAP uses explicit DKJ base and premium inputs instead of the generic annual rate field.'
+      annualRateNote:
+        'BMAP uses the published effective annual coupon rate instead of the generic annual rate field.'
     }),
     dkj: buildDedicatedHostSubtypeUiConfig(DKJ_PRODUCT_SPEC, {
       hostId: 'investment-dkj-wrap',
@@ -139,7 +140,8 @@ function buildSpecBackedInvestmentSubtypeUiConfig() {
     pmap: buildDedicatedHostSubtypeUiConfig(PMAP_PRODUCT_SPEC, {
       hostId: 'investment-pmap-wrap',
       inflationSchedulePreview: true,
-      annualRateNote: 'PMAP coupon is derived from inflation base and premium inputs.'
+      annualRateNote:
+        'PMAP uses the published effective annual coupon rate instead of the generic annual rate field.'
     })
   }
 }

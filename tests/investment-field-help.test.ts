@@ -2,14 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import YAML from 'yaml'
-import {
-  getDkjFieldHelp,
-  getBmapFieldHelp,
-  getPmapFieldHelp
-} from '../public/controller/investment-field-help.js'
-import { DKJ_FRONTEND_FIELD_ADAPTER } from '../public/controller/dkj-form.js'
-import { PMAP_FRONTEND_FIELD_ADAPTER } from '../public/controller/pmap-form.js'
-import { BMAP_FRONTEND_FIELD_ADAPTER } from '../public/controller/bmap-form.js'
+import { DKJ_PRODUCT_SPEC, DKJ_FRONTEND_FIELD_ADAPTER } from '../public/controller/dkj-form.js'
+import { BMAP_PRODUCT_SPEC, BMAP_FRONTEND_FIELD_ADAPTER } from '../public/controller/bmap-form.js'
+import { PMAP_PRODUCT_SPEC, PMAP_FRONTEND_FIELD_ADAPTER } from '../public/controller/pmap-form.js'
 
 function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
@@ -23,12 +18,24 @@ function extractFormHtml(indexHtml: string, formId: string): string {
   return match[0]
 }
 
+function assertEmbeddedInputDescriptionsMatchYaml(
+  embeddedSpec: { inputs: Array<{ name: string; description?: string }> },
+  yamlSpec: { inputs: Array<{ name: string; description?: string }> }
+) {
+  const embeddedByName = new Map(embeddedSpec.inputs.map((field) => [field.name, field]))
+  for (const field of yamlSpec.inputs) {
+    const embedded = embeddedByName.get(field.name)
+    if (!embedded) continue
+    expect(embedded.description).toBe(field.description)
+  }
+}
+
 describe('investment field help and dedicated hosts', () => {
   const indexHtml = readRepoFile('public/index.html')
   const simplifiedFormHtml = extractFormHtml(indexHtml, 'investment-form')
   const commercialFormHtml = extractFormHtml(indexHtml, 'commercial-investment-form')
 
-  it('keeps DKJ/BMAP/PMAP help copy aligned with YAML descriptions', () => {
+  it('keeps embedded DKJ/BMAP/PMAP input descriptions aligned with YAML', () => {
     const dkj = YAML.parse(
       readRepoFile('docs/product-specs/products/government-securities/dkj/product.yaml')
     ) as any
@@ -39,15 +46,24 @@ describe('investment field help and dedicated hosts', () => {
       readRepoFile('docs/product-specs/products/government-securities/pmap/product.yaml')
     ) as any
 
-    for (const field of dkj.inputs) {
-      expect(getDkjFieldHelp(field.name)).toBe(field.description)
-    }
-    for (const field of bmap.inputs) {
-      expect(getBmapFieldHelp(field.name)).toBe(field.description)
-    }
-    for (const field of pmap.inputs) {
-      expect(getPmapFieldHelp(field.name)).toBe(field.description)
-    }
+    expect(DKJ_PRODUCT_SPEC.specVersion).toBe(dkj.specVersion)
+    expect(BMAP_PRODUCT_SPEC.specVersion).toBe(bmap.specVersion)
+    expect(PMAP_PRODUCT_SPEC.specVersion).toBe(pmap.specVersion)
+
+    assertEmbeddedInputDescriptionsMatchYaml(DKJ_PRODUCT_SPEC, dkj)
+    assertEmbeddedInputDescriptionsMatchYaml(BMAP_PRODUCT_SPEC, bmap)
+    assertEmbeddedInputDescriptionsMatchYaml(PMAP_PRODUCT_SPEC, pmap)
+  })
+
+  it('keeps investment-field-help.js free of product field maps', () => {
+    const helpSource = readRepoFile('public/controller/investment-field-help.js')
+    expect(helpSource).toContain('SHARED_INVESTMENT_UI_HELP')
+    expect(helpSource).not.toMatch(/\bDKJ_FIELD_HELP\b/)
+    expect(helpSource).not.toMatch(/\bBMAP_FIELD_HELP\b/)
+    expect(helpSource).not.toMatch(/\bPMAP_FIELD_HELP\b/)
+    expect(helpSource).not.toMatch(/\bgetDkjFieldHelp\b/)
+    expect(helpSource).not.toMatch(/\bgetBmapFieldHelp\b/)
+    expect(helpSource).not.toMatch(/\bgetPmapFieldHelp\b/)
   })
 
   it('keeps generic bond subtypes on the simplified investment form', () => {
@@ -72,7 +88,10 @@ describe('investment field help and dedicated hosts', () => {
     expect(commercialFormHtml).toContain('id="investment-bmap-wrap"')
     expect(commercialFormHtml).toContain('id="commercial-investment-form-status"')
     expect(commercialFormHtml).toContain('id="dkj-face-value"')
-    expect(commercialFormHtml).toContain('id="pmap-previous-year-inflation-pct"')
+    expect(commercialFormHtml).toContain('id="pmap-annual-coupon-rate-pct"')
+    expect(commercialFormHtml).toContain('id="pmap-maturity-date"')
+    expect(commercialFormHtml).toContain('id="bmap-annual-coupon-rate-pct"')
+    expect(commercialFormHtml).toContain('id="bmap-maturity-date"')
     expect(commercialFormHtml).toContain('id="commercial-investment-maturity-preview-help"')
   })
 

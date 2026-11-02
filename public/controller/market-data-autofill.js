@@ -3,6 +3,8 @@
  * Never returns amount fields (principal / faceValue) or purchase/settlement dates.
  */
 
+import { deriveDkjRemainingDays } from '@finance_engine/instruments/day_count'
+
 const TERM_BUCKETS = [3, 6, 12]
 
 function parseIsoDateUtc(value) {
@@ -37,13 +39,9 @@ export function deriveTermMonths(issue, mat) {
   )
 }
 
+/** Calendar days settlement→maturity (ACT); finance_engine day-count. */
 export function deriveRemainingDays(settlementDate, maturityDate) {
-  const start = parseIsoDateUtc(settlementDate)
-  const end = parseIsoDateUtc(maturityDate)
-  if (!start || !end || end <= start) {
-    return null
-  }
-  return Math.round((end.getTime() - start.getTime()) / 86400000)
+  return deriveDkjRemainingDays(settlementDate, maturityDate)
 }
 
 /**
@@ -87,18 +85,71 @@ export function pickPurchasePricePct(quote) {
   return null
 }
 
-/** Prefer ask yield, else bid yield (temporary BMÁP/PMÁP effective interest). */
-export function pickEffectiveInterestPct(quote) {
-  if (!quote) {
+/**
+ * Convert published coupons/<id>.json columnar rows into engine couponSchedule objects.
+ * @param {{ cols?: string[], rows?: Array<Array<string|number|null>> }|null|undefined} coupons
+ * @returns {Array<{ from: string, to: string|null, rate: number|null }>|null}
+ */
+export function couponsFileToCouponSchedule(coupons) {
+  const rows = Array.isArray(coupons?.rows) ? coupons.rows : []
+  if (!rows.length) {
     return null
   }
-  if (quote.ay != null && Number.isFinite(Number(quote.ay))) {
-    return Number(quote.ay)
+  const schedule = []
+  for (const row of rows) {
+    const from = String(row?.[0] || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) continue
+    const rawTo = row?.[1]
+    const to =
+      rawTo == null || rawTo === ''
+        ? null
+        : /^\d{4}-\d{2}-\d{2}$/.test(String(rawTo))
+          ? String(rawTo)
+          : null
+    const rawRate = row?.[2]
+    const rate =
+      rawRate == null || rawRate === ''
+        ? null
+        : Number.isFinite(Number(rawRate))
+          ? Number(rawRate)
+          : null
+    schedule.push({ from, to, rate })
   }
-  if (quote.by != null && Number.isFinite(Number(quote.by))) {
-    return Number(quote.by)
+  return schedule.length > 0 ? schedule : null
+}
+
+/**
+ * Pick effective annual coupon % from a coupons/<id>.json file for onIso.
+ * Prefer a covering period with a defined rate; else latest prior defined rate.
+ * @param {{ cols?: string[], rows?: Array<Array<string|number|null>> }|null|undefined} coupons
+ * @param {string} onIso
+ * @returns {number|null}
+ */
+export function pickCouponRatePct(coupons, onIso) {
+  const rows = Array.isArray(coupons?.rows) ? coupons.rows : []
+  if (!rows.length || !/^\d{4}-\d{2}-\d{2}$/.test(String(onIso || ''))) {
+    return null
   }
-  return null
+  const day = String(onIso)
+  const covering = rows.find((row) => {
+    const from = row?.[0]
+    const to = row?.[1]
+    const rate = row?.[2]
+    if (!from || from > day) return false
+    if (to != null && to !== '' && String(to) < day) return false
+    return rate != null && Number.isFinite(Number(rate))
+  })
+  if (covering) return Number(covering[2])
+  const prior = rows
+    .filter(
+      (row) =>
+        row?.[0] &&
+        String(row[0]) <= day &&
+        row[2] != null &&
+        Number.isFinite(Number(row[2]))
+    )
+    .sort((a, b) => String(b[0]).localeCompare(String(a[0])))[0]
+  return prior ? Number(prior[2]) : null
 }
 
 /**
@@ -137,67 +188,13 @@ export function deriveLastAvailabilityDate(series) {
 }
 
 /**
- * Match published retail-interest rows to a market series (name preferred; id fallback).
- * Prefers offered=true periods, else the latest `from`.
- * @param {{ rows?: Array<object> }|null|undefined} retailInterest
- * @param {{ name?: string, id?: string }|null|undefined} series
- */
-export function findRetailInterestForSeries(retailInterest, series) {
-  const rows = retailInterest?.rows
-  if (!Array.isArray(rows) || !series) {
-    return null
-  }
-  const name = String(series.name || '').trim()
-  const id = String(series.id || '').trim()
-  const candidates = rows.filter((row) => {
-    if (!row) return false
-    if (name && row.series === name) return true
-    if (id && (row.id === id || row.series === id)) return true
-    return false
-  })
-  if (candidates.length === 0) {
-    return null
-  }
-  const offered = candidates.filter((row) => row.offered === true)
-  const pool = offered.length > 0 ? offered : candidates
-  return pool.reduce((best, row) => {
-    if (!best) return row
-    return String(row.from || '') > String(best.from || '') ? row : best
-  }, null)
-}
-
-/**
- * @returns {boolean|null} true/false from treasury offered; null when refs missing/unmatched
- */
-export function isSeriesOfferedInRetailInterest(series, retailInterest) {
-  const row = findRetailInterestForSeries(retailInterest, series)
-  if (!row) {
-    return null
-  }
-  return row.offered === true
-}
-
-/**
- * Period kamat mértéke from retail interest (combined coupon — not interest premium).
- * @returns {number|null}
- */
-export function pickRetailPeriodRate(series, retailInterest) {
-  const row = findRetailInterestForSeries(retailInterest, series)
-  if (!row || row.rate == null || !Number.isFinite(Number(row.rate))) {
-    return null
-  }
-  return Number(row.rate)
-}
-
-/**
- * @param {{ name?: string, issue?: string|null }|null|undefined} series
+ * @param {{ name?: string, issue?: string|null, offered?: boolean|null }|null|undefined} series
  * @param {string} todayIso Europe/Budapest calendar day
- * @param {{ rows?: Array<object> }|null|undefined} [retailInterest]
  */
-export function isSeriesAvailableOn(series, todayIso, retailInterest = null) {
-  const offered = isSeriesOfferedInRetailInterest(series, retailInterest)
-  if (offered != null) {
-    return offered
+export function isSeriesAvailableOn(series, todayIso) {
+  // Schema v2: prefer series.offered from kamatok join (ADR 0038).
+  if (series && typeof series.offered === 'boolean') {
+    return series.offered === true
   }
   const last = deriveLastAvailabilityDate(series)
   if (!last || !/^\d{4}-\d{2}-\d{2}$/.test(String(todayIso || ''))) {
@@ -224,17 +221,12 @@ export function budapestTodayIso(date = new Date()) {
 }
 
 /**
- * @param {{ name?: string, id?: string, issue?: string|null }|null|undefined} series
+ * @param {{ name?: string, id?: string, issue?: string|null, offered?: boolean|null }|null|undefined} series
  * @param {string} [todayIso]
- * @param {{ rows?: Array<object> }|null|undefined} [retailInterest]
  */
-export function formatSeriesAvailabilityLabel(
-  series,
-  todayIso = budapestTodayIso(),
-  retailInterest = null
-) {
+export function formatSeriesAvailabilityLabel(series, todayIso = budapestTodayIso()) {
   const name = String(series?.name || series?.id || '').trim() || 'Series'
-  const available = isSeriesAvailableOn(series, todayIso, retailInterest)
+  const available = isSeriesAvailableOn(series, todayIso)
   return available ? `${name} — available` : `${name} — past`
 }
 
@@ -250,18 +242,20 @@ export const MARKET_AUTOFILL_PROTECTED_FIELDS = Object.freeze([
 export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
   dkj: Object.freeze(['purchasePricePct', 'termMonths', 'maturityDate', 'remainingDays']),
   pmap: Object.freeze([
-    'interestPremiumPct',
-    'previousYearAverageInflationPct',
+    'annualCouponRatePct',
+    'maturityDate',
     'startDate',
     'issueDate',
-    'firstCouponDate'
+    'firstCouponDate',
+    'couponSchedule'
   ]),
   bmap: Object.freeze([
-    'dkjBaseYieldPct',
-    'interestPremiumPct',
+    'annualCouponRatePct',
+    'maturityDate',
     'startDate',
     'issueDate',
-    'firstCouponDate'
+    'firstCouponDate',
+    'couponSchedule'
   ])
 })
 
@@ -283,19 +277,15 @@ export function marketableFieldsMissingFromPatch(family, sourcedNames = []) {
  * Build a patch of form field values from market data.
  * Always overwrites sourced (auto) fields when values are available.
  * Never returns amount or purchase/settlement date fields.
+ * For PMÁP/BMÁP, includes `couponSchedule` (array) from coupons/<id>.json when present.
  *
- * @param {{
- *   family: 'dkj'|'pmap'|'bmap',
- *   series: object|null|undefined,
- *   quote: object|null|undefined,
- *   current?: Record<string, string|number|null|undefined>
- * }} args
- * @returns {{ fields: Record<string, string|number>, sourced: string[] }}
+ * @returns {{ fields: Record<string, string|number|Array>, sourced: string[] }}
  */
 export function buildMarketAutofillPatch({
   family,
   series,
   quote,
+  coupons = null,
   current = {}
 } = {}) {
   const fields = {}
@@ -332,18 +322,18 @@ export function buildMarketAutofillPatch({
       setField('remainingDays', remaining)
     }
   } else if (family === 'pmap' || family === 'bmap') {
-    // Temporary: when quote yield exists, fill 0 + effective interest into base+premium
-    // until refs/inflation.json and refs/dkj-base.json land.
-    const effective = pickEffectiveInterestPct(quote)
-    if (effective != null) {
-      if (family === 'bmap') {
-        setField('dkjBaseYieldPct', 0)
-      } else {
-        setField('previousYearAverageInflationPct', 0)
-      }
-      setField('interestPremiumPct', effective)
-    } else if (series?.prem != null && Number.isFinite(Number(series.prem))) {
-      setField('interestPremiumPct', Number(series.prem))
+    // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
+    const onIso = String(current.purchaseDate || series?.issue || '').trim()
+    const couponRate = pickCouponRatePct(coupons, onIso)
+    if (couponRate != null) {
+      setField('annualCouponRatePct', couponRate)
+    }
+    const schedule = couponsFileToCouponSchedule(coupons)
+    if (schedule) {
+      setField('couponSchedule', schedule)
+    }
+    if (series?.mat) {
+      setField('maturityDate', series.mat)
     }
     if (series?.issue) {
       setField('issueDate', series.issue)

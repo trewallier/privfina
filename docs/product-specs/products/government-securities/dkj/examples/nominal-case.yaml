@@ -1,4 +1,4 @@
-specVersion: v2alpha1
+specVersion: v2alpha2
 productId: government-security.dkj.standard
 exampleId: nominal-case
 title: Nominal DKJ example
@@ -10,15 +10,16 @@ inputs:
   termMonths: 12
   settlementDate: 2026-01-07
   maturityDate: 2027-01-07
-  remainingDays: 360
 
 expected:
   purchaseAmount: 95000
   redemptionValue: 100000
   grossGain: 5000
   simpleReturnPct: 5.2631578947
-  annualizedYieldPct: 5.2631578947
+  remainingDays: 365
+  annualizedYieldPct: 5.1911052781
 
 notes:
   - purchaseAmount = faceValue * purchasePricePct / 100.
+  - remainingDays is derived from settlementDate → maturityDate (calendar days; 2026-01-07 → 2027-01-07 = 365).
   - annualizedYieldPct = ((redemptionValue - purchaseAmount) / purchaseAmount) * (360 / remainingDays) * 100.

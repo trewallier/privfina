@@ -1,6 +1,9 @@
-/** schemaVersion 1 published market-data shapes (ADR 0034 / 0035). */
+/** schemaVersion 2 published market-data shapes (ADR 0038). */
 
-export const SCHEMA_VERSION = 1 as const
+export const SCHEMA_VERSION = 2 as const
+
+/** Basename under `data/market/` for the published tree. */
+export const MARKET_PATH_SEGMENT = 'v2' as const
 
 export type FamilyCode =
   | 'dkj'
@@ -12,6 +15,8 @@ export type FamilyCode =
   | 'baba'
   | 'emap'
   | 'omap'
+  | 'ktj'
+  | 'map2'
 
 /** All published family folders (required + optional). */
 export const FAMILIES: readonly FamilyCode[] = [
@@ -23,7 +28,9 @@ export const FAMILIES: readonly FamilyCode[] = [
   'mapp',
   'baba',
   'emap',
-  'omap'
+  'omap',
+  'ktj',
+  'map2'
 ] as const
 
 /** Must have ≥1 quote after ÁKK + allampapir combine. */
@@ -32,6 +39,13 @@ export const REQUIRED_FAMILIES: readonly FamilyCode[] = ['dkj', 'pmap', 'bmap'] 
 export const QUOTE_COLS = ['d', 'bid', 'ask', 'by', 'ay', 'ai'] as const
 export type QuoteCol = (typeof QUOTE_COLS)[number]
 export type QuoteRow = [string, number | null, number | null, number | null, number | null, number | null]
+
+export const COUPON_COLS = ['from', 'to', 'rate'] as const
+export type CouponCol = (typeof COUPON_COLS)[number]
+/** Period window + rate; `to` and `rate` nullable (future / unknown). */
+export type CouponRow = [string, string | null, number | null]
+
+export type DayCountConvention = 'ACT/360' | 'ACT/365F' | '30E/360'
 
 /** active = currently quoted; matured = past maturity; delisted = not quoted, not matured. */
 export type SeriesStatus = 'active' | 'matured' | 'delisted'
@@ -48,8 +62,10 @@ export interface SeriesRecord {
   face?: number | null
   iType?: string | null
   status: SeriesStatus
-  /** Interest premium % when known (PMÁP / BMÁP). */
-  prem?: number | null
+  /** Day-count convention (family-defaulted when omitted by source). */
+  dayCount?: DayCountConvention | null
+  /** Currently offered for subscription when retailInterest join succeeds. */
+  offered?: boolean | null
   /** Reference curve label when known. */
   ref?: string | null
 }
@@ -66,6 +82,14 @@ export interface QuotesFile {
   family: FamilyCode
   cols: typeof QUOTE_COLS
   rows: QuoteRow[]
+}
+
+export interface CouponsFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  id: string
+  family: FamilyCode
+  cols: typeof COUPON_COLS
+  rows: CouponRow[]
 }
 
 export interface LatestQuote {
@@ -88,8 +112,12 @@ export interface ManifestFamilyPaths {
   latest: string
 }
 
-/** Path hints for additive refs files (ADR 0036 retail interest; ADR 0037 inflation; deferred DKJ-base). */
+/** Path hints for additive refs files (ADR 0037 inflation; deferred DKJ-base). */
 export interface ManifestRefsPaths {
+  /**
+   * @deprecated Schema v2 does not publish flat retail-interest; optional only for
+   * reading transitional trees. Validate must not require this path.
+   */
   retailInterest?: string
   inflation?: string
 }
@@ -101,23 +129,30 @@ export interface ManifestFile {
   /** Required families plus optional families that have content. */
   families: FamilyCode[]
   paths: Partial<Record<FamilyCode, ManifestFamilyPaths>>
-  /** Optional refs paths (e.g. Lakossági kamatok). */
+  /** Optional refs paths (inflation). */
   refs?: ManifestRefsPaths
   digests: Record<string, string>
 }
 
-/** One Lakossági kamatok period declaration (ADR 0036). */
+/**
+ * One Lakossági kamatok period declaration (ADR 0036) — INTERNAL ingest intermediate.
+ * Published tree writes `families/{fam}/coupons/<id>.json` + series.offered instead
+ * (ADR 0038); do not write `refs/retail-interest.json`.
+ */
 export interface RetailInterestRow {
   /** Canonical id from short series name (`toSeriesId`). */
   id: string
-  /** Mapped family, or null when type/place is outside published families (e.g. KTJ). */
+  /** Mapped family, or null when type/place is outside published families. */
   family: FamilyCode | null
   /** Short series label from kamatok (`2029/Q2`, `KTJ_I`, …). */
   series: string
   /** Source product type label (`FixMÁP`, `PMÁP`, …). */
   type: string
-  /** Period kamat mértéke % (combined coupon for PMÁP/BMÁP — not interest premium). */
-  rate: number | null
+  /**
+   * Period kamat band(s) % (combined coupon for PMÁP/BMÁP — not interest premium).
+   * Stepped display strings expand to multiple entries (never first-band-only).
+   */
+  rates: Array<number | null>
   /** EHM % when published. */
   ehm: number | null
   /** Validity start ISO date. */
@@ -136,9 +171,6 @@ export interface RetailInterestFile {
   generatedAt: string
   rows: RetailInterestRow[]
 }
-
-/** Published path for retail interest refs (ADR 0036). */
-export const RETAIL_INTEREST_REF_PATH = 'refs/retail-interest.json' as const
 
 /** CPI series keys published from KSH STADAT ara0040 (ADR 0037). */
 export type InflationSeriesKey = 'yoy' | 'mom' | 'ytdFromDec' | 'ytdYoy'
@@ -233,4 +265,12 @@ export function emptyNormalizedByFamily(): NormalizedSnapshot['byFamily'] {
     byFamily[family] = { series: [], quotes: [] }
   }
   return byFamily
+}
+
+/**
+ * Default day-count for published families (retail HUF bonds → ACT/360).
+ * Callers may override when a series carries an explicit convention.
+ */
+export function defaultDayCountForFamily(_family: FamilyCode): DayCountConvention {
+  return 'ACT/360'
 }

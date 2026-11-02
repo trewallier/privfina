@@ -31,11 +31,12 @@ describe('bmap frontend form metadata seam', () => {
     expect(orderedNames).toEqual([
       'principal',
       'purchaseDate',
-      'dkjBaseYieldPct',
-      'interestPremiumPct',
+      'annualCouponRatePct',
       'issueDate',
+      'maturityDate',
       'startDate',
-      'firstCouponDate'
+      'firstCouponDate',
+      'dayCountConvention'
     ])
   })
 
@@ -47,10 +48,10 @@ describe('bmap frontend form metadata seam', () => {
 
   it('keeps adapter mapping minimal while preserving BMAP DOM wiring', () => {
     expect(BMAP_FRONTEND_FIELD_ADAPTER.principal.inputId).toBe('bmap-principal')
-    expect(BMAP_FRONTEND_FIELD_ADAPTER.dkjBaseYieldPct.inputId).toBe('bmap-dkj-base-yield-pct')
-    expect(BMAP_FRONTEND_FIELD_ADAPTER.interestPremiumPct.inputId).toBe(
-      'bmap-interest-premium-pct'
+    expect(BMAP_FRONTEND_FIELD_ADAPTER.annualCouponRatePct.inputId).toBe(
+      'bmap-annual-coupon-rate-pct'
     )
+    expect(BMAP_FRONTEND_FIELD_ADAPTER.maturityDate.inputId).toBe('bmap-maturity-date')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.startDate.inputId).toBe('bmap-start-date')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.purchaseDate.inputId).toBe('bmap-purchase-date')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.issueDate.inputId).toBe('bmap-issue-date')

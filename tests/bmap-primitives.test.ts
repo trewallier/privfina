@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   deriveBmapAccruedInterestAmount,
-  deriveBmapMaturityDate,
   deriveBmapRateOutputs,
   generateBmapQuarterlyCouponFlows
 } from '../src/finance_engine/instruments/bmap'
@@ -11,22 +10,17 @@ import {
   generateQuarterlyCouponFlows as generateQuarterlyCouponFlowsBrowser
 } from '../public/controller/bmap-calculation-adapter.js'
 
-describe('BMAP TypeScript primitives (ADR 0017)', () => {
-  it('derives a 6-year maturity from start date', () => {
-    expect(deriveBmapMaturityDate('2026-04-24')).toBe('2032-04-24')
-  })
-
-  it('floors negative DKJ base yield and matches browser dual-surface', () => {
-    const inputs = { dkjBaseYieldPct: -1.5, interestPremiumPct: 0.75 }
+describe('BMAP TypeScript primitives (ADR 0017 / 0038)', () => {
+  it('passes through published effective coupon and matches browser dual-surface', () => {
+    const inputs = {
+      annualCouponRatePct: 6.88,
+      purchaseDate: '2026-04-24',
+      issueDate: '2026-04-24'
+    }
     const engine = deriveBmapRateOutputs(inputs)
     const browser = deriveBmapRateOutputsBrowser(inputs)
 
-    expect(engine).toEqual({
-      effectiveDkjBaseYieldPct: 0,
-      annualCouponRatePct: 0.75,
-      couponPaymentFrequency: 'quarterly',
-      periodCouponRatePct: 0.1875
-    })
+    expect(engine).toEqual({ annualCouponRatePct: 6.88 })
     expect(browser).toEqual(engine)
   })
 
@@ -35,7 +29,8 @@ describe('BMAP TypeScript primitives (ADR 0017)', () => {
       principal: 1_000_000,
       startDate: '2026-04-01',
       purchaseDate: '2026-04-24',
-      issueDate: '2026-04-01'
+      issueDate: '2026-04-01',
+      annualCouponRatePct: 6.88
     }
     const annualCouponRatePct = 6.88
     const engine = deriveBmapAccruedInterestAmount(specInputs, annualCouponRatePct)
@@ -48,10 +43,11 @@ describe('BMAP TypeScript primitives (ADR 0017)', () => {
   it('builds quarterly coupon flows matching the browser dual-surface', () => {
     const specInputs = {
       principal: 1_000_000,
-      dkjBaseYieldPct: 6.13,
-      interestPremiumPct: 0.75,
+      annualCouponRatePct: 6.88,
       startDate: '2026-04-24',
-      purchaseDate: '2026-04-24'
+      purchaseDate: '2026-04-24',
+      issueDate: '2026-04-24',
+      maturityDate: '2032-04-24'
     }
     const rates = deriveBmapRateOutputs(specInputs)
     const purchaseAmount = specInputs.principal

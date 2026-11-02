@@ -27,8 +27,9 @@ export function digestCanonical(value: unknown): string {
 }
 
 /**
- * Retail-interest digest payload excludes `generatedAt` so a fresh ingest stamp
- * alone does not force a market-data commit (ADR 0036 / §6b digest-gated no-op).
+ * Intermediate retail-interest content digest (excludes `generatedAt`).
+ * Used by merge to decide whether to re-join coupons when a fresh stamp alone
+ * arrives (ADR 0036 / 0038). Published digests hash joined `coupons/<id>.json`.
  */
 export function retailInterestContentForDigest(file: RetailInterestFile): {
   schemaVersion: RetailInterestFile['schemaVersion']

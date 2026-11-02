@@ -1,13 +1,16 @@
 import { assertSeriesId } from './ids.ts'
 import { digestCanonical, digestInflation, digestRetailInterest } from './digests.ts'
 import { mergeInflationFile } from './merge-inflation.ts'
+import { joinRetailInterestToCoupons } from './normalize-retail-interest.ts'
 import {
+  COUPON_COLS,
   FAMILIES,
   INFLATION_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
-  RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
+  type CouponsFile,
+  type CouponRow,
   type FamilyCode,
   type InflationFile,
   type LatestFile,
@@ -33,12 +36,17 @@ export interface FamilyTreeState {
   series: SeriesFile
   latest: LatestFile
   quotes: Record<string, QuotesFile>
+  /** Per-series coupon schedules (`families/{fam}/coupons/<id>.json`). */
+  coupons: Record<string, CouponsFile>
 }
 
 export interface MarketTreeState {
   manifest: ManifestFile | null
   families: Record<FamilyCode, FamilyTreeState>
-  /** Lakossági kamatok refs (ADR 0036); null when never ingested. */
+  /**
+   * Optional internal intermediate only (ADR 0038). Used for same-process content
+   * compare; never published under refs/.
+   */
   retailInterest: RetailInterestFile | null
   /** KSH CPI Összesen refs (ADR 0037); null when never ingested. */
   inflation: InflationFile | null
@@ -69,13 +77,19 @@ function emptyQuotes(family: FamilyCode, id: string): QuotesFile {
   return { schemaVersion: SCHEMA_VERSION, id, family, cols: QUOTE_COLS, rows: [] }
 }
 
+function emptyCoupons(family: FamilyCode, id: string): CouponsFile {
+  assertSeriesId(id)
+  return { schemaVersion: SCHEMA_VERSION, id, family, cols: COUPON_COLS, rows: [] }
+}
+
 export function emptyMarketTree(): MarketTreeState {
   const families = {} as Record<FamilyCode, FamilyTreeState>
   for (const family of FAMILIES) {
     families[family] = {
       series: emptySeries(family),
       latest: emptyLatest(),
-      quotes: {}
+      quotes: {},
+      coupons: {}
     }
   }
   return { manifest: null, families, retailInterest: null, inflation: null }
@@ -155,7 +169,7 @@ function rebuildLatest(quotes: Record<string, QuotesFile>): LatestFile {
   return latest
 }
 
-/** Required families always published; optional only when they have series or quote history. */
+/** Required families always published; optional only when they have series, quotes, or coupons. */
 export function publishedFamilies(tree: MarketTreeState): FamilyCode[] {
   const out: FamilyCode[] = []
   for (const family of FAMILIES) {
@@ -164,6 +178,7 @@ export function publishedFamilies(tree: MarketTreeState): FamilyCode[] {
     const hasContent =
       fam.series.series.length > 0 ||
       Object.keys(fam.quotes).length > 0 ||
+      Object.keys(fam.coupons).length > 0 ||
       Object.keys(fam.latest.quotes).length > 0
     if (required || hasContent) out.push(family)
   }
@@ -185,12 +200,11 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     for (const [id, q] of Object.entries(fam.quotes)) {
       digests[`families/${family}/quotes/${id}.json`] = digestCanonical(q)
     }
+    for (const [id, c] of Object.entries(fam.coupons)) {
+      digests[`families/${family}/coupons/${id}.json`] = digestCanonical(c)
+    }
   }
   const refs: ManifestFile['refs'] = {}
-  if (tree.retailInterest) {
-    refs.retailInterest = RETAIL_INTEREST_REF_PATH
-    digests[RETAIL_INTEREST_REF_PATH] = digestRetailInterest(tree.retailInterest)
-  }
   if (tree.inflation) {
     refs.inflation = INFLATION_REF_PATH
     digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
@@ -218,6 +232,51 @@ function digestsEqual(a: ManifestFile | null, b: ManifestFile): boolean {
   return true
 }
 
+function cloneCouponsFile(c: CouponsFile): CouponsFile {
+  return {
+    schemaVersion: c.schemaVersion,
+    id: c.id,
+    family: c.family,
+    cols: COUPON_COLS,
+    rows: c.rows.map((r) => [...r] as CouponRow)
+  }
+}
+
+function applyRetailInterestJoin(
+  tree: MarketTreeState,
+  retail: RetailInterestFile | null
+): void {
+  const seriesByFamily: Partial<Record<FamilyCode, SeriesRecord[]>> = {}
+  for (const family of FAMILIES) {
+    seriesByFamily[family] = tree.families[family].series.series
+  }
+  const joined = joinRetailInterestToCoupons(retail, seriesByFamily)
+
+  for (const family of FAMILIES) {
+    const fam = tree.families[family]
+    const fromJoin = joined.couponsByFamily[family] ?? {}
+    const next: Record<string, CouponsFile> = {}
+    for (const [id, file] of Object.entries(fromJoin)) {
+      next[id] = cloneCouponsFile(file)
+    }
+    fam.coupons = next
+
+    fam.series = {
+      schemaVersion: SCHEMA_VERSION,
+      family,
+      series: fam.series.series.map((s) => {
+        const copy = { ...s }
+        if (s.id in joined.offeredById) {
+          copy.offered = joined.offeredById[s.id]
+        } else {
+          delete copy.offered
+        }
+        return copy
+      })
+    }
+  }
+}
+
 /**
  * Merge a normalized snapshot into an existing market tree (append-first).
  * Same (id, settleDate) + identical values → skip; same date + different values → fail
@@ -230,7 +289,11 @@ export function mergeSnapshot(
   options?: {
     generatedAt?: string
     allowSameDayRewrite?: boolean
-    /** When provided (including empty rows), replace retail-interest refs. When omitted, keep previous. */
+    /**
+     * When provided (including empty rows), join onto series → replace coupons per id and
+     * set series.offered. Intermediate only — not published as refs/retail-interest.json.
+     * When omitted, keep previous coupons / offered / internal retailInterest.
+     */
     retailInterest?: RetailInterestFile | null
     /**
      * When provided, append-first merge into inflation refs (historical conflicts fail).
@@ -247,7 +310,10 @@ export function mergeSnapshot(
           schemaVersion: previous.retailInterest.schemaVersion,
           asOf: previous.retailInterest.asOf,
           generatedAt: previous.retailInterest.generatedAt,
-          rows: previous.retailInterest.rows.map((r) => ({ ...r }))
+          rows: previous.retailInterest.rows.map((r) => ({
+            ...r,
+            rates: [...r.rates]
+          }))
         }
       : null,
     inflation: previous.inflation ? structuredClone(previous.inflation) : null
@@ -318,12 +384,15 @@ export function mergeSnapshot(
       previous.retailInterest &&
       digestRetailInterest(incoming) === digestRetailInterest(previous.retailInterest)
     ) {
-      // Content unchanged: keep previous generatedAt so the on-disk file stays stable.
+      // Content unchanged: keep previous generatedAt + coupons/offered already cloned.
       tree.retailInterest = {
         schemaVersion: previous.retailInterest.schemaVersion,
         asOf: previous.retailInterest.asOf,
         generatedAt: previous.retailInterest.generatedAt,
-        rows: previous.retailInterest.rows.map((r) => ({ ...r }))
+        rows: previous.retailInterest.rows.map((r) => ({
+          ...r,
+          rates: [...r.rates]
+        }))
       }
     } else {
       tree.retailInterest = incoming
@@ -331,9 +400,13 @@ export function mergeSnapshot(
             schemaVersion: incoming.schemaVersion,
             asOf: incoming.asOf,
             generatedAt: incoming.generatedAt,
-            rows: incoming.rows.map((r) => ({ ...r }))
+            rows: incoming.rows.map((r) => ({
+              ...r,
+              rates: [...r.rates]
+            }))
           }
         : null
+      applyRetailInterestJoin(tree, tree.retailInterest)
     }
   }
 
@@ -390,6 +463,12 @@ function cloneFamily(fam: FamilyTreeState): FamilyTreeState {
           rows: q.rows.map((r) => [...r] as QuoteRow)
         }
       ])
+    ),
+    coupons: Object.fromEntries(
+      Object.entries(fam.coupons).map(([id, c]) => [id, cloneCouponsFile(c)])
     )
   }
 }
+
+/** @internal test helper — empty coupons file factory */
+export { emptyCoupons }

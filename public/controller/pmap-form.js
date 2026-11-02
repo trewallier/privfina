@@ -1,21 +1,23 @@
 import { PMAP_PRODUCT_SPEC } from './pmap-product-spec.js'
-import { mapPmapSpecInputsToLegacyInvestmentInput } from './pmap-calculation-adapter.js'
+import {
+  mapPmapSpecInputsToLegacyInvestmentInput,
+  generatePmapInstrumentBundleFromSpecInputs
+} from './pmap-calculation-adapter.js'
 import {
   toInputType,
   applyNumericConstraints,
   orderedSpecFields
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
-import { getPmapFieldHelp } from './investment-field-help.js'
 import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const PMAP_FRONTEND_FIELD_ADAPTER = {
   principal: { inputId: 'pmap-principal', formName: 'principal' },
-  interestPremiumPct: { inputId: 'pmap-interest-premium-pct', formName: 'interestPremiumPct' },
-  previousYearAverageInflationPct: {
-    inputId: 'pmap-previous-year-inflation-pct',
-    formName: 'previousYearAverageInflationPct'
+  annualCouponRatePct: {
+    inputId: 'pmap-annual-coupon-rate-pct',
+    formName: 'annualCouponRatePct'
   },
+  maturityDate: { inputId: 'pmap-maturity-date', formName: 'maturityDate' },
   startDate: { inputId: 'pmap-start-date', formName: 'startDate' },
   purchaseDate: { inputId: 'pmap-purchase-date', formName: 'purchaseDate' },
   issueDate: { inputId: 'pmap-issue-date', formName: 'issueDate' },
@@ -23,15 +25,11 @@ const PMAP_FRONTEND_FIELD_ADAPTER = {
 }
 
 const PMAP_OUTPUT_PREVIEW_ADAPTER = {
-  redemptionValue: {
-    inputId: 'commercial-investment-maturity-preview',
-    legacyInputId: 'investment-maturity-preview'
+  purchaseAmount: {
+    inputId: 'commercial-investment-purchase-preview',
+    legacyInputId: 'investment-purchase-preview'
   },
   annualCouponRatePct: {
-    inputId: 'commercial-investment-inflation-schedule-preview',
-    legacyInputId: 'investment-inflation-schedule-preview'
-  },
-  couponPaymentFrequency: {
     inputId: 'commercial-investment-inflation-schedule-preview',
     legacyInputId: 'investment-inflation-schedule-preview'
   }
@@ -88,7 +86,7 @@ function applyPmapSpecToForm({
         label,
         {
           label: field.label,
-          description: field.description || getPmapFieldHelp(field.name),
+          description: field.description || '',
           required: Boolean(field.required),
           role: 'input',
           helpId: `${adapter.inputId}-help`,
@@ -99,48 +97,25 @@ function applyPmapSpecToForm({
     }
   })
 
-  const inflationPreview = queryFormInput(
-    investmentForm,
-    PMAP_OUTPUT_PREVIEW_ADAPTER.annualCouponRatePct
-  )
-  const inflationLabel = inflationPreview ? inflationPreview.closest('label') : null
-  if (inflationLabel) {
+  PMAP_PRODUCT_SPEC.outputs.forEach((field) => {
+    const adapter = PMAP_OUTPUT_PREVIEW_ADAPTER[field.name]
+    if (!adapter) return
+    const input = queryFormInput(investmentForm, adapter)
+    const label = input ? input.closest('label') : null
+    if (!label) return
     applyFieldChrome(
-      inflationLabel,
+      label,
       {
-        label: 'Coupon preview',
-        description:
-          getPmapFieldHelp('annualCouponRatePct') +
-          ' ' +
-          getPmapFieldHelp('couponPaymentFrequency'),
+        label: field.label,
+        description: field.description || '',
         required: false,
         role: 'output',
-        helpId: `${inflationPreview.id}-help`,
+        helpId: `${input.id}-help`,
         labelClassName: 'investment-field-label'
       },
-      inflationPreview
+      input
     )
-  }
-
-  const maturityPreview = queryFormInput(
-    investmentForm,
-    PMAP_OUTPUT_PREVIEW_ADAPTER.redemptionValue
-  )
-  const maturityLabel = maturityPreview ? maturityPreview.closest('label') : null
-  if (maturityLabel) {
-    applyFieldChrome(
-      maturityLabel,
-      {
-        label: 'Redemption Value',
-        description: getPmapFieldHelp('redemptionValue'),
-        required: false,
-        role: 'output',
-        helpId: `${maturityPreview.id}-help`,
-        labelClassName: 'investment-field-label'
-      },
-      maturityPreview
-    )
-  }
+  })
 }
 
 function setPmapFieldVisibility(investmentForm, visible) {
@@ -151,19 +126,28 @@ function setPmapFieldVisibility(investmentForm, visible) {
   }
 }
 
+function parseCouponScheduleField(raw) {
+  const text = String(raw || '').trim()
+  if (!text) return undefined
+  try {
+    const parsed = JSON.parse(text)
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function mapFormDataToPmapSpecInputs(formData) {
   return {
     principal: parseMoneyAmount(formData.get('principal')),
-    interestPremiumPct: Number(
-      formData.get('interestPremiumPct') ?? formData.get('spreadRate')
-    ),
-    previousYearAverageInflationPct: Number(
-      formData.get('previousYearAverageInflationPct') ?? formData.get('yearlyInflation')
-    ),
-    startDate: String(formData.get('startDate') || '').trim(),
-    purchaseDate: String(formData.get('purchaseDate') || '').trim() || undefined,
-    issueDate: String(formData.get('issueDate') || '').trim() || undefined,
-    firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined
+    annualCouponRatePct: Number(formData.get('annualCouponRatePct')),
+    purchaseDate: String(formData.get('purchaseDate') || '').trim(),
+    issueDate: String(formData.get('issueDate') || '').trim(),
+    maturityDate: String(formData.get('maturityDate') || '').trim(),
+    startDate: String(formData.get('startDate') || '').trim() || undefined,
+    firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
+    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
+    couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))
   }
 }
 
@@ -175,7 +159,7 @@ function mapPmapSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     productId: PMAP_PRODUCT_SPEC.id,
     productSpecVersion: PMAP_PRODUCT_SPEC.specVersion,
     label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle,
-    subtype: 'inflation-linked-bond',
+    subtype: 'pmap',
     purchaseDate: legacyInput.transactionDate,
     maturityDate: legacyInput.dueDate,
     issueDate: legacyInput.issueDate,
@@ -184,18 +168,19 @@ function mapPmapSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     principal: legacyInput.principal,
     purchasePrice: undefined,
     annualRate: undefined,
-    spreadRate: legacyInput.spreadRate,
-    yearlyInflationRaw: legacyInput.yearlyInflationRaw,
+    spreadRate: undefined,
+    yearlyInflationRaw: '',
     saleDate: '',
     saleValue: undefined,
     couponPeriod: specInputs.firstCouponDate || '',
     category: meta.category || 'investment',
     description: meta.description,
     createdAt: meta.createdAt,
-    interestPremiumPct: specInputs.interestPremiumPct,
-    previousYearAverageInflationPct: specInputs.previousYearAverageInflationPct,
+    annualCouponRatePct: specInputs.annualCouponRatePct,
     startDate: specInputs.startDate,
-    firstCouponDate: specInputs.firstCouponDate
+    firstCouponDate: specInputs.firstCouponDate,
+    dayCountConvention: specInputs.dayCountConvention,
+    couponSchedule: specInputs.couponSchedule
   }
 }
 
@@ -207,6 +192,7 @@ export {
   setPmapFieldVisibility,
   mapFormDataToPmapSpecInputs,
   mapPmapSpecInputsToInvestmentBundleInput,
+  generatePmapInstrumentBundleFromSpecInputs,
   orderedSpecFields,
   ensureFieldLabelTitleElement
 }

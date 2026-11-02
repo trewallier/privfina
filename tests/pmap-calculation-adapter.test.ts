@@ -7,62 +7,41 @@ import {
   mapPmapSpecInputsToLegacyInvestmentInput,
   mapLegacyPmapPreviewToSpecOutputs
 } from '../public/controller/pmap-calculation-adapter.js'
-import { createInvestmentMaturityPreview } from '../public/instruments.js'
 
 function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
 }
 
 describe('pmap calculation adapter seam', () => {
-  it('bridges PMAP example inputs through existing investment calculation path and returns spec-shaped outputs', () => {
-    const exampleYaml = readRepoFile('docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml')
+  it('bridges PMAP example inputs and returns ADR 0038 spec-shaped outputs', () => {
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/pmap/examples/nominal-case.yaml'
+    )
     const parsed = YAML.parse(exampleYaml) as any
 
     expect(exampleYaml).toContain('principal: 1000000')
-    expect(exampleYaml).toContain('interestPremiumPct: 0.5')
-    expect(exampleYaml).toContain('previousYearAverageInflationPct: 4.4')
+    expect(exampleYaml).toContain('annualCouponRatePct: 4.9')
+    expect(exampleYaml).toContain('maturityDate: 2036-05-23')
     expect(exampleYaml).toContain('startDate: 2026-05-23')
 
-    const specInputs = {
-      principal: 1000000,
-      interestPremiumPct: 0.5,
-      previousYearAverageInflationPct: 4.4,
-      startDate: '2026-05-23',
-      purchaseDate: '2026-05-23'
-    }
+    const adapterOutputs = calculatePmapFromSpecInputs(parsed.inputs)
+    const legacyInput = mapPmapSpecInputsToLegacyInvestmentInput(parsed.inputs)
+    const expectedSpecOutputs = mapLegacyPmapPreviewToSpecOutputs(null, parsed.inputs)
 
-    let delegationCount = 0
-    const delegatedExistingPath = (input) => {
-      delegationCount += 1
-      return createInvestmentMaturityPreview(input)
-    }
-
-    const adapterOutputs = calculatePmapFromSpecInputs(specInputs, {
-      createInvestmentMaturityPreview: delegatedExistingPath
-    })
-
-    const legacyInput = mapPmapSpecInputsToLegacyInvestmentInput(specInputs)
-    const legacyPreview = createInvestmentMaturityPreview(legacyInput)
-    const expectedSpecOutputs = mapLegacyPmapPreviewToSpecOutputs(legacyPreview, specInputs)
-
-    expect(delegationCount).toBe(1)
+    expect(legacyInput.dueDate).toBe(parsed.inputs.maturityDate)
     expect(adapterOutputs).toEqual(expectedSpecOutputs)
-    expect(adapterOutputs).toEqual(parsed.expected)
+    expect(adapterOutputs).toMatchObject(parsed.expected)
     expect(adapterOutputs).toMatchObject({
-      effectiveInflationBasePct: expect.any(Number),
       annualCouponRatePct: expect.any(Number),
-      couponPaymentFrequency: expect.any(String),
-      redemptionValue: expect.any(Number)
+      accruedInterestAmount: expect.any(Number),
+      purchaseAmount: expect.any(Number)
     })
-    expect(Object.keys(adapterOutputs).sort()).toEqual([
-      'annualCouponRatePct',
-      'couponPaymentFrequency',
-      'effectiveInflationBasePct',
-      'redemptionValue'
-    ].sort())
+    expect(Object.keys(adapterOutputs).sort()).toEqual(
+      ['annualCouponRatePct', 'accruedInterestAmount', 'purchaseAmount'].sort()
+    )
   })
 
-  it('bridges inflation-reset-case example and floors negative inflation base', () => {
+  it('bridges inflation-reset-case example with published effective coupon', () => {
     const exampleYaml = readRepoFile(
       'docs/product-specs/products/government-securities/pmap/examples/inflation-reset-case.yaml'
     )
@@ -71,12 +50,9 @@ describe('pmap calculation adapter seam', () => {
       expected: Record<string, unknown>
     }
 
-    const adapterOutputs = calculatePmapFromSpecInputs(parsed.inputs, {
-      createInvestmentMaturityPreview
-    })
+    const adapterOutputs = calculatePmapFromSpecInputs(parsed.inputs)
 
-    expect(adapterOutputs).toEqual(parsed.expected)
-    expect(adapterOutputs.effectiveInflationBasePct).toBe(0)
+    expect(adapterOutputs).toMatchObject(parsed.expected)
     expect(adapterOutputs.annualCouponRatePct).toBe(0.5)
   })
 })

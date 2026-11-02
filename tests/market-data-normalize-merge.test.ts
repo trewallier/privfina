@@ -95,7 +95,7 @@ describe('mergeSnapshot', () => {
 })
 
 describe('ingestMarketData (fixture / disk)', () => {
-  it('writes schemaVersion 1 tree and is a no-op on second identical ingest', async () => {
+  it('writes schemaVersion 2 tree and is a no-op on second identical ingest', async () => {
     const catalog = await loadFixture('catalog.json')
     const rates = await loadFixture('network-rates.json')
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'privfina-market-'))
@@ -109,10 +109,10 @@ describe('ingestMarketData (fixture / disk)', () => {
       })
       expect(first.changed).toBe(true)
       const seriesText = await readFile(
-        path.join(tmp, 'data/market/v1/families/dkj/series.json'),
+        path.join(tmp, 'data/market/v2/families/dkj/series.json'),
         'utf8'
       )
-      expect(JSON.parse(seriesText).schemaVersion).toBe(1)
+      expect(JSON.parse(seriesText).schemaVersion).toBe(2)
 
       const second = await ingestMarketData({
         root: tmp,

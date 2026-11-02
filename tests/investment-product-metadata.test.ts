@@ -50,11 +50,17 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(config.dkj.fields.faceValue.description).toBe(
       inputByName(DKJ_PRODUCT_SPEC, 'faceValue')?.description
     )
-    expect(config.pmap.fields.previousYearAverageInflationPct.required).toBe(
-      inputByName(PMAP_PRODUCT_SPEC, 'previousYearAverageInflationPct')?.required
+    expect(config.pmap.fields.annualCouponRatePct.required).toBe(
+      inputByName(PMAP_PRODUCT_SPEC, 'annualCouponRatePct')?.required
     )
-    expect(config.bmap.fields.dkjBaseYieldPct.description).toBe(
-      inputByName(BMAP_PRODUCT_SPEC, 'dkjBaseYieldPct')?.description
+    expect(config.pmap.fields.maturityDate.required).toBe(
+      inputByName(PMAP_PRODUCT_SPEC, 'maturityDate')?.required
+    )
+    expect(config.bmap.fields.annualCouponRatePct.description).toBe(
+      inputByName(BMAP_PRODUCT_SPEC, 'annualCouponRatePct')?.description
+    )
+    expect(config.bmap.fields.maturityDate.required).toBe(
+      inputByName(BMAP_PRODUCT_SPEC, 'maturityDate')?.required
     )
   })
 })

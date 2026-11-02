@@ -79,11 +79,29 @@ export {
 } from './instruments/investment'
 export type { BmapRateOutputs, BmapSpecInputs } from './instruments/bmap'
 export {
-  deriveBmapMaturityDate,
   deriveBmapRateOutputs,
   deriveBmapAccruedInterestAmount,
   generateBmapQuarterlyCouponFlows
 } from './instruments/bmap'
+export type { PmapRateOutputs, PmapSpecInputs } from './instruments/pmap'
+export {
+  derivePmapRateOutputs,
+  derivePmapAccruedInterestAmount,
+  generatePmapAnnualCouponFlows
+} from './instruments/pmap'
+export {
+  accrueInterestAmount,
+  annualizeDkjSimpleReturnPct,
+  calendarDaysBetweenIso,
+  dayCountDenominator,
+  deriveDkjRemainingDays,
+  normalizeDayCountConvention,
+  resolveAccrualStartIso,
+  resolveCouponRatePct,
+  resolveCoveringCouponPeriod,
+  DEFAULT_GOVERNMENT_SECURITY_DAY_COUNT
+} from './instruments/day_count'
+export type { CouponSchedulePeriod, DayCountConvention } from './instruments/day_count'
 export type {
   HomeSavingsBundleInput,
   HomeSavingsInstrumentInput,

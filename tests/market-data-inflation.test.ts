@@ -144,7 +144,7 @@ describe('KSH inflation ingest wiring', () => {
       expect(seeded.changed).toBe(true)
       expect(seeded.inflationUpdated).toBe(true)
       const written = await readFile(
-        path.join(tmp, 'data/market/v1', INFLATION_REF_PATH),
+        path.join(tmp, 'data/market/v2', INFLATION_REF_PATH),
         'utf8'
       )
       const parsed = JSON.parse(written)

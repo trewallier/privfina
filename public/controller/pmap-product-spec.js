@@ -1,5 +1,5 @@
 const PMAP_PRODUCT_SPEC = {
-  specVersion: 'v2alpha1',
+  specVersion: 'v2alpha2',
   id: 'government-security.pmap.standard',
   family: 'government-security',
   variant: 'pmap',
@@ -13,50 +13,52 @@ const PMAP_PRODUCT_SPEC = {
       label: 'Principal',
       required: true,
       unit: 'currency',
-      description: 'Invested nominal amount.',
+      description: 'Face amount you invest in forints (HUF).',
       constraints: { minimum: 1 }
     },
     {
-      name: 'interestPremiumPct',
+      name: 'annualCouponRatePct',
       type: 'number',
-      label: 'Interest Premium',
+      label: 'Annual Coupon Rate',
       required: true,
       unit: 'percent',
-      description: 'Fixed premium added on top of the inflation base.',
+      description:
+        'Yearly interest rate for the current period, as published (already combined; not inflation plus premium).',
       constraints: { minimum: 0, maximum: 100 }
-    },
-    {
-      name: 'previousYearAverageInflationPct',
-      type: 'number',
-      label: 'Previous Year Average Inflation',
-      required: true,
-      unit: 'percent',
-      description: 'Official annual average inflation for the previous calendar year.',
-      constraints: { minimum: -100, maximum: 100 }
-    },
-    {
-      name: 'startDate',
-      type: 'string',
-      label: 'Start Date',
-      required: true,
-      unit: 'date',
-      description: 'Investment start date in ISO format.'
     },
     {
       name: 'purchaseDate',
       type: 'string',
       label: 'Purchase Date',
-      required: false,
+      required: true,
       unit: 'date',
-      description: 'Purchase or valuation date in ISO format, used for accrued-interest-related calculations.'
+      description:
+        'Date when the purchase is accounted for (YYYY-MM-DD). Used to compute interest already earned.'
     },
     {
       name: 'issueDate',
       type: 'string',
       label: 'Issue Date',
+      required: true,
+      unit: 'date',
+      description: 'Date this series was issued (YYYY-MM-DD).'
+    },
+    {
+      name: 'maturityDate',
+      type: 'string',
+      label: 'Maturity Date',
+      required: true,
+      unit: 'date',
+      description:
+        'Date the bond repays principal (YYYY-MM-DD). Taken from the series; not invented by the calculator.'
+    },
+    {
+      name: 'startDate',
+      type: 'string',
+      label: 'Start Date',
       required: false,
       unit: 'date',
-      description: 'Issue date of the PMAP series in ISO format.'
+      description: 'Optional holding start (YYYY-MM-DD). Defaults to the issue date when omitted.'
     },
     {
       name: 'firstCouponDate',
@@ -64,7 +66,18 @@ const PMAP_PRODUCT_SPEC = {
       label: 'First Coupon Date',
       required: false,
       unit: 'date',
-      description: 'First coupon payment date in ISO format if known.'
+      description:
+        'First interest payment date (YYYY-MM-DD) when you are not supplying a full coupon schedule.'
+    },
+    {
+      name: 'dayCountConvention',
+      type: 'string',
+      label: 'Day Count Convention',
+      required: false,
+      unit: 'text',
+      description:
+        'How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).',
+      constraints: { enum: ['ACT/360', 'ACT/365F', '30E/360'] }
     }
   ],
   outputs: [
@@ -74,31 +87,7 @@ const PMAP_PRODUCT_SPEC = {
       label: 'Annual Coupon Rate',
       required: true,
       unit: 'percent',
-      description: 'Coupon rate for the current annual interest period.'
-    },
-    {
-      name: 'couponPaymentFrequency',
-      type: 'string',
-      label: 'Coupon Payment Frequency',
-      required: true,
-      unit: 'text',
-      description: 'Frequency of coupon payments.'
-    },
-    {
-      name: 'effectiveInflationBasePct',
-      type: 'number',
-      label: 'Effective Inflation Base',
-      required: true,
-      unit: 'percent',
-      description: 'Inflation base after applying the 0% floor for zero or negative inflation.'
-    },
-    {
-      name: 'periodCouponRatePct',
-      type: 'number',
-      label: 'Period Coupon Rate',
-      required: false,
-      unit: 'percent',
-      description: 'Coupon rate applicable to the current coupon period or first irregular period.'
+      description: 'Yearly interest rate applied for the current period.'
     },
     {
       name: 'accruedInterestAmount',
@@ -106,7 +95,8 @@ const PMAP_PRODUCT_SPEC = {
       label: 'Accrued Interest',
       required: false,
       unit: 'currency',
-      description: 'Interest accrued from issue or previous coupon date to purchase/valuation date.'
+      description:
+        'Interest already earned from the previous coupon (or issue) through the purchase date.'
     },
     {
       name: 'purchaseAmount',
@@ -114,15 +104,7 @@ const PMAP_PRODUCT_SPEC = {
       label: 'Purchase Amount',
       required: false,
       unit: 'currency',
-      description: 'Purchase amount based on principal plus accrued interest, where applicable.'
-    },
-    {
-      name: 'redemptionValue',
-      type: 'number',
-      label: 'Redemption Value',
-      required: true,
-      unit: 'currency',
-      description: 'Principal repaid at maturity.'
+      description: 'Total paid at purchase — principal plus accrued interest when applicable.'
     }
   ],
   ui: {
@@ -134,11 +116,12 @@ const PMAP_PRODUCT_SPEC = {
         fieldNames: [
           'principal',
           'purchaseDate',
-          'previousYearAverageInflationPct',
-          'interestPremiumPct',
+          'annualCouponRatePct',
           'issueDate',
+          'maturityDate',
           'startDate',
-          'firstCouponDate'
+          'firstCouponDate',
+          'dayCountConvention'
         ]
       }
     ]

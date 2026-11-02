@@ -31,11 +31,12 @@ describe('pmap frontend form metadata seam', () => {
     expect(orderedNames).toEqual([
       'principal',
       'purchaseDate',
-      'previousYearAverageInflationPct',
-      'interestPremiumPct',
+      'annualCouponRatePct',
       'issueDate',
+      'maturityDate',
       'startDate',
-      'firstCouponDate'
+      'firstCouponDate',
+      'dayCountConvention'
     ])
   })
 
@@ -46,13 +47,13 @@ describe('pmap frontend form metadata seam', () => {
   })
 
   it('maps PMAP fields onto dedicated host controls named like YAML', () => {
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.interestPremiumPct).toEqual({
-      inputId: 'pmap-interest-premium-pct',
-      formName: 'interestPremiumPct'
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.annualCouponRatePct).toEqual({
+      inputId: 'pmap-annual-coupon-rate-pct',
+      formName: 'annualCouponRatePct'
     })
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.previousYearAverageInflationPct).toEqual({
-      inputId: 'pmap-previous-year-inflation-pct',
-      formName: 'previousYearAverageInflationPct'
+    expect(PMAP_FRONTEND_FIELD_ADAPTER.maturityDate).toEqual({
+      inputId: 'pmap-maturity-date',
+      formName: 'maturityDate'
     })
     expect(PMAP_FRONTEND_FIELD_ADAPTER.startDate.inputId).toBe('pmap-start-date')
     expect(PMAP_FRONTEND_FIELD_ADAPTER.purchaseDate.inputId).toBe('pmap-purchase-date')

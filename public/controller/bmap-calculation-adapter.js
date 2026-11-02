@@ -1,10 +1,8 @@
 /**
- * BMAP commercial calculation adapter (ADR 0032).
- * Rate / accrued / coupon math from `@finance_engine/instruments/bmap`;
- * bundle assembly stays in the controller.
+ * BMAP commercial calculation adapter (ADR 0032 / 0038).
+ * Rate / accrued / coupon math from `@finance_engine/instruments/bmap`.
  */
 import {
-  deriveBmapMaturityDate,
   deriveBmapRateOutputs,
   deriveBmapAccruedInterestAmount,
   generateBmapQuarterlyCouponFlows
@@ -14,10 +12,11 @@ import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
 import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
 
 function buildBmapLegacyInvestmentInput(specInputs, purchaseAmount, annualCouponRatePct) {
-  const startDateIso = String(specInputs.startDate || '').trim()
+  const issueDateIso = String(specInputs.issueDate || '').trim()
+  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const purchaseDateIso =
     typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
-  const maturityDateIso = deriveBmapMaturityDate(startDateIso)
+  const maturityDateIso = String(specInputs.maturityDate || '').trim()
   const purchaseIso = purchaseDateIso || startDateIso
 
   return {
@@ -27,8 +26,7 @@ function buildBmapLegacyInvestmentInput(specInputs, purchaseAmount, annualCoupon
     annualRate: annualCouponRatePct / 100,
     purchaseDate: purchaseIso,
     maturityDate: maturityDateIso,
-    issueDate:
-      typeof specInputs.issueDate === 'string' ? String(specInputs.issueDate).trim() : startDateIso,
+    issueDate: issueDateIso || startDateIso,
     transactionDate: purchaseIso,
     dueDate: maturityDateIso,
     couponPeriod: '0 0 1 */3 *'
@@ -55,8 +53,7 @@ function calculateBmapFromSpecInputs(specInputs, options) {
   return {
     ...rateOutputs,
     accruedInterestAmount,
-    purchaseAmount: toFiniteNumber(legacyPreview.purchaseAmount, 'purchaseAmount'),
-    redemptionValue: toFiniteNumber(legacyPreview.maturityAmount, 'maturityAmount')
+    purchaseAmount: toFiniteNumber(legacyPreview.purchaseAmount, 'purchaseAmount')
   }
 }
 
@@ -79,9 +76,11 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
     calculated.purchaseAmount,
     calculated.annualCouponRatePct
   )
-  const startDateIso = String(specInputs.startDate || '').trim()
+  const issueDateIso = String(specInputs.issueDate || '').trim()
+  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const purchaseDateIso =
     typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
+  const maturityDateIso = String(specInputs.maturityDate || '').trim()
 
   return normalizeInstrumentBundle({
     id: extras.id || `bmap-${Date.now()}`,
@@ -94,38 +93,32 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
       productSpecVersion: BMAP_PRODUCT_SPEC.specVersion,
       subtype: 'bmap',
       principal: calculated.purchaseAmount - calculated.accruedInterestAmount,
-      dkjBaseYieldPct: Number(specInputs.dkjBaseYieldPct),
-      interestPremiumPct: Number(specInputs.interestPremiumPct),
+      annualCouponRatePct: calculated.annualCouponRatePct,
       startDate: startDateIso,
       purchaseDate: purchaseDateIso || undefined,
-      issueDate:
-        typeof specInputs.issueDate === 'string'
-          ? String(specInputs.issueDate).trim() || undefined
-          : undefined,
+      issueDate: issueDateIso || undefined,
+      maturityDate: maturityDateIso,
       firstCouponDate:
         typeof specInputs.firstCouponDate === 'string'
           ? String(specInputs.firstCouponDate).trim() || undefined
           : undefined,
+      dayCountConvention: specInputs.dayCountConvention || 'ACT/360',
+      couponSchedule: Array.isArray(specInputs.couponSchedule)
+        ? specInputs.couponSchedule
+        : undefined,
       purchaseAmount: calculated.purchaseAmount,
       accruedInterestAmount: calculated.accruedInterestAmount,
-      annualCouponRatePct: calculated.annualCouponRatePct,
-      effectiveDkjBaseYieldPct: calculated.effectiveDkjBaseYieldPct,
-      periodCouponRatePct: calculated.periodCouponRatePct,
-      couponPaymentFrequency: calculated.couponPaymentFrequency,
       category: extras.category || 'investment',
       description: extras.description
     },
     preview: {
       purchaseAmount: calculated.purchaseAmount,
-      maturityAmount: calculated.redemptionValue,
-      gainAmount: calculated.redemptionValue - calculated.purchaseAmount,
+      maturityAmount: toNonNegativeNumber(specInputs.principal, 'principal'),
+      gainAmount:
+        toNonNegativeNumber(specInputs.principal, 'principal') - calculated.purchaseAmount,
       subtype: 'bmap',
       annualCouponRatePct: calculated.annualCouponRatePct,
-      couponPaymentFrequency: calculated.couponPaymentFrequency,
-      effectiveDkjBaseYieldPct: calculated.effectiveDkjBaseYieldPct,
-      periodCouponRatePct: calculated.periodCouponRatePct,
-      accruedInterestAmount: calculated.accruedInterestAmount,
-      redemptionValue: calculated.redemptionValue
+      accruedInterestAmount: calculated.accruedInterestAmount
     },
     generatedFlows: flows,
     createdAt: extras.createdAt,

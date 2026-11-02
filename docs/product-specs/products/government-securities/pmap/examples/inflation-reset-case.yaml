@@ -1,20 +1,21 @@
-specVersion: v2alpha1
+specVersion: v2alpha2
 productId: government-security.pmap.standard
 exampleId: inflation-reset-case
-title: Inflation reset PMAP example
-description: Scenario demonstrating inflation-floor behavior when prior-year average inflation is negative.
+title: Low effective-rate PMAP example
+description: Scenario with a low published effective coupon (historically a floored inflation base plus premium).
 
 inputs:
   principal: 1000000
-  interestPremiumPct: 0.5
-  previousYearAverageInflationPct: -2.0
+  annualCouponRatePct: 0.5
   startDate: 2027-01-01
+  purchaseDate: 2027-01-01
+  issueDate: 2027-01-01
+  maturityDate: 2037-01-01
+  dayCountConvention: ACT/360
 
 expected:
-  effectiveInflationBasePct: 0
   annualCouponRatePct: 0.5
-  couponPaymentFrequency: annual
-  redemptionValue: 1000000
+  purchaseAmount: 1000000
 
 notes:
-  - The inflation base is floored at 0%, so the annual coupon rate equals the fixed premium.
+  - Commercial path uses the effective period rate; inflation-floor composition is not a required composer input.

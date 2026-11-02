@@ -2132,11 +2132,11 @@
                     <div class="row">
                       <label id="dkj-remaining-days-wrap">
                         <span class="label-title"><span class="dkj-field-label">Remaining Days</span></span>
-                        <input id="dkj-remaining-days" name="remainingDays" type="number" min="1" step="1" />
+                        <input id="dkj-remaining-days" name="remainingDays" type="number" min="1" step="1" readonly />
                       </label>
                       <label id="dkj-maturity-date-wrap">
                         <span class="label-title"><span class="dkj-field-label">Maturity Date</span></span>
-                        <input id="dkj-maturity-date" name="maturityDate" type="date" />
+                        <input id="dkj-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
                   </div>
@@ -2149,32 +2149,39 @@
                       </label>
                       <label id="pmap-purchase-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">Purchase Date</span></span>
-                        <input id="pmap-purchase-date" name="purchaseDate" type="date" />
+                        <input id="pmap-purchase-date" name="purchaseDate" type="date" required />
                       </label>
                     </div>
                     <div class="row">
-                      <label id="pmap-previous-year-inflation-pct-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Previous Year Average Inflation</span></span>
-                        <input id="pmap-previous-year-inflation-pct" name="previousYearAverageInflationPct" type="number" min="-100" max="100" step="0.01" required />
+                      <label id="pmap-annual-coupon-rate-pct-wrap">
+                        <span class="label-title"><span class="pmap-field-label">Annual Coupon Rate</span></span>
+                        <input id="pmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
                       </label>
-                      <label id="pmap-interest-premium-pct-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Interest Premium</span></span>
-                        <input id="pmap-interest-premium-pct" name="interestPremiumPct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="pmap-maturity-date-wrap">
+                        <span class="label-title"><span class="pmap-field-label">Maturity Date</span></span>
+                        <input id="pmap-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
                     <div class="row">
                       <label id="pmap-issue-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">Issue Date</span></span>
-                        <input id="pmap-issue-date" name="issueDate" type="date" />
+                        <input id="pmap-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="pmap-start-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">Start Date</span></span>
-                        <input id="pmap-start-date" name="startDate" type="date" required />
+                        <input id="pmap-start-date" name="startDate" type="date" />
                       </label>
                       <label id="pmap-first-coupon-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">First Coupon Date</span></span>
                         <input id="pmap-first-coupon-date" name="firstCouponDate" type="date" />
                       </label>
+                      <input
+                        id="pmap-coupon-schedule"
+                        name="couponSchedule"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
                     </div>
                   </div>
 
@@ -2186,32 +2193,39 @@
                       </label>
                       <label id="bmap-purchase-date-wrap">
                         <span class="label-title"><span id="bmap-purchase-date-label" class="bmap-field-label">Purchase Date</span></span>
-                        <input id="bmap-purchase-date" name="purchaseDate" type="date" />
+                        <input id="bmap-purchase-date" name="purchaseDate" type="date" required />
                       </label>
                     </div>
                     <div class="row">
-                      <label id="bmap-dkj-base-yield-pct-wrap">
-                        <span class="label-title"><span id="bmap-dkj-base-yield-pct-label" class="bmap-field-label">DKJ Base Yield</span></span>
-                        <input id="bmap-dkj-base-yield-pct" name="dkjBaseYieldPct" type="number" min="-100" max="100" step="0.01" required />
+                      <label id="bmap-annual-coupon-rate-pct-wrap">
+                        <span class="label-title"><span id="bmap-annual-coupon-rate-pct-label" class="bmap-field-label">Annual Coupon Rate</span></span>
+                        <input id="bmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
                       </label>
-                      <label id="bmap-interest-premium-pct-wrap">
-                        <span class="label-title"><span id="bmap-interest-premium-pct-label" class="bmap-field-label">Interest Premium</span></span>
-                        <input id="bmap-interest-premium-pct" name="interestPremiumPct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="bmap-maturity-date-wrap">
+                        <span class="label-title"><span id="bmap-maturity-date-label" class="bmap-field-label">Maturity Date</span></span>
+                        <input id="bmap-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
                     <div class="row">
                       <label id="bmap-issue-date-wrap">
                         <span class="label-title"><span id="bmap-issue-date-label" class="bmap-field-label">Issue Date</span></span>
-                        <input id="bmap-issue-date" name="issueDate" type="date" />
+                        <input id="bmap-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="bmap-start-date-wrap">
                         <span class="label-title"><span id="bmap-start-date-label" class="bmap-field-label">Start Date</span></span>
-                        <input id="bmap-start-date" name="startDate" type="date" required />
+                        <input id="bmap-start-date" name="startDate" type="date" />
                       </label>
                       <label id="bmap-first-coupon-date-wrap">
                         <span class="label-title"><span id="bmap-first-coupon-date-label" class="bmap-field-label">First Coupon Date</span></span>
                         <input id="bmap-first-coupon-date" name="firstCouponDate" type="date" />
                       </label>
+                      <input
+                        id="bmap-coupon-schedule"
+                        name="couponSchedule"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
                     </div>
                   </div>
 

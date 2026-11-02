@@ -1,20 +1,21 @@
-specVersion: v2alpha1
+specVersion: v2alpha2
 productId: government-security.bmap.standard
 exampleId: lower-dkj-base-case
-title: Lower DKJ base-yield BMAP example
-description: Scenario showing BMAP coupon behavior when the raw DKJ base yield is negative and floored at 0%.
+title: Low effective-rate BMAP example
+description: Scenario with a low published effective coupon (historically a floored DKJ base plus premium).
 
 inputs:
   principal: 1000000
-  dkjBaseYieldPct: -0.25
-  interestPremiumPct: 0.75
+  annualCouponRatePct: 0.75
   startDate: 2026-08-01
+  purchaseDate: 2026-08-01
+  issueDate: 2026-08-01
+  maturityDate: 2032-08-01
+  dayCountConvention: ACT/360
 
 expected:
-  effectiveDkjBaseYieldPct: 0
   annualCouponRatePct: 0.75
-  couponPaymentFrequency: quarterly
-  redemptionValue: 1000000
+  purchaseAmount: 1000000
 
 notes:
-  - This example demonstrates the 0% floor on the DKJ-based coupon base without external data lookup.
+  - Commercial path uses the effective period rate; base-floor composition is not a required composer input.

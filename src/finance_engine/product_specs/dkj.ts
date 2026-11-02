@@ -4,7 +4,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 export interface DkjProductSpec {
-  specVersion: 'v2alpha1'
+  specVersion: 'v2alpha1' | 'v2alpha2'
   kind: 'financial-product'
   id: 'government-security.dkj.standard'
   family: 'government-security'

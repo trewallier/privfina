@@ -1,41 +1,39 @@
 /**
- * Reusable BMAP calculation primitives (ADR 0017 — TypeScript owns new math).
- * Browser dual-surface: `public/controller/bmap-calculation-adapter.js` until bundler.
+ * Reusable BMAP calculation primitives (ADR 0017 / 0038).
  */
 
 import { formatIsoDate, parseIsoDate } from '../date_utils'
 import { createCashFlow, sortCashFlowsByDate } from './common'
+import {
+  accrueInterestAmount,
+  normalizeDayCountConvention,
+  resolveCouponRatePct,
+  type CouponSchedulePeriod,
+  type DayCountConvention
+} from './day_count'
 import { CashFlowDirection } from '../models'
 import type { CashFlow } from '../models'
 
-const MILLIS_PER_DAY = 24 * 60 * 60 * 1000
-const ACT_360_DAY_COUNT = 360
-const BMAP_TERM_YEARS = 6
 const QUARTER_MONTHS = 3
 
 export type BmapRateOutputs = {
-  effectiveDkjBaseYieldPct: number
   annualCouponRatePct: number
-  couponPaymentFrequency: 'quarterly'
-  periodCouponRatePct: number
 }
 
 export type BmapSpecInputs = {
   principal: number
-  dkjBaseYieldPct: number
-  interestPremiumPct: number
-  startDate: string
-  purchaseDate?: string
-  issueDate?: string
+  annualCouponRatePct: number
+  purchaseDate: string
+  issueDate: string
+  maturityDate: string
+  startDate?: string
   firstCouponDate?: string
+  dayCountConvention?: DayCountConvention | string
+  couponSchedule?: CouponSchedulePeriod[]
 }
 
 function addMonthsUtc(date: Date, months: number): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, date.getUTCDate()))
-}
-
-function addYearsUtc(date: Date, years: number): Date {
-  return new Date(Date.UTC(date.getUTCFullYear() + years, date.getUTCMonth(), date.getUTCDate()))
 }
 
 function ensureFiniteNumber(value: number, label: string): number {
@@ -53,51 +51,65 @@ function ensureNonNegativeNumber(value: number, label: string): number {
   return normalized
 }
 
-export function deriveBmapMaturityDate(startDateIso: string): string {
-  return formatIsoDate(addYearsUtc(parseIsoDate(startDateIso), BMAP_TERM_YEARS))
+function requireIso(value: string | undefined, label: string): string {
+  const iso = String(value || '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    throw new Error(`${label} must be an ISO date.`)
+  }
+  return iso
 }
 
-export function deriveBmapRateOutputs(specInputs: Pick<BmapSpecInputs, 'dkjBaseYieldPct' | 'interestPremiumPct'>): BmapRateOutputs {
-  const dkjBaseYieldPct = ensureFiniteNumber(specInputs.dkjBaseYieldPct, 'dkjBaseYieldPct')
-  const effectiveDkjBaseYieldPct = Math.max(dkjBaseYieldPct, 0)
-  const interestPremiumPct = ensureNonNegativeNumber(specInputs.interestPremiumPct, 'interestPremiumPct')
-  const annualCouponRatePct = effectiveDkjBaseYieldPct + interestPremiumPct
-
-  return {
-    effectiveDkjBaseYieldPct,
-    annualCouponRatePct,
-    couponPaymentFrequency: 'quarterly',
-    periodCouponRatePct: annualCouponRatePct / 4
-  }
+export function deriveBmapRateOutputs(
+  specInputs: Pick<BmapSpecInputs, 'annualCouponRatePct' | 'couponSchedule' | 'purchaseDate' | 'issueDate'>
+): BmapRateOutputs {
+  const purchaseDate = String(specInputs.purchaseDate || specInputs.issueDate || '').trim()
+  const fallback = ensureNonNegativeNumber(
+    Number(specInputs.annualCouponRatePct),
+    'annualCouponRatePct'
+  )
+  const annualCouponRatePct = resolveCouponRatePct(
+    specInputs.couponSchedule,
+    purchaseDate || String(specInputs.issueDate || ''),
+    fallback
+  )
+  return { annualCouponRatePct }
 }
 
 /**
- * ACT/360 accrued interest from accrual start (issueDate or startDate) to purchaseDate.
- * Returns 0 when purchaseDate is omitted.
+ * Accrued interest from accrual start (issueDate or startDate) to purchaseDate.
  */
 export function deriveBmapAccruedInterestAmount(
-  specInputs: Pick<BmapSpecInputs, 'principal' | 'startDate' | 'purchaseDate' | 'issueDate'>,
-  annualCouponRatePct: number
+  specInputs: Pick<
+    BmapSpecInputs,
+    | 'principal'
+    | 'startDate'
+    | 'purchaseDate'
+    | 'issueDate'
+    | 'dayCountConvention'
+    | 'annualCouponRatePct'
+    | 'couponSchedule'
+  >,
+  annualCouponRatePct?: number
 ): number {
-  const startDateIso = String(specInputs.startDate || '').trim()
-  const purchaseDateIso =
-    typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
-
-  if (!purchaseDateIso) {
-    return 0
-  }
-
-  const issueDateRaw = typeof specInputs.issueDate === 'string' ? String(specInputs.issueDate).trim() : ''
-  const accrualStartIso = issueDateRaw || startDateIso
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const accrualStartIso = issueDateIso || startDateIso
   if (purchaseDateIso < accrualStartIso) {
     throw new Error('purchaseDate must be on or after startDate or issueDate.')
   }
-
+  const rate =
+    annualCouponRatePct != null
+      ? ensureNonNegativeNumber(annualCouponRatePct, 'annualCouponRatePct')
+      : deriveBmapRateOutputs(specInputs).annualCouponRatePct
   const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
-  const days = Math.floor(
-    (parseIsoDate(purchaseDateIso).getTime() - parseIsoDate(accrualStartIso).getTime()) / MILLIS_PER_DAY
-  )
-  return (principal * annualCouponRatePct * days) / (100 * ACT_360_DAY_COUNT)
+  return accrueInterestAmount({
+    principal,
+    annualRatePct: rate,
+    fromIso: accrualStartIso,
+    toIso: purchaseDateIso,
+    dayCount: normalizeDayCountConvention(specInputs.dayCountConvention)
+  })
 }
 
 export function generateBmapQuarterlyCouponFlows(
@@ -106,18 +118,18 @@ export function generateBmapQuarterlyCouponFlows(
   annualCouponRatePct: number,
   description = 'BMAP'
 ): CashFlow[] {
-  const startDateIso = String(specInputs.startDate || '').trim()
-  const maturityDateIso = deriveBmapMaturityDate(startDateIso)
-  const purchaseDateIso =
-    typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
+  const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
   const firstCouponDateIso =
     typeof specInputs.firstCouponDate === 'string' ? String(specInputs.firstCouponDate).trim() : ''
   const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
-  const couponAmount = (principal * annualCouponRatePct) / 100 / 4
+  const schedule = Array.isArray(specInputs.couponSchedule) ? specInputs.couponSchedule : []
 
   const flows: CashFlow[] = [
     createCashFlow(
-      purchaseDateIso || startDateIso,
+      purchaseDateIso,
       purchaseAmount,
       CashFlowDirection.Outflow,
       'investment',
@@ -129,11 +141,26 @@ export function generateBmapQuarterlyCouponFlows(
     ? parseIsoDate(firstCouponDateIso)
     : addMonthsUtc(parseIsoDate(startDateIso), QUARTER_MONTHS)
   const maturityDate = parseIsoDate(maturityDateIso)
-  const purchaseOrStart = purchaseDateIso || startDateIso
 
   while (couponDate.getTime() <= maturityDate.getTime()) {
     const couponIso = formatIsoDate(couponDate)
-    if (couponIso >= purchaseOrStart) {
+    if (couponIso >= purchaseDateIso) {
+      const period = schedule.find((row) => {
+        if (!row?.from) return false
+        if (row.from > couponIso) return false
+        if (row.to != null && row.to !== '' && row.to < couponIso) return false
+        return true
+      })
+      if (period && (period.rate == null || !Number.isFinite(Number(period.rate)))) {
+        // Future / undefined rate: do not invent a cash flow (ADR 0038).
+        couponDate = addMonthsUtc(couponDate, QUARTER_MONTHS)
+        continue
+      }
+      const ratePct =
+        period && period.rate != null && Number.isFinite(Number(period.rate))
+          ? Number(period.rate)
+          : annualCouponRatePct
+      const couponAmount = (principal * ratePct) / 100 / 4
       flows.push(
         createCashFlow(couponIso, couponAmount, CashFlowDirection.Inflow, 'investment', description)
       )

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "D261223",
   "family": "dkj",
   "cols": ["d", "bid", "ask", "by", "ay", "ai"],

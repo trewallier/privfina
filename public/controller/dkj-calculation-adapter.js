@@ -1,25 +1,34 @@
 import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-input-validators.js'
+import { deriveRemainingDays } from './market-data-autofill.js'
 
-function addMonthsToIsoDate(dateIso, months) {
-  const source = new Date(`${dateIso}T00:00:00Z`)
-  if (Number.isNaN(source.getTime())) {
-    throw new Error('settlementDate must be an ISO date string.')
+function resolveRemainingDays(specInputs) {
+  const remainingDaysRaw = specInputs?.remainingDays
+  if (remainingDaysRaw !== undefined && remainingDaysRaw !== null && remainingDaysRaw !== '') {
+    return toPositiveInteger(remainingDaysRaw, 'remainingDays')
   }
 
-  const target = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + months, source.getUTCDate()))
-  return target.toISOString().slice(0, 10)
+  const settlementDate = String(specInputs?.settlementDate || '').trim()
+  const maturityDate = String(specInputs?.maturityDate || '').trim()
+  const derived = deriveRemainingDays(settlementDate, maturityDate)
+  if (derived == null) {
+    throw new Error('remainingDays could not be derived from settlementDate and maturityDate.')
+  }
+  return toPositiveInteger(derived, 'remainingDays')
 }
 
 function mapDkjSpecInputsToLegacyInvestmentInput(specInputs) {
   const faceValue = toNonNegativeNumber(specInputs.faceValue, 'faceValue')
   const purchasePricePct = toNonNegativeNumber(specInputs.purchasePricePct, 'purchasePricePct')
-  const termMonths = toPositiveInteger(specInputs.termMonths, 'termMonths')
+  toPositiveInteger(specInputs.termMonths, 'termMonths')
   const settlementDate = String(specInputs.settlementDate || '').trim()
   if (!settlementDate) {
     throw new Error('settlementDate is required.')
   }
 
-  const maturityDate = String(specInputs.maturityDate || '').trim() || addMonthsToIsoDate(settlementDate, termMonths)
+  const maturityDate = String(specInputs.maturityDate || '').trim()
+  if (!maturityDate) {
+    throw new Error('maturityDate is required.')
+  }
 
   const purchasePrice = (faceValue * purchasePricePct) / 100
 
@@ -34,14 +43,21 @@ function mapDkjSpecInputsToLegacyInvestmentInput(specInputs) {
 }
 
 function mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview) {
-  const purchaseAmount = toFiniteNumber(legacyPreview.purchaseAmount ?? legacyPreview.purchaseAmount, 'purchaseAmount')
-  const redemptionValue = toFiniteNumber(legacyPreview.maturityAmount ?? legacyPreview.maturityAmount, 'maturityAmount')
+  const purchaseAmount = toFiniteNumber(
+    legacyPreview.purchaseAmount ?? legacyPreview.purchaseAmount,
+    'purchaseAmount'
+  )
+  const redemptionValue = toFiniteNumber(
+    legacyPreview.maturityAmount ?? legacyPreview.maturityAmount,
+    'maturityAmount'
+  )
   const grossGain = toFiniteNumber(legacyPreview.gainAmount ?? legacyPreview.gainAmount, 'gainAmount')
-  const annualizedYieldPct = legacyPreview.discountMetrics && typeof legacyPreview.discountMetrics.yieldPercent === 'number'
-    ? legacyPreview.discountMetrics.yieldPercent
-    : toFiniteNumber(legacyPreview.discountMetrics?.yieldPercent ?? 0, 'yieldPercent')
+  const annualizedYieldPct =
+    legacyPreview.discountMetrics && typeof legacyPreview.discountMetrics.yieldPercent === 'number'
+      ? legacyPreview.discountMetrics.yieldPercent
+      : toFiniteNumber(legacyPreview.discountMetrics?.yieldPercent ?? 0, 'yieldPercent')
 
-  const simpleReturnPct = (purchaseAmount > 0) ? (grossGain / purchaseAmount) * 100 : 0
+  const simpleReturnPct = purchaseAmount > 0 ? (grossGain / purchaseAmount) * 100 : 0
 
   return {
     purchaseAmount,
@@ -52,13 +68,10 @@ function mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview) {
   }
 }
 
-function resolveAnnualizedYieldPct(specInputs, fallbackAnnualizedYieldPct, simpleReturnPct) {
-  const remainingDaysRaw = specInputs?.remainingDays
-  if (remainingDaysRaw === undefined || remainingDaysRaw === null || remainingDaysRaw === '') {
+function resolveAnnualizedYieldPct(remainingDays, fallbackAnnualizedYieldPct, simpleReturnPct) {
+  if (remainingDays == null) {
     return fallbackAnnualizedYieldPct
   }
-
-  const remainingDays = toPositiveInteger(remainingDaysRaw, 'remainingDays')
   return simpleReturnPct * (360 / remainingDays)
 }
 
@@ -68,13 +81,23 @@ function calculateDkjFromSpecInputs(specInputs, options) {
     throw new Error('createInvestmentMaturityPreview function is required.')
   }
 
+  const remainingDays = resolveRemainingDays(specInputs)
   const legacyInput = mapDkjSpecInputsToLegacyInvestmentInput(specInputs)
   const legacyPreview = createInvestmentMaturityPreview(legacyInput)
   const mapped = mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview)
   return {
     ...mapped,
-    annualizedYieldPct: resolveAnnualizedYieldPct(specInputs, mapped.annualizedYieldPct, mapped.simpleReturnPct)
+    remainingDays,
+    annualizedYieldPct: resolveAnnualizedYieldPct(
+      remainingDays,
+      mapped.annualizedYieldPct,
+      mapped.simpleReturnPct
+    )
   }
 }
 
-export { mapDkjSpecInputsToLegacyInvestmentInput, mapLegacyInvestmentPreviewToSpecOutputs, calculateDkjFromSpecInputs }
+export {
+  mapDkjSpecInputsToLegacyInvestmentInput,
+  mapLegacyInvestmentPreviewToSpecOutputs,
+  calculateDkjFromSpecInputs
+}

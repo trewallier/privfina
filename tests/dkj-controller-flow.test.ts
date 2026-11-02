@@ -8,7 +8,10 @@ import {
   mapDkjSpecInputsToInvestmentBundleInput
 } from '../public/controller/dkj-form.js'
 import { calculateDkjFromSpecInputs } from '../public/controller/dkj-calculation-adapter.js'
-import { createInvestmentMaturityPreview, generateInvestmentInstrumentBundle } from '../public/instruments.js'
+import {
+  createInvestmentMaturityPreview,
+  generateInvestmentInstrumentBundle
+} from '../public/instruments.js'
 
 function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
@@ -34,17 +37,19 @@ describe('dkj ui/controller integration seam', () => {
       purchasePricePct: String(parsed.inputs.purchasePricePct),
       termMonths: String(parsed.inputs.termMonths),
       settlementDate: String(parsed.inputs.settlementDate),
-      maturityDate: String(parsed.inputs.maturityDate),
-      remainingDays: String(parsed.inputs.remainingDays)
+      maturityDate: String(parsed.inputs.maturityDate)
     })
 
     const specInputs = mapFormDataToDkjSpecInputs(formData as any)
     const outputs = calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
     const bundle = generateInvestmentInstrumentBundle(
-      mapDkjSpecInputsToInvestmentBundleInput(specInputs, {
-        label: DKJ_PRODUCT_SPEC.ui.formTitle,
-        category: 'investment'
-      })
+      mapDkjSpecInputsToInvestmentBundleInput(
+        { ...specInputs, remainingDays: outputs.remainingDays },
+        {
+          label: DKJ_PRODUCT_SPEC.ui.formTitle,
+          category: 'investment'
+        }
+      )
     )
 
     expect(specInputs).toEqual({
@@ -53,23 +58,28 @@ describe('dkj ui/controller integration seam', () => {
       termMonths: 12,
       settlementDate: '2026-01-07',
       maturityDate: '2027-01-07',
-      remainingDays: 360
+      dayCountConvention: undefined,
+      remainingDays: undefined
     })
 
     expect(outputs).toMatchObject({
       purchaseAmount: parsed.expected.purchaseAmount,
       redemptionValue: parsed.expected.redemptionValue,
-      grossGain: parsed.expected.grossGain
+      grossGain: parsed.expected.grossGain,
+      remainingDays: 365
     })
 
     expect(outputs.simpleReturnPct).toBeCloseTo(parsed.expected.simpleReturnPct, 8)
-    expect(outputs.annualizedYieldPct).toBeCloseTo(parsed.expected.annualizedYieldPct, 8)
+    expect(outputs.annualizedYieldPct).toBeCloseTo(
+      parsed.expected.simpleReturnPct * (360 / 365),
+      8
+    )
 
     expect(bundle.productId).toBe('government-security.dkj.standard')
     expect(bundle.productSpecVersion).toBe('v2alpha1')
     expect(bundle.config.subtype).toBe('dkj')
     expect(bundle.config.termMonths).toBe(12)
-    expect(bundle.config.remainingDays).toBe(360)
+    expect(bundle.config.remainingDays).toBe(365)
     expect(bundle.generatedFlows).toHaveLength(2)
     expect(bundle.generatedFlows[0]).toMatchObject({
       direction: 'outflow',

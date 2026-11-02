@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "family": "pmap",
   "series": [
     {
@@ -12,7 +12,7 @@
       "face": 1000,
       "iType": "FLOAT",
       "status": "active",
-      "prem": 0.75,
+      "dayCount": "ACT/360",
       "ref": "HUF CPI"
     }
   ]

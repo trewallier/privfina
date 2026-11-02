@@ -65,10 +65,10 @@ describe('commercial investment UI markup contracts', () => {
       /id="dkj-face-value-wrap"[\s\S]*?id="dkj-settlement-date-wrap"[\s\S]*?id="dkj-purchase-price-pct-wrap"[\s\S]*?id="dkj-term-months-wrap"[\s\S]*?id="dkj-remaining-days-wrap"[\s\S]*?id="dkj-maturity-date-wrap"/
     )
     expect(indexHtml).toMatch(
-      /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-previous-year-inflation-pct-wrap"[\s\S]*?id="pmap-interest-premium-pct-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-start-date-wrap"[\s\S]*?id="pmap-first-coupon-date-wrap"/
+      /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="pmap-maturity-date-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-start-date-wrap"[\s\S]*?id="pmap-first-coupon-date-wrap"/
     )
     expect(indexHtml).toMatch(
-      /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-dkj-base-yield-pct-wrap"[\s\S]*?id="bmap-interest-premium-pct-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-start-date-wrap"[\s\S]*?id="bmap-first-coupon-date-wrap"/
+      /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="bmap-maturity-date-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-start-date-wrap"[\s\S]*?id="bmap-first-coupon-date-wrap"/
     )
   })
 
@@ -106,9 +106,12 @@ describe('commercial investment UI markup contracts', () => {
     expect(appController).not.toContain('preserveSeriesId')
     expect(appController).not.toContain('Auto-filled from market data:')
     expect(appController).toContain("firstCouponDate: '#bmap-first-coupon-date'")
-    expect(appController).toContain("dkjBaseYieldPct: '#bmap-dkj-base-yield-pct'")
-    expect(appController).toContain(
-      "previousYearAverageInflationPct: '#pmap-previous-year-inflation-pct'"
-    )
+    expect(appController).toContain("annualCouponRatePct: '#bmap-annual-coupon-rate-pct'")
+    expect(appController).toContain("maturityDate: '#bmap-maturity-date'")
+    expect(appController).toContain("annualCouponRatePct: '#pmap-annual-coupon-rate-pct'")
+    expect(appController).toContain("maturityDate: '#pmap-maturity-date'")
+    expect(appController).not.toContain('bmap-dkj-base-yield-pct')
+    expect(appController).not.toContain('pmap-previous-year-inflation-pct')
+
   })
 })

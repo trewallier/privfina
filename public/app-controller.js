@@ -113,7 +113,7 @@ import {
   applyPmapSpecToForm,
   setPmapFieldVisibility,
   mapFormDataToPmapSpecInputs,
-  mapPmapSpecInputsToInvestmentBundleInput
+  generatePmapInstrumentBundleFromSpecInputs
 } from './controller/pmap-form.js'
 import { calculatePmapFromSpecInputs } from './controller/pmap-calculation-adapter.js'
 import {
@@ -326,8 +326,8 @@ function initController() {
   const investmentPurchasePriceWrap = document.getElementById('investment-purchase-price-wrap')
   const investmentAnnualRateWrap = document.getElementById('investment-annual-rate-wrap')
   const bmapPrincipalInput = document.getElementById('bmap-principal')
-  const bmapDkjBaseYieldPctInput = document.getElementById('bmap-dkj-base-yield-pct')
-  const bmapInterestPremiumPctInput = document.getElementById('bmap-interest-premium-pct')
+  const bmapAnnualCouponRatePctInput = document.getElementById('bmap-annual-coupon-rate-pct')
+  const bmapMaturityDateInput = document.getElementById('bmap-maturity-date')
   const bmapStartDateInput = document.getElementById('bmap-start-date')
   const bmapPurchaseDateInput = document.getElementById('bmap-purchase-date')
   const bmapIssueDateInput = document.getElementById('bmap-issue-date')
@@ -339,8 +339,8 @@ function initController() {
   const dkjMaturityDateInput = document.getElementById('dkj-maturity-date')
   const dkjRemainingDaysInput = document.getElementById('dkj-remaining-days')
   const pmapPrincipalInput = document.getElementById('pmap-principal')
-  const pmapInterestPremiumPctInput = document.getElementById('pmap-interest-premium-pct')
-  const pmapPreviousYearInflationPctInput = document.getElementById('pmap-previous-year-inflation-pct')
+  const pmapAnnualCouponRatePctInput = document.getElementById('pmap-annual-coupon-rate-pct')
+  const pmapMaturityDateInput = document.getElementById('pmap-maturity-date')
   const pmapStartDateInput = document.getElementById('pmap-start-date')
   const pmapPurchaseDateInput = document.getElementById('pmap-purchase-date')
   const pmapIssueDateInput = document.getElementById('pmap-issue-date')
@@ -971,10 +971,9 @@ function initController() {
     if (family === 'pmap') {
       return {
         principal: commercialInvestmentForm.querySelector('#pmap-principal')?.value || '',
-        interestPremiumPct:
-          commercialInvestmentForm.querySelector('#pmap-interest-premium-pct')?.value || '',
-        previousYearAverageInflationPct:
-          commercialInvestmentForm.querySelector('#pmap-previous-year-inflation-pct')?.value || '',
+        annualCouponRatePct:
+          commercialInvestmentForm.querySelector('#pmap-annual-coupon-rate-pct')?.value || '',
+        maturityDate: commercialInvestmentForm.querySelector('#pmap-maturity-date')?.value || '',
         startDate: commercialInvestmentForm.querySelector('#pmap-start-date')?.value || '',
         purchaseDate: commercialInvestmentForm.querySelector('#pmap-purchase-date')?.value || '',
         issueDate: commercialInvestmentForm.querySelector('#pmap-issue-date')?.value || '',
@@ -985,10 +984,9 @@ function initController() {
     if (family === 'bmap') {
       return {
         principal: commercialInvestmentForm.querySelector('#bmap-principal')?.value || '',
-        dkjBaseYieldPct:
-          commercialInvestmentForm.querySelector('#bmap-dkj-base-yield-pct')?.value || '',
-        interestPremiumPct:
-          commercialInvestmentForm.querySelector('#bmap-interest-premium-pct')?.value || '',
+        annualCouponRatePct:
+          commercialInvestmentForm.querySelector('#bmap-annual-coupon-rate-pct')?.value || '',
+        maturityDate: commercialInvestmentForm.querySelector('#bmap-maturity-date')?.value || '',
         startDate: commercialInvestmentForm.querySelector('#bmap-start-date')?.value || '',
         purchaseDate: commercialInvestmentForm.querySelector('#bmap-purchase-date')?.value || '',
         issueDate: commercialInvestmentForm.querySelector('#bmap-issue-date')?.value || '',
@@ -1008,15 +1006,15 @@ function initController() {
         remainingDays: '#dkj-remaining-days'
       },
       pmap: {
-        interestPremiumPct: '#pmap-interest-premium-pct',
-        previousYearAverageInflationPct: '#pmap-previous-year-inflation-pct',
+        annualCouponRatePct: '#pmap-annual-coupon-rate-pct',
+        maturityDate: '#pmap-maturity-date',
         startDate: '#pmap-start-date',
         issueDate: '#pmap-issue-date',
         firstCouponDate: '#pmap-first-coupon-date'
       },
       bmap: {
-        dkjBaseYieldPct: '#bmap-dkj-base-yield-pct',
-        interestPremiumPct: '#bmap-interest-premium-pct',
+        annualCouponRatePct: '#bmap-annual-coupon-rate-pct',
+        maturityDate: '#bmap-maturity-date',
         startDate: '#bmap-start-date',
         issueDate: '#bmap-issue-date',
         firstCouponDate: '#bmap-first-coupon-date'
@@ -1388,8 +1386,7 @@ function initController() {
     const asOfLabel = commercialMarketFamilyState.asOf
       ? `Market data as of ${commercialMarketFamilyState.asOf}`
       : 'Market data loaded'
-    // Period kamat from Lakossági kamatok is informational (combined coupon).
-    // Never map into interestPremiumPct for PMÁP/BMÁP (ADR 0036).
+    // Period kamat from Lakossági kamatok is informational until v2 coupon schedules land.
     const retailRow = findRetailInterestForSeries(
       commercialMarketFamilyState.retailInterest,
       series
@@ -1435,8 +1432,8 @@ function initController() {
 
     const bmapInputs = [
       bmapPrincipalInput,
-      bmapDkjBaseYieldPctInput,
-      bmapInterestPremiumPctInput,
+      bmapAnnualCouponRatePctInput,
+      bmapMaturityDateInput,
       bmapStartDateInput,
       bmapPurchaseDateInput,
       bmapIssueDateInput,
@@ -1452,8 +1449,8 @@ function initController() {
     ]
     const pmapInputs = [
       pmapPrincipalInput,
-      pmapInterestPremiumPctInput,
-      pmapPreviousYearInflationPctInput,
+      pmapAnnualCouponRatePctInput,
+      pmapMaturityDateInput,
       pmapStartDateInput,
       pmapPurchaseDateInput,
       pmapIssueDateInput,
@@ -1762,15 +1759,15 @@ function initController() {
       dkjMaturityDateInput,
       dkjRemainingDaysInput,
       pmapPrincipalInput,
-      pmapInterestPremiumPctInput,
-      pmapPreviousYearInflationPctInput,
+      pmapAnnualCouponRatePctInput,
+      pmapMaturityDateInput,
       pmapStartDateInput,
       pmapPurchaseDateInput,
       pmapIssueDateInput,
       pmapFirstCouponDateInput,
       bmapPrincipalInput,
-      bmapDkjBaseYieldPctInput,
-      bmapInterestPremiumPctInput,
+      bmapAnnualCouponRatePctInput,
+      bmapMaturityDateInput,
       bmapStartDateInput,
       bmapPurchaseDateInput,
       bmapIssueDateInput,
@@ -1927,10 +1924,10 @@ function initController() {
     if (productCode === 'bmap') {
       commercialInvestmentForm.querySelector('#bmap-principal').value =
         config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-      commercialInvestmentForm.querySelector('#bmap-dkj-base-yield-pct').value =
-        config.dkjBaseYieldPct !== undefined ? String(config.dkjBaseYieldPct) : ''
-      commercialInvestmentForm.querySelector('#bmap-interest-premium-pct').value =
-        config.interestPremiumPct !== undefined ? String(config.interestPremiumPct) : ''
+      commercialInvestmentForm.querySelector('#bmap-annual-coupon-rate-pct').value =
+        config.annualCouponRatePct !== undefined ? String(config.annualCouponRatePct) : ''
+      commercialInvestmentForm.querySelector('#bmap-maturity-date').value =
+        config.maturityDate || config.dueDate || ''
       commercialInvestmentForm.querySelector('#bmap-start-date').value = config.startDate || ''
       commercialInvestmentForm.querySelector('#bmap-purchase-date').value = config.purchaseDate || ''
       commercialInvestmentForm.querySelector('#bmap-issue-date').value = config.issueDate || ''
@@ -1956,16 +1953,10 @@ function initController() {
     } else if (productCode === 'pmap') {
       commercialInvestmentForm.querySelector('#pmap-principal').value =
         config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
-      commercialInvestmentForm.querySelector('#pmap-interest-premium-pct').value =
-        config.interestPremiumPct !== undefined
-          ? String(config.interestPremiumPct)
-          : config.spreadRate !== undefined
-            ? String(Number(config.spreadRate) * 100)
-            : ''
-      commercialInvestmentForm.querySelector('#pmap-previous-year-inflation-pct').value =
-        config.previousYearAverageInflationPct !== undefined
-          ? String(config.previousYearAverageInflationPct)
-          : ''
+      commercialInvestmentForm.querySelector('#pmap-annual-coupon-rate-pct').value =
+        config.annualCouponRatePct !== undefined ? String(config.annualCouponRatePct) : ''
+      commercialInvestmentForm.querySelector('#pmap-maturity-date').value =
+        config.maturityDate || config.dueDate || ''
       commercialInvestmentForm.querySelector('#pmap-start-date').value =
         config.startDate || config.issueDate || ''
       commercialInvestmentForm.querySelector('#pmap-purchase-date').value =
@@ -3066,22 +3057,24 @@ function initController() {
           )
         } else if (productCode === 'dkj') {
           const specInputs = mapFormDataToDkjSpecInputs(formData)
-          calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+          const calculated = calculateDkjFromSpecInputs(specInputs, {
+            createInvestmentMaturityPreview
+          })
           bundle = generateInvestmentInstrumentBundle(
-            mapDkjSpecInputsToInvestmentBundleInput(specInputs, {
-              ...meta,
-              label: meta.label || DKJ_PRODUCT_SPEC.ui.formTitle
-            })
+            mapDkjSpecInputsToInvestmentBundleInput(
+              { ...specInputs, remainingDays: calculated.remainingDays },
+              {
+                ...meta,
+                label: meta.label || DKJ_PRODUCT_SPEC.ui.formTitle
+              }
+            )
           )
         } else if (productCode === 'pmap') {
           const specInputs = mapFormDataToPmapSpecInputs(formData)
-          calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
-          bundle = generateInvestmentInstrumentBundle(
-            mapPmapSpecInputsToInvestmentBundleInput(specInputs, {
-              ...meta,
-              label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
-            })
-          )
+          bundle = generatePmapInstrumentBundleFromSpecInputs(specInputs, {
+            ...meta,
+            label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
+          })
         } else {
           throw new Error(`Unsupported commercial investment product: ${productCode}`)
         }

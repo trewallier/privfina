@@ -10,14 +10,14 @@ inputs:
   termMonths: 3
   settlementDate: 2026-02-01
   maturityDate: 2026-05-02
-  remainingDays: 90
 
 expected:
   purchaseAmount: 98000
   redemptionValue: 100000
   grossGain: 2000
   simpleReturnPct: 2.0408163265
+  remainingDays: 90
   annualizedYieldPct: 8.1632653061
 
 notes:
-  - This example validates day-based annualized yield behavior with the 360-day convention.
+  - Remaining days are derived; this example validates day-based annualized yield with the 360-day convention.

@@ -30,53 +30,66 @@ inputs:
     constraints:
       minimum: 1
 
-  - name: dkjBaseYieldPct
+  - name: annualCouponRatePct
     type: number
-    label: DKJ Base Yield
+    label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Base yield derived from 3-month DKJ auction averages.
-    constraints:
-      minimum: -100
-      maximum: 100
-
-  - name: interestPremiumPct
-    type: number
-    label: Interest Premium
-    required: true
-    unit: percent
-    description: Fixed premium added on top of the DKJ-based yield.
+    description: Effective annual coupon rate for the applicable interest period (combined period kamat as published).
     constraints:
       minimum: 0
       maximum: 100
 
-  - name: startDate
-    type: string
-    label: Start Date
-    required: true
-    unit: date
-    description: Investment start date in ISO format.
-
   - name: purchaseDate
     type: string
     label: Purchase Date
-    required: false
+    required: true
     unit: date
     description: Purchase or valuation date in ISO format, used for accrued-interest-related calculations.
 
   - name: issueDate
     type: string
     label: Issue Date
-    required: false
+    required: true
     unit: date
     description: Issue date of the BMAP series in ISO format.
+
+  - name: maturityDate
+    type: string
+    label: Maturity Date
+    required: true
+    unit: date
+    description: Maturity date of the BMAP series in ISO format.
+
+  - name: startDate
+    type: string
+    label: Start Date
+    required: false
+    unit: date
+    description: Investment start date in ISO format; defaults to issue date when omitted.
 
   - name: firstCouponDate
     type: string
     label: First Coupon Date
     required: false
     unit: date
-    description: First coupon payment date in ISO format if known.
+    description: First coupon payment date in ISO format when a full couponSchedule is not supplied.
+
+  - name: dayCountConvention
+    type: string
+    label: Day Count Convention
+    required: false
+    unit: text
+    description: Interest day-count convention for accrued interest (default ACT/360).
+    constraints:
+      enum: [ACT/360, ACT/365F, 30E/360]
+
+  - name: couponSchedule
+    type: array
+    label: Coupon Schedule
+    required: false
+    unit: text
+    description: Optional list of coupon periods `{ from, to?, rate? }`; future rates may be omitted.
 
 outputs:
   - name: annualCouponRatePct
@@ -84,28 +97,7 @@ outputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Annual coupon rate for the current period, equal to effective DKJ base plus premium.
-
-  - name: couponPaymentFrequency
-    type: string
-    label: Coupon Payment Frequency
-    required: true
-    unit: text
-    description: Frequency of coupon payments.
-
-  - name: effectiveDkjBaseYieldPct
-    type: number
-    label: Effective DKJ Base Yield
-    required: true
-    unit: percent
-    description: DKJ coupon base after applying the 0% floor.
-
-  - name: periodCouponRatePct
-    type: number
-    label: Period Coupon Rate
-    required: false
-    unit: percent
-    description: Coupon amount or rate applicable to the current coupon period using the 360-day convention.
+    description: Effective annual coupon rate used for the current period.
 
   - name: accruedInterestAmount
     type: number
@@ -121,27 +113,20 @@ outputs:
     unit: currency
     description: Purchase amount based on principal plus accrued interest, where applicable.
 
-  - name: redemptionValue
-    type: number
-    label: Redemption Value
-    required: true
-    unit: currency
-    description: Principal repaid at maturity.
-
 assumptions:
   - BMAP is modeled as a quarterly-pay variable-rate retail government bond.
-  - Product-term intent in this pilot is 6 years.
-  - Annual coupon rate is effective DKJ base yield plus fixed premium.
-  - Effective DKJ base yield is max(raw DKJ-based rate, 0).
-  - The DKJ-based rate is conceptually tied to the last four successful 3-month DKJ auctions used for rate-setting.
+  - Commercial inputs use the published effective period coupon rate; base+premium composition is not required for composer autofill.
+  - Coupon payment frequency is quarterly (product-type constant; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - BMAP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
-  - BMAP uses a 360-day convention for accrued-interest and period coupon calculations.
+  - Default day-count for accrued-interest and period coupon calculations is ACT/360 unless overridden per series or input.
+  - Maturity comes from the series / input; calculators must not invent a fixed term length.
+  - Coupon schedule periods without a published rate do not invent cash flows.
+  - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem BMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
   - Collateral-purpose transfer is out of scope and restricted by the official product rules.
-  - This spec remains a product-type model and does not attempt to encode every live BMAP series edge case.
-  - Live DKJ market data integration is future work; examples use explicit base-yield input values.
+  - Live DKJ auction base derivation (`refs/dkj-base.json`) remains future work.
 
 ui:
   formTitle: Bonus Hungarian Government Security (BMÁP)
@@ -151,11 +136,12 @@ ui:
       fieldNames:
         - principal
         - purchaseDate
-        - dkjBaseYieldPct
-        - interestPremiumPct
+        - annualCouponRatePct
         - issueDate
+        - maturityDate
         - startDate
         - firstCouponDate
+        - dayCountConvention
 
 exampleRefs:
   - ./examples/nominal-case.yaml

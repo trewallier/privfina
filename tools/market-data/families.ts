@@ -27,7 +27,14 @@ const TYPE_TO_FAMILY: Record<string, FamilyCode> = {
   PEMAP: 'emap',
   '1MAP': 'omap',
   '1MÁP': 'omap',
-  OMAP: 'omap'
+  OMAP: 'omap',
+  KTJ: 'ktj',
+  'KTJ I': 'ktj',
+  'KTJ II': 'ktj',
+  KTJ_I: 'ktj',
+  KTJ_II: 'ktj',
+  '2MÁP': 'map2',
+  '2MAP': 'map2'
 }
 
 /** Place codes from retailInterest (Forgalmazóhelyek) → family. */
@@ -41,7 +48,10 @@ const PLACE_TO_FAMILY: Record<string, FamilyCode> = {
   MAPP_F: 'mapp',
   BABA: 'baba',
   EMAP: 'emap',
-  '1MAP': 'omap'
+  '1MAP': 'omap',
+  KTJ: 'ktj',
+  '2MAP': 'map2',
+  '2MÁP': 'map2'
 }
 
 /** Map ÁKK / allampapir securityType values to published family folder codes. */
@@ -92,6 +102,11 @@ export function familyFromAllampapirPaper(
       return 'emap'
     case '1MAP':
       return 'omap'
+    case 'KTJ':
+      return 'ktj'
+    case '2MAP':
+    case '2MÁP':
+      return 'map2'
     default:
       return familyFromSecurityType(p)
   }

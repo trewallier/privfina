@@ -1,16 +1,17 @@
-import { digestCanonical, digestInflation, digestRetailInterest } from './digests.ts'
+import { digestCanonical, digestInflation } from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import { publishedFamilies, type MarketTreeState } from './merge.ts'
 import {
+  COUPON_COLS,
   INFLATION_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
-  RETAIL_INTEREST_REF_PATH,
   SCHEMA_VERSION,
   type FamilyCode,
   type InflationSeriesKey,
-  type ManifestFile
+  type ManifestFile,
+  type SeriesRecord
 } from './types.ts'
 
 export class ValidateError extends Error {
@@ -50,6 +51,7 @@ export function validateMarketTree(tree: MarketTreeState): void {
           `Non-canonical series id in ${family}: ${err instanceof Error ? err.message : String(err)}`
         )
       }
+      validateSeriesRecord(family, s, required)
       seriesIds.add(s.id)
     }
     for (const [id, q] of Object.entries(fam.quotes)) {
@@ -74,11 +76,42 @@ export function validateMarketTree(tree: MarketTreeState): void {
         }
       }
     }
+    for (const [id, c] of Object.entries(fam.coupons ?? {})) {
+      try {
+        assertSeriesId(id)
+      } catch (err) {
+        throw new ValidateError(
+          `Non-canonical coupon key in ${family}: ${err instanceof Error ? err.message : String(err)}`
+        )
+      }
+      if (c.id !== id) throw new ValidateError(`Coupon id mismatch ${family}/${id}`)
+      if (c.family !== family) throw new ValidateError(`Coupon family mismatch ${family}/${id}`)
+      if (!seriesIds.has(id)) {
+        throw new ValidateError(`Coupon schedule for ${family}/${id} missing from series.json`)
+      }
+      if (c.cols.join(',') !== COUPON_COLS.join(',')) {
+        throw new ValidateError(`Coupon cols mismatch ${family}/${id}`)
+      }
+      if (c.schemaVersion !== SCHEMA_VERSION) {
+        throw new ValidateError(`Bad coupon schemaVersion for ${family}/${id}`)
+      }
+      for (const row of c.rows) {
+        if (!row[0] || !/^\d{4}-\d{2}-\d{2}$/.test(row[0])) {
+          throw new ValidateError(`Bad coupon from date in ${family}/${id}`)
+        }
+        if (row[1] != null && !/^\d{4}-\d{2}-\d{2}$/.test(row[1])) {
+          throw new ValidateError(`Bad coupon to date in ${family}/${id}`)
+        }
+        if (row[2] != null && (typeof row[2] !== 'number' || !Number.isFinite(row[2]))) {
+          throw new ValidateError(`Bad coupon rate in ${family}/${id}`)
+        }
+      }
+    }
   }
-  if (tree.retailInterest) {
-    validateRetailInterest(tree)
-  } else if (tree.manifest.refs?.retailInterest || tree.manifest.digests[RETAIL_INTEREST_REF_PATH]) {
-    throw new ValidateError('manifest references retail-interest but file is missing')
+  if (tree.manifest.refs?.retailInterest) {
+    throw new ValidateError(
+      'manifest.refs.retailInterest is not published under schemaVersion 2 (use coupons/<id>.json)'
+    )
   }
   if (tree.inflation) {
     validateInflation(tree)
@@ -88,37 +121,17 @@ export function validateMarketTree(tree: MarketTreeState): void {
   verifyManifestDigests(tree)
 }
 
-function validateRetailInterest(tree: MarketTreeState): void {
-  const file = tree.retailInterest
-  if (!file) return
-  if (file.schemaVersion !== SCHEMA_VERSION) {
-    throw new ValidateError('retail-interest schemaVersion must be 1')
+function validateSeriesRecord(family: FamilyCode, s: SeriesRecord, requiredFamily: boolean): void {
+  if (Object.prototype.hasOwnProperty.call(s, 'prem')) {
+    throw new ValidateError(`series.prem is not allowed in schemaVersion 2 (${family}/${s.id})`)
   }
-  if (!Array.isArray(file.rows)) {
-    throw new ValidateError('retail-interest.rows must be an array')
-  }
-  for (const row of file.rows) {
-    try {
-      assertSeriesId(row.id)
-    } catch (err) {
-      throw new ValidateError(
-        `Non-canonical retail-interest id: ${err instanceof Error ? err.message : String(err)}`
-      )
-    }
-    if (!row.from || !/^\d{4}-\d{2}-\d{2}$/.test(row.from)) {
-      throw new ValidateError(`Bad retail-interest from date for ${row.id}`)
-    }
-    if (row.to != null && !/^\d{4}-\d{2}-\d{2}$/.test(row.to)) {
-      throw new ValidateError(`Bad retail-interest to date for ${row.id}`)
-    }
-    if (typeof row.offered !== 'boolean') {
-      throw new ValidateError(`retail-interest offered must be boolean for ${row.id}`)
-    }
-  }
-  const refPath = tree.manifest?.refs?.retailInterest
-  if (refPath && refPath !== RETAIL_INTEREST_REF_PATH) {
+  if (
+    requiredFamily &&
+    s.status === 'active' &&
+    (s.mat == null || s.mat === '')
+  ) {
     throw new ValidateError(
-      `manifest.refs.retailInterest must be ${RETAIL_INTEREST_REF_PATH}, got ${refPath}`
+      `Active series in required family ${family}/${s.id} must have non-null mat`
     )
   }
 }
@@ -129,7 +142,7 @@ function validateInflation(tree: MarketTreeState): void {
   const file = tree.inflation
   if (!file) return
   if (file.schemaVersion !== SCHEMA_VERSION) {
-    throw new ValidateError('inflation schemaVersion must be 1')
+    throw new ValidateError(`inflation schemaVersion must be ${SCHEMA_VERSION}`)
   }
   if (file.metric !== 'cpi_total' || file.unit !== 'pct_change') {
     throw new ValidateError('inflation metric/unit must be cpi_total / pct_change')
@@ -206,9 +219,9 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
     for (const [id, q] of Object.entries(fam.quotes)) {
       digests[`families/${family}/quotes/${id}.json`] = digestCanonical(q)
     }
-  }
-  if (tree.retailInterest) {
-    digests[RETAIL_INTEREST_REF_PATH] = digestRetailInterest(tree.retailInterest)
+    for (const [id, c] of Object.entries(fam.coupons ?? {})) {
+      digests[`families/${family}/coupons/${id}.json`] = digestCanonical(c)
+    }
   }
   if (tree.inflation) {
     digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
@@ -228,7 +241,7 @@ export async function assertPublishedTree(root: string): Promise<MarketTreeState
 
 function validateManifest(manifest: ManifestFile): void {
   if (manifest.schemaVersion !== SCHEMA_VERSION) {
-    throw new ValidateError('manifest.schemaVersion must be 1')
+    throw new ValidateError(`manifest.schemaVersion must be ${SCHEMA_VERSION}`)
   }
   for (const family of REQUIRED_FAMILIES) {
     if (!manifest.families.includes(family)) {

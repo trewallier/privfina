@@ -77,12 +77,12 @@ npm run test:exploratory # optional EBKM diagnosis probes only
 
 Node **≥ 22** (`engines` in [`package.json`](../../package.json)).
 
-### E. Market-data ingest (ADR 0034 / 0035 / 0036 / 0037)
+### E. Market-data ingest (ADR 0034 / 0035 / 0036 / 0037 / 0038)
 
 Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read-only ([secure use / token permissions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-secrets)). The **`push` job must not use `GITHUB_TOKEN` for writes** — it mints a **GitHub App installation token** instead.
 
 1. Workflow [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) is **two jobs**:
-   - **`ingest`** (`contents: read`): resolve whether `market-data` exists (API; fail-closed on non-404 errors), checkout baseline only when it exists (no blind `continue-on-error`), call ÁKK (2 GETs) **and** allampapir.hu (CSRF + papers + per-paper prices **and** `retailInterest/get_all_data` for Lakossági kamatok; retailInterest soft-fails and keeps previous refs so a kamatok outage does not block price publishes) **and** KSH STADAT `ara0040.csv` (CPI Összesen → `refs/inflation.json`; hard-fail on fetch/normalize or historical revision), combine prices → merge retail-interest + inflation refs → stage tree under `out/`, emit `changed` / `as_of`, upload artifact when changed.
+   - **`ingest`** (`contents: read`): resolve whether `market-data` exists (API; fail-closed on non-404 errors), checkout baseline only when it exists (no blind `continue-on-error`), call ÁKK (2 GETs) **and** allampapir.hu (CSRF + papers + per-paper prices **and** `retailInterest/get_all_data` for Lakossági kamatok; retailInterest soft-fails and keeps previous coupon/offered data so a kamatok outage does not block price publishes) **and** KSH STADAT `ara0040.csv` (CPI Összesen → `refs/inflation.json`; hard-fail on fetch/normalize or historical revision), combine prices → merge coupons/offered + inflation refs → stage tree under `out/data/market/v2/`, emit `changed` / `as_of`, upload artifact when changed.
    - **`push`** (`if: changed`): App token → resolve branch → checkout or orphan-init → download artifact → **`validate-tree`** (schema + digests) → bash `commit-push.sh`. **Does not call ÁKK, allampapir.hu, or ksh.hu.**
 2. **GitHub App setup (required before first successful push):**
    1. Create a GitHub App with **Contents: Read and write** on this repository (no metadata beyond what push needs).
@@ -93,10 +93,10 @@ Follow GitHub’s least-privilege guidance: keep the default `GITHUB_TOKEN` read
 4. Prefer **single-line** `run:` steps. TS via pinned **`tsx`** (`npx tsx tools/market-data/cli.ts …`) for fetch/normalize/merge/validate. **Git glue is bash-only** (`tools/market-data/scripts/ensure-clone.sh`, `commit-push.sh`) — no parallel TypeScript commit path. Commit identity is `privfina-market-data[bot]` (App id email), not `github-actions[bot]`. Paths via **env vars**.
 5. Exit conventions: local `ingest` → `0` updated / `2` unchanged / `1` error; `ci-ingest` → `0` on success with `changed` on `GITHUB_OUTPUT`.
 6. Unchanged digests → green, `push` skipped. Push is non-`--force`. `concurrency.cancel-in-progress: false`. Smoke with `workflow_dispatch` after merge + App setup.
-7. **Pages materialization (ROADMAP §6b):** `deploy.yml` resolves whether `market-data` exists (same `resolve-branch` helper as ingest), checks out that tip only when present (sparse `data/market/v1`), and copies it into `dist-web/data/market/v1/` for same-origin SPA `fetch`. Soft-fail with a warning if resolve/checkout/tree is unavailable so product Pages still deploys; the SPA degrades to manual entry. After merge to the default branch, confirm `GET /privfina/data/market/v1/manifest.json` returns 200 on the live site.
+7. **Pages materialization (ROADMAP §6b / §6f):** `deploy.yml` resolves whether `market-data` exists (same `resolve-branch` helper as ingest), checks out that tip only when present (sparse `data/market/v2`), and copies it into `dist-web/data/market/v2/` for same-origin SPA `fetch`. Soft-fail with a warning if resolve/checkout/tree is unavailable so product Pages still deploys; the SPA degrades to manual entry. After merge to the default branch, confirm `GET /privfina/data/market/v2/manifest.json` returns 200 on the live site.
 8. Local dry-run: `npm run market-data:ingest -- --help`.
 9. Optional later: Actions **workflow dependency lockfiles**; enforce CODEOWNERS required reviews on `.github/workflows/**` when multi-maintainer review is available.
-10. `refs/inflation.json` (ADR 0037 / ROADMAP §6e) is published from KSH `ara0040.csv` (Összesen only; append-first). `refs/retail-interest.json` (ADR 0036 / ROADMAP §6d) is published from `retailInterest` JSON — not from the kamatok XLSX download. Optional later: `refs/dkj-base.json` (BMÁP DKJ-base remains manual until a source is named).
+10. `refs/inflation.json` (ADR 0037 / ROADMAP §6e) is published from KSH `ara0040.csv` (Összesen only; append-first). SchemaVersion 2 publishes kamatok into `families/{fam}/coupons/<id>.json` + series `offered` (ADR 0038 / ROADMAP §6f) — not flat `refs/retail-interest.json`. Optional later: `refs/dkj-base.json` (BMÁP DKJ-base remains manual until a source is named).
 
 ## Explicit non-goals (for now)
 

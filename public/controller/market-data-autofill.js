@@ -250,15 +250,15 @@ export const MARKET_AUTOFILL_PROTECTED_FIELDS = Object.freeze([
 export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
   dkj: Object.freeze(['purchasePricePct', 'termMonths', 'maturityDate', 'remainingDays']),
   pmap: Object.freeze([
-    'interestPremiumPct',
-    'previousYearAverageInflationPct',
+    'annualCouponRatePct',
+    'maturityDate',
     'startDate',
     'issueDate',
     'firstCouponDate'
   ]),
   bmap: Object.freeze([
-    'dkjBaseYieldPct',
-    'interestPremiumPct',
+    'annualCouponRatePct',
+    'maturityDate',
     'startDate',
     'issueDate',
     'firstCouponDate'
@@ -332,18 +332,16 @@ export function buildMarketAutofillPatch({
       setField('remainingDays', remaining)
     }
   } else if (family === 'pmap' || family === 'bmap') {
-    // Temporary: when quote yield exists, fill 0 + effective interest into base+premium
-    // until refs/inflation.json and refs/dkj-base.json land.
+    // ADR 0038: commercial path uses effective annualCouponRatePct + series maturity.
+    // Until market schema v2 coupon schedules land, prefer quote ask/bid yield, else series.prem.
     const effective = pickEffectiveInterestPct(quote)
     if (effective != null) {
-      if (family === 'bmap') {
-        setField('dkjBaseYieldPct', 0)
-      } else {
-        setField('previousYearAverageInflationPct', 0)
-      }
-      setField('interestPremiumPct', effective)
+      setField('annualCouponRatePct', effective)
     } else if (series?.prem != null && Number.isFinite(Number(series.prem))) {
-      setField('interestPremiumPct', Number(series.prem))
+      setField('annualCouponRatePct', Number(series.prem))
+    }
+    if (series?.mat) {
+      setField('maturityDate', series.mat)
     }
     if (series?.issue) {
       setField('issueDate', series.issue)

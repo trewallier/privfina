@@ -32,7 +32,7 @@ export const EXIT_ERROR = 1
 export const EXIT_UNCHANGED = 2
 
 export interface IngestOptions {
-  /** Output repo root or path containing data/market/v1 (or the v1 dir itself). */
+  /** Output repo root or path containing data/market/v2 (or the v2 dir itself). */
   root: string
   /**
    * Optional baseline tree to load before merge (e.g. tip of `market-data`).
@@ -53,10 +53,10 @@ export interface IngestOptions {
   skipAllampapir?: boolean
   /**
    * Offline retailInterest get_all_data envelope. When omitted with fixture ÁKK / skip,
-   * previous refs are kept. Live runs refresh retail interest (soft-fail on errors).
+   * previous coupons are kept. Live runs refresh retail interest (soft-fail on errors).
    */
   retailInterestEnvelope?: AllampapirEnvelope
-  /** Skip only retailInterest fetch/replace (keep previous refs). */
+  /** Skip only retailInterest fetch/join (keep previous coupons / offered). */
   skipRetailInterest?: boolean
   /**
    * Offline KSH ara0040 CSV path. When omitted with fixture ÁKK / skip,
@@ -76,7 +76,7 @@ export interface IngestReport extends MergeResult {
   marketRoot: string
   dualSource: boolean
   retailInterestUpdated: boolean
-  /** True when live retailInterest fetch failed and previous refs were kept. */
+  /** True when live retailInterest fetch failed and previous coupons were kept. */
   retailInterestSoftFailed: boolean
   inflationUpdated: boolean
 }
@@ -88,7 +88,7 @@ function emptyAllampapirSnapshot(): NormalizedSnapshot {
 function logRetailInterestSoftFail(err: unknown): void {
   const message = err instanceof Error ? err.message : String(err)
   console.error(
-    `[market-data] retailInterest soft-fail; keeping previous refs and continuing price publish: ${message}`
+    `[market-data] retailInterest soft-fail; keeping previous coupons and continuing price publish: ${message}`
   )
 }
 

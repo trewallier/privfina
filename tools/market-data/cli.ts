@@ -19,7 +19,7 @@ import { assertPublishedTree } from './validate.ts'
 
 function printHelp(): void {
   process.stdout.write(`Usage:
-  market-data ingest --root <repo-or-v1> [--previous-root <path>] [--raw-dir <dir>]
+  market-data ingest --root <repo-or-v2> [--previous-root <path>] [--raw-dir <dir>]
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
@@ -27,7 +27,7 @@ function printHelp(): void {
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
-  market-data validate-tree --root <repo-or-v1>
+  market-data validate-tree --root <repo-or-v2>
   market-data resolve-branch --repository <owner/repo> --branch <name>
 
 Git (workflow): bash tools/market-data/scripts/ensure-clone.sh | commit-push.sh

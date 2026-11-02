@@ -2,20 +2,21 @@ specVersion: v2alpha1
 productId: government-security.bmap.standard
 exampleId: nominal-case
 title: Nominal BMAP example
-description: Baseline BMAP scenario with explicit DKJ base-yield input.
+description: Baseline BMAP scenario with published effective coupon rate and series maturity.
 
 inputs:
   principal: 1000000
-  dkjBaseYieldPct: 6.13
-  interestPremiumPct: 0.75
+  annualCouponRatePct: 6.88
   startDate: 2026-04-24
   purchaseDate: 2026-04-24
+  issueDate: 2026-04-24
+  maturityDate: 2032-04-24
+  dayCountConvention: ACT/360
 
 expected:
-  effectiveDkjBaseYieldPct: 6.13
   annualCouponRatePct: 6.88
-  couponPaymentFrequency: quarterly
-  redemptionValue: 1000000
+  purchaseAmount: 1000000
 
 notes:
-  - Coupon rate is represented as effective DKJ base yield plus fixed premium for this acceptance scenario.
+  - Effective coupon rate is supplied directly (historically equivalent to 6.13 DKJ base + 0.75 premium).
+  - Maturity is series-authored; calculators must not invent a fixed 6-year term.

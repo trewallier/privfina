@@ -442,7 +442,7 @@
         },
         "type": {
           "type": "string",
-          "enum": ["number", "integer", "string", "boolean"]
+          "enum": ["number", "integer", "string", "boolean", "array"]
         },
         "label": {
           "type": "string",

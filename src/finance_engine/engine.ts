@@ -184,11 +184,25 @@ export {
 export type { EbkmCalculationResult, EbkmDatedFlow, EbkmLeg } from './instruments/ebkm'
 export type { BmapRateOutputs, BmapSpecInputs } from './instruments/bmap'
 export {
-  deriveBmapMaturityDate,
   deriveBmapRateOutputs,
   deriveBmapAccruedInterestAmount,
   generateBmapQuarterlyCouponFlows
 } from './instruments/bmap'
+export type { PmapRateOutputs, PmapSpecInputs } from './instruments/pmap'
+export {
+  derivePmapRateOutputs,
+  derivePmapAccruedInterestAmount,
+  generatePmapAnnualCouponFlows
+} from './instruments/pmap'
+export {
+  accrueInterestAmount,
+  calendarDaysBetweenIso,
+  dayCountDenominator,
+  normalizeDayCountConvention,
+  resolveCouponRatePct,
+  DEFAULT_GOVERNMENT_SECURITY_DAY_COUNT
+} from './instruments/day_count'
+export type { CouponSchedulePeriod, DayCountConvention } from './instruments/day_count'
 
 function signedAmount(cashFlow: CashFlow): number {
   return cashFlow.direction === CashFlowDirection.Inflow ? cashFlow.amount : -cashFlow.amount

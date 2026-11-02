@@ -2,20 +2,21 @@ specVersion: v2alpha1
 productId: government-security.pmap.standard
 exampleId: nominal-case
 title: Nominal PMAP example
-description: Baseline inflation-linked PMAP scenario with explicit prior-year inflation input.
+description: Baseline PMAP scenario with published effective coupon rate and series maturity.
 
 inputs:
   principal: 1000000
-  interestPremiumPct: 0.5
-  previousYearAverageInflationPct: 4.4
+  annualCouponRatePct: 4.9
   startDate: 2026-05-23
   purchaseDate: 2026-05-23
+  issueDate: 2026-05-23
+  maturityDate: 2036-05-23
+  dayCountConvention: ACT/360
 
 expected:
-  effectiveInflationBasePct: 4.4
   annualCouponRatePct: 4.9
-  couponPaymentFrequency: annual
-  redemptionValue: 1000000
+  purchaseAmount: 1000000
 
 notes:
-  - Effective inflation base equals prior-year average inflation when inflation is positive.
+  - Effective coupon rate is supplied directly (historically equivalent to 4.4 inflation base + 0.5 premium).
+  - Maturity is series-authored; calculators must not invent a fixed 10-year term.

@@ -117,7 +117,7 @@ describe('id load/write round-trip', () => {
       })
       await writeMarketTree(tmp, merged.tree)
 
-      const quotePath = path.join(tmp, 'data/market/v1/families/bmap/quotes', `${id}.json`)
+      const quotePath = path.join(tmp, 'data/market/v2/families/bmap/quotes', `${id}.json`)
       const onDisk = JSON.parse(await readFile(quotePath, 'utf8')) as { id: string }
       expect(onDisk.id).toBe(id)
 

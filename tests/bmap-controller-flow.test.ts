@@ -6,7 +6,10 @@ import {
   BMAP_PRODUCT_SPEC,
   mapFormDataToBmapSpecInputs
 } from '../public/controller/bmap-form.js'
-import { calculateBmapFromSpecInputs, generateBmapInstrumentBundleFromSpecInputs } from '../public/controller/bmap-calculation-adapter.js'
+import {
+  calculateBmapFromSpecInputs,
+  generateBmapInstrumentBundleFromSpecInputs
+} from '../public/controller/bmap-calculation-adapter.js'
 import { createInvestmentMaturityPreview } from '../public/instruments.js'
 
 function readRepoFile(relativePath: string): string {
@@ -23,15 +26,18 @@ function createFormDataLike(entries: Record<string, string>): { get(name: string
 
 describe('bmap ui/controller integration seam', () => {
   it('maps spec-backed BMAP form values through adapter and BMAP bundle generation', () => {
-    const exampleYaml = readRepoFile('docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml')
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/bmap/examples/nominal-case.yaml'
+    )
     const parsed = YAML.parse(exampleYaml) as any
 
     const formData = createFormDataLike({
       principal: String(parsed.inputs.principal),
-      dkjBaseYieldPct: String(parsed.inputs.dkjBaseYieldPct),
-      interestPremiumPct: String(parsed.inputs.interestPremiumPct),
-      startDate: String(parsed.inputs.startDate),
-      purchaseDate: String(parsed.inputs.purchaseDate)
+      annualCouponRatePct: String(parsed.inputs.annualCouponRatePct),
+      purchaseDate: String(parsed.inputs.purchaseDate),
+      issueDate: String(parsed.inputs.issueDate),
+      maturityDate: String(parsed.inputs.maturityDate),
+      startDate: String(parsed.inputs.startDate)
     })
 
     const specInputs = mapFormDataToBmapSpecInputs(formData as any)
@@ -43,12 +49,13 @@ describe('bmap ui/controller integration seam', () => {
 
     expect(specInputs).toEqual({
       principal: 1000000,
-      dkjBaseYieldPct: 6.13,
-      interestPremiumPct: 0.75,
-      startDate: '2026-04-24',
+      annualCouponRatePct: 6.88,
       purchaseDate: '2026-04-24',
-      issueDate: undefined,
-      firstCouponDate: undefined
+      issueDate: '2026-04-24',
+      maturityDate: '2032-04-24',
+      startDate: '2026-04-24',
+      firstCouponDate: undefined,
+      dayCountConvention: undefined
     })
 
     expect(outputs).toMatchObject(parsed.expected)
@@ -56,7 +63,8 @@ describe('bmap ui/controller integration seam', () => {
     expect(bundle.productSpecVersion).toBe('v2alpha1')
     expect(bundle.config.subtype).toBe('bmap')
     expect(bundle.config.principal).toBe(parsed.inputs.principal)
-    expect(bundle.config.couponPaymentFrequency).toBe('quarterly')
+    expect(bundle.config.annualCouponRatePct).toBe(parsed.inputs.annualCouponRatePct)
+    expect(bundle.config.maturityDate).toBe(parsed.inputs.maturityDate)
     expect(bundle.generatedFlows.length).toBeGreaterThan(2)
     expect(bundle.generatedFlows[0]).toMatchObject({
       direction: 'outflow',
@@ -67,7 +75,8 @@ describe('bmap ui/controller integration seam', () => {
     })
     expect(bundle.generatedFlows[bundle.generatedFlows.length - 1]).toMatchObject({
       direction: 'inflow',
-      amount: parsed.inputs.principal
+      amount: parsed.inputs.principal,
+      date: parsed.inputs.maturityDate
     })
   })
 })

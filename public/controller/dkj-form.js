@@ -55,18 +55,18 @@ const DKJ_PRODUCT_SPEC = {
       name: 'maturityDate',
       type: 'string',
       label: 'Maturity Date',
-      required: false,
+      required: true,
       unit: 'date',
-      description: 'Maturity date in ISO format, if known.'
+      description: 'Maturity date in ISO format.'
     },
     {
-      name: 'remainingDays',
-      type: 'integer',
-      label: 'Remaining Days',
+      name: 'dayCountConvention',
+      type: 'string',
+      label: 'Day Count Convention',
       required: false,
-      unit: 'days',
-      description: 'Days remaining from settlement to maturity, used for annualized yield calculation.',
-      constraints: { minimum: 1 }
+      unit: 'text',
+      description: 'Day-count used for annualized yield (default ACT/360 denominator 360).',
+      constraints: { enum: ['ACT/360', 'ACT/365F', '30E/360'] }
     }
   ],
   outputs: [
@@ -108,7 +108,16 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Annualized Yield',
       required: true,
       unit: 'percent',
-      description: 'Annualized yield calculated using remaining days and the official discount-bill convention.'
+      description:
+        'Annualized yield using remaining days from settlement to maturity and the official discount-bill convention.'
+    },
+    {
+      name: 'remainingDays',
+      type: 'integer',
+      label: 'Remaining Days',
+      required: false,
+      unit: 'days',
+      description: 'Derived days from settlement to maturity used for annualized yield.'
     }
   ],
   ui: {
@@ -122,8 +131,8 @@ const DKJ_PRODUCT_SPEC = {
           'settlementDate',
           'purchasePricePct',
           'termMonths',
-          'remainingDays',
-          'maturityDate'
+          'maturityDate',
+          'dayCountConvention'
         ]
       }
     ]
@@ -242,6 +251,29 @@ function applyDkjSpecToForm({
     }
   })
 
+  // remainingDays is derived (settlement → maturity), not a primary input.
+  const remainingAdapter = DKJ_FRONTEND_FIELD_ADAPTER.remainingDays
+  const remainingInput = investmentForm.querySelector(`#${remainingAdapter.inputId}`)
+  if (remainingInput) {
+    remainingInput.name = remainingAdapter.formName
+    remainingInput.readOnly = true
+    const remainingLabel = remainingInput.closest('label')
+    if (remainingLabel) {
+      applyFieldChrome(
+        remainingLabel,
+        {
+          label: 'Remaining Days',
+          description: getDkjFieldHelp('remainingDays'),
+          required: false,
+          role: 'derived',
+          helpId: `${remainingAdapter.inputId}-help`,
+          labelClassName: 'dkj-field-label'
+        },
+        remainingInput
+      )
+    }
+  }
+
   DKJ_PRODUCT_SPEC.outputs.forEach((field) => {
     const adapter = DKJ_OUTPUT_PREVIEW_ADAPTER[field.name]
     if (!adapter) return
@@ -282,11 +314,22 @@ function mapFormDataToDkjSpecInputs(formData) {
     settlementDate: String(
       formData.get('settlementDate') || formData.get('transactionDate') || ''
     ).trim(),
-    maturityDate: String(formData.get('maturityDate') || formData.get('dueDate') || '').trim() || undefined,
+    maturityDate: String(formData.get('maturityDate') || formData.get('dueDate') || '').trim(),
+    dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
+    // Derived autofill target; adapter re-derives when omitted.
     remainingDays: String(formData.get('remainingDays') || '').trim()
       ? Number(formData.get('remainingDays'))
       : undefined
   }
+}
+
+function calendarDaysBetween(settlementDate, maturityDate) {
+  const start = new Date(`${settlementDate}T00:00:00Z`)
+  const end = new Date(`${maturityDate}T00:00:00Z`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return undefined
+  }
+  return Math.round((end.getTime() - start.getTime()) / 86400000)
 }
 
 function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
@@ -295,6 +338,12 @@ function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
   const maturityDate =
     String(specInputs.maturityDate || '').trim() ||
     addMonthsToIsoDate(settlementDate, specInputs.termMonths)
+  const remainingDays =
+    specInputs.remainingDays !== undefined &&
+    specInputs.remainingDays !== null &&
+    specInputs.remainingDays !== ''
+      ? Number(specInputs.remainingDays)
+      : calendarDaysBetween(settlementDate, maturityDate)
 
   return {
     id: meta.id,
@@ -319,7 +368,7 @@ function mapDkjSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     description: meta.description,
     createdAt: meta.createdAt,
     termMonths: specInputs.termMonths,
-    remainingDays: specInputs.remainingDays,
+    remainingDays,
     purchasePricePct: specInputs.purchasePricePct
   }
 }

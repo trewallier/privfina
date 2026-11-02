@@ -2,6 +2,7 @@ import { familyFromSecurityType } from './families.ts'
 import { toSeriesId } from './ids.ts'
 import {
   REQUIRED_FAMILIES,
+  defaultDayCountForFamily,
   emptyNormalizedByFamily,
   type AkkEnvelope,
   type AkkRow,
@@ -65,11 +66,14 @@ function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
   const label = rawLabelFromRow(row)
   if (!label) return null
   const id = toSeriesId(label)
+  const rawMat = asString(row.maturityDate)
   const mat = isoDate(row.maturityDate)
+  if (rawMat && !mat) {
+    throw new NormalizeError(`Unparseable maturityDate on catalog row ${id}: ${rawMat}`)
+  }
   const status: SeriesRecord['status'] =
     asOf && mat && mat < asOf ? 'matured' : 'active'
   const face = asNumber(row.faceValue, 'faceValue', id)
-  const prem = asNumber(row.coupon, 'coupon', id)
   const displayName = asString(row.name) ?? label
   const rec: SeriesRecord = {
     id,
@@ -78,11 +82,11 @@ function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
     issue: isoDate(row.issueDate),
     mat,
     ccy: asString(row.currency),
-    status
+    status,
+    dayCount: defaultDayCountForFamily(family)
   }
   if (face != null) rec.face = face
   if (asString(row.interestType)) rec.iType = asString(row.interestType)
-  if (prem != null && prem !== 0) rec.prem = prem
   if (asString(row.referenceCurve)) rec.ref = asString(row.referenceCurve)
   return rec
 }
@@ -112,6 +116,7 @@ function mapQuoteRow(row: AkkRow): { family: FamilyCode; id: string; row: QuoteR
  * Build a normalized snapshot from ÁKK catalog + network-rate envelopes.
  * Series list in the snapshot is the **currently quoted** set only; merge accumulates history.
  * Catalog join misses for quoted ids fail hard (commercial past-calc needs metadata).
+ * Quoted catalog rows must carry a parseable `mat` (ÁKK publishes maturityDate).
  * Required-family emptiness is enforced after dual-source combine (ADR 0035), not here —
  * but ÁKK-only callers still require the three core families.
  */
@@ -152,6 +157,7 @@ export function normalizeAkkSnapshots(
   }
 
   const joinMisses: string[] = []
+  const missingMat: string[] = []
   const seen = new Set<string>()
   for (const family of REQUIRED_FAMILIES) {
     for (const q of byFamily[family].quotes) {
@@ -162,6 +168,10 @@ export function normalizeAkkSnapshots(
         joinMisses.push(q.id)
         continue
       }
+      if (!fromCatalog.mat) {
+        missingMat.push(q.id)
+        continue
+      }
       byFamily[family].series.push({ ...fromCatalog, status: 'active' })
     }
     byFamily[family].series.sort((a, b) => a.id.localeCompare(b.id))
@@ -170,6 +180,11 @@ export function normalizeAkkSnapshots(
   if (joinMisses.length > 0) {
     throw new NormalizeError(
       `Catalog join miss for quoted series (${joinMisses.length}): ${joinMisses.slice(0, 8).join(', ')}`
+    )
+  }
+  if (missingMat.length > 0) {
+    throw new NormalizeError(
+      `Quoted catalog series missing mat (${missingMat.length}): ${missingMat.slice(0, 8).join(', ')}`
     )
   }
 

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "id": "D261223",
+  "family": "dkj",
+  "cols": ["from", "to", "rate"],
+  "rows": [
+    ["2025-12-23", null, null]
+  ]
+}

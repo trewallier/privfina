@@ -16,48 +16,53 @@ const DKJ_FIELD_HELP = {
   purchasePricePct: 'Purchase price as percentage of face value.',
   termMonths: 'Product-type maturity bucket for DKJ.',
   settlementDate: 'Settlement date in ISO format.',
-  maturityDate: 'Maturity date in ISO format, if known.',
-  remainingDays: 'Days remaining from settlement to maturity, used for annualized yield calculation.',
+  maturityDate: 'Maturity date in ISO format.',
+  dayCountConvention: 'Day-count used for annualized yield (default ACT/360 denominator 360).',
+  remainingDays: 'Derived days from settlement to maturity used for annualized yield.',
   purchaseAmount: 'Amount paid for the security at purchase.',
   redemptionValue: 'Face value repaid at maturity.',
   grossGain: 'Difference between redemption value and purchase amount.',
   simpleReturnPct: 'Gross gain relative to purchase amount.',
-  annualizedYieldPct: 'Annualized yield calculated using remaining days and the official discount-bill convention.'
+  annualizedYieldPct:
+    'Annualized yield using remaining days from settlement to maturity and the official discount-bill convention.'
 }
 
 const BMAP_FIELD_HELP = {
   principal: 'Invested nominal amount.',
-  dkjBaseYieldPct: 'Base yield derived from 3-month DKJ auction averages.',
-  interestPremiumPct: 'Fixed premium added on top of the DKJ-based yield.',
-  startDate: 'Investment start date in ISO format.',
-  purchaseDate: 'Purchase or valuation date in ISO format, used for accrued-interest-related calculations.',
+  annualCouponRatePct:
+    'Effective annual coupon rate for the applicable interest period (combined period kamat as published).',
+  purchaseDate:
+    'Purchase or valuation date in ISO format, used for accrued-interest-related calculations.',
   issueDate: 'Issue date of the BMAP series in ISO format.',
-  firstCouponDate: 'First coupon payment date in ISO format if known.',
-  annualCouponRatePct: 'Annual coupon rate for the current period, equal to effective DKJ base plus premium.',
-  couponPaymentFrequency: 'Frequency of coupon payments.',
-  effectiveDkjBaseYieldPct: 'DKJ coupon base after applying the 0% floor.',
-  periodCouponRatePct:
-    'Coupon amount or rate applicable to the current coupon period using the 360-day convention.',
-  accruedInterestAmount: 'Interest accrued from issue or previous coupon date to purchase or valuation date.',
-  purchaseAmount: 'Purchase amount based on principal plus accrued interest, where applicable.',
-  redemptionValue: 'Principal repaid at maturity.'
+  maturityDate: 'Maturity date of the BMAP series in ISO format.',
+  startDate: 'Investment start date in ISO format; defaults to issue date when omitted.',
+  firstCouponDate:
+    'First coupon payment date in ISO format when a full couponSchedule is not supplied.',
+  dayCountConvention: 'Interest day-count convention for accrued interest (default ACT/360).',
+  couponSchedule:
+    'Optional list of coupon periods `{ from, to?, rate? }`; future rates may be omitted.',
+  accruedInterestAmount:
+    'Interest accrued from issue or previous coupon date to purchase or valuation date.',
+  purchaseAmount: 'Purchase amount based on principal plus accrued interest, where applicable.'
 }
 
 const PMAP_FIELD_HELP = {
   principal: 'Invested nominal amount.',
-  interestPremiumPct: 'Fixed premium added on top of the inflation base.',
-  previousYearAverageInflationPct: 'Official annual average inflation for the previous calendar year.',
-  startDate: 'Investment start date in ISO format.',
-  purchaseDate: 'Purchase or valuation date in ISO format, used for accrued-interest-related calculations.',
+  annualCouponRatePct:
+    'Effective annual coupon rate for the applicable interest period (combined period kamat as published).',
+  purchaseDate:
+    'Purchase or valuation date in ISO format, used for accrued-interest-related calculations.',
   issueDate: 'Issue date of the PMAP series in ISO format.',
-  firstCouponDate: 'First coupon payment date in ISO format if known.',
-  annualCouponRatePct: 'Coupon rate for the current annual interest period.',
-  couponPaymentFrequency: 'Frequency of coupon payments.',
-  effectiveInflationBasePct: 'Inflation base after applying the 0% floor for zero or negative inflation.',
-  periodCouponRatePct: 'Coupon rate applicable to the current coupon period or first irregular period.',
-  accruedInterestAmount: 'Interest accrued from issue or previous coupon date to purchase/valuation date.',
-  purchaseAmount: 'Purchase amount based on principal plus accrued interest, where applicable.',
-  redemptionValue: 'Principal repaid at maturity.'
+  maturityDate: 'Maturity date of the PMAP series in ISO format.',
+  startDate: 'Investment start date in ISO format; defaults to issue date when omitted.',
+  firstCouponDate:
+    'First coupon payment date in ISO format when a full couponSchedule is not supplied.',
+  dayCountConvention: 'Interest day-count convention for accrued interest (default ACT/360).',
+  couponSchedule:
+    'Optional list of coupon periods `{ from, to?, rate? }`; future rates may be omitted.',
+  accruedInterestAmount:
+    'Interest accrued from issue or previous coupon date to purchase/valuation date.',
+  purchaseAmount: 'Purchase amount based on principal plus accrued interest, where applicable.'
 }
 
 function getDkjFieldHelp(fieldName) {

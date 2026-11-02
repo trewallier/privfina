@@ -16,12 +16,13 @@ const FIXTURE_ROOT = resolve(process.cwd(), 'tests/fixtures/market-data/publishe
 function createFixtureFetch() {
   return async (input: RequestInfo | URL) => {
     const url = String(input)
-    const marker = '/data/market/v1/'
+    const marker = '/data/market/v2/'
     const index = url.indexOf(marker)
     if (index < 0) {
       return new Response('not found', { status: 404 })
     }
     const relative = url.slice(index + marker.length).replace(/^\//, '')
+    // fixture root mirrors the v2 tree layout
     const filePath = resolve(FIXTURE_ROOT, relative)
     if (!existsSync(filePath)) {
       return new Response('missing', { status: 404 })
@@ -50,7 +51,7 @@ describe('market-data-loader', () => {
     })
 
     const manifest = await loader.loadManifest()
-    expect(manifest?.schemaVersion).toBe(1)
+    expect(manifest?.schemaVersion).toBe(2)
     expect(manifest?.families).toEqual(['dkj', 'pmap', 'bmap'])
 
     const family = await loader.loadFamily('dkj')
@@ -63,12 +64,13 @@ describe('market-data-loader', () => {
 
   it('loads quotes history and finds a settle-date row', async () => {
     const loader = createMarketDataLoader({
-      baseUrl: '/privfina/data/market/v1/',
+      baseUrl: '/privfina/data/market/v2/',
       fetchImpl: createFixtureFetch()
     })
 
     const quotes = await loader.loadQuotes('dkj', 'D261223')
     expect(quotes?.id).toBe('D261223')
+    expect(quotes?.schemaVersion).toBe(2)
     const row = findQuoteRowBySettleDate(quotes, '2026-10-31')
     expect(row).toEqual({
       d: '2026-10-31',
@@ -83,7 +85,7 @@ describe('market-data-loader', () => {
 
   it('finds the nearest quote date and resolves purchase-date clamp', async () => {
     const loader = createMarketDataLoader({
-      baseUrl: '/privfina/data/market/v1/',
+      baseUrl: '/privfina/data/market/v2/',
       fetchImpl: createFixtureFetch()
     })
     const quotes = await loader.loadQuotes('dkj', 'D261223')
@@ -125,15 +127,16 @@ describe('market-data-loader', () => {
     ).toBeNull()
   })
 
-  it('loads retail-interest refs when present', async () => {
+  it('loads coupon schedules when present and retires flat retail-interest', async () => {
     const loader = createMarketDataLoader({
       baseUrl: '/privfina/',
       fetchImpl: createFixtureFetch()
     })
-    const retail = await loader.loadRetailInterest()
-    expect(retail?.schemaVersion).toBe(1)
-    expect(retail?.rows.some((row) => row.offered === true)).toBe(true)
-    expect(retail?.rows.find((row) => row.series === '2027/J')?.rate).toBe(4.5)
+    const coupons = await loader.loadCoupons('dkj', 'D261223')
+    expect(coupons?.schemaVersion).toBe(2)
+    expect(coupons?.cols).toEqual(['from', 'to', 'rate'])
+    expect(coupons?.rows[0]).toEqual(['2025-12-23', null, null])
+    expect(await loader.loadRetailInterest()).toBeNull()
   })
 
   it('soft-degrades when published files are missing', async () => {
@@ -150,6 +153,7 @@ describe('market-data-loader', () => {
       available: false,
       asOf: null
     })
+    expect(await loader.loadCoupons('dkj', 'D261223')).toBeNull()
     expect(await loader.loadRetailInterest()).toBeNull()
   })
 

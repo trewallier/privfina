@@ -83,7 +83,7 @@ describe('assertPublishedTree', () => {
       const tree = await assertPublishedTree(tmp)
       expect(tree.manifest?.asOf).toBe('2026-11-02')
 
-      const manifestPath = path.join(tmp, 'data/market/v1/manifest.json')
+      const manifestPath = path.join(tmp, 'data/market/v2/manifest.json')
       const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as {
         digests: Record<string, string>
       }

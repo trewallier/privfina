@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "asOf": "2026-11-02",
   "generatedAt": "2026-10-31T21:17:07.922Z",
   "families": ["dkj", "pmap", "bmap"],
@@ -17,12 +17,9 @@
       "latest": "families/bmap/latest.json"
     }
   },
-  "refs": {
-    "retailInterest": "refs/retail-interest.json"
-  },
   "digests": {
     "families/dkj/series.json": "fixture",
     "families/dkj/latest.json": "fixture",
-    "refs/retail-interest.json": "fixture"
+    "families/dkj/coupons/D261223.json": "fixture"
   }
 }

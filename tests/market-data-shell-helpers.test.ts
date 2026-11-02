@@ -38,11 +38,11 @@ describe('market-data bash git helpers', () => {
       )
       expect(identity.stdout).not.toContain('github-actions')
 
-      const v1 = path.join(clone, 'data/market/v1')
-      await mkdir(v1, { recursive: true })
+      const v2 = path.join(clone, 'data/market/v2')
+      await mkdir(v2, { recursive: true })
       await writeFile(
-        path.join(v1, 'manifest.json'),
-        `${JSON.stringify({ schemaVersion: 1, asOf: '2026-11-02', digests: {} })}\n`,
+        path.join(v2, 'manifest.json'),
+        `${JSON.stringify({ schemaVersion: 2, asOf: '2026-11-02', digests: {} })}\n`,
         'utf8'
       )
 

@@ -72,7 +72,10 @@ describe('investment field help and dedicated hosts', () => {
     expect(commercialFormHtml).toContain('id="investment-bmap-wrap"')
     expect(commercialFormHtml).toContain('id="commercial-investment-form-status"')
     expect(commercialFormHtml).toContain('id="dkj-face-value"')
-    expect(commercialFormHtml).toContain('id="pmap-previous-year-inflation-pct"')
+    expect(commercialFormHtml).toContain('id="pmap-annual-coupon-rate-pct"')
+    expect(commercialFormHtml).toContain('id="pmap-maturity-date"')
+    expect(commercialFormHtml).toContain('id="bmap-annual-coupon-rate-pct"')
+    expect(commercialFormHtml).toContain('id="bmap-maturity-date"')
     expect(commercialFormHtml).toContain('id="commercial-investment-maturity-preview-help"')
   })
 

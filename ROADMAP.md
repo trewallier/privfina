@@ -313,12 +313,12 @@ Constraints
 - Optional-family composers stay out of this slice (§6g).
 
 Plan slices (implement in order; each slice should stay PR-sized)
-- [ ] ADR 0038 + ROADMAP / ownership / spec / CI playbook / market-data README + government-securities extension matrix stub.
-- [ ] Product YAML + examples: effective `annualCouponRatePct`, required `maturityDate`, optional `couponSchedule` / `dayCountConvention`; slim outputs; DKJ `remainingDays` derived.
-- [ ] `tools/market-data/` v2: drop `prem`; `coupons/<id>.json` with nullable / multi-band rates; `dayCount` / `offered`; canonical id join; `ktj` / `map2` routing stubs; fixtures + validate.
-- [ ] Engine + adapters: shared day-count/accrued; schedule-aware coupons; retire invented term years; Vitest.
-- [ ] SPA loader/autofill/forms hard-cut to v2; drop `0 + askYield` premium mapping; Pages materialization of `data/market/v2/`.
-- [ ] Close §6f: formula-ownership / catalog notes; confirm no kamatok→premium path remains.
+- [x] ADR 0038 + ROADMAP / ownership / spec / CI playbook / market-data README + government-securities extension matrix stub.
+- [x] Product YAML + examples: effective `annualCouponRatePct`, required `maturityDate`, optional `couponSchedule` / `dayCountConvention`; slim outputs; DKJ `remainingDays` derived.
+- [x] `tools/market-data/` v2: drop `prem`; `coupons/<id>.json` with nullable / multi-band rates; `dayCount` / `offered`; canonical id join; `ktj` / `map2` routing stubs; fixtures + validate.
+- [x] Engine + adapters: shared day-count/accrued; schedule-aware coupons; retire invented term years; Vitest.
+- [x] SPA loader/autofill/forms hard-cut to v2; drop `0 + askYield` premium mapping; Pages materialization of `data/market/v2/`.
+- [x] Close §6f: formula-ownership / catalog notes; confirm no kamatok→premium path remains.
 
 Out of scope for §6f
 - `refs/dkj-base.json`; commercial inflation+premium composition as composer inputs.

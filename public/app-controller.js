@@ -143,7 +143,6 @@ import {
   MARKET_MARKETABLE_REQUIRED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
-  findRetailInterestForSeries,
   formatSeriesAvailabilityLabel,
   marketableFieldsMissingFromPatch
 } from './controller/market-data-autofill.js'
@@ -267,7 +266,7 @@ function initController() {
     latest: null,
     available: false,
     asOf: null,
-    retailInterest: null
+    couponsById: {}
   }
   let commercialMarketApplyToken = 0
   const commercialInvestmentDiscountYieldWrap = document.getElementById(
@@ -1213,11 +1212,10 @@ function initController() {
     commercialInvestmentSeriesInput.appendChild(manual)
 
     const todayIso = budapestTodayIso() || browserTodayIso()
-    const retailInterest = commercialMarketFamilyState.retailInterest
     commercialMarketFamilyState.series.forEach((entry) => {
       const option = document.createElement('option')
       option.value = entry.id
-      const label = formatSeriesAvailabilityLabel(entry, todayIso, retailInterest)
+      const label = formatSeriesAvailabilityLabel(entry, todayIso)
       option.textContent = label
       option.dataset.availability = label.endsWith('available') ? 'available' : 'past'
       commercialInvestmentSeriesInput.appendChild(option)
@@ -1244,7 +1242,7 @@ function initController() {
       latest: null,
       available: false,
       asOf: null,
-      retailInterest: null
+      couponsById: {}
     }
     rebuildCommercialMarketSeriesOptions('')
     clearCommercialMarketSelection()
@@ -1254,10 +1252,7 @@ function initController() {
   async function refreshCommercialMarketFamily(productCode) {
     const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
     const token = ++commercialMarketApplyToken
-    const [loaded, retailInterest] = await Promise.all([
-      marketDataLoader.loadFamily(code),
-      marketDataLoader.loadRetailInterest()
-    ])
+    const loaded = await marketDataLoader.loadFamily(code)
     if (token !== commercialMarketApplyToken) {
       return
     }
@@ -1268,7 +1263,7 @@ function initController() {
       latest: loaded.latest,
       available: Boolean(loaded.available),
       asOf: loaded.asOf,
-      retailInterest
+      couponsById: {}
     }
 
     if (!commercialMarketFamilyState.available) {
@@ -1374,10 +1369,25 @@ function initController() {
       current.purchaseDate = dateInput.value
     }
 
+    let coupons = commercialMarketFamilyState.couponsById?.[seriesId] || null
+    if (!coupons && (family === 'pmap' || family === 'bmap')) {
+      coupons = await marketDataLoader.loadCoupons(family, seriesId)
+      if (token !== commercialMarketApplyToken) {
+        return
+      }
+      if (coupons) {
+        commercialMarketFamilyState.couponsById = {
+          ...(commercialMarketFamilyState.couponsById || {}),
+          [seriesId]: coupons
+        }
+      }
+    }
+
     const patch = buildMarketAutofillPatch({
       family,
       series,
       quote: lookup.quote,
+      coupons,
       current
     })
     clearMarketableFieldsMissingFromPatch(family, patch.sourced)
@@ -1386,22 +1396,20 @@ function initController() {
     const asOfLabel = commercialMarketFamilyState.asOf
       ? `Market data as of ${commercialMarketFamilyState.asOf}`
       : 'Market data loaded'
-    // Period kamat from Lakossági kamatok is informational until v2 coupon schedules land.
-    const retailRow = findRetailInterestForSeries(
-      commercialMarketFamilyState.retailInterest,
-      series
-    )
     const periodRate =
-      retailRow?.rate != null && Number.isFinite(Number(retailRow.rate))
-        ? Number(retailRow.rate)
+      patch.fields.annualCouponRatePct != null &&
+      Number.isFinite(Number(patch.fields.annualCouponRatePct))
+        ? Number(patch.fields.annualCouponRatePct)
         : null
     const rateHint =
       periodRate != null
-        ? ` · Period kamat (info) ${periodRate.toLocaleString('hu-HU', {
+        ? ` · Period kamat ${periodRate.toLocaleString('hu-HU', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 3
-          })}%${retailRow?.offered ? ' · offered' : ''}`
-        : ''
+          })}%${series?.offered ? ' · offered' : ''}`
+        : series?.offered
+          ? ' · offered'
+          : ''
     const clampHint =
       lookup.clamped && lookup.date
         ? ` · Purchase/settlement clamped to ${lookup.date}`

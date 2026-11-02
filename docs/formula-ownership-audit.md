@@ -38,21 +38,21 @@ Inventory (by product)
 - DKJ (`government-security.dkj.standard`) — **fully-spec-backed**
   - Spec: `docs/product-specs/products/government-securities/dkj/product.yaml`
   - Engine primitives: `deriveDiscountBondMetrics` in `src/finance_engine/instruments/common.ts`
-  - Browser path: `public/controller/dkj-calculation-adapter.js` → discount-bond preview in `public/instruments.js`
+  - Browser path: `public/controller/dkj-calculation-adapter.js` → discount-bond preview; `remainingDays` derived from settlement→maturity (ADR 0038)
   - Note: persisted / legacy bundles may use investment `subtype: 'dkj'` as an alias for the `discount-bond` calculation strategy (not a productCode amortizer branch)
-  - Status: day-based yield and adapter seam aligned for v1
+  - Status: day-based yield and adapter seam aligned; market autofill from `data/market/v2/`
 
 - PMAP (`government-security.pmap.standard`) — **fully-spec-backed**
   - Spec: `docs/product-specs/products/government-securities/pmap/product.yaml`
-  - Engine primitives: inflation-linked helpers in `src/finance_engine/instruments/common.ts`
-  - Browser path: `public/controller/pmap-calculation-adapter.js` applies `max(previousYearAverageInflationPct, 0)` when mapping to legacy investment input / outputs
-  - Status: floor and coupon composition enforced in the adapter seam for v1
+  - Engine primitives: `src/finance_engine/instruments/pmap.ts` + shared `day_count.ts` accrued (ADR 0038); commercial input is effective `annualCouponRatePct` + real `maturityDate`
+  - Browser path: `public/controller/pmap-calculation-adapter.js` delegates to TS primitives
+  - Status: schedule + accrued use series maturity / effective rate; inflation+premium composition is not the commercial path
 
 - BMAP (`government-security.bmap.standard`) — **fully-spec-backed** (auction derivation future)
   - Spec: `docs/product-specs/products/government-securities/bmap/product.yaml`
-  - Engine primitives: accrued-interest ACT/360 and quarterly coupon schedule helpers in `src/finance_engine/instruments/bmap.ts` (ADR 0017 TS-first); browser adapter delegates / mirrors until bundler
-  - Browser path: `public/controller/bmap-calculation-adapter.js` accepts user-supplied `dkjBaseYieldPct`
-  - Status: coupon composition from base yield + premium is spec-backed; weighted auction DKJ base derivation remains future external-data work
+  - Engine primitives: `src/finance_engine/instruments/bmap.ts` + shared `day_count.ts` (ADR 0017 / 0038); commercial input is effective `annualCouponRatePct` + real `maturityDate`
+  - Browser path: `public/controller/bmap-calculation-adapter.js` delegates to TS; market autofill from `coupons/<id>.json`
+  - Status: effective-rate + schedule-aware coupons; weighted auction DKJ-base derivation (`refs/dkj-base.json`) remains future work
 
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`

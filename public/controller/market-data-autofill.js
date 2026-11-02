@@ -87,7 +87,10 @@ export function pickPurchasePricePct(quote) {
   return null
 }
 
-/** Prefer ask yield, else bid yield (temporary BMÁP/PMÁP effective interest). */
+/**
+ * @deprecated Quote yields are not the BMÁP/PMÁP commercial interest source (ADR 0038).
+ * Kept for DKJ diagnostics / tests only.
+ */
 export function pickEffectiveInterestPct(quote) {
   if (!quote) {
     return null
@@ -99,6 +102,40 @@ export function pickEffectiveInterestPct(quote) {
     return Number(quote.by)
   }
   return null
+}
+
+/**
+ * Pick effective annual coupon % from a coupons/<id>.json file for onIso.
+ * Prefer a covering period with a defined rate; else latest prior defined rate.
+ * @param {{ cols?: string[], rows?: Array<Array<string|number|null>> }|null|undefined} coupons
+ * @param {string} onIso
+ * @returns {number|null}
+ */
+export function pickCouponRatePct(coupons, onIso) {
+  const rows = Array.isArray(coupons?.rows) ? coupons.rows : []
+  if (!rows.length || !/^\d{4}-\d{2}-\d{2}$/.test(String(onIso || ''))) {
+    return null
+  }
+  const day = String(onIso)
+  const covering = rows.find((row) => {
+    const from = row?.[0]
+    const to = row?.[1]
+    const rate = row?.[2]
+    if (!from || from > day) return false
+    if (to != null && to !== '' && String(to) < day) return false
+    return rate != null && Number.isFinite(Number(rate))
+  })
+  if (covering) return Number(covering[2])
+  const prior = rows
+    .filter(
+      (row) =>
+        row?.[0] &&
+        String(row[0]) <= day &&
+        row[2] != null &&
+        Number.isFinite(Number(row[2]))
+    )
+    .sort((a, b) => String(b[0]).localeCompare(String(a[0])))[0]
+  return prior ? Number(prior[2]) : null
 }
 
 /**
@@ -195,6 +232,10 @@ export function pickRetailPeriodRate(series, retailInterest) {
  * @param {{ rows?: Array<object> }|null|undefined} [retailInterest]
  */
 export function isSeriesAvailableOn(series, todayIso, retailInterest = null) {
+  // Schema v2: prefer series.offered from kamatok join (ADR 0038).
+  if (series && typeof series.offered === 'boolean') {
+    return series.offered === true
+  }
   const offered = isSeriesOfferedInRetailInterest(series, retailInterest)
   if (offered != null) {
     return offered
@@ -296,6 +337,7 @@ export function buildMarketAutofillPatch({
   family,
   series,
   quote,
+  coupons = null,
   current = {}
 } = {}) {
   const fields = {}
@@ -332,13 +374,11 @@ export function buildMarketAutofillPatch({
       setField('remainingDays', remaining)
     }
   } else if (family === 'pmap' || family === 'bmap') {
-    // ADR 0038: commercial path uses effective annualCouponRatePct + series maturity.
-    // Until market schema v2 coupon schedules land, prefer quote ask/bid yield, else series.prem.
-    const effective = pickEffectiveInterestPct(quote)
-    if (effective != null) {
-      setField('annualCouponRatePct', effective)
-    } else if (series?.prem != null && Number.isFinite(Number(series.prem))) {
-      setField('annualCouponRatePct', Number(series.prem))
+    // ADR 0038: effective rate from coupons/<id>.json for purchase date — not quote ay/by.
+    const onIso = String(current.purchaseDate || series?.issue || '').trim()
+    const couponRate = pickCouponRatePct(coupons, onIso)
+    if (couponRate != null) {
+      setField('annualCouponRatePct', couponRate)
     }
     if (series?.mat) {
       setField('maturityDate', series.mat)

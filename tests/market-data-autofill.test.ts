@@ -13,6 +13,7 @@ import {
   isSeriesAvailableOn,
   isSeriesOfferedInRetailInterest,
   parseSeriesNameYear,
+  pickCouponRatePct,
   pickEffectiveInterestPct,
   pickPurchasePricePct,
   pickRetailPeriodRate
@@ -143,15 +144,23 @@ describe('market-data-autofill', () => {
     expect(sourced).not.toContain('settlementDate')
   })
 
-  it('maps PMÁP / BMÁP to effective annualCouponRatePct, maturity, and first coupon', () => {
+  it('maps PMÁP / BMÁP from coupons + maturity (not quote yields)', () => {
+    const coupons = {
+      cols: ['from', 'to', 'rate'],
+      rows: [
+        ['2025-03-24', '2026-03-23', 3.5],
+        ['2026-03-24', '2027-03-23', 4.5]
+      ]
+    }
     const pmap = buildMarketAutofillPatch({
       family: 'pmap',
-      series: { issue: '2022-01-21', mat: '2027-03-24', prem: 0.75 },
-      quote: { d: '2026-11-02', ask: 100.25, bid: 100.12, ay: 4.0, by: 4.1 },
+      series: { issue: '2022-01-21', mat: '2027-03-24', offered: true },
+      quote: { d: '2026-11-02', ask: 100.25, bid: 100.12, ay: 9.9, by: 9.8 },
+      coupons,
       current: { principal: '1000000', purchaseDate: '2026-06-01' }
     })
     expect(pmap.fields).toEqual({
-      annualCouponRatePct: 4.0,
+      annualCouponRatePct: 4.5,
       maturityDate: '2027-03-24',
       issueDate: '2022-01-21',
       startDate: '2022-01-21',
@@ -162,12 +171,16 @@ describe('market-data-autofill', () => {
 
     const bmap = buildMarketAutofillPatch({
       family: 'bmap',
-      series: { issue: '2017-10-03', mat: '2028-03-22', prem: 1.5 },
+      series: { issue: '2017-10-03', mat: '2028-03-22' },
       quote: { d: '2026-11-02', ask: 101.7, bid: 101.5, ay: 5.1, by: 5.2 },
-      current: {}
+      coupons: {
+        cols: ['from', 'to', 'rate'],
+        rows: [['2026-03-22', '2026-06-21', 5.47]]
+      },
+      current: { purchaseDate: '2026-04-01' }
     })
     expect(bmap.fields).toEqual({
-      annualCouponRatePct: 5.1,
+      annualCouponRatePct: 5.47,
       maturityDate: '2028-03-22',
       issueDate: '2017-10-03',
       startDate: '2017-10-03',
@@ -175,16 +188,36 @@ describe('market-data-autofill', () => {
     })
   })
 
-  it('falls back to series premium when quote yield is missing', () => {
+  it('omits annualCouponRatePct when coupon schedule has no defined rate', () => {
     const bmap = buildMarketAutofillPatch({
       family: 'bmap',
-      series: { issue: '2017-10-03', mat: '2028-03-22', prem: 1.5 },
+      series: { issue: '2017-10-03', mat: '2028-03-22' },
       quote: { d: '2026-11-02', ask: 101.7, bid: 101.5, ay: null, by: null },
-      current: {}
+      coupons: { cols: ['from', 'to', 'rate'], rows: [['2027-01-01', null, null]] },
+      current: { purchaseDate: '2026-04-01' }
     })
-    expect(bmap.fields.annualCouponRatePct).toBe(1.5)
+    expect(bmap.fields.annualCouponRatePct).toBeUndefined()
     expect(bmap.fields.maturityDate).toBe('2028-03-22')
     expect(bmap.fields.firstCouponDate).toBe('2017-12-22')
+  })
+
+  it('picks coupon rate for a purchase date', () => {
+    expect(
+      pickCouponRatePct(
+        {
+          rows: [
+            ['2025-01-01', '2025-12-31', 3],
+            ['2026-01-01', '2026-12-31', 4.5]
+          ]
+        },
+        '2026-06-01'
+      )
+    ).toBe(4.5)
+  })
+
+  it('prefers series.offered over name-year heuristic', () => {
+    expect(isSeriesAvailableOn({ name: '2020/A', offered: true }, '2026-11-01')).toBe(true)
+    expect(isSeriesAvailableOn({ name: '2027/J', offered: false }, '2026-11-01')).toBe(false)
   })
 
   it('documents protected amount / purchase-settlement fields', () => {
@@ -217,20 +250,22 @@ describe('market-data-autofill', () => {
     ])
   })
 
-  it('overwrites rates on series switch and leaves missing yield fields out of the patch', () => {
+  it('overwrites rates on series switch and leaves missing coupon fields out of the patch', () => {
     const withYield = buildMarketAutofillPatch({
       family: 'bmap',
-      series: { issue: '2017-10-03', mat: '2028-03-22', prem: 1.5 },
+      series: { issue: '2017-10-03', mat: '2028-03-22' },
       quote: { d: '2026-11-02', ask: 101.7, bid: 101.5, ay: 5.1, by: 5.2 },
-      current: {}
+      coupons: { rows: [['2017-10-03', null, 5.47]] },
+      current: { purchaseDate: '2026-04-01' }
     })
-    expect(withYield.fields.annualCouponRatePct).toBe(5.1)
+    expect(withYield.fields.annualCouponRatePct).toBe(5.47)
     expect(withYield.fields.maturityDate).toBe('2028-03-22')
 
     const withoutYield = buildMarketAutofillPatch({
       family: 'bmap',
       series: { issue: '2018-01-01', mat: '2029-03-22' },
       quote: { d: '2026-11-02', ask: 100, bid: 99.9, ay: null, by: null },
+      coupons: null,
       current: {
         annualCouponRatePct: '5.1',
         maturityDate: '2028-03-22',

@@ -9,7 +9,6 @@ import {
   orderedSpecFields
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
-import { getPmapFieldHelp } from './investment-field-help.js'
 import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const PMAP_FRONTEND_FIELD_ADAPTER = {
@@ -87,7 +86,7 @@ function applyPmapSpecToForm({
         label,
         {
           label: field.label,
-          description: field.description || getPmapFieldHelp(field.name),
+          description: field.description || '',
           required: Boolean(field.required),
           role: 'input',
           helpId: `${adapter.inputId}-help`,
@@ -98,45 +97,25 @@ function applyPmapSpecToForm({
     }
   })
 
-  const couponPreview = queryFormInput(
-    investmentForm,
-    PMAP_OUTPUT_PREVIEW_ADAPTER.annualCouponRatePct
-  )
-  const couponLabel = couponPreview ? couponPreview.closest('label') : null
-  if (couponLabel) {
+  PMAP_PRODUCT_SPEC.outputs.forEach((field) => {
+    const adapter = PMAP_OUTPUT_PREVIEW_ADAPTER[field.name]
+    if (!adapter) return
+    const input = queryFormInput(investmentForm, adapter)
+    const label = input ? input.closest('label') : null
+    if (!label) return
     applyFieldChrome(
-      couponLabel,
+      label,
       {
-        label: 'Coupon preview',
-        description: getPmapFieldHelp('annualCouponRatePct'),
+        label: field.label,
+        description: field.description || '',
         required: false,
         role: 'output',
-        helpId: `${couponPreview.id}-help`,
+        helpId: `${input.id}-help`,
         labelClassName: 'investment-field-label'
       },
-      couponPreview
+      input
     )
-  }
-
-  const purchasePreview = queryFormInput(
-    investmentForm,
-    PMAP_OUTPUT_PREVIEW_ADAPTER.purchaseAmount
-  )
-  const purchaseLabel = purchasePreview ? purchasePreview.closest('label') : null
-  if (purchaseLabel) {
-    applyFieldChrome(
-      purchaseLabel,
-      {
-        label: 'Purchase Amount',
-        description: getPmapFieldHelp('purchaseAmount'),
-        required: false,
-        role: 'output',
-        helpId: `${purchasePreview.id}-help`,
-        labelClassName: 'investment-field-label'
-      },
-      purchasePreview
-    )
-  }
+  })
 }
 
 function setPmapFieldVisibility(investmentForm, visible) {

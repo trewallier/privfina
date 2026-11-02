@@ -60,7 +60,7 @@ describe('bmap ui/controller integration seam', () => {
 
     expect(outputs).toMatchObject(parsed.expected)
     expect(bundle.productId).toBe('government-security.bmap.standard')
-    expect(bundle.productSpecVersion).toBe('v2alpha1')
+    expect(bundle.productSpecVersion).toBe('v2alpha2')
     expect(bundle.config.subtype).toBe('bmap')
     expect(bundle.config.principal).toBe(parsed.inputs.principal)
     expect(bundle.config.annualCouponRatePct).toBe(parsed.inputs.annualCouponRatePct)

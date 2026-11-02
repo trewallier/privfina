@@ -187,7 +187,7 @@ export function normalizeRetailInterestEnvelope(
 export interface RetailCouponsJoinResult {
   /** family → canonical series id → CouponsFile */
   couponsByFamily: Partial<Record<FamilyCode, Record<string, CouponsFile>>>
-  /** Canonical series id → offered flag (last matching retail row wins). */
+  /** Canonical series id → offered flag (latest period by `from` wins). */
   offeredById: Record<string, boolean>
 }
 
@@ -239,6 +239,8 @@ export function joinRetailInterestToCoupons(
   }
 
   const rowsByTarget = new Map<string, { family: FamilyCode; rows: CouponRow[] }>()
+  /** Track the latest retail period (by `from`) that contributed offered for each series id. */
+  const offeredFromById: Record<string, string> = {}
 
   for (const row of retail.rows) {
     if (!row.family) continue
@@ -271,7 +273,12 @@ export function joinRetailInterestToCoupons(
 
     if (!targetId || !targetFamily) continue
 
-    offeredById[targetId] = row.offered
+    // Latest period (max `from`) wins for offered; ties keep the later row in input order.
+    const prevFrom = offeredFromById[targetId]
+    if (prevFrom == null || row.from >= prevFrom) {
+      offeredFromById[targetId] = row.from
+      offeredById[targetId] = row.offered
+    }
     const key = `${targetFamily}\0${targetId}`
     const prev = rowsByTarget.get(key)
     const nextRows = couponRowsFromRetail(row)

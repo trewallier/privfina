@@ -92,10 +92,14 @@ export {
 
 export {
   accrueInterestAmount,
+  annualizeDkjSimpleReturnPct,
   calendarDaysBetweenIso,
   dayCountDenominator,
+  deriveDkjRemainingDays,
   normalizeDayCountConvention,
+  resolveAccrualStartIso,
   resolveCouponRatePct,
+  resolveCoveringCouponPeriod,
   DEFAULT_GOVERNMENT_SECURITY_DAY_COUNT
 } from './instruments/day_count'
 export type { CouponSchedulePeriod, DayCountConvention } from './instruments/day_count'

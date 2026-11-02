@@ -200,6 +200,108 @@ describe('retail interest join → coupons + merge', () => {
     ])
   })
 
+  it('offeredById prefers the latest period (max from), not input order alone', () => {
+    const retail = {
+      schemaVersion: 2 as const,
+      asOf: '2026-11-01',
+      generatedAt: '2026-11-01T12:00:00.000Z',
+      rows: [
+        {
+          id: '2029_Q2',
+          family: 'fixmap' as const,
+          series: '2029/Q2',
+          type: 'FixMÁP',
+          rates: [5.5],
+          ehm: null,
+          from: '2026-10-01',
+          to: '2026-10-31',
+          offered: true
+        },
+        {
+          id: '2029_Q2',
+          family: 'fixmap' as const,
+          series: '2029/Q2',
+          type: 'FixMÁP',
+          rates: [5.75],
+          ehm: null,
+          from: '2026-11-01',
+          to: null,
+          offered: false
+        },
+        {
+          id: '2029_Q2',
+          family: 'fixmap' as const,
+          series: '2029/Q2',
+          type: 'FixMÁP',
+          rates: [5.0],
+          ehm: null,
+          from: '2026-09-01',
+          to: '2026-09-30',
+          offered: true
+        }
+      ]
+    }
+    const joined = joinRetailInterestToCoupons(retail, {
+      fixmap: [seedJoinableSeries()]
+    })
+    expect(joined.offeredById['2029_Q2']).toBe(false)
+  })
+
+  it('treats empty successful retailInterest as soft-fail when prior coupons exist', async () => {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-ri-empty-'))
+    tmpDirs.push(tmp)
+    const envelope = loadJson<AllampapirEnvelope>('retail-interest/get_all_data.json')
+
+    await ingestMarketData({
+      root: tmp,
+      rawDir: path.join(tmp, 'raw1'),
+      catalog: loadJson('catalog.json'),
+      networkRates: loadJson('network-rates.json'),
+      allampapirPrices: {
+        DKJ: loadJson('allampapir/prices_DKJ.json'),
+        MAP: loadJson('allampapir/prices_MAP.json'),
+        MAPP: loadJson('allampapir/prices_MAPP.json'),
+        BABA: loadJson('allampapir/prices_BABA.json'),
+        EMAP: loadJson('allampapir/prices_EMAP.json'),
+        '1MAP': loadJson('allampapir/prices_1MAP.json')
+      },
+      retailInterestEnvelope: envelope,
+      generatedAt: '2026-11-01T12:00:00.000Z'
+    })
+
+    const couponPath = path.join(
+      tmp,
+      'data/market/v2/families/mapp/coupons/A311127M26.json'
+    )
+    const kept = JSON.parse(await readFile(couponPath, 'utf8'))
+
+    const emptyEnvelope: AllampapirEnvelope = {
+      status: true,
+      message: 'ok',
+      data: { data: [] }
+    }
+    const emptied = await ingestMarketData({
+      root: tmp,
+      previousRoot: tmp,
+      rawDir: path.join(tmp, 'raw2'),
+      catalog: loadJson('catalog.json'),
+      networkRates: loadJson('network-rates.json'),
+      allampapirPrices: {
+        DKJ: loadJson('allampapir/prices_DKJ.json'),
+        MAP: loadJson('allampapir/prices_MAP.json'),
+        MAPP: loadJson('allampapir/prices_MAPP.json'),
+        BABA: loadJson('allampapir/prices_BABA.json'),
+        EMAP: loadJson('allampapir/prices_EMAP.json'),
+        '1MAP': loadJson('allampapir/prices_1MAP.json')
+      },
+      retailInterestEnvelope: emptyEnvelope,
+      generatedAt: '2026-11-01T14:00:00.000Z'
+    })
+    expect(emptied.retailInterestSoftFailed).toBe(true)
+    expect(emptied.retailInterestUpdated).toBe(false)
+    expect(JSON.parse(await readFile(couponPath, 'utf8'))).toEqual(kept)
+  })
+
   it('keeps previous coupons when offline without envelope', async () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-ri-'))
     tmpDirs.push(tmp)

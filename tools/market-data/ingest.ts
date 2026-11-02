@@ -11,6 +11,7 @@ import { normalizeKshInflationCsv } from './normalize-ksh-inflation.ts'
 import { normalizeRetailInterestEnvelope } from './normalize-retail-interest.ts'
 import {
   emptyNormalizedByFamily,
+  FAMILIES,
   type AkkEnvelope,
   type AllampapirEnvelope,
   type InflationFile,
@@ -171,6 +172,23 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
 
   const combined = combineSnapshots(akkSnapshot, allampapirSnapshot)
   const previous = await loadMarketTree(options.previousRoot ?? options.root)
+
+  // Empty successful live retailInterest is treated like soft-fail: keep previous coupons
+  // unless this is an intentional full wipe (previous also had no coupons / no retail).
+  if (retailInterestUpdate !== undefined && retailInterestUpdate.rows.length === 0) {
+    const previousHadCoupons = FAMILIES.some(
+      (family) => Object.keys(previous.families[family].coupons).length > 0
+    )
+    const previousHadRetail = Boolean(previous.retailInterest?.rows?.length)
+    if (previousHadCoupons || previousHadRetail) {
+      logRetailInterestSoftFail(
+        new Error('retailInterest returned zero rows; keeping previous coupons/offered')
+      )
+      retailInterestSoftFailed = true
+      retailInterestUpdate = undefined
+    }
+  }
+
   // Dual-source combined rows may rewrite same settleDate vs an ÁKK-only baseline (cutover).
   const mergeOptions: Parameters<typeof mergeSnapshot>[2] = {
     generatedAt,

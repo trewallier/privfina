@@ -1,5 +1,8 @@
+import {
+  annualizeDkjSimpleReturnPct,
+  deriveDkjRemainingDays
+} from '@finance_engine/instruments/day_count'
 import { toFiniteNumber, toPositiveInteger, toNonNegativeNumber } from './spec-input-validators.js'
-import { deriveRemainingDays } from './market-data-autofill.js'
 
 function resolveRemainingDays(specInputs) {
   const remainingDaysRaw = specInputs?.remainingDays
@@ -9,7 +12,7 @@ function resolveRemainingDays(specInputs) {
 
   const settlementDate = String(specInputs?.settlementDate || '').trim()
   const maturityDate = String(specInputs?.maturityDate || '').trim()
-  const derived = deriveRemainingDays(settlementDate, maturityDate)
+  const derived = deriveDkjRemainingDays(settlementDate, maturityDate)
   if (derived == null) {
     throw new Error('remainingDays could not be derived from settlementDate and maturityDate.')
   }
@@ -68,11 +71,16 @@ function mapLegacyInvestmentPreviewToSpecOutputs(legacyPreview) {
   }
 }
 
-function resolveAnnualizedYieldPct(remainingDays, fallbackAnnualizedYieldPct, simpleReturnPct) {
+function resolveAnnualizedYieldPct(
+  remainingDays,
+  fallbackAnnualizedYieldPct,
+  simpleReturnPct,
+  dayCountConvention
+) {
   if (remainingDays == null) {
     return fallbackAnnualizedYieldPct
   }
-  return simpleReturnPct * (360 / remainingDays)
+  return annualizeDkjSimpleReturnPct(simpleReturnPct, remainingDays, dayCountConvention)
 }
 
 function calculateDkjFromSpecInputs(specInputs, options) {
@@ -91,7 +99,8 @@ function calculateDkjFromSpecInputs(specInputs, options) {
     annualizedYieldPct: resolveAnnualizedYieldPct(
       remainingDays,
       mapped.annualizedYieldPct,
-      mapped.simpleReturnPct
+      mapped.simpleReturnPct,
+      specInputs.dayCountConvention
     )
   }
 }

@@ -1,11 +1,11 @@
-specVersion: v2alpha1
+specVersion: v2alpha2
 kind: financial-product
 id: government-security.bmap.standard
 family: government-security
 variant: bmap
 productCode: bmap
 displayName: Bonus Hungarian Government Security (BMÁP)
-description: Hungarian retail government bond with variable coupon linked to 3-month DKJ auction yields and quarterly interest payment.
+description: Hungarian retail government bond with a variable coupon tied to 3-month DKJ auction yields, paid quarterly.
 
 category: retail-government-bond
 denominationCurrency: HUF
@@ -26,7 +26,7 @@ inputs:
     label: Principal
     required: true
     unit: currency
-    description: Invested nominal amount.
+    description: Face amount you invest in forints (HUF).
     constraints:
       minimum: 1
 
@@ -35,7 +35,7 @@ inputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Effective annual coupon rate for the applicable interest period (combined period kamat as published).
+    description: Yearly interest rate for the current period, as published (already combined; not base plus premium).
     constraints:
       minimum: 0
       maximum: 100
@@ -45,42 +45,42 @@ inputs:
     label: Purchase Date
     required: true
     unit: date
-    description: Purchase or valuation date in ISO format, used for accrued-interest-related calculations.
+    description: Date when the purchase is accounted for (YYYY-MM-DD). Used to compute interest already earned.
 
   - name: issueDate
     type: string
     label: Issue Date
     required: true
     unit: date
-    description: Issue date of the BMAP series in ISO format.
+    description: Date this series was issued (YYYY-MM-DD).
 
   - name: maturityDate
     type: string
     label: Maturity Date
     required: true
     unit: date
-    description: Maturity date of the BMAP series in ISO format.
+    description: Date the bond repays principal (YYYY-MM-DD). Taken from the series; not invented by the calculator.
 
   - name: startDate
     type: string
     label: Start Date
     required: false
     unit: date
-    description: Investment start date in ISO format; defaults to issue date when omitted.
+    description: Optional holding start (YYYY-MM-DD). Defaults to the issue date when omitted.
 
   - name: firstCouponDate
     type: string
     label: First Coupon Date
     required: false
     unit: date
-    description: First coupon payment date in ISO format when a full couponSchedule is not supplied.
+    description: First interest payment date (YYYY-MM-DD) when you are not supplying a full coupon schedule.
 
   - name: dayCountConvention
     type: string
     label: Day Count Convention
     required: false
     unit: text
-    description: Interest day-count convention for accrued interest (default ACT/360).
+    description: How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).
     constraints:
       enum: [ACT/360, ACT/365F, 30E/360]
 
@@ -89,7 +89,24 @@ inputs:
     label: Coupon Schedule
     required: false
     unit: text
-    description: Optional list of coupon periods `{ from, to?, rate? }`; future rates may be omitted.
+    description: Optional interest periods. Each row needs a start date; end date and rate may be empty for future unknown periods. Commercial autofill currently uses the flat yearly rate until family composers land (§6g).
+    constraints:
+      items:
+        type: object
+        additionalProperties: false
+        required: [from]
+        properties:
+          from:
+            type: string
+            format: date
+            description: Period start (YYYY-MM-DD).
+          to:
+            type: ["string", "null"]
+            format: date
+            description: Period end (YYYY-MM-DD), or null when open-ended.
+          rate:
+            type: ["number", "null"]
+            description: Annual coupon percent for the period, or null when not yet published.
 
 outputs:
   - name: annualCouponRatePct
@@ -97,21 +114,21 @@ outputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Effective annual coupon rate used for the current period.
+    description: Yearly interest rate applied for the current period.
 
   - name: accruedInterestAmount
     type: number
     label: Accrued Interest
     required: false
     unit: currency
-    description: Interest accrued from issue or previous coupon date to purchase or valuation date.
+    description: Interest already earned from the previous coupon (or issue) through the purchase date.
 
   - name: purchaseAmount
     type: number
     label: Purchase Amount
     required: false
     unit: currency
-    description: Purchase amount based on principal plus accrued interest, where applicable.
+    description: Total paid at purchase — principal plus accrued interest when applicable.
 
 assumptions:
   - BMAP is modeled as a quarterly-pay variable-rate retail government bond.
@@ -121,12 +138,13 @@ assumptions:
   - BMAP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
   - Default day-count for accrued-interest and period coupon calculations is ACT/360 unless overridden per series or input.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
-  - Coupon schedule periods without a published rate do not invent cash flows.
+  - When a couponSchedule is supplied, periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the commercial path holds the flat yearly rate through maturity (ADR 0038 / §6g follow-up).
   - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem BMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
   - Collateral-purpose transfer is out of scope and restricted by the official product rules.
   - Live DKJ auction base derivation (`refs/dkj-base.json`) remains future work.
+  - Breaking input contract vs pre-ADR-0038 shapes is stamped as specVersion v2alpha2; saved bundles with base+premium migrate on edit.
 
 ui:
   formTitle: Bonus Hungarian Government Security (BMÁP)
@@ -146,3 +164,4 @@ ui:
 exampleRefs:
   - ./examples/nominal-case.yaml
   - ./examples/lower-dkj-base-case.yaml
+  - ./examples/mid-period-purchase-case.yaml

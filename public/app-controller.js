@@ -151,6 +151,10 @@ import {
   ensureDefaultPurchaseDateValue,
   resolveSeriesSelectValue
 } from './controller/market-data-composer.js'
+import {
+  migrateBmapConfigForEdit,
+  migratePmapConfigForEdit
+} from './controller/govsec-config-migrate.js'
 
 const INVESTMENT_FAMILY_TITLE = 'Simplified Investment'
 const COMMERCIAL_INVESTMENT_FAMILY_TITLE = 'Commercial Investment'
@@ -1930,17 +1934,19 @@ function initController() {
     applyCommercialInvestmentProductUi(productCode)
 
     if (productCode === 'bmap') {
+      const migrated = migrateBmapConfigForEdit(config)
       commercialInvestmentForm.querySelector('#bmap-principal').value =
-        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+        migrated.principal !== undefined ? formatMoneyAmount(migrated.principal) : ''
       commercialInvestmentForm.querySelector('#bmap-annual-coupon-rate-pct').value =
-        config.annualCouponRatePct !== undefined ? String(config.annualCouponRatePct) : ''
+        migrated.annualCouponRatePct !== undefined ? String(migrated.annualCouponRatePct) : ''
       commercialInvestmentForm.querySelector('#bmap-maturity-date').value =
-        config.maturityDate || config.dueDate || ''
-      commercialInvestmentForm.querySelector('#bmap-start-date').value = config.startDate || ''
-      commercialInvestmentForm.querySelector('#bmap-purchase-date').value = config.purchaseDate || ''
-      commercialInvestmentForm.querySelector('#bmap-issue-date').value = config.issueDate || ''
+        migrated.maturityDate || ''
+      commercialInvestmentForm.querySelector('#bmap-start-date').value = migrated.startDate || ''
+      commercialInvestmentForm.querySelector('#bmap-purchase-date').value =
+        migrated.purchaseDate || ''
+      commercialInvestmentForm.querySelector('#bmap-issue-date').value = migrated.issueDate || ''
       commercialInvestmentForm.querySelector('#bmap-first-coupon-date').value =
-        config.firstCouponDate || ''
+        migrated.firstCouponDate || ''
     } else if (productCode === 'dkj') {
       commercialInvestmentForm.querySelector('#dkj-face-value').value =
         config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
@@ -1959,19 +1965,20 @@ function initController() {
       commercialInvestmentForm.querySelector('#dkj-remaining-days').value =
         config.remainingDays !== undefined ? String(config.remainingDays) : ''
     } else if (productCode === 'pmap') {
+      const migrated = migratePmapConfigForEdit(config)
       commercialInvestmentForm.querySelector('#pmap-principal').value =
-        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+        migrated.principal !== undefined ? formatMoneyAmount(migrated.principal) : ''
       commercialInvestmentForm.querySelector('#pmap-annual-coupon-rate-pct').value =
-        config.annualCouponRatePct !== undefined ? String(config.annualCouponRatePct) : ''
+        migrated.annualCouponRatePct !== undefined ? String(migrated.annualCouponRatePct) : ''
       commercialInvestmentForm.querySelector('#pmap-maturity-date').value =
-        config.maturityDate || config.dueDate || ''
+        migrated.maturityDate || ''
       commercialInvestmentForm.querySelector('#pmap-start-date').value =
-        config.startDate || config.issueDate || ''
+        migrated.startDate || migrated.issueDate || ''
       commercialInvestmentForm.querySelector('#pmap-purchase-date').value =
-        config.purchaseDate || config.transactionDate || ''
-      commercialInvestmentForm.querySelector('#pmap-issue-date').value = config.issueDate || ''
+        migrated.purchaseDate || migrated.transactionDate || ''
+      commercialInvestmentForm.querySelector('#pmap-issue-date').value = migrated.issueDate || ''
       commercialInvestmentForm.querySelector('#pmap-first-coupon-date').value =
-        config.firstCouponDate || config.couponPeriod || ''
+        migrated.firstCouponDate || migrated.couponPeriod || ''
     }
 
     commercialInvestmentSubmitButton.textContent = 'Save Commercial Investment'

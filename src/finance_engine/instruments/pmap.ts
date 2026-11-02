@@ -7,6 +7,8 @@ import { createCashFlow, sortCashFlowsByDate } from './common'
 import {
   accrueInterestAmount,
   normalizeDayCountConvention,
+  resolveAccrualStartIso,
+  resolveCoveringCouponPeriod,
   resolveCouponRatePct,
   type CouponSchedulePeriod,
   type DayCountConvention
@@ -87,11 +89,15 @@ export function derivePmapAccruedInterestAmount(
   annualCouponRatePct?: number
 ): number {
   const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
-  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
-  const accrualStartIso = issueDateIso || startDateIso
+  const accrualStartIso = resolveAccrualStartIso({
+    purchaseDate: purchaseDateIso,
+    issueDate: issueDateIso,
+    startDate: specInputs.startDate,
+    couponSchedule: specInputs.couponSchedule
+  })
   if (purchaseDateIso < accrualStartIso) {
-    throw new Error('purchaseDate must be on or after startDate or issueDate.')
+    throw new Error('purchaseDate must be on or after accrual start (prior coupon, startDate, or issueDate).')
   }
   const rate =
     annualCouponRatePct != null
@@ -121,6 +127,7 @@ export function generatePmapAnnualCouponFlows(
     typeof specInputs.firstCouponDate === 'string' ? String(specInputs.firstCouponDate).trim() : ''
   const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
   const schedule = Array.isArray(specInputs.couponSchedule) ? specInputs.couponSchedule : []
+  const scheduleActive = schedule.length > 0
 
   const flows: CashFlow[] = [
     createCashFlow(
@@ -140,13 +147,14 @@ export function generatePmapAnnualCouponFlows(
   while (couponDate.getTime() <= maturityDate.getTime()) {
     const couponIso = formatIsoDate(couponDate)
     if (couponIso >= purchaseDateIso) {
-      const period = schedule.find((row) => {
-        if (!row?.from) return false
-        if (row.from > couponIso) return false
-        if (row.to != null && row.to !== '' && row.to < couponIso) return false
-        return true
-      })
-      if (period && (period.rate == null || !Number.isFinite(Number(period.rate)))) {
+      const period = resolveCoveringCouponPeriod(schedule, couponIso)
+      if (scheduleActive) {
+        // With an explicit schedule: null rate OR missing covering period → skip (no invent).
+        if (!period || period.rate == null || !Number.isFinite(Number(period.rate))) {
+          couponDate = addYearsUtc(couponDate, 1)
+          continue
+        }
+      } else if (period && (period.rate == null || !Number.isFinite(Number(period.rate)))) {
         couponDate = addYearsUtc(couponDate, 1)
         continue
       }

@@ -31,6 +31,7 @@ Exit codes: `ingest` → `0` updated / `2` unchanged / `1` error.
 ## Domain rules (schemaVersion 2)
 
 - **Publish root**: `data/market/v2/` only after ADR 0038 cutover (no v1 dual-write).
+- **Cutover**: when `v2` is empty, `loadMarketTree` one-shot lifts `data/market/v1/` (quotes retained, `prem` dropped, inflation bumped, flat retail-interest → coupons). Push clears `data/market/v2` before artifact extract; `writeMarketTree` prunes orphan quote/coupon files. Empty successful retailInterest soft-fails (keeps previous coupons). Maintainer checklist after merge: `workflow_dispatch` → tip `manifest.json` → Pages `/privfina/data/market/v2/manifest.json`.
 - **Canonical ids**: `toSeriesId` transliterates Hungarian diacritics then slugifies; map key = `quotes/<id>.json` = `coupons/<id>.json` = `QuotesFile.id`. Display text stays on `name`.
 - **Series**: identity + `mat` (required when source provides it for quoted series) + optional `dayCount` / `offered` / `ref`. **No `prem`.**
 - **Coupons**: `families/{fam}/coupons/<id>.json` from retailInterest periods joined onto series id (name / slug). `rate` and `to` nullable; multi-band / stepped rate strings → distinct rows.

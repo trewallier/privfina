@@ -314,16 +314,18 @@ Constraints
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0038 + ROADMAP / ownership / spec / CI playbook / market-data README + government-securities extension matrix stub.
-- [x] Product YAML + examples: effective `annualCouponRatePct`, required `maturityDate`, optional `couponSchedule` / `dayCountConvention`; slim outputs; DKJ `remainingDays` derived.
+- [x] Product YAML + examples: effective `annualCouponRatePct`, required `maturityDate`, optional `couponSchedule` / `dayCountConvention`; slim outputs; DKJ `remainingDays` derived; **specVersion v2alpha2** for the breaking input contract.
 - [x] `tools/market-data/` v2: drop `prem`; `coupons/<id>.json` with nullable / multi-band rates; `dayCount` / `offered`; canonical id join; `ktj` / `map2` routing stubs; fixtures + validate.
-- [x] Engine + adapters: shared day-count/accrued; schedule-aware coupons; retire invented term years; Vitest.
-- [x] SPA loader/autofill/forms hard-cut to v2; drop `0 + askYield` premium mapping; Pages materialization of `data/market/v2/`.
-- [x] Close §6f: formula-ownership / catalog notes; confirm no kamatok→premium path remains.
+- [x] Engine + adapters: shared day-count/accrued (prior-coupon accrual start); schedule null/gap skip; DKJ remaining-days + ACT/360 annualization in `finance_engine`; retire invented term years; Vitest.
+- [x] SPA loader/autofill/forms hard-cut to v2; drop `0 + askYield` premium mapping; Pages materialization of `data/market/v2/`; schema-owned plain-language field help; bundle edit migration (base+premium → effective rate).
+- [x] Cutover hardening: v1→v2 baseline lift on first ingest; prune-on-publish (`rm -rf` v2 before artifact extract + orphan prune in `writeMarketTree`); empty retailInterest soft-fail.
+- [ ] **Close §6f only after live cutover:** `workflow_dispatch` market-data → tip has `data/market/v2/manifest.json` → Pages serves `/privfina/data/market/v2/manifest.json`. Until then: **code complete; cutover pending**.
 
 Out of scope for §6f
 - `refs/dkj-base.json`; commercial inflation+premium composition as composer inputs.
 - Auto-authoring product YAML; browser CORS to market hosts.
 - Commercial composers for FixMÁP and other optional families (§6g).
+- End-to-end SPA `couponSchedule` wire-through (commercial path intentionally flat-hold rate until §6g).
 
 #### 6g) Additional government securities on commercial composer (subsequent)
 Goal: add catalog product specs and commercial investment hosts for families already (or newly) published on the market-data branch, reusing ADR 0038 v2 series/coupon shapes.

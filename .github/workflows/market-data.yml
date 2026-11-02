@@ -148,6 +148,11 @@ jobs:
           MARKET_DATA_GIT_NAME: privfina-market-data[bot]
         run: bash tools/market-data/scripts/ensure-clone.sh
 
+      # Prune before extract: writeMarketTree also deletes orphans, but an overlay
+      # extract onto a prior tip can leave ghost coupons/quotes when the join set shrinks.
+      - name: Clear previous published v2 tree
+        run: rm -rf "${{ github.workspace }}/market-data/data/market/v2"
+
       - name: Download published market-data artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:

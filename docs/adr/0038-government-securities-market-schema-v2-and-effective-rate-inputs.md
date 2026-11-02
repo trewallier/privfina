@@ -28,6 +28,10 @@ Related: 0015, 0017, 0027, 0034, 0035, 0036, 0037, ROADMAP §6f / §6g
 ## Consequences
 
 - Ingest, validate, fixtures, deploy sparse copy, and SPA loader/autofill must move to `data/market/v2/` together; maintainers republish the `market-data` tip once.
+- **Cutover (merge gate):** `loadMarketTree` one-shot lifts a live `data/market/v1/` tip into an in-memory v2 baseline (copy quotes, drop `prem`, bump schemaVersion, migrate inflation, join flat retail-interest → coupons when present). Push job `rm -rf …/data/market/v2` before artifact extract; `writeMarketTree` prunes orphan quote/coupon files. Empty successful retailInterest is soft-fail (keep previous coupons) unless an intentional wipe. After merge: `workflow_dispatch` market-data → confirm `data/market/v2/manifest.json` on tip → confirm Pages materialization. Until that republish completes, ROADMAP §6f is **code complete; cutover pending** — do not mark closed.
+- **Product contract version:** government-security catalog products stamp **`specVersion: v2alpha2`** (schema allows `v2alpha1 | v2alpha2`). This is a breaking input change vs prior BMÁP/PMÁP base+premium / invented maturity shapes that still said `v2alpha1`. Loan / home-savings products remain on `v2alpha1`. Old saved bundles migrate on commercial edit (compose effective rate; require maturity; never invent +6y/+10y).
+- **Commercial couponSchedule:** engine honors an explicit schedule (null rate and covering gaps skip cash flows). SPA autofill remains scalar `annualCouponRatePct` (flat hold through maturity) until §6g wires family composers end-to-end.
+- Field help for catalog inputs/outputs is owned by product YAML descriptions; `investment-field-help.js` holds shared non-product UI copy only.
 - Commercial autofill reads current coupon `rate` and `series.mat`; temporary `0 + askYield` → premium mapping is removed.
 - Inflation + premium composition and DKJ-base auction derivation remain later optional verification paths, not the commercial input contract.
 - §6g can add FixMÁP and other family composers against the v2 coupon/series shape without another market-schema ADR.

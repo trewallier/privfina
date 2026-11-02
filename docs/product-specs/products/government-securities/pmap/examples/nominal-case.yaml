@@ -1,4 +1,4 @@
-specVersion: v2alpha1
+specVersion: v2alpha2
 productId: government-security.pmap.standard
 exampleId: nominal-case
 title: Nominal PMAP example

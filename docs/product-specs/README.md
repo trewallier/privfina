@@ -8,7 +8,7 @@ Product specs define financial products as data: inputs, derived values, outputs
 
 Folder conventions:
 
-- `schema/v2/` contains the **active** versioned validation contracts (`specVersion: v2alpha1`).
+- `schema/v2/` contains the **active** versioned validation contracts (`specVersion: v2alpha1` baseline; government securities use `v2alpha2` after ADR 0038).
 - `schema/v1/` is **frozen** historical pilot (`v1alpha1`); do not extend it for new products.
 - `products/<family>/<variant>/` contains one product spec and its examples.
 - Worked examples live beside each product and act as acceptance criteria.

@@ -37,13 +37,17 @@ export function deriveTermMonths(issue, mat) {
   )
 }
 
+/**
+ * Calendar days settlement→maturity (ACT). Delegates to finance_engine day-count
+ * (Math.floor); kept here so autofill callers need not import the engine directly.
+ */
 export function deriveRemainingDays(settlementDate, maturityDate) {
   const start = parseIsoDateUtc(settlementDate)
   const end = parseIsoDateUtc(maturityDate)
   if (!start || !end || end <= start) {
     return null
   }
-  return Math.round((end.getTime() - start.getTime()) / 86400000)
+  return Math.floor((end.getTime() - start.getTime()) / 86400000)
 }
 
 /**

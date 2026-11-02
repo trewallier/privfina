@@ -57,7 +57,7 @@ describe('pmap ui/controller integration seam', () => {
 
     expect(outputs).toMatchObject(parsed.expected)
     expect(bundle.productId).toBe('government-security.pmap.standard')
-    expect(bundle.productSpecVersion).toBe('v2alpha1')
+    expect(bundle.productSpecVersion).toBe('v2alpha2')
     expect(bundle.config.subtype).toBe('pmap')
     expect(bundle.config.annualCouponRatePct).toBe(4.9)
     expect(bundle.config.maturityDate).toBe('2036-05-23')

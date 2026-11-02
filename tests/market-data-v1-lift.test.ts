@@ -93,6 +93,7 @@ async function writeV1Baseline(root: string): Promise<void> {
     )
   }
 
+  // Production tip (ADR 0036) uses singular `rate`, not ADR 0038 `rates`.
   await writeFile(
     path.join(v1, 'refs', 'retail-interest.json'),
     JSON.stringify({
@@ -105,7 +106,7 @@ async function writeV1Baseline(root: string): Promise<void> {
           family: 'bmap',
           series: '2028/N',
           type: 'BMÁP',
-          rates: [6.88],
+          rate: 6.88,
           ehm: null,
           from: '2026-09-22',
           to: '2026-12-22',
@@ -132,6 +133,9 @@ describe('v1→v2 baseline lift + prune', () => {
     ])
     expect(tree.families.bmap.series.series[0]?.offered).toBe(true)
     expect(tree.manifest?.refs?.retailInterest).toBeUndefined()
+    // Loaded tip row is coerced to ADR 0038 `rates` (no leftover singular `rate`).
+    expect(tree.retailInterest?.rows[0]).toMatchObject({ rates: [6.88] })
+    expect(tree.retailInterest?.rows[0]).not.toHaveProperty('rate')
   })
 
   it('prunes orphan quote and coupon files on write', async () => {

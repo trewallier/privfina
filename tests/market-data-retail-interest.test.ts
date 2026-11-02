@@ -13,6 +13,7 @@ import { fetchRetailInterestSnapshots } from '../tools/market-data/fetch-retail-
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
 import { emptyMarketTree, mergeSnapshot } from '../tools/market-data/merge.ts'
 import {
+  coerceRetailInterestFile,
   joinRetailInterestToCoupons,
   normalizeRetailInterestEnvelope,
   parseRetailRateBands
@@ -197,6 +198,50 @@ describe('retail interest join → coupons + merge', () => {
     expect(joined.couponsByFamily.fixmap?.['2029_Q2']?.rows).toEqual([
       ['2026-10-01', null, 4.5],
       ['2026-10-01', null, 5.75]
+    ])
+  })
+
+  it('coerces ADR 0036 singular rate tip rows into rates before join', () => {
+    // Shape matches market-data tip refs/retail-interest.json (all 1599 rows use `rate`).
+    const legacy = {
+      schemaVersion: 1,
+      asOf: '2026-10-26',
+      generatedAt: '2026-11-01T18:19:13.147Z',
+      rows: [
+        {
+          id: '2028_N',
+          family: 'bmap' as const,
+          series: '2028/N',
+          type: 'BMÁP',
+          rate: 6.88,
+          ehm: 0,
+          from: '2026-09-22',
+          to: '2026-12-22',
+          offered: true,
+          mat: '2028-03-22'
+        }
+      ]
+    }
+    const coerced = coerceRetailInterestFile(legacy)
+    expect(coerced.schemaVersion).toBe(2)
+    expect(coerced.rows[0]).toMatchObject({ rates: [6.88] })
+    expect(coerced.rows[0]).not.toHaveProperty('rate')
+
+    const joined = joinRetailInterestToCoupons(legacy, {
+      bmap: [
+        {
+          id: 'A280322N17',
+          isin: 'HU0000403423',
+          name: '2028/N',
+          issue: '2017-10-03',
+          mat: '2028-03-22',
+          ccy: 'HUF',
+          status: 'active'
+        }
+      ]
+    })
+    expect(joined.couponsByFamily.bmap?.A280322N17?.rows).toEqual([
+      ['2026-09-22', '2026-12-22', 6.88]
     ])
   })
 

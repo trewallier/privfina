@@ -10,6 +10,8 @@ import {
   deriveRemainingDays,
   deriveTermMonths,
   formatSeriesAvailabilityLabel,
+  formatSeriesOptionLabel,
+  formatSeriesMaturityStatusHint,
   isSeriesAvailableOn,
   parseSeriesNameYear,
   pickCouponRatePct,
@@ -50,11 +52,13 @@ describe('market-data-autofill', () => {
       false
     )
     expect(formatSeriesAvailabilityLabel({ name: '2028/N', issue: '2017-10-03' }, '2026-11-01')).toBe(
-      '2028/N — available'
+      '2028/N'
     )
     expect(formatSeriesAvailabilityLabel({ name: '2020/A', issue: '2015-03-01' }, '2026-11-01')).toBe(
-      '2020/A — past'
+      '2020/A'
     )
+    expect(formatSeriesOptionLabel({ name: '2027/J', id: '2027/J' })).toBe('2027/J')
+    expect(formatSeriesMaturityStatusHint({ status: 'matured' })).toBe('Matured')
     expect(budapestTodayIso(new Date('2026-11-01T12:00:00Z'))).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
@@ -66,7 +70,7 @@ describe('market-data-autofill', () => {
         { name: '2027/J', issue: '2022-09-30', offered: true },
         '2026-11-01'
       )
-    ).toBe('2027/J — available')
+    ).toBe('2027/J')
   })
 
   it('always overwrites DKJ auto fields without sourcing settlement or amounts', () => {
@@ -120,7 +124,6 @@ describe('market-data-autofill', () => {
       ],
       maturityDate: '2027-03-24',
       issueDate: '2022-01-21',
-      startDate: '2022-01-21',
       firstCouponDate: '2022-03-24'
     })
     expect(pmap.fields).not.toHaveProperty('principal')
@@ -141,7 +144,6 @@ describe('market-data-autofill', () => {
       couponSchedule: [{ from: '2026-03-22', to: '2026-06-21', rate: 5.47 }],
       maturityDate: '2028-03-22',
       issueDate: '2017-10-03',
-      startDate: '2017-10-03',
       firstCouponDate: '2017-12-22'
     })
   })
@@ -185,7 +187,7 @@ describe('market-data-autofill', () => {
 
   it('lists marketable fields missing from a new patch so series switches can clear stale rates', () => {
     expect(
-      marketableFieldsMissingFromPatch('bmap', ['issueDate', 'startDate', 'firstCouponDate'])
+      marketableFieldsMissingFromPatch('bmap', ['issueDate', 'firstCouponDate'])
     ).toEqual(['annualCouponRatePct', 'maturityDate', 'couponSchedule'])
     expect(
       marketableFieldsMissingFromPatch('dkj', [
@@ -198,7 +200,6 @@ describe('market-data-autofill', () => {
     expect(marketableFieldsMissingFromPatch('pmap', [])).toEqual([
       'annualCouponRatePct',
       'maturityDate',
-      'startDate',
       'issueDate',
       'firstCouponDate',
       'couponSchedule'
@@ -228,7 +229,6 @@ describe('market-data-autofill', () => {
         annualCouponRatePct: '5.1',
         maturityDate: '2028-03-22',
         issueDate: '2017-10-03',
-        startDate: '2017-10-03',
         firstCouponDate: '2017-12-22'
       }
     })

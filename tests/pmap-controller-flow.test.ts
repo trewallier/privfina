@@ -33,8 +33,7 @@ describe('pmap ui/controller integration seam', () => {
       annualCouponRatePct: String(parsed.inputs.annualCouponRatePct),
       purchaseDate: String(parsed.inputs.purchaseDate),
       issueDate: String(parsed.inputs.issueDate),
-      maturityDate: String(parsed.inputs.maturityDate),
-      startDate: String(parsed.inputs.startDate)
+      maturityDate: String(parsed.inputs.maturityDate)
     })
 
     const specInputs = mapFormDataToPmapSpecInputs(formData as any)
@@ -50,14 +49,13 @@ describe('pmap ui/controller integration seam', () => {
       purchaseDate: '2026-05-23',
       issueDate: '2026-05-23',
       maturityDate: '2036-05-23',
-      startDate: '2026-05-23',
       firstCouponDate: undefined,
       dayCountConvention: undefined
     })
 
     expect(outputs).toMatchObject(parsed.expected)
     expect(bundle.productId).toBe('government-security.pmap.standard')
-    expect(bundle.productSpecVersion).toBe('v2alpha2')
+    expect(bundle.productSpecVersion).toBe('v2alpha3')
     expect(bundle.config.subtype).toBe('pmap')
     expect(bundle.config.annualCouponRatePct).toBe(4.9)
     expect(bundle.config.maturityDate).toBe('2036-05-23')

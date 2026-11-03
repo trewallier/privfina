@@ -40,7 +40,7 @@ inputs:
     label: Term Bucket in Months
     required: true
     unit: months
-    description: Official DKJ term bucket (3, 6, or 12 months). Does not invent a maturity date.
+    description: Official DKJ term bucket (3, 6, or 12 months).
     constraints:
       enum: [3, 6, 12]
 
@@ -49,14 +49,14 @@ inputs:
     label: Settlement Date
     required: true
     unit: date
-    description: Date the purchase settles (YYYY-MM-DD).
+    description: Date the purchase settles.
 
   - name: maturityDate
     type: string
     label: Maturity Date
     required: true
     unit: date
-    description: Date face value is repaid (YYYY-MM-DD). Required — the calculator does not invent it from the term bucket.
+    description: Date face value is repaid.
 
   - name: dayCountConvention
     type: string

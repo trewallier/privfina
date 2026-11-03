@@ -14,6 +14,12 @@ describe('money amount formatting', () => {
     expect(formatMoneyAmount(-2000)).toBe('−2 000.00')
   })
 
+  it('formats whole forints when fractionDigits is 0', () => {
+    expect(formatMoneyAmount(10_000, { fractionDigits: 0 })).toBe('10 000')
+    expect(formatMoneyAmount(1_000_000.4, { fractionDigits: 0 })).toBe('1 000 000')
+    expect(formatMoneyAmount(-2500, { fractionDigits: 0 })).toBe('−2 500')
+  })
+
   it('parses spaced and plain numeric strings', () => {
     expect(parseMoneyAmount('5 000')).toBe(5000)
     expect(parseMoneyAmount('1 000 000.50')).toBe(1000000.5)

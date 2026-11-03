@@ -31,6 +31,7 @@ export function migrateBmapConfigForEdit(config = {}) {
   delete next.interestPremiumPct
   // Maturity must come from the saved config or series autofill — never invent +6y.
   next.maturityDate = next.maturityDate || next.dueDate || ''
+  delete next.startDate
   return next
 }
 
@@ -56,5 +57,6 @@ export function migratePmapConfigForEdit(config = {}) {
   delete next.inflationPct
   delete next.interestPremiumPct
   next.maturityDate = next.maturityDate || next.dueDate || ''
+  delete next.startDate
   return next
 }

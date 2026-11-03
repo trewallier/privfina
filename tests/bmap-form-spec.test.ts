@@ -34,7 +34,6 @@ describe('bmap frontend form metadata seam', () => {
       'annualCouponRatePct',
       'issueDate',
       'maturityDate',
-      'startDate',
       'firstCouponDate',
       'dayCountConvention'
     ])
@@ -52,7 +51,6 @@ describe('bmap frontend form metadata seam', () => {
       'bmap-annual-coupon-rate-pct'
     )
     expect(BMAP_FRONTEND_FIELD_ADAPTER.maturityDate.inputId).toBe('bmap-maturity-date')
-    expect(BMAP_FRONTEND_FIELD_ADAPTER.startDate.inputId).toBe('bmap-start-date')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.purchaseDate.inputId).toBe('bmap-purchase-date')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.issueDate.inputId).toBe('bmap-issue-date')
     expect(BMAP_FRONTEND_FIELD_ADAPTER.firstCouponDate.inputId).toBe('bmap-first-coupon-date')

@@ -116,6 +116,19 @@ function bindMoneyAmountInput(input) {
   input.setAttribute('inputmode', 'decimal')
   input.setAttribute('autocomplete', 'off')
 
+  const resolveFractionDigits = () => {
+    const raw = Number(input.dataset.fractionDigits)
+    if (Number.isFinite(raw) && raw >= 0) {
+      return Math.floor(raw)
+    }
+    // Denomination-backed HUF face/principal amounts are whole forints.
+    const unit = Number(input.dataset.denominationUnit)
+    if (Number.isFinite(unit) && unit > 0) {
+      return 0
+    }
+    return 2
+  }
+
   const reformat = () => {
     const unit = Number(input.dataset.denominationUnit)
     const minimum = Number(input.dataset.denominationMinimum)
@@ -127,7 +140,7 @@ function bindMoneyAmountInput(input) {
     } else if (!Number.isFinite(numeric)) {
       return
     }
-    input.value = formatMoneyAmount(numeric)
+    input.value = formatMoneyAmount(numeric, { fractionDigits: resolveFractionDigits() })
   }
 
   // Readonly preview fields are written already formatted by preview sync.
@@ -186,11 +199,19 @@ function applyDenominationToMoneyInput(
     delete input.dataset.denominationMinimum
   }
 
+  // HUF face/principal denomination fields always display whole forints.
+  if (Number.isFinite(unit) && unit > 0 && input.dataset.fractionDigits === undefined) {
+    input.dataset.fractionDigits = '0'
+  }
+
   if (setDefaultIfEmpty && !String(input.value || '').trim()) {
     const amount = defaultDenominationAmount(unit, {
       minimum: Number.isFinite(min) ? min : unit
     })
-    input.value = formatMoneyAmount(amount)
+    const fractionDigits = Number(input.dataset.fractionDigits)
+    input.value = formatMoneyAmount(amount, {
+      fractionDigits: Number.isFinite(fractionDigits) ? fractionDigits : 0
+    })
   }
 }
 

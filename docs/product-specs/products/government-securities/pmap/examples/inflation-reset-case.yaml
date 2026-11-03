@@ -1,4 +1,4 @@
-specVersion: v2alpha2
+specVersion: v2alpha3
 productId: government-security.pmap.standard
 exampleId: inflation-reset-case
 title: Low effective-rate PMAP example
@@ -7,7 +7,6 @@ description: Scenario with a low published effective coupon (historically a floo
 inputs:
   principal: 1000000
   annualCouponRatePct: 0.5
-  startDate: 2027-01-01
   purchaseDate: 2027-01-01
   issueDate: 2027-01-01
   maturityDate: 2037-01-01

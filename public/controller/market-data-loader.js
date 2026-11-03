@@ -178,22 +178,29 @@ export function createMarketDataLoader(options = {}) {
 
     /**
      * @param {'dkj'|'pmap'|'bmap'} family
-     * @returns {Promise<{ series: object[], latest: object|null, available: boolean, asOf: string|null }>}
+     * @returns {Promise<{ series: object[], latest: object|null, available: boolean, asOf: string|null, generatedAt: string|null }>}
      */
     async loadFamily(family) {
+      const empty = {
+        series: [],
+        latest: null,
+        available: false,
+        asOf: null,
+        generatedAt: null
+      }
       if (!MARKET_FAMILIES.includes(family)) {
-        return { series: [], latest: null, available: false, asOf: null }
+        return empty
       }
 
       try {
         const manifest = await this.loadManifest()
         if (!manifest) {
-          return { series: [], latest: null, available: false, asOf: null }
+          return empty
         }
 
         const paths = manifest.paths?.[family]
         if (!paths?.series || !paths?.latest) {
-          return { series: [], latest: null, available: false, asOf: null }
+          return empty
         }
 
         const [seriesFile, latestFile] = await Promise.all([
@@ -203,16 +210,17 @@ export function createMarketDataLoader(options = {}) {
           cachedFetch(joinUrl(baseUrl, paths.latest), fetchImpl, validateLatestFile)
         ])
 
-        // Include active / matured / delisted so the composer can label available vs past.
+        // Include active / matured / delisted so the composer can show maturity status in the hint.
         const listedSeries = (seriesFile.series || []).filter((row) => row && row.id)
         return {
           series: listedSeries,
           latest: latestFile,
           available: listedSeries.length > 0,
-          asOf: latestFile.asOf || manifest.asOf || null
+          asOf: latestFile.asOf || manifest.asOf || null,
+          generatedAt: manifest.generatedAt || null
         }
       } catch {
-        return { series: [], latest: null, available: false, asOf: null }
+        return empty
       }
     },
 

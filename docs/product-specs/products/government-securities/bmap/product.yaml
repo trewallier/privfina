@@ -1,4 +1,4 @@
-specVersion: v2alpha2
+specVersion: v2alpha3
 kind: financial-product
 id: government-security.bmap.standard
 family: government-security
@@ -45,35 +45,28 @@ inputs:
     label: Purchase Date
     required: true
     unit: date
-    description: Date when the purchase is accounted for (YYYY-MM-DD). Used to compute interest already earned.
+    description: Date when the purchase is accounted for. Used to compute interest already earned.
 
   - name: issueDate
     type: string
     label: Issue Date
     required: true
     unit: date
-    description: Date this series was issued (YYYY-MM-DD).
+    description: Date this series was issued.
 
   - name: maturityDate
     type: string
     label: Maturity Date
     required: true
     unit: date
-    description: Date the bond repays principal (YYYY-MM-DD). Taken from the series; not invented by the calculator.
-
-  - name: startDate
-    type: string
-    label: Start Date
-    required: false
-    unit: date
-    description: Optional holding start (YYYY-MM-DD). Defaults to the issue date when omitted.
+    description: Date the bond repays principal. Taken from the series when autofilled.
 
   - name: firstCouponDate
     type: string
     label: First Coupon Date
     required: false
     unit: date
-    description: First interest payment date (YYYY-MM-DD) when you are not supplying a full coupon schedule.
+    description: First interest payment date when you are not supplying a full coupon schedule.
 
   - name: dayCountConvention
     type: string
@@ -99,11 +92,11 @@ inputs:
           from:
             type: string
             format: date
-            description: Period start (YYYY-MM-DD).
+            description: Period start date.
           to:
             type: ["string", "null"]
             format: date
-            description: Period end (YYYY-MM-DD), or null when open-ended.
+            description: Period end date, or null when open-ended.
           rate:
             type: ["number", "null"]
             description: Annual coupon percent for the period, or null when not yet published.
@@ -138,13 +131,14 @@ assumptions:
   - BMAP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
   - Default day-count for accrued-interest and period coupon calculations is ACT/360 unless overridden per series or input.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
+  - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent (optional startDate removed in v2alpha3).
   - When a couponSchedule is supplied (including from published market coupons autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
   - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem BMAP before maturity.
   - Primary-market acquisition is limited to natural persons.
   - Collateral-purpose transfer is out of scope and restricted by the official product rules.
   - Live DKJ auction base derivation (`refs/dkj-base.json`) remains future work.
-  - Breaking input contract vs pre-ADR-0038 shapes is stamped as specVersion v2alpha2; saved bundles with base+premium migrate on edit.
+  - Breaking input contract vs ADR 0038 shapes (drop optional startDate) is stamped as specVersion v2alpha3; saved bundles with startDate migrate on edit by ignoring the field.
 
 ui:
   formTitle: Bonus Hungarian Government Security (BMÁP)
@@ -157,7 +151,6 @@ ui:
         - annualCouponRatePct
         - issueDate
         - maturityDate
-        - startDate
         - firstCouponDate
         - dayCountConvention
 

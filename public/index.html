@@ -116,6 +116,11 @@
         color: var(--muted);
       }
 
+      #composer-region {
+        display: grid;
+        gap: 12px;
+      }
+
       .composer-toolbar {
         display: flex;
         gap: 8px;
@@ -201,23 +206,37 @@
         grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
         gap: 10px;
         min-width: 0;
+        align-items: stretch;
       }
 
       label {
         font-size: 0.9rem;
         display: grid;
+        grid-template-rows: auto auto;
+        align-content: start;
         gap: 6px;
         min-width: 0;
         max-width: 100%;
       }
 
+      /* Keep controls on one baseline across a row despite unequal label lengths. */
+      .row > label {
+        grid-template-rows: minmax(2.6rem, auto) auto;
+        align-items: stretch;
+      }
+
+      .row > label > :not(.label-title):not(.field-help) {
+        align-self: end;
+      }
+
       .label-title {
         display: inline-flex;
         align-items: center;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         gap: 6px;
         font-weight: 600;
         min-width: 0;
+        min-height: 2.6rem;
       }
 
       .label-title .field-label,
@@ -1544,7 +1563,7 @@
                     </label>
                     <label>
                       <span class="label-title"><span class="loan-field-label">Principal</span> <button type="button" class="info-chip" data-help-button="loan-principal-help" aria-label="Principal help">i</button></span>
-                      <input id="loan-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
+                      <input id="loan-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
                       <div id="loan-principal-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="loan-principal-help" aria-label="Close">x</button>
                         <p>Initial borrowed amount used for amortization.</p>
@@ -1706,7 +1725,7 @@
                     </label>
                     <label>
                       <span class="label-title">Principal <button type="button" class="info-chip" data-help-button="commercial-loan-principal-help" aria-label="Principal help">i</button></span>
-                      <input id="commercial-loan-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
+                      <input id="commercial-loan-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
                       <div id="commercial-loan-principal-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="commercial-loan-principal-help" aria-label="Close">x</button>
                         <p>Approved forint principal disbursed for the home-loan purpose.</p>
@@ -1918,7 +1937,7 @@
                     </label>
                     <label id="investment-principal-wrap">
                       <span class="label-title"><span id="investment-principal-label" class="field-label">Principal / face value</span> <button type="button" class="info-chip" data-help-button="investment-principal-help" aria-label="Principal help">i</button></span>
-                      <input id="investment-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
+                      <input id="investment-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
                       <div id="investment-principal-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="investment-principal-help" aria-label="Close">x</button>
                         <p>Base notional amount for principal redemption and yield calculations.</p>
@@ -2108,7 +2127,7 @@
                     <div class="row">
                       <label id="dkj-face-value-wrap">
                         <span class="label-title"><span class="dkj-field-label">Face Value</span></span>
-                        <input id="dkj-face-value" name="faceValue" class="money-amount" type="text" inputmode="decimal" required />
+                        <input id="dkj-face-value" name="faceValue" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
                       </label>
                       <label id="dkj-settlement-date-wrap">
                         <span class="label-title"><span class="dkj-field-label">Settlement Date</span></span>
@@ -2130,10 +2149,6 @@
                       </label>
                     </div>
                     <div class="row">
-                      <label id="dkj-remaining-days-wrap">
-                        <span class="label-title"><span class="dkj-field-label">Remaining Days</span></span>
-                        <input id="dkj-remaining-days" name="remainingDays" type="number" min="1" step="1" readonly />
-                      </label>
                       <label id="dkj-maturity-date-wrap">
                         <span class="label-title"><span class="dkj-field-label">Maturity Date</span></span>
                         <input id="dkj-maturity-date" name="maturityDate" type="date" required />
@@ -2145,7 +2160,7 @@
                     <div class="row">
                       <label id="pmap-principal-wrap">
                         <span class="label-title"><span class="pmap-field-label">Principal</span></span>
-                        <input id="pmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
+                        <input id="pmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
                       </label>
                       <label id="pmap-purchase-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">Purchase Date</span></span>
@@ -2167,10 +2182,6 @@
                         <span class="label-title"><span class="pmap-field-label">Issue Date</span></span>
                         <input id="pmap-issue-date" name="issueDate" type="date" required />
                       </label>
-                      <label id="pmap-start-date-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Start Date</span></span>
-                        <input id="pmap-start-date" name="startDate" type="date" />
-                      </label>
                       <label id="pmap-first-coupon-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">First Coupon Date</span></span>
                         <input id="pmap-first-coupon-date" name="firstCouponDate" type="date" />
@@ -2189,7 +2200,7 @@
                     <div class="row">
                       <label id="bmap-principal-wrap">
                         <span class="label-title"><span id="bmap-principal-label" class="bmap-field-label">Principal</span></span>
-                        <input id="bmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" required />
+                        <input id="bmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
                       </label>
                       <label id="bmap-purchase-date-wrap">
                         <span class="label-title"><span id="bmap-purchase-date-label" class="bmap-field-label">Purchase Date</span></span>
@@ -2211,10 +2222,6 @@
                         <span class="label-title"><span id="bmap-issue-date-label" class="bmap-field-label">Issue Date</span></span>
                         <input id="bmap-issue-date" name="issueDate" type="date" required />
                       </label>
-                      <label id="bmap-start-date-wrap">
-                        <span class="label-title"><span id="bmap-start-date-label" class="bmap-field-label">Start Date</span></span>
-                        <input id="bmap-start-date" name="startDate" type="date" />
-                      </label>
                       <label id="bmap-first-coupon-date-wrap">
                         <span class="label-title"><span id="bmap-first-coupon-date-label" class="bmap-field-label">First Coupon Date</span></span>
                         <input id="bmap-first-coupon-date" name="firstCouponDate" type="date" />
@@ -2231,6 +2238,10 @@
 
                   <p id="commercial-investment-calculated-heading" class="investment-calculated-heading">Calculated outputs</p>
                   <div id="commercial-investment-preview-row" class="row">
+                    <label id="dkj-remaining-days-wrap" hidden>
+                      <span class="label-title"><span class="dkj-field-label">Remaining Days</span></span>
+                      <input id="dkj-remaining-days" name="remainingDays" type="number" min="1" step="1" readonly />
+                    </label>
                     <label id="commercial-investment-maturity-preview-wrap">
                       <span class="label-title"><span class="field-label">Maturity preview</span> <button type="button" class="info-chip" data-help-button="commercial-investment-maturity-preview-help" aria-label="Maturity preview help">i</button></span>
                       <input id="commercial-investment-maturity-preview" class="money-amount" type="text" readonly />

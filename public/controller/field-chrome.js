@@ -300,8 +300,7 @@ function applyInvestmentFieldValidity(form, message) {
     [/coupon|firstCoupon/i, 'investment-coupon-period'],
     [/termMonths|term bucket/i, 'dkj-term-months'],
     [/remainingDays/i, 'dkj-remaining-days'],
-    [/purchaseDate must be on or after startDate/i, 'bmap-purchase-date'],
-    [/startDate/i, 'bmap-start-date']
+    [/purchaseDate must be on or after accrual start/i, 'bmap-purchase-date']
   ]
 
   for (const [pattern, id] of rules) {

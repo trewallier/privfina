@@ -26,7 +26,6 @@ export type PmapSpecInputs = {
   purchaseDate: string
   issueDate: string
   maturityDate: string
-  startDate?: string
   firstCouponDate?: string
   dayCountConvention?: DayCountConvention | string
   couponSchedule?: CouponSchedulePeriod[]
@@ -79,7 +78,6 @@ export function derivePmapAccruedInterestAmount(
   specInputs: Pick<
     PmapSpecInputs,
     | 'principal'
-    | 'startDate'
     | 'purchaseDate'
     | 'issueDate'
     | 'dayCountConvention'
@@ -93,11 +91,10 @@ export function derivePmapAccruedInterestAmount(
   const accrualStartIso = resolveAccrualStartIso({
     purchaseDate: purchaseDateIso,
     issueDate: issueDateIso,
-    startDate: specInputs.startDate,
     couponSchedule: specInputs.couponSchedule
   })
   if (purchaseDateIso < accrualStartIso) {
-    throw new Error('purchaseDate must be on or after accrual start (prior coupon, startDate, or issueDate).')
+    throw new Error('purchaseDate must be on or after accrual start (prior coupon or issueDate).')
   }
   const rate =
     annualCouponRatePct != null
@@ -120,7 +117,6 @@ export function generatePmapAnnualCouponFlows(
   description = 'PMAP'
 ): CashFlow[] {
   const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
-  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
   const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
   const firstCouponDateIso =
@@ -141,7 +137,7 @@ export function generatePmapAnnualCouponFlows(
 
   let couponDate = firstCouponDateIso
     ? parseIsoDate(firstCouponDateIso)
-    : addYearsUtc(parseIsoDate(startDateIso), 1)
+    : addYearsUtc(parseIsoDate(issueDateIso), 1)
   const maturityDate = parseIsoDate(maturityDateIso)
 
   while (couponDate.getTime() <= maturityDate.getTime()) {

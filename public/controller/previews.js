@@ -1,5 +1,7 @@
 import { formatMoneyAmount, parseMoneyAmount } from './money-format.js'
 
+const WHOLE_FORINT = Object.freeze({ fractionDigits: 0 })
+
 function normalizePreviewGracePeriodMonths(value) {
   if (value === undefined || value === null || String(value).trim() === '') {
     return 0
@@ -146,6 +148,8 @@ function createInvestmentPreviewSync({
   onPreviewSuccess,
   extraInputs = []
 }) {
+  const remainingDaysInput = form?.querySelector?.('#dkj-remaining-days') || null
+
   const clearPreviews = () => {
     if (purchasePreviewInput) purchasePreviewInput.value = '—'
     if (maturityPreviewInput) maturityPreviewInput.value = '—'
@@ -153,6 +157,7 @@ function createInvestmentPreviewSync({
     if (discountYieldPreviewInput) discountYieldPreviewInput.value = '—'
     if (discountCurrentValuePreviewInput) discountCurrentValuePreviewInput.value = '—'
     if (inflationSchedulePreviewInput) inflationSchedulePreviewInput.value = '—'
+    if (remainingDaysInput) remainingDaysInput.value = ''
   }
 
   const syncInvestmentPreview = () => {
@@ -167,9 +172,12 @@ function createInvestmentPreviewSync({
         const specInputs = mapFormDataToDkjSpecInputs(new FormData(form))
         const preview = calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
 
-        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount)
-        maturityPreviewInput.value = formatMoneyAmount(preview.redemptionValue)
-        gainPreviewInput.value = formatMoneyAmount(preview.grossGain)
+        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
+        maturityPreviewInput.value = formatMoneyAmount(preview.redemptionValue, WHOLE_FORINT)
+        gainPreviewInput.value = formatMoneyAmount(preview.grossGain, WHOLE_FORINT)
+        if (remainingDaysInput && preview.remainingDays != null) {
+          remainingDaysInput.value = String(preview.remainingDays)
+        }
         if (discountYieldPreviewInput) {
           discountYieldPreviewInput.value = `${preview.annualizedYieldPct.toFixed(4)}%`
         }
@@ -189,10 +197,11 @@ function createInvestmentPreviewSync({
         const specInputs = mapFormDataToPmapSpecInputs(new FormData(form))
         const preview = calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
 
-        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount)
-        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal)
+        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
+        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)
         gainPreviewInput.value = formatMoneyAmount(
-          Number(specInputs.principal) - Number(preview.purchaseAmount)
+          Number(specInputs.principal) - Number(preview.purchaseAmount),
+          WHOLE_FORINT
         )
         if (discountYieldPreviewInput) {
           discountYieldPreviewInput.value = '—'
@@ -220,10 +229,11 @@ function createInvestmentPreviewSync({
           createInvestmentMaturityPreview
         })
 
-        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount)
-        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal)
+        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
+        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)
         gainPreviewInput.value = formatMoneyAmount(
-          Number(specInputs.principal) - Number(preview.purchaseAmount)
+          Number(specInputs.principal) - Number(preview.purchaseAmount),
+          WHOLE_FORINT
         )
         if (discountYieldPreviewInput) {
           discountYieldPreviewInput.value = '—'

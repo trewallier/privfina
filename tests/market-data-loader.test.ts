@@ -151,7 +151,8 @@ describe('market-data-loader', () => {
       series: [],
       latest: null,
       available: false,
-      asOf: null
+      asOf: null,
+      generatedAt: null
     })
     expect(await loader.loadCoupons('dkj', 'D261223')).toBeNull()
     expect(await loader.loadRetailInterest()).toBeNull()

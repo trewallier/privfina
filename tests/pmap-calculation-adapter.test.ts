@@ -22,7 +22,7 @@ describe('pmap calculation adapter seam', () => {
     expect(exampleYaml).toContain('principal: 1000000')
     expect(exampleYaml).toContain('annualCouponRatePct: 4.9')
     expect(exampleYaml).toContain('maturityDate: 2036-05-23')
-    expect(exampleYaml).toContain('startDate: 2026-05-23')
+    expect(exampleYaml).not.toContain('startDate:')
 
     const adapterOutputs = calculatePmapFromSpecInputs(parsed.inputs)
     const legacyInput = mapPmapSpecInputsToLegacyInvestmentInput(parsed.inputs)

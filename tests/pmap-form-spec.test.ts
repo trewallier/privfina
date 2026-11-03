@@ -34,7 +34,6 @@ describe('pmap frontend form metadata seam', () => {
       'annualCouponRatePct',
       'issueDate',
       'maturityDate',
-      'startDate',
       'firstCouponDate',
       'dayCountConvention'
     ])
@@ -55,7 +54,6 @@ describe('pmap frontend form metadata seam', () => {
       inputId: 'pmap-maturity-date',
       formName: 'maturityDate'
     })
-    expect(PMAP_FRONTEND_FIELD_ADAPTER.startDate.inputId).toBe('pmap-start-date')
     expect(PMAP_FRONTEND_FIELD_ADAPTER.purchaseDate.inputId).toBe('pmap-purchase-date')
     expect(PMAP_FRONTEND_FIELD_ADAPTER.issueDate.inputId).toBe('pmap-issue-date')
     expect(PMAP_FRONTEND_FIELD_ADAPTER.firstCouponDate.inputId).toBe('pmap-first-coupon-date')

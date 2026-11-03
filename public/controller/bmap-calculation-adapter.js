@@ -13,11 +13,10 @@ import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
 
 function buildBmapLegacyInvestmentInput(specInputs, purchaseAmount, annualCouponRatePct) {
   const issueDateIso = String(specInputs.issueDate || '').trim()
-  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const purchaseDateIso =
     typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
   const maturityDateIso = String(specInputs.maturityDate || '').trim()
-  const purchaseIso = purchaseDateIso || startDateIso
+  const purchaseIso = purchaseDateIso || issueDateIso
 
   return {
     subtype: 'custom-bond',
@@ -26,7 +25,7 @@ function buildBmapLegacyInvestmentInput(specInputs, purchaseAmount, annualCoupon
     annualRate: annualCouponRatePct / 100,
     purchaseDate: purchaseIso,
     maturityDate: maturityDateIso,
-    issueDate: issueDateIso || startDateIso,
+    issueDate: issueDateIso,
     transactionDate: purchaseIso,
     dueDate: maturityDateIso,
     couponPeriod: '0 0 1 */3 *'
@@ -77,7 +76,6 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
     calculated.annualCouponRatePct
   )
   const issueDateIso = String(specInputs.issueDate || '').trim()
-  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const purchaseDateIso =
     typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
   const maturityDateIso = String(specInputs.maturityDate || '').trim()
@@ -94,7 +92,6 @@ function generateBmapInstrumentBundleFromSpecInputs(specInputs, extras = {}, opt
       subtype: 'bmap',
       principal: calculated.purchaseAmount - calculated.accruedInterestAmount,
       annualCouponRatePct: calculated.annualCouponRatePct,
-      startDate: startDateIso,
       purchaseDate: purchaseDateIso || undefined,
       issueDate: issueDateIso || undefined,
       maturityDate: maturityDateIso,

@@ -49,7 +49,7 @@ describe('product specification schema v2', () => {
       const spec = YAML.parse(readFileSync(productPath, 'utf8'))
       const valid = validateProduct(spec)
       expect(valid, `${productPath}: ${JSON.stringify(validateProduct.errors)}`).toBe(true)
-      expect(['v2alpha1', 'v2alpha2']).toContain(spec.specVersion)
+      expect(['v2alpha1', 'v2alpha2', 'v2alpha3']).toContain(spec.specVersion)
       expect(typeof spec.productCode).toBe('string')
       expect(spec.productCode.length).toBeGreaterThan(0)
     }
@@ -192,7 +192,7 @@ describe('product specification schema v2', () => {
         const example = YAML.parse(readFileSync(examplePath, 'utf8'))
         const valid = validateExample(example)
         expect(valid, `${examplePath}: ${JSON.stringify(validateExample.errors)}`).toBe(true)
-        expect(['v2alpha1', 'v2alpha2']).toContain(example.specVersion)
+        expect(['v2alpha1', 'v2alpha2', 'v2alpha3']).toContain(example.specVersion)
       }
     }
   })

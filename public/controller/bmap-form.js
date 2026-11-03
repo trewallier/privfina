@@ -7,7 +7,7 @@ import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.j
 import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
 
 const BMAP_PRODUCT_SPEC = {
-  specVersion: 'v2alpha2',
+  specVersion: 'v2alpha3',
   id: 'government-security.bmap.standard',
   family: 'government-security',
   variant: 'bmap',
@@ -41,7 +41,7 @@ const BMAP_PRODUCT_SPEC = {
       required: true,
       unit: 'date',
       description:
-        'Date when the purchase is accounted for (YYYY-MM-DD). Used to compute interest already earned.'
+        'Date when the purchase is accounted for. Used to compute interest already earned.'
     },
     {
       name: 'issueDate',
@@ -49,7 +49,7 @@ const BMAP_PRODUCT_SPEC = {
       label: 'Issue Date',
       required: true,
       unit: 'date',
-      description: 'Date this series was issued (YYYY-MM-DD).'
+      description: 'Date this series was issued.'
     },
     {
       name: 'maturityDate',
@@ -57,16 +57,7 @@ const BMAP_PRODUCT_SPEC = {
       label: 'Maturity Date',
       required: true,
       unit: 'date',
-      description:
-        'Date the bond repays principal (YYYY-MM-DD). Taken from the series; not invented by the calculator.'
-    },
-    {
-      name: 'startDate',
-      type: 'string',
-      label: 'Start Date',
-      required: false,
-      unit: 'date',
-      description: 'Optional holding start (YYYY-MM-DD). Defaults to the issue date when omitted.'
+      description: 'Date the bond repays principal. Taken from the series when autofilled.'
     },
     {
       name: 'firstCouponDate',
@@ -75,7 +66,7 @@ const BMAP_PRODUCT_SPEC = {
       required: false,
       unit: 'date',
       description:
-        'First interest payment date (YYYY-MM-DD) when you are not supplying a full coupon schedule.'
+        'First interest payment date when you are not supplying a full coupon schedule.'
     },
     {
       name: 'dayCountConvention',
@@ -127,7 +118,6 @@ const BMAP_PRODUCT_SPEC = {
           'annualCouponRatePct',
           'issueDate',
           'maturityDate',
-          'startDate',
           'firstCouponDate',
           'dayCountConvention'
         ]
@@ -142,7 +132,6 @@ const BMAP_FRONTEND_FIELD_ADAPTER = {
   purchaseDate: { inputId: 'bmap-purchase-date' },
   issueDate: { inputId: 'bmap-issue-date' },
   maturityDate: { inputId: 'bmap-maturity-date' },
-  startDate: { inputId: 'bmap-start-date' },
   firstCouponDate: { inputId: 'bmap-first-coupon-date' }
 }
 
@@ -223,7 +212,6 @@ function mapFormDataToBmapSpecInputs(formData) {
     purchaseDate: String(formData.get('purchaseDate') || '').trim(),
     issueDate: String(formData.get('issueDate') || '').trim(),
     maturityDate: String(formData.get('maturityDate') || '').trim(),
-    startDate: String(formData.get('startDate') || '').trim() || undefined,
     firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
     dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
     couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))

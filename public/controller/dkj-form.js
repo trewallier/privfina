@@ -40,7 +40,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Term Bucket in Months',
       required: true,
       unit: 'months',
-      description: 'Official DKJ term bucket (3, 6, or 12 months). Does not invent a maturity date.',
+      description: 'Official DKJ term bucket (3, 6, or 12 months).',
       constraints: { enum: [3, 6, 12] }
     },
     {
@@ -49,7 +49,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Settlement Date',
       required: true,
       unit: 'date',
-      description: 'Date the purchase settles (YYYY-MM-DD).'
+      description: 'Date the purchase settles.'
     },
     {
       name: 'maturityDate',
@@ -57,8 +57,7 @@ const DKJ_PRODUCT_SPEC = {
       label: 'Maturity Date',
       required: true,
       unit: 'date',
-      description:
-        'Date face value is repaid (YYYY-MM-DD). Required — the calculator does not invent it from the term bucket.'
+      description: 'Date face value is repaid.'
     },
     {
       name: 'dayCountConvention',
@@ -199,6 +198,7 @@ function applyDkjSpecToForm({
     input.name = adapter.formName
     const hasEnum = Array.isArray(field?.constraints?.enum) && field.constraints.enum.length > 0
     if (hasEnum && input.tagName === 'SELECT') {
+      const previousValue = String(input.value || '')
       input.innerHTML = ''
       field.constraints.enum.forEach((value) => {
         const option = document.createElement('option')
@@ -206,6 +206,10 @@ function applyDkjSpecToForm({
         option.textContent = String(value)
         input.appendChild(option)
       })
+      // Preserve selection after rebuild (autofill sets termMonths before chrome re-apply).
+      if (previousValue && field.constraints.enum.map(String).includes(previousValue)) {
+        input.value = previousValue
+      }
     } else if (field.unit === 'currency' || input.classList.contains('money-amount')) {
       input.type = 'text'
       input.setAttribute('inputmode', 'decimal')
@@ -295,6 +299,11 @@ function setDkjFieldVisibility(investmentForm, visible) {
   const wrap = investmentForm.querySelector('#investment-dkj-wrap')
   if (wrap) {
     wrap.hidden = !visible
+  }
+  // Remaining days lives in the calculated-outputs row (outside #investment-dkj-wrap).
+  const remainingWrap = investmentForm.querySelector('#dkj-remaining-days-wrap')
+  if (remainingWrap) {
+    remainingWrap.hidden = !visible
   }
 }
 

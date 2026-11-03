@@ -1,4 +1,4 @@
-specVersion: v2alpha2
+specVersion: v2alpha3
 productId: government-security.pmap.standard
 exampleId: nominal-case
 title: Nominal PMAP example
@@ -7,7 +7,6 @@ description: Baseline PMAP scenario with published effective coupon rate and ser
 inputs:
   principal: 1000000
   annualCouponRatePct: 4.9
-  startDate: 2026-05-23
   purchaseDate: 2026-05-23
   issueDate: 2026-05-23
   maturityDate: 2036-05-23

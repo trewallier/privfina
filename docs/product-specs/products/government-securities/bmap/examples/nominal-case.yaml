@@ -1,4 +1,4 @@
-specVersion: v2alpha2
+specVersion: v2alpha3
 productId: government-security.bmap.standard
 exampleId: nominal-case
 title: Nominal BMAP example
@@ -7,7 +7,6 @@ description: Baseline BMAP scenario with published effective coupon rate and ser
 inputs:
   principal: 1000000
   annualCouponRatePct: 6.88
-  startDate: 2026-04-24
   purchaseDate: 2026-04-24
   issueDate: 2026-04-24
   maturityDate: 2032-04-24

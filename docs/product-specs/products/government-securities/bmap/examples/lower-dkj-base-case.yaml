@@ -1,4 +1,4 @@
-specVersion: v2alpha2
+specVersion: v2alpha3
 productId: government-security.bmap.standard
 exampleId: lower-dkj-base-case
 title: Low effective-rate BMAP example
@@ -7,7 +7,6 @@ description: Scenario with a low published effective coupon (historically a floo
 inputs:
   principal: 1000000
   annualCouponRatePct: 0.75
-  startDate: 2026-08-01
   purchaseDate: 2026-08-01
   issueDate: 2026-08-01
   maturityDate: 2032-08-01

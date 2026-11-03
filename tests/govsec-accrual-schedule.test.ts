@@ -33,16 +33,14 @@ describe('govsec accrual start + schedule gaps + DKJ day math', () => {
       principal: 1_000_000,
       annualCouponRatePct: 6.88,
       issueDate: '2024-03-22',
-      purchaseDate: '2026-05-15',
-      // no schedule → falls back to startDate/issue
-      startDate: '2024-03-22'
+      purchaseDate: '2026-05-15'
+      // no schedule → falls back to issueDate
     })
     const midPeriod = deriveBmapAccruedInterestAmount({
       principal: 1_000_000,
       annualCouponRatePct: 6.88,
       issueDate: '2024-03-22',
       purchaseDate: '2026-05-15',
-      startDate: '2024-03-22',
       couponSchedule: [
         { from: '2025-03-22', to: '2026-03-21', rate: 6.5 },
         { from: '2026-03-22', to: '2027-03-21', rate: 6.88 }

@@ -62,13 +62,13 @@ describe('commercial investment UI markup contracts', () => {
   it('uses fixed product field rows for amount, rates, and dates', () => {
     expect(indexHtml).toContain('id="investment-dkj-wrap"')
     expect(indexHtml).toMatch(
-      /id="dkj-face-value-wrap"[\s\S]*?id="dkj-settlement-date-wrap"[\s\S]*?id="dkj-purchase-price-pct-wrap"[\s\S]*?id="dkj-term-months-wrap"[\s\S]*?id="dkj-remaining-days-wrap"[\s\S]*?id="dkj-maturity-date-wrap"/
+      /id="dkj-face-value-wrap"[\s\S]*?id="dkj-settlement-date-wrap"[\s\S]*?id="dkj-purchase-price-pct-wrap"[\s\S]*?id="dkj-term-months-wrap"[\s\S]*?id="dkj-maturity-date-wrap"[\s\S]*?id="dkj-remaining-days-wrap"/
     )
     expect(indexHtml).toMatch(
-      /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="pmap-maturity-date-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-start-date-wrap"[\s\S]*?id="pmap-first-coupon-date-wrap"/
+      /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="pmap-maturity-date-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-first-coupon-date-wrap"/
     )
     expect(indexHtml).toMatch(
-      /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="bmap-maturity-date-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-start-date-wrap"[\s\S]*?id="bmap-first-coupon-date-wrap"/
+      /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="bmap-maturity-date-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-first-coupon-date-wrap"/
     )
   })
 
@@ -90,7 +90,7 @@ describe('commercial investment UI markup contracts', () => {
   })
 
   it('wires series + purchase/settlement autofill, stale clear, and apply-token guard', () => {
-    expect(appController).toContain('formatSeriesAvailabilityLabel')
+    expect(appController).toContain('formatSeriesOptionLabel')
     expect(appController).toContain('syncCommercialMarketFieldChrome')
     expect(appController).toContain('clearCommercialMarketSourcedFields')
     expect(appController).toContain('clearMarketableFieldsMissingFromPatch')

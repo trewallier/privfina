@@ -19,8 +19,8 @@
   "properties": {
     "specVersion": {
       "type": "string",
-      "enum": ["v2alpha1", "v2alpha2"],
-      "description": "v2alpha1 is the ADR 0020 baseline. v2alpha2 marks the ADR 0038 government-security breaking input contract (effective annualCouponRatePct + required maturityDate)."
+      "enum": ["v2alpha1", "v2alpha2", "v2alpha3"],
+      "description": "v2alpha1 is the ADR 0020 baseline. v2alpha2 marks the ADR 0038 government-security breaking input contract (effective annualCouponRatePct + required maturityDate). v2alpha3 drops optional startDate on PMÁP/BMÁP (issueDate is the sole series/holding anchor when schedule/firstCoupon absent)."
     },
     "kind": {
       "type": "string",

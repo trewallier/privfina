@@ -19,7 +19,7 @@ describe('bmap calculation adapter seam', () => {
     expect(exampleYaml).toContain('principal: 1000000')
     expect(exampleYaml).toContain('annualCouponRatePct: 6.88')
     expect(exampleYaml).toContain('maturityDate: 2032-04-24')
-    expect(exampleYaml).toContain('startDate: 2026-04-24')
+    expect(exampleYaml).not.toContain('startDate:')
 
     let delegationCount = 0
     const delegatedExistingPath = (input) => {

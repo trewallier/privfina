@@ -18,7 +18,6 @@ const PMAP_FRONTEND_FIELD_ADAPTER = {
     formName: 'annualCouponRatePct'
   },
   maturityDate: { inputId: 'pmap-maturity-date', formName: 'maturityDate' },
-  startDate: { inputId: 'pmap-start-date', formName: 'startDate' },
   purchaseDate: { inputId: 'pmap-purchase-date', formName: 'purchaseDate' },
   issueDate: { inputId: 'pmap-issue-date', formName: 'issueDate' },
   firstCouponDate: { inputId: 'pmap-first-coupon-date', formName: 'firstCouponDate' }
@@ -144,7 +143,6 @@ function mapFormDataToPmapSpecInputs(formData) {
     purchaseDate: String(formData.get('purchaseDate') || '').trim(),
     issueDate: String(formData.get('issueDate') || '').trim(),
     maturityDate: String(formData.get('maturityDate') || '').trim(),
-    startDate: String(formData.get('startDate') || '').trim() || undefined,
     firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
     dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
     couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))
@@ -177,7 +175,6 @@ function mapPmapSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     description: meta.description,
     createdAt: meta.createdAt,
     annualCouponRatePct: specInputs.annualCouponRatePct,
-    startDate: specInputs.startDate,
     firstCouponDate: specInputs.firstCouponDate,
     dayCountConvention: specInputs.dayCountConvention,
     couponSchedule: specInputs.couponSchedule

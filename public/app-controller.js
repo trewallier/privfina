@@ -144,9 +144,9 @@ import {
 } from './controller/market-data-loader.js'
 import {
   MARKET_MARKETABLE_REQUIRED_FIELDS,
-  budapestTodayIso,
   buildMarketAutofillPatch,
-  formatSeriesAvailabilityLabel,
+  formatSeriesMaturityStatusHint,
+  formatSeriesOptionLabel,
   marketableFieldsMissingFromPatch
 } from './controller/market-data-autofill.js'
 import {
@@ -273,7 +273,50 @@ function initController() {
     latest: null,
     available: false,
     asOf: null,
+    generatedAt: null,
     couponsById: {}
+  }
+
+  function formatCommercialMarketUpdatedHint(generatedAt) {
+    if (!generatedAt) {
+      return ''
+    }
+    const raw = String(generatedAt).trim()
+    if (!raw) {
+      return ''
+    }
+    const parsed = Date.parse(raw)
+    if (!Number.isFinite(parsed)) {
+      return `Database updated ${raw}`
+    }
+    const dateLabel = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Budapest',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(parsed)
+    return `Database updated ${dateLabel}`
+  }
+
+  function buildCommercialMarketSeriesHint({ series = null, quote = null, clampDate = null } = {}) {
+    const parts = []
+    if (series) {
+      parts.push(formatSeriesMaturityStatusHint(series))
+    }
+    const lastPriceDay = quote?.d || null
+    if (lastPriceDay) {
+      parts.push(`Last market price ${lastPriceDay}`)
+    }
+    const updated = formatCommercialMarketUpdatedHint(commercialMarketFamilyState.generatedAt)
+    if (updated) {
+      parts.push(updated)
+    } else if (commercialMarketFamilyState.asOf && !lastPriceDay) {
+      parts.push(`Market data as of ${commercialMarketFamilyState.asOf}`)
+    }
+    if (clampDate) {
+      parts.push(`Purchase/settlement clamped to ${clampDate}`)
+    }
+    return parts.join(' · ')
   }
   let commercialMarketApplyToken = 0
   const commercialInvestmentDiscountYieldWrap = document.getElementById(
@@ -334,7 +377,6 @@ function initController() {
   const bmapPrincipalInput = document.getElementById('bmap-principal')
   const bmapAnnualCouponRatePctInput = document.getElementById('bmap-annual-coupon-rate-pct')
   const bmapMaturityDateInput = document.getElementById('bmap-maturity-date')
-  const bmapStartDateInput = document.getElementById('bmap-start-date')
   const bmapPurchaseDateInput = document.getElementById('bmap-purchase-date')
   const bmapIssueDateInput = document.getElementById('bmap-issue-date')
   const bmapFirstCouponDateInput = document.getElementById('bmap-first-coupon-date')
@@ -347,7 +389,6 @@ function initController() {
   const pmapPrincipalInput = document.getElementById('pmap-principal')
   const pmapAnnualCouponRatePctInput = document.getElementById('pmap-annual-coupon-rate-pct')
   const pmapMaturityDateInput = document.getElementById('pmap-maturity-date')
-  const pmapStartDateInput = document.getElementById('pmap-start-date')
   const pmapPurchaseDateInput = document.getElementById('pmap-purchase-date')
   const pmapIssueDateInput = document.getElementById('pmap-issue-date')
   const pmapFirstCouponDateInput = document.getElementById('pmap-first-coupon-date')
@@ -980,7 +1021,6 @@ function initController() {
         annualCouponRatePct:
           commercialInvestmentForm.querySelector('#pmap-annual-coupon-rate-pct')?.value || '',
         maturityDate: commercialInvestmentForm.querySelector('#pmap-maturity-date')?.value || '',
-        startDate: commercialInvestmentForm.querySelector('#pmap-start-date')?.value || '',
         purchaseDate: commercialInvestmentForm.querySelector('#pmap-purchase-date')?.value || '',
         issueDate: commercialInvestmentForm.querySelector('#pmap-issue-date')?.value || '',
         firstCouponDate:
@@ -993,7 +1033,6 @@ function initController() {
         annualCouponRatePct:
           commercialInvestmentForm.querySelector('#bmap-annual-coupon-rate-pct')?.value || '',
         maturityDate: commercialInvestmentForm.querySelector('#bmap-maturity-date')?.value || '',
-        startDate: commercialInvestmentForm.querySelector('#bmap-start-date')?.value || '',
         purchaseDate: commercialInvestmentForm.querySelector('#bmap-purchase-date')?.value || '',
         issueDate: commercialInvestmentForm.querySelector('#bmap-issue-date')?.value || '',
         firstCouponDate:
@@ -1014,7 +1053,6 @@ function initController() {
       pmap: {
         annualCouponRatePct: '#pmap-annual-coupon-rate-pct',
         maturityDate: '#pmap-maturity-date',
-        startDate: '#pmap-start-date',
         issueDate: '#pmap-issue-date',
         firstCouponDate: '#pmap-first-coupon-date',
         couponSchedule: '#pmap-coupon-schedule'
@@ -1022,7 +1060,6 @@ function initController() {
       bmap: {
         annualCouponRatePct: '#bmap-annual-coupon-rate-pct',
         maturityDate: '#bmap-maturity-date',
-        startDate: '#bmap-start-date',
         issueDate: '#bmap-issue-date',
         firstCouponDate: '#bmap-first-coupon-date',
         couponSchedule: '#bmap-coupon-schedule'
@@ -1226,13 +1263,13 @@ function initController() {
     manual.textContent = 'Manual entry'
     commercialInvestmentSeriesInput.appendChild(manual)
 
-    const todayIso = budapestTodayIso() || browserTodayIso()
     commercialMarketFamilyState.series.forEach((entry) => {
       const option = document.createElement('option')
       option.value = entry.id
-      const label = formatSeriesAvailabilityLabel(entry, todayIso)
-      option.textContent = label
-      option.dataset.availability = label.endsWith('available') ? 'available' : 'past'
+      option.textContent = formatSeriesOptionLabel(entry)
+      if (entry.status) {
+        option.dataset.status = String(entry.status)
+      }
       commercialInvestmentSeriesInput.appendChild(option)
     })
 
@@ -1257,6 +1294,7 @@ function initController() {
       latest: null,
       available: false,
       asOf: null,
+      generatedAt: null,
       couponsById: {}
     }
     rebuildCommercialMarketSeriesOptions('')
@@ -1278,6 +1316,7 @@ function initController() {
       latest: loaded.latest,
       available: Boolean(loaded.available),
       asOf: loaded.asOf,
+      generatedAt: loaded.generatedAt || null,
       couponsById: {}
     }
 
@@ -1304,10 +1343,13 @@ function initController() {
     setCommercialMarketRowVisible(true)
     // Product/family refresh always forces Manual entry.
     rebuildCommercialMarketSeriesOptions('')
-    const asOfLabel = commercialMarketFamilyState.asOf
-      ? `Market data as of ${commercialMarketFamilyState.asOf}`
-      : 'Market data loaded'
-    setCommercialMarketHint(asOfLabel, true)
+    const updated = formatCommercialMarketUpdatedHint(commercialMarketFamilyState.generatedAt)
+    const idleHint =
+      updated ||
+      (commercialMarketFamilyState.asOf
+        ? `Market data as of ${commercialMarketFamilyState.asOf}`
+        : 'Market data loaded')
+    setCommercialMarketHint(idleHint, true)
     clearCommercialMarketSourcedFields(code)
   }
 
@@ -1335,12 +1377,15 @@ function initController() {
     }
     if (!seriesId) {
       clearCommercialMarketSourcedFields(family)
-      const asOfLabel = commercialMarketFamilyState.asOf
-        ? `Market data as of ${commercialMarketFamilyState.asOf}`
-        : commercialMarketFamilyState.available
-          ? 'Market data loaded'
-          : ''
-      setCommercialMarketHint(asOfLabel, Boolean(asOfLabel))
+      const updated = formatCommercialMarketUpdatedHint(commercialMarketFamilyState.generatedAt)
+      const idleHint =
+        updated ||
+        (commercialMarketFamilyState.asOf
+          ? `Market data as of ${commercialMarketFamilyState.asOf}`
+          : commercialMarketFamilyState.available
+            ? 'Market data loaded'
+            : '')
+      setCommercialMarketHint(idleHint, Boolean(idleHint))
       syncCommercialInvestmentPreview()
       return
     }
@@ -1408,9 +1453,6 @@ function initController() {
     clearMarketableFieldsMissingFromPatch(family, patch.sourced)
     applyCommercialMarketFields(family, patch.fields)
     syncCommercialMarketFieldChrome(family, patch.sourced)
-    const asOfLabel = commercialMarketFamilyState.asOf
-      ? `Market data as of ${commercialMarketFamilyState.asOf}`
-      : 'Market data loaded'
     const periodRate =
       patch.fields.annualCouponRatePct != null &&
       Number.isFinite(Number(patch.fields.annualCouponRatePct))
@@ -1418,18 +1460,18 @@ function initController() {
         : null
     const rateHint =
       periodRate != null
-        ? ` · Period kamat ${periodRate.toLocaleString('hu-HU', {
+        ? `Period kamat ${periodRate.toLocaleString('hu-HU', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 3
-          })}%${series?.offered ? ' · offered' : ''}`
-        : series?.offered
-          ? ' · offered'
-          : ''
-    const clampHint =
-      lookup.clamped && lookup.date
-        ? ` · Purchase/settlement clamped to ${lookup.date}`
+          })}%`
         : ''
-    setCommercialMarketHint(`${asOfLabel}${clampHint}${rateHint}`, true)
+    const baseHint = buildCommercialMarketSeriesHint({
+      series,
+      quote: lookup.quote,
+      clampDate: lookup.clamped && lookup.date ? lookup.date : null
+    })
+    const hint = [baseHint, rateHint].filter(Boolean).join(' · ')
+    setCommercialMarketHint(hint, Boolean(hint))
     syncCommercialInvestmentPreview()
   }
 
@@ -1457,7 +1499,6 @@ function initController() {
       bmapPrincipalInput,
       bmapAnnualCouponRatePctInput,
       bmapMaturityDateInput,
-      bmapStartDateInput,
       bmapPurchaseDateInput,
       bmapIssueDateInput,
       bmapFirstCouponDateInput
@@ -1474,7 +1515,6 @@ function initController() {
       pmapPrincipalInput,
       pmapAnnualCouponRatePctInput,
       pmapMaturityDateInput,
-      pmapStartDateInput,
       pmapPurchaseDateInput,
       pmapIssueDateInput,
       pmapFirstCouponDateInput
@@ -1786,14 +1826,12 @@ function initController() {
       pmapPrincipalInput,
       pmapAnnualCouponRatePctInput,
       pmapMaturityDateInput,
-      pmapStartDateInput,
       pmapPurchaseDateInput,
       pmapIssueDateInput,
       pmapFirstCouponDateInput,
       bmapPrincipalInput,
       bmapAnnualCouponRatePctInput,
       bmapMaturityDateInput,
-      bmapStartDateInput,
       bmapPurchaseDateInput,
       bmapIssueDateInput,
       bmapFirstCouponDateInput
@@ -1949,12 +1987,13 @@ function initController() {
     if (productCode === 'bmap') {
       const migrated = migrateBmapConfigForEdit(config)
       commercialInvestmentForm.querySelector('#bmap-principal').value =
-        migrated.principal !== undefined ? formatMoneyAmount(migrated.principal) : ''
+        migrated.principal !== undefined
+          ? formatMoneyAmount(migrated.principal, { fractionDigits: 0 })
+          : ''
       commercialInvestmentForm.querySelector('#bmap-annual-coupon-rate-pct').value =
         migrated.annualCouponRatePct !== undefined ? String(migrated.annualCouponRatePct) : ''
       commercialInvestmentForm.querySelector('#bmap-maturity-date').value =
         migrated.maturityDate || ''
-      commercialInvestmentForm.querySelector('#bmap-start-date').value = migrated.startDate || ''
       commercialInvestmentForm.querySelector('#bmap-purchase-date').value =
         migrated.purchaseDate || ''
       commercialInvestmentForm.querySelector('#bmap-issue-date').value = migrated.issueDate || ''
@@ -1967,7 +2006,9 @@ function initController() {
         : ''
     } else if (productCode === 'dkj') {
       commercialInvestmentForm.querySelector('#dkj-face-value').value =
-        config.principal !== undefined ? formatMoneyAmount(config.principal) : ''
+        config.principal !== undefined
+          ? formatMoneyAmount(config.principal, { fractionDigits: 0 })
+          : ''
       commercialInvestmentForm.querySelector('#dkj-purchase-price-pct').value =
         config.purchasePricePct !== undefined
           ? String(config.purchasePricePct)
@@ -1985,13 +2026,13 @@ function initController() {
     } else if (productCode === 'pmap') {
       const migrated = migratePmapConfigForEdit(config)
       commercialInvestmentForm.querySelector('#pmap-principal').value =
-        migrated.principal !== undefined ? formatMoneyAmount(migrated.principal) : ''
+        migrated.principal !== undefined
+          ? formatMoneyAmount(migrated.principal, { fractionDigits: 0 })
+          : ''
       commercialInvestmentForm.querySelector('#pmap-annual-coupon-rate-pct').value =
         migrated.annualCouponRatePct !== undefined ? String(migrated.annualCouponRatePct) : ''
       commercialInvestmentForm.querySelector('#pmap-maturity-date').value =
         migrated.maturityDate || ''
-      commercialInvestmentForm.querySelector('#pmap-start-date').value =
-        migrated.startDate || migrated.issueDate || ''
       commercialInvestmentForm.querySelector('#pmap-purchase-date').value =
         migrated.purchaseDate || migrated.transactionDate || ''
       commercialInvestmentForm.querySelector('#pmap-issue-date').value = migrated.issueDate || ''

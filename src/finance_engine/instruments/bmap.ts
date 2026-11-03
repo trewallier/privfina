@@ -28,7 +28,6 @@ export type BmapSpecInputs = {
   purchaseDate: string
   issueDate: string
   maturityDate: string
-  startDate?: string
   firstCouponDate?: string
   dayCountConvention?: DayCountConvention | string
   couponSchedule?: CouponSchedulePeriod[]
@@ -78,13 +77,12 @@ export function deriveBmapRateOutputs(
 }
 
 /**
- * Accrued interest from last coupon on/before purchase (or startDate / issueDate) to purchaseDate.
+ * Accrued interest from last coupon on/before purchase (or issueDate) to purchaseDate.
  */
 export function deriveBmapAccruedInterestAmount(
   specInputs: Pick<
     BmapSpecInputs,
     | 'principal'
-    | 'startDate'
     | 'purchaseDate'
     | 'issueDate'
     | 'dayCountConvention'
@@ -98,11 +96,10 @@ export function deriveBmapAccruedInterestAmount(
   const accrualStartIso = resolveAccrualStartIso({
     purchaseDate: purchaseDateIso,
     issueDate: issueDateIso,
-    startDate: specInputs.startDate,
     couponSchedule: specInputs.couponSchedule
   })
   if (purchaseDateIso < accrualStartIso) {
-    throw new Error('purchaseDate must be on or after accrual start (prior coupon, startDate, or issueDate).')
+    throw new Error('purchaseDate must be on or after accrual start (prior coupon or issueDate).')
   }
   const rate =
     annualCouponRatePct != null
@@ -125,7 +122,6 @@ export function generateBmapQuarterlyCouponFlows(
   description = 'BMAP'
 ): CashFlow[] {
   const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
-  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
   const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
   const firstCouponDateIso =
@@ -146,7 +142,7 @@ export function generateBmapQuarterlyCouponFlows(
 
   let couponDate = firstCouponDateIso
     ? parseIsoDate(firstCouponDateIso)
-    : addMonthsUtc(parseIsoDate(startDateIso), QUARTER_MONTHS)
+    : addMonthsUtc(parseIsoDate(issueDateIso), QUARTER_MONTHS)
   const maturityDate = parseIsoDate(maturityDateIso)
 
   while (couponDate.getTime() <= maturityDate.getTime()) {

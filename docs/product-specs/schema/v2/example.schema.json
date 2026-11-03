@@ -8,8 +8,8 @@
   "properties": {
     "specVersion": {
       "type": "string",
-      "enum": ["v2alpha1", "v2alpha2"],
-      "description": "Must match the product specVersion for the referenced productId (v2alpha2 for ADR 0038 government securities)."
+      "enum": ["v2alpha1", "v2alpha2", "v2alpha3"],
+      "description": "Must match the product specVersion for the referenced productId (v2alpha2 for ADR 0038 DKJ/govsec; v2alpha3 for PMÁP/BMÁP without startDate)."
     },
     "productId": {
       "type": "string",

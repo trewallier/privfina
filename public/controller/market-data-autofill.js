@@ -221,13 +221,36 @@ export function budapestTodayIso(date = new Date()) {
 }
 
 /**
+ * Series picker option text — name only (status belongs in the hint, not the label).
+ * @param {{ name?: string, id?: string }|null|undefined} series
+ */
+export function formatSeriesOptionLabel(series) {
+  return String(series?.name || series?.id || '').trim() || 'Series'
+}
+
+/**
+ * @deprecated Prefer formatSeriesOptionLabel; availability is shown in the market hint.
  * @param {{ name?: string, id?: string, issue?: string|null, offered?: boolean|null }|null|undefined} series
  * @param {string} [todayIso]
  */
 export function formatSeriesAvailabilityLabel(series, todayIso = budapestTodayIso()) {
-  const name = String(series?.name || series?.id || '').trim() || 'Series'
-  const available = isSeriesAvailableOn(series, todayIso)
-  return available ? `${name} — available` : `${name} — past`
+  void todayIso
+  return formatSeriesOptionLabel(series)
+}
+
+/**
+ * Human-readable matured state for the market hint (extensible for future statuses).
+ * @param {{ status?: string }|null|undefined} series
+ */
+export function formatSeriesMaturityStatusHint(series) {
+  const status = String(series?.status || '').trim().toLowerCase()
+  if (status === 'matured') {
+    return 'Matured'
+  }
+  if (status === 'delisted') {
+    return 'Delisted'
+  }
+  return 'Not matured'
 }
 
 /** Fields that must never be overwritten / marked auto by market autofill. */
@@ -244,7 +267,6 @@ export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
   pmap: Object.freeze([
     'annualCouponRatePct',
     'maturityDate',
-    'startDate',
     'issueDate',
     'firstCouponDate',
     'couponSchedule'
@@ -252,7 +274,6 @@ export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
   bmap: Object.freeze([
     'annualCouponRatePct',
     'maturityDate',
-    'startDate',
     'issueDate',
     'firstCouponDate',
     'couponSchedule'
@@ -337,7 +358,6 @@ export function buildMarketAutofillPatch({
     }
     if (series?.issue) {
       setField('issueDate', series.issue)
-      setField('startDate', series.issue)
     }
     const firstCoupon = deriveFirstCouponDate(
       series?.issue,

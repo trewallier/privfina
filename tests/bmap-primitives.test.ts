@@ -27,7 +27,6 @@ describe('BMAP TypeScript primitives (ADR 0017 / 0038)', () => {
   it('computes ACT/360 accrued interest and matches browser dual-surface', () => {
     const specInputs = {
       principal: 1_000_000,
-      startDate: '2026-04-01',
       purchaseDate: '2026-04-24',
       issueDate: '2026-04-01',
       annualCouponRatePct: 6.88
@@ -44,7 +43,6 @@ describe('BMAP TypeScript primitives (ADR 0017 / 0038)', () => {
     const specInputs = {
       principal: 1_000_000,
       annualCouponRatePct: 6.88,
-      startDate: '2026-04-24',
       purchaseDate: '2026-04-24',
       issueDate: '2026-04-24',
       maturityDate: '2032-04-24'

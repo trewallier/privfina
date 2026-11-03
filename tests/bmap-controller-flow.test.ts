@@ -36,8 +36,7 @@ describe('bmap ui/controller integration seam', () => {
       annualCouponRatePct: String(parsed.inputs.annualCouponRatePct),
       purchaseDate: String(parsed.inputs.purchaseDate),
       issueDate: String(parsed.inputs.issueDate),
-      maturityDate: String(parsed.inputs.maturityDate),
-      startDate: String(parsed.inputs.startDate)
+      maturityDate: String(parsed.inputs.maturityDate)
     })
 
     const specInputs = mapFormDataToBmapSpecInputs(formData as any)
@@ -53,14 +52,13 @@ describe('bmap ui/controller integration seam', () => {
       purchaseDate: '2026-04-24',
       issueDate: '2026-04-24',
       maturityDate: '2032-04-24',
-      startDate: '2026-04-24',
       firstCouponDate: undefined,
       dayCountConvention: undefined
     })
 
     expect(outputs).toMatchObject(parsed.expected)
     expect(bundle.productId).toBe('government-security.bmap.standard')
-    expect(bundle.productSpecVersion).toBe('v2alpha2')
+    expect(bundle.productSpecVersion).toBe('v2alpha3')
     expect(bundle.config.subtype).toBe('bmap')
     expect(bundle.config.principal).toBe(parsed.inputs.principal)
     expect(bundle.config.annualCouponRatePct).toBe(parsed.inputs.annualCouponRatePct)

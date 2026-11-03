@@ -1,5 +1,5 @@
 const PMAP_PRODUCT_SPEC = {
-  specVersion: 'v2alpha2',
+  specVersion: 'v2alpha3',
   id: 'government-security.pmap.standard',
   family: 'government-security',
   variant: 'pmap',
@@ -33,7 +33,7 @@ const PMAP_PRODUCT_SPEC = {
       required: true,
       unit: 'date',
       description:
-        'Date when the purchase is accounted for (YYYY-MM-DD). Used to compute interest already earned.'
+        'Date when the purchase is accounted for. Used to compute interest already earned.'
     },
     {
       name: 'issueDate',
@@ -41,7 +41,7 @@ const PMAP_PRODUCT_SPEC = {
       label: 'Issue Date',
       required: true,
       unit: 'date',
-      description: 'Date this series was issued (YYYY-MM-DD).'
+      description: 'Date this series was issued.'
     },
     {
       name: 'maturityDate',
@@ -49,16 +49,7 @@ const PMAP_PRODUCT_SPEC = {
       label: 'Maturity Date',
       required: true,
       unit: 'date',
-      description:
-        'Date the bond repays principal (YYYY-MM-DD). Taken from the series; not invented by the calculator.'
-    },
-    {
-      name: 'startDate',
-      type: 'string',
-      label: 'Start Date',
-      required: false,
-      unit: 'date',
-      description: 'Optional holding start (YYYY-MM-DD). Defaults to the issue date when omitted.'
+      description: 'Date the bond repays principal. Taken from the series when autofilled.'
     },
     {
       name: 'firstCouponDate',
@@ -67,7 +58,7 @@ const PMAP_PRODUCT_SPEC = {
       required: false,
       unit: 'date',
       description:
-        'First interest payment date (YYYY-MM-DD) when you are not supplying a full coupon schedule.'
+        'First interest payment date when you are not supplying a full coupon schedule.'
     },
     {
       name: 'dayCountConvention',
@@ -119,7 +110,6 @@ const PMAP_PRODUCT_SPEC = {
           'annualCouponRatePct',
           'issueDate',
           'maturityDate',
-          'startDate',
           'firstCouponDate',
           'dayCountConvention'
         ]

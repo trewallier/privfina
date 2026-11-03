@@ -31,7 +31,6 @@ function calculatePmapFromSpecInputs(specInputs, options) {
 function mapPmapSpecInputsToLegacyInvestmentInput(specInputs) {
   const principal = toNonNegativeNumber(specInputs.principal, 'principal')
   const issueDate = String(specInputs.issueDate || '').trim()
-  const startDate = String(specInputs.startDate || '').trim() || issueDate
   const purchaseDate =
     typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
   const maturityDate = String(specInputs.maturityDate || '').trim()
@@ -39,8 +38,8 @@ function mapPmapSpecInputsToLegacyInvestmentInput(specInputs) {
   return {
     subtype: 'inflation-linked-bond',
     principal,
-    issueDate: issueDate || startDate,
-    transactionDate: purchaseDate || startDate,
+    issueDate,
+    transactionDate: purchaseDate || issueDate,
     dueDate: maturityDate,
     spreadRate: annualCouponRatePct / 100,
     yearlyInflation: [],
@@ -66,7 +65,6 @@ function generatePmapInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
     description: flow.description || 'PMAP'
   }))
   const issueDateIso = String(specInputs.issueDate || '').trim()
-  const startDateIso = String(specInputs.startDate || '').trim() || issueDateIso
   const purchaseDateIso =
     typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
   const maturityDateIso = String(specInputs.maturityDate || '').trim()
@@ -83,7 +81,6 @@ function generatePmapInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
       subtype: 'pmap',
       principal: calculated.purchaseAmount - calculated.accruedInterestAmount,
       annualCouponRatePct: calculated.annualCouponRatePct,
-      startDate: startDateIso,
       purchaseDate: purchaseDateIso || undefined,
       issueDate: issueDateIso || undefined,
       maturityDate: maturityDateIso,

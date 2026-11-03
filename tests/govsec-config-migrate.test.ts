@@ -41,4 +41,24 @@ describe('govsec config edit migration', () => {
     expect(migrated).not.toHaveProperty('previousYearAverageInflationPct')
     expect(migrated).not.toHaveProperty('interestPremiumPct')
   })
+
+  it('drops legacy startDate from saved BMÁP configs on edit', () => {
+    const migrated = migrateBmapConfigForEdit({
+      startDate: '2024-03-22',
+      annualCouponRatePct: 6.5,
+      maturityDate: '2028-03-22'
+    })
+    expect(migrated).not.toHaveProperty('startDate')
+    expect(migrated.maturityDate).toBe('2028-03-22')
+  })
+
+  it('drops legacy startDate from saved PMÁP configs on edit', () => {
+    const migrated = migratePmapConfigForEdit({
+      startDate: '2026-05-23',
+      annualCouponRatePct: 4.9,
+      dueDate: '2036-05-23'
+    })
+    expect(migrated).not.toHaveProperty('startDate')
+    expect(migrated.maturityDate).toBe('2036-05-23')
+  })
 })

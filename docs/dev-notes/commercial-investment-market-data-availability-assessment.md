@@ -1,63 +1,141 @@
 # Commercial investment vs real-life availability / pricing
 
-Short assessment of PMÁP / BMÁP (and related DKJ) gaps between harvested market data, the commercial investment composer, and how ordinary retail buyers actually buy these papers. **Exact cash-flow math is out of scope**; focus is availability and pricing.
+Assessment of PMÁP / BMÁP / DKJ gaps between harvested market data, the commercial investment composer, and retail (Államkincstár) use. **Exact cash-flow math is out of scope**; focus is **availability** and **pricing**.
 
-Checked: ÁKK + Magyar Államkincstár / allampapir.hu public pages (2026-11-03), `market-data` tip `data/market/v2/`, SPA market autofill / purchase-date clamp.
+Definitions used below:
 
-## Real-life channel (official)
+- **Availability** for a series is known when these facts are known: **issue date**, **maturity date**, and **on which days retailers sold / sell the paper** (sale calendar, not merely “offered today”).
+- **Pricing on a date** is known when the **effective customer price** for that day is known or can be **calculated** from published rules + interest inputs (treasury retail buy unless noted).
 
-- **ÁKK** is the issuer / debt manager. It publishes product rules, public offers, and **network rates**. Retail natural persons do **not** buy PMÁP / BMÁP “from ÁKK” as a shopfront.
-- **Magyar Államkincstár** (and other retail distributors) sell to the public. ÁKK itself points buyers to **Kincstári árfolyamjegyzés** on [allampapir.hu](https://www.allampapir.hu/kincstari_arfolyamjegyzes/MAP) for treasury bid/ask.
-- Current PMÁP / BMÁP series are sold in **phased (adagolt) public offering**. Official Kincstár product pages describe purchase as **face (névérték) + accrued interest** while the series is under issue — not a free-floating secondary “ÁKK daily market” price for the retail primary buy.
-- After a series leaves sale, treasury tables typically keep a **bid** (investor sell-back, often ~99) and accrued interest; **ask is absent** until/unless the series is offered again.
-- Purchase settlement at Kincstár is **T+1 / T+2** depending on értéknapváltás (official FAQ) — the app’s `purchaseDate` is an accounting/accrual date, not a modeled settlement-cycle date.
-- Deep historical end-of-day treasury quotes exist via **WebKincstár PDF** report downloads; that is a different surface than the allampapir JSON the pipeline calls.
+Checked (Europe/Budapest context, research day 2026-11-03): ÁKK + Magyar Államkincstár / allampapir.hu / WebKincstár surfaces, PMÁP `2036/I1` nyilvános ajánlattétel, `market-data` tip `data/market/v2/`, SPA market autofill.
 
-## What we harvest
+---
 
-| Source | Role in pipeline | What it actually returns |
+## 1) What exists in the repo today
+
+Published tree: `origin/market-data` → `data/market/v2/` (asOf **2026-11-03**). Quote history depth: **two** settle dates (`2026-11-02`, `2026-11-03`) for DKJ / PMÁP / BMÁP.
+
+### Availability facts
+
+| Fact | DKJ | PMÁP | BMÁP | Notes |
+| --- | --- | --- | --- | --- |
+| Issue date | **Yes** (`series.issue`) | **Yes** | **Yes** | From ÁKK catalog / allampapir row metadata |
+| Maturity date | **Yes** (`series.mat`) | **Yes** | **Yes** | Required on quoted series |
+| Sale calendar (which days retailers sold it) | **No** | **Partial / No** | **Partial / No** | Only a **today** boolean `series.offered` ← kamatok `underIssue`. No `saleWindow.from`/`to`, no historical offered timeline. Coupon `from`/`to` are **rate periods**, not sale windows (e.g. PMÁP `2036/I1` kamatok `validTo=2027-02-20` vs offering sale end **2027-07-16**) |
+
+So under the availability definition above: identity dates are present; **retailer sale-day knowledge is not**. The SPA “available / past” label is a **current-offer snapshot**, not a sale calendar.
+
+### Pricing on a date (effective customer price)
+
+| Family | Today (latest settle) | Historical dates in published quotes | Calculable without collecting daily ask? |
+| --- | --- | --- | --- |
+| **DKJ** | **Partial**: ask present for most listed bills; near-dated rows may have `ask=null` and only bid | Only the two harvested settles | **No** — discount ask **must be collected** (not par+accrued) |
+| **PMÁP / BMÁP offered** | **Yes (model)**: offering rules + engine use **par + accrued**; harvested `ask=100` confirms clean par; `ai` harvested but SPA purchase uses engine accrued from coupons | Only two settles; both have ask only on the offered id | **Yes during sale**, if sale days + period rate + day-count are known — clean ask is **100** by rule; dirty price = 100 + accrued |
+| **PMÁP / BMÁP closed** | **No retail buy ask** (`ask=null`); bid≈99 + `ai` (sell-back / table) | Same thin history | **Buy price N/A** at treasury primary; early **sell** bid is policy/table — prefer collect or lock from ismertető, do not invent from “interest” alone |
+
+Supporting published inputs (not prices themselves):
+
+- `families/{pmap,bmap}/coupons/<id>.json` — period `from` / `to` / `rate` from retailInterest (declared periods; current tip has rates filled, some `to` into 2027).
+- `refs/inflation.json` — KSH CPI (not the commercial PMÁP input path after ADR 0038).
+- DKJ has **no** coupons files.
+
+### How the app uses this
+
+- Purchase/settlement date → nearest quote → **clamp** when missing (`resolveQuoteForPurchaseDate`) → explains Nov-2 clamp (only two quote days exist).
+- DKJ autofill: quote **ask else bid** → `purchasePricePct`.
+- PMÁP / BMÁP autofill: coupons → effective rate + `couponSchedule`; cash = principal + **engine accrued**; quote ask/bid not the purchase driver (`offeringPriceModel: par-plus-accrued-interest`).
+
+---
+
+## 2) Real-life channel (official)
+
+- **ÁKK**: issuer; rules, nyilvános ajánlattétel, network rates. Not the retail counter.
+- **Magyar Államkincstár** (+ other distributors): retail path. ÁKK points to **Kincstári árfolyamjegyzés** ([allampapir.hu MAP](https://www.allampapir.hu/kincstari_arfolyamjegyzes/MAP)).
+- Example offering (PMÁP `2036/I1`): sale **2026-07-17 – 2027-07-16**; issue start **2026-07-20**; maturity **2036-02-21**; **first day face, thereafter face + accrued**; full coupon payment list through maturity in the PDF.
+- Closed series on the treasury table: typically **bid + accrued**, **ask absent**.
+- Settlement: T+1 / T+2 after értéknapváltás (Kincstár FAQ) — not modeled as market `settleDate`.
+
+---
+
+## 3) One-shot historical backfill (consumer prices)
+
+### Feasible official-ish paths
+
+1. **WebKincstár daily PDF (primary collect path)**  
+   Community-documented endpoint:  
+   `POST https://webkincstar.allamkincstar.gov.hu/report-service/report`  
+   body includes `reportName: "_20633_arfolyam_mak"` and `report_params: [{ name: "datum", value: "<day>" }]`.  
+   Returns that day’s treasury price table as PDF; parse bid/ask/ai (and series labels) into `quotes/<id>.json` rows.  
+   **One-shot**: loop business days over the desired range, merge append-first into `market-data`.  
+   Evidence: logout.hu / Portfolio Performance threads; `havasd/pp-scraper` `mak_historical` spider.  
+   **Ops caveat (this research run):** the report name is recognized (unknown names → HTTP 403 “not in allowed rate report names”), but live POSTs from this environment returned **HTTP 500** for several dates. Treat as **real but brittle** — needs a working probe (session/headers/weekday) before productionizing.
+
+2. **allampapir.hu JSON**  
+   CSRF `get_prices` / legacy network_rate paths are **same-day snapshots**. **Cannot** one-shot multi-year history.
+
+3. **ÁKK network rates**  
+   Same limitation (snapshot). Also often **missing retail ask**; wrong authority for “what the customer paid at Kincstár.”
+
+4. **Unofficial archives** (e.g. community GitLab dumps)  
+   Possible bootstrap; **not** official; provenance/license risk — prefer WebKincstár PDF if revived.
+
+### What must be **collected** vs what can be **calculated**
+
+| Price component | Collect? | Calculate? |
 | --- | --- | --- |
-| ÁKK xpose3 catalog + network rates | Identity + institutional/network quotes | Snapshot for `settleDate`; often **missing retail ask** for DKJ / closed retail series |
-| allampapir.hu CSRF + `get_prices` | Treasury retail bid/ask/ai | **Same-day snapshot** per paper family (not a multi-year history dump) |
-| allampapir `retailInterest` | Effective period kamat + `offered` | Coupon schedules / sale flag (good for availability labels) |
-| Combine (ADR 0035) | Prefer allampapir for conflicting bid/ask/ai | Correct retail-price priority when both sources quote the same day |
+| **DKJ ask** (customer buy %) | **Must collect** (PDF/table) | No — discount curve / quoted retail ask is not “par + interest” |
+| **DKJ bid** | Collect | No (same) |
+| **PMÁP/BMÁP clean ask while under sale** | Optional validation | **Yes = 100** by nyilvános ajánlattétel (“névérték … + felhalmozott kamat”) |
+| **PMÁP/BMÁP dirty customer buy** while under sale | Optional (`ask`/`ai` from PDF) | **Yes** if known: sale day ∈ sale window, period **rate**, accrual start, **day-count from offering** → accrued; dirty ≈ 100 + accrued |
+| **PMÁP/BMÁP ask after sale closed** | N/A (null) | N/A — not sold at treasury ask |
+| **PMÁP/BMÁP bid** (early sell-back) | Prefer collect from PDF/table | Partially rule-like (~99 + accrued in practice) — confirm per ismertető; do not assume from interest history alone |
+| **Sale window bounds** | Prefer collect from **nyilvános ajánlattétel** (start/end printed) | Weak inference only (first/last day `ask` non-null in a full PDF backfill; `underIssue` is not historical) |
+| **Period coupon rates** | Already collected via retailInterest (and backfillable from kamatok history if retained) | Composition from CPI+premium is out of commercial path (ADR 0038) |
 
-Published tip (as of `asOf` **2026-11-03**): PMÁP / BMÁP / DKJ quote files each hold **only two settle dates** (`2026-11-02`, `2026-11-03`). Ingest is append-first from daily snapshots; it does **not** backfill from WebKincstár PDFs or any historical API.
+**Practical hybrid one-shot**
 
-Observed latest quotes match retail reality:
+- **DKJ**: PDF backfill required for every historical settle you care about.  
+- **PMÁP/BMÁP**:  
+  - Ingest offering sale windows + coupon rate periods (kamatok / PDFs).  
+  - **Synthesize** customer buy price on sale days as par + calculated accrued (collect PDF asks as regression checks).  
+  - Still **collect** bids if sell-back pricing matters.  
+- Without sale windows, calculated PMÁP/BMÁP history cannot know *which* days retailers actually sold the paper (availability gap).
 
-- **Currently offered**: PMÁP `2036/I1` and BMÁP `2032/R1` → `ask=100`, `bid=99`, non-null `ai`, `offered=true`.
-- **Past / closed series**: `ask=null`, `bid=99`, `ai` present, `offered=false`.
+Day-count caveat (pricing fidelity, not solved here): PMÁP `2036/I1` offering states **Tényleges/tényleges**; published `series.dayCount` today is **ACT/360**. Calculated accrued must follow the offering’s convention to match Kincstár `ai`.
 
-## How the app uses that data
+---
 
-- Series picker lists past + available; `offered` drives the label (ADR 0036 / 0038).
-- Changing series or purchase/settlement date loads the nearest published quote and **clamps** the date to that quote’s `d` when no exact match exists (`resolveQuoteForPurchaseDate`).
-- **DKJ** autofill uses quote **ask (else bid)** as `purchasePricePct`.
-- **PMÁP / BMÁP** autofill does **not** use ask/bid for purchase price. Specs model `offeringPriceModel: par-plus-accrued-interest`; cash paid is principal + **engine-derived** accrued interest from the coupon schedule. Quote `ai` is harvested but not the PMÁP/BMÁP purchase driver. Period kamat comes from `coupons/<id>.json`, not from ÁKK yields.
+## 4) Future coupon payment dates — API or not?
 
-So the Nov-2 clamp is **not** “ÁKK only publishes from Nov 2.” It is the SPA correctly snapping to the **only harvested quote days**, which currently start on 2026-11-02.
+**Authoritative source today:** each series’ **nyilvános ajánlattétel** lists exact kamatfizetési napok through maturity (example: PMÁP `2036/I1` every **21 Feb** 2027–2036).
 
-## Gaps (availability & pricing)
+**Official JSON APIs checked / in-pipeline**
 
-1. **Thin quote history → purchase-date clamp**  
-   Real life: buyers can choose many past business days; treasury / WebKincstár retain historical tables. App: any date outside `{2026-11-02, 2026-11-03}` snaps to the nearest of those two. Until daily ingest accumulates (or a one-shot historical backfill lands), historical purchase dating is effectively unusable.
+| Surface | Full future coupon calendar? |
+| --- | --- |
+| allampapir `retailInterest/get_all_data` | **No** — returns **declared rate periods** (`validFrom`/`validTo`/`rate_val`/`underIssue`). Current period may extend months ahead; **does not** enumerate decade-long payment dates or unset future rates |
+| allampapir / ÁKK price APIs | **No** coupon calendars |
+| Published `coupons/<id>.json` | Period schedule for **known** rates only; not a complete payment calendar to maturity |
+| SPA `deriveFirstCouponDate(issue, mat, 12\|3)` | Heuristic only; stub first periods and offering exceptions need the PDF list |
 
-2. **Snapshot API ≠ historical treasury archive**  
-   Pipeline sources (ÁKK network rates + allampapir `get_prices`) are **current settle** feeds. They cannot reconstruct years of PMÁP/BMÁP prices in one run. The historical surface users see on the Kincstár side (PDF report by date) is **not ingested**.
+**Conclusion:** no known official API replaces the offering PDF for **exact future coupon days** of current offerings. Closest machine path still in-repo is kamatok period bounds (implicit next payment ≈ day after contiguous `to` for settled periods). Full calendars require **PDF (or HTML) offering documents**, MNB közzétételek, or unofficial third-party calendars that scrape those.
 
-3. **ÁKK daily prices alone are the wrong retail primary-buy source**  
-   Confirmed by official channel split and by data: ÁKK often lacks retail ask; treasury ask for offered PMÁP/BMÁP is **par (100)**. ADR 0035’s treasury-prefer combine is the right direction. Treating ÁKK network rates as “what ordinary people pay” would still be wrong even with deeper ÁKK history.
+Heuristic generation (anniversary of maturity / quarterly anchors) can approximate many series after the first period, but offerings explicitly call out **exceptions** on early periods — unsafe as sole source for “exact dates.”
 
-4. **Closed-series pricing vs modeling intent**  
-   Harvested `ask=null` for non-offered PMÁP/BMÁP matches “you cannot buy that series from Kincstár today.” The composer still lets users pick **past** series (reasonable for “I already hold this”), but there is no market-sourced **historical ask** path for “I bought 2030/I on date D” beyond clamping to the two known days — and for those days ask is still null.
+---
 
-5. **Offered-series price model is aligned; secondary / bank channels are not**  
-   Par + accrued for offered PMÁP/BMÁP matches Kincstár product rules and harvested `ask=100`. Bank / other distributor tickets, post-sale secondary trades, and early sell-back at **bid (~99) + ai** are not first-class purchase modes in the commercial composer (sell-back is outside current investment compose).
+## 5) Earlier gaps (still valid)
 
-6. **Settlement-cycle nuance unused**  
-   Official T+1/T+2 értéknap rules are not reflected in market-data dates or purchase-date UX; `settleDate` on quotes is the published table date, which may differ from the user’s order day.
+1. Thin quote history → purchase-date clamp to Nov 2–3.  
+2. Snapshot ingest ≠ WebKincstár archive.  
+3. ÁKK network rates ≠ ordinary retail ticket.  
+4. Closed-series modeling has no historical ask path.  
+5. Bank/secondary channels and T+1/T+2 settlement unused.
+
+---
 
 ## Bottom line
 
-Harvested dual-source data already encodes the important **retail** distinction (treasury ask at par for the one offered PMÁP/BMÁP series; bid-only for closed series; coupons/`offered` from kamatok). The main consistency break with real-life use is **history depth and source surface**: the app clamps purchase dates to a two-day harvested window because ingest only accumulates same-day snapshots, while Kincstár’s usable historical prices live on a different official channel that we do not harvest. ÁKK daily network rates are a supporting identity/network feed, not the ordinary buyer’s ticket price.
+Under the availability/pricing definitions: the repo **knows issue and maturity**, knows **whether a series is offered today**, and can price **today’s** DKJ asks (when present) and **today’s** offered PMÁP/BMÁP buys via **par + accrued**. It does **not** know retailer **sale calendars**, and almost **no historical customer prices** are stored (two settles only).
+
+One-shot history: **collect** WebKincstár (or equivalent) tables for **DKJ asks**; for **PMÁP/BMÁP** during sale, **calculate** dirty ask from rules + interest once sale windows exist, and optionally collect PDFs to verify. Future coupon **dates** still come from **offerings**, not from a coupon-calendar API.

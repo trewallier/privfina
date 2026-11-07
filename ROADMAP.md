@@ -352,11 +352,12 @@ Constraints
 - Prefer parsed published JSON on `market-data` over committing raw PDFs.
 - Design PDF→row parsing so a later historical backfill (§6j) can reuse it; **do not** implement backfill in this epic.
 - ADR when the published shape / merge rules need a boundary decision.
+- **Attribution / legal:** credit Magyar Államkincstár (WebKincstár) as the price-table source where the published tree or product docs expose that data; document that republished figures are **informational**, may lag or differ from the live treasury table, and are **not** official investment advice or a substitute for the issuer/distributor publications.
 
 Plan slices (high level; detail when scheduled)
-- [ ] Spec / ADR as needed: daily WebKincstár price ingest + explicit no-price day records.
+- [ ] Spec / ADR as needed: daily WebKincstár price ingest + explicit no-price day records + source attribution / accuracy notes.
 - [ ] Wire daily collect: fetch → parse → merge into `market-data` alongside existing ÁKK / allampapir / kamatok / inflation sources.
-- [ ] Acceptance: price days land as quotes; no-price days are recorded distinctly; parser reusable for §6j.
+- [ ] Acceptance: price days land as quotes; no-price days are recorded distinctly; parser reusable for §6j; attribution and accuracy disclaimer present for the new source.
 
 Out of scope for §6h
 - Historical backfill of older settles (§6j).
@@ -370,11 +371,12 @@ Constraints
 - Accumulate offerings going forward; design transcription so a later backfill (§6j) can reuse parsers.
 - Product YAML auto-authoring remains out of scope unless a later ADR says otherwise.
 - ADR when architecture / published offering schema is chosen.
+- **Attribution / legal:** attribute each transcribed offering to its public host (ÁKK / Államkincstár as applicable); keep provenance to the source document; document that transcriptions may be incomplete or outdated vs the authoritative PDF, and are **not** a substitute for the official nyilvános ajánlattétel.
 
 Plan slices (high level; detail when scheduled)
-- [ ] Spec / ADR as needed: offering discovery + published offering records on `market-data`.
-- [ ] Daily detect new offerings → transcribe into the published tree.
-- [ ] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6j.
+- [ ] Spec / ADR as needed: offering discovery + published offering records on `market-data` + attribution / accuracy notes.
+- [ ] Daily detect new offerings → transcribe into the published tree (with source attribution).
+- [ ] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6j; source credit and accuracy disclaimer present.
 
 Out of scope for §6i
 - Backfilling older offerings (§6j).
@@ -386,9 +388,10 @@ Goal: one-shot (or batched) backfill of historical market artifacts into `market
 Constraints
 - Detail and sequencing TBD when this epic is planned; do not start until §6h / §6i daily paths exist.
 - Prefer official sources already used by daily ingest.
+- Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6i); do not imply backfilled history is more authoritative than the original publications.
 
 Plan slices
-- [ ] Plan and implement historical backfill (scope, sources, and cutover TBD).
+- [ ] Plan and implement historical backfill (scope, sources, cutover, and attribution/legal notes TBD).
 
 Out of scope until planned
 - Concrete date ranges, report inventories, or SPA UX for deep history.

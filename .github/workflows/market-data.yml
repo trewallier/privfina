@@ -1,10 +1,13 @@
-# Scheduled ÁKK + allampapir.hu + KSH inflation → compact data/market/v2 on the market-data branch
-# (ADR 0034 / 0035 / 0036 / 0037 / ROADMAP §6b–§6e).
+# Scheduled ÁKK + allampapir.hu + KSH inflation + WebKincstár daily price PDFs
+# → compact data/market/v2 on the market-data branch
+# (ADR 0034 / 0035 / 0036 / 0037 / 0039 / ROADMAP §6b–§6e / §6h).
 #
 # Security split:
 # - ingest: contents:read; contacts ÁKK + allampapir.hu (prices + retailInterest kamatok)
-#   + KSH STADAT ara0040 CSV; never holds a write token
-# - push: GitHub App installation token only (not GITHUB_TOKEN) for market-data checkout/push
+#   + KSH STADAT ara0040 CSV + WebKincstár report-service PDFs (Poppler pdftotext);
+#   never holds a write token
+# - push: GitHub App installation token only (not GITHUB_TOKEN) for market-data checkout/push;
+#   does not call ÁKK, allampapir.hu, ksh.hu, or WebKincstár
 # Paths via env; single-line run: steps; TS via pinned tsx (not --experimental-strip-types).
 name: Market data ingest
 
@@ -12,7 +15,7 @@ permissions: {}
 
 on:
   schedule:
-    # Daily: securities quotes + KSH inflation check (write only when digests change).
+    # Daily: securities quotes + KSH inflation + WebKincstár prices (write only when digests change).
     - cron: "30 17 * * *"
   workflow_dispatch:
 
@@ -47,6 +50,9 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: npm ci
+
+      - name: Install Poppler (pdftotext for WebKincstár PDFs)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
 
       - name: Resolve market-data baseline branch
         id: resolve_baseline

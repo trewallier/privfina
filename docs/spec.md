@@ -10,7 +10,7 @@ Glossary
 - Adapter layer: browser-side normalization layer that converts external macro data into a shape the calculation engine consumes.
 - Calculation engine: isolated browser-side module that computes cash flows, aggregates, and analytics.
 - Cumulative cash-flow diagram: chart showing running total over a selected date range.
-- Published market data: compact GitHub-hosted JSON under `data/market/v2/` (schemaVersion 2) produced by scheduled Actions from ÁKK, allampapir.hu, and KSH (ADR 0034 / 0035 / 0036 / 0037 / 0038 / ROADMAP §6b–§6f), including per-series coupon schedules and CPI inflation refs.
+- Published market data: compact GitHub-hosted JSON under `data/market/v2/` (schemaVersion 2) produced by scheduled Actions from ÁKK, allampapir.hu, KSH, and WebKincstár (ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039 / ROADMAP §6b–§6h), including per-series coupon schedules, CPI inflation refs, and a WebKincstár price calendar (`priced` / `no_price` / `fetch_failed`).
 
 Scenarios / Use-cases
 - Cash-flow management page: users can add, view, edit, and delete any number of cash flows.
@@ -52,7 +52,7 @@ Scenarios / Use-cases
 - Expandable product catalog (schema v2 / ADR 0020): contributors can specify new loan and mortgage-loan products (including state-supported and purpose-differentiated offerings) as YAML product specs without widening a closed `variant` enum.
 - Mortgage calc-aligned engine path (ADR 0021 / 0022 / 0023 / 0026): published tariff notice (Hirdetmény) mortgage-loan products compute customer-rate schedules, upfront fee packages, and fee-inclusive THM from product specs; public-offering commercially-usable requires all three ADR 0024 checks (dual-lane UI retired).
 - Configured-flow folders: users can organize flows into flat collapsible folders (no nested folders), rename folders, drag items into/out of folders (mouse drag-and-drop or touch long-press), and reorder items; folder collapsed state and item order persist in `listStatus` and round-trip through export/import.
-- Government-securities market-data ingest (ROADMAP §6b–§6f / ADR 0034 / 0035 / 0036 / 0037 / 0038): maintainers (via GitHub Actions) refresh published catalog, daily network quotes, per-series coupon schedules from Lakossági kamatok, and KSH CPI inflation from ÁKK, allampapir.hu, and ksh.hu without contacting those hosts from the browser.
+- Government-securities market-data ingest (ROADMAP §6b–§6h / ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039): maintainers (via GitHub Actions) refresh published catalog, daily network quotes, per-series coupon schedules from Lakossági kamatok, KSH CPI inflation, and WebKincstár daily price tables (with explicit no-price days) from ÁKK, allampapir.hu, ksh.hu, and WebKincstár without contacting those hosts from the browser.
 
 Assumptions
 - The app runs entirely in-browser for v1.
@@ -71,9 +71,9 @@ Assumptions
 - Instrument bundle generation must be finite at save time; salary/subscription instrument mode therefore requires an end condition.
 - v1 cumulative summary assumes a single account context where all included inflows and outflows are netted into one running balance.
 - Multi-account support is explicitly out of scope for the current implementation and treated as future enhancement.
-- Official ÁKK and allampapir.hu endpoints are contacted only by GitHub Actions for published market data; the browser loads GitHub-hosted published JSON from the Pages artifact (`/privfina/data/market/v2/`).
-- Raw ÁKK / allampapir API payloads are not tracked in git; only compact `data/market/v2/` outputs accumulate on the `market-data` branch after the ADR 0038 cutover.
-- Market-data history is append-first on `(series id, settleDate)`; unchanged digests produce no commit.
+- Official ÁKK, allampapir.hu, ksh.hu, and WebKincstár endpoints are contacted only by GitHub Actions for published market data; the browser loads GitHub-hosted published JSON from the Pages artifact (`/privfina/data/market/v2/`).
+- Raw ÁKK / allampapir / KSH / WebKincstár PDF payloads are not tracked in git; only compact `data/market/v2/` outputs accumulate on the `market-data` branch after the ADR 0038 cutover.
+- Market-data history is append-first on `(series id, settleDate)`; unchanged digests produce no commit. WebKincstár calendar days append-first on `(report, datum)` (ADR 0039).
 
 Acceptance criteria
 - [ ] Static app deployment is feasible on GitHub Pages, with all runtime behavior in client-side assets.
@@ -109,6 +109,7 @@ Acceptance criteria
 - [x] Same ingest also fetches allampapir.hu (CSRF + all `data.papers` prices), combines with ÁKK (treasury-prefer same-day quotes), publishes required + optional families, and writes one merged tree to `market-data` when digests change (ADR 0035 / ROADMAP §6c).
 - [x] Same ingest also fetches allampapir.hu Lakossági kamatok (`retailInterest/get_all_data`) and, under schemaVersion 2, publishes per-series `families/{fam}/coupons/<id>.json` (nullable / multi-band rates) plus series `offered` (ADR 0036 / 0038 / ROADMAP §6d / §6f). RetailInterest soft-fails without blocking price publishes (including empty successful responses that would otherwise wipe prior coupons).
 - [x] Same ingest also fetches KSH STADAT `ara0040.csv` (Összesen only), publishes append-only `refs/inflation.json` (`yoy` / `mom` / `ytdFromDec` / `ytdYoy` + `annualAverage`, `pct_change`), and fails closed on historical revisions (ADR 0037 / ROADMAP §6e). Raw CSV is not committed; inflation+premium composition is not the commercial PMÁP input path (ADR 0038).
+- [ ] Same ingest also fetches WebKincstár daily price PDFs (DKJ + MAK reports), parses text-layer rows into schemaVersion 2 quotes (WebKincstár-prefer over dual-source), publishes append-only `refs/price-calendar.json` with `priced` / `no_price` / `fetch_failed`, soft-fails PDF outages without blocking ÁKK/allampapir/KSH, and never commits raw PDFs (ADR 0039 / ROADMAP §6h). Browser never calls WebKincstár; republished figures are informational with source attribution / accuracy disclaimer.
 - [x] Market-data normalize/merge/combine rules are covered by fixture tests (append-first, dedupe, required-family empty fails, treasury-prefer dual-source, coupon normalize / id join, inflation immutable merge); raw captures are not committed.
 - [x] Pages deploy materializes `data/market/v2/` into the site for same-origin SPA `fetch` (ADR 0038 / ROADMAP §6f); soft-fail if `market-data` is unavailable so product Pages still ships. First ingest after cutover lifts a live `v1` tip; push prunes orphan files. Live tip republish after merge remains the §6f close gate (code complete; cutover pending until tip + Pages show v2).
 - [x] SPA loads published market JSON at runtime (not bundled) for commercial investment series listing / auto-fill (session cache; manual-entry degrade when files missing); loader accepts schemaVersion 2 only after cutover.
@@ -223,7 +224,7 @@ How to use this file
 
 Design alignment
 - For engine implementation guidance and evaluation strategy rationale, see `DESIGN.md`. Use `docs/adr/` for recorded architecture decisions that affect evaluation strategy and scope.
-- For government-securities published market data (Actions ingest, `market-data` branch, schemaVersion 2 under `data/market/v2/`), see `docs/adr/0038-government-securities-market-schema-v2-and-effective-rate-inputs.md` plus ingest-host ADRs 0034 / 0035 / 0036 / 0037 and ROADMAP §6b–§6f.
+- For government-securities published market data (Actions ingest, `market-data` branch, schemaVersion 2 under `data/market/v2/`), see `docs/adr/0038-government-securities-market-schema-v2-and-effective-rate-inputs.md` plus ingest-host ADRs 0034 / 0035 / 0036 / 0037 / 0039 and ROADMAP §6b–§6h.
 
 Investment Formula Canonical Source
 -----------------------------------

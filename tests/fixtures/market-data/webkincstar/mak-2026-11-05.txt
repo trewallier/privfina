@@ -1,0 +1,184 @@
+                                                   2026.11.05
+
+
+
+                                    Jelenleg forgalmazott állampapírok árfolyamai a Magyar Államkincstár állampapír-forgalmazó ügyfélszolgálatain
+
+
+Magyar Államkötvények                                                                                                                                                          Értéknap: 2026.11.05
+
+                                                                                                                       Eladási                                 Következő    Lejárati vagy  Lejáratig
+ Értékpapír    Vételi nettó   Felhalmozott   Vételi bruttó      Vételi      Vételi    Eladási nettó   Felhalmozott                Eladási hozam Eladási hozam                                              Lejárat
+                                                                                                                       bruttó                                 esedékesség    következő hátralévő napok
+ elnevezése     árfolyam         kamat        árfolyam       hozam EHM   hozam ISMA     árfolyam         kamat                        EHM           ISMA                                                   dátuma
+                                                                                                                      árfolyam                                  dátuma        kifizetés     száma
+
+
+2026/D         99.5799 %       2.3959 %      101.9758 %       5.90 %      6.05 %      99.7608 %       2.3959 %       102.1567 %      4.51 %       4.60 %     2026.12.22      102.75 %        47          2026.12.22
+
+2027/A         97.6763 %       0.0740 %      97.7503 %        5.51 %      5.51 %      98.3222 %       0.0740 %       98.3962 %       4.80 %       4.80 %     2027.10.27      103.00 %        356         2027.10.27
+
+2027/B         100.0500 %      0.2139 %      100.2639 %        Vált.       Vált.      101.0500 %      0.2139 %       101.2639 %       Vált.        Vált.     2027.01.22       1.41 %         168         2027.04.22
+
+2027/I         99.0000 %       3.6532 %      102.6532 %        Vált.       Vált.           -              -              -              -           -        2027.03.24      105.90 %        139         2027.03.24
+
+2027/J         99.0000 %       3.9789 %      102.9789 %        Vált.       Vált.           -              -              -              -           -        2027.01.27      105.15 %        83          2027.01.27
+
+2027/K         99.0000 %       3.5838 %      102.5838 %        Vált.       Vált.           -              -              -              -           -        2027.02.24      105.15 %        111         2027.02.24
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok a Fix Magyar Állampapír esetében napi maximum 50 millió Ft névértékű, a Magyar Államkötvények esetében napi maximum 100
+millió Ft névértékű állampapír visszavételére, valamint a rendelkezésre álló készlet, de napi maximum 100 millió Ft erejéig történő eladásra, Bónusz- és Prémium Magyar Állampapír esetében napi maximum
+50 millió Ft névértékű állampapír visszavételére jelentenek kötelezettséget. Bármely árfolyam változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban:
+Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik. A
+Forgalmazó árfolyamot akkor is jegyez, ha az adott értékpapírból állománnyal nem rendelkezik. Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig felhalmozott kamat, az esedékességet megelőző
+munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal. Befektetési megbízásait a Forgalmazó - az értéknap-váltásra figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott
+feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó levonását, melynek megállapítása és levonása a kifizetés napján történik.(EHM:
+kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi Értékpapírpiaci Szövetség Actual/Actual módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek.
+
+
+2026.11.08. 00:01                                                                                                                                                                                        1/8
+Magyar Államkötvények                                                                                                                                                         Értéknap: 2026.11.05
+
+                                                                                                                      Eladási                                 Következő    Lejárati vagy  Lejáratig
+ Értékpapír    Vételi nettó   Felhalmozott   Vételi bruttó      Vételi      Vételi    Eladási nettó   Felhalmozott               Eladási hozam Eladási hozam                                              Lejárat
+                                                                                                                      bruttó                                 esedékesség    következő hátralévő napok
+ elnevezése     árfolyam         kamat        árfolyam       hozam EHM   hozam ISMA     árfolyam         kamat                       EHM           ISMA                                                   dátuma
+                                                                                                                     árfolyam                                  dátuma        kifizetés     száma
+
+
+2029/R1        99.0000 %       0.1714 %      99.1714 %         Vált.       Vált.           -              -              -             -           -        2027.01.26       1.58 %         903         2029.04.26
+
+2030/A         90.1356 %       0.6247 %      90.7603 %        5.98 %      5.98 %      92.2379 %       0.6247 %       92.8626 %      5.31 %       5.31 %     2027.08.21       3.00 %        1,385        2030.08.21
+
+2030/I         99.0000 %       4.1704 %      103.1704 %        Vált.       Vált.           -              -              -             -           -        2027.02.20       5.90 %        1,203        2030.02.20
+
+2030/J         99.0000 %       3.7178 %      102.7178 %        Vált.       Vált.           -              -              -             -           -        2027.03.20       5.90 %        1,231        2030.03.20
+
+2030/N         99.0000 %       0.7189 %      99.7189 %         Vált.       Vált.           -              -              -             -           -        2026.12.26       1.64 %        1,421        2030.09.26
+
+2030/N1        99.0000 %       0.6738 %      99.6738 %         Vált.       Vált.           -              -              -             -           -        2026.12.27       1.57 %        1,422        2030.09.27
+
+2030/Q2        99.0000 %       0.1943 %      99.1943 %        7.02 %      0.00 %           -              -              -             -           -        2027.01.25       1.63 %        1,267        2030.04.25
+
+2030/Q3        99.0000 %       0.1943 %      99.1943 %        7.00 %      0.00 %           -              -              -             -           -        2027.01.25       1.63 %        1,358        2030.07.25
+
+2030/Q4        99.0000 %       0.2283 %      99.2283 %        7.49 %      0.00 %           -              -              -             -           -        2027.01.24       1.75 %        1,449        2030.10.24
+
+2030/Q5        99.0000 %       0.8846 %      99.8846 %        7.48 %      0.00 %           -              -              -             -           -        2026.12.20       1.75 %        1,506        2030.12.20
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok a Fix Magyar Állampapír esetében napi maximum 50 millió Ft névértékű, a Magyar Államkötvények esetében napi maximum 100
+millió Ft névértékű állampapír visszavételére, valamint a rendelkezésre álló készlet, de napi maximum 100 millió Ft erejéig történő eladásra, Bónusz- és Prémium Magyar Állampapír esetében napi maximum
+50 millió Ft névértékű állampapír visszavételére jelentenek kötelezettséget. Bármely árfolyam változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban:
+Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik. A
+Forgalmazó árfolyamot akkor is jegyez, ha az adott értékpapírból állománnyal nem rendelkezik. Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig felhalmozott kamat, az esedékességet megelőző
+munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal. Befektetési megbízásait a Forgalmazó - az értéknap-váltásra figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott
+feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó levonását, melynek megállapítása és levonása a kifizetés napján történik.(EHM:
+kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi Értékpapírpiaci Szövetség Actual/Actual módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek.
+
+
+2026.11.08. 00:01                                                                                                                                                                                       5/8
+Magyar Államkötvények                                                                                                                                                          Értéknap: 2026.11.05
+
+                                                                                                                       Eladási                                 Következő    Lejárati vagy  Lejáratig
+ Értékpapír    Vételi nettó   Felhalmozott   Vételi bruttó      Vételi      Vételi    Eladási nettó   Felhalmozott                Eladási hozam Eladási hozam                                              Lejárat
+                                                                                                                       bruttó                                 esedékesség    következő hátralévő napok
+ elnevezése     árfolyam         kamat        árfolyam       hozam EHM   hozam ISMA     árfolyam         kamat                        EHM           ISMA                                                   dátuma
+                                                                                                                      árfolyam                                  dátuma        kifizetés     száma
+
+
+2032/B         99.4000 %       1.1080 %      100.5080 %        Vált.       Vált.      100.6500 %      1.1080 %       101.7580 %       Vált.        Vált.     2026.11.25       1.42 %        2,120        2032.08.25
+
+2032/G         93.8070 %       1.9973 %      95.8043 %        5.82 %      5.83 %      96.8992 %       1.9973 %       98.8965 %       5.14 %       5.15 %     2027.05.27       4.50 %        2,030        2032.05.27
+
+2032/I         99.0000 %       2.6447 %      101.6447 %        Vált.       Vált.           -              -              -              -           -        2027.04.22       4.90 %        1,995        2032.04.22
+
+2032/J         99.0000 %       2.6447 %      101.6447 %        Vált.       Vált.           -              -              -              -           -        2027.04.22       4.90 %        1,995        2032.04.22
+
+2032/R1        99.0000 %       0.6686 %      99.6686 %         Vált.       Vált.      100.0000 %      0.6686 %       100.6686 %       Vált.        Vált.     2026.12.22       1.38 %        2,056        2032.06.22
+
+2033/A         81.1738 %       1.2267 %      82.4005 %        5.82 %      5.83 %      84.5418 %       1.2267 %       85.7685 %       5.12 %       5.12 %     2027.04.20       2.25 %        2,358        2033.04.20
+
+2033/C         100.6734 %      2.8932 %      103.5666 %       5.86 %      5.86 %      104.7674 %      2.8932 %       107.6606 %      5.13 %       5.13 %     2027.07.27       7.23 %        2,456        2033.07.27
+
+2033/I         99.0000 %       3.6818 %      102.6818 %        Vált.       Vált.           -              -              -              -           -        2027.01.20       4.65 %        2,268        2033.01.20
+
+2034/A         78.4884 %       0.8384 %      79.3268 %        5.82 %      5.82 %      82.2881 %       0.8384 %       83.1265 %       5.11 %       5.11 %     2027.06.22       2.25 %        2,786        2034.06.22
+
+2035/A         107.8449 %      0.2301 %      108.0750 %       5.85 %      5.85 %      113.1712 %      0.2301 %       113.4013 %      5.13 %       5.13 %     2027.10.24       7.00 %        3,275        2035.10.24
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok a Fix Magyar Állampapír esetében napi maximum 50 millió Ft névértékű, a Magyar Államkötvények esetében napi maximum 100
+millió Ft névértékű állampapír visszavételére, valamint a rendelkezésre álló készlet, de napi maximum 100 millió Ft erejéig történő eladásra, Bónusz- és Prémium Magyar Állampapír esetében napi maximum
+50 millió Ft névértékű állampapír visszavételére jelentenek kötelezettséget. Bármely árfolyam változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban:
+Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik. A
+Forgalmazó árfolyamot akkor is jegyez, ha az adott értékpapírból állománnyal nem rendelkezik. Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig felhalmozott kamat, az esedékességet megelőző
+munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal. Befektetési megbízásait a Forgalmazó - az értéknap-váltásra figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott
+feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó levonását, melynek megállapítása és levonása a kifizetés napján történik.(EHM:
+kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi Értékpapírpiaci Szövetség Actual/Actual módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek.
+
+
+2026.11.08. 00:01                                                                                                                                                                                        7/8
+Magyar Államkötvények                                                                                                                                                          Értéknap: 2026.11.05
+
+                                                                                                                       Eladási                                 Következő    Lejárati vagy  Lejáratig
+ Értékpapír    Vételi nettó   Felhalmozott   Vételi bruttó      Vételi      Vételi    Eladási nettó   Felhalmozott                Eladási hozam Eladási hozam                                              Lejárat
+                                                                                                                       bruttó                                 esedékesség    következő hátralévő napok
+ elnevezése     árfolyam         kamat        árfolyam       hozam EHM   hozam ISMA     árfolyam         kamat                        EHM           ISMA                                                   dátuma
+                                                                                                                      árfolyam                                  dátuma        kifizetés     száma
+
+
+2035/I1        99.0000 %       2.2151 %      101.2151 %        Vált.       Vált.           -              -              -              -           -        2027.05.24       4.90 %        3,122        2035.05.24
+
+2035/I2        99.0000 %       2.0466 %      101.0466 %        Vált.       Vált.           -              -              -              -           -        2027.05.23       4.50 %        3,121        2035.05.23
+
+2036/B         98.7500 %       1.0926 %      99.8426 %         Vált.       Vált.      100.2900 %      1.0926 %       101.3826 %       Vált.        Vált.     2026.11.26       1.42 %        3,674        2036.11.26
+
+2036/I1        99.0000 %       1.3315 %      100.3315 %        Vált.       Vált.      100.0000 %      1.3315 %       101.3315 %       Vált.        Vált.     2027.02.21       2.66 %        3,395        2036.02.21
+
+2037/A         103.5397 %      0.7363 %      104.2760 %       5.80 %      5.80 %      109.2361 %      0.7363 %       109.9724 %      5.12 %       5.12 %     2027.09.23       6.25 %        3,975        2037.09.23
+
+2038/A         76.1548 %       0.0740 %      76.2288 %        5.82 %      5.82 %      81.2079 %       0.0740 %       81.2819 %       5.14 %       5.14 %     2027.10.27       3.00 %        4,374        2038.10.27
+
+2038/C         97.3660 %       0.3315 %      97.6975 %        5.82 %      5.82 %      103.1149 %      0.3315 %       103.4464 %      5.14 %       5.14 %     2027.06.30       3.90 %        4,255        2038.06.30
+
+2041/A         73.0561 %       1.5945 %      74.6506 %        5.80 %      5.80 %      78.5939 %       1.5945 %       80.1884 %       5.13 %       5.13 %     2027.04.25       3.00 %        5,285        2041.04.25
+
+2051/G         76.2121 %       2.0932 %      78.3053 %        5.85 %      5.85 %      83.8125 %       2.0932 %       85.9057 %       5.18 %       5.18 %     2027.04.28       4.00 %        8,940        2051.04.28
+
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok a Fix Magyar Állampapír esetében napi maximum 50 millió Ft névértékű, a Magyar Államkötvények esetében napi maximum 100
+millió Ft névértékű állampapír visszavételére, valamint a rendelkezésre álló készlet, de napi maximum 100 millió Ft erejéig történő eladásra, Bónusz- és Prémium Magyar Állampapír esetében napi maximum
+50 millió Ft névértékű állampapír visszavételére jelentenek kötelezettséget. Bármely árfolyam változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban:
+Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik. A
+Forgalmazó árfolyamot akkor is jegyez, ha az adott értékpapírból állománnyal nem rendelkezik. Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig felhalmozott kamat, az esedékességet megelőző
+munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal. Befektetési megbízásait a Forgalmazó - az értéknap-váltásra figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott
+feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó levonását, melynek megállapítása és levonása a kifizetés napján történik.(EHM:
+kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi Értékpapírpiaci Szövetség Actual/Actual módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek.
+
+
+2026.11.08. 00:01                                                                                                                                                                                        8/8

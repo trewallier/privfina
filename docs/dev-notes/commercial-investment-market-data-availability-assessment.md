@@ -7,7 +7,7 @@ Definitions used below:
 - **Availability** for a series is known when these facts are known: **issue date**, **maturity date**, and **on which days retailers sold / sell the paper** (sale calendar, not merely “offered today”).
 - **Pricing on a date** is known when the **effective customer price** for that day is known or can be **calculated** from published rules + interest inputs (treasury retail buy unless noted).
 
-Checked (Europe/Budapest context, research day 2026-11-03): ÁKK + Magyar Államkincstár / allampapir.hu / WebKincstár surfaces, PMÁP `2036/I1` nyilvános ajánlattétel, `market-data` tip `data/market/v2/`, SPA market autofill.
+Checked (Europe/Budapest context, research 2026-11-03 … 2026-11-07): ÁKK + Magyar Államkincstár / allampapir.hu / WebKincstár surfaces, PMÁP `2036/I1` nyilvános ajánlattétel, `market-data` tip `data/market/v2/`, SPA market autofill. WebKincstár PDF fetch contract confirmed 2026-11-07.
 
 ---
 
@@ -59,25 +59,42 @@ Supporting published inputs (not prices themselves):
 
 ## 3) One-shot historical backfill (consumer prices)
 
-### Feasible official-ish paths
+### Official paths
 
-1. **WebKincstár daily PDF (primary collect path)**  
-   Community-documented endpoint:  
-   `POST https://webkincstar.allamkincstar.gov.hu/report-service/report`  
-   body includes `reportName: "_20633_arfolyam_mak"` and `report_params: [{ name: "datum", value: "<day>" }]`.  
-   Returns that day’s treasury price table as PDF; parse bid/ask/ai (and series labels) into `quotes/<id>.json` rows.  
-   **One-shot**: loop business days over the desired range, merge append-first into `market-data`.  
-   Evidence: logout.hu / Portfolio Performance threads; `havasd/pp-scraper` `mak_historical` spider.  
-   **Ops caveat (this research run):** the report name is recognized (unknown names → HTTP 403 “not in allowed rate report names”), but live POSTs from this environment returned **HTTP 500** for several dates. Treat as **real but brittle** — needs a working probe (session/headers/weekday) before productionizing.
+1. **WebKincstár daily PDF (primary collect + backfill path)** — **fetch contract confirmed** (2026-11-07)
+
+   - **URL:** `POST https://webkincstar.allamkincstar.gov.hu/report-service/report`
+   - **Headers (minimum):** `Content-Type: application/json`, `Accept: application/pdf`
+   - **Body (JSON):** must include all of:
+     - `clientCode`: `"all"`
+     - `reportName`: one of the public price reports (see below)
+     - `language`: `"hu"`
+     - `report_params`: `[{ "name": "datum", "value": "YYYY-MM-DD" }]`
+     - `lang`: `"hu"` — **required** (omit → HTTP 500)
+     - `channel`: `"WEB"` — **required**
+     - `channelId`: `2` — **required**
+   - **Auth:** none. No login. Browser session cookies are **not** required (bare POST with the body above returned populated PDFs in probes). Optional: `GET` homepage first to pick up load-balancer cookies.
+   - **UA:** not required for success (default HTTP client UA worked).
+   - **Report names** (from public `GET …/instrument-service/instrumentgroup/group?lang=hu` → `priceReportName`):
+     - `_20631_arfolyam_dkj` — Diszkont Kincstárjegy
+     - `_20633_arfolyam_mak` — MÁK / BMÁP / PMÁP / FixMÁP (retail gov bonds table)
+     - also available: `_20632_arfolyam_kkj`, `_20638_arfolyam_pemak`, `_20642_arfolyam_start`, `_207461_arfolyam_mapp` (out of current commercial PMÁP/BMÁP/DKJ focus unless needed later)
+   - **Proven outputs (probes):** populated PDFs with `Értéknap` set and data rows, e.g. DKJ `2026-11-05` / `2024-06-03`; MAK `2026-11-05`, `2024-06-03`, `2022-01-04` (multi-page). Columns include vételi/eladási (bid/ask) net, felhalmozott kamat (AI), yields, maturity.
+
+   **Daily GH Actions shape (not implemented in this PR):**
+
+   1. For yesterday’s (or last) business `datum`, POST once per needed `reportName` (`_20631_…`, `_20633_…`).
+   2. Assert response is `application/pdf` and starts with `%PDF`.
+   3. Extract text layer (`pdftotext -layout`) → parse rows → merge into `data/market/v2/` quote files (append-first by settle date).
+   4. Prefer committing **parsed JSON** (per settle / per series), not binary PDFs, on `market-data`.
+
+   **One-shot backfill shape:** same POST in a date loop over the desired range (business days or every calendar day — weekend PDFs may still return a document; prefer business days). Rate-limit politely; retry on 5xx. Validate `Értéknap` in the PDF text matches the requested `datum` before merge (guards empty shells).
 
 2. **allampapir.hu JSON**  
-   CSRF `get_prices` / legacy network_rate paths are **same-day snapshots**. **Cannot** one-shot multi-year history.
+   CSRF `networkRate` / `get_prices` paths are **same-day snapshots**. **Cannot** one-shot multi-year history. Keep for ongoing dual-source daily append (ADR 0035).
 
 3. **ÁKK network rates**  
-   Same limitation (snapshot). Also often **missing retail ask**; wrong authority for “what the customer paid at Kincstár.”
-
-4. **Unofficial archives** (e.g. community GitLab dumps)  
-   Possible bootstrap; **not** official; provenance/license risk — prefer WebKincstár PDF if revived.
+   Same limitation (snapshot). Often **missing retail ask**; wrong authority alone for “what the customer paid at Kincstár.” Keep as catalog / cross-check.
 
 ### What must be **collected** vs what can be **calculated**
 
@@ -118,7 +135,7 @@ Day-count caveat (pricing fidelity, not solved here): PMÁP `2036/I1` offering s
 | Published `coupons/<id>.json` | Period schedule for **known** rates only; not a complete payment calendar to maturity |
 | SPA `deriveFirstCouponDate(issue, mat, 12\|3)` | Heuristic only; stub first periods and offering exceptions need the PDF list |
 
-**Conclusion:** no known official API replaces the offering PDF for **exact future coupon days** of current offerings. Closest machine path still in-repo is kamatok period bounds (implicit next payment ≈ day after contiguous `to` for settled periods). Full calendars require **PDF (or HTML) offering documents**, MNB közzétételek, or unofficial third-party calendars that scrape those.
+**Conclusion:** no known official API replaces the offering PDF for **exact future coupon days** of current offerings. Closest machine path still in-repo is kamatok period bounds (implicit next payment ≈ day after contiguous `to` for settled periods). Full calendars require **PDF (or HTML) offering documents** (or MNB közzétételek derived from those).
 
 Heuristic generation (anniversary of maturity / quarterly anchors) can approximate many series after the first period, but offerings explicitly call out **exceptions** on early periods — unsafe as sole source for “exact dates.”
 
@@ -127,9 +144,9 @@ Heuristic generation (anniversary of maturity / quarterly anchors) can approxima
 ## 5) Earlier gaps (still valid)
 
 1. Thin quote history → purchase-date clamp to Nov 2–3.  
-2. Snapshot ingest ≠ WebKincstár archive.  
-3. ÁKK network rates ≠ ordinary retail ticket.  
-4. Closed-series modeling has no historical ask path.  
+2. Snapshot ingest (allampapir / ÁKK) ≠ historical WebKincstár archive — but the PDF report API is now a confirmed backfill source.  
+3. ÁKK network rates ≠ ordinary retail ticket alone.  
+4. Closed-series modeling has no historical ask path (PDF still has bid + AI).  
 5. Bank/secondary channels and T+1/T+2 settlement unused.
 
 ---
@@ -138,4 +155,4 @@ Heuristic generation (anniversary of maturity / quarterly anchors) can approxima
 
 Under the availability/pricing definitions: the repo **knows issue and maturity**, knows **whether a series is offered today**, and can price **today’s** DKJ asks (when present) and **today’s** offered PMÁP/BMÁP buys via **par + accrued**. It does **not** know retailer **sale calendars**, and almost **no historical customer prices** are stored (two settles only).
 
-One-shot history: **collect** WebKincstár (or equivalent) tables for **DKJ asks**; for **PMÁP/BMÁP** during sale, **calculate** dirty ask from rules + interest once sale windows exist, and optionally collect PDFs to verify. Future coupon **dates** still come from **offerings**, not from a coupon-calendar API.
+One-shot / daily history: **automate WebKincstár** `report-service` PDFs (confirmed JSON body above) to **collect** DKJ ask/bid and PMÁP/BMÁP table rows; parse to text/JSON for `market-data`. For **PMÁP/BMÁP** during sale, dirty ask remains **calculable** (100 + accrued) once sale windows + rates exist; PDF asks are validation. Future coupon **dates** still come from **offerings**, not from a coupon-calendar API.

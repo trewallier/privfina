@@ -1,24 +1,38 @@
 import { combineSnapshots } from './combine.ts'
+import { applyWebkincstarQuotes } from './combine-webkincstar.ts'
 import { fetchAkkSnapshots } from './fetch-akk.ts'
 import { CsrfSession, fetchAllampapirSnapshots } from './fetch-allampapir.ts'
 import { fetchKshInflationCsv } from './fetch-ksh-inflation.ts'
 import { fetchRetailInterestSnapshots } from './fetch-retail-interest.ts'
+import {
+  budapestYesterdayIso,
+  fetchWebkincstarSnapshots
+} from './fetch-webkincstar.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
+import { priceCalendarFileFromDays } from './merge-price-calendar.ts'
 import { normalizeAkkSnapshots } from './normalize.ts'
 import { normalizeAllampapirSnapshots } from './normalize-allampapir.ts'
 import { normalizeKshInflationCsv } from './normalize-ksh-inflation.ts'
 import { normalizeRetailInterestEnvelope } from './normalize-retail-interest.ts'
 import {
+  fetchFailedCalendarDays,
+  normalizeWebkincstarReports
+} from './normalize-webkincstar.ts'
+import {
   emptyNormalizedByFamily,
   FAMILIES,
   type AkkEnvelope,
   type AllampapirEnvelope,
+  type FamilyCode,
   type InflationFile,
   type NormalizedSnapshot,
-  type RetailInterestFile
+  type PriceCalendarFile,
+  type RetailInterestFile,
+  type SeriesRecord
 } from './types.ts'
 import { validateMarketTree } from './validate.ts'
+import { WEBKINCSTAR_REPORTS, type WebkincstarReportName } from './webkincstar-reports.ts'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
@@ -68,6 +82,17 @@ export interface IngestOptions {
   inflationCsvBytes?: Uint8Array
   /** Skip only inflation fetch/merge (keep previous refs). */
   skipInflation?: boolean
+  /**
+   * Europe/Budapest YYYY-MM-DD for WebKincstár PDFs. Defaults to yesterday.
+   */
+  webkincstarDatum?: string
+  /**
+   * Offline pre-extracted `pdftotext -layout` texts keyed by report name (tests).
+   * When set with fixture ÁKK, skips live WebKincstár POST.
+   */
+  webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
+  /** Skip WebKincstár fetch/overlay (keep previous price calendar). */
+  skipWebkincstar?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -80,6 +105,9 @@ export interface IngestReport extends MergeResult {
   /** True when live retailInterest fetch failed and previous coupons were kept. */
   retailInterestSoftFailed: boolean
   inflationUpdated: boolean
+  webkincstarUpdated: boolean
+  /** True when WebKincstár soft-failed and calendar recorded fetch_failed. */
+  webkincstarSoftFailed: boolean
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -93,7 +121,26 @@ function logRetailInterestSoftFail(err: unknown): void {
   )
 }
 
-/** Fetch (optional) → normalize → combine → merge → validate → write when changed. */
+function logWebkincstarSoftFail(err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err)
+  console.error(
+    `[market-data] WebKincstár soft-fail; recording fetch_failed calendar and continuing dual-source publish: ${message}`
+  )
+}
+
+function previousSeriesForJoin(
+  previous: Awaited<ReturnType<typeof loadMarketTree>>
+): Array<{ family: FamilyCode; series: SeriesRecord }> {
+  const out: Array<{ family: FamilyCode; series: SeriesRecord }> = []
+  for (const family of FAMILIES) {
+    for (const series of previous.families[family].series.series) {
+      out.push({ family, series })
+    }
+  }
+  return out
+}
+
+/** Fetch (optional) → normalize → combine → WebKincstár overlay → merge → validate → write. */
 export async function ingestMarketData(options: IngestOptions): Promise<IngestReport> {
   let catalog = options.catalog
   let networkRates = options.networkRates
@@ -189,10 +236,59 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     }
   }
 
-  // Dual-source combined rows may rewrite same settleDate vs an ÁKK-only baseline (cutover).
+  /** undefined = keep previous calendar; file = append-first merge. */
+  let priceCalendarUpdate: PriceCalendarFile | undefined
+  let webkincstarSoftFailed = false
+  let webkincstarHasQuotes = false
+  let mergeSnapshotInput = combined.snapshot
+
+  const webkincstarDatum = options.webkincstarDatum ?? budapestYesterdayIso()
+  const shouldFetchWebkincstar =
+    !options.skipWebkincstar &&
+    (Boolean(options.webkincstarTextByReport) || !offlineAkk)
+
+  if (shouldFetchWebkincstar) {
+    try {
+      const fetched = await fetchWebkincstarSnapshots({
+        datum: webkincstarDatum,
+        rawDir: path.join(options.rawDir, 'webkincstar'),
+        fetchImpl: options.fetchImpl,
+        textByReport: options.webkincstarTextByReport
+      })
+      const normalized = normalizeWebkincstarReports(
+        fetched.reports.map((r) => r.parsed)
+      )
+      if (normalized.unmatchedNames.length > 0) {
+        console.error(
+          `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalized.unmatchedNames.join(', ')}`
+        )
+      }
+      const overlay = applyWebkincstarQuotes(combined.snapshot, normalized.snapshot, {
+        extraSeries: previousSeriesForJoin(previous)
+      })
+      if (overlay.skippedUnmatched > 0) {
+        console.error(
+          `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match`
+        )
+      }
+      mergeSnapshotInput = overlay.snapshot
+      webkincstarHasQuotes = overlay.hasQuotes
+      priceCalendarUpdate = priceCalendarFileFromDays(normalized.calendarDays, generatedAt)
+    } catch (err) {
+      // Soft-fail: PDF outage must not block dual-source / KSH (ADR 0039).
+      logWebkincstarSoftFail(err)
+      webkincstarSoftFailed = true
+      priceCalendarUpdate = priceCalendarFileFromDays(
+        fetchFailedCalendarDays(webkincstarDatum, WEBKINCSTAR_REPORTS),
+        generatedAt
+      )
+    }
+  }
+
+  // Dual-source or WebKincstár overlay may rewrite same settleDate vs prior tip.
   const mergeOptions: Parameters<typeof mergeSnapshot>[2] = {
     generatedAt,
-    allowSameDayRewrite: combined.dualSource
+    allowSameDayRewrite: combined.dualSource || webkincstarHasQuotes
   }
   if (retailInterestUpdate !== undefined) {
     mergeOptions.retailInterest = retailInterestUpdate
@@ -200,7 +296,10 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   if (inflationUpdate !== undefined) {
     mergeOptions.inflation = inflationUpdate
   }
-  const merged = mergeSnapshot(previous, combined.snapshot, mergeOptions)
+  if (priceCalendarUpdate !== undefined) {
+    mergeOptions.priceCalendar = priceCalendarUpdate
+  }
+  const merged = mergeSnapshot(previous, mergeSnapshotInput, mergeOptions)
   validateMarketTree(merged.tree)
 
   if (merged.changed) {
@@ -216,7 +315,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     dualSource: combined.dualSource,
     retailInterestUpdated: retailInterestUpdate !== undefined,
     retailInterestSoftFailed,
-    inflationUpdated: inflationUpdate !== undefined
+    inflationUpdated: inflationUpdate !== undefined,
+    webkincstarUpdated: priceCalendarUpdate !== undefined,
+    webkincstarSoftFailed
   }
 }
 

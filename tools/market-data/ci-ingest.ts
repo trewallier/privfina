@@ -1,6 +1,7 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import { writeGithubOutput } from './github-output.ts'
 import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
+import type { WebkincstarReportName } from './webkincstar-reports.ts'
 
 export interface CiIngestOptions {
   outRoot: string
@@ -15,6 +16,9 @@ export interface CiIngestOptions {
   inflationCsvPath?: string
   inflationCsvBytes?: Uint8Array
   skipInflation?: boolean
+  webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
+  webkincstarDatum?: string
+  skipWebkincstar?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -44,6 +48,9 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     inflationCsvPath: options.inflationCsvPath,
     inflationCsvBytes: options.inflationCsvBytes,
     skipInflation: options.skipInflation,
+    webkincstarTextByReport: options.webkincstarTextByReport,
+    webkincstarDatum: options.webkincstarDatum,
+    skipWebkincstar: options.skipWebkincstar,
     fetchImpl: options.fetchImpl,
     generatedAt: options.generatedAt
   })

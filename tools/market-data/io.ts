@@ -10,6 +10,8 @@ import {
 import {
   FAMILIES,
   INFLATION_REF_PATH,
+  PRICE_CALENDAR_REF_PATH,
+  type PriceCalendarFile,
   MARKET_PATH_SEGMENT,
   QUOTE_COLS,
   COUPON_COLS,
@@ -74,7 +76,7 @@ function v2TreeHasContent(tree: MarketTreeState): boolean {
     if (Object.keys(fam.quotes).length > 0) return true
     if (Object.keys(fam.coupons).length > 0) return true
   }
-  return tree.inflation != null
+  return tree.inflation != null || tree.priceCalendar != null
 }
 
 async function loadFamilyDir(
@@ -178,6 +180,17 @@ async function loadTreeAtPath(
     ? options?.forceSchemaVersion
       ? bumpSchemaVersion(inflation)
       : inflation
+    : null
+
+  const priceCalendarPath =
+    tree.manifest?.refs?.priceCalendar ?? PRICE_CALENDAR_REF_PATH
+  const priceCalendar = await readJsonIfExists<PriceCalendarFile>(
+    path.join(rootDir, priceCalendarPath)
+  )
+  tree.priceCalendar = priceCalendar
+    ? options?.forceSchemaVersion
+      ? bumpSchemaVersion(priceCalendar)
+      : priceCalendar
     : null
 
   // Internal-only: load flat retail-interest when present (v1 tip) for coupon lift.
@@ -295,6 +308,13 @@ export async function writeMarketTree(root: string, tree: MarketTreeState): Prom
     const abs = path.join(v2, rel)
     await mkdir(path.dirname(abs), { recursive: true })
     await writeFile(abs, canonicalJson(tree.inflation), 'utf8')
+  }
+
+  if (tree.priceCalendar) {
+    const rel = tree.manifest.refs?.priceCalendar ?? PRICE_CALENDAR_REF_PATH
+    const abs = path.join(v2, rel)
+    await mkdir(path.dirname(abs), { recursive: true })
+    await writeFile(abs, canonicalJson(tree.priceCalendar), 'utf8')
   }
 
   // Never re-publish flat retail-interest under v2.

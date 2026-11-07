@@ -112,7 +112,7 @@ export interface ManifestFamilyPaths {
   latest: string
 }
 
-/** Path hints for additive refs files (ADR 0037 inflation; deferred DKJ-base). */
+/** Path hints for additive refs files (ADR 0037 inflation; ADR 0039 price calendar; deferred DKJ-base). */
 export interface ManifestRefsPaths {
   /**
    * @deprecated Schema v2 does not publish flat retail-interest; optional only for
@@ -120,6 +120,8 @@ export interface ManifestRefsPaths {
    */
   retailInterest?: string
   inflation?: string
+  /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
+  priceCalendar?: string
 }
 
 export interface ManifestFile {
@@ -218,6 +220,39 @@ export interface InflationFile {
 
 /** Published path for inflation refs (ADR 0037). */
 export const INFLATION_REF_PATH = 'refs/inflation.json' as const
+
+/** Published path for WebKincstár price calendar (ADR 0039). */
+export const PRICE_CALENDAR_REF_PATH = 'refs/price-calendar.json' as const
+
+export type PriceCalendarDayStatus = 'priced' | 'no_price' | 'fetch_failed'
+
+export interface PriceCalendarDayRow {
+  datum: string
+  report: string
+  status: PriceCalendarDayStatus
+  rowCount: number
+}
+
+export interface PriceCalendarSourceMeta {
+  id: 'webkincstar-report-service'
+  host: 'webkincstar.allamkincstar.gov.hu'
+  disclaimer: string
+}
+
+/**
+ * Published WebKincstár report×datum calendar (ADR 0039).
+ * Distinguishes priced days, no-price days (weekends/holidays), and fetch failures.
+ */
+export interface PriceCalendarFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  generatedAt: string
+  source: PriceCalendarSourceMeta
+  reports: string[]
+  days: PriceCalendarDayRow[]
+}
+
+export const WEBKINCSTAR_PRICE_CALENDAR_DISCLAIMER =
+  'Informational republish of Magyar Államkincstár (WebKincstár) daily price tables; may lag or differ from the live treasury table; not investment advice.' as const
 
 export const KSH_ARA0040_PAGE_URL =
   'https://www.ksh.hu/stadat_files/ara/hu/ara0040.html' as const

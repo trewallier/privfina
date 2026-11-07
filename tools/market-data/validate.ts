@@ -1,10 +1,11 @@
-import { digestCanonical, digestInflation } from './digests.ts'
+import { digestCanonical, digestInflation, digestPriceCalendar } from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import { publishedFamilies, type MarketTreeState } from './merge.ts'
 import {
   COUPON_COLS,
   INFLATION_REF_PATH,
+  PRICE_CALENDAR_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
@@ -118,6 +119,14 @@ export function validateMarketTree(tree: MarketTreeState): void {
   } else if (tree.manifest.refs?.inflation || tree.manifest.digests[INFLATION_REF_PATH]) {
     throw new ValidateError('manifest references inflation but file is missing')
   }
+  if (tree.priceCalendar) {
+    validatePriceCalendar(tree)
+  } else if (
+    tree.manifest.refs?.priceCalendar ||
+    tree.manifest.digests[PRICE_CALENDAR_REF_PATH]
+  ) {
+    throw new ValidateError('manifest references priceCalendar but file is missing')
+  }
   verifyManifestDigests(tree)
 }
 
@@ -192,6 +201,56 @@ function validateInflation(tree: MarketTreeState): void {
   }
 }
 
+function validatePriceCalendar(tree: MarketTreeState): void {
+  const file = tree.priceCalendar
+  if (!file) return
+  if (file.schemaVersion !== SCHEMA_VERSION) {
+    throw new ValidateError(`priceCalendar schemaVersion must be ${SCHEMA_VERSION}`)
+  }
+  if (!file.source || file.source.id !== 'webkincstar-report-service') {
+    throw new ValidateError('priceCalendar.source.id must be webkincstar-report-service')
+  }
+  if (!file.source.disclaimer || !file.source.disclaimer.trim()) {
+    throw new ValidateError('priceCalendar.source.disclaimer is required')
+  }
+  if (!Array.isArray(file.reports) || file.reports.length === 0) {
+    throw new ValidateError('priceCalendar.reports must be a non-empty array')
+  }
+  if (!Array.isArray(file.days)) {
+    throw new ValidateError('priceCalendar.days must be an array')
+  }
+  const seen = new Set<string>()
+  for (const day of file.days) {
+    if (!day || typeof day.datum !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day.datum)) {
+      throw new ValidateError(`Bad priceCalendar datum: ${String(day?.datum)}`)
+    }
+    if (typeof day.report !== 'string' || !day.report) {
+      throw new ValidateError('priceCalendar day missing report')
+    }
+    if (
+      day.status !== 'priced' &&
+      day.status !== 'no_price' &&
+      day.status !== 'fetch_failed'
+    ) {
+      throw new ValidateError(`Bad priceCalendar status: ${String(day.status)}`)
+    }
+    if (typeof day.rowCount !== 'number' || !Number.isFinite(day.rowCount) || day.rowCount < 0) {
+      throw new ValidateError(`Bad priceCalendar rowCount for ${day.report} ${day.datum}`)
+    }
+    const key = `${day.report}\0${day.datum}`
+    if (seen.has(key)) {
+      throw new ValidateError(`Duplicate priceCalendar day ${day.report} ${day.datum}`)
+    }
+    seen.add(key)
+  }
+  const refPath = tree.manifest?.refs?.priceCalendar
+  if (refPath && refPath !== PRICE_CALENDAR_REF_PATH) {
+    throw new ValidateError(
+      `manifest.refs.priceCalendar must be ${PRICE_CALENDAR_REF_PATH}, got ${refPath}`
+    )
+  }
+}
+
 /** Recompute file digests and require an exact match to manifest.digests. */
 export function verifyManifestDigests(tree: MarketTreeState): void {
   if (!tree.manifest) {
@@ -225,6 +284,9 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
   }
   if (tree.inflation) {
     digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
+  }
+  if (tree.priceCalendar) {
+    digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)
   }
   return digests
 }

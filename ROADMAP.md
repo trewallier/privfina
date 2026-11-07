@@ -344,6 +344,55 @@ Plan slices
 Out of scope for §6g until named
 - Live auction DKJ-base derivation; non-ÁKK retail products outside published families.
 
+#### 6h) WebKincstár daily price PDF into market-data ingest
+Goal: extend the existing scheduled market-data workflow so each run also collects Magyar Államkincstár (WebKincstár) **daily price tables**, parses **all listed prices** into published `market-data`, and records days with **no prices** so calendar gaps (weekends / holidays) can be distinguished from missing ingest. Discovery / fetch contract: [`docs/dev-notes/commercial-investment-market-data-availability-assessment.md`](docs/dev-notes/commercial-investment-market-data-availability-assessment.md).
+
+Constraints
+- Actions-only contact; browser must not call WebKincstár.
+- Prefer parsed published JSON on `market-data` over committing raw PDFs.
+- Design PDF→row parsing so a later historical backfill (§6j) can reuse it; **do not** implement backfill in this epic.
+- ADR when the published shape / merge rules need a boundary decision.
+
+Plan slices (high level; detail when scheduled)
+- [ ] Spec / ADR as needed: daily WebKincstár price ingest + explicit no-price day records.
+- [ ] Wire daily collect: fetch → parse → merge into `market-data` alongside existing ÁKK / allampapir / kamatok / inflation sources.
+- [ ] Acceptance: price days land as quotes; no-price days are recorded distinctly; parser reusable for §6j.
+
+Out of scope for §6h
+- Historical backfill of older settles (§6j).
+- SPA composer changes beyond consuming whatever the published tree already supports.
+
+#### 6i) Daily public-offering capture (ÁKK + Államkincstár)
+Goal: extend the daily scrape pipeline to detect **new nyilvános ajánlattétel (public offering)** documents on **akk.hu** and **allamkincstar.hu**, and transcribe their content into published market data over time (sale windows, coupon calendars, and other offering details — e.g. BMÁP coupon days). Exact sources, layout, and transcription shape are decided when this epic is planned in detail.
+
+Constraints
+- Actions-only contact; browser must not scrape those hosts.
+- Accumulate offerings going forward; design transcription so a later backfill (§6j) can reuse parsers.
+- Product YAML auto-authoring remains out of scope unless a later ADR says otherwise.
+- ADR when architecture / published offering schema is chosen.
+
+Plan slices (high level; detail when scheduled)
+- [ ] Spec / ADR as needed: offering discovery + published offering records on `market-data`.
+- [ ] Daily detect new offerings → transcribe into the published tree.
+- [ ] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6j.
+
+Out of scope for §6i
+- Backfilling older offerings (§6j).
+- Replacing retailInterest or WebKincstár price ingest (§6d / §6h).
+
+#### 6j) Historical market-data backfill
+Goal: one-shot (or batched) backfill of historical market artifacts into `market-data`, reusing the daily ingest parsers from §6h / §6i where possible.
+
+Constraints
+- Detail and sequencing TBD when this epic is planned; do not start until §6h / §6i daily paths exist.
+- Prefer official sources already used by daily ingest.
+
+Plan slices
+- [ ] Plan and implement historical backfill (scope, sources, and cutover TBD).
+
+Out of scope until planned
+- Concrete date ranges, report inventories, or SPA UX for deep history.
+
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).
 

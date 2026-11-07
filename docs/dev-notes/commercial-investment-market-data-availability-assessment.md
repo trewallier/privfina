@@ -155,4 +155,10 @@ Heuristic generation (anniversary of maturity / quarterly anchors) can approxima
 
 Under the availability/pricing definitions: the repo **knows issue and maturity**, knows **whether a series is offered today**, and can price **today’s** DKJ asks (when present) and **today’s** offered PMÁP/BMÁP buys via **par + accrued**. It does **not** know retailer **sale calendars**, and almost **no historical customer prices** are stored (two settles only).
 
-One-shot / daily history: **automate WebKincstár** `report-service` PDFs (confirmed JSON body above) to **collect** DKJ ask/bid and PMÁP/BMÁP table rows; parse to text/JSON for `market-data`. For **PMÁP/BMÁP** during sale, dirty ask remains **calculable** (100 + accrued) once sale windows + rates exist; PDF asks are validation. Future coupon **dates** still come from **offerings**, not from a coupon-calendar API.
+Follow-on work is tracked on the roadmap (this note is discovery only — **no ingest implementation here**):
+
+- **ROADMAP §6h** — daily WebKincstár price PDF into the existing market-data collect (explicit no-price days; parser reusable later).
+- **ROADMAP §6i** — daily public-offering capture from akk.hu / allamkincstar.hu into published market data.
+- **ROADMAP §6j** — historical backfill (planned later; reuse §6h / §6i parsers).
+
+Confirmed fetch contract above supports §6h. For **PMÁP/BMÁP** during sale, dirty ask remains **calculable** (100 + accrued) once sale windows + rates exist; PDF asks are validation. Future coupon **dates** still come from **offerings** (§6i), not from a coupon-calendar API.

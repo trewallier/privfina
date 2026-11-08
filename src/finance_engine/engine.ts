@@ -194,6 +194,12 @@ export {
   derivePmapAccruedInterestAmount,
   generatePmapAnnualCouponFlows
 } from './instruments/pmap'
+export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
+export {
+  deriveFixmapRateOutputs,
+  deriveFixmapAccruedInterestAmount,
+  generateFixmapAnnualCouponFlows
+} from './instruments/fixmap'
 export {
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,

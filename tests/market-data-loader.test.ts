@@ -192,6 +192,19 @@ describe('market-data-loader', () => {
     expect(await loader.loadOffering('pmap', 'MISSING')).toBeNull()
   })
 
+  it('memoizes offering misses in the session cache (ROADMAP §6l)', async () => {
+    let hits = 0
+    const fetchImpl = async () => {
+      hits += 1
+      return new Response('gone', { status: 404 })
+    }
+    const loader = createMarketDataLoader({ baseUrl: '/privfina/', fetchImpl })
+    expect(await loader.loadOffering('pmap', 'MISSING')).toBeNull()
+    expect(hits).toBe(1)
+    expect(await loader.loadOffering('pmap', 'MISSING')).toBeNull()
+    expect(hits).toBe(1)
+  })
+
   it('soft-degrades when published files are missing', async () => {
     const loader = createMarketDataLoader({
       baseUrl: '/privfina/',

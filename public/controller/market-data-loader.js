@@ -286,6 +286,7 @@ export function createMarketDataLoader(options = {}) {
     /**
      * Per-series offering transcription (ROADMAP §6l). Soft-null when missing/invalid.
      * Preferred path: `families/{fam}/offerings/<id>.json` (schemaVersion 2).
+     * Misses (404 / invalid) are session-memoized as null so pre-§6k applies do not re-fetch.
      * @param {'dkj'|'pmap'|'bmap'} family
      * @param {string} id
      * @returns {Promise<object|null>}
@@ -294,12 +295,16 @@ export function createMarketDataLoader(options = {}) {
       if (!MARKET_FAMILIES.includes(family) || !id) {
         return null
       }
+      const relative = `families/${family}/offerings/${encodeURIComponent(id)}.json`
+      const url = joinUrl(baseUrl, relative)
+      if (sessionCache.has(url)) {
+        return sessionCache.get(url)
+      }
       try {
-        const relative = `families/${family}/offerings/${encodeURIComponent(id)}.json`
-        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, (data) =>
-          validateOfferingFile(data, id)
-        )
+        const validated = await cachedFetch(url, fetchImpl, (data) => validateOfferingFile(data, id))
+        return validated
       } catch {
+        sessionCache.set(url, null)
         return null
       }
     },

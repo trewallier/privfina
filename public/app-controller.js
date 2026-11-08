@@ -1503,17 +1503,19 @@ function initController() {
       }
     }
 
-    let offering = commercialMarketFamilyState.offeringsById?.[seriesId] || null
-    if (!offering) {
+    const offeringsById = commercialMarketFamilyState.offeringsById || {}
+    let offering
+    if (Object.prototype.hasOwnProperty.call(offeringsById, seriesId)) {
+      offering = offeringsById[seriesId]
+    } else {
       offering = await marketDataLoader.loadOffering(family, seriesId)
       if (token !== commercialMarketApplyToken) {
         return
       }
-      if (offering) {
-        commercialMarketFamilyState.offeringsById = {
-          ...(commercialMarketFamilyState.offeringsById || {}),
-          [seriesId]: offering
-        }
+      // Memoize hits and misses (null) so missing offerings do not re-fetch on every apply.
+      commercialMarketFamilyState.offeringsById = {
+        ...offeringsById,
+        [seriesId]: offering
       }
     }
 

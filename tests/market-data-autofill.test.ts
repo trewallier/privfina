@@ -247,7 +247,7 @@ describe('market-data-autofill', () => {
   it('lists marketable fields missing from a new patch so series switches can clear stale rates', () => {
     expect(
       marketableFieldsMissingFromPatch('bmap', ['issueDate', 'firstCouponDate'])
-    ).toEqual(['annualCouponRatePct', 'maturityDate', 'couponSchedule'])
+    ).toEqual(['annualCouponRatePct', 'maturityDate', 'couponSchedule', 'dayCountConvention'])
     expect(
       marketableFieldsMissingFromPatch('dkj', [
         'maturityDate',
@@ -261,8 +261,19 @@ describe('market-data-autofill', () => {
       'maturityDate',
       'issueDate',
       'firstCouponDate',
-      'couponSchedule'
+      'couponSchedule',
+      'dayCountConvention'
     ])
+    expect(
+      marketableFieldsMissingFromPatch('pmap', [
+        'annualCouponRatePct',
+        'maturityDate',
+        'issueDate',
+        'firstCouponDate',
+        'couponSchedule',
+        'dayCountConvention'
+      ])
+    ).toEqual([])
   })
 
   it('overwrites rates on series switch and leaves missing coupon fields out of the patch', () => {

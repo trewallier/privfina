@@ -188,7 +188,8 @@ export function deriveLastAvailabilityDate(series) {
 }
 
 /**
- * Prefer series-adjacent saleWindow, else offering.saleWindow (ROADMAP §6l).
+ * Prefer offering.saleWindow when present, else series-adjacent saleWindow (ROADMAP §6l).
+ * Picker labels use series-adjacent only (no N+1); selected-series path may pass a loaded offering.
  * @param {{ saleWindow?: { from?: string, to?: string|null } }|null|undefined} series
  * @param {{ saleWindow?: { from?: string, to?: string|null } }|null|undefined} offering
  */
@@ -315,8 +316,9 @@ export function budapestTodayIso(date = new Date()) {
 }
 
 /**
- * Series picker option text with available/past from `offered` (or name-year heuristic).
- * @param {{ name?: string, id?: string, issue?: string|null, offered?: boolean|null }|null|undefined} series
+ * Series picker option text with available/past from saleWindow, else `offered`, else name-year heuristic.
+ * Passes series only (no offering) so the picker stays free of N+1 offering fetches.
+ * @param {{ name?: string, id?: string, issue?: string|null, offered?: boolean|null, saleWindow?: object }|null|undefined} series
  * @param {string} [todayIso] Europe/Budapest calendar day
  */
 export function formatSeriesOptionLabel(series, todayIso = budapestTodayIso()) {
@@ -366,14 +368,16 @@ export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
     'maturityDate',
     'issueDate',
     'firstCouponDate',
-    'couponSchedule'
+    'couponSchedule',
+    'dayCountConvention'
   ]),
   bmap: Object.freeze([
     'annualCouponRatePct',
     'maturityDate',
     'issueDate',
     'firstCouponDate',
-    'couponSchedule'
+    'couponSchedule',
+    'dayCountConvention'
   ])
 })
 
@@ -439,10 +443,6 @@ export function buildMarketAutofillPatch({
     const remaining = deriveRemainingDays(settlement, maturity)
     if (remaining != null) {
       setField('remainingDays', remaining)
-    }
-    const dayCount = offering?.dayCount || series?.dayCount
-    if (dayCount) {
-      setField('dayCountConvention', dayCount)
     }
   } else if (family === 'pmap' || family === 'bmap') {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.

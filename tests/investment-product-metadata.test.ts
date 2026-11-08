@@ -7,6 +7,7 @@ import {
 import { buildGenericBondSubtypeUiConfig } from '../public/controller/generic-bond-presentation.js'
 import { BMAP_PRODUCT_SPEC } from '../public/controller/bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from '../public/controller/dkj-form.js'
+import { FIXMAP_PRODUCT_SPEC } from '../public/controller/fixmap-form.js'
 import { PMAP_PRODUCT_SPEC } from '../public/controller/pmap-form.js'
 
 function inputByName(spec: any, inputName: string) {
@@ -14,16 +15,18 @@ function inputByName(spec: any, inputName: string) {
 }
 
 describe('commercial investment product metadata (ADR 0027)', () => {
-  it('builds BMAP, DKJ, and PMAP commercial product options from spec metadata', () => {
+  it('builds BMAP, DKJ, PMAP, and FixMÁP commercial product options from spec metadata', () => {
     const options = buildCommercialInvestmentProductOptions()
     const optionByValue = new Map(options.map((entry) => [entry.value, entry]))
 
     expect(optionByValue.get('bmap')?.label).toBe(BMAP_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('dkj')?.label).toBe(DKJ_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('pmap')?.label).toBe(PMAP_PRODUCT_SPEC.ui.formTitle)
+    expect(optionByValue.get('fixmap')?.label).toBe(FIXMAP_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('bmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('dkj')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
+    expect(optionByValue.get('fixmap')?.migrationStatus).toBe('schedule-usable')
     expect(options.every((entry) => entry.available)).toBe(true)
   })
 
@@ -31,6 +34,7 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(findCommercialInvestmentProduct('dkj')?.spec.id).toBe(DKJ_PRODUCT_SPEC.id)
     expect(findCommercialInvestmentProduct('pmap')?.spec.id).toBe(PMAP_PRODUCT_SPEC.id)
     expect(findCommercialInvestmentProduct('bmap')?.spec.id).toBe(BMAP_PRODUCT_SPEC.id)
+    expect(findCommercialInvestmentProduct('fixmap')?.spec.id).toBe(FIXMAP_PRODUCT_SPEC.id)
     expect(findCommercialInvestmentProduct('regular-bond')).toBeNull()
   })
 
@@ -39,9 +43,11 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(config.bmap.usesDedicatedHost).toBe(true)
     expect(config.dkj.usesDedicatedHost).toBe(true)
     expect(config.pmap.usesDedicatedHost).toBe(true)
+    expect(config.fixmap.usesDedicatedHost).toBe(true)
     expect(config.bmap.hostId).toBe('investment-bmap-wrap')
     expect(config.dkj.hostId).toBe('investment-dkj-wrap')
     expect(config.pmap.hostId).toBe('investment-pmap-wrap')
+    expect(config.fixmap.hostId).toBe('investment-fixmap-wrap')
   })
 
   it('keeps catalog field descriptions aligned with embedded product specs', () => {

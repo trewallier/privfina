@@ -378,6 +378,14 @@ export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
     'firstCouponDate',
     'couponSchedule',
     'dayCountConvention'
+  ]),
+  fixmap: Object.freeze([
+    'annualCouponRatePct',
+    'maturityDate',
+    'issueDate',
+    'firstCouponDate',
+    'couponSchedule',
+    'dayCountConvention'
   ])
 })
 
@@ -385,7 +393,7 @@ export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
  * Marketable field names that should be cleared before applying a new patch
  * so series switches cannot leave stale rates looking user-entered.
  *
- * @param {'dkj'|'pmap'|'bmap'} family
+ * @param {'dkj'|'pmap'|'bmap'|'fixmap'} family
  * @param {Iterable<string>} sourcedNames
  * @returns {string[]}
  */
@@ -444,7 +452,7 @@ export function buildMarketAutofillPatch({
     if (remaining != null) {
       setField('remainingDays', remaining)
     }
-  } else if (family === 'pmap' || family === 'bmap') {
+  } else if (family === 'pmap' || family === 'bmap' || family === 'fixmap') {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
     const onIso = String(current.purchaseDate || series?.issue || '').trim()
     const couponRate = pickCouponRatePct(coupons, onIso)

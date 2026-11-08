@@ -68,6 +68,9 @@ describe('commercial investment UI markup contracts', () => {
       /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="pmap-maturity-date-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-first-coupon-date-wrap"/
     )
     expect(indexHtml).toMatch(
+      /id="fixmap-principal-wrap"[\s\S]*?id="fixmap-purchase-date-wrap"[\s\S]*?id="fixmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="fixmap-maturity-date-wrap"[\s\S]*?id="fixmap-issue-date-wrap"[\s\S]*?id="fixmap-first-coupon-date-wrap"/
+    )
+    expect(indexHtml).toMatch(
       /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="bmap-maturity-date-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-first-coupon-date-wrap"/
     )
   })
@@ -84,8 +87,9 @@ describe('commercial investment UI markup contracts', () => {
     )
   })
 
-  it('defaults PMÁP/BMÁP purchase dates via ensureDefaultPurchaseDate', () => {
+  it('defaults PMÁP/FixMÁP/BMÁP purchase dates via ensureDefaultPurchaseDate', () => {
     expect(appController).toContain('ensureDefaultPurchaseDate(pmapPurchaseDateInput)')
+    expect(appController).toContain('ensureDefaultPurchaseDate(fixmapPurchaseDateInput)')
     expect(appController).toContain('ensureDefaultPurchaseDate(bmapPurchaseDateInput)')
   })
 
@@ -122,10 +126,14 @@ describe('commercial investment UI markup contracts', () => {
     expect(appController).toContain("annualCouponRatePct: '#pmap-annual-coupon-rate-pct'")
     expect(appController).toContain("maturityDate: '#pmap-maturity-date'")
     expect(appController).toContain("dayCountConvention: '#pmap-day-count-convention'")
+    expect(appController).toContain("annualCouponRatePct: '#fixmap-annual-coupon-rate-pct'")
+    expect(appController).toContain("maturityDate: '#fixmap-maturity-date'")
+    expect(appController).toContain("dayCountConvention: '#fixmap-day-count-convention'")
     expect(appController).not.toContain('bmap-dkj-base-yield-pct')
     expect(appController).not.toContain('pmap-previous-year-inflation-pct')
     expect(indexHtml).toContain('id="commercial-investment-market-attribution"')
     expect(indexHtml).toContain('id="pmap-day-count-convention"')
+    expect(indexHtml).toContain('id="fixmap-day-count-convention"')
     expect(indexHtml).toContain('id="bmap-day-count-convention"')
   })
 })

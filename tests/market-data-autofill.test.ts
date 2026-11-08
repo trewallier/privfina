@@ -264,6 +264,14 @@ describe('market-data-autofill', () => {
       'couponSchedule',
       'dayCountConvention'
     ])
+    expect(marketableFieldsMissingFromPatch('fixmap', [])).toEqual([
+      'annualCouponRatePct',
+      'maturityDate',
+      'issueDate',
+      'firstCouponDate',
+      'couponSchedule',
+      'dayCountConvention'
+    ])
     expect(
       marketableFieldsMissingFromPatch('pmap', [
         'annualCouponRatePct',

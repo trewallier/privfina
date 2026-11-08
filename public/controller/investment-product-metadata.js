@@ -1,8 +1,16 @@
 import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from './dkj-form.js'
+import { FIXMAP_PRODUCT_SPEC } from './fixmap-form.js'
 import { PMAP_PRODUCT_SPEC } from './pmap-form.js'
 
-const FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS = [
+/** Catalog statuses that may appear on the commercial investment picker (ADR 0027 / ROADMAP §6j). */
+const COMMERCIAL_PICKER_STATUSES = new Set([
+  'schedule-usable',
+  'commercially-usable',
+  'fully-spec-backed'
+])
+
+const COMMERCIAL_INVESTMENT_PRODUCTS = [
   {
     subtype: 'bmap',
     spec: BMAP_PRODUCT_SPEC,
@@ -14,11 +22,21 @@ const FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS = [
     migrationStatus: 'fully-spec-backed'
   },
   {
+    subtype: 'fixmap',
+    spec: FIXMAP_PRODUCT_SPEC,
+    migrationStatus: 'schedule-usable'
+  },
+  {
     subtype: 'pmap',
     spec: PMAP_PRODUCT_SPEC,
     migrationStatus: 'fully-spec-backed'
   }
 ]
+
+/** @deprecated Prefer COMMERCIAL_INVESTMENT_PRODUCTS (includes schedule-usable+). */
+const FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS = COMMERCIAL_INVESTMENT_PRODUCTS.filter(
+  (entry) => entry.migrationStatus === 'fully-spec-backed'
+)
 
 function findSpecInput(spec, inputName) {
   return spec.inputs.find((field) => field.name === inputName)
@@ -43,9 +61,12 @@ function resolveOptionLabel(spec) {
 /**
  * Catalog government-security products for the commercial investment composer.
  * Simplified investment uses generic bond subtypes only (ADR 0027).
+ * Picker exposes schedule-usable+ (ROADMAP §6j FixMÁP).
  */
 function buildCommercialInvestmentProductOptions() {
-  return FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS.map((entry) => ({
+  return COMMERCIAL_INVESTMENT_PRODUCTS.filter((entry) =>
+    COMMERCIAL_PICKER_STATUSES.has(entry.migrationStatus)
+  ).map((entry) => ({
     value: entry.subtype,
     label: resolveOptionLabel(entry.spec),
     migrationStatus: entry.migrationStatus,
@@ -59,7 +80,7 @@ function buildSpecBackedInvestmentSubtypeOptions() {
 }
 
 function findCommercialInvestmentProduct(productCode) {
-  return FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS.find((entry) => entry.subtype === productCode) || null
+  return COMMERCIAL_INVESTMENT_PRODUCTS.find((entry) => entry.subtype === productCode) || null
 }
 
 /**
@@ -137,6 +158,12 @@ function buildSpecBackedInvestmentSubtypeUiConfig() {
       annualRateReadOnly: true,
       annualRateNote: 'Derived from DKJ purchase amount and redemption profile.'
     }),
+    fixmap: buildDedicatedHostSubtypeUiConfig(FIXMAP_PRODUCT_SPEC, {
+      hostId: 'investment-fixmap-wrap',
+      inflationSchedulePreview: true,
+      annualRateNote:
+        'FixMÁP uses the published effective annual coupon rate instead of the generic annual rate field.'
+    }),
     pmap: buildDedicatedHostSubtypeUiConfig(PMAP_PRODUCT_SPEC, {
       hostId: 'investment-pmap-wrap',
       inflationSchedulePreview: true,
@@ -147,6 +174,7 @@ function buildSpecBackedInvestmentSubtypeUiConfig() {
 }
 
 export {
+  COMMERCIAL_INVESTMENT_PRODUCTS,
   FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS,
   buildSpecBackedInvestmentSubtypeOptions,
   buildCommercialInvestmentProductOptions,

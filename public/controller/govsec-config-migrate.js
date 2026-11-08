@@ -60,3 +60,18 @@ export function migratePmapConfigForEdit(config = {}) {
   delete next.startDate
   return next
 }
+
+/**
+ * Normalize FixMÁP configs for edit (ADR 0038 effective rate + maturity).
+ * FixMÁP never used inflation+premium storage; keep annualCouponRatePct as-is.
+ */
+export function migrateFixmapConfigForEdit(config = {}) {
+  const next = { ...config }
+  const existing = toFiniteNumber(next.annualCouponRatePct)
+  if (existing != null) {
+    next.annualCouponRatePct = existing
+  }
+  next.maturityDate = next.maturityDate || next.dueDate || ''
+  delete next.startDate
+  return next
+}

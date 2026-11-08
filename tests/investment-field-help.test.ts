@@ -4,6 +4,10 @@ import { resolve } from 'node:path'
 import YAML from 'yaml'
 import { DKJ_PRODUCT_SPEC, DKJ_FRONTEND_FIELD_ADAPTER } from '../public/controller/dkj-form.js'
 import { BMAP_PRODUCT_SPEC, BMAP_FRONTEND_FIELD_ADAPTER } from '../public/controller/bmap-form.js'
+import {
+  FIXMAP_PRODUCT_SPEC,
+  FIXMAP_FRONTEND_FIELD_ADAPTER
+} from '../public/controller/fixmap-form.js'
 import { PMAP_PRODUCT_SPEC, PMAP_FRONTEND_FIELD_ADAPTER } from '../public/controller/pmap-form.js'
 
 function readRepoFile(relativePath: string): string {
@@ -35,7 +39,7 @@ describe('investment field help and dedicated hosts', () => {
   const simplifiedFormHtml = extractFormHtml(indexHtml, 'investment-form')
   const commercialFormHtml = extractFormHtml(indexHtml, 'commercial-investment-form')
 
-  it('keeps embedded DKJ/BMAP/PMAP input descriptions aligned with YAML', () => {
+  it('keeps embedded DKJ/BMAP/PMAP/FixMÁP input descriptions aligned with YAML', () => {
     const dkj = YAML.parse(
       readRepoFile('docs/product-specs/products/government-securities/dkj/product.yaml')
     ) as any
@@ -45,14 +49,19 @@ describe('investment field help and dedicated hosts', () => {
     const pmap = YAML.parse(
       readRepoFile('docs/product-specs/products/government-securities/pmap/product.yaml')
     ) as any
+    const fixmap = YAML.parse(
+      readRepoFile('docs/product-specs/products/government-securities/fixmap/product.yaml')
+    ) as any
 
     expect(DKJ_PRODUCT_SPEC.specVersion).toBe(dkj.specVersion)
     expect(BMAP_PRODUCT_SPEC.specVersion).toBe(bmap.specVersion)
     expect(PMAP_PRODUCT_SPEC.specVersion).toBe(pmap.specVersion)
+    expect(FIXMAP_PRODUCT_SPEC.specVersion).toBe(fixmap.specVersion)
 
     assertEmbeddedInputDescriptionsMatchYaml(DKJ_PRODUCT_SPEC, dkj)
     assertEmbeddedInputDescriptionsMatchYaml(BMAP_PRODUCT_SPEC, bmap)
     assertEmbeddedInputDescriptionsMatchYaml(PMAP_PRODUCT_SPEC, pmap)
+    assertEmbeddedInputDescriptionsMatchYaml(FIXMAP_PRODUCT_SPEC, fixmap)
   })
 
   it('keeps investment-field-help.js free of product field maps', () => {
@@ -61,6 +70,7 @@ describe('investment field help and dedicated hosts', () => {
     expect(helpSource).not.toMatch(/\bDKJ_FIELD_HELP\b/)
     expect(helpSource).not.toMatch(/\bBMAP_FIELD_HELP\b/)
     expect(helpSource).not.toMatch(/\bPMAP_FIELD_HELP\b/)
+    expect(helpSource).not.toMatch(/\bFIXMAP_FIELD_HELP\b/)
     expect(helpSource).not.toMatch(/\bgetDkjFieldHelp\b/)
     expect(helpSource).not.toMatch(/\bgetBmapFieldHelp\b/)
     expect(helpSource).not.toMatch(/\bgetPmapFieldHelp\b/)
@@ -74,22 +84,26 @@ describe('investment field help and dedicated hosts', () => {
     expect(simplifiedFormHtml).toContain('value="custom-bond"')
     expect(simplifiedFormHtml).not.toContain('id="investment-dkj-wrap"')
     expect(simplifiedFormHtml).not.toContain('id="investment-pmap-wrap"')
+    expect(simplifiedFormHtml).not.toContain('id="investment-fixmap-wrap"')
     expect(simplifiedFormHtml).not.toContain('id="investment-bmap-wrap"')
     expect(simplifiedFormHtml).toContain('id="investment-form-status"')
     expect(simplifiedFormHtml).toContain('data-help-button="investment-category-help"')
   })
 
-  it('hosts DKJ/PMAP/BMAP on the commercial investment form', () => {
+  it('hosts DKJ/PMAP/FixMÁP/BMAP on the commercial investment form', () => {
     expect(commercialFormHtml).toContain('id="commercial-investment-product"')
     expect(commercialFormHtml).not.toContain('id="commercial-investment-readiness-hint"')
     expect(commercialFormHtml).not.toMatch(/Readiness:\s*fully-spec-backed/)
     expect(commercialFormHtml).toContain('id="investment-dkj-wrap"')
     expect(commercialFormHtml).toContain('id="investment-pmap-wrap"')
+    expect(commercialFormHtml).toContain('id="investment-fixmap-wrap"')
     expect(commercialFormHtml).toContain('id="investment-bmap-wrap"')
     expect(commercialFormHtml).toContain('id="commercial-investment-form-status"')
     expect(commercialFormHtml).toContain('id="dkj-face-value"')
     expect(commercialFormHtml).toContain('id="pmap-annual-coupon-rate-pct"')
     expect(commercialFormHtml).toContain('id="pmap-maturity-date"')
+    expect(commercialFormHtml).toContain('id="fixmap-annual-coupon-rate-pct"')
+    expect(commercialFormHtml).toContain('id="fixmap-maturity-date"')
     expect(commercialFormHtml).toContain('id="bmap-annual-coupon-rate-pct"')
     expect(commercialFormHtml).toContain('id="bmap-maturity-date"')
     expect(commercialFormHtml).toContain('id="commercial-investment-maturity-preview-help"')
@@ -100,6 +114,9 @@ describe('investment field help and dedicated hosts', () => {
       expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
     }
     for (const adapter of Object.values(PMAP_FRONTEND_FIELD_ADAPTER)) {
+      expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
+    }
+    for (const adapter of Object.values(FIXMAP_FRONTEND_FIELD_ADAPTER)) {
       expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
     }
     for (const adapter of Object.values(BMAP_FRONTEND_FIELD_ADAPTER)) {

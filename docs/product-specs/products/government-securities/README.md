@@ -22,7 +22,7 @@ Published market family folders already (or soon) available on the `market-data`
 | Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
 | `fixmap` | FixMÁP | **Done (fully-spec-backed)** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
-| `mapp` | MÁP Plusz (incl. nyomdai) | **In progress (this stack)** — semi-annual pay; multi-band rates in coupons; year-partitioned bands in product examples; kamatok min–max dual rows preserved as published |
+| `mapp` | MÁP Plusz (incl. nyomdai) | **In progress (this stack)** — series `couponFrequencyMonths` 12 (newer annual) or 6 (older semi-annual); Ismertető ACT/ACT accrued + kamatjuttatás; multi-band rates; kamatok min–max dual rows preserved as published |
 | `baba` | Babakötvény | Follow-on; optional prices already ingested |
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
 | *(possible `pemap`)* | PEMÁP | Split only if needed |

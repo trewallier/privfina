@@ -410,13 +410,13 @@ Constraints (after ADR 0040 platform refactor)
 - New family registration must include `calculateFromSpecInputs`, `marketableRequiredFields`, `migrationStatus`, and `hostWrapId` (picker + autofill + preview derive from the registry).
 
 #### MÁP Plusz next (`mapp`) — this stack
-Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on the commercial investment picker. Market ingest already publishes `families/mapp/` (incl. multi-band kamatok coupon rows). Semi-annual coupon cadence (6-month step, coupon ÷2). Register on shared `coupon-bearing` profile (ADR 0040); do not clone FixMÁP/PMÁP form modules. Temporary tip→`master` CI head PR (close, do not merge).
+Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on the commercial investment picker. Market ingest already publishes `families/mapp/` (incl. multi-band kamatok coupon rows). Coupon cadence is **series-authored** (`couponFrequencyMonths` 12 = newer annual-pay; 6 = older semi-annual) with Ismertető ACT/ACT accrued, irregular first-period `gp`, and kamatjuttatás (in-kind) until maturity cash. Register on shared `coupon-bearing` profile (ADR 0040); do not clone FixMÁP/PMÁP form modules. Temporary tip→`master` CI head PR (close, do not merge).
 
 Plan slices (implement in order; each slice should stay PR-sized)
-- [x] ROADMAP / spec / ownership / gov-sec README: MÁP Plusz-next delivery + temporary CI head; semi-annual cadence + multi-band coupon notes.
+- [x] ROADMAP / spec / ownership / gov-sec README: MÁP Plusz-next delivery + temporary CI head; dual annual/semi-annual cadence + Ismertető notes.
 - [ ] Author `mapp/product.yaml` + examples; catalog `government-security.mapp.standard` at **`spec-only`**.
-- [ ] Engine family mapper + semi-annual coupon-schedule primitives (BMÁP-style step-6 / ÷2; reuse day-count / covering-period helpers) → **`calc-aligned`**.
-- [ ] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill (first-coupon months = 6) → **`schedule-usable`**.
+- [ ] Engine family mapper + frequency-parameterized coupon primitives (Ismertető accrued / `gp`; kamatjuttatás) → **`calc-aligned`**.
+- [ ] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill (frequency from offering spacing) → **`schedule-usable`**.
 - [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off MÁP Plusz; temporary tip→`master` CI head PR (close, do not merge). Prefer omit-middle-rung catalog stamp with note (DKJ–FixMÁP precedent) unless an explicit `commercially-usable` row is useful.
 
 #### Later remaining families

@@ -151,7 +151,7 @@ Acceptance criteria
 - [x] Simplified investment composer lists only generic bond subtypes; ÁKK / government-security products are absent from that subtype picker (ADR 0027 / ROADMAP §5d).
 - [x] Commercial investment composer box exists with a treasury product picker over catalog `government-security` codes (DKJ, PMÁP, BMÁP, FixMÁP; MÁP Plusz when schedule-usable+). Catalog migration status stays in product metadata / docs — not shown as user-facing readiness copy on the form.
 - [x] Commercial investment product picker includes FixMÁP (fully-spec-backed); other §6j optional families remain out of the picker until their own stacks land.
-- [ ] Catalog MÁP Plusz (`mapp`) renders a dedicated commercial host whose field names/types/help match product-spec YAML; series load/autofill reuse the §6i calendar / `offered` / §6l offering soft-fail path for `families/mapp/` with semi-annual first-coupon heuristic (ROADMAP §6j).
+- [ ] Catalog MÁP Plusz (`mapp`) renders a dedicated commercial host whose field names/types/help match product-spec YAML; series load/autofill reuse the §6i calendar / `offered` / §6l offering soft-fail path for `families/mapp/` with series-authored coupon frequency (12 or 6) inferred from offering paymentDates when present (ROADMAP §6j).
 - [ ] Commercial investment product picker includes MÁP Plusz once schedule-usable+; registry entry uses `composerProfile: 'coupon-bearing'` (ADR 0040) without cloning FixMÁP/PMÁP form modules.
 - [x] ADR 0040 records the commercial investment composer host + family registry boundary and the no-clone rule for §6j follow-ons.
 - [x] Commercial PMÁP / BMÁP purchase date defaults to the browser’s current local calendar date when empty (create / product switch); edit keeps a persisted purchase date.

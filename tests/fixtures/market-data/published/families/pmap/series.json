@@ -13,7 +13,12 @@
       "iType": "FLOAT",
       "status": "active",
       "dayCount": "ACT/360",
-      "ref": "HUF CPI"
+      "ref": "HUF CPI",
+      "saleWindow": {
+        "from": "2022-01-21",
+        "to": "2023-01-20"
+      },
+      "offered": false
     }
   ]
 }

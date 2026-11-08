@@ -2090,7 +2090,7 @@
                       </select>
                       <div id="commercial-investment-series-help" class="field-help" hidden>
                         <button type="button" class="field-help-close" data-help-close="commercial-investment-series-help" aria-label="Close">x</button>
-                        <p>Published treasury offering from GitHub-hosted market data. Selecting a series auto-fills non-amount fields from the quote for the purchase/settlement date. Amount stays manual; purchase/settlement stays editable (clamped to the nearest valid quote date when needed). Missing quote data resets to Manual entry. Series labels mark available vs past from published offered flags.</p>
+                        <p>Published treasury offering from GitHub-hosted market data. Selecting a series auto-fills non-amount fields from the quote for the purchase/settlement date. Amount stays manual; purchase/settlement stays editable (clamped to the nearest valid quote date when needed). Missing quote data resets to Manual entry. Series labels mark available vs past from published sale windows when present, otherwise offered flags.</p>
                       </div>
                     </label>
                   </div>
@@ -2194,6 +2194,13 @@
                         value=""
                         autocomplete="off"
                       />
+                      <input
+                        id="pmap-day-count-convention"
+                        name="dayCountConvention"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
                     </div>
                   </div>
 
@@ -2230,6 +2237,13 @@
                       <input
                         id="bmap-coupon-schedule"
                         name="couponSchedule"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                      <input
+                        id="bmap-day-count-convention"
+                        name="dayCountConvention"
                         type="hidden"
                         value=""
                         autocomplete="off"

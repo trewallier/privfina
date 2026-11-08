@@ -68,6 +68,15 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(config.bmap.fields.maturityDate.required).toBe(
       inputByName(BMAP_PRODUCT_SPEC, 'maturityDate')?.required
     )
+    expect(config.fixmap.fields.annualCouponRatePct.required).toBe(
+      inputByName(FIXMAP_PRODUCT_SPEC, 'annualCouponRatePct')?.required
+    )
+    expect(config.fixmap.fields.maturityDate.required).toBe(
+      inputByName(FIXMAP_PRODUCT_SPEC, 'maturityDate')?.required
+    )
+    expect(config.fixmap.fields.annualCouponRatePct.description).toBe(
+      inputByName(FIXMAP_PRODUCT_SPEC, 'annualCouponRatePct')?.description
+    )
   })
 })
 

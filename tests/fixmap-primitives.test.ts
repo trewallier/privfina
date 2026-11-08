@@ -59,16 +59,58 @@ describe('FixMÁP TypeScript primitives (ADR 0017 / 0038 / ROADMAP §6j)', () =>
       purchaseAmount,
       rates.annualCouponRatePct
     )
-    expect(flows[0]).toMatchObject({
-      date: inputs.purchaseDate,
-      direction: 'outflow',
-      amount: purchaseAmount
-    })
-    expect(flows.at(-1)).toMatchObject({
-      date: inputs.maturityDate,
-      direction: 'inflow',
-      amount: inputs.principal
-    })
-    expect(flows.some((flow) => String(flow.description || '').includes('FixMAP'))).toBe(true)
+    // Stepped schedule: each annual coupon uses the covering band rate (end-inclusive `to`).
+    // firstCouponDate 2027-08-03 is covered by 2026-08-03…2027-08-03 @ 6.5%, then 7.0…8.5.
+    expect(flows).toEqual([
+      {
+        date: '2027-02-03',
+        amount: purchaseAmount,
+        direction: 'outflow',
+        category: 'investment',
+        description: 'FixMAP'
+      },
+      {
+        date: '2027-08-03',
+        amount: 65_000,
+        direction: 'inflow',
+        category: 'investment',
+        description: 'FixMAP'
+      },
+      {
+        date: '2028-08-03',
+        amount: 70_000,
+        direction: 'inflow',
+        category: 'investment',
+        description: 'FixMAP'
+      },
+      {
+        date: '2029-08-03',
+        amount: 75_000,
+        direction: 'inflow',
+        category: 'investment',
+        description: 'FixMAP'
+      },
+      {
+        date: '2030-08-03',
+        amount: 80_000,
+        direction: 'inflow',
+        category: 'investment',
+        description: 'FixMAP'
+      },
+      {
+        date: '2031-08-03',
+        amount: 85_000,
+        direction: 'inflow',
+        category: 'investment',
+        description: 'FixMAP'
+      },
+      {
+        date: '2031-08-03',
+        amount: inputs.principal,
+        direction: 'inflow',
+        category: 'investment',
+        description: 'FixMAP'
+      }
+    ])
   })
 })

@@ -192,6 +192,28 @@ describe('market-data-autofill', () => {
       firstCouponDate: '2017-12-22'
     })
 
+    // FixMÁP shares the annual (12-month) first-coupon derivation with PMÁP, not BMÁP's quarterly.
+    const fixmap = buildMarketAutofillPatch({
+      family: 'fixmap',
+      series: { issue: '2026-08-03', mat: '2031-08-03', offered: true },
+      quote: { d: '2027-02-03', ask: 100.1, bid: 100.0, ay: 6.6, by: 6.5 },
+      coupons,
+      current: { principal: '1000000', purchaseDate: '2027-02-03' }
+    })
+    expect(fixmap.fields).toEqual({
+      annualCouponRatePct: 4.5,
+      couponSchedule: [
+        { from: '2025-03-24', to: '2026-03-23', rate: 3.5 },
+        { from: '2026-03-24', to: '2027-03-23', rate: 4.5 }
+      ],
+      maturityDate: '2031-08-03',
+      issueDate: '2026-08-03',
+      // Annual anniversary of mat month/day on/after issue (same as PMÁP path).
+      firstCouponDate: '2026-08-03'
+    })
+    expect(fixmap.fields).not.toHaveProperty('principal')
+    expect(fixmap.fields).not.toHaveProperty('purchaseDate')
+
     const withOffering = buildMarketAutofillPatch({
       family: 'pmap',
       series: { issue: '2022-01-21', mat: '2027-03-24', dayCount: 'ACT/360' },

@@ -23,7 +23,7 @@ const MAPP_PRODUCT_SPEC = {
       required: true,
       unit: 'percent',
       description:
-        'Yearly interest rate for the current period, as published (effective period rate; stepped bands live in couponSchedule when present). Semi-annual payments use half of this annual rate per coupon.',
+        'Published yearly coupon rate (p.a.) for the current period; stepped bands live in couponSchedule when present. Each payment uses the Ismertető period rate gp derived from this annual rate and couponFrequencyMonths (regular gp = ga × frequencyMonths/12; irregular first period uses the published ACT/ACT add-on).',
       constraints: { minimum: 0, maximum: 100 }
     },
     {
@@ -58,7 +58,17 @@ const MAPP_PRODUCT_SPEC = {
       required: false,
       unit: 'date',
       description:
-        'First interest payment date when you are not supplying a full coupon schedule.'
+        'First interest payment (kamatteljesítés) date. Prefer offering paymentDates when autofilled.'
+    },
+    {
+      name: 'couponFrequencyMonths',
+      type: 'integer',
+      label: 'Coupon Frequency (Months)',
+      required: false,
+      unit: 'text',
+      description:
+        'Months between coupon payments for this series. Use 12 for newer annual-pay MÁP Plusz offerings and 6 for older semi-annual series. Defaults to 12 when omitted. Autofill may infer from offering paymentDates spacing.',
+      constraints: { enum: [6, 12] }
     },
     {
       name: 'dayCountConvention',
@@ -67,8 +77,8 @@ const MAPP_PRODUCT_SPEC = {
       required: false,
       unit: 'text',
       description:
-        'How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).',
-      constraints: { enum: ['ACT/360', 'ACT/365F', '30E/360'] }
+        'Accrued interest for MÁP Plusz follows the Ismertető ACT/ACT period-fraction formula (Tényleges/Tényleges). This field is retained for parity with sibling govsec hosts; MÁP Plusz calculators ignore ACT/360-style denominators for accrued.',
+      constraints: { enum: ['ACT/ACT', 'ACT/360', 'ACT/365F', '30E/360'] }
     }
   ],
   outputs: [
@@ -78,7 +88,7 @@ const MAPP_PRODUCT_SPEC = {
       label: 'Annual Coupon Rate',
       required: true,
       unit: 'percent',
-      description: 'Yearly interest rate applied for the current period.'
+      description: 'Yearly interest rate (ga) applied for the current period.'
     },
     {
       name: 'accruedInterestAmount',
@@ -87,7 +97,7 @@ const MAPP_PRODUCT_SPEC = {
       required: false,
       unit: 'currency',
       description:
-        'Interest already earned from the previous semi-annual coupon payment (or issue) through the purchase date. Year-band couponSchedule rows select the rate only; they do not redefine the accrual start.'
+        'Interest already earned through the purchase date per the Ismertető ACT/ACT period-fraction formula (irregular first period supported).'
     },
     {
       name: 'purchaseAmount',
@@ -111,6 +121,7 @@ const MAPP_PRODUCT_SPEC = {
           'issueDate',
           'maturityDate',
           'firstCouponDate',
+          'couponFrequencyMonths',
           'dayCountConvention'
         ]
       }

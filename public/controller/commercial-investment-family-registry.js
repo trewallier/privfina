@@ -208,7 +208,8 @@ function registerCouponBearingFamily({
   calculateFromSpecInputs,
   migrateConfigForEdit,
   buildBundle,
-  populateEditOptions = {}
+  populateEditOptions = {},
+  marketableRequiredFields = COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
 }) {
   const prefix = couponBearingDomPrefix(productCode)
   registerCommercialInvestmentFamily({
@@ -223,7 +224,7 @@ function registerCouponBearingFamily({
     denomination: { formField: 'principal', unit: productSpec.denominationUnit },
     productSpec,
     fieldLabelClass: buildCouponBearingFieldLabelClass(prefix),
-    marketableRequiredFields: COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS,
+    marketableRequiredFields,
     inputIds: buildCouponBearingInputIds(prefix),
     marketFieldSelectors: buildCouponBearingMarketFieldSelectors(prefix),
     purchaseOrSettlementSelector: buildCouponBearingPurchaseOrSettlementSelector(prefix),
@@ -335,6 +336,10 @@ registerCouponBearingFamily({
   inflationSchedulePreview: true,
   migrationStatus: 'schedule-usable',
   productSpec: MAPP_PRODUCT_SPEC,
+  marketableRequiredFields: Object.freeze([
+    ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS,
+    'couponFrequencyMonths'
+  ]),
   applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
     applyMappSpecToForm({
       investmentForm: form,

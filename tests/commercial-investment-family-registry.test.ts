@@ -124,6 +124,7 @@ describe('commercial investment family registry (ADR 0040)', () => {
         issueDate: `#${code}-issue-date`,
         firstCouponDate: `#${code}-first-coupon-date`,
         couponSchedule: `#${code}-coupon-schedule`,
+        couponFrequencyMonths: `#${code}-coupon-frequency-months`,
         dayCountConvention: `#${code}-day-count-convention`
       })
       expect(entry?.inputIds).toEqual([

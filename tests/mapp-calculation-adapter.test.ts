@@ -21,7 +21,8 @@ describe('mapp calculation adapter seam', () => {
 
     expect(exampleYaml).toContain('principal: 1000000')
     expect(exampleYaml).toContain('annualCouponRatePct: 5.0')
-    expect(exampleYaml).toContain('maturityDate: 2031-10-02')
+    expect(exampleYaml).toContain('maturityDate: 2031-11-27')
+    expect(exampleYaml).toContain('couponFrequencyMonths: 12')
     expect(exampleYaml).not.toContain('startDate:')
 
     const adapterOutputs = calculateMappFromSpecInputs(parsed.inputs)
@@ -72,7 +73,10 @@ describe('mapp calculation adapter seam', () => {
     const adapterOutputs = calculateMappFromSpecInputs(parsed.inputs)
 
     expect(adapterOutputs.annualCouponRatePct).toBe(parsed.expected.annualCouponRatePct)
-    expect(adapterOutputs.accruedInterestAmount).toBe(parsed.expected.accruedInterestAmount)
-    expect(adapterOutputs.purchaseAmount).toBe(parsed.expected.purchaseAmount)
+    expect(adapterOutputs.accruedInterestAmount).toBeCloseTo(
+      parsed.expected.accruedInterestAmount,
+      10
+    )
+    expect(adapterOutputs.purchaseAmount).toBeCloseTo(parsed.expected.purchaseAmount, 10)
   })
 })

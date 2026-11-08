@@ -35,6 +35,7 @@ describe('mapp frontend form metadata seam', () => {
       'issueDate',
       'maturityDate',
       'firstCouponDate',
+      'couponFrequencyMonths',
       'dayCountConvention'
     ])
   })

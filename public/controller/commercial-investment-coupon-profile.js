@@ -16,6 +16,7 @@ function buildCouponBearingMarketFieldSelectors(prefix) {
     issueDate: `#${prefix}-issue-date`,
     firstCouponDate: `#${prefix}-first-coupon-date`,
     couponSchedule: `#${prefix}-coupon-schedule`,
+    couponFrequencyMonths: `#${prefix}-coupon-frequency-months`,
     dayCountConvention: `#${prefix}-day-count-convention`
   }
 }
@@ -77,6 +78,8 @@ function populateCouponBearingEditFields(
   const issueDate = form.querySelector(`#${prefix}-issue-date`)
   const firstCouponDate = form.querySelector(`#${prefix}-first-coupon-date`)
   const couponSchedule = form.querySelector(`#${prefix}-coupon-schedule`)
+  const couponFrequencyMonths = form.querySelector(`#${prefix}-coupon-frequency-months`)
+  const dayCountConvention = form.querySelector(`#${prefix}-day-count-convention`)
 
   if (principal) {
     principal.value =
@@ -108,6 +111,15 @@ function populateCouponBearingEditFields(
     couponSchedule.value = Array.isArray(migrated.couponSchedule)
       ? JSON.stringify(migrated.couponSchedule)
       : ''
+  }
+  if (couponFrequencyMonths) {
+    couponFrequencyMonths.value =
+      migrated.couponFrequencyMonths !== undefined && migrated.couponFrequencyMonths !== null
+        ? String(migrated.couponFrequencyMonths)
+        : ''
+  }
+  if (dayCountConvention) {
+    dayCountConvention.value = migrated.dayCountConvention || ''
   }
 }
 

@@ -1,11 +1,11 @@
 /**
  * MÁP Plusz commercial calculation adapter (ADR 0032 / 0038 / ROADMAP §6j).
- * Rate / accrued / semi-annual coupon math from `@finance_engine/instruments/mapp`.
+ * Rate / accrued / coupon math from `@finance_engine/instruments/mapp`.
  */
 import {
   deriveMappRateOutputs,
   deriveMappAccruedInterestAmount,
-  generateMappSemiAnnualCouponFlows
+  generateMappCouponFlows
 } from '@finance_engine/instruments/mapp'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
@@ -53,7 +53,7 @@ function mapLegacyMappPreviewToSpecOutputs(_legacyPreview, specInputs) {
 
 function generateMappInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
   const calculated = calculateMappFromSpecInputs(specInputs)
-  const flows = generateMappSemiAnnualCouponFlows(
+  const flows = generateMappCouponFlows(
     specInputs,
     calculated.purchaseAmount,
     calculated.annualCouponRatePct
@@ -68,6 +68,12 @@ function generateMappInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
   const purchaseDateIso =
     typeof specInputs.purchaseDate === 'string' ? String(specInputs.purchaseDate).trim() : ''
   const maturityDateIso = String(specInputs.maturityDate || '').trim()
+  const frequencyRaw = Number(specInputs.couponFrequencyMonths)
+  const couponFrequencyMonths = frequencyRaw === 6 || frequencyRaw === 12 ? frequencyRaw : 12
+  const maturityRedemption = [...flows].reverse().find((flow) => flow.direction === 'inflow')
+  const maturityAmount = maturityRedemption
+    ? toNonNegativeNumber(maturityRedemption.amount, 'maturityAmount')
+    : toNonNegativeNumber(specInputs.principal, 'principal')
 
   return normalizeInstrumentBundle({
     id: extras.id || `mapp-${Date.now()}`,
@@ -88,7 +94,8 @@ function generateMappInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
         typeof specInputs.firstCouponDate === 'string'
           ? String(specInputs.firstCouponDate).trim() || undefined
           : undefined,
-      dayCountConvention: specInputs.dayCountConvention || 'ACT/360',
+      couponFrequencyMonths,
+      dayCountConvention: specInputs.dayCountConvention || 'ACT/ACT',
       couponSchedule: Array.isArray(specInputs.couponSchedule)
         ? specInputs.couponSchedule
         : undefined,
@@ -99,9 +106,8 @@ function generateMappInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
     },
     preview: {
       purchaseAmount: calculated.purchaseAmount,
-      maturityAmount: toNonNegativeNumber(specInputs.principal, 'principal'),
-      gainAmount:
-        toNonNegativeNumber(specInputs.principal, 'principal') - calculated.purchaseAmount,
+      maturityAmount,
+      gainAmount: maturityAmount - calculated.purchaseAmount,
       subtype: 'mapp',
       annualCouponRatePct: calculated.annualCouponRatePct,
       accruedInterestAmount: calculated.accruedInterestAmount

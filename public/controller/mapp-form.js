@@ -123,6 +123,11 @@ function setMappFieldVisibility(investmentForm, visible) {
   void visible
 }
 
+function parseCouponFrequencyMonths(raw) {
+  const n = Number(raw)
+  return n === 6 || n === 12 ? n : undefined
+}
+
 function mapFormDataToMappSpecInputs(formData) {
   return {
     principal: parseMoneyAmount(formData.get('principal')),
@@ -131,6 +136,7 @@ function mapFormDataToMappSpecInputs(formData) {
     issueDate: String(formData.get('issueDate') || '').trim(),
     maturityDate: String(formData.get('maturityDate') || '').trim(),
     firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
+    couponFrequencyMonths: parseCouponFrequencyMonths(formData.get('couponFrequencyMonths')),
     dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
     couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))
   }
@@ -163,6 +169,7 @@ function mapMappSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     createdAt: meta.createdAt,
     annualCouponRatePct: specInputs.annualCouponRatePct,
     firstCouponDate: specInputs.firstCouponDate,
+    couponFrequencyMonths: specInputs.couponFrequencyMonths,
     dayCountConvention: specInputs.dayCountConvention,
     couponSchedule: specInputs.couponSchedule
   }

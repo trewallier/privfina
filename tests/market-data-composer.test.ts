@@ -173,6 +173,8 @@ describe('commercial investment UI markup contracts', () => {
     expect(indexHtml).toContain('id="pmap-day-count-convention"')
     expect(indexHtml).toContain('id="fixmap-day-count-convention"')
     expect(indexHtml).toContain('id="mapp-day-count-convention"')
+    expect(indexHtml).toContain('id="mapp-coupon-frequency-months"')
+    expect(indexHtml).toContain('name="couponFrequencyMonths"')
     expect(indexHtml).toContain('id="bmap-day-count-convention"')
   })
 })

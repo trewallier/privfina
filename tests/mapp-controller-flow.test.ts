@@ -34,7 +34,9 @@ describe('mapp ui/controller integration seam', () => {
       purchaseDate: String(parsed.inputs.purchaseDate),
       issueDate: String(parsed.inputs.issueDate),
       maturityDate: String(parsed.inputs.maturityDate),
-      firstCouponDate: String(parsed.inputs.firstCouponDate)
+      firstCouponDate: String(parsed.inputs.firstCouponDate),
+      couponFrequencyMonths: String(parsed.inputs.couponFrequencyMonths),
+      dayCountConvention: String(parsed.inputs.dayCountConvention)
     })
 
     const specInputs = mapFormDataToMappSpecInputs(formData as any)
@@ -49,9 +51,10 @@ describe('mapp ui/controller integration seam', () => {
       annualCouponRatePct: 5.0,
       purchaseDate: '2026-10-02',
       issueDate: '2026-10-02',
-      maturityDate: '2031-10-02',
-      firstCouponDate: '2027-04-02',
-      dayCountConvention: undefined,
+      maturityDate: '2031-11-27',
+      firstCouponDate: '2027-11-27',
+      couponFrequencyMonths: 12,
+      dayCountConvention: 'ACT/ACT',
       couponSchedule: undefined
     })
 
@@ -60,7 +63,8 @@ describe('mapp ui/controller integration seam', () => {
     expect(bundle.productSpecVersion).toBe('v2alpha3')
     expect(bundle.config.subtype).toBe('mapp')
     expect(bundle.config.annualCouponRatePct).toBe(5.0)
-    expect(bundle.config.maturityDate).toBe('2031-10-02')
+    expect(bundle.config.couponFrequencyMonths).toBe(12)
+    expect(bundle.config.maturityDate).toBe('2031-11-27')
     expect(bundle.generatedFlows.length).toBeGreaterThan(1)
     expect(bundle.generatedFlows[0]).toMatchObject({
       direction: 'outflow',
@@ -68,10 +72,37 @@ describe('mapp ui/controller integration seam', () => {
       sourceInstrumentId: bundle.id,
       sourceInstrumentType: 'investment'
     })
-    expect(bundle.generatedFlows[bundle.generatedFlows.length - 1]).toMatchObject({
-      direction: 'inflow',
-      amount: parsed.inputs.principal
+    // Kamatjuttatás compounds face; maturity redeems compounded principal (not issue face).
+    const maturityInflow = [...bundle.generatedFlows]
+      .reverse()
+      .find((flow: { direction: string }) => flow.direction === 'inflow')
+    expect(maturityInflow?.amount).toBeGreaterThan(parsed.inputs.principal)
+    expect(bundle.preview.maturityAmount).toBe(maturityInflow?.amount)
+  })
+
+  it('maps legacy semi-annual cadence through form → adapter → bundle', () => {
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/mapp/examples/semi-annual-legacy-case.yaml'
+    )
+    const parsed = YAML.parse(exampleYaml) as any
+
+    const formData = createFormDataLike({
+      principal: String(parsed.inputs.principal),
+      annualCouponRatePct: String(parsed.inputs.annualCouponRatePct),
+      purchaseDate: String(parsed.inputs.purchaseDate),
+      issueDate: String(parsed.inputs.issueDate),
+      maturityDate: String(parsed.inputs.maturityDate),
+      firstCouponDate: String(parsed.inputs.firstCouponDate),
+      couponFrequencyMonths: String(parsed.inputs.couponFrequencyMonths),
+      dayCountConvention: String(parsed.inputs.dayCountConvention)
     })
+
+    const specInputs = mapFormDataToMappSpecInputs(formData as any)
+    const bundle = generateMappInstrumentBundleFromSpecInputs(specInputs)
+
+    expect(specInputs.couponFrequencyMonths).toBe(6)
+    expect(bundle.config.couponFrequencyMonths).toBe(6)
+    expect(bundle.preview.maturityAmount).toBeCloseTo(1_000_000 * 1.02 ** 9, 6)
   })
 
   it('keeps mid-period-after-coupon accrual through form → adapter → bundle', () => {
@@ -91,6 +122,7 @@ describe('mapp ui/controller integration seam', () => {
       issueDate: String(parsed.inputs.issueDate),
       maturityDate: String(parsed.inputs.maturityDate),
       firstCouponDate: String(parsed.inputs.firstCouponDate),
+      couponFrequencyMonths: String(parsed.inputs.couponFrequencyMonths),
       dayCountConvention: String(parsed.inputs.dayCountConvention),
       couponSchedule: schedule
     })
@@ -100,12 +132,15 @@ describe('mapp ui/controller integration seam', () => {
     const bundle = generateMappInstrumentBundleFromSpecInputs(specInputs)
 
     expect(outputs.annualCouponRatePct).toBe(parsed.expected.annualCouponRatePct)
-    expect(outputs.accruedInterestAmount).toBe(parsed.expected.accruedInterestAmount)
-    expect(outputs.purchaseAmount).toBe(parsed.expected.purchaseAmount)
-    expect(bundle.config.accruedInterestAmount).toBe(parsed.expected.accruedInterestAmount)
+    expect(outputs.accruedInterestAmount).toBeCloseTo(parsed.expected.accruedInterestAmount, 10)
+    expect(outputs.purchaseAmount).toBeCloseTo(parsed.expected.purchaseAmount, 10)
+    expect(bundle.config.accruedInterestAmount).toBeCloseTo(
+      parsed.expected.accruedInterestAmount,
+      10
+    )
     expect(bundle.generatedFlows[0]).toMatchObject({
       direction: 'outflow',
-      amount: parsed.expected.purchaseAmount
+      amount: outputs.purchaseAmount
     })
   })
 })

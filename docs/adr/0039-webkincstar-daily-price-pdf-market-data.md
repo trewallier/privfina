@@ -30,7 +30,7 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
   - Status values: `priced` | `no_price` | `fetch_failed`.
   - Digest hashes content **excluding `generatedAt`**. Include `manifest.refs.priceCalendar` and a digest entry so a pure no-price day still commits.
   - File-level `source` meta credits Magyar Államkincstár (WebKincstár) and states that republished figures are **informational**, may lag or differ from the live treasury table, and are **not** investment advice or a substitute for official publications.
-- **Soft-fail** WebKincstár like retailInterest (ADR 0036): on fetch/parse outage, write/update calendar rows as `fetch_failed` when possible, keep previous quotes, and still publish ÁKK / allampapir / KSH. A PDF outage must not block dual-source freshness.
+- **Soft-fail** WebKincstár like retailInterest (ADR 0036): on fetch/parse outage, append calendar rows as `fetch_failed` **only when that `(report, datum)` is still absent**; if a prior run already recorded `priced` / `no_price` / `fetch_failed` for the same key, keep the existing row (append-first immutability) and continue. Keep previous quotes and still publish ÁKK / allampapir / KSH. Isolate failures **per report** so one bad PDF does not discard a healthy sibling. A PDF outage must not block dual-source freshness.
 - Raw PDFs stay ephemeral under `MARKET_RAW_DIR` / runner temp. Browser must not call WebKincstár; SPA continues to load published JSON from Pages only.
 - Install Poppler on the **ingest** job only; the **push** job stays offline to external market hosts.
 

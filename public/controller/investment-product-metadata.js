@@ -24,7 +24,7 @@ const COMMERCIAL_INVESTMENT_PRODUCTS = [
   {
     subtype: 'fixmap',
     spec: FIXMAP_PRODUCT_SPEC,
-    migrationStatus: 'schedule-usable'
+    migrationStatus: 'fully-spec-backed'
   },
   {
     subtype: 'pmap',

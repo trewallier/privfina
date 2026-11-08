@@ -26,7 +26,7 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(optionByValue.get('bmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('dkj')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
-    expect(optionByValue.get('fixmap')?.migrationStatus).toBe('schedule-usable')
+    expect(optionByValue.get('fixmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(options.every((entry) => entry.available)).toBe(true)
   })
 

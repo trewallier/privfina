@@ -17,12 +17,12 @@ Commercial inputs use **effective** period coupon rates and **real** maturities 
 
 Published market family folders already (or soon) available on the `market-data` branch — commercial hosts land under §6j (not §6f).
 
-**Delivery:** FixMÁP (`fixmap`) first as a gh-stack vertical slice; remaining families follow in later stacks. Open a temporary tip→`master` CI head PR for the stack (close, do not merge).
+**Delivery:** FixMÁP (`fixmap`) done; **MÁP Plusz (`mapp`) next** as a gh-stack vertical slice (register on ADR 0040 `coupon-bearing` profile — do not clone FixMÁP/PMÁP form modules). Remaining families follow in later stacks. Open a temporary tip→`master` CI head PR for the stack (close, do not merge).
 
 | Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
 | `fixmap` | FixMÁP | **Done (fully-spec-backed)** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
-| `mapp` | MÁP Plusz (incl. nyomdai) | Follow-on; multi-band rates in coupons |
+| `mapp` | MÁP Plusz (incl. nyomdai) | **In progress (this stack)** — semi-annual pay; multi-band rates in coupons; year-partitioned bands in product examples; kamatok min–max dual rows preserved as published |
 | `baba` | Babakötvény | Follow-on; optional prices already ingested |
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
 | *(possible `pemap`)* | PEMÁP | Split only if needed |

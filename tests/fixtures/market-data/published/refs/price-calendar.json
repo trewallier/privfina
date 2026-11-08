@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T17:30:00.000Z",
+  "source": {
+    "id": "webkincstar-report-service",
+    "host": "webkincstar.allamkincstar.gov.hu",
+    "disclaimer": "Informational republish of Magyar Államkincstár (WebKincstár) daily price tables; may lag or differ from the live treasury table; not investment advice."
+  },
+  "reports": ["_20631_arfolyam_dkj", "_20633_arfolyam_mak"],
+  "days": [
+    {
+      "datum": "2026-10-31",
+      "report": "_20631_arfolyam_dkj",
+      "status": "priced",
+      "rowCount": 2
+    },
+    {
+      "datum": "2026-10-31",
+      "report": "_20633_arfolyam_mak",
+      "status": "priced",
+      "rowCount": 10
+    },
+    {
+      "datum": "2026-11-01",
+      "report": "_20631_arfolyam_dkj",
+      "status": "no_price",
+      "rowCount": 0
+    },
+    {
+      "datum": "2026-11-01",
+      "report": "_20633_arfolyam_mak",
+      "status": "no_price",
+      "rowCount": 0
+    },
+    {
+      "datum": "2026-11-02",
+      "report": "_20631_arfolyam_dkj",
+      "status": "priced",
+      "rowCount": 2
+    },
+    {
+      "datum": "2026-11-02",
+      "report": "_20633_arfolyam_mak",
+      "status": "priced",
+      "rowCount": 10
+    },
+    {
+      "datum": "2026-11-03",
+      "report": "_20631_arfolyam_dkj",
+      "status": "fetch_failed",
+      "rowCount": 0
+    },
+    {
+      "datum": "2026-11-03",
+      "report": "_20633_arfolyam_mak",
+      "status": "fetch_failed",
+      "rowCount": 0
+    }
+  ]
+}

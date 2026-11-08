@@ -123,31 +123,31 @@ Workflow: install Poppler on **ingest** job only; keep push job offline to exter
 
 ## PR-sized slices (implement in order)
 
-### PR1 — Docs / ADR boundary
+### PR1 — Docs / ADR boundary — **done**
 
 - Land ADR 0039 (`proposed`→accepted on merge) with the decisions above.
 - Expand ROADMAP §6h checklist (this plan’s slices).
 - Update `docs/spec.md` AC, `docs/source-of-truth-ownership.md`, `docs/dev-playbooks/ci-and-supply-chain.md`, `tools/market-data/README.md`, ADR index.
 - No runtime behavior change.
 
-### PR2 — Fetch + parse + fixtures (offline)
+### PR2 — Fetch + parse + fixtures (offline) — **done**
 
 - Implement fetch + `pdftotext` wrapper + pure text parser.
 - Vitest fixtures: curated `pdftotext -layout` extracts for DKJ + MAK (priced day + empty/no-price day); assert Értéknap, row counts, bid/ask/ai mapping.
 - Optional local live probe behind explicit env (never CI).
 - Still not wired into `ingestMarketData` / workflow (or wired behind `--skip-webkincstar` default-on in unit tests only).
 
-### PR3 — Combine / calendar / ingest CLI
+### PR3 — Combine / calendar / ingest CLI — **done**
 
 - Overlay into combine→merge; `refs/price-calendar.json`; validate + digests.
 - CLI flags; soft-fail path; same-day rewrite when WebKincstár present.
 - Fixture-driven `ci-ingest` / `ingest` tests proving: priced day updates quotes; no-price day commits calendar only; fetch_failed does not block ÁKK/allampapir.
 
-### PR4 — Workflow wire + acceptance close
+### PR4 — Workflow wire + acceptance close — **done**
 
-- `market-data.yml`: Poppler install; pass datum/raw dir; document hosts in playbook.
-- Acceptance checklist in ROADMAP/spec: Actions-only; no raw PDF in git; priced + no-price; attribution present; parser entrypoints documented for §6j.
-- Mark §6h complete (SPA unchanged).
+- `market-data.yml`: Poppler (`poppler-utils`) on **ingest** job only; push stays offline to WebKincstár.
+- Acceptance in ROADMAP/spec: Actions-only; no raw PDF in git; priced + no-price; attribution present; `parseWebkincstarPdfText` documented for §6j.
+- §6h marked complete (SPA unchanged).
 
 ---
 

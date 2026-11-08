@@ -130,7 +130,7 @@ describe('loan form field info popups', () => {
     expect(appController).toContain('loanForm')
     expect(appController).toContain('investmentForm')
     expect(appController).toContain('commercialLoanForm')
-    expect(appController).toContain('commercialInvestmentForm')
+    expect(appController).toContain("document.getElementById('commercial-investment-form')")
     expect(appController).toContain("form.querySelectorAll('[data-help-button]')")
     expect(appController).toContain('toggleInvestmentInfoPopup(button)')
   })

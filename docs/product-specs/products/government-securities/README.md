@@ -10,7 +10,7 @@ This family contains Hungarian government securities in the product-specificatio
 
 ## In progress (ROADMAP §6j)
 
-- Fixed Hungarian Government Security (FixMÁP) — `government-security.fixmap.standard` (**spec-only**; climbing the commercial investment ladder)
+- Fixed Hungarian Government Security (FixMÁP) — `government-security.fixmap.standard` (**calc-aligned**; climbing the commercial investment ladder)
 
 Product differences live primarily in product specifications, assumptions, worked examples, and metadata rather than engine branches (ADR 0015).
 

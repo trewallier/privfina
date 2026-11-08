@@ -54,9 +54,11 @@ Inventory (by product)
   - Browser path: `public/controller/bmap-calculation-adapter.js` delegates to TS; market autofill from `coupons/<id>.json`
   - Status: effective-rate + schedule-aware coupons; weighted auction DKJ-base derivation (`refs/dkj-base.json`) remains future work
 
-- FixMÁP (`government-security.fixmap.standard`) — **spec-only** (ROADMAP §6j)
+- FixMÁP (`government-security.fixmap.standard`) — **calc-aligned** (ROADMAP §6j)
   - Spec: `docs/product-specs/products/government-securities/fixmap/product.yaml`
-  - Engine / browser path: pending calc-aligned + commercial host (reuse PMÁP/BMÁP coupon-schedule / day-count primitives; no `productCode` forks)
+  - Engine primitives: `src/finance_engine/instruments/fixmap.ts` (thin annual-coupon wrapper over shared PMÁP / `day_count` path; no `productCode` forks)
+  - Family mapper: `src/finance_engine/product_specs/fixmap.ts`
+  - Browser / commercial host: pending schedule-usable SPA layer
 
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`

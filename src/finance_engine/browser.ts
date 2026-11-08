@@ -91,6 +91,13 @@ export {
 } from './instruments/pmap'
 
 export {
+  deriveFixmapRateOutputs,
+  deriveFixmapAccruedInterestAmount,
+  generateFixmapAnnualCouponFlows
+} from './instruments/fixmap'
+export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
+
+export {
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,
   calendarDaysBetweenIso,

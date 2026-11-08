@@ -1,0 +1,39 @@
+  Jelenleg forgalmazott állampapírok árfolyamai a Magyar Államkincstár állampapír-forgalmazó ügyfélszolgálatain
+
+
+Diszkont Kincstárjegyek                                                                 Értéknap: 2026.11.05
+                                   Vételi                               Eladási                    Lejáratig
+  Értékpapír
+                                                                                                  hátralévő     Lejárat dátuma
+  elnevezése
+                    árfolyam       EHM        ISMA        árfolyam       EHM           ISMA      napok száma
+
+D261125             99.6650 %      6.13 %   6.05 %            -             -           -            20        2026.11.25
+D261223             99.1998 %      6.13 %   6.05 %       99.3904 %       4.66 %       4.60 %         48        2026.12.23
+D270120             98.7389 %      6.13 %   6.05 %       99.0382 %       4.66 %       4.60 %         76        2027.01.20
+D270217             98.4080 %      5.68 %   5.60 %       98.6464 %       4.82 %       4.75 %        104        2027.02.17
+D270428             97.3692 %      5.67 %   5.59 %       97.7326 %       4.87 %       4.80 %        174        2027.04.28
+D270623             96.5458 %      5.68 %   5.60 %       97.0366 %       4.85 %       4.78 %        230        2027.06.23
+D270818             95.7552 %      5.66 %   5.58 %       96.3267 %       4.87 %       4.80 %        286        2027.08.18
+D271027             94.8150 %      5.61 %   5.53 %       95.5767 %       4.75 %       4.68 %        356        2027.10.27
+
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 100 millió Ft névértékű Diszkont
+Kincstárjegy visszavételére, valamint a rendelkezésre álló készlet, de napi maximum 100 millió Ft erejéig történő eladásra
+jelentenek kötelezettséget. Bármely árfolyam változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar
+Államkincstár (a továbbiakban: Forgalmazó) fenntartja. A lejáratot megelőző 14 napban az eladási árfolyam, lejáratot megelőző
+2 munkanapon a vételi árfolyam jegyzése szünetel. Befektetési megbízásait a Forgalmazó - az értéknap-váltásra figyelemmel
+-, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos
+adójogszabályoknak megfelelően teljesíti az adó levonását, melynek megállapítása és levonása a kifizetés napján történik.
+(EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi Értékpapírpiaci Szövetség
+Actual/360 módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek.
+
+2026.11.08. 00:01                                                                                                   1/1
+

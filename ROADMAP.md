@@ -360,10 +360,10 @@ Constraints
 - Deliver as a **gh-stack** of PR-sized layers; open a temporary tip→`master` head PR for full-stack CI (do not merge the head PR).
 
 Plan slices (implement in order; each slice should stay PR-sized)
-- [ ] ROADMAP renumber (§6i inserted; optional-family / offering / backfill letters shifted) + spec / ownership ACs for calendar loader, clamp hints, attribution, `offered` labels.
-- [ ] SPA loader: `loadPriceCalendar` + calendar-aware `resolveQuoteForPurchaseDate` + fixtures/tests.
-- [ ] Commercial composer UX: available/past picker labels via `series.offered`, attribution disclaimer, clamp / no_price / fetch_failed hints.
-- [ ] Close §6i: check off ROADMAP/spec; soft-fail regression; temporary tip→`master` CI head PR (close, do not merge).
+- [x] ROADMAP renumber (§6i inserted; optional-family / offering / backfill letters shifted) + spec / ownership ACs for calendar loader, clamp hints, attribution, `offered` labels.
+- [x] SPA loader: `loadPriceCalendar` + calendar-aware `resolveQuoteForPurchaseDate` + fixtures/tests.
+- [x] Commercial composer UX: available/past picker labels via `series.offered`, attribution disclaimer, clamp / no_price / fetch_failed hints.
+- [x] Close §6i: check off ROADMAP/spec; soft-fail regression; temporary tip→`master` CI head PR (close, do not merge).
 
 Out of scope for §6i
 - Optional-family commercial hosts (§6j).

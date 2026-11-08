@@ -5,7 +5,8 @@ import YAML from 'yaml'
 import {
   deriveMappAccruedInterestAmount,
   deriveMappRateOutputs,
-  generateMappSemiAnnualCouponFlows
+  generateMappSemiAnnualCouponFlows,
+  resolveMappAccrualStartIso
 } from '../src/finance_engine/instruments/mapp'
 import { loadMappProductSpecYamlFromFiles } from '../src/finance_engine/product_specs/mapp'
 import type { MappSpecInputs } from '../src/finance_engine/instruments/mapp'
@@ -146,5 +147,27 @@ describe('MÁP Plusz TypeScript primitives (ADR 0017 / 0038 / ROADMAP §6j)', ()
         description: 'MAPP'
       }
     ])
+  })
+
+  it('locks mid-period-after-coupon accrual from last payment, not year-band from', () => {
+    const { inputs, expected } = readExample(
+      'docs/product-specs/products/government-securities/mapp/examples/mid-period-after-coupon-case.yaml'
+    )
+    expect(resolveMappAccrualStartIso(inputs)).toBe('2027-04-02')
+
+    const rates = deriveMappRateOutputs(inputs)
+    const accrued = deriveMappAccruedInterestAmount(inputs, rates.annualCouponRatePct)
+    const purchaseAmount = Number(inputs.principal) + accrued
+
+    expect(rates.annualCouponRatePct).toBe(expected.annualCouponRatePct)
+    expect(accrued).toBe(expected.accruedInterestAmount)
+    expect(purchaseAmount).toBe(expected.purchaseAmount)
+
+    // On a coupon payment date accrued must be zero (not year-band ACT/360 from issue).
+    const onCoupon = deriveMappAccruedInterestAmount(
+      { ...inputs, purchaseDate: '2027-04-02' },
+      rates.annualCouponRatePct
+    )
+    expect(onCoupon).toBe(0)
   })
 })

@@ -2,6 +2,11 @@
  * MÁP Plusz calculation primitives (ADR 0017 / 0038 / ROADMAP §6j).
  * Semi-annual coupon + stepped schedule path reuses shared day-count /
  * covering-period helpers (same contract as BMÁP/PMÁP; no productCode forks).
+ *
+ * Year-band couponSchedule rows select covering rates only. Accrual starts from
+ * the previous semi-annual payment date (firstCouponDate + 6-month steps), not
+ * from schedule `from` dates — otherwise mid-year purchases after a coupon
+ * over-accrue from the year-band start.
  */
 
 import { formatIsoDate, parseIsoDate } from '../date_utils'
@@ -9,7 +14,6 @@ import { createCashFlow, sortCashFlowsByDate } from './common'
 import {
   accrueInterestAmount,
   normalizeDayCountConvention,
-  resolveAccrualStartIso,
   resolveCoveringCouponPeriod,
   resolveCouponRatePct,
   type CouponSchedulePeriod,
@@ -19,6 +23,7 @@ import { CashFlowDirection } from '../models'
 import type { CashFlow } from '../models'
 
 const SEMI_ANNUAL_MONTHS = 6
+const MAX_COUPON_STEPS = 240
 
 export type MappRateOutputs = {
   annualCouponRatePct: number
@@ -79,7 +84,34 @@ export function deriveMappRateOutputs(
 }
 
 /**
- * Accrued interest from last coupon on/before purchase (or issueDate) to purchaseDate.
+ * Last semi-annual coupon payment ISO on/before purchase, else issueDate.
+ * Does not consult couponSchedule band starts (those are rate windows only).
+ */
+export function resolveMappAccrualStartIso(
+  specInputs: Pick<MappSpecInputs, 'purchaseDate' | 'issueDate' | 'firstCouponDate'>
+): string {
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const firstCouponDateIso =
+    typeof specInputs.firstCouponDate === 'string' ? String(specInputs.firstCouponDate).trim() : ''
+
+  let couponDate = firstCouponDateIso
+    ? parseIsoDate(firstCouponDateIso)
+    : addMonthsUtc(parseIsoDate(issueDateIso), SEMI_ANNUAL_MONTHS)
+
+  let accrualStartIso = issueDateIso
+  for (let step = 0; step < MAX_COUPON_STEPS; step += 1) {
+    const couponIso = formatIsoDate(couponDate)
+    if (couponIso > purchaseDateIso) break
+    accrualStartIso = couponIso
+    couponDate = addMonthsUtc(couponDate, SEMI_ANNUAL_MONTHS)
+  }
+  return accrualStartIso
+}
+
+/**
+ * Accrued interest from last semi-annual coupon payment on/before purchase
+ * (or issueDate) to purchaseDate. Covering rate still comes from couponSchedule.
  */
 export function deriveMappAccruedInterestAmount(
   specInputs: Pick<
@@ -87,19 +119,15 @@ export function deriveMappAccruedInterestAmount(
     | 'principal'
     | 'purchaseDate'
     | 'issueDate'
+    | 'firstCouponDate'
     | 'dayCountConvention'
     | 'annualCouponRatePct'
     | 'couponSchedule'
   >,
   annualCouponRatePct?: number
 ): number {
-  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
   const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
-  const accrualStartIso = resolveAccrualStartIso({
-    purchaseDate: purchaseDateIso,
-    issueDate: issueDateIso,
-    couponSchedule: specInputs.couponSchedule
-  })
+  const accrualStartIso = resolveMappAccrualStartIso(specInputs)
   if (purchaseDateIso < accrualStartIso) {
     throw new Error('purchaseDate must be on or after accrual start (prior coupon or issueDate).')
   }

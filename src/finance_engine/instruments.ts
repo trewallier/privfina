@@ -99,6 +99,7 @@ export type { MappRateOutputs, MappSpecInputs } from './instruments/mapp'
 export {
   deriveMappRateOutputs,
   deriveMappAccruedInterestAmount,
+  resolveMappAccrualStartIso,
   generateMappSemiAnnualCouponFlows
 } from './instruments/mapp'
 export {

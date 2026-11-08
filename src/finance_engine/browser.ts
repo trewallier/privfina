@@ -100,6 +100,7 @@ export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
 export {
   deriveMappRateOutputs,
   deriveMappAccruedInterestAmount,
+  resolveMappAccrualStartIso,
   generateMappSemiAnnualCouponFlows
 } from './instruments/mapp'
 export type { MappRateOutputs, MappSpecInputs } from './instruments/mapp'

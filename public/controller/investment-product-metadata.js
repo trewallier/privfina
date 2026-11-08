@@ -2,6 +2,7 @@ import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from './dkj-form.js'
 import { FIXMAP_PRODUCT_SPEC } from './fixmap-form.js'
 import { PMAP_PRODUCT_SPEC } from './pmap-form.js'
+import { listCommercialInvestmentFamilies } from './commercial-investment-family-registry.js'
 
 /** Catalog statuses that may appear on the commercial investment picker (ADR 0027 / ROADMAP §6j). */
 const COMMERCIAL_PICKER_STATUSES = new Set([
@@ -10,28 +11,14 @@ const COMMERCIAL_PICKER_STATUSES = new Set([
   'fully-spec-backed'
 ])
 
-const COMMERCIAL_INVESTMENT_PRODUCTS = [
-  {
-    subtype: 'bmap',
-    spec: BMAP_PRODUCT_SPEC,
-    migrationStatus: 'fully-spec-backed'
-  },
-  {
-    subtype: 'dkj',
-    spec: DKJ_PRODUCT_SPEC,
-    migrationStatus: 'fully-spec-backed'
-  },
-  {
-    subtype: 'fixmap',
-    spec: FIXMAP_PRODUCT_SPEC,
-    migrationStatus: 'fully-spec-backed'
-  },
-  {
-    subtype: 'pmap',
-    spec: PMAP_PRODUCT_SPEC,
-    migrationStatus: 'fully-spec-backed'
-  }
-]
+/** Picker catalog derived from the family registry (ADR 0040) — sorted by productCode. */
+const COMMERCIAL_INVESTMENT_PRODUCTS = listCommercialInvestmentFamilies()
+  .map((entry) => ({
+    subtype: entry.productCode,
+    spec: entry.productSpec,
+    migrationStatus: entry.migrationStatus || 'fully-spec-backed'
+  }))
+  .sort((a, b) => String(a.subtype).localeCompare(String(b.subtype)))
 
 /** @deprecated Prefer COMMERCIAL_INVESTMENT_PRODUCTS (includes schedule-usable+). */
 const FULLY_SPEC_BACKED_INVESTMENT_PRODUCTS = COMMERCIAL_INVESTMENT_PRODUCTS.filter(

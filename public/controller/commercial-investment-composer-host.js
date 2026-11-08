@@ -4,14 +4,6 @@
  * commercial-investment-family-registry.js.
  */
 import { createInvestmentPreviewSync } from './previews.js'
-import { mapFormDataToBmapSpecInputs } from './bmap-form.js'
-import { calculateBmapFromSpecInputs } from './bmap-calculation-adapter.js'
-import { mapFormDataToDkjSpecInputs } from './dkj-form.js'
-import { calculateDkjFromSpecInputs } from './dkj-calculation-adapter.js'
-import { mapFormDataToPmapSpecInputs } from './pmap-form.js'
-import { calculatePmapFromSpecInputs } from './pmap-calculation-adapter.js'
-import { mapFormDataToFixmapSpecInputs } from './fixmap-form.js'
-import { calculateFixmapFromSpecInputs } from './fixmap-calculation-adapter.js'
 import {
   buildCommercialInvestmentProductOptions,
   findCommercialInvestmentProduct
@@ -37,7 +29,6 @@ import {
   resolveQuoteForPurchaseDate
 } from './market-data-loader.js'
 import {
-  MARKET_MARKETABLE_REQUIRED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
   formatOfferingAttributionDisclaimer,
@@ -352,13 +343,14 @@ function createCommercialInvestmentComposerHost({
     }
     const entry = getCommercialInvestmentFamily(family)
     const title = label.querySelector('.label-title')
-    const labelSpan =
-      title?.querySelector(
-        '.field-label, .dkj-field-label, .pmap-field-label, .fixmap-field-label, .bmap-field-label'
-      ) || null
+    const labelClass = entry?.fieldLabelClass
+    const labelQuery = labelClass
+      ? `.field-label, .${labelClass}`
+      : '.field-label, [class$="-field-label"]'
+    const labelSpan = title?.querySelector(labelQuery) || null
     const help = label.querySelector('.field-help p')
     const labelClassName =
-      labelSpan?.className || entry?.fieldLabelClass || 'field-label'
+      labelSpan?.className || labelClass || 'field-label'
     applyFieldChrome(
       label,
       {
@@ -397,7 +389,8 @@ function createCommercialInvestmentComposerHost({
       return
     }
     const sourced = new Set(sourcedNames)
-    const marketable = MARKET_MARKETABLE_REQUIRED_FIELDS[family] || []
+    const entry = getCommercialInvestmentFamily(family)
+    const marketable = entry?.marketableRequiredFields || []
     reapplyCommercialProductFieldChrome(family)
 
     marketable.forEach((name) => {
@@ -770,6 +763,8 @@ function createCommercialInvestmentComposerHost({
 
     const families = listCommercialInvestmentFamilies()
     families.forEach((family) => {
+      const wrap = document.getElementById(family.hostWrapId)
+      if (wrap) wrap.hidden = true
       family.setFieldVisibility(commercialInvestmentForm, false)
       ;(family.inputIds || []).forEach((id) => {
         const input = document.getElementById(id)
@@ -789,6 +784,8 @@ function createCommercialInvestmentComposerHost({
     // Seed face/principal defaults only on create; edit populate overwrites afterward.
     const setAmountDefaultIfEmpty = !editingCommercialInvestmentId
 
+    const activeWrap = document.getElementById(entry.hostWrapId)
+    if (activeWrap) activeWrap.hidden = false
     entry.setFieldVisibility(commercialInvestmentForm, true)
     ;(entry.inputIds || []).forEach((id) => {
       const input = document.getElementById(id)
@@ -826,14 +823,6 @@ function createCommercialInvestmentComposerHost({
     discountCurrentValuePreviewInput: commercialInvestmentDiscountCurrentValuePreviewInput,
     inflationSchedulePreviewInput: commercialInvestmentInflationSchedulePreviewInput,
     createInvestmentMaturityPreview,
-    calculateDkjFromSpecInputs,
-    mapFormDataToDkjSpecInputs,
-    calculatePmapFromSpecInputs,
-    mapFormDataToPmapSpecInputs,
-    calculateFixmapFromSpecInputs,
-    mapFormDataToFixmapSpecInputs,
-    calculateBmapFromSpecInputs,
-    mapFormDataToBmapSpecInputs,
     onPreviewError: (message) => {
       applyInvestmentFieldValidity(commercialInvestmentForm, message)
       setCommercialInvestmentFormStatus(message, 'warning')

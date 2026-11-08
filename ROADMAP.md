@@ -401,11 +401,13 @@ Plan slices
 - [x] Extract `commercial-investment-composer-host.js` (behavior-preserving move of DKJ/PMÁP/BMÁP/FixMÁP orchestration out of `app-controller.js`).
 - [x] Introduce `commercial-investment-family-registry.js`; host dispatches via lookup (no host-level productCode forests).
 - [x] Shared coupon-bearing helpers for PMÁP/BMÁP/FixMÁP; remap FixMÁP onto the shared profile without product-behavior change.
+- [x] Registry owns live preview adapters, marketable required fields, picker `migrationStatus`, and `hostWrapId` wrap visibility; host chrome uses `fieldLabelClass` (no hardcoded family label-class list).
 
 #### Remaining families (follow-on stacks under §6j)
 Constraints (after ADR 0040 platform refactor)
-- Register each family on the commercial investment **family registry** with an existing `composerProfile` (prefer `coupon-bearing`). Do **not** clone PMÁP/FixMÁP form/host modules or add `app-controller` / host `productCode` forests.
+- Register each family on the commercial investment **family registry** with an existing `composerProfile` (prefer `coupon-bearing`). Do **not** clone PMÁP/FixMÁP form/host modules or add `app-controller` / host / `previews.js` `productCode` forests.
 - FixMÁP is already on shared `commercial-investment-coupon-profile.js` helpers (`composerProfile: 'coupon-bearing'`). Follow-on ÁKK coupon families must reuse those helpers — no PMÁP/FixMÁP form clone.
+- New family registration must include `calculateFromSpecInputs`, `marketableRequiredFields`, `migrationStatus`, and `hostWrapId` (picker + autofill + preview derive from the registry).
 
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`mapp`, `baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).

@@ -3,6 +3,9 @@
  * Host orchestration dispatches through lookup — no productCode forests in the host.
  * Coupon-bearing entries (pmap/bmap/fixmap) share helpers from
  * commercial-investment-coupon-profile.js; §6j follow-ons register on that profile.
+ *
+ * Registry is the addition path for: preview adapters, marketable required fields,
+ * picker migrationStatus, and hostWrapId (wrap visibility).
  */
 import {
   BMAP_PRODUCT_SPEC,
@@ -10,7 +13,10 @@ import {
   setBmapFieldVisibility,
   mapFormDataToBmapSpecInputs
 } from './bmap-form.js'
-import { generateBmapInstrumentBundleFromSpecInputs } from './bmap-calculation-adapter.js'
+import {
+  calculateBmapFromSpecInputs,
+  generateBmapInstrumentBundleFromSpecInputs
+} from './bmap-calculation-adapter.js'
 import {
   DKJ_PRODUCT_SPEC,
   applyDkjSpecToForm,
@@ -26,6 +32,7 @@ import {
   mapFormDataToPmapSpecInputs,
   generatePmapInstrumentBundleFromSpecInputs
 } from './pmap-form.js'
+import { calculatePmapFromSpecInputs } from './pmap-calculation-adapter.js'
 import {
   FIXMAP_PRODUCT_SPEC,
   applyFixmapSpecToForm,
@@ -33,6 +40,7 @@ import {
   mapFormDataToFixmapSpecInputs,
   generateFixmapInstrumentBundleFromSpecInputs
 } from './fixmap-form.js'
+import { calculateFixmapFromSpecInputs } from './fixmap-calculation-adapter.js'
 import {
   migrateBmapConfigForEdit,
   migratePmapConfigForEdit,
@@ -47,6 +55,18 @@ import {
   readCouponBearingMarketFields,
   populateCouponBearingEditFields
 } from './commercial-investment-coupon-profile.js'
+import { formatMoneyAmount as formatMoneyAmountDefault } from './money-format.js'
+
+const WHOLE_FORINT = Object.freeze({ fractionDigits: 0 })
+
+const COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS = Object.freeze([
+  'annualCouponRatePct',
+  'maturityDate',
+  'issueDate',
+  'firstCouponDate',
+  'couponSchedule',
+  'dayCountConvention'
+])
 
 function readFormValue(form, selector) {
   return form?.querySelector(selector)?.value || ''
@@ -65,12 +85,19 @@ registerCommercialInvestmentFamily({
   marketFamily: 'dkj',
   composerProfile: 'discount',
   hostWrapId: 'investment-dkj-wrap',
+  migrationStatus: 'fully-spec-backed',
   discountYieldPreview: true,
   discountCurrentValuePreview: true,
   inflationSchedulePreview: false,
   denomination: { formField: 'faceValue', unit: DKJ_PRODUCT_SPEC.denominationUnit },
   productSpec: DKJ_PRODUCT_SPEC,
   fieldLabelClass: 'dkj-field-label',
+  marketableRequiredFields: Object.freeze([
+    'purchasePricePct',
+    'termMonths',
+    'maturityDate',
+    'remainingDays'
+  ]),
   inputIds: [
     'dkj-face-value',
     'dkj-purchase-price-pct',
@@ -95,6 +122,7 @@ registerCommercialInvestmentFamily({
   },
   setFieldVisibility: setDkjFieldVisibility,
   mapFormDataToSpecInputs: mapFormDataToDkjSpecInputs,
+  calculateFromSpecInputs: calculateDkjFromSpecInputs,
   buildBundle(formData, meta, deps = {}) {
     const specInputs = mapFormDataToDkjSpecInputs(formData)
     const calculated = calculateDkjFromSpecInputs(specInputs, {
@@ -167,6 +195,7 @@ function registerCouponBearingFamily({
   applySpecToForm,
   setFieldVisibility,
   mapFormDataToSpecInputs,
+  calculateFromSpecInputs,
   migrateConfigForEdit,
   buildBundle,
   populateEditOptions = {}
@@ -177,18 +206,21 @@ function registerCouponBearingFamily({
     marketFamily: productCode,
     composerProfile: 'coupon-bearing',
     hostWrapId: `investment-${prefix}-wrap`,
+    migrationStatus: 'fully-spec-backed',
     discountYieldPreview,
     discountCurrentValuePreview,
     inflationSchedulePreview,
     denomination: { formField: 'principal', unit: productSpec.denominationUnit },
     productSpec,
     fieldLabelClass: buildCouponBearingFieldLabelClass(prefix),
+    marketableRequiredFields: COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS,
     inputIds: buildCouponBearingInputIds(prefix),
     marketFieldSelectors: buildCouponBearingMarketFieldSelectors(prefix),
     purchaseOrSettlementSelector: buildCouponBearingPurchaseOrSettlementSelector(prefix),
     applySpecToForm,
     setFieldVisibility,
     mapFormDataToSpecInputs,
+    calculateFromSpecInputs,
     migrateConfigForEdit,
     buildBundle,
     readCurrentMarketFields(form) {
@@ -220,6 +252,7 @@ registerCouponBearingFamily({
   },
   setFieldVisibility: setPmapFieldVisibility,
   mapFormDataToSpecInputs: mapFormDataToPmapSpecInputs,
+  calculateFromSpecInputs: calculatePmapFromSpecInputs,
   migrateConfigForEdit: migratePmapConfigForEdit,
   buildBundle(formData, meta) {
     const specInputs = mapFormDataToPmapSpecInputs(formData)
@@ -228,7 +261,7 @@ registerCouponBearingFamily({
       label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
     })
   }
-  // populateEditOptions defaults: transactionDate + couponPeriod fallbacks on
+  // populateEditOptions omitted: defaults keep transactionDate + couponPeriod fallbacks.
 })
 
 registerCouponBearingFamily({
@@ -243,6 +276,7 @@ registerCouponBearingFamily({
   },
   setFieldVisibility: setBmapFieldVisibility,
   mapFormDataToSpecInputs: mapFormDataToBmapSpecInputs,
+  calculateFromSpecInputs: calculateBmapFromSpecInputs,
   migrateConfigForEdit: migrateBmapConfigForEdit,
   buildBundle(formData, meta, deps = {}) {
     const specInputs = mapFormDataToBmapSpecInputs(formData)
@@ -275,6 +309,7 @@ registerCouponBearingFamily({
   },
   setFieldVisibility: setFixmapFieldVisibility,
   mapFormDataToSpecInputs: mapFormDataToFixmapSpecInputs,
+  calculateFromSpecInputs: calculateFixmapFromSpecInputs,
   migrateConfigForEdit: migrateFixmapConfigForEdit,
   buildBundle(formData, meta) {
     const specInputs = mapFormDataToFixmapSpecInputs(formData)
@@ -310,9 +345,110 @@ function resolveCommercialInvestmentProductCodeFromBundle(bundle) {
   return null
 }
 
+/**
+ * Apply live commercial preview for a registry family (discount vs coupon-bearing).
+ * Used by previews.js so commercial subtypes do not need per-productCode forests.
+ */
+function applyCommercialInvestmentLivePreview(
+  entry,
+  form,
+  targets = {},
+  deps = {}
+) {
+  if (!entry || !form || typeof entry.mapFormDataToSpecInputs !== 'function') {
+    return false
+  }
+  if (typeof entry.calculateFromSpecInputs !== 'function') {
+    return false
+  }
+  const formatMoneyAmount = deps.formatMoneyAmount || formatMoneyAmountDefault
+  const {
+    purchasePreviewInput,
+    maturityPreviewInput,
+    gainPreviewInput,
+    discountYieldPreviewInput,
+    discountCurrentValuePreviewInput,
+    inflationSchedulePreviewInput
+  } = targets
+
+  const formData = deps.formData != null ? deps.formData : new FormData(form)
+  const specInputs = entry.mapFormDataToSpecInputs(formData)
+  const preview = entry.calculateFromSpecInputs(specInputs, {
+    createInvestmentMaturityPreview: deps.createInvestmentMaturityPreview
+  })
+
+  if (entry.composerProfile === 'discount') {
+    if (purchasePreviewInput) {
+      purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
+    }
+    if (maturityPreviewInput) {
+      maturityPreviewInput.value = formatMoneyAmount(preview.redemptionValue, WHOLE_FORINT)
+    }
+    if (gainPreviewInput) {
+      gainPreviewInput.value = formatMoneyAmount(preview.grossGain, WHOLE_FORINT)
+    }
+    const remainingSelector = entry.marketFieldSelectors?.remainingDays
+    const remainingDaysInput = remainingSelector
+      ? form.querySelector(remainingSelector)
+      : null
+    if (remainingDaysInput && preview.remainingDays != null) {
+      remainingDaysInput.value = String(preview.remainingDays)
+    }
+    if (discountYieldPreviewInput) {
+      discountYieldPreviewInput.value = `${preview.annualizedYieldPct.toFixed(4)}%`
+    }
+    if (discountCurrentValuePreviewInput) {
+      discountCurrentValuePreviewInput.value = `${preview.simpleReturnPct.toFixed(4)}%`
+    }
+    if (inflationSchedulePreviewInput) {
+      inflationSchedulePreviewInput.value = '—'
+    }
+    return true
+  }
+
+  if (entry.composerProfile === 'coupon-bearing') {
+    if (purchasePreviewInput) {
+      purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
+    }
+    if (maturityPreviewInput) {
+      maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)
+    }
+    if (gainPreviewInput) {
+      gainPreviewInput.value = formatMoneyAmount(
+        Number(specInputs.principal) - Number(preview.purchaseAmount),
+        WHOLE_FORINT
+      )
+    }
+    if (discountYieldPreviewInput) {
+      discountYieldPreviewInput.value = '—'
+    }
+    if (discountCurrentValuePreviewInput) {
+      discountCurrentValuePreviewInput.value = '—'
+    }
+    if (inflationSchedulePreviewInput) {
+      inflationSchedulePreviewInput.value = `${preview.annualCouponRatePct.toFixed(4)}%`
+    }
+    return true
+  }
+
+  return false
+}
+
+/** Frozen map of marketable required field names by productCode (derived from registry). */
+function buildMarketMarketableRequiredFields() {
+  const out = {}
+  for (const entry of listCommercialInvestmentFamilies()) {
+    out[entry.productCode] = Object.freeze([...(entry.marketableRequiredFields || [])])
+  }
+  return Object.freeze(out)
+}
+
 export {
   getCommercialInvestmentFamily,
   listCommercialInvestmentFamilies,
   listCommercialInvestmentFamilyCodes,
-  resolveCommercialInvestmentProductCodeFromBundle
+  resolveCommercialInvestmentProductCodeFromBundle,
+  applyCommercialInvestmentLivePreview,
+  buildMarketMarketableRequiredFields,
+  COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
 }

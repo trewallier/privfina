@@ -119,11 +119,9 @@ function applyPmapSpecToForm({
 }
 
 function setPmapFieldVisibility(investmentForm, visible) {
-  if (!investmentForm) return
-  const wrap = investmentForm.querySelector('#investment-pmap-wrap')
-  if (wrap) {
-    wrap.hidden = !visible
-  }
+  // Main host wrap is toggled by the family registry hostWrapId (ADR 0040).
+  void investmentForm
+  void visible
 }
 
 function mapFormDataToPmapSpecInputs(formData) {

@@ -188,11 +188,9 @@ function applyBmapSpecToForm({ bmapForm, bmapBox, setAmountDefaultIfEmpty = fals
 }
 
 function setBmapFieldVisibility(investmentForm, visible) {
-  if (!investmentForm) return
-  const wrap = investmentForm.querySelector('#investment-bmap-wrap')
-  if (wrap) {
-    wrap.hidden = !visible
-  }
+  // Main host wrap is toggled by the family registry hostWrapId (ADR 0040).
+  void investmentForm
+  void visible
 }
 
 function mapFormDataToBmapSpecInputs(formData) {

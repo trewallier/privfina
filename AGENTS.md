@@ -33,6 +33,7 @@ Human-oriented hubs: [`README.md`](README.md), [`docs/README.md`](docs/README.md
 | Spec scenario / AC | [`.github/prompts/update-spec.prompt.md`](.github/prompts/update-spec.prompt.md) → [`docs/spec.md`](docs/spec.md) |
 | Formula ownership / dual TS↔JS surface | [`docs/formula-ownership-audit.md`](docs/formula-ownership-audit.md) |
 | CI / Pages deploy / supply-chain | [`docs/dev-playbooks/ci-and-supply-chain.md`](docs/dev-playbooks/ci-and-supply-chain.md) + [ADR 0007](docs/adr/0007-security-basics-public-repo-workflows-guardrails.md) |
+| Stacked PRs / `gh stack` | Vendored skill [`.agents/skills/gh-stack/`](.agents/skills/gh-stack/) + [update/pin playbook](docs/dev-playbooks/gh-stack-skill.md) (pin: [`.agents/vendor/gh-stack.json`](.agents/vendor/gh-stack.json)). Precedence: this file’s non-negotiables → playbook overlays → vendored skill. |
 
 ## Verify
 

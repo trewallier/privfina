@@ -4,3 +4,7 @@
 .github/CODEOWNERS @trewallier
 SECURITY.md @trewallier
 docs/dev-playbooks/ci-and-supply-chain.md @trewallier
+docs/dev-playbooks/gh-stack-skill.md @trewallier
+
+# Agent instruction surface (skills / vendor pins) is security-sensitive.
+.agents/ @trewallier

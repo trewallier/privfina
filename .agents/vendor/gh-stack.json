@@ -1,0 +1,22 @@
+{
+  "name": "gh-stack",
+  "skillPath": ".agents/skills/gh-stack",
+  "upstream": {
+    "repo": "https://github.com/github/gh-stack",
+    "path": "skills/gh-stack",
+    "ref": "refs/tags/v0.3.0",
+    "commit": "2a49e6751238633db504655d8a8eba3e433e827d",
+    "treeSha": "1f58c48379bc9fcab68e8a37cb41aad3ad937419"
+  },
+  "extension": {
+    "repo": "github/gh-stack",
+    "pin": "v0.3.0",
+    "install": "gh extension install github/gh-stack --pin v0.3.0"
+  },
+  "files": {
+    "SKILL.md": "8e39024612eee7754304d55c0f974a40e6b41801",
+    "references/commands.md": "54fd09a545d74bec444bb2e4c4aa71deb937d260",
+    "references/stack-design.md": "f64543acebd3947f8c430253f8a4d385ba9dcfe6",
+    "references/troubleshooting.md": "774a459365c56937347e7922500fb870a7a880eb"
+  }
+}

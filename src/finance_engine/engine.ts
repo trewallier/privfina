@@ -205,6 +205,11 @@ export {
   deriveMappRateOutputs,
   deriveMappAccruedInterestAmount,
   resolveMappAccrualStartIso,
+  normalizeMappCouponFrequencyMonths,
+  mappRegularPeriodRatePct,
+  mappFirstPeriodRatePct,
+  listMappPaymentDatesIso,
+  generateMappCouponFlows,
   generateMappSemiAnnualCouponFlows
 } from './instruments/mapp'
 export {

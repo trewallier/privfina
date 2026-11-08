@@ -5,7 +5,8 @@ import YAML from 'yaml'
 import {
   deriveMappAccruedInterestAmount,
   deriveMappRateOutputs,
-  generateMappSemiAnnualCouponFlows,
+  generateMappCouponFlows,
+  mappFirstPeriodRatePct,
   resolveMappAccrualStartIso
 } from '../src/finance_engine/instruments/mapp'
 import { loadMappProductSpecYamlFromFiles } from '../src/finance_engine/product_specs/mapp'
@@ -30,6 +31,17 @@ describe('MÁP Plusz TypeScript primitives (ADR 0017 / 0038 / ROADMAP §6j)', ()
     expect(spec.specVersion).toBe('v2alpha3')
   })
 
+  it('locks 2031/M6 first-period tényleges kamat gp ≈ 5.77%', () => {
+    expect(
+      mappFirstPeriodRatePct({
+        annualRatePct: 5,
+        issueDate: '2026-10-02',
+        firstCouponDate: '2027-11-27',
+        couponFrequencyMonths: 12
+      })
+    ).toBeCloseTo(5.77, 2)
+  })
+
   it('locks nominal-case example rates and purchase amount', () => {
     const { inputs, expected } = readExample(
       'docs/product-specs/products/government-securities/mapp/examples/nominal-case.yaml'
@@ -39,11 +51,11 @@ describe('MÁP Plusz TypeScript primitives (ADR 0017 / 0038 / ROADMAP §6j)', ()
     const purchaseAmount = Number(inputs.principal) + accrued
 
     expect(rates.annualCouponRatePct).toBe(expected.annualCouponRatePct)
+    expect(accrued).toBe(expected.accruedInterestAmount)
     expect(purchaseAmount).toBe(expected.purchaseAmount)
-    expect(accrued).toBe(0)
   })
 
-  it('locks stepped-coupon-case covering rate, ACT/360 accrued, and semi-annual flows', () => {
+  it('locks stepped-coupon-case Ismertető first-period accrued', () => {
     const { inputs, expected } = readExample(
       'docs/product-specs/products/government-securities/mapp/examples/stepped-coupon-case.yaml'
     )
@@ -54,120 +66,60 @@ describe('MÁP Plusz TypeScript primitives (ADR 0017 / 0038 / ROADMAP §6j)', ()
     expect(rates.annualCouponRatePct).toBe(expected.annualCouponRatePct)
     expect(accrued).toBeCloseTo(expected.accruedInterestAmount, 10)
     expect(purchaseAmount).toBeCloseTo(expected.purchaseAmount, 10)
-
-    const flows = generateMappSemiAnnualCouponFlows(
-      inputs,
-      purchaseAmount,
-      rates.annualCouponRatePct
-    )
-    // Stepped schedule: each semi-annual coupon uses covering band rate / 2 (end-inclusive `to`).
-    expect(flows).toEqual([
-      {
-        date: '2027-01-15',
-        amount: purchaseAmount,
-        direction: 'outflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2027-04-02',
-        amount: 25_000,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2027-10-02',
-        amount: 25_000,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2028-04-02',
-        amount: 26_250,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2028-10-02',
-        amount: 26_250,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2029-04-02',
-        amount: 27_500,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2029-10-02',
-        amount: 27_500,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2030-04-02',
-        amount: 28_750,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2030-10-02',
-        amount: 28_750,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2031-04-02',
-        amount: 30_000,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2031-10-02',
-        amount: 30_000,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      },
-      {
-        date: '2031-10-02',
-        amount: inputs.principal,
-        direction: 'inflow',
-        category: 'investment',
-        description: 'MAPP'
-      }
-    ])
   })
 
-  it('locks mid-period-after-coupon accrual from last payment, not year-band from', () => {
+  it('locks mid-period-after-coupon accrual from last payment', () => {
     const { inputs, expected } = readExample(
       'docs/product-specs/products/government-securities/mapp/examples/mid-period-after-coupon-case.yaml'
     )
-    expect(resolveMappAccrualStartIso(inputs)).toBe('2027-04-02')
+    expect(resolveMappAccrualStartIso(inputs)).toBe('2027-11-27')
 
     const rates = deriveMappRateOutputs(inputs)
     const accrued = deriveMappAccruedInterestAmount(inputs, rates.annualCouponRatePct)
     const purchaseAmount = Number(inputs.principal) + accrued
 
     expect(rates.annualCouponRatePct).toBe(expected.annualCouponRatePct)
-    expect(accrued).toBe(expected.accruedInterestAmount)
-    expect(purchaseAmount).toBe(expected.purchaseAmount)
+    expect(accrued).toBeCloseTo(expected.accruedInterestAmount, 10)
+    expect(purchaseAmount).toBeCloseTo(expected.purchaseAmount, 10)
 
-    // On a coupon payment date accrued must be zero (not year-band ACT/360 from issue).
     const onCoupon = deriveMappAccruedInterestAmount(
-      { ...inputs, purchaseDate: '2027-04-02' },
+      { ...inputs, purchaseDate: '2027-11-27' },
       rates.annualCouponRatePct
     )
     expect(onCoupon).toBe(0)
+  })
+
+  it('locks semi-annual-legacy-case and compounds in-kind coupons', () => {
+    const { inputs, expected } = readExample(
+      'docs/product-specs/products/government-securities/mapp/examples/semi-annual-legacy-case.yaml'
+    )
+    const rates = deriveMappRateOutputs(inputs)
+    const accrued = deriveMappAccruedInterestAmount(inputs, rates.annualCouponRatePct)
+    expect(rates.annualCouponRatePct).toBe(expected.annualCouponRatePct)
+    expect(accrued).toBe(expected.accruedInterestAmount)
+
+    const flows = generateMappCouponFlows(inputs, expected.purchaseAmount, rates.annualCouponRatePct)
+    // Purchase outflow only until maturity (intermediate kamatjuttatás is in-kind).
+    expect(flows.filter((f) => f.direction === 'outflow')).toHaveLength(1)
+    const inflows = flows.filter((f) => f.direction === 'inflow')
+    expect(inflows.length).toBe(2)
+    // Nine in-kind 2% coupons then maturity cash on compounded face: 1e6*(1.02)^9.
+    const compounded = 1_000_000 * 1.02 ** 9
+    const finalCoupon = compounded * 0.02
+    expect(inflows[0].amount).toBeCloseTo(finalCoupon, 6)
+    expect(inflows[1].amount).toBeCloseTo(compounded, 6)
+    expect(inflows[0].date).toBe('2025-06-01')
+    expect(inflows[1].date).toBe('2025-06-01')
+  })
+
+  it('annual 2031/M6 path pays HUF coupon only at maturity after in-kind coupons', () => {
+    const { inputs } = readExample(
+      'docs/product-specs/products/government-securities/mapp/examples/nominal-case.yaml'
+    )
+    const rates = deriveMappRateOutputs(inputs)
+    const flows = generateMappCouponFlows(inputs, 1_000_000, rates.annualCouponRatePct)
+    const inflows = flows.filter((f) => f.direction === 'inflow')
+    expect(inflows.every((f) => f.date === '2031-11-27')).toBe(true)
+    expect(inflows).toHaveLength(2)
   })
 })

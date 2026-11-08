@@ -63,7 +63,7 @@ Inventory (by product)
 
 - MÁP Plusz (`government-security.mapp.standard`) — **calc-aligned** (ROADMAP §6j)
   - Spec: `docs/product-specs/products/government-securities/mapp/product.yaml`
-  - Engine primitives: `src/finance_engine/instruments/mapp.ts` (semi-annual coupon flows ÷2 / step 6 months + shared `day_count` covering-period helpers; no `productCode` forks)
+  - Engine primitives: `src/finance_engine/instruments/mapp.ts` (`couponFrequencyMonths` 6|12; Ismertető ACT/ACT accrued + first-period `gp`; kamatjuttatás compounds face; shared covering-period helpers; no `productCode` forks)
   - Family mapper: `src/finance_engine/product_specs/mapp.ts`
   - Browser path: deferred to SPA stack layer (ADR 0040 `coupon-bearing` registry entry + thin adapter)
   - Status: executable YAML example goldens green; commercial composer not yet wired

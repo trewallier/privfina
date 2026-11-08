@@ -1,6 +1,6 @@
 /**
  * Runtime loader for published government-security market JSON
- * (ADR 0034 / 0035 / 0036 / 0038 / 0039 / ROADMAP §6b–§6i).
+ * (ADR 0034 / 0035 / 0036 / 0038 / 0039 / ROADMAP §6b–§6l).
  * Fetches same-origin Pages files under data/market/v2/ — never official market hosts.
  */
 
@@ -97,6 +97,43 @@ function validatePriceCalendar(data) {
 }
 
 /**
+ * Per-series public-offering transcription (ROADMAP §6k publish → §6l SPA).
+ * Requires id + schemaVersion; saleWindow / paymentDates / dayCount / source soft-optional.
+ * @param {unknown} data
+ * @param {string} id
+ */
+function validateOfferingFile(data, id) {
+  if (!isPlainObject(data) || data.schemaVersion !== MARKET_SCHEMA_VERSION) {
+    return null
+  }
+  if (data.id !== id) {
+    return null
+  }
+  if (data.saleWindow != null) {
+    if (!isPlainObject(data.saleWindow) || typeof data.saleWindow.from !== 'string') {
+      return null
+    }
+    if (
+      data.saleWindow.to != null &&
+      data.saleWindow.to !== '' &&
+      typeof data.saleWindow.to !== 'string'
+    ) {
+      return null
+    }
+  }
+  if (data.paymentDates != null && !Array.isArray(data.paymentDates)) {
+    return null
+  }
+  if (data.dayCount != null && typeof data.dayCount !== 'string') {
+    return null
+  }
+  if (data.source != null && !isPlainObject(data.source)) {
+    return null
+  }
+  return data
+}
+
+/**
  * Aggregate calendar status for a Europe/Budapest calendar date across reports.
  * Prefer priced > fetch_failed > no_price when multiple report rows share a datum.
  * @param {{ days?: Array<{ datum?: string, status?: string }> }|null|undefined} calendar
@@ -178,6 +215,9 @@ export function createMarketDataLoader(options = {}) {
       async loadPriceCalendar() {
         return null
       },
+      async loadOffering() {
+        return null
+      },
       /** @deprecated Schema v2 publishes coupons/; always soft-null. */
       async loadRetailInterest() {
         return null
@@ -238,6 +278,27 @@ export function createMarketDataLoader(options = {}) {
         const relative =
           (manifest && manifest.refs && manifest.refs.priceCalendar) || PRICE_CALENDAR_REF_PATH
         return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validatePriceCalendar)
+      } catch {
+        return null
+      }
+    },
+
+    /**
+     * Per-series offering transcription (ROADMAP §6l). Soft-null when missing/invalid.
+     * Preferred path: `families/{fam}/offerings/<id>.json` (schemaVersion 2).
+     * @param {'dkj'|'pmap'|'bmap'} family
+     * @param {string} id
+     * @returns {Promise<object|null>}
+     */
+    async loadOffering(family, id) {
+      if (!MARKET_FAMILIES.includes(family) || !id) {
+        return null
+      }
+      try {
+        const relative = `families/${family}/offerings/${encodeURIComponent(id)}.json`
+        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, (data) =>
+          validateOfferingFile(data, id)
+        )
       } catch {
         return null
       }

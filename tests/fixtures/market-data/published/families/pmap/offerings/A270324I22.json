@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "id": "A270324I22",
+  "saleWindow": {
+    "from": "2022-01-21",
+    "to": "2023-01-20"
+  },
+  "dayCount": "ACT/365F",
+  "paymentDates": [
+    "2022-03-24",
+    "2023-03-24",
+    "2024-03-24",
+    "2025-03-24",
+    "2026-03-24",
+    "2027-03-24"
+  ],
+  "source": {
+    "id": "nyilvanos-ajanlattetel-fixture",
+    "host": "public-offering-host.example",
+    "document": "PMÁP 2027/I nyilvános ajánlattétel (fixture)",
+    "disclaimer": "Informational transcription of a public offering document; may be incomplete or outdated vs the authoritative PDF; not a substitute for the official nyilvános ajánlattétel; not investment advice."
+  }
+}

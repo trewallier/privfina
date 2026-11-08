@@ -14,18 +14,20 @@ Commercial inputs use **effective** period coupon rates and **real** maturities 
 
 ## Subsequent inclusion matrix (ROADMAP §6j)
 
-Published market family folders already (or soon) available on the `market-data` branch — **no commercial composer in §6f**:
+Published market family folders already (or soon) available on the `market-data` branch — commercial hosts land under §6j (not §6f).
+
+**Delivery:** FixMÁP (`fixmap`) first as a gh-stack vertical slice; remaining families follow in later stacks. Open a temporary tip→`master` CI head PR for the stack (close, do not merge).
 
 | Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
-| `fixmap` | FixMÁP | Fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
-| `mapp` | MÁP Plusz (incl. nyomdai) | Multi-band rates in coupons |
-| `baba` | Babakötvény | Optional prices already ingested |
-| `emap` | EMÁP | Optional prices; consider split from PEMÁP if product rules diverge |
-| *(possible `pemap`)* | PEMÁP | Today routed into `emap`; split only if needed |
-| `omap` | 1MÁP | Optional prices |
-| `ktv` | Kincstárjegy / KTV | Optional prices |
-| `ktj` | KTJ I / KTJ II | Routing stub in v2; was `family: null` in kamatok v1 |
-| `map2` | 2MÁP | Routing stub in v2; was `family: null` in kamatok v1 |
+| `fixmap` | FixMÁP | **First slice** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
+| `mapp` | MÁP Plusz (incl. nyomdai) | Follow-on; multi-band rates in coupons |
+| `baba` | Babakötvény | Follow-on; optional prices already ingested |
+| `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
+| *(possible `pemap`)* | PEMÁP | Split only if needed |
+| `omap` | 1MÁP | Follow-on |
+| `ktv` | Kincstárjegy / KTV | Follow-on |
+| `ktj` | KTJ I / KTJ II | Follow-on; routing stub in v2 |
+| `map2` | 2MÁP | Follow-on; routing stub in v2 |
 
 When adding a family: author `product.yaml` + examples first, register catalog `spec-only`, then engine → schedule-usable → commercially-usable on the commercial investment picker. Reuse ADR 0038 series/coupon shapes.

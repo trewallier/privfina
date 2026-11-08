@@ -381,11 +381,22 @@ Candidates (inclusion matrix lives in `docs/product-specs/products/government-se
 Constraints
 - Product YAML + examples before engine/UI; no core generator `productCode` forks.
 - Reuse v2 coupons/`dayCount`/`offered`; do not revive `series.prem` or base+premium required inputs unless a product truly publishes a split.
+- Deliver as a **gh-stack** of PR-sized layers; open a temporary tip→`master` head PR for full-stack CI (do not merge the head PR).
 
-Plan slices
-- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable on commercial investment picker.
-- [ ] Decide PEMÁP vs EMÁP family split if product rules diverge.
-- [ ] SPA series picker + autofill per family; parity tests.
+#### FixMÁP first (`fixmap`) — this stack
+Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on the commercial investment picker. Market ingest already publishes `families/fixmap/`; SPA must extend `MARKET_FAMILIES` and add a dedicated host.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ROADMAP / spec / ownership / gov-sec README: FixMÁP-first delivery + temporary CI head; PEMÁP stays on `emap` (no `pemap` folder until product rules diverge).
+- [ ] Author `fixmap/product.yaml` + examples; catalog `government-security.fixmap.standard` at **`spec-only`**.
+- [ ] Engine family mapper + coupon-schedule primitives (reuse PMÁP/BMÁP day-count / schedule path) → **`calc-aligned`**.
+- [ ] SPA: `MARKET_FAMILIES` + `fixmap` host / adapter / picker / autofill → **`schedule-usable`**.
+- [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off FixMÁP; temporary tip→`master` CI head PR (close, do not merge).
+
+#### Remaining families (follow-on stacks under §6j)
+- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable on commercial investment picker (`mapp`, `baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`).
+- [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).
+- [ ] SPA series picker + autofill per remaining family; parity tests.
 
 Out of scope for §6j until named
 - Live auction DKJ-base derivation; non-ÁKK retail products outside published families.

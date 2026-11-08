@@ -177,6 +177,21 @@ describe('market-data-loader', () => {
     expect(await loader.loadRetailInterest()).toBeNull()
   })
 
+  it('loads offering records when present (ROADMAP §6l)', async () => {
+    const loader = createMarketDataLoader({
+      baseUrl: '/privfina/',
+      fetchImpl: createFixtureFetch()
+    })
+    const offering = await loader.loadOffering('pmap', 'A270324I22')
+    expect(offering?.schemaVersion).toBe(2)
+    expect(offering?.id).toBe('A270324I22')
+    expect(offering?.saleWindow).toEqual({ from: '2022-01-21', to: '2023-01-20' })
+    expect(offering?.dayCount).toBe('ACT/365F')
+    expect(offering?.paymentDates?.[0]).toBe('2022-03-24')
+    expect(offering?.source?.disclaimer).toMatch(/nyilvános ajánlattétel/i)
+    expect(await loader.loadOffering('pmap', 'MISSING')).toBeNull()
+  })
+
   it('soft-degrades when published files are missing', async () => {
     const loader = createMarketDataLoader({
       baseUrl: '/privfina/',
@@ -194,6 +209,7 @@ describe('market-data-loader', () => {
     })
     expect(await loader.loadCoupons('dkj', 'D261223')).toBeNull()
     expect(await loader.loadPriceCalendar()).toBeNull()
+    expect(await loader.loadOffering('pmap', 'A270324I22')).toBeNull()
     expect(await loader.loadRetailInterest()).toBeNull()
   })
 

@@ -200,6 +200,12 @@ export {
   deriveFixmapAccruedInterestAmount,
   generateFixmapAnnualCouponFlows
 } from './instruments/fixmap'
+export type { MappRateOutputs, MappSpecInputs } from './instruments/mapp'
+export {
+  deriveMappRateOutputs,
+  deriveMappAccruedInterestAmount,
+  generateMappSemiAnnualCouponFlows
+} from './instruments/mapp'
 export {
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,

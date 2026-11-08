@@ -188,11 +188,76 @@ export function deriveLastAvailabilityDate(series) {
 }
 
 /**
- * @param {{ name?: string, issue?: string|null, offered?: boolean|null }|null|undefined} series
- * @param {string} todayIso Europe/Budapest calendar day
+ * Prefer series-adjacent saleWindow, else offering.saleWindow (ROADMAP §6l).
+ * @param {{ saleWindow?: { from?: string, to?: string|null } }|null|undefined} series
+ * @param {{ saleWindow?: { from?: string, to?: string|null } }|null|undefined} offering
  */
-export function isSeriesAvailableOn(series, todayIso) {
-  // Schema v2: prefer series.offered from kamatok join (ADR 0038).
+export function resolveSaleWindow(series, offering = null) {
+  const fromOffering = offering?.saleWindow
+  if (fromOffering && typeof fromOffering.from === 'string' && fromOffering.from) {
+    return fromOffering
+  }
+  const fromSeries = series?.saleWindow
+  if (fromSeries && typeof fromSeries.from === 'string' && fromSeries.from) {
+    return fromSeries
+  }
+  return null
+}
+
+/**
+ * @param {string} isoDate
+ * @param {{ from?: string, to?: string|null }|null|undefined} saleWindow
+ * @returns {boolean|null} null when window/date unusable
+ */
+export function isDateInSaleWindow(isoDate, saleWindow) {
+  const day = String(isoDate || '')
+  const from = saleWindow?.from
+  if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{4}-\d{2}-\d{2}$/.test(String(from))) {
+    return null
+  }
+  if (day < String(from)) {
+    return false
+  }
+  const to = saleWindow?.to
+  if (to != null && to !== '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(to))) {
+      return null
+    }
+    if (day > String(to)) {
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * First ISO payment date from an offering calendar (sorted ascending).
+ * @param {{ paymentDates?: unknown }|null|undefined} offering
+ */
+export function pickFirstOfferingPaymentDate(offering) {
+  const raw = Array.isArray(offering?.paymentDates) ? offering.paymentDates : []
+  const dates = raw
+    .map((entry) => String(entry || '').trim())
+    .filter((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry))
+    .sort()
+  return dates[0] || null
+}
+
+/**
+ * @param {{ name?: string, issue?: string|null, offered?: boolean|null, saleWindow?: object }|null|undefined} series
+ * @param {string} todayIso Europe/Budapest calendar day
+ * @param {{ saleWindow?: object }|null|undefined} [offering]
+ */
+export function isSeriesAvailableOn(series, todayIso, offering = null) {
+  // ROADMAP §6l: prefer saleWindow over kamatok offered / name-year heuristic.
+  const window = resolveSaleWindow(series, offering)
+  if (window) {
+    const inWindow = isDateInSaleWindow(todayIso, window)
+    if (inWindow != null) {
+      return inWindow
+    }
+  }
+  // Schema v2: prefer series.offered from kamatok join (ADR 0038 / §6i).
   if (series && typeof series.offered === 'boolean') {
     return series.offered === true
   }
@@ -201,6 +266,35 @@ export function isSeriesAvailableOn(series, todayIso) {
     return false
   }
   return String(todayIso) <= last
+}
+
+/**
+ * Short hint when purchase/settlement falls outside a known sale window.
+ * @param {string} isoDate
+ * @param {{ from?: string, to?: string|null }|null|undefined} saleWindow
+ */
+export function formatPurchaseOutsideSaleWindowHint(isoDate, saleWindow) {
+  const inWindow = isDateInSaleWindow(isoDate, saleWindow)
+  if (inWindow !== false || !saleWindow?.from) {
+    return ''
+  }
+  const to = saleWindow.to != null && saleWindow.to !== '' ? String(saleWindow.to) : 'open'
+  return `Purchase date ${isoDate} is outside the published sale window ${saleWindow.from}–${to}`
+}
+
+/**
+ * Offering-transcription disclaimer text (ROADMAP §6l).
+ * @param {{ source?: { disclaimer?: string } }|null|undefined} offering
+ */
+export function formatOfferingAttributionDisclaimer(offering) {
+  const text =
+    offering &&
+    offering.source &&
+    typeof offering.source.disclaimer === 'string' &&
+    offering.source.disclaimer.trim()
+      ? offering.source.disclaimer.trim()
+      : ''
+  return text
 }
 
 /** Europe/Budapest calendar YYYY-MM-DD. */
@@ -310,6 +404,7 @@ export function buildMarketAutofillPatch({
   series,
   quote,
   coupons = null,
+  offering = null,
   current = {}
 } = {}) {
   const fields = {}
@@ -345,6 +440,10 @@ export function buildMarketAutofillPatch({
     if (remaining != null) {
       setField('remainingDays', remaining)
     }
+    const dayCount = offering?.dayCount || series?.dayCount
+    if (dayCount) {
+      setField('dayCountConvention', dayCount)
+    }
   } else if (family === 'pmap' || family === 'bmap') {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
     const onIso = String(current.purchaseDate || series?.issue || '').trim()
@@ -362,13 +461,16 @@ export function buildMarketAutofillPatch({
     if (series?.issue) {
       setField('issueDate', series.issue)
     }
-    const firstCoupon = deriveFirstCouponDate(
-      series?.issue,
-      series?.mat,
-      family === 'bmap' ? 3 : 12
-    )
+    // ROADMAP §6l: prefer offering payment calendar over anniversary heuristic.
+    const firstCoupon =
+      pickFirstOfferingPaymentDate(offering) ||
+      deriveFirstCouponDate(series?.issue, series?.mat, family === 'bmap' ? 3 : 12)
     if (firstCoupon) {
       setField('firstCouponDate', firstCoupon)
+    }
+    const dayCount = offering?.dayCount || series?.dayCount
+    if (dayCount) {
+      setField('dayCountConvention', dayCount)
     }
   }
 

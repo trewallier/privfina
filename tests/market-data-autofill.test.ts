@@ -9,13 +9,18 @@ import {
   deriveLastAvailabilityDate,
   deriveRemainingDays,
   deriveTermMonths,
+  formatOfferingAttributionDisclaimer,
+  formatPurchaseOutsideSaleWindowHint,
   formatSeriesAvailabilityLabel,
   formatSeriesOptionLabel,
   formatSeriesMaturityStatusHint,
+  isDateInSaleWindow,
   isSeriesAvailableOn,
   parseSeriesNameYear,
   pickCouponRatePct,
-  pickPurchasePricePct
+  pickFirstOfferingPaymentDate,
+  pickPurchasePricePct,
+  resolveSaleWindow
 } from '../public/controller/market-data-autofill.js'
 
 describe('market-data-autofill', () => {
@@ -76,6 +81,41 @@ describe('market-data-autofill', () => {
     expect(
       formatSeriesOptionLabel({ name: '2027/J', issue: '2022-09-30', offered: false }, '2026-11-01')
     ).toBe('2027/J (past)')
+  })
+
+  it('prefers saleWindow over offered / heuristic (ROADMAP §6l)', () => {
+    const window = { from: '2022-01-21', to: '2023-01-20' }
+    expect(isDateInSaleWindow('2022-06-01', window)).toBe(true)
+    expect(isDateInSaleWindow('2023-01-21', window)).toBe(false)
+    expect(resolveSaleWindow({ saleWindow: window }, null)).toEqual(window)
+    expect(
+      resolveSaleWindow({ saleWindow: { from: '2099-01-01', to: null } }, { saleWindow: window })
+    ).toEqual(window)
+    // offered true but outside sale window → past
+    expect(
+      isSeriesAvailableOn(
+        { name: '2027/I', offered: true, saleWindow: window },
+        '2026-11-01'
+      )
+    ).toBe(false)
+    expect(
+      formatSeriesOptionLabel(
+        { name: '2027/I', offered: false, saleWindow: window },
+        '2022-06-01'
+      )
+    ).toBe('2027/I (available)')
+    expect(
+      formatPurchaseOutsideSaleWindowHint('2026-11-01', window)
+    ).toMatch(/outside the published sale window/)
+    expect(formatPurchaseOutsideSaleWindowHint('2022-06-01', window)).toBe('')
+    expect(pickFirstOfferingPaymentDate({ paymentDates: ['2023-03-24', '2022-03-24'] })).toBe(
+      '2022-03-24'
+    )
+    expect(
+      formatOfferingAttributionDisclaimer({
+        source: { disclaimer: 'Informational transcription of a public offering document.' }
+      })
+    ).toMatch(/Informational transcription/)
   })
 
   it('always overwrites DKJ auto fields without sourcing settlement or amounts', () => {
@@ -151,6 +191,20 @@ describe('market-data-autofill', () => {
       issueDate: '2017-10-03',
       firstCouponDate: '2017-12-22'
     })
+
+    const withOffering = buildMarketAutofillPatch({
+      family: 'pmap',
+      series: { issue: '2022-01-21', mat: '2027-03-24', dayCount: 'ACT/360' },
+      quote: { d: '2026-11-02', ask: 100.25 },
+      coupons,
+      offering: {
+        paymentDates: ['2022-04-01', '2023-03-24'],
+        dayCount: 'ACT/365F'
+      },
+      current: { purchaseDate: '2026-06-01' }
+    })
+    expect(withOffering.fields.firstCouponDate).toBe('2022-04-01')
+    expect(withOffering.fields.dayCountConvention).toBe('ACT/365F')
   })
 
   it('omits annualCouponRatePct when coupon schedule has no defined rate', () => {

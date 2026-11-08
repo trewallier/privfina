@@ -146,9 +146,12 @@ import {
   MARKET_MARKETABLE_REQUIRED_FIELDS,
   budapestTodayIso,
   buildMarketAutofillPatch,
+  formatOfferingAttributionDisclaimer,
+  formatPurchaseOutsideSaleWindowHint,
   formatSeriesMaturityStatusHint,
   formatSeriesOptionLabel,
-  marketableFieldsMissingFromPatch
+  marketableFieldsMissingFromPatch,
+  resolveSaleWindow
 } from './controller/market-data-autofill.js'
 import {
   browserTodayIso,
@@ -279,6 +282,7 @@ function initController() {
     asOf: null,
     generatedAt: null,
     couponsById: {},
+    offeringsById: {},
     priceCalendar: null
   }
 
@@ -1011,17 +1015,19 @@ function initController() {
     commercialInvestmentMarketHint.hidden = !visible
   }
 
-  function setCommercialMarketAttribution(calendar) {
+  function setCommercialMarketAttribution({ calendar = null, offering = null } = {}) {
     if (!commercialInvestmentMarketAttribution) {
       return
     }
-    const disclaimer =
+    const priceDisclaimer =
       calendar &&
       calendar.source &&
       typeof calendar.source.disclaimer === 'string' &&
       calendar.source.disclaimer.trim()
         ? calendar.source.disclaimer.trim()
         : ''
+    const offeringDisclaimer = formatOfferingAttributionDisclaimer(offering)
+    const disclaimer = [priceDisclaimer, offeringDisclaimer].filter(Boolean).join(' ')
     commercialInvestmentMarketAttribution.textContent = disclaimer
     commercialInvestmentMarketAttribution.hidden = !disclaimer
   }
@@ -1032,7 +1038,7 @@ function initController() {
     }
     if (!visible) {
       setCommercialMarketHint('', false)
-      setCommercialMarketAttribution(null)
+      setCommercialMarketAttribution({})
     }
   }
 
@@ -1091,14 +1097,16 @@ function initController() {
         maturityDate: '#pmap-maturity-date',
         issueDate: '#pmap-issue-date',
         firstCouponDate: '#pmap-first-coupon-date',
-        couponSchedule: '#pmap-coupon-schedule'
+        couponSchedule: '#pmap-coupon-schedule',
+        dayCountConvention: '#pmap-day-count-convention'
       },
       bmap: {
         annualCouponRatePct: '#bmap-annual-coupon-rate-pct',
         maturityDate: '#bmap-maturity-date',
         issueDate: '#bmap-issue-date',
         firstCouponDate: '#bmap-first-coupon-date',
-        couponSchedule: '#bmap-coupon-schedule'
+        couponSchedule: '#bmap-coupon-schedule',
+        dayCountConvention: '#bmap-day-count-convention'
       }
     }
     return maps[family] || null
@@ -1333,6 +1341,7 @@ function initController() {
       asOf: null,
       generatedAt: null,
       couponsById: {},
+      offeringsById: {},
       priceCalendar: null
     }
     rebuildCommercialMarketSeriesOptions('')
@@ -1359,6 +1368,7 @@ function initController() {
       asOf: loaded.asOf,
       generatedAt: loaded.generatedAt || null,
       couponsById: {},
+      offeringsById: {},
       priceCalendar: priceCalendar || null
     }
 
@@ -1378,7 +1388,7 @@ function initController() {
       if (commercialInvestmentSeriesInput) {
         commercialInvestmentSeriesInput.disabled = true
       }
-      setCommercialMarketAttribution(calendar)
+      setCommercialMarketAttribution({ calendar })
       clearCommercialMarketSourcedFields(code)
       return
     }
@@ -1397,7 +1407,7 @@ function initController() {
         ? `Market data as of ${commercialMarketFamilyState.asOf}`
         : 'Market data loaded')
     setCommercialMarketHint(idleHint, true)
-    setCommercialMarketAttribution(commercialMarketFamilyState.priceCalendar)
+    setCommercialMarketAttribution({ calendar: commercialMarketFamilyState.priceCalendar })
     clearCommercialMarketSourcedFields(code)
   }
 
@@ -1435,6 +1445,7 @@ function initController() {
             ? 'Market data loaded'
             : '')
       setCommercialMarketHint(idleHint, Boolean(idleHint))
+      setCommercialMarketAttribution({ calendar: commercialMarketFamilyState.priceCalendar })
       syncCommercialInvestmentPreview()
       return
     }
@@ -1492,11 +1503,26 @@ function initController() {
       }
     }
 
+    let offering = commercialMarketFamilyState.offeringsById?.[seriesId] || null
+    if (!offering) {
+      offering = await marketDataLoader.loadOffering(family, seriesId)
+      if (token !== commercialMarketApplyToken) {
+        return
+      }
+      if (offering) {
+        commercialMarketFamilyState.offeringsById = {
+          ...(commercialMarketFamilyState.offeringsById || {}),
+          [seriesId]: offering
+        }
+      }
+    }
+
     const patch = buildMarketAutofillPatch({
       family,
       series,
       quote: lookup.quote,
       coupons,
+      offering,
       current
     })
     clearMarketableFieldsMissingFromPatch(family, patch.sourced)
@@ -1514,15 +1540,24 @@ function initController() {
             maximumFractionDigits: 3
           })}%`
         : ''
+    const purchaseIso =
+      family === 'dkj'
+        ? String(current.settlementDate || dateInput?.value || '').trim()
+        : String(current.purchaseDate || dateInput?.value || '').trim()
+    const saleWindow = resolveSaleWindow(series, offering)
+    const windowHint = formatPurchaseOutsideSaleWindowHint(purchaseIso, saleWindow)
     const baseHint = buildCommercialMarketSeriesHint({
       series,
       quote: lookup.quote,
       clampDate: lookup.clamped && lookup.date ? lookup.date : null,
       clampReason: lookup.clamped ? lookup.clampReason || null : null
     })
-    const hint = [baseHint, rateHint].filter(Boolean).join(' · ')
+    const hint = [baseHint, rateHint, windowHint].filter(Boolean).join(' · ')
     setCommercialMarketHint(hint, Boolean(hint))
-    setCommercialMarketAttribution(commercialMarketFamilyState.priceCalendar)
+    setCommercialMarketAttribution({
+      calendar: commercialMarketFamilyState.priceCalendar,
+      offering
+    })
     syncCommercialInvestmentPreview()
   }
 

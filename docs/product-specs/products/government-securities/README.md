@@ -8,6 +8,10 @@ This family contains Hungarian government securities in the product-specificatio
 - Premium Hungarian Government Security (PMÁP) — `government-security.pmap.standard`
 - Bonus Hungarian Government Security (BMÁP) — `government-security.bmap.standard`
 
+## In progress (ROADMAP §6j)
+
+- Fixed Hungarian Government Security (FixMÁP) — `government-security.fixmap.standard` (**spec-only**; climbing the commercial investment ladder)
+
 Product differences live primarily in product specifications, assumptions, worked examples, and metadata rather than engine branches (ADR 0015).
 
 Commercial inputs use **effective** period coupon rates and **real** maturities from published market data (`data/market/v2/`), not base+premium composition. Optional `couponSchedule` entries may leave future `rate` undefined. Day-count is series-/product-parameterized (default ACT/360 for current ÁKK retail bonds).

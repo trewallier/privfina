@@ -1,0 +1,40 @@
+specVersion: v2alpha3
+productId: government-security.fixmap.standard
+exampleId: stepped-coupon-case
+title: Stepped FixMÁP coupon schedule example
+description: Mid-holding FixMÁP purchase where published couponSchedule bands set period rates; accrued interest uses the covering band.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 7.0
+  purchaseDate: 2027-02-03
+  issueDate: 2026-08-03
+  maturityDate: 2031-08-03
+  firstCouponDate: 2027-08-03
+  dayCountConvention: ACT/360
+  couponSchedule:
+    - from: 2026-08-03
+      to: 2027-08-03
+      rate: 6.5
+    - from: 2027-08-03
+      to: 2028-08-03
+      rate: 7.0
+    - from: 2028-08-03
+      to: 2029-08-03
+      rate: 7.5
+    - from: 2029-08-03
+      to: 2030-08-03
+      rate: 8.0
+    - from: 2030-08-03
+      to: 2031-08-03
+      rate: 8.5
+
+expected:
+  annualCouponRatePct: 6.5
+  accruedInterestAmount: 33222.22222222222
+  purchaseAmount: 1033222.2222222222
+
+notes:
+  - "Accrued from schedule band start 2026-08-03 through purchaseDate 2027-02-03 under the first band (6.5% ACT/360): 1000000 * 0.065 * 184/360."
+  - "Derived annualCouponRatePct is the covering-band rate at purchase (6.5), not the input fallback (7.0)."
+  - "Later bands demonstrate stepped fixed coupons without inventing rates for unpublished periods."

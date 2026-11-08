@@ -388,7 +388,7 @@ Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usabl
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ROADMAP / spec / ownership / gov-sec README: FixMÁP-first delivery + temporary CI head; PEMÁP stays on `emap` (no `pemap` folder until product rules diverge).
-- [ ] Author `fixmap/product.yaml` + examples; catalog `government-security.fixmap.standard` at **`spec-only`**.
+- [x] Author `fixmap/product.yaml` + examples; catalog `government-security.fixmap.standard` at **`spec-only`**.
 - [ ] Engine family mapper + coupon-schedule primitives (reuse PMÁP/BMÁP day-count / schedule path) → **`calc-aligned`**.
 - [ ] SPA: `MARKET_FAMILIES` + `fixmap` host / adapter / picker / autofill → **`schedule-usable`**.
 - [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off FixMÁP; temporary tip→`master` CI head PR (close, do not merge).

@@ -59,6 +59,7 @@ Inventory (by product)
   - Engine primitives: `src/finance_engine/instruments/fixmap.ts` (thin annual-coupon wrapper over shared PMÁP / `day_count` path; no `productCode` forks)
   - Family mapper: `src/finance_engine/product_specs/fixmap.ts`
   - Browser path: `public/controller/fixmap-calculation-adapter.js` + embedded `fixmap-product-spec.js` + commercial host `#investment-fixmap-wrap`; market family `fixmap`
+  - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ/PMÁP/BMÁP precedent)
 
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
@@ -107,6 +108,11 @@ Files referenced
 - `docs/product-specs/products/government-securities/dkj/product.yaml`
 - `docs/product-specs/products/government-securities/pmap/product.yaml`
 - `docs/product-specs/products/government-securities/bmap/product.yaml`
+- `docs/product-specs/products/government-securities/fixmap/product.yaml`
+- `src/finance_engine/instruments/fixmap.ts`
+- `src/finance_engine/product_specs/fixmap.ts`
+- `public/controller/fixmap-product-spec.js`
+- `public/controller/fixmap-calculation-adapter.js`
 - `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
 - `src/finance_engine/instruments/home_savings.ts`
 - `src/finance_engine/product_specs/home_savings.ts`

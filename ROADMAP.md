@@ -354,10 +354,11 @@ Constraints
 - ADR when the published shape / merge rules need a boundary decision.
 - **Attribution / legal:** credit Magyar Államkincstár (WebKincstár) as the price-table source where the published tree or product docs expose that data; document that republished figures are **informational**, may lag or differ from the live treasury table, and are **not** official investment advice or a substitute for the issuer/distributor publications.
 
-Plan slices (high level; detail when scheduled)
-- [ ] Spec / ADR as needed: daily WebKincstár price ingest + explicit no-price day records + source attribution / accuracy notes.
-- [ ] Wire daily collect: fetch → parse → merge into `market-data` alongside existing ÁKK / allampapir / kamatok / inflation sources.
-- [ ] Acceptance: price days land as quotes; no-price days are recorded distinctly; parser reusable for §6j; attribution and accuracy disclaimer present for the new source.
+Plan slices (implement in order; each slice should stay PR-sized). Detail: [`docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md`](docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md); architecture: ADR 0039.
+- [x] ADR 0039 + docs: Actions-only POST, DKJ+MAK reports, WebKincstár-prefer quotes, `refs/price-calendar.json`, soft-fail, `pdftotext`, attribution / accuracy notes (no runtime change).
+- [ ] Fetch + pure text parser + Vitest `pdftotext` fixtures (priced + no-price); not yet wired into live ingest / workflow.
+- [ ] Overlay into combine→merge; calendar merge + digests; CLI flags; soft-fail + same-day rewrite; fixture-driven ingest tests.
+- [ ] `market-data.yml` Poppler on ingest job; acceptance close (priced + no-price + attribution; parser reusable for §6j; SPA unchanged).
 
 Out of scope for §6h
 - Historical backfill of older settles (§6j).

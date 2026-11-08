@@ -120,6 +120,14 @@ import {
 } from './controller/pmap-form.js'
 import { calculatePmapFromSpecInputs } from './controller/pmap-calculation-adapter.js'
 import {
+  FIXMAP_PRODUCT_SPEC,
+  applyFixmapSpecToForm,
+  setFixmapFieldVisibility,
+  mapFormDataToFixmapSpecInputs,
+  generateFixmapInstrumentBundleFromSpecInputs
+} from './controller/fixmap-form.js'
+import { calculateFixmapFromSpecInputs } from './controller/fixmap-calculation-adapter.js'
+import {
   buildCommercialInvestmentProductOptions,
   findCommercialInvestmentProduct
 } from './controller/investment-product-metadata.js'
@@ -160,7 +168,8 @@ import {
 } from './controller/market-data-composer.js'
 import {
   migrateBmapConfigForEdit,
-  migratePmapConfigForEdit
+  migratePmapConfigForEdit,
+  migrateFixmapConfigForEdit
 } from './controller/govsec-config-migrate.js'
 
 const INVESTMENT_FAMILY_TITLE = 'Simplified Investment'
@@ -416,6 +425,12 @@ function initController() {
   const pmapPurchaseDateInput = document.getElementById('pmap-purchase-date')
   const pmapIssueDateInput = document.getElementById('pmap-issue-date')
   const pmapFirstCouponDateInput = document.getElementById('pmap-first-coupon-date')
+  const fixmapPrincipalInput = document.getElementById('fixmap-principal')
+  const fixmapAnnualCouponRatePctInput = document.getElementById('fixmap-annual-coupon-rate-pct')
+  const fixmapMaturityDateInput = document.getElementById('fixmap-maturity-date')
+  const fixmapPurchaseDateInput = document.getElementById('fixmap-purchase-date')
+  const fixmapIssueDateInput = document.getElementById('fixmap-issue-date')
+  const fixmapFirstCouponDateInput = document.getElementById('fixmap-first-coupon-date')
   const salaryScheduleModeInput = document.getElementById('salary-schedule-mode')
   const salaryCronWrap = document.getElementById('salary-cron-wrap')
   const salaryCustomWrap = document.getElementById('salary-custom-wrap')
@@ -725,6 +740,7 @@ function initController() {
   applyBmapSpecToForm({ bmapForm: commercialInvestmentForm, bmapBox: commercialInvestmentBox })
   applyDkjSpecToForm({ investmentForm: commercialInvestmentForm, investmentBox: commercialInvestmentBox })
   applyPmapSpecToForm({ investmentForm: commercialInvestmentForm, investmentBox: commercialInvestmentBox })
+  applyFixmapSpecToForm({ investmentForm: commercialInvestmentForm, investmentBox: commercialInvestmentBox })
 
   function setInvestmentFamilyTitle() {
     if (!investmentBox) return
@@ -993,11 +1009,13 @@ function initController() {
       }
       return
     }
-    if (productCode === 'pmap' || productCode === 'bmap') {
+    if (productCode === 'pmap' || productCode === 'bmap' || productCode === 'fixmap') {
       const unit =
         productCode === 'pmap'
           ? PMAP_PRODUCT_SPEC.denominationUnit
-          : BMAP_PRODUCT_SPEC.denominationUnit
+          : productCode === 'fixmap'
+            ? FIXMAP_PRODUCT_SPEC.denominationUnit
+            : BMAP_PRODUCT_SPEC.denominationUnit
       const principal = formData.get('principal')
       if (!isMultipleOfDenomination(principal, unit, { minimum: unit })) {
         throw new Error(
@@ -1069,6 +1087,18 @@ function initController() {
           commercialInvestmentForm.querySelector('#pmap-first-coupon-date')?.value || ''
       }
     }
+    if (family === 'fixmap') {
+      return {
+        principal: commercialInvestmentForm.querySelector('#fixmap-principal')?.value || '',
+        annualCouponRatePct:
+          commercialInvestmentForm.querySelector('#fixmap-annual-coupon-rate-pct')?.value || '',
+        maturityDate: commercialInvestmentForm.querySelector('#fixmap-maturity-date')?.value || '',
+        purchaseDate: commercialInvestmentForm.querySelector('#fixmap-purchase-date')?.value || '',
+        issueDate: commercialInvestmentForm.querySelector('#fixmap-issue-date')?.value || '',
+        firstCouponDate:
+          commercialInvestmentForm.querySelector('#fixmap-first-coupon-date')?.value || ''
+      }
+    }
     if (family === 'bmap') {
       return {
         principal: commercialInvestmentForm.querySelector('#bmap-principal')?.value || '',
@@ -1100,6 +1130,14 @@ function initController() {
         couponSchedule: '#pmap-coupon-schedule',
         dayCountConvention: '#pmap-day-count-convention'
       },
+      fixmap: {
+        annualCouponRatePct: '#fixmap-annual-coupon-rate-pct',
+        maturityDate: '#fixmap-maturity-date',
+        issueDate: '#fixmap-issue-date',
+        firstCouponDate: '#fixmap-first-coupon-date',
+        couponSchedule: '#fixmap-coupon-schedule',
+        dayCountConvention: '#fixmap-day-count-convention'
+      },
       bmap: {
         annualCouponRatePct: '#bmap-annual-coupon-rate-pct',
         maturityDate: '#bmap-maturity-date',
@@ -1118,6 +1156,9 @@ function initController() {
     }
     if (family === 'pmap') {
       return pmapPurchaseDateInput
+    }
+    if (family === 'fixmap') {
+      return fixmapPurchaseDateInput
     }
     if (family === 'bmap') {
       return bmapPurchaseDateInput
@@ -1144,6 +1185,11 @@ function initController() {
         investmentForm: commercialInvestmentForm,
         investmentBox: commercialInvestmentBox
       })
+    } else if (family === 'fixmap') {
+      applyFixmapSpecToForm({
+        investmentForm: commercialInvestmentForm,
+        investmentBox: commercialInvestmentBox
+      })
     }
   }
 
@@ -1162,7 +1208,7 @@ function initController() {
     const title = label.querySelector('.label-title')
     const labelSpan =
       title?.querySelector(
-        '.field-label, .dkj-field-label, .pmap-field-label, .bmap-field-label'
+        '.field-label, .dkj-field-label, .pmap-field-label, .fixmap-field-label, .bmap-field-label'
       ) || null
     const help = label.querySelector('.field-help p')
     const labelClassName =
@@ -1171,9 +1217,11 @@ function initController() {
         ? 'dkj-field-label'
         : family === 'pmap'
           ? 'pmap-field-label'
-          : family === 'bmap'
-            ? 'bmap-field-label'
-            : 'field-label')
+          : family === 'fixmap'
+            ? 'fixmap-field-label'
+            : family === 'bmap'
+              ? 'bmap-field-label'
+              : 'field-label')
     applyFieldChrome(
       label,
       {
@@ -1485,12 +1533,12 @@ function initController() {
     const current = readCommercialMarketCurrentFields(family)
     if (family === 'dkj' && dateInput) {
       current.settlementDate = dateInput.value
-    } else if ((family === 'pmap' || family === 'bmap') && dateInput) {
+    } else if ((family === 'pmap' || family === 'bmap' || family === 'fixmap') && dateInput) {
       current.purchaseDate = dateInput.value
     }
 
     let coupons = commercialMarketFamilyState.couponsById?.[seriesId] || null
-    if (!coupons && (family === 'pmap' || family === 'bmap')) {
+    if (!coupons && (family === 'pmap' || family === 'bmap' || family === 'fixmap')) {
       coupons = await marketDataLoader.loadCoupons(family, seriesId)
       if (token !== commercialMarketApplyToken) {
         return
@@ -1578,10 +1626,12 @@ function initController() {
     const isBmap = code === 'bmap'
     const isDkj = code === 'dkj'
     const isPmap = code === 'pmap'
+    const isFixmap = code === 'fixmap'
 
     setBmapFieldVisibility(commercialInvestmentForm, isBmap)
     setDkjFieldVisibility(commercialInvestmentForm, isDkj)
     setPmapFieldVisibility(commercialInvestmentForm, isPmap)
+    setFixmapFieldVisibility(commercialInvestmentForm, isFixmap)
 
     const bmapInputs = [
       bmapPrincipalInput,
@@ -1607,8 +1657,16 @@ function initController() {
       pmapIssueDateInput,
       pmapFirstCouponDateInput
     ]
+    const fixmapInputs = [
+      fixmapPrincipalInput,
+      fixmapAnnualCouponRatePctInput,
+      fixmapMaturityDateInput,
+      fixmapPurchaseDateInput,
+      fixmapIssueDateInput,
+      fixmapFirstCouponDateInput
+    ]
 
-    ;[...bmapInputs, ...dkjInputs, ...pmapInputs].forEach((input) => {
+    ;[...bmapInputs, ...dkjInputs, ...pmapInputs, ...fixmapInputs].forEach((input) => {
       if (!input) return
       input.disabled = true
       input.required = false
@@ -1658,6 +1716,22 @@ function initController() {
         setAmountDefaultIfEmpty
       })
       ensureDefaultPurchaseDate(pmapPurchaseDateInput)
+      setElementVisible(commercialInvestmentDiscountYieldWrap, false)
+      setElementVisible(commercialInvestmentDiscountCurrentValueWrap, false)
+      setElementVisible(commercialInvestmentInflationScheduleWrap, true)
+      return
+    }
+
+    if (isFixmap) {
+      fixmapInputs.forEach((input) => {
+        if (input) input.disabled = false
+      })
+      applyFixmapSpecToForm({
+        investmentForm: commercialInvestmentForm,
+        investmentBox: commercialInvestmentBox,
+        setAmountDefaultIfEmpty
+      })
+      ensureDefaultPurchaseDate(fixmapPurchaseDateInput)
       setElementVisible(commercialInvestmentDiscountYieldWrap, false)
       setElementVisible(commercialInvestmentDiscountCurrentValueWrap, false)
       setElementVisible(commercialInvestmentInflationScheduleWrap, true)
@@ -1809,6 +1883,7 @@ function initController() {
     if (productId === BMAP_PRODUCT_SPEC.id || config.subtype === 'bmap') return 'bmap'
     if (productId === DKJ_PRODUCT_SPEC.id || config.subtype === 'dkj') return 'dkj'
     if (productId === PMAP_PRODUCT_SPEC.id || config.subtype === 'pmap') return 'pmap'
+    if (productId === FIXMAP_PRODUCT_SPEC.id || config.subtype === 'fixmap') return 'fixmap'
     return null
   }
 
@@ -1892,6 +1967,8 @@ function initController() {
     mapFormDataToDkjSpecInputs,
     calculatePmapFromSpecInputs,
     mapFormDataToPmapSpecInputs,
+    calculateFixmapFromSpecInputs,
+    mapFormDataToFixmapSpecInputs,
     calculateBmapFromSpecInputs,
     mapFormDataToBmapSpecInputs,
     onPreviewError: (message) => {
@@ -1917,6 +1994,12 @@ function initController() {
       pmapPurchaseDateInput,
       pmapIssueDateInput,
       pmapFirstCouponDateInput,
+      fixmapPrincipalInput,
+      fixmapAnnualCouponRatePctInput,
+      fixmapMaturityDateInput,
+      fixmapPurchaseDateInput,
+      fixmapIssueDateInput,
+      fixmapFirstCouponDateInput,
       bmapPrincipalInput,
       bmapAnnualCouponRatePctInput,
       bmapMaturityDateInput,
@@ -2127,6 +2210,26 @@ function initController() {
       commercialInvestmentForm.querySelector('#pmap-first-coupon-date').value =
         migrated.firstCouponDate || migrated.couponPeriod || ''
       commercialInvestmentForm.querySelector('#pmap-coupon-schedule').value = Array.isArray(
+        migrated.couponSchedule
+      )
+        ? JSON.stringify(migrated.couponSchedule)
+        : ''
+    } else if (productCode === 'fixmap') {
+      const migrated = migrateFixmapConfigForEdit(config)
+      commercialInvestmentForm.querySelector('#fixmap-principal').value =
+        migrated.principal !== undefined
+          ? formatMoneyAmount(migrated.principal, { fractionDigits: 0 })
+          : ''
+      commercialInvestmentForm.querySelector('#fixmap-annual-coupon-rate-pct').value =
+        migrated.annualCouponRatePct !== undefined ? String(migrated.annualCouponRatePct) : ''
+      commercialInvestmentForm.querySelector('#fixmap-maturity-date').value =
+        migrated.maturityDate || ''
+      commercialInvestmentForm.querySelector('#fixmap-purchase-date').value =
+        migrated.purchaseDate || migrated.transactionDate || ''
+      commercialInvestmentForm.querySelector('#fixmap-issue-date').value = migrated.issueDate || ''
+      commercialInvestmentForm.querySelector('#fixmap-first-coupon-date').value =
+        migrated.firstCouponDate || migrated.couponPeriod || ''
+      commercialInvestmentForm.querySelector('#fixmap-coupon-schedule').value = Array.isArray(
         migrated.couponSchedule
       )
         ? JSON.stringify(migrated.couponSchedule)
@@ -2464,6 +2567,7 @@ function initController() {
   }
   bindCommercialPurchaseSettlementAutofill(dkjSettlementDateInput)
   bindCommercialPurchaseSettlementAutofill(pmapPurchaseDateInput)
+  bindCommercialPurchaseSettlementAutofill(fixmapPurchaseDateInput)
   bindCommercialPurchaseSettlementAutofill(bmapPurchaseDateInput)
 
   bindLoanPreviewEvents({
@@ -3241,6 +3345,12 @@ function initController() {
           bundle = generatePmapInstrumentBundleFromSpecInputs(specInputs, {
             ...meta,
             label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
+          })
+        } else if (productCode === 'fixmap') {
+          const specInputs = mapFormDataToFixmapSpecInputs(formData)
+          bundle = generateFixmapInstrumentBundleFromSpecInputs(specInputs, {
+            ...meta,
+            label: meta.label || FIXMAP_PRODUCT_SPEC.ui.formTitle
           })
         } else {
           throw new Error(`Unsupported commercial investment product: ${productCode}`)

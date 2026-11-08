@@ -142,6 +142,8 @@ function createInvestmentPreviewSync({
   mapFormDataToDkjSpecInputs,
   calculatePmapFromSpecInputs,
   mapFormDataToPmapSpecInputs,
+  calculateFixmapFromSpecInputs,
+  mapFormDataToFixmapSpecInputs,
   calculateBmapFromSpecInputs,
   mapFormDataToBmapSpecInputs,
   onPreviewError,
@@ -196,6 +198,38 @@ function createInvestmentPreviewSync({
       if (subtype === 'pmap' && typeof calculatePmapFromSpecInputs === 'function' && typeof mapFormDataToPmapSpecInputs === 'function' && form) {
         const specInputs = mapFormDataToPmapSpecInputs(new FormData(form))
         const preview = calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
+
+        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
+        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)
+        gainPreviewInput.value = formatMoneyAmount(
+          Number(specInputs.principal) - Number(preview.purchaseAmount),
+          WHOLE_FORINT
+        )
+        if (discountYieldPreviewInput) {
+          discountYieldPreviewInput.value = '—'
+        }
+        if (discountCurrentValuePreviewInput) {
+          discountCurrentValuePreviewInput.value = '—'
+        }
+        if (inflationSchedulePreviewInput) {
+          inflationSchedulePreviewInput.value = `${preview.annualCouponRatePct.toFixed(4)}%`
+        }
+        if (typeof onPreviewSuccess === 'function') {
+          onPreviewSuccess()
+        }
+        return
+      }
+
+      if (
+        subtype === 'fixmap' &&
+        typeof calculateFixmapFromSpecInputs === 'function' &&
+        typeof mapFormDataToFixmapSpecInputs === 'function' &&
+        form
+      ) {
+        const specInputs = mapFormDataToFixmapSpecInputs(new FormData(form))
+        const preview = calculateFixmapFromSpecInputs(specInputs, {
+          createInvestmentMaturityPreview
+        })
 
         purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
         maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)

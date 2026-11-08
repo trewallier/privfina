@@ -190,6 +190,7 @@
 
       #investment-dkj-wrap,
       #investment-pmap-wrap,
+      #investment-fixmap-wrap,
       #investment-bmap-wrap {
         display: grid;
         gap: 12px;
@@ -245,6 +246,7 @@
       .label-title .home-savings-field-label,
       .label-title .dkj-field-label,
       .label-title .pmap-field-label,
+      .label-title .fixmap-field-label,
       .label-title .bmap-field-label {
         min-width: 0;
       }
@@ -2196,6 +2198,53 @@
                       />
                       <input
                         id="pmap-day-count-convention"
+                        name="dayCountConvention"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                    </div>
+                  </div>
+
+                  <div id="investment-fixmap-wrap" hidden>
+                    <div class="row">
+                      <label id="fixmap-principal-wrap">
+                        <span class="label-title"><span class="fixmap-field-label">Principal</span></span>
+                        <input id="fixmap-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
+                      </label>
+                      <label id="fixmap-purchase-date-wrap">
+                        <span class="label-title"><span class="fixmap-field-label">Purchase Date</span></span>
+                        <input id="fixmap-purchase-date" name="purchaseDate" type="date" required />
+                      </label>
+                    </div>
+                    <div class="row">
+                      <label id="fixmap-annual-coupon-rate-pct-wrap">
+                        <span class="label-title"><span class="fixmap-field-label">Annual Coupon Rate</span></span>
+                        <input id="fixmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      </label>
+                      <label id="fixmap-maturity-date-wrap">
+                        <span class="label-title"><span class="fixmap-field-label">Maturity Date</span></span>
+                        <input id="fixmap-maturity-date" name="maturityDate" type="date" required />
+                      </label>
+                    </div>
+                    <div class="row">
+                      <label id="fixmap-issue-date-wrap">
+                        <span class="label-title"><span class="fixmap-field-label">Issue Date</span></span>
+                        <input id="fixmap-issue-date" name="issueDate" type="date" required />
+                      </label>
+                      <label id="fixmap-first-coupon-date-wrap">
+                        <span class="label-title"><span class="fixmap-field-label">First Coupon Date</span></span>
+                        <input id="fixmap-first-coupon-date" name="firstCouponDate" type="date" />
+                      </label>
+                      <input
+                        id="fixmap-coupon-schedule"
+                        name="couponSchedule"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                      <input
+                        id="fixmap-day-count-convention"
                         name="dayCountConvention"
                         type="hidden"
                         value=""

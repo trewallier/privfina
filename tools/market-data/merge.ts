@@ -1,11 +1,13 @@
 import { assertSeriesId } from './ids.ts'
-import { digestCanonical, digestInflation, digestRetailInterest } from './digests.ts'
+import { digestCanonical, digestInflation, digestPriceCalendar, digestRetailInterest } from './digests.ts'
 import { mergeInflationFile } from './merge-inflation.ts'
+import { mergePriceCalendarFile } from './merge-price-calendar.ts'
 import { joinRetailInterestToCoupons } from './normalize-retail-interest.ts'
 import {
   COUPON_COLS,
   FAMILIES,
   INFLATION_REF_PATH,
+  PRICE_CALENDAR_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
@@ -17,6 +19,7 @@ import {
   type LatestQuote,
   type ManifestFile,
   type NormalizedSnapshot,
+  type PriceCalendarFile,
   type QuotesFile,
   type QuoteRow,
   type RetailInterestFile,
@@ -50,6 +53,8 @@ export interface MarketTreeState {
   retailInterest: RetailInterestFile | null
   /** KSH CPI Összesen refs (ADR 0037); null when never ingested. */
   inflation: InflationFile | null
+  /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
+  priceCalendar: PriceCalendarFile | null
 }
 
 export interface MergeResult {
@@ -62,6 +67,8 @@ export interface MergeResult {
   rewrittenRows: number
   /** Inflation month/year rows appended this merge. */
   inflationAppendedRows: number
+  /** Price-calendar days appended this merge. */
+  priceCalendarAppendedDays: number
 }
 
 function emptyLatest(): LatestFile {
@@ -92,7 +99,7 @@ export function emptyMarketTree(): MarketTreeState {
       coupons: {}
     }
   }
-  return { manifest: null, families, retailInterest: null, inflation: null }
+  return { manifest: null, families, retailInterest: null, inflation: null, priceCalendar: null }
 }
 
 function quoteRowsEqual(a: QuoteRow, b: QuoteRow): boolean {
@@ -209,6 +216,10 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     refs.inflation = INFLATION_REF_PATH
     digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
   }
+  if (tree.priceCalendar) {
+    refs.priceCalendar = PRICE_CALENDAR_REF_PATH
+    digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)
+  }
   const manifest: ManifestFile = {
     schemaVersion: SCHEMA_VERSION,
     asOf,
@@ -300,6 +311,11 @@ export function mergeSnapshot(
      * When omitted, keep previous inflation.
      */
     inflation?: InflationFile | null
+    /**
+     * When provided, append-first merge into price-calendar refs (ADR 0039).
+     * When omitted, keep previous price calendar.
+     */
+    priceCalendar?: PriceCalendarFile | null
   }
 ): MergeResult {
   const tree: MarketTreeState = {
@@ -316,7 +332,10 @@ export function mergeSnapshot(
           }))
         }
       : null,
-    inflation: previous.inflation ? structuredClone(previous.inflation) : null
+    inflation: previous.inflation ? structuredClone(previous.inflation) : null,
+    priceCalendar: previous.priceCalendar
+      ? structuredClone(previous.priceCalendar)
+      : null
   }
   for (const family of FAMILIES) {
     tree.families[family] = cloneFamily(previous.families[family])
@@ -326,6 +345,7 @@ export function mergeSnapshot(
   let skippedDuplicates = 0
   let rewrittenRows = 0
   let inflationAppendedRows = 0
+  let priceCalendarAppendedDays = 0
   const allowSameDayRewrite = options?.allowSameDayRewrite === true
   const asOf = snapshot.asOf
 
@@ -422,6 +442,18 @@ export function mergeSnapshot(
     }
   }
 
+  if (options && 'priceCalendar' in options) {
+    const incoming = options.priceCalendar
+    if (incoming) {
+      const mergedCal = mergePriceCalendarFile(previous.priceCalendar, incoming)
+      tree.priceCalendar = mergedCal.file
+      priceCalendarAppendedDays = mergedCal.appendedDays
+      skippedDuplicates += mergedCal.skippedDuplicates
+    } else {
+      tree.priceCalendar = null
+    }
+  }
+
   const generatedAt = options?.generatedAt ?? new Date().toISOString()
   const manifest = buildManifest(tree, asOf, generatedAt)
   const changed = !digestsEqual(previous.manifest, manifest)
@@ -434,7 +466,8 @@ export function mergeSnapshot(
     appendedRows,
     skippedDuplicates,
     rewrittenRows,
-    inflationAppendedRows
+    inflationAppendedRows,
+    priceCalendarAppendedDays
   }
 }
 

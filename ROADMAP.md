@@ -357,7 +357,7 @@ Constraints
 Plan slices (implement in order; each slice should stay PR-sized). Detail: [`docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md`](docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md); architecture: ADR 0039.
 - [x] ADR 0039 + docs: Actions-only POST, DKJ+MAK reports, WebKincstár-prefer quotes, `refs/price-calendar.json`, soft-fail, `pdftotext`, attribution / accuracy notes (no runtime change).
 - [x] Fetch + pure text parser + Vitest `pdftotext` fixtures (priced + no-price); not yet wired into live ingest / workflow.
-- [ ] Overlay into combine→merge; calendar merge + digests; CLI flags; soft-fail + same-day rewrite; fixture-driven ingest tests.
+- [x] Overlay into combine→merge; calendar merge + digests; CLI flags; soft-fail + same-day rewrite; fixture-driven ingest tests.
 - [ ] `market-data.yml` Poppler on ingest job; acceptance close (priced + no-price + attribution; parser reusable for §6j; SPA unchanged).
 
 Out of scope for §6h

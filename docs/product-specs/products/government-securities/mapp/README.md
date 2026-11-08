@@ -4,7 +4,7 @@ Hungarian retail government bond with a stepped fixed coupon and semi-annual int
 
 ## Scope
 
-This specification models the MÁP Plusz product type: a fixed-coupon government bond where period rates come from published offerings / `coupons/<id>.json` (effective rates, not base+premium). Coupons pay twice a year. Principal is repaid at maturity in one amount. Catalog status is **calc-aligned** (engine primitives + executable examples); SPA commercial host lands in the next stack layer (ROADMAP §6j / ADR 0040 `coupon-bearing` registry).
+This specification models the MÁP Plusz product type: a fixed-coupon government bond where period rates come from published offerings / `coupons/<id>.json` (effective rates, not base+premium). Coupons pay twice a year. Principal is repaid at maturity in one amount. Catalog status is **schedule-usable** on the commercial investment composer (ADR 0027 / 0040 / ROADMAP §6j); commercially-usable / fully-spec-backed embed lands on the close stack layer.
 
 ## Out of Scope
 

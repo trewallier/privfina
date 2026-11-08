@@ -214,6 +214,22 @@ describe('market-data-autofill', () => {
     expect(fixmap.fields).not.toHaveProperty('principal')
     expect(fixmap.fields).not.toHaveProperty('purchaseDate')
 
+    // MÁP Plusz uses semi-annual (6-month) first-coupon derivation.
+    const mapp = buildMarketAutofillPatch({
+      family: 'mapp',
+      series: { issue: '2026-10-02', mat: '2031-11-27', offered: true },
+      quote: { d: '2026-11-02', ask: 100.0, bid: 99.0, ay: 5.46, by: 5.69 },
+      coupons,
+      current: { principal: '1000000', purchaseDate: '2026-11-02' }
+    })
+    expect(mapp.fields.annualCouponRatePct).toBe(4.5)
+    expect(mapp.fields.maturityDate).toBe('2031-11-27')
+    expect(mapp.fields.issueDate).toBe('2026-10-02')
+    // Semi-annual anniversary of mat month/day on/after issue.
+    expect(mapp.fields.firstCouponDate).toBe('2026-11-27')
+    expect(mapp.fields).not.toHaveProperty('principal')
+    expect(mapp.fields).not.toHaveProperty('purchaseDate')
+
     const withOffering = buildMarketAutofillPatch({
       family: 'pmap',
       series: { issue: '2022-01-21', mat: '2027-03-24', dayCount: 'ACT/360' },
@@ -287,6 +303,14 @@ describe('market-data-autofill', () => {
       'dayCountConvention'
     ])
     expect(marketableFieldsMissingFromPatch('fixmap', [])).toEqual([
+      'annualCouponRatePct',
+      'maturityDate',
+      'issueDate',
+      'firstCouponDate',
+      'couponSchedule',
+      'dayCountConvention'
+    ])
+    expect(marketableFieldsMissingFromPatch('mapp', [])).toEqual([
       'annualCouponRatePct',
       'maturityDate',
       'issueDate',

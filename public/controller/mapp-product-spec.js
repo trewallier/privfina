@@ -87,7 +87,7 @@ const MAPP_PRODUCT_SPEC = {
       required: false,
       unit: 'currency',
       description:
-        'Interest already earned from the previous coupon (or issue) through the purchase date.'
+        'Interest already earned from the previous semi-annual coupon payment (or issue) through the purchase date. Year-band couponSchedule rows select the rate only; they do not redefine the accrual start.'
     },
     {
       name: 'purchaseAmount',

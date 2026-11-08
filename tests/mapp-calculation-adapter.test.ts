@@ -59,4 +59,20 @@ describe('mapp calculation adapter seam', () => {
     )
     expect(adapterOutputs.purchaseAmount).toBeCloseTo(parsed.expected.purchaseAmount, 10)
   })
+
+  it('bridges mid-period-after-coupon accrual from last payment not year-band from', () => {
+    const exampleYaml = readRepoFile(
+      'docs/product-specs/products/government-securities/mapp/examples/mid-period-after-coupon-case.yaml'
+    )
+    const parsed = YAML.parse(exampleYaml) as {
+      inputs: Record<string, unknown>
+      expected: Record<string, number>
+    }
+
+    const adapterOutputs = calculateMappFromSpecInputs(parsed.inputs)
+
+    expect(adapterOutputs.annualCouponRatePct).toBe(parsed.expected.annualCouponRatePct)
+    expect(adapterOutputs.accruedInterestAmount).toBe(parsed.expected.accruedInterestAmount)
+    expect(adapterOutputs.purchaseAmount).toBe(parsed.expected.purchaseAmount)
+  })
 })

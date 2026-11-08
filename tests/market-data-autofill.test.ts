@@ -33,6 +33,9 @@ describe('market-data-autofill', () => {
   it('derives first coupon from maturity month/day schedule', () => {
     expect(deriveFirstCouponDate('2022-01-21', '2027-03-24', 12)).toBe('2022-03-24')
     expect(deriveFirstCouponDate('2017-10-03', '2028-03-22', 3)).toBe('2017-12-22')
+    // Discriminating semi-annual vs annual anniversary (same for 3/6/12 on some mat dates).
+    expect(deriveFirstCouponDate('2026-12-01', '2031-06-15', 6)).toBe('2026-12-15')
+    expect(deriveFirstCouponDate('2026-12-01', '2031-06-15', 12)).toBe('2027-06-15')
   })
 
   it('prefers ask over bid for purchase price percent', () => {
@@ -229,6 +232,24 @@ describe('market-data-autofill', () => {
     expect(mapp.fields.firstCouponDate).toBe('2026-11-27')
     expect(mapp.fields).not.toHaveProperty('principal')
     expect(mapp.fields).not.toHaveProperty('purchaseDate')
+
+    // Discriminating fixture: 6-month step → 2026-12-15; annual would be 2027-06-15.
+    const mappSemi = buildMarketAutofillPatch({
+      family: 'mapp',
+      series: { issue: '2026-12-01', mat: '2031-06-15', offered: true },
+      quote: { d: '2026-12-10', ask: 100.0, bid: 99.0 },
+      coupons,
+      current: { principal: '1000000', purchaseDate: '2026-12-10' }
+    })
+    expect(mappSemi.fields.firstCouponDate).toBe('2026-12-15')
+    const fixmapAnnualSameDates = buildMarketAutofillPatch({
+      family: 'fixmap',
+      series: { issue: '2026-12-01', mat: '2031-06-15', offered: true },
+      quote: { d: '2026-12-10', ask: 100.0, bid: 99.0 },
+      coupons,
+      current: { principal: '1000000', purchaseDate: '2026-12-10' }
+    })
+    expect(fixmapAnnualSameDates.fields.firstCouponDate).toBe('2027-06-15')
 
     const withOffering = buildMarketAutofillPatch({
       family: 'pmap',

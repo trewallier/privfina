@@ -52,7 +52,7 @@ export function deriveRemainingDays(settlementDate, maturityDate) {
  * First coupon on the maturity month/day schedule at/after issue.
  * @param {string|null|undefined} issue
  * @param {string|null|undefined} mat
- * @param {number} frequencyMonths 12 = annual (PMÁP), 3 = quarterly (BMÁP)
+ * @param {number} frequencyMonths 12 = annual (PMÁP/FixMÁP), 6 = semi-annual (MÁP Plusz), 3 = quarterly (BMÁP)
  */
 export function deriveFirstCouponDate(issue, mat, frequencyMonths) {
   const issueDate = parseIsoDateUtc(issue)

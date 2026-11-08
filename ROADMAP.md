@@ -414,7 +414,7 @@ Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usabl
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ROADMAP / spec / ownership / gov-sec README: MÁP Plusz-next delivery + temporary CI head; semi-annual cadence + multi-band coupon notes.
-- [ ] Author `mapp/product.yaml` + examples; catalog `government-security.mapp.standard` at **`spec-only`**.
+- [x] Author `mapp/product.yaml` + examples; catalog `government-security.mapp.standard` at **`spec-only`**.
 - [ ] Engine family mapper + semi-annual coupon-schedule primitives (BMÁP-style step-6 / ÷2; reuse day-count / covering-period helpers) → **`calc-aligned`**.
 - [ ] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill (first-coupon months = 6) → **`schedule-usable`**.
 - [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off MÁP Plusz; temporary tip→`master` CI head PR (close, do not merge). Prefer omit-middle-rung catalog stamp with note (DKJ–FixMÁP precedent) unless an explicit `commercially-usable` row is useful.

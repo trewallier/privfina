@@ -1,0 +1,41 @@
+specVersion: v2alpha3
+productId: government-security.mapp.standard
+exampleId: stepped-coupon-case
+title: Stepped MÁP Plusz coupon schedule example
+description: Mid-holding MÁP Plusz purchase where published couponSchedule year bands set period rates; accrued interest uses the covering band.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 5.5
+  purchaseDate: 2027-01-15
+  issueDate: 2026-10-02
+  maturityDate: 2031-10-02
+  firstCouponDate: 2027-04-02
+  dayCountConvention: ACT/360
+  couponSchedule:
+    - from: 2026-10-02
+      to: 2027-10-02
+      rate: 5.0
+    - from: 2027-10-02
+      to: 2028-10-02
+      rate: 5.25
+    - from: 2028-10-02
+      to: 2029-10-02
+      rate: 5.5
+    - from: 2029-10-02
+      to: 2030-10-02
+      rate: 5.75
+    - from: 2030-10-02
+      to: 2031-10-02
+      rate: 6.0
+
+expected:
+  annualCouponRatePct: 5.0
+  accruedInterestAmount: 14583.333333333334
+  purchaseAmount: 1014583.3333333334
+
+notes:
+  - "Accrued from schedule band start 2026-10-02 through purchaseDate 2027-01-15 under the first band (5.0% ACT/360): 1000000 * 0.05 * 105/360."
+  - "Derived annualCouponRatePct is the covering-band rate at purchase (5.0), not the input fallback (5.5)."
+  - "Later bands demonstrate stepped fixed coupons without inventing rates for unpublished periods."
+  - "Semi-annual cash flows use the covering band's annual rate divided by two per payment."

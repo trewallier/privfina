@@ -1,0 +1,23 @@
+specVersion: v2alpha3
+productId: government-security.mapp.standard
+exampleId: nominal-case
+title: Nominal MÁP Plusz example
+description: Baseline MÁP Plusz scenario with a flat published effective coupon rate and series maturity; purchase on issue (no accrued interest).
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 5.0
+  purchaseDate: 2026-10-02
+  issueDate: 2026-10-02
+  maturityDate: 2031-10-02
+  firstCouponDate: 2027-04-02
+  dayCountConvention: ACT/360
+
+expected:
+  annualCouponRatePct: 5.0
+  purchaseAmount: 1000000
+
+notes:
+  - Effective coupon rate is supplied directly for the current period.
+  - Maturity is series-authored; calculators must not invent a fixed term length.
+  - Semi-annual coupons pay principal × rate / 100 / 2 on each payment date.

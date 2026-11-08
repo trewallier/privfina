@@ -1363,7 +1363,11 @@ function initController() {
     }
 
     if (!commercialMarketFamilyState.available) {
+      // Preserve a successfully loaded calendar across family soft-fail so the
+      // WebKincstár disclaimer still shows when present (ROADMAP §6i / docs/spec.md).
+      const calendar = commercialMarketFamilyState.priceCalendar
       resetCommercialMarketControls()
+      commercialMarketFamilyState.priceCalendar = calendar
       setCommercialMarketHint(
         'Published market data unavailable — enter fields manually.',
         true
@@ -1374,6 +1378,7 @@ function initController() {
       if (commercialInvestmentSeriesInput) {
         commercialInvestmentSeriesInput.disabled = true
       }
+      setCommercialMarketAttribution(calendar)
       clearCommercialMarketSourcedFields(code)
       return
     }

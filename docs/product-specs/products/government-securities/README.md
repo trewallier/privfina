@@ -8,6 +8,7 @@ This family contains Hungarian government securities in the product-specificatio
 - Premium Hungarian Government Security (PMÁP) — `government-security.pmap.standard`
 - Bonus Hungarian Government Security (BMÁP) — `government-security.bmap.standard`
 - Fixed Hungarian Government Security (FixMÁP) — `government-security.fixmap.standard` (**fully-spec-backed**; ROADMAP §6j)
+- Hungarian Government Security Plus (MÁP Plusz) — `government-security.mapp.standard` (**fully-spec-backed**; ROADMAP §6j)
 
 Product differences live primarily in product specifications, assumptions, worked examples, and metadata rather than engine branches (ADR 0015).
 
@@ -17,12 +18,12 @@ Commercial inputs use **effective** period coupon rates and **real** maturities 
 
 Published market family folders already (or soon) available on the `market-data` branch — commercial hosts land under §6j (not §6f).
 
-**Delivery:** FixMÁP (`fixmap`) done; **MÁP Plusz (`mapp`) next** as a gh-stack vertical slice (register on ADR 0040 `coupon-bearing` profile — do not clone FixMÁP/PMÁP form modules). Remaining families follow in later stacks. Open a temporary tip→`master` CI head PR for the stack (close, do not merge).
+**Delivery:** FixMÁP (`fixmap`) and MÁP Plusz (`mapp`) done; remaining families follow in later stacks (register on ADR 0040 `coupon-bearing` profile — do not clone form modules). Open a temporary tip→`master` CI head PR for each stack (close, do not merge).
 
 | Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
 | `fixmap` | FixMÁP | **Done (fully-spec-backed)** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
-| `mapp` | MÁP Plusz (incl. nyomdai) | **In progress (this stack)** — series `couponFrequencyMonths` 12 (newer annual) or 6 (older semi-annual); Ismertető ACT/ACT accrued + kamatjuttatás; multi-band rates; kamatok min–max dual rows preserved as published |
+| `mapp` | MÁP Plusz (incl. nyomdai) | **Done (fully-spec-backed)** — series `couponFrequencyMonths` 12 (newer annual) or 6 (older semi-annual); Ismertető ACT/ACT accrued + kamatjuttatás; multi-band rates; kamatok min–max dual rows preserved as published |
 | `baba` | Babakötvény | Follow-on; optional prices already ingested |
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
 | *(possible `pemap`)* | PEMÁP | Split only if needed |

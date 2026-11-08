@@ -46,9 +46,17 @@ export interface FetchWebkincstarReportResult {
   parsed: WebkincstarParseResult
 }
 
+export interface FetchWebkincstarReportFailure {
+  reportName: WebkincstarReportName
+  error: unknown
+}
+
 export interface FetchWebkincstarResult {
   datum: string
+  /** Successfully fetched + parsed reports (Értéknap matched). */
   reports: FetchWebkincstarReportResult[]
+  /** Per-report failures (other reports may still succeed). */
+  failures: FetchWebkincstarReportFailure[]
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -134,31 +142,37 @@ async function postPdf(
 
 /**
  * Fetch (or load offline text for) WebKincstár daily price reports, extract text, parse rows.
- * Asserts Értéknap === requested datum before returning (ADR 0039).
+ * Asserts Értéknap === requested datum per successful report (ADR 0039).
+ * Isolates failures per report so one bad PDF does not discard a healthy sibling.
  */
 export async function fetchWebkincstarSnapshots(
   options: FetchWebkincstarOptions
 ): Promise<FetchWebkincstarResult> {
   const reports = options.reports ?? WEBKINCSTAR_REPORTS
   const out: FetchWebkincstarReportResult[] = []
+  const failures: FetchWebkincstarReportFailure[] = []
 
   for (const reportName of reports) {
-    let text: string
-    let rawPath: string | null = null
-    const offline = options.textByReport?.[reportName]
-    if (offline != null) {
-      text = offline
-    } else {
-      const { bytes, rawPath: saved } = await postPdf(reportName, options.datum, options)
-      rawPath = saved
-      text = await pdfBytesToTextLayout(bytes, options.pdfToText)
+    try {
+      let text: string
+      let rawPath: string | null = null
+      const offline = options.textByReport?.[reportName]
+      if (offline != null) {
+        text = offline
+      } else {
+        const { bytes, rawPath: saved } = await postPdf(reportName, options.datum, options)
+        rawPath = saved
+        text = await pdfBytesToTextLayout(bytes, options.pdfToText)
+      }
+      const parsed = parseWebkincstarPdfText({ reportName, text })
+      assertErteknapMatchesDatum(parsed.erteknap, options.datum, reportName)
+      out.push({ reportName, datum: options.datum, rawPath, parsed })
+    } catch (error) {
+      failures.push({ reportName, error })
     }
-    const parsed = parseWebkincstarPdfText({ reportName, text })
-    assertErteknapMatchesDatum(parsed.erteknap, options.datum, reportName)
-    out.push({ reportName, datum: options.datum, rawPath, parsed })
   }
 
-  return { datum: options.datum, reports: out }
+  return { datum: options.datum, reports: out, failures }
 }
 
 /**

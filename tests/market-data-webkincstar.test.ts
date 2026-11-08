@@ -167,8 +167,25 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
       }
     })
     expect(result.reports).toHaveLength(2)
+    expect(result.failures).toEqual([])
     expect(result.reports[0].parsed.status).toBe('priced')
     expect(result.reports[1].parsed.status).toBe('priced')
+  })
+
+  it('isolates per-report failures so one healthy PDF is kept', async () => {
+    const result = await fetchWebkincstarSnapshots({
+      datum: '2026-11-05',
+      rawDir: '/tmp/unused-webkincstar-raw',
+      textByReport: {
+        _20631_arfolyam_dkj: loadText('dkj-2026-11-05.txt'),
+        // Wrong Értéknap vs requested datum → that report alone fails
+        _20633_arfolyam_mak: loadText('mak-2026-11-08-empty.txt')
+      }
+    })
+    expect(result.reports).toHaveLength(1)
+    expect(result.reports[0].reportName).toBe('_20631_arfolyam_dkj')
+    expect(result.failures).toHaveLength(1)
+    expect(result.failures[0].reportName).toBe('_20633_arfolyam_mak')
   })
 
   it('budapestYesterdayIso uses Europe/Budapest calendar day', () => {
@@ -318,6 +335,102 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
       )
       expect(cal.source.id).toBe('webkincstar-report-service')
       expect(cal.source.disclaimer).toMatch(/informational/i)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('soft-fail after a priced calendar day does not MergeError the ingest', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'privfina-wk-re-soft-'))
+    try {
+      const priced = await ingestMarketData({
+        root: dir,
+        rawDir: path.join(dir, 'raw'),
+        catalog: loadJson<AkkEnvelope>('catalog.json'),
+        networkRates: loadJson<AkkEnvelope>('network-rates.json'),
+        skipAllampapir: true,
+        skipInflation: true,
+        skipRetailInterest: true,
+        webkincstarDatum: '2026-11-05',
+        webkincstarTextByReport: {
+          _20631_arfolyam_dkj: loadText('dkj-2026-11-05.txt'),
+          _20633_arfolyam_mak: loadText('mak-2026-11-05.txt')
+        },
+        generatedAt: '2026-11-05T18:00:00.000Z'
+      })
+      expect(priced.webkincstarSoftFailed).toBe(false)
+      expect(
+        priced.tree.priceCalendar?.days.some((d) => d.status === 'priced')
+      ).toBe(true)
+
+      const soft = await ingestMarketData({
+        root: dir,
+        previousRoot: dir,
+        rawDir: path.join(dir, 'raw2'),
+        catalog: loadJson<AkkEnvelope>('catalog.json'),
+        networkRates: loadJson<AkkEnvelope>('network-rates.json'),
+        skipAllampapir: true,
+        skipInflation: true,
+        skipRetailInterest: true,
+        webkincstarDatum: '2026-11-05',
+        webkincstarTextByReport: {
+          _20631_arfolyam_dkj: loadText('dkj-2026-11-08-empty.txt'),
+          _20633_arfolyam_mak: loadText('mak-2026-11-08-empty.txt')
+        },
+        generatedAt: '2026-11-05T19:00:00.000Z'
+      })
+      expect(soft.webkincstarSoftFailed).toBe(true)
+      // Prior priced rows kept — soft-fail must not rewrite or MergeError.
+      expect(
+        soft.tree.priceCalendar?.days
+          .filter((d) => d.datum === '2026-11-05')
+          .every((d) => d.status === 'priced')
+      ).toBe(true)
+      expect(Object.keys(soft.tree.families.dkj.latest.quotes).length).toBeGreaterThan(0)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('partial WebKincstár success overlays the healthy report and marks the other fetch_failed', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'privfina-wk-partial-'))
+    try {
+      const report = await ingestMarketData({
+        root: dir,
+        rawDir: path.join(dir, 'raw'),
+        catalog: loadJson<AkkEnvelope>('catalog.json'),
+        networkRates: loadJson<AkkEnvelope>('network-rates.json'),
+        skipAllampapir: true,
+        skipInflation: true,
+        skipRetailInterest: true,
+        webkincstarDatum: '2026-11-05',
+        webkincstarTextByReport: {
+          _20631_arfolyam_dkj: loadText('dkj-2026-11-05.txt'),
+          _20633_arfolyam_mak: loadText('mak-2026-11-08-empty.txt')
+        },
+        generatedAt: '2026-11-05T18:00:00.000Z'
+      })
+      expect(report.webkincstarSoftFailed).toBe(true)
+      expect(report.webkincstarUpdated).toBe(true)
+      const days = report.tree.priceCalendar?.days ?? []
+      expect(
+        days.find(
+          (d) => d.report === '_20631_arfolyam_dkj' && d.datum === '2026-11-05'
+        )?.status
+      ).toBe('priced')
+      expect(
+        days.find(
+          (d) => d.report === '_20633_arfolyam_mak' && d.datum === '2026-11-05'
+        )?.status
+      ).toBe('fetch_failed')
+      const quotes = JSON.parse(
+        await readFile(
+          path.join(dir, 'data/market/v2/families/dkj/quotes/D261125.json'),
+          'utf8'
+        )
+      )
+      const row = quotes.rows.find((r: QuoteRow) => r[0] === '2026-11-05')
+      expect(row?.[1]).toBe(99.665)
     } finally {
       await rm(dir, { recursive: true, force: true })
     }

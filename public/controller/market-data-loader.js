@@ -7,7 +7,7 @@
 export const PRICE_CALENDAR_REF_PATH = 'refs/price-calendar.json'
 
 export const MARKET_SCHEMA_VERSION = 2
-export const MARKET_FAMILIES = Object.freeze(['dkj', 'pmap', 'bmap', 'fixmap'])
+export const MARKET_FAMILIES = Object.freeze(['dkj', 'pmap', 'bmap', 'fixmap', 'mapp'])
 
 const sessionCache = new Map()
 

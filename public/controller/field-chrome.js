@@ -23,7 +23,7 @@ function ensureLabelTitle(label) {
 }
 
 const FIELD_LABEL_CLASS_SELECTOR =
-  '.field-label, .loan-field-label, .commercial-loan-field-label, .home-savings-field-label, .dkj-field-label, .pmap-field-label, .fixmap-field-label, .bmap-field-label'
+  '.field-label, .loan-field-label, .commercial-loan-field-label, .home-savings-field-label, .dkj-field-label, .pmap-field-label, .fixmap-field-label, .mapp-field-label, .bmap-field-label'
 
 function ensureFieldLabelSpan(title, className = 'field-label') {
   let span = title.querySelector(`.${className}`)

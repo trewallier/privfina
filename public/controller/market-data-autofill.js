@@ -435,7 +435,12 @@ export function buildMarketAutofillPatch({
     if (remaining != null) {
       setField('remainingDays', remaining)
     }
-  } else if (family === 'pmap' || family === 'bmap' || family === 'fixmap') {
+  } else if (
+    family === 'pmap' ||
+    family === 'bmap' ||
+    family === 'fixmap' ||
+    family === 'mapp'
+  ) {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
     const onIso = String(current.purchaseDate || series?.issue || '').trim()
     const couponRate = pickCouponRatePct(coupons, onIso)
@@ -453,9 +458,11 @@ export function buildMarketAutofillPatch({
       setField('issueDate', series.issue)
     }
     // ROADMAP §6l: prefer offering payment calendar over anniversary heuristic.
+    // BMÁP quarterly (3), MÁP Plusz semi-annual (6), PMÁP/FixMÁP annual (12).
+    const frequencyMonths = family === 'bmap' ? 3 : family === 'mapp' ? 6 : 12
     const firstCoupon =
       pickFirstOfferingPaymentDate(offering) ||
-      deriveFirstCouponDate(series?.issue, series?.mat, family === 'bmap' ? 3 : 12)
+      deriveFirstCouponDate(series?.issue, series?.mat, frequencyMonths)
     if (firstCoupon) {
       setField('firstCouponDate', firstCoupon)
     }

@@ -25,6 +25,8 @@ Issuer phrasing for treasury products: **ÁKK / Hungarian State Treasury**.
 | Discount Treasury Bond (DKJ) | Diszkont Kincstárjegy |
 | Premium Hungarian Government Security (PMÁP) | Prémium Magyar Állampapír |
 | Bonus Hungarian Government Security (BMÁP) | Bónusz Magyar Állampapír |
+| Fixed Hungarian Government Security (FixMÁP) | Fix Magyar Állampapír |
+| Hungarian Government Security Plus (MÁP Plusz) | Magyar Állampapír Plusz |
 | Home Savings (LTP / lakástakarékpénztár) | lakás-előtakarékosság |
 | OTP Home Savings Premium Plus 10x30 (Lakástakarék PRÉMIUM PLUSZ 10x30) | — |
 | OTP Home Savings Premium Plus 4x10 (Lakástakarék PRÉMIUM PLUSZ 4x10) | — |

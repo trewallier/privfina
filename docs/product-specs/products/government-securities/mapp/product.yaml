@@ -113,7 +113,7 @@ outputs:
     label: Accrued Interest
     required: false
     unit: currency
-    description: Interest already earned from the previous coupon (or issue) through the purchase date.
+    description: Interest already earned from the previous semi-annual coupon payment (or issue) through the purchase date. Year-band couponSchedule rows select the rate only; they do not redefine the accrual start.
 
   - name: purchaseAmount
     type: number
@@ -132,6 +132,7 @@ assumptions:
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent.
   - The first coupon period may differ from a regular semi-annual period.
+  - Accrued interest starts from the previous semi-annual payment date on/before purchase (firstCouponDate + 6-month steps, or issueDate before the first coupon) — not from year-band couponSchedule.from rows, which select the covering rate only.
   - When a couponSchedule is supplied (including from published market coupons autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
   - Principal is repaid at maturity in one amount (redemption equals principal).
   - Early investor redemption windows and issuer early call are out of scope for this iteration.
@@ -157,3 +158,4 @@ ui:
 exampleRefs:
   - ./examples/nominal-case.yaml
   - ./examples/stepped-coupon-case.yaml
+  - ./examples/mid-period-after-coupon-case.yaml

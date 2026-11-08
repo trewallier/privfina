@@ -13,7 +13,7 @@ This iteration excludes:
 - Secondary-market operations beyond consuming published quotes
 - Early investor redemption windows and issuer early call
 - Tax or withholding treatment
-- Fabricating year-partitioned coupon bands from kamatok min–max display rows (those dual same-`from` rows are preserved as published; year bands are authored in product examples)
+- Fabricating year-partitioned coupon bands from kamatok min–max display rows (those dual same-`from` rows are preserved as published; year bands are authored in product examples and select rates only — accrued interest still starts from the prior semi-annual payment date)
 
 ## Worked Examples
 

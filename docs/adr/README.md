@@ -36,6 +36,7 @@ Recent decisions
 - `0037-ksh-inflation-published-refs.md` — same workflow also fetches KSH STADAT ara0040 CSV; publishes append-only `refs/inflation.json` CPI total (ROADMAP §6e).
 - `0038-government-securities-market-schema-v2-and-effective-rate-inputs.md` — `data/market/v2/` schemaVersion 2 (coupons/<id>, dayCount, offered, drop `prem`); commercial DKJ/PMÁP/BMÁP effective-rate + real maturity inputs (ROADMAP §6f).
 - `0039-webkincstar-daily-price-pdf-market-data.md` — same workflow also fetches WebKincstár daily price PDFs; WebKincstár-prefer quote overlay; `refs/price-calendar.json` for priced / no-price / fetch_failed days (ROADMAP §6h).
+- `0040-commercial-investment-composer-host-and-family-registry.md` — extract commercial investment composer host + family registry; §6j registers `composerProfile`s (prefer `coupon-bearing`), does not clone PMÁP (ROADMAP §6j platform refactor).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

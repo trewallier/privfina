@@ -8,6 +8,7 @@ import {
   findNearestQuoteRow,
   findQuoteRowBySettleDate,
   latestQuoteForId,
+  lookupPriceCalendarStatus,
   resolveQuoteForPurchaseDate
 } from '../public/controller/market-data-loader.js'
 
@@ -107,7 +108,9 @@ describe('market-data-loader', () => {
     expect(exact).toEqual({
       quote: expect.objectContaining({ d: '2026-10-31', ask: 99.2 }),
       date: '2026-10-31',
-      clamped: false
+      clamped: false,
+      calendarStatus: null,
+      clampReason: null
     })
 
     const clamped = resolveQuoteForPurchaseDate({
@@ -117,6 +120,7 @@ describe('market-data-loader', () => {
     })
     expect(clamped?.clamped).toBe(true)
     expect(clamped?.date).toBeTruthy()
+    expect(clamped?.clampReason).toBe('no_quote')
 
     expect(
       resolveQuoteForPurchaseDate({
@@ -125,6 +129,40 @@ describe('market-data-loader', () => {
         quotesFile: { cols: ['d'], rows: [] }
       })
     ).toBeNull()
+  })
+
+  it('loads price calendar and annotates clamp reasons from no_price / fetch_failed', async () => {
+    const loader = createMarketDataLoader({
+      baseUrl: '/privfina/',
+      fetchImpl: createFixtureFetch()
+    })
+    const calendar = await loader.loadPriceCalendar()
+    expect(calendar?.schemaVersion).toBe(2)
+    expect(calendar?.source?.id).toBe('webkincstar-report-service')
+    expect(lookupPriceCalendarStatus(calendar, '2026-11-01')).toBe('no_price')
+    expect(lookupPriceCalendarStatus(calendar, '2026-11-03')).toBe('fetch_failed')
+    expect(lookupPriceCalendarStatus(calendar, '2026-10-31')).toBe('priced')
+
+    const quotes = await loader.loadQuotes('dkj', 'D261223')
+    const weekend = resolveQuoteForPurchaseDate({
+      requestedDate: '2026-11-01',
+      latestQuote: null,
+      quotesFile: quotes,
+      priceCalendar: calendar
+    })
+    expect(weekend?.clamped).toBe(true)
+    expect(weekend?.clampReason).toBe('no_price')
+    expect(weekend?.calendarStatus).toBe('no_price')
+    expect(weekend?.date).toBe('2026-11-02')
+
+    const failed = resolveQuoteForPurchaseDate({
+      requestedDate: '2026-11-03',
+      latestQuote: null,
+      quotesFile: quotes,
+      priceCalendar: calendar
+    })
+    expect(failed?.clamped).toBe(true)
+    expect(failed?.clampReason).toBe('fetch_failed')
   })
 
   it('loads coupon schedules when present and retires flat retail-interest', async () => {
@@ -155,6 +193,7 @@ describe('market-data-loader', () => {
       generatedAt: null
     })
     expect(await loader.loadCoupons('dkj', 'D261223')).toBeNull()
+    expect(await loader.loadPriceCalendar()).toBeNull()
     expect(await loader.loadRetailInterest()).toBeNull()
   })
 

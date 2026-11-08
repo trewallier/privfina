@@ -17,9 +17,13 @@
       "latest": "families/bmap/latest.json"
     }
   },
+  "refs": {
+    "priceCalendar": "refs/price-calendar.json"
+  },
   "digests": {
     "families/dkj/series.json": "fixture",
     "families/dkj/latest.json": "fixture",
-    "families/dkj/coupons/D261223.json": "fixture"
+    "families/dkj/coupons/D261223.json": "fixture",
+    "refs/price-calendar.json": "fixture"
   }
 }

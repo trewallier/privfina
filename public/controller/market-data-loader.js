@@ -1,8 +1,10 @@
 /**
  * Runtime loader for published government-security market JSON
- * (ADR 0034 / 0035 / 0036 / 0038 / ROADMAP §6b–§6f).
+ * (ADR 0034 / 0035 / 0036 / 0038 / 0039 / ROADMAP §6b–§6i).
  * Fetches same-origin Pages files under data/market/v2/ — never official market hosts.
  */
+
+export const PRICE_CALENDAR_REF_PATH = 'refs/price-calendar.json'
 
 export const MARKET_SCHEMA_VERSION = 2
 export const MARKET_FAMILIES = Object.freeze(['dkj', 'pmap', 'bmap'])
@@ -84,6 +86,52 @@ function validateCouponsFile(data, id) {
   return data
 }
 
+function validatePriceCalendar(data) {
+  if (!isPlainObject(data) || data.schemaVersion !== MARKET_SCHEMA_VERSION) {
+    return null
+  }
+  if (!isPlainObject(data.source) || !Array.isArray(data.reports) || !Array.isArray(data.days)) {
+    return null
+  }
+  return data
+}
+
+/**
+ * Aggregate calendar status for a Europe/Budapest calendar date across reports.
+ * Prefer priced > fetch_failed > no_price when multiple report rows share a datum.
+ * @param {{ days?: Array<{ datum?: string, status?: string }> }|null|undefined} calendar
+ * @param {string} datum
+ * @returns {'priced'|'no_price'|'fetch_failed'|null}
+ */
+export function lookupPriceCalendarStatus(calendar, datum) {
+  const wanted = String(datum || '').trim()
+  if (!calendar || !wanted || !Array.isArray(calendar.days)) {
+    return null
+  }
+  let sawNoPrice = false
+  let sawFetchFailed = false
+  for (const row of calendar.days) {
+    if (!row || String(row.datum || '') !== wanted) {
+      continue
+    }
+    if (row.status === 'priced') {
+      return 'priced'
+    }
+    if (row.status === 'fetch_failed') {
+      sawFetchFailed = true
+    } else if (row.status === 'no_price') {
+      sawNoPrice = true
+    }
+  }
+  if (sawFetchFailed) {
+    return 'fetch_failed'
+  }
+  if (sawNoPrice) {
+    return 'no_price'
+  }
+  return null
+}
+
 async function fetchJson(url, fetchImpl) {
   const response = await fetchImpl(url, { credentials: 'same-origin' })
   if (!response.ok) {
@@ -125,6 +173,9 @@ export function createMarketDataLoader(options = {}) {
         return null
       },
       async loadCoupons() {
+        return null
+      },
+      async loadPriceCalendar() {
         return null
       },
       /** @deprecated Schema v2 publishes coupons/; always soft-null. */
@@ -174,6 +225,22 @@ export function createMarketDataLoader(options = {}) {
      */
     async loadRetailInterest() {
       return null
+    },
+
+    /**
+     * WebKincstár priced / no_price / fetch_failed calendar (ADR 0039 / ROADMAP §6i).
+     * Soft-null when missing or invalid.
+     * @returns {Promise<object|null>}
+     */
+    async loadPriceCalendar() {
+      try {
+        const manifest = await this.loadManifest()
+        const relative =
+          (manifest && manifest.refs && manifest.refs.priceCalendar) || PRICE_CALENDAR_REF_PATH
+        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validatePriceCalendar)
+      } catch {
+        return null
+      }
     },
 
     /**
@@ -344,36 +411,64 @@ export function findNearestQuoteRow(quotesFile, settleDate) {
 /**
  * Resolve a quote for purchase/settlement date using latest + optional quotes history.
  * Clamps to the nearest available quote date when the requested date is missing.
+ * Optional `priceCalendar` never invents quotes; it only annotates why a clamp happened
+ * (`no_price` / `fetch_failed` vs thin history).
  *
  * @param {{
  *   requestedDate?: string|null,
  *   latestQuote?: object|null,
- *   quotesFile?: { cols: string[], rows: unknown[][] }|null
+ *   quotesFile?: { cols: string[], rows: unknown[][] }|null,
+ *   priceCalendar?: object|null
  * }} args
- * @returns {{ quote: object, date: string, clamped: boolean }|null}
+ * @returns {{
+ *   quote: object,
+ *   date: string,
+ *   clamped: boolean,
+ *   calendarStatus?: 'priced'|'no_price'|'fetch_failed'|null,
+ *   clampReason?: 'no_quote'|'no_price'|'fetch_failed'|null
+ * }|null}
  */
 export function resolveQuoteForPurchaseDate({
   requestedDate = '',
   latestQuote = null,
-  quotesFile = null
+  quotesFile = null,
+  priceCalendar = null
 } = {}) {
   const wanted = String(requestedDate || '').trim()
+  const calendarStatus = wanted ? lookupPriceCalendarStatus(priceCalendar, wanted) : null
+
+  function annotate(result) {
+    if (!result) {
+      return null
+    }
+    const out = { ...result, calendarStatus }
+    if (!result.clamped) {
+      out.clampReason = null
+      return out
+    }
+    if (calendarStatus === 'no_price' || calendarStatus === 'fetch_failed') {
+      out.clampReason = calendarStatus
+    } else {
+      out.clampReason = 'no_quote'
+    }
+    return out
+  }
 
   if (wanted && latestQuote?.d === wanted) {
-    return { quote: latestQuote, date: wanted, clamped: false }
+    return annotate({ quote: latestQuote, date: wanted, clamped: false })
   }
 
   const nearest = findNearestQuoteRow(quotesFile, wanted)
   if (nearest) {
-    return nearest
+    return annotate(nearest)
   }
 
   if (latestQuote?.d) {
-    return {
+    return annotate({
       quote: latestQuote,
       date: String(latestQuote.d),
       clamped: !wanted || wanted !== String(latestQuote.d)
-    }
+    })
   }
 
   return null

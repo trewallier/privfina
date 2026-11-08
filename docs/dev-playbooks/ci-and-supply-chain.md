@@ -23,7 +23,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 
 1. Do not commit secrets, credentials, private keys, or `.env` files (`.gitignore` already ignores `.env`).
 2. Prefer `npm ci` locally when validating lockfile changes; keep [`package-lock.json`](../../package-lock.json) committed.
-3. PRs must keep **`validate`** green (`npm test`, `npm run build:lib`, `npm run build`).
+3. PRs must keep **`validate`** green (`npm run verify:gh-stack-skill`, `npm test`, `npm run build:lib`, `npm run build`). Vendored skill pin: [`gh-stack-skill.md`](gh-stack-skill.md).
 4. Do not add custom secrets to workflows; the SPA needs none for Pages.
 5. When editing workflows: keep the invariants above; CODEOWNERS will request maintainer review ([`.github/CODEOWNERS`](../../.github/CODEOWNERS)).
 6. EBKM diagnosis / probe suites under [`tests/exploratory/`](../../tests/exploratory/) are **not** part of `npm test` / CI. Run them only when working that diagnosis: `npm run test:exploratory`.

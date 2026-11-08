@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify vendored gh-stack skill tree pin
+        run: npm run verify:gh-stack-skill
+
       - name: Run tests
         run: npm test
 

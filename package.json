@@ -15,6 +15,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:exploratory": "VITEST_EXPLORATORY=1 vitest run tests/exploratory",
+    "verify:gh-stack-skill": "bash scripts/verify-gh-stack-skill.sh",
     "market-data:ingest": "tsx tools/market-data/cli.ts ingest",
     "market-data:ci-ingest": "tsx tools/market-data/cli.ts ci-ingest",
     "market-data:publish": "tsx tools/market-data/cli.ts ingest",

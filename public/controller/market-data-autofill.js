@@ -221,21 +221,24 @@ export function budapestTodayIso(date = new Date()) {
 }
 
 /**
- * Series picker option text — name only (status belongs in the hint, not the label).
- * @param {{ name?: string, id?: string }|null|undefined} series
+ * Series picker option text with available/past from `offered` (or name-year heuristic).
+ * @param {{ name?: string, id?: string, issue?: string|null, offered?: boolean|null }|null|undefined} series
+ * @param {string} [todayIso] Europe/Budapest calendar day
  */
-export function formatSeriesOptionLabel(series) {
-  return String(series?.name || series?.id || '').trim() || 'Series'
+export function formatSeriesOptionLabel(series, todayIso = budapestTodayIso()) {
+  const name = String(series?.name || series?.id || '').trim() || 'Series'
+  const day = todayIso || budapestTodayIso()
+  const available = day ? isSeriesAvailableOn(series, day) : false
+  return `${name} (${available ? 'available' : 'past'})`
 }
 
 /**
- * @deprecated Prefer formatSeriesOptionLabel; availability is shown in the market hint.
+ * Alias for formatSeriesOptionLabel (available/past in the option text).
  * @param {{ name?: string, id?: string, issue?: string|null, offered?: boolean|null }|null|undefined} series
  * @param {string} [todayIso]
  */
 export function formatSeriesAvailabilityLabel(series, todayIso = budapestTodayIso()) {
-  void todayIso
-  return formatSeriesOptionLabel(series)
+  return formatSeriesOptionLabel(series, todayIso)
 }
 
 /**

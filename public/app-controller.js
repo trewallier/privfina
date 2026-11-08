@@ -144,6 +144,7 @@ import {
 } from './controller/market-data-loader.js'
 import {
   MARKET_MARKETABLE_REQUIRED_FIELDS,
+  budapestTodayIso,
   buildMarketAutofillPatch,
   formatSeriesMaturityStatusHint,
   formatSeriesOptionLabel,
@@ -263,6 +264,9 @@ function initController() {
   const commercialInvestmentMarketHint = document.getElementById(
     'commercial-investment-market-hint'
   )
+  const commercialInvestmentMarketAttribution = document.getElementById(
+    'commercial-investment-market-attribution'
+  )
   const commercialInvestmentFormStatus = document.getElementById(
     'commercial-investment-form-status'
   )
@@ -274,7 +278,8 @@ function initController() {
     available: false,
     asOf: null,
     generatedAt: null,
-    couponsById: {}
+    couponsById: {},
+    priceCalendar: null
   }
 
   function formatCommercialMarketUpdatedHint(generatedAt) {
@@ -298,7 +303,12 @@ function initController() {
     return `Database updated ${dateLabel}`
   }
 
-  function buildCommercialMarketSeriesHint({ series = null, quote = null, clampDate = null } = {}) {
+  function buildCommercialMarketSeriesHint({
+    series = null,
+    quote = null,
+    clampDate = null,
+    clampReason = null
+  } = {}) {
     const parts = []
     if (series) {
       parts.push(formatSeriesMaturityStatusHint(series))
@@ -314,7 +324,17 @@ function initController() {
       parts.push(`Market data as of ${commercialMarketFamilyState.asOf}`)
     }
     if (clampDate) {
-      parts.push(`Purchase/settlement clamped to ${clampDate}`)
+      if (clampReason === 'no_price') {
+        parts.push(
+          `No treasury prices that day (weekend/holiday) — purchase/settlement clamped to ${clampDate}`
+        )
+      } else if (clampReason === 'fetch_failed') {
+        parts.push(
+          `Price calendar fetch incomplete for that day — purchase/settlement clamped to ${clampDate}`
+        )
+      } else {
+        parts.push(`Purchase/settlement clamped to ${clampDate}`)
+      }
     }
     return parts.join(' · ')
   }
@@ -991,12 +1011,28 @@ function initController() {
     commercialInvestmentMarketHint.hidden = !visible
   }
 
+  function setCommercialMarketAttribution(calendar) {
+    if (!commercialInvestmentMarketAttribution) {
+      return
+    }
+    const disclaimer =
+      calendar &&
+      calendar.source &&
+      typeof calendar.source.disclaimer === 'string' &&
+      calendar.source.disclaimer.trim()
+        ? calendar.source.disclaimer.trim()
+        : ''
+    commercialInvestmentMarketAttribution.textContent = disclaimer
+    commercialInvestmentMarketAttribution.hidden = !disclaimer
+  }
+
   function setCommercialMarketRowVisible(visible) {
     if (commercialInvestmentMarketRow) {
       commercialInvestmentMarketRow.hidden = !visible
     }
     if (!visible) {
       setCommercialMarketHint('', false)
+      setCommercialMarketAttribution(null)
     }
   }
 
@@ -1263,10 +1299,11 @@ function initController() {
     manual.textContent = 'Manual entry'
     commercialInvestmentSeriesInput.appendChild(manual)
 
+    const todayIso = budapestTodayIso()
     commercialMarketFamilyState.series.forEach((entry) => {
       const option = document.createElement('option')
       option.value = entry.id
-      option.textContent = formatSeriesOptionLabel(entry)
+      option.textContent = formatSeriesOptionLabel(entry, todayIso)
       if (entry.status) {
         option.dataset.status = String(entry.status)
       }
@@ -1295,7 +1332,8 @@ function initController() {
       available: false,
       asOf: null,
       generatedAt: null,
-      couponsById: {}
+      couponsById: {},
+      priceCalendar: null
     }
     rebuildCommercialMarketSeriesOptions('')
     clearCommercialMarketSelection()
@@ -1305,7 +1343,10 @@ function initController() {
   async function refreshCommercialMarketFamily(productCode) {
     const code = productCode || commercialInvestmentProductInput?.value || 'dkj'
     const token = ++commercialMarketApplyToken
-    const loaded = await marketDataLoader.loadFamily(code)
+    const [loaded, priceCalendar] = await Promise.all([
+      marketDataLoader.loadFamily(code),
+      marketDataLoader.loadPriceCalendar()
+    ])
     if (token !== commercialMarketApplyToken) {
       return
     }
@@ -1317,11 +1358,16 @@ function initController() {
       available: Boolean(loaded.available),
       asOf: loaded.asOf,
       generatedAt: loaded.generatedAt || null,
-      couponsById: {}
+      couponsById: {},
+      priceCalendar: priceCalendar || null
     }
 
     if (!commercialMarketFamilyState.available) {
+      // Preserve a successfully loaded calendar across family soft-fail so the
+      // WebKincstár disclaimer still shows when present (ROADMAP §6i / docs/spec.md).
+      const calendar = commercialMarketFamilyState.priceCalendar
       resetCommercialMarketControls()
+      commercialMarketFamilyState.priceCalendar = calendar
       setCommercialMarketHint(
         'Published market data unavailable — enter fields manually.',
         true
@@ -1332,6 +1378,7 @@ function initController() {
       if (commercialInvestmentSeriesInput) {
         commercialInvestmentSeriesInput.disabled = true
       }
+      setCommercialMarketAttribution(calendar)
       clearCommercialMarketSourcedFields(code)
       return
     }
@@ -1350,6 +1397,7 @@ function initController() {
         ? `Market data as of ${commercialMarketFamilyState.asOf}`
         : 'Market data loaded')
     setCommercialMarketHint(idleHint, true)
+    setCommercialMarketAttribution(commercialMarketFamilyState.priceCalendar)
     clearCommercialMarketSourcedFields(code)
   }
 
@@ -1364,7 +1412,8 @@ function initController() {
     return resolveQuoteForPurchaseDate({
       requestedDate,
       latestQuote: latest,
-      quotesFile
+      quotesFile,
+      priceCalendar: commercialMarketFamilyState.priceCalendar
     })
   }
 
@@ -1468,10 +1517,12 @@ function initController() {
     const baseHint = buildCommercialMarketSeriesHint({
       series,
       quote: lookup.quote,
-      clampDate: lookup.clamped && lookup.date ? lookup.date : null
+      clampDate: lookup.clamped && lookup.date ? lookup.date : null,
+      clampReason: lookup.clamped ? lookup.clampReason || null : null
     })
     const hint = [baseHint, rateHint].filter(Boolean).join(' · ')
     setCommercialMarketHint(hint, Boolean(hint))
+    setCommercialMarketAttribution(commercialMarketFamilyState.priceCalendar)
     syncCommercialInvestmentPreview()
   }
 

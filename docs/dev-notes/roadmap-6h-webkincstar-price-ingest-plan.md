@@ -13,7 +13,7 @@ Each scheduled market-data run also:
 1. POSTs WebKincstár daily price PDFs for the target `datum`.
 2. Parses **all listed price rows** into published quotes under `data/market/v2/`.
 3. Records days with **no prices** so weekends / holidays are distinguishable from “ingest never ran.”
-4. Leaves a **text-layer parser** reusable by historical backfill (§6l) without implementing backfill here.
+4. Leaves a **text-layer parser** reusable by historical backfill (§6m) without implementing backfill here.
 
 ---
 
@@ -39,15 +39,15 @@ Status on first impl PR: `proposed` → `accepted` when merged.
 | Calendar shape | Append-first `(reportName, datum)`; status `priced` \| `no_price` \| `fetch_failed`; digest excludes `generatedAt`; source meta on file | Mirror inflation attribution pattern |
 | Soft vs hard fail | Soft-fail WebKincstár like retailInterest: append `fetch_failed` only when `(report, datum)` is absent; never MergeError over an existing priced/no_price row; isolate failures per report; ÁKK/allampapir/KSH still publish | One PDF outage must not block daily dual-source; calendar distinguishes miss vs no-price without rewriting history |
 | PDF→text | System **`pdftotext -layout`** (Poppler) in Actions (`apt-get install -y poppler-utils` on ingest job); Vitest fixtures are **pre-extracted text** (no binary PDF in git) | Assessment recommendation; no npm PDF dependency |
-| Parser API | Pure `parseWebkincstarPdfText({ reportName, text }) → { erteknap, rows[] }` over text, not bytes | §6l reuses parser with archived text or `pdftotext` offline |
+| Parser API | Pure `parseWebkincstarPdfText({ reportName, text }) → { erteknap, rows[] }` over text, not bytes | §6m reuses parser with archived text or `pdftotext` offline |
 | Attribution / legal | Document in ADR + ownership + market-data README + `refs/price-calendar.json` `source` / `disclaimer`: credit Magyar Államkincstár (WebKincstár); figures informational; may lag/differ; not advice / not a substitute for live treasury publications | ROADMAP §6h constraint |
 
 ### Explicit non-decisions (out of §6h ADR)
 
-- Historical date-loop backfill (§6l).
+- Historical date-loop backfill (§6m).
 - SPA composer / loader changes (quote columns unchanged; calendar optional for later UX — ROADMAP §6i).
 - Other WebKincstár report names (`_20632_…`, `_20638_…`, …) unless needed for a required family.
-- Per-row provenance columns; sale-window / offering capture (§6k); `refs/dkj-base.json`.
+- Per-row provenance columns; sale-window / offering capture (§6k); SPA offering consumer (§6l); `refs/dkj-base.json`.
 
 ---
 
@@ -146,7 +146,7 @@ Workflow: install Poppler on **ingest** job only; keep push job offline to exter
 ### PR4 — Workflow wire + acceptance close — **done**
 
 - `market-data.yml`: Poppler (`poppler-utils`) on **ingest** job only; push stays offline to WebKincstár.
-- Acceptance in ROADMAP/spec: Actions-only; no raw PDF in git; priced + no-price; attribution present; `parseWebkincstarPdfText` documented for §6l.
+- Acceptance in ROADMAP/spec: Actions-only; no raw PDF in git; priced + no-price; attribution present; `parseWebkincstarPdfText` documented for §6m.
 - §6h marked complete (SPA unchanged).
 
 ---

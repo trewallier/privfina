@@ -12,7 +12,7 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 
 - ADR 0034 / 0035 publish compact network quotes from ÁKK and allampapir.hu. Those APIs are **same-day snapshots**; empty or thin settles cannot distinguish “no treasury prices that day” (weekend / holiday) from “ingest never ran.”
 - Magyar Államkincstár WebKincstár exposes daily **Kincstári árfolyamjegyzés** PDFs via an unauthenticated report API. Discovery / fetch contract: [`../dev-notes/commercial-investment-market-data-availability-assessment.md`](../dev-notes/commercial-investment-market-data-availability-assessment.md).
-- ROADMAP §6h requires Actions-only collection of those tables, parsed rows into published `data/market/v2/`, explicit no-price day records, a text-layer parser reusable by historical backfill (§6l), and source attribution / accuracy notes. Backfill itself stays out of scope.
+- ROADMAP §6h requires Actions-only collection of those tables, parsed rows into published `data/market/v2/`, explicit no-price day records, a text-layer parser reusable by historical backfill (§6m), and source attribution / accuracy notes. Backfill itself stays out of scope.
 
 ## Decision
 
@@ -21,7 +21,7 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
   - **v1 reports:** `_20631_arfolyam_dkj` (DKJ) and `_20633_arfolyam_mak` (MÁK / BMÁP / PMÁP / FixMÁP). Other report names deferred.
   - **Target datum:** Europe/Budapest **calendar yesterday** (or explicit CLI `--datum`); request that date even on weekends so no-price days are recorded. The daily cron (`30 17 * * *` UTC) maps unambiguously to “yesterday” in Europe/Budapest.
   - Assert response is PDF (`%PDF`); extract text with system **`pdftotext -layout`** (Poppler). Vitest fixtures are **pre-extracted text** — never commit raw PDFs to git.
-  - Pure parser API over text (not bytes): `parseWebkincstarPdfText({ reportName, text })` so §6l can reuse it offline. Parsed header **`Értéknap`** must equal the requested `datum` before merge; mismatch → treat as failure for that report.
+  - Pure parser API over text (not bytes): `parseWebkincstarPdfText({ reportName, text })` so §6m can reuse it offline. Parsed header **`Értéknap`** must equal the requested `datum` before merge; mismatch → treat as failure for that report.
 - **Quote overlay:** keep schemaVersion 2 `QUOTE_COLS = [d, bid, ask, by, ay, ai]` (no per-row source column). After ADR 0035 `combineSnapshots`, apply WebKincstár rows: prefer non-null; when both sides non-null and differ → **WebKincstár wins** bid/ask/by/ay/ai. ADR 0035’s allampapir-over-ÁKK rule remains for the dual-source step only.
 - **Same-day rewrite:** when any WebKincstár quote is present for the settle, set `allowSameDayRewrite: true` (extend today’s dual-source gate) so the first PDF day can upgrade an existing allampapir tip without `MergeError`.
 - **Identity:** map PDF instrument name / ISIN onto existing series via `toSeriesId` / catalog join; unmatched rows soft-skip with an ingest log (do not invent series). ÁKK catalog remains the identity owner.
@@ -44,8 +44,8 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 
 ## Out of scope
 
-- Historical date-loop backfill (§6l).
+- Historical date-loop backfill (§6m).
 - SPA composer / loader changes (quote columns unchanged; calendar optional for later UX — ROADMAP §6i).
 - Other WebKincstár report names unless needed for a required family.
-- Per-row provenance columns; sale-window / offering capture (§6k); `refs/dkj-base.json`.
+- Per-row provenance columns; sale-window / offering capture (§6k); SPA offering consumer (§6l); `refs/dkj-base.json`.
 - Committing raw PDF payloads to git; browser CORS to WebKincstár.

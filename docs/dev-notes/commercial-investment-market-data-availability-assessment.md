@@ -161,6 +161,7 @@ Follow-on work is tracked on the roadmap (this note is discovery only — **no i
 - **ROADMAP §6i** — SPA consumes WebKincstár-enriched quotes + `refs/price-calendar.json` (clamp / attribution / `offered` labels).
 - **ROADMAP §6j** — optional-family commercial composers (was §6g).
 - **ROADMAP §6k** — daily public-offering capture from akk.hu / allamkincstar.hu into published market data (attribution + accuracy notes).
-- **ROADMAP §6l** — historical backfill (planned later; reuse §6h / §6k parsers; same attribution/legal posture).
+- **ROADMAP §6l** — SPA consumes offering-enriched records (sale windows, coupon payment calendars, offering day-count, attribution).
+- **ROADMAP §6m** — historical backfill (planned later; reuse §6h / §6k parsers; same attribution/legal posture).
 
-Confirmed fetch contract above supports §6h. For **PMÁP/BMÁP** during sale, dirty ask remains **calculable** (100 + accrued) once sale windows + rates exist; PDF asks are validation. Future coupon **dates** still come from **offerings** (§6k), not from a coupon-calendar API.
+Confirmed fetch contract above supports §6h. For **PMÁP/BMÁP** during sale, dirty ask remains **calculable** (100 + accrued) once sale windows + rates exist; PDF asks are validation. Future coupon **dates** still come from **offerings** (§6k ingest → §6l SPA), not from a coupon-calendar API.

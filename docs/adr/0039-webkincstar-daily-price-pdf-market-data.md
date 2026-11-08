@@ -45,7 +45,7 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 ## Out of scope
 
 - Historical date-loop backfill (§6l).
-- SPA composer / loader changes (quote columns unchanged; calendar optional for later UX).
+- SPA composer / loader changes (quote columns unchanged; calendar optional for later UX — ROADMAP §6i).
 - Other WebKincstár report names unless needed for a required family.
 - Per-row provenance columns; sale-window / offering capture (§6k); `refs/dkj-base.json`.
 - Committing raw PDF payloads to git; browser CORS to WebKincstár.

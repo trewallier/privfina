@@ -1,41 +1,42 @@
 specVersion: v2alpha3
 productId: government-security.mapp.standard
 exampleId: mid-period-after-coupon-case
-title: Mid-holding MÁP Plusz purchase after a semi-annual coupon
-description: Accrued interest starts from the previous coupon payment date (2027-04-02), not from the year-band schedule from (2026-10-02). Year bands still select the covering rate only.
+title: Mid-holding MÁP Plusz purchase after first annual coupon
+description: Purchase after the first kamatjuttatás date; accrued from last payment 2027-11-27 under the covering band using regular ACT/ACT period fraction.
 
 inputs:
   principal: 1000000
   annualCouponRatePct: 5.5
-  purchaseDate: 2027-07-01
+  purchaseDate: 2028-05-01
   issueDate: 2026-10-02
-  maturityDate: 2031-10-02
-  firstCouponDate: 2027-04-02
-  dayCountConvention: ACT/360
+  maturityDate: 2031-11-27
+  firstCouponDate: 2027-11-27
+  couponFrequencyMonths: 12
+  dayCountConvention: ACT/ACT
   couponSchedule:
     - from: 2026-10-02
-      to: 2027-10-02
+      to: 2027-11-27
       rate: 5.0
-    - from: 2027-10-02
-      to: 2028-10-02
+    - from: 2027-11-27
+      to: 2028-11-27
       rate: 5.25
-    - from: 2028-10-02
-      to: 2029-10-02
+    - from: 2028-11-27
+      to: 2029-11-27
       rate: 5.5
-    - from: 2029-10-02
-      to: 2030-10-02
+    - from: 2029-11-27
+      to: 2030-11-27
       rate: 5.75
-    - from: 2030-10-02
-      to: 2031-10-02
+    - from: 2030-11-27
+      to: 2031-11-27
       rate: 6.0
 
 expected:
-  annualCouponRatePct: 5.0
-  accruedInterestAmount: 12500
-  purchaseAmount: 1012500
+  annualCouponRatePct: 5.25
+  # Regular period: ga * (ds - di-1) / (di - di-1) = 0.0525 * 156/366 (2028 leap year period 2027-11-27→2028-11-27)
+  accruedInterestAmount: 22377.04918032787
+  purchaseAmount: 1022377.0491803279
 
 notes:
-  - "Accrual from last coupon payment 2027-04-02 through purchaseDate 2027-07-01 under the covering year band (5.0% ACT/360): 1000000 * 0.05 * 90/360."
-  - "Must not restart accrual at the year-band from 2026-10-02 (that would yield ~37777.78)."
-  - "On a coupon payment date, accrued interest is zero (accrual start equals purchaseDate)."
-  - "Derived annualCouponRatePct is the covering-band rate at purchase (5.0), not the input fallback (5.5)."
+  - "Accrual starts at last payment 2027-11-27, not at year-band from."
+  - "Covering ga at purchase is 5.25%."
+  - "On a coupon payment date, accrued is zero."

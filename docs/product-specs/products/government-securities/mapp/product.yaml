@@ -5,7 +5,7 @@ family: government-security
 variant: mapp
 productCode: mapp
 displayName: Hungarian Government Security Plus (MÁP Plusz)
-description: Hungarian retail government bond with a stepped fixed coupon schedule, paid twice a year (semi-annual).
+description: Hungarian retail government bond with a stepped fixed coupon schedule. Coupon frequency is series-authored (annual on newer offerings; semi-annual on older series).
 
 category: retail-government-bond
 denominationCurrency: HUF
@@ -34,7 +34,7 @@ inputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Yearly interest rate for the current period, as published (effective period rate; stepped bands live in couponSchedule when present). Semi-annual payments use half of this annual rate per coupon.
+    description: Published yearly coupon rate (p.a.) for the current period; stepped bands live in couponSchedule when present. Each payment uses the Ismertető period rate gp derived from this annual rate and couponFrequencyMonths (regular gp = ga × frequencyMonths/12; irregular first period uses the published ACT/ACT add-on).
     constraints:
       minimum: 0
       maximum: 100
@@ -65,23 +65,32 @@ inputs:
     label: First Coupon Date
     required: false
     unit: date
-    description: First interest payment date when you are not supplying a full coupon schedule.
+    description: First interest payment (kamatteljesítés) date. Prefer offering paymentDates when autofilled.
+
+  - name: couponFrequencyMonths
+    type: integer
+    label: Coupon Frequency (Months)
+    required: false
+    unit: text
+    description: Months between coupon payments for this series. Use 12 for newer annual-pay MÁP Plusz offerings and 6 for older semi-annual series. Defaults to 12 when omitted. Autofill may infer from offering paymentDates spacing.
+    constraints:
+      enum: [6, 12]
 
   - name: dayCountConvention
     type: string
     label: Day Count Convention
     required: false
     unit: text
-    description: How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).
+    description: Accrued interest for MÁP Plusz follows the Ismertető ACT/ACT period-fraction formula (Tényleges/Tényleges). This field is retained for parity with sibling govsec hosts; MÁP Plusz calculators ignore ACT/360-style denominators for accrued.
     constraints:
-      enum: [ACT/360, ACT/365F, 30E/360]
+      enum: [ACT/ACT, ACT/360, ACT/365F, 30E/360]
 
   - name: couponSchedule
     type: array
     label: Coupon Schedule
     required: false
     unit: text
-    description: Optional interest periods. Each row needs a start date; end date and rate may be empty for future unknown periods. Commercial autofill maps published coupons into this schedule for accrued interest and cash-flow skips. MÁP Plusz series commonly publish multi-band fixed rates here (year bands in product examples; kamatok min–max dual rows may share the same from/to).
+    description: Optional published rate bands (often year bands on offerings). Each row needs a start date; end date and rate may be empty for future unknown periods. Bands select the covering annual rate ga only — they do not redefine payment dates or accrual starts. Commercial autofill maps published coupons into this schedule.
     constraints:
       items:
         type: object
@@ -106,14 +115,14 @@ outputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Yearly interest rate applied for the current period.
+    description: Yearly interest rate (ga) applied for the current period.
 
   - name: accruedInterestAmount
     type: number
     label: Accrued Interest
     required: false
     unit: currency
-    description: Interest already earned from the previous semi-annual coupon payment (or issue) through the purchase date. Year-band couponSchedule rows select the rate only; they do not redefine the accrual start.
+    description: Interest already earned through the purchase date per the Ismertető ACT/ACT period-fraction formula (irregular first period supported).
 
   - name: purchaseAmount
     type: number
@@ -123,23 +132,22 @@ outputs:
     description: Total paid at purchase — principal plus accrued interest when applicable.
 
 assumptions:
-  - MÁP Plusz is modeled as a semi-annual-pay fixed-coupon retail bond; published rates may step across couponSchedule year bands.
-  - Commercial inputs use the published effective period coupon rate; do not revive series.prem or base+premium composition.
-  - Coupon payment frequency is semi-annual (product-type constant; not a calculated output). Each coupon pays principal × annualRate / 100 / 2.
+  - MÁP Plusz is a stepped fixed-coupon retail bond. Coupon frequency is series-/offering-authored via couponFrequencyMonths (12 = newer annual-pay; 6 = older semi-annual) so both cadences share one product code.
+  - Commercial inputs use the published effective annual coupon rate ga; do not revive series.prem or base+premium composition.
+  - Regular period coupon rate gp = ga × couponFrequencyMonths / 12. Irregular first period uses the Ismertető formula gp = gBase + gBase × (dt1−d0)/(dt1−dt0) with gBase = ga × frequencyMonths/12 and technical dates stepped back one/two frequency periods from firstCouponDate (matches 2031/M6 first tényleges kamat 5,77% when frequencyMonths=12).
+  - Accrued interest uses the Ismertető Tényleges/Tényleges period-fraction formulas (not ACT/360 day/360). Accrual anchors are payment dates from firstCouponDate + frequency steps (or issueDate before the first payment), not couponSchedule.from year-band starts.
+  - Intermediate kamatteljesítés before maturity is kamatjuttatás — interest is paid in additional same-series MÁP Plusz face (no HUF coupon inflow). Only the final maturity kamatfizetés pays HUF cash coupon; principal redemption equals the compounded face after in-kind coupons.
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - MÁP Plusz denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
-  - Default day-count for accrued interest is ACT/360 unless overridden per series or input.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent.
-  - The first coupon period may differ from a regular semi-annual period.
-  - Accrued interest starts from the previous semi-annual payment date on/before purchase (firstCouponDate + 6-month steps, or issueDate before the first coupon) — not from year-band couponSchedule.from rows, which select the covering rate only.
+  - The first coupon period may be longer or shorter than one regular frequency period.
   - When a couponSchedule is supplied (including from published market coupons autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
-  - Principal is repaid at maturity in one amount (redemption equals principal).
-  - Early investor redemption windows and issuer early call are out of scope for this iteration.
+  - Early investor secondary sale windows (including Kamatjuttatást Követő Vételi Időszak at net 100%) and issuer early call are out of scope for this iteration.
   - Primary-market acquisition is limited to natural persons.
   - Collateral-purpose transfer is out of scope and restricted by the official product rules.
   - Nyomdai MÁP Plusz shares this family code (mapp); market routing already folds nyomdai variants into mapp.
-  - Breaking input contract aligns with ADR 0038 / v2alpha3 shapes used by PMÁP, BMÁP, and FixMÁP.
+  - Breaking input contract aligns with ADR 0038 / v2alpha3 shapes used by PMÁP, BMÁP, and FixMÁP, plus MÁP-specific couponFrequencyMonths.
 
 ui:
   formTitle: Hungarian Government Security Plus (MÁP Plusz)
@@ -153,9 +161,11 @@ ui:
         - issueDate
         - maturityDate
         - firstCouponDate
+        - couponFrequencyMonths
         - dayCountConvention
 
 exampleRefs:
   - ./examples/nominal-case.yaml
   - ./examples/stepped-coupon-case.yaml
   - ./examples/mid-period-after-coupon-case.yaml
+  - ./examples/semi-annual-legacy-case.yaml

@@ -47,7 +47,7 @@ describe('commercial loan schema field info hints', () => {
 
   it('wires commercial loan info chips through the shared floating info popup handler', () => {
     expect(appController).toContain('commercialLoanForm')
-    expect(appController).toContain('commercialInvestmentForm')
+    expect(appController).toContain("document.getElementById('commercial-investment-form')")
     expect(appController).toContain("form.querySelectorAll('[data-help-button]')")
     expect(appController).toContain('toggleInvestmentInfoPopup(button)')
   })

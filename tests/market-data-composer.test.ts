@@ -44,11 +44,16 @@ describe('market-data-composer helpers', () => {
 describe('commercial investment UI markup contracts', () => {
   const indexHtml = readFileSync(resolve(process.cwd(), 'public/index.html'), 'utf8')
   const appController = readFileSync(resolve(process.cwd(), 'public/app-controller.js'), 'utf8')
+  const commercialHost = readFileSync(
+    resolve(process.cwd(), 'public/controller/commercial-investment-composer-host.js'),
+    'utf8'
+  )
 
   it('does not render catalog readiness / migration-status copy', () => {
     expect(indexHtml).not.toContain('commercial-investment-readiness-hint')
     expect(indexHtml).not.toMatch(/Readiness:\s*fully-spec-backed/)
     expect(appController).not.toContain('resolveCommercialInvestmentReadinessHint')
+    expect(commercialHost).not.toContain('resolveCommercialInvestmentReadinessHint')
   })
 
   it('removes quote settle date and update-from-latest controls', () => {
@@ -57,6 +62,9 @@ describe('commercial investment UI markup contracts', () => {
     expect(appController).not.toContain('familyUsesQuoteSettleControls')
     expect(appController).not.toContain('commercialInvestmentSettleDateInput')
     expect(appController).not.toContain('commercialInvestmentUpdateQuoteButton')
+    expect(commercialHost).not.toContain('familyUsesQuoteSettleControls')
+    expect(commercialHost).not.toContain('commercialInvestmentSettleDateInput')
+    expect(commercialHost).not.toContain('commercialInvestmentUpdateQuoteButton')
   })
 
   it('uses fixed product field rows for amount, rates, and dates', () => {
@@ -76,11 +84,10 @@ describe('commercial investment UI markup contracts', () => {
   })
 
   it('clears market series selection at the start of commercial investment edit', () => {
-    expect(appController).toMatch(/function startCommercialInvestmentEdit/)
-    const editFn = appController.slice(
-      appController.indexOf('function startCommercialInvestmentEdit'),
-      appController.indexOf('function startInvestmentEdit')
-    )
+    expect(commercialHost).toMatch(/function startEdit/)
+    const start = commercialHost.indexOf('function startEdit')
+    const nextFn = commercialHost.indexOf('\n  function ', start + 1)
+    const editFn = commercialHost.slice(start, nextFn === -1 ? undefined : nextFn)
     expect(editFn).toContain('clearCommercialMarketSelection()')
     expect(editFn.indexOf('clearCommercialMarketSelection()')).toBeLessThan(
       editFn.indexOf('applyCommercialInvestmentProductUi')
@@ -88,49 +95,49 @@ describe('commercial investment UI markup contracts', () => {
   })
 
   it('defaults PMÁP/FixMÁP/BMÁP purchase dates via ensureDefaultPurchaseDate', () => {
-    expect(appController).toContain('ensureDefaultPurchaseDate(pmapPurchaseDateInput)')
-    expect(appController).toContain('ensureDefaultPurchaseDate(fixmapPurchaseDateInput)')
-    expect(appController).toContain('ensureDefaultPurchaseDate(bmapPurchaseDateInput)')
+    expect(commercialHost).toContain('ensureDefaultPurchaseDate(pmapPurchaseDateInput)')
+    expect(commercialHost).toContain('ensureDefaultPurchaseDate(fixmapPurchaseDateInput)')
+    expect(commercialHost).toContain('ensureDefaultPurchaseDate(bmapPurchaseDateInput)')
   })
 
   it('wires series + purchase/settlement autofill, stale clear, and apply-token guard', () => {
-    expect(appController).toContain('formatSeriesOptionLabel')
-    expect(appController).toContain('budapestTodayIso')
-    expect(appController).toContain('syncCommercialMarketFieldChrome')
-    expect(appController).toContain('clearCommercialMarketSourcedFields')
-    expect(appController).toContain('clearMarketableFieldsMissingFromPatch')
-    expect(appController).toContain('marketableFieldsMissingFromPatch')
-    expect(appController).toContain('bindCommercialPurchaseSettlementAutofill')
-    expect(appController).toContain('resolveQuoteForPurchaseDate')
-    expect(appController).toContain('loadPriceCalendar')
-    expect(appController).toContain('loadOffering')
-    expect(appController).toContain('setCommercialMarketAttribution')
-    expect(appController).toContain('formatPurchaseOutsideSaleWindowHint')
-    expect(appController).toContain('resolveSaleWindow')
-    expect(appController).toContain('formatOfferingAttributionDisclaimer')
-    expect(appController).toContain('offeringsById')
-    expect(appController).toContain('priceCalendar')
-    expect(appController).toContain('clampReason')
-    expect(appController).toContain('assertCommercialInvestmentDenomination')
-    expect(appController).toContain('commercialMarketApplyToken')
-    expect(appController).toMatch(
+    expect(commercialHost).toContain('formatSeriesOptionLabel')
+    expect(commercialHost).toContain('budapestTodayIso')
+    expect(commercialHost).toContain('syncCommercialMarketFieldChrome')
+    expect(commercialHost).toContain('clearCommercialMarketSourcedFields')
+    expect(commercialHost).toContain('clearMarketableFieldsMissingFromPatch')
+    expect(commercialHost).toContain('marketableFieldsMissingFromPatch')
+    expect(commercialHost).toContain('bindCommercialPurchaseSettlementAutofill')
+    expect(commercialHost).toContain('resolveQuoteForPurchaseDate')
+    expect(commercialHost).toContain('loadPriceCalendar')
+    expect(commercialHost).toContain('loadOffering')
+    expect(commercialHost).toContain('setCommercialMarketAttribution')
+    expect(commercialHost).toContain('formatPurchaseOutsideSaleWindowHint')
+    expect(commercialHost).toContain('resolveSaleWindow')
+    expect(commercialHost).toContain('formatOfferingAttributionDisclaimer')
+    expect(commercialHost).toContain('offeringsById')
+    expect(commercialHost).toContain('priceCalendar')
+    expect(commercialHost).toContain('clampReason')
+    expect(commercialHost).toContain('assertCommercialInvestmentDenomination')
+    expect(commercialHost).toContain('commercialMarketApplyToken')
+    expect(commercialHost).toMatch(
       /async function applyCommercialMarketSelection\(\) \{[\s\S]*?const token = \+\+commercialMarketApplyToken/
     )
-    expect(appController).not.toContain('decideMarketAutofillAction')
-    expect(appController).not.toContain('preserveSeriesId')
-    expect(appController).not.toContain('Auto-filled from market data:')
-    expect(appController).toContain("firstCouponDate: '#bmap-first-coupon-date'")
-    expect(appController).toContain("annualCouponRatePct: '#bmap-annual-coupon-rate-pct'")
-    expect(appController).toContain("maturityDate: '#bmap-maturity-date'")
-    expect(appController).toContain("dayCountConvention: '#bmap-day-count-convention'")
-    expect(appController).toContain("annualCouponRatePct: '#pmap-annual-coupon-rate-pct'")
-    expect(appController).toContain("maturityDate: '#pmap-maturity-date'")
-    expect(appController).toContain("dayCountConvention: '#pmap-day-count-convention'")
-    expect(appController).toContain("annualCouponRatePct: '#fixmap-annual-coupon-rate-pct'")
-    expect(appController).toContain("maturityDate: '#fixmap-maturity-date'")
-    expect(appController).toContain("dayCountConvention: '#fixmap-day-count-convention'")
-    expect(appController).not.toContain('bmap-dkj-base-yield-pct')
-    expect(appController).not.toContain('pmap-previous-year-inflation-pct')
+    expect(commercialHost).not.toContain('decideMarketAutofillAction')
+    expect(commercialHost).not.toContain('preserveSeriesId')
+    expect(commercialHost).not.toContain('Auto-filled from market data:')
+    expect(commercialHost).toContain("firstCouponDate: '#bmap-first-coupon-date'")
+    expect(commercialHost).toContain("annualCouponRatePct: '#bmap-annual-coupon-rate-pct'")
+    expect(commercialHost).toContain("maturityDate: '#bmap-maturity-date'")
+    expect(commercialHost).toContain("dayCountConvention: '#bmap-day-count-convention'")
+    expect(commercialHost).toContain("annualCouponRatePct: '#pmap-annual-coupon-rate-pct'")
+    expect(commercialHost).toContain("maturityDate: '#pmap-maturity-date'")
+    expect(commercialHost).toContain("dayCountConvention: '#pmap-day-count-convention'")
+    expect(commercialHost).toContain("annualCouponRatePct: '#fixmap-annual-coupon-rate-pct'")
+    expect(commercialHost).toContain("maturityDate: '#fixmap-maturity-date'")
+    expect(commercialHost).toContain("dayCountConvention: '#fixmap-day-count-convention'")
+    expect(commercialHost).not.toContain('bmap-dkj-base-yield-pct')
+    expect(commercialHost).not.toContain('pmap-previous-year-inflation-pct')
     expect(indexHtml).toContain('id="commercial-investment-market-attribution"')
     expect(indexHtml).toContain('id="pmap-day-count-convention"')
     expect(indexHtml).toContain('id="fixmap-day-count-convention"')

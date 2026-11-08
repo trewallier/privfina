@@ -91,12 +91,17 @@ describe('commercial investment UI markup contracts', () => {
 
   it('wires series + purchase/settlement autofill, stale clear, and apply-token guard', () => {
     expect(appController).toContain('formatSeriesOptionLabel')
+    expect(appController).toContain('budapestTodayIso')
     expect(appController).toContain('syncCommercialMarketFieldChrome')
     expect(appController).toContain('clearCommercialMarketSourcedFields')
     expect(appController).toContain('clearMarketableFieldsMissingFromPatch')
     expect(appController).toContain('marketableFieldsMissingFromPatch')
     expect(appController).toContain('bindCommercialPurchaseSettlementAutofill')
     expect(appController).toContain('resolveQuoteForPurchaseDate')
+    expect(appController).toContain('loadPriceCalendar')
+    expect(appController).toContain('setCommercialMarketAttribution')
+    expect(appController).toContain('priceCalendar')
+    expect(appController).toContain('clampReason')
     expect(appController).toContain('assertCommercialInvestmentDenomination')
     expect(appController).toContain('commercialMarketApplyToken')
     expect(appController).toMatch(
@@ -112,6 +117,6 @@ describe('commercial investment UI markup contracts', () => {
     expect(appController).toContain("maturityDate: '#pmap-maturity-date'")
     expect(appController).not.toContain('bmap-dkj-base-yield-pct')
     expect(appController).not.toContain('pmap-previous-year-inflation-pct')
-
+    expect(indexHtml).toContain('id="commercial-investment-market-attribution"')
   })
 })

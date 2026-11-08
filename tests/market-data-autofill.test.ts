@@ -52,12 +52,14 @@ describe('market-data-autofill', () => {
       false
     )
     expect(formatSeriesAvailabilityLabel({ name: '2028/N', issue: '2017-10-03' }, '2026-11-01')).toBe(
-      '2028/N'
+      '2028/N (available)'
     )
     expect(formatSeriesAvailabilityLabel({ name: '2020/A', issue: '2015-03-01' }, '2026-11-01')).toBe(
-      '2020/A'
+      '2020/A (past)'
     )
-    expect(formatSeriesOptionLabel({ name: '2027/J', id: '2027/J' })).toBe('2027/J')
+    expect(formatSeriesOptionLabel({ name: '2027/J', id: '2027/J', offered: true }, '2026-11-01')).toBe(
+      '2027/J (available)'
+    )
     expect(formatSeriesMaturityStatusHint({ status: 'matured' })).toBe('Matured')
     expect(budapestTodayIso(new Date('2026-11-01T12:00:00Z'))).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
@@ -70,7 +72,10 @@ describe('market-data-autofill', () => {
         { name: '2027/J', issue: '2022-09-30', offered: true },
         '2026-11-01'
       )
-    ).toBe('2027/J')
+    ).toBe('2027/J (available)')
+    expect(
+      formatSeriesOptionLabel({ name: '2027/J', issue: '2022-09-30', offered: false }, '2026-11-01')
+    ).toBe('2027/J (past)')
   })
 
   it('always overwrites DKJ auto fields without sourcing settlement or amounts', () => {

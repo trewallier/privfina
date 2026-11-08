@@ -2,15 +2,12 @@
 
 This family contains Hungarian government securities in the product-specification layer.
 
-## Commercial composer today (ROADMAP §6f / ADR 0038)
+## Commercial composer today (ROADMAP §6f / §6j / ADR 0038)
 
 - Discount Treasury Bond (DKJ) — `government-security.dkj.standard`
 - Premium Hungarian Government Security (PMÁP) — `government-security.pmap.standard`
 - Bonus Hungarian Government Security (BMÁP) — `government-security.bmap.standard`
-
-## In progress (ROADMAP §6j)
-
-- Fixed Hungarian Government Security (FixMÁP) — `government-security.fixmap.standard` (**schedule-usable** on commercial investment picker)
+- Fixed Hungarian Government Security (FixMÁP) — `government-security.fixmap.standard` (**fully-spec-backed**; ROADMAP §6j)
 
 Product differences live primarily in product specifications, assumptions, worked examples, and metadata rather than engine branches (ADR 0015).
 
@@ -24,7 +21,7 @@ Published market family folders already (or soon) available on the `market-data`
 
 | Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
-| `fixmap` | FixMÁP | **First slice** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
+| `fixmap` | FixMÁP | **Done (fully-spec-backed)** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
 | `mapp` | MÁP Plusz (incl. nyomdai) | Follow-on; multi-band rates in coupons |
 | `baba` | Babakötvény | Follow-on; optional prices already ingested |
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |

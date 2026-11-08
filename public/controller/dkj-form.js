@@ -296,11 +296,8 @@ function applyDkjSpecToForm({
 
 function setDkjFieldVisibility(investmentForm, visible) {
   if (!investmentForm) return
-  const wrap = investmentForm.querySelector('#investment-dkj-wrap')
-  if (wrap) {
-    wrap.hidden = !visible
-  }
-  // Remaining days lives in the calculated-outputs row (outside #investment-dkj-wrap).
+  // Main host wrap (#investment-dkj-wrap) is toggled by the family registry hostWrapId.
+  // Remaining days lives in the calculated-outputs row (outside the host wrap).
   const remainingWrap = investmentForm.querySelector('#dkj-remaining-days-wrap')
   if (remainingWrap) {
     remainingWrap.hidden = !visible

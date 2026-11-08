@@ -119,11 +119,9 @@ function applyFixmapSpecToForm({
 }
 
 function setFixmapFieldVisibility(investmentForm, visible) {
-  if (!investmentForm) return
-  const wrap = investmentForm.querySelector('#investment-fixmap-wrap')
-  if (wrap) {
-    wrap.hidden = !visible
-  }
+  // Main host wrap is toggled by the family registry hostWrapId (ADR 0040).
+  void investmentForm
+  void visible
 }
 
 function mapFormDataToFixmapSpecInputs(formData) {

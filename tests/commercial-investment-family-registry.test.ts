@@ -3,8 +3,14 @@ import {
   getCommercialInvestmentFamily,
   listCommercialInvestmentFamilies,
   listCommercialInvestmentFamilyCodes,
-  resolveCommercialInvestmentProductCodeFromBundle
+  resolveCommercialInvestmentProductCodeFromBundle,
+  applyCommercialInvestmentLivePreview,
+  buildMarketMarketableRequiredFields,
+  COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
 } from '../public/controller/commercial-investment-family-registry.js'
+import { MARKET_MARKETABLE_REQUIRED_FIELDS } from '../public/controller/market-data-autofill.js'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import {
   couponBearingDomPrefix,
   buildCouponBearingMarketFieldSelectors,
@@ -120,5 +126,136 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(parseCouponScheduleField('[]')).toBeUndefined()
     expect(parseCouponScheduleField('not-json')).toBeUndefined()
     expect(parseCouponScheduleField('[{"ratePct":5}]')).toEqual([{ ratePct: 5 }])
+  })
+
+  it('exposes marketableRequiredFields + calculateFromSpecInputs + hostWrapId on every family', () => {
+    for (const entry of listCommercialInvestmentFamilies()) {
+      expect(entry.hostWrapId).toBe(`investment-${entry.productCode}-wrap`)
+      expect(entry.migrationStatus).toBe('fully-spec-backed')
+      expect(Array.isArray(entry.marketableRequiredFields)).toBe(true)
+      expect(entry.marketableRequiredFields.length).toBeGreaterThan(0)
+      expect(typeof entry.calculateFromSpecInputs).toBe('function')
+      expect(typeof entry.mapFormDataToSpecInputs).toBe('function')
+    }
+    expect(getCommercialInvestmentFamily('dkj')?.marketableRequiredFields).toEqual([
+      'purchasePricePct',
+      'termMonths',
+      'maturityDate',
+      'remainingDays'
+    ])
+    expect(getCommercialInvestmentFamily('pmap')?.marketableRequiredFields).toEqual([
+      ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
+    ])
+  })
+
+  it('derives MARKET_MARKETABLE_REQUIRED_FIELDS from the registry', () => {
+    expect(MARKET_MARKETABLE_REQUIRED_FIELDS).toEqual(buildMarketMarketableRequiredFields())
+    expect(Object.keys(MARKET_MARKETABLE_REQUIRED_FIELDS).sort()).toEqual([
+      'bmap',
+      'dkj',
+      'fixmap',
+      'pmap'
+    ])
+  })
+
+  it('applies discount vs coupon-bearing live preview via registry helpers', () => {
+    const purchasePreviewInput = { value: '' }
+    const maturityPreviewInput = { value: '' }
+    const gainPreviewInput = { value: '' }
+    const discountYieldPreviewInput = { value: '' }
+    const discountCurrentValuePreviewInput = { value: '' }
+    const inflationSchedulePreviewInput = { value: '' }
+    const remainingDays = { value: '' }
+    const form = {
+      querySelector(selector: string) {
+        if (selector === '#dkj-remaining-days') return remainingDays
+        return null
+      }
+    } as unknown as HTMLFormElement
+
+    const dkj = getCommercialInvestmentFamily('dkj')!
+    const originalMap = dkj.mapFormDataToSpecInputs
+    const originalCalc = dkj.calculateFromSpecInputs
+    dkj.mapFormDataToSpecInputs = () => ({
+      faceValue: 10000,
+      purchasePricePct: 95,
+      termMonths: 12,
+      settlementDate: '2026-01-01',
+      maturityDate: '2026-12-31'
+    })
+    dkj.calculateFromSpecInputs = () => ({
+      purchaseAmount: 9500,
+      redemptionValue: 10000,
+      grossGain: 500,
+      remainingDays: 364,
+      annualizedYieldPct: 5.1234,
+      simpleReturnPct: 5.2631
+    })
+    expect(
+      applyCommercialInvestmentLivePreview(
+        dkj,
+        form,
+        {
+          purchasePreviewInput,
+          maturityPreviewInput,
+          gainPreviewInput,
+          discountYieldPreviewInput,
+          discountCurrentValuePreviewInput,
+          inflationSchedulePreviewInput
+        },
+        { formatMoneyAmount: (n: number) => String(n), formData: {} }
+      )
+    ).toBe(true)
+    expect(purchasePreviewInput.value).toBe('9500')
+    expect(maturityPreviewInput.value).toBe('10000')
+    expect(gainPreviewInput.value).toBe('500')
+    expect(remainingDays.value).toBe('364')
+    expect(discountYieldPreviewInput.value).toBe('5.1234%')
+    expect(inflationSchedulePreviewInput.value).toBe('—')
+    dkj.mapFormDataToSpecInputs = originalMap
+    dkj.calculateFromSpecInputs = originalCalc
+
+    const pmap = getCommercialInvestmentFamily('pmap')!
+    const pmapMap = pmap.mapFormDataToSpecInputs
+    const pmapCalc = pmap.calculateFromSpecInputs
+    pmap.mapFormDataToSpecInputs = () => ({ principal: 100000 })
+    pmap.calculateFromSpecInputs = () => ({
+      purchaseAmount: 100500,
+      annualCouponRatePct: 6.5
+    })
+    expect(
+      applyCommercialInvestmentLivePreview(
+        pmap,
+        form,
+        {
+          purchasePreviewInput,
+          maturityPreviewInput,
+          gainPreviewInput,
+          discountYieldPreviewInput,
+          discountCurrentValuePreviewInput,
+          inflationSchedulePreviewInput
+        },
+        { formatMoneyAmount: (n: number) => String(n), formData: {} }
+      )
+    ).toBe(true)
+    expect(maturityPreviewInput.value).toBe('100000')
+    expect(gainPreviewInput.value).toBe('-500')
+    expect(inflationSchedulePreviewInput.value).toBe('6.5000%')
+    expect(discountYieldPreviewInput.value).toBe('—')
+    pmap.mapFormDataToSpecInputs = pmapMap
+    pmap.calculateFromSpecInputs = pmapCalc
+  })
+
+  it('keeps commercial preview dispatch registry-driven (no subtype forests in previews.js)', () => {
+    const previewsSrc = readFileSync(
+      resolve(process.cwd(), 'public/controller/previews.js'),
+      'utf8'
+    )
+    expect(previewsSrc).toContain('getCommercialInvestmentFamily')
+    expect(previewsSrc).toContain('applyCommercialInvestmentLivePreview')
+    expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]dkj['"]/)
+    expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]pmap['"]/)
+    expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]bmap['"]/)
+    expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]fixmap['"]/)
   })
 })

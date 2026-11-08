@@ -4,6 +4,10 @@
  */
 
 import { deriveDkjRemainingDays } from '@finance_engine/instruments/day_count'
+import {
+  getCommercialInvestmentFamily,
+  buildMarketMarketableRequiredFields
+} from './commercial-investment-family-registry.js'
 
 const TERM_BUCKETS = [3, 6, 12]
 
@@ -360,46 +364,25 @@ export const MARKET_AUTOFILL_PROTECTED_FIELDS = Object.freeze([
   'settlementDate'
 ])
 
-/** Required marketable inputs (excludes protected amount / purchase/settlement date). */
-export const MARKET_MARKETABLE_REQUIRED_FIELDS = Object.freeze({
-  dkj: Object.freeze(['purchasePricePct', 'termMonths', 'maturityDate', 'remainingDays']),
-  pmap: Object.freeze([
-    'annualCouponRatePct',
-    'maturityDate',
-    'issueDate',
-    'firstCouponDate',
-    'couponSchedule',
-    'dayCountConvention'
-  ]),
-  bmap: Object.freeze([
-    'annualCouponRatePct',
-    'maturityDate',
-    'issueDate',
-    'firstCouponDate',
-    'couponSchedule',
-    'dayCountConvention'
-  ]),
-  fixmap: Object.freeze([
-    'annualCouponRatePct',
-    'maturityDate',
-    'issueDate',
-    'firstCouponDate',
-    'couponSchedule',
-    'dayCountConvention'
-  ])
-})
+/**
+ * Required marketable inputs (excludes protected amount / purchase/settlement date).
+ * Derived from the commercial investment family registry (ADR 0040).
+ */
+export const MARKET_MARKETABLE_REQUIRED_FIELDS = buildMarketMarketableRequiredFields()
 
 /**
  * Marketable field names that should be cleared before applying a new patch
  * so series switches cannot leave stale rates looking user-entered.
  *
- * @param {'dkj'|'pmap'|'bmap'|'fixmap'} family
+ * @param {string} family
  * @param {Iterable<string>} sourcedNames
  * @returns {string[]}
  */
 export function marketableFieldsMissingFromPatch(family, sourcedNames = []) {
   const sourced = sourcedNames instanceof Set ? sourcedNames : new Set(sourcedNames || [])
-  const marketable = MARKET_MARKETABLE_REQUIRED_FIELDS[family] || []
+  const entry = getCommercialInvestmentFamily(family)
+  const marketable =
+    entry?.marketableRequiredFields || MARKET_MARKETABLE_REQUIRED_FIELDS[family] || []
   return marketable.filter((name) => !sourced.has(name))
 }
 

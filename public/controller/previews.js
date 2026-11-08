@@ -1,6 +1,8 @@
 import { formatMoneyAmount, parseMoneyAmount } from './money-format.js'
-
-const WHOLE_FORINT = Object.freeze({ fractionDigits: 0 })
+import {
+  getCommercialInvestmentFamily,
+  applyCommercialInvestmentLivePreview
+} from './commercial-investment-family-registry.js'
 
 function normalizePreviewGracePeriodMonths(value) {
   if (value === undefined || value === null || String(value).trim() === '') {
@@ -138,20 +140,10 @@ function createInvestmentPreviewSync({
   discountCurrentValuePreviewInput,
   inflationSchedulePreviewInput,
   createInvestmentMaturityPreview,
-  calculateDkjFromSpecInputs,
-  mapFormDataToDkjSpecInputs,
-  calculatePmapFromSpecInputs,
-  mapFormDataToPmapSpecInputs,
-  calculateFixmapFromSpecInputs,
-  mapFormDataToFixmapSpecInputs,
-  calculateBmapFromSpecInputs,
-  mapFormDataToBmapSpecInputs,
   onPreviewError,
   onPreviewSuccess,
   extraInputs = []
 }) {
-  const remainingDaysInput = form?.querySelector?.('#dkj-remaining-days') || null
-
   const clearPreviews = () => {
     if (purchasePreviewInput) purchasePreviewInput.value = '—'
     if (maturityPreviewInput) maturityPreviewInput.value = '—'
@@ -159,6 +151,9 @@ function createInvestmentPreviewSync({
     if (discountYieldPreviewInput) discountYieldPreviewInput.value = '—'
     if (discountCurrentValuePreviewInput) discountCurrentValuePreviewInput.value = '—'
     if (inflationSchedulePreviewInput) inflationSchedulePreviewInput.value = '—'
+    const dkjFamily = getCommercialInvestmentFamily('dkj')
+    const remainingSelector = dkjFamily?.marketFieldSelectors?.remainingDays
+    const remainingDaysInput = remainingSelector ? form?.querySelector?.(remainingSelector) : null
     if (remainingDaysInput) remainingDaysInput.value = ''
   }
 
@@ -169,115 +164,27 @@ function createInvestmentPreviewSync({
 
     try {
       const subtype = String(subtypeInput?.value || 'regular-bond')
-
-      if (subtype === 'dkj' && typeof calculateDkjFromSpecInputs === 'function' && typeof mapFormDataToDkjSpecInputs === 'function' && form) {
-        const specInputs = mapFormDataToDkjSpecInputs(new FormData(form))
-        const preview = calculateDkjFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
-
-        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
-        maturityPreviewInput.value = formatMoneyAmount(preview.redemptionValue, WHOLE_FORINT)
-        gainPreviewInput.value = formatMoneyAmount(preview.grossGain, WHOLE_FORINT)
-        if (remainingDaysInput && preview.remainingDays != null) {
-          remainingDaysInput.value = String(preview.remainingDays)
-        }
-        if (discountYieldPreviewInput) {
-          discountYieldPreviewInput.value = `${preview.annualizedYieldPct.toFixed(4)}%`
-        }
-        if (discountCurrentValuePreviewInput) {
-          discountCurrentValuePreviewInput.value = `${preview.simpleReturnPct.toFixed(4)}%`
-        }
-        if (inflationSchedulePreviewInput) {
-          inflationSchedulePreviewInput.value = '—'
-        }
-        if (typeof onPreviewSuccess === 'function') {
-          onPreviewSuccess()
-        }
-        return
-      }
-
-      if (subtype === 'pmap' && typeof calculatePmapFromSpecInputs === 'function' && typeof mapFormDataToPmapSpecInputs === 'function' && form) {
-        const specInputs = mapFormDataToPmapSpecInputs(new FormData(form))
-        const preview = calculatePmapFromSpecInputs(specInputs, { createInvestmentMaturityPreview })
-
-        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
-        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)
-        gainPreviewInput.value = formatMoneyAmount(
-          Number(specInputs.principal) - Number(preview.purchaseAmount),
-          WHOLE_FORINT
-        )
-        if (discountYieldPreviewInput) {
-          discountYieldPreviewInput.value = '—'
-        }
-        if (discountCurrentValuePreviewInput) {
-          discountCurrentValuePreviewInput.value = '—'
-        }
-        if (inflationSchedulePreviewInput) {
-          inflationSchedulePreviewInput.value = `${preview.annualCouponRatePct.toFixed(4)}%`
-        }
-        if (typeof onPreviewSuccess === 'function') {
-          onPreviewSuccess()
-        }
-        return
-      }
-
+      const commercialFamily = getCommercialInvestmentFamily(subtype)
       if (
-        subtype === 'fixmap' &&
-        typeof calculateFixmapFromSpecInputs === 'function' &&
-        typeof mapFormDataToFixmapSpecInputs === 'function' &&
-        form
-      ) {
-        const specInputs = mapFormDataToFixmapSpecInputs(new FormData(form))
-        const preview = calculateFixmapFromSpecInputs(specInputs, {
-          createInvestmentMaturityPreview
-        })
-
-        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
-        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)
-        gainPreviewInput.value = formatMoneyAmount(
-          Number(specInputs.principal) - Number(preview.purchaseAmount),
-          WHOLE_FORINT
+        commercialFamily &&
+        form &&
+        applyCommercialInvestmentLivePreview(
+          commercialFamily,
+          form,
+          {
+            purchasePreviewInput,
+            maturityPreviewInput,
+            gainPreviewInput,
+            discountYieldPreviewInput,
+            discountCurrentValuePreviewInput,
+            inflationSchedulePreviewInput
+          },
+          {
+            createInvestmentMaturityPreview,
+            formatMoneyAmount
+          }
         )
-        if (discountYieldPreviewInput) {
-          discountYieldPreviewInput.value = '—'
-        }
-        if (discountCurrentValuePreviewInput) {
-          discountCurrentValuePreviewInput.value = '—'
-        }
-        if (inflationSchedulePreviewInput) {
-          inflationSchedulePreviewInput.value = `${preview.annualCouponRatePct.toFixed(4)}%`
-        }
-        if (typeof onPreviewSuccess === 'function') {
-          onPreviewSuccess()
-        }
-        return
-      }
-
-      if (
-        subtype === 'bmap' &&
-        typeof calculateBmapFromSpecInputs === 'function' &&
-        typeof mapFormDataToBmapSpecInputs === 'function' &&
-        form
       ) {
-        const specInputs = mapFormDataToBmapSpecInputs(new FormData(form))
-        const preview = calculateBmapFromSpecInputs(specInputs, {
-          createInvestmentMaturityPreview
-        })
-
-        purchasePreviewInput.value = formatMoneyAmount(preview.purchaseAmount, WHOLE_FORINT)
-        maturityPreviewInput.value = formatMoneyAmount(specInputs.principal, WHOLE_FORINT)
-        gainPreviewInput.value = formatMoneyAmount(
-          Number(specInputs.principal) - Number(preview.purchaseAmount),
-          WHOLE_FORINT
-        )
-        if (discountYieldPreviewInput) {
-          discountYieldPreviewInput.value = '—'
-        }
-        if (discountCurrentValuePreviewInput) {
-          discountCurrentValuePreviewInput.value = '—'
-        }
-        if (inflationSchedulePreviewInput) {
-          inflationSchedulePreviewInput.value = `${preview.annualCouponRatePct.toFixed(4)}%`
-        }
         if (typeof onPreviewSuccess === 'function') {
           onPreviewSuccess()
         }

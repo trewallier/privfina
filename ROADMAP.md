@@ -276,7 +276,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0036 + ROADMAP / ownership / spec / CI playbook / market-data README.
 - [x] `tools/market-data/`: fetch-retail-interest + normalize + merge into tree + validate digests; Vitest fixtures.
 - [x] Wire `ingest` / `ci-ingest` / workflow; Pages materialization already sparse-copies `data/market/v1` (includes `refs/`).
-- [x] SPA loader + available/past labels from `offered`; period kamat shown informationally (PMÁP/BMÁP never mapped into interest premium); FixMÁP hosts remain a later optional-family slice.
+- [x] SPA loader + available/past labels from `offered`; period kamat shown informationally (PMÁP/BMÁP never mapped into interest premium); FixMÁP commercial hosts land under §6j (not this slice).
 
 Out of scope for §6d
 - Replacing dual-source **price** ingest (ADR 0035).
@@ -391,10 +391,10 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Author `fixmap/product.yaml` + examples; catalog `government-security.fixmap.standard` at **`spec-only`**.
 - [x] Engine family mapper + coupon-schedule primitives (reuse PMÁP/BMÁP day-count / schedule path) → **`calc-aligned`**.
 - [x] SPA: `MARKET_FAMILIES` + `fixmap` host / adapter / picker / autofill → **`schedule-usable`**.
-- [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off FixMÁP; temporary tip→`master` CI head PR (close, do not merge).
+- [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off FixMÁP; temporary tip→`master` CI head PR (close, do not merge). Note: commercially-usable bar was met on the SPA layer; catalog stamped **`fully-spec-backed`** without an intermediate `commercially-usable` row (same as DKJ/PMÁP/BMÁP).
 
 #### Remaining families (follow-on stacks under §6j)
-- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable on commercial investment picker (`mapp`, `baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`).
+- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`mapp`, `baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).
 - [ ] SPA series picker + autofill per remaining family; parity tests.
 

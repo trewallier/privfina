@@ -4,7 +4,7 @@ Hungarian retail government bond with a fixed (optionally stepped) coupon and an
 
 ## Scope
 
-This specification models the FixMÁP product type: a fixed-coupon government bond where period rates come from published offerings / `coupons/<id>.json` (effective rates, not base+premium). Principal is repaid at maturity in one amount. Catalog readiness climbs under ROADMAP §6j on the commercial investment composer (ADR 0027 / 0038).
+This specification models the FixMÁP product type: a fixed-coupon government bond where period rates come from published offerings / `coupons/<id>.json` (effective rates, not base+premium). Principal is repaid at maturity in one amount. Catalog status is **fully-spec-backed** on the commercial investment composer (ADR 0027 / 0038 / ROADMAP §6j); commercially-usable composer bar was satisfied when the SPA host landed.
 
 ## Out of Scope
 

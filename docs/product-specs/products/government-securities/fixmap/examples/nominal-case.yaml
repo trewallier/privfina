@@ -1,0 +1,21 @@
+specVersion: v2alpha3
+productId: government-security.fixmap.standard
+exampleId: nominal-case
+title: Nominal FixMÁP example
+description: Baseline FixMÁP scenario with a flat published effective coupon rate and series maturity.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 6.5
+  purchaseDate: 2026-08-03
+  issueDate: 2026-08-03
+  maturityDate: 2031-08-03
+  dayCountConvention: ACT/360
+
+expected:
+  annualCouponRatePct: 6.5
+  purchaseAmount: 1000000
+
+notes:
+  - Effective coupon rate is supplied directly for the current period.
+  - Maturity is series-authored; calculators must not invent a fixed term length.

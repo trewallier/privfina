@@ -4,7 +4,7 @@ Hungarian retail government bond with a stepped fixed coupon. **Newer** offering
 
 ## Scope
 
-This specification models MÁP Plusz from the ÁKK Ismertető / nyilvános ajánlattétel contract: effective published annual rates (not base+premium), ACT/ACT period-fraction accrued, irregular first-period `gp`, and intermediate **kamatjuttatás** (in-kind face) with HUF coupon only at maturity. Catalog status climbs the ADR 0027 ladder on the commercial investment composer (ROADMAP §6j); registration uses the ADR 0040 `coupon-bearing` family-registry profile.
+This specification models MÁP Plusz from the ÁKK Ismertető / nyilvános ajánlattétel contract: effective published annual rates (not base+premium), ACT/ACT period-fraction accrued, irregular first-period `gp`, and intermediate **kamatjuttatás** (in-kind face) with HUF coupon only at maturity. Catalog status is **calc-aligned** (engine primitives + executable examples); SPA commercial host lands in the next stack layer (ROADMAP §6j / ADR 0040 `coupon-bearing` registry).
 
 ## Out of Scope
 

@@ -310,7 +310,7 @@ Constraints
 - Publish under `data/market/v2/` schemaVersion 2; after cutover reject schemaVersion 1 (soft-fail if tree missing).
 - No `if (productCode === …)` in core generators (ADR 0015); math in `src/finance_engine/` first (ADR 0017).
 - Do not invent coupon cash flows for periods with undefined rates; do not invent BMÁP/PMÁP maturity (+6y/+10y).
-- Optional-family composers stay out of this slice (§6g).
+- Optional-family composers stay out of this slice (§6j).
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0038 + ROADMAP / ownership / spec / CI playbook / market-data README + government-securities extension matrix stub.
@@ -324,9 +324,54 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Out of scope for §6f
 - `refs/dkj-base.json`; commercial inflation+premium composition as composer inputs.
 - Auto-authoring product YAML; browser CORS to market hosts.
-- Commercial composers for FixMÁP and other optional families (§6g).
+- Commercial composers for FixMÁP and other optional families (§6j).
 
-#### 6g) Additional government securities on commercial composer (subsequent)
+#### 6g) _(relocated to §6j)_
+Optional-family commercial composers (FixMÁP and peers) moved after the §6i SPA consumer epic — see **§6j**.
+
+#### 6h) WebKincstár daily price PDF into market-data ingest
+Goal: extend the existing scheduled market-data workflow so each run also collects Magyar Államkincstár (WebKincstár) **daily price tables**, parses **all listed prices** into published `market-data`, and records days with **no prices** so calendar gaps (weekends / holidays) can be distinguished from missing ingest. Discovery / fetch contract: [`docs/dev-notes/commercial-investment-market-data-availability-assessment.md`](docs/dev-notes/commercial-investment-market-data-availability-assessment.md).
+
+Constraints
+- Actions-only contact; browser must not call WebKincstár.
+- Prefer parsed published JSON on `market-data` over committing raw PDFs.
+- Design PDF→row parsing so a later historical backfill (§6l) can reuse it; **do not** implement backfill in this epic.
+- ADR when the published shape / merge rules need a boundary decision.
+- **Attribution / legal:** credit Magyar Államkincstár (WebKincstár) as the price-table source where the published tree or product docs expose that data; document that republished figures are **informational**, may lag or differ from the live treasury table, and are **not** official investment advice or a substitute for the issuer/distributor publications.
+
+Plan slices (implement in order; each slice should stay PR-sized). Detail: [`docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md`](docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md); architecture: ADR 0039.
+- [x] ADR 0039 + docs: Actions-only POST, DKJ+MAK reports, WebKincstár-prefer quotes, `refs/price-calendar.json`, soft-fail, `pdftotext`, attribution / accuracy notes (no runtime change).
+- [x] Fetch + pure text parser + Vitest `pdftotext` fixtures (priced + no-price); not yet wired into live ingest / workflow.
+- [x] Overlay into combine→merge; calendar merge + digests; CLI flags; soft-fail + same-day rewrite; fixture-driven ingest tests.
+- [x] `market-data.yml` Poppler on ingest job; acceptance close (priced + no-price + attribution; parser reusable for §6l; SPA unchanged).
+
+Out of scope for §6h
+- Historical backfill of older settles (§6l).
+- SPA composer changes beyond consuming whatever the published tree already supports (see §6i).
+
+#### 6i) SPA uses WebKincstár-enriched market data
+Goal: commercial investment composer (DKJ / PMÁP / BMÁP) consumes the published tree §6h adds — richer quotes plus `refs/price-calendar.json` — so purchase/settlement lookup and chrome reflect priced vs no-price days, and WebKincstár source attribution is visible. Also close the gap where kamatok `series.offered` is published but not shown on the series picker.
+
+Constraints
+- Browser only `fetch`es same-origin `data/market/v2/`; never WebKincstár / ÁKK / allampapir.
+- Do not change quote columns or invent per-row provenance (ADR 0039).
+- Soft-fail if calendar / manifest refs missing (manual path unchanged).
+- No new ADR unless the published shape changes; extend `docs/spec.md` + ownership + this checklist. ADR 0039 remains the published contract.
+- Deliver as a **gh-stack** of PR-sized layers; open a temporary tip→`master` head PR for full-stack CI (do not merge the head PR).
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [ ] ROADMAP renumber (§6i inserted; optional-family / offering / backfill letters shifted) + spec / ownership ACs for calendar loader, clamp hints, attribution, `offered` labels.
+- [ ] SPA loader: `loadPriceCalendar` + calendar-aware `resolveQuoteForPurchaseDate` + fixtures/tests.
+- [ ] Commercial composer UX: available/past picker labels via `series.offered`, attribution disclaimer, clamp / no_price / fetch_failed hints.
+- [ ] Close §6i: check off ROADMAP/spec; soft-fail regression; temporary tip→`master` CI head PR (close, do not merge).
+
+Out of scope for §6i
+- Optional-family commercial hosts (§6j).
+- Offering / sale-window capture (§6k).
+- Historical backfill UX (§6l).
+- Inflation as commercial composer inputs; `refs/dkj-base.json`.
+
+#### 6j) Additional government securities on commercial composer (subsequent)
 Goal: add catalog product specs and commercial investment hosts for families already (or newly) published on the market-data branch, reusing ADR 0038 v2 series/coupon shapes.
 
 Candidates (inclusion matrix lives in `docs/product-specs/products/government-securities/README.md`):
@@ -341,35 +386,15 @@ Plan slices
 - [ ] Decide PEMÁP vs EMÁP family split if product rules diverge.
 - [ ] SPA series picker + autofill per family; parity tests.
 
-Out of scope for §6g until named
+Out of scope for §6j until named
 - Live auction DKJ-base derivation; non-ÁKK retail products outside published families.
 
-#### 6h) WebKincstár daily price PDF into market-data ingest
-Goal: extend the existing scheduled market-data workflow so each run also collects Magyar Államkincstár (WebKincstár) **daily price tables**, parses **all listed prices** into published `market-data`, and records days with **no prices** so calendar gaps (weekends / holidays) can be distinguished from missing ingest. Discovery / fetch contract: [`docs/dev-notes/commercial-investment-market-data-availability-assessment.md`](docs/dev-notes/commercial-investment-market-data-availability-assessment.md).
-
-Constraints
-- Actions-only contact; browser must not call WebKincstár.
-- Prefer parsed published JSON on `market-data` over committing raw PDFs.
-- Design PDF→row parsing so a later historical backfill (§6j) can reuse it; **do not** implement backfill in this epic.
-- ADR when the published shape / merge rules need a boundary decision.
-- **Attribution / legal:** credit Magyar Államkincstár (WebKincstár) as the price-table source where the published tree or product docs expose that data; document that republished figures are **informational**, may lag or differ from the live treasury table, and are **not** official investment advice or a substitute for the issuer/distributor publications.
-
-Plan slices (implement in order; each slice should stay PR-sized). Detail: [`docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md`](docs/dev-notes/roadmap-6h-webkincstar-price-ingest-plan.md); architecture: ADR 0039.
-- [x] ADR 0039 + docs: Actions-only POST, DKJ+MAK reports, WebKincstár-prefer quotes, `refs/price-calendar.json`, soft-fail, `pdftotext`, attribution / accuracy notes (no runtime change).
-- [x] Fetch + pure text parser + Vitest `pdftotext` fixtures (priced + no-price); not yet wired into live ingest / workflow.
-- [x] Overlay into combine→merge; calendar merge + digests; CLI flags; soft-fail + same-day rewrite; fixture-driven ingest tests.
-- [x] `market-data.yml` Poppler on ingest job; acceptance close (priced + no-price + attribution; parser reusable for §6j; SPA unchanged).
-
-Out of scope for §6h
-- Historical backfill of older settles (§6j).
-- SPA composer changes beyond consuming whatever the published tree already supports.
-
-#### 6i) Daily public-offering capture (ÁKK + Államkincstár)
+#### 6k) Daily public-offering capture (ÁKK + Államkincstár)
 Goal: extend the daily scrape pipeline to detect **new nyilvános ajánlattétel (public offering)** documents on **akk.hu** and **allamkincstar.hu**, and transcribe their content into published market data over time (sale windows, coupon calendars, and other offering details — e.g. BMÁP coupon days). Exact sources, layout, and transcription shape are decided when this epic is planned in detail.
 
 Constraints
 - Actions-only contact; browser must not scrape those hosts.
-- Accumulate offerings going forward; design transcription so a later backfill (§6j) can reuse parsers.
+- Accumulate offerings going forward; design transcription so a later backfill (§6l) can reuse parsers.
 - Product YAML auto-authoring remains out of scope unless a later ADR says otherwise.
 - ADR when architecture / published offering schema is chosen.
 - **Attribution / legal:** attribute each transcribed offering to its public host (ÁKK / Államkincstár as applicable); keep provenance to the source document; document that transcriptions may be incomplete or outdated vs the authoritative PDF, and are **not** a substitute for the official nyilvános ajánlattétel.
@@ -377,19 +402,19 @@ Constraints
 Plan slices (high level; detail when scheduled)
 - [ ] Spec / ADR as needed: offering discovery + published offering records on `market-data` + attribution / accuracy notes.
 - [ ] Daily detect new offerings → transcribe into the published tree (with source attribution).
-- [ ] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6j; source credit and accuracy disclaimer present.
+- [ ] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6l; source credit and accuracy disclaimer present.
 
-Out of scope for §6i
-- Backfilling older offerings (§6j).
+Out of scope for §6k
+- Backfilling older offerings (§6l).
 - Replacing retailInterest or WebKincstár price ingest (§6d / §6h).
 
-#### 6j) Historical market-data backfill
-Goal: one-shot (or batched) backfill of historical market artifacts into `market-data`, reusing the daily ingest parsers from §6h / §6i where possible.
+#### 6l) Historical market-data backfill
+Goal: one-shot (or batched) backfill of historical market artifacts into `market-data`, reusing the daily ingest parsers from §6h / §6k where possible.
 
 Constraints
-- Detail and sequencing TBD when this epic is planned; do not start until §6h / §6i daily paths exist.
+- Detail and sequencing TBD when this epic is planned; do not start until §6h / §6k daily paths exist.
 - Prefer official sources already used by daily ingest.
-- Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6i); do not imply backfilled history is more authoritative than the original publications.
+- Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6k); do not imply backfilled history is more authoritative than the original publications.
 
 Plan slices
 - [ ] Plan and implement historical backfill (scope, sources, cutover, and attribution/legal notes TBD).

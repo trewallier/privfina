@@ -12,11 +12,11 @@ Product differences live primarily in product specifications, assumptions, worke
 
 Commercial inputs use **effective** period coupon rates and **real** maturities from published market data (`data/market/v2/`), not base+premium composition. Optional `couponSchedule` entries may leave future `rate` undefined. Day-count is series-/product-parameterized (default ACT/360 for current ÁKK retail bonds).
 
-## Subsequent inclusion matrix (ROADMAP §6g)
+## Subsequent inclusion matrix (ROADMAP §6j)
 
 Published market family folders already (or soon) available on the `market-data` branch — **no commercial composer in §6f**:
 
-| Market family | Typical offerings | Notes for §6g |
+| Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
 | `fixmap` | FixMÁP | Fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
 | `mapp` | MÁP Plusz (incl. nyomdai) | Multi-band rates in coupons |

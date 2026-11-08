@@ -158,7 +158,9 @@ Under the availability/pricing definitions: the repo **knows issue and maturity*
 Follow-on work is tracked on the roadmap (this note is discovery only — **no ingest implementation here**):
 
 - **ROADMAP §6h** — daily WebKincstár price PDF into the existing market-data collect (explicit no-price days; parser reusable later; source attribution + accuracy notes).
-- **ROADMAP §6i** — daily public-offering capture from akk.hu / allamkincstar.hu into published market data (attribution + accuracy notes).
-- **ROADMAP §6j** — historical backfill (planned later; reuse §6h / §6i parsers; same attribution/legal posture).
+- **ROADMAP §6i** — SPA consumes WebKincstár-enriched quotes + `refs/price-calendar.json` (clamp / attribution / `offered` labels).
+- **ROADMAP §6j** — optional-family commercial composers (was §6g).
+- **ROADMAP §6k** — daily public-offering capture from akk.hu / allamkincstar.hu into published market data (attribution + accuracy notes).
+- **ROADMAP §6l** — historical backfill (planned later; reuse §6h / §6k parsers; same attribution/legal posture).
 
-Confirmed fetch contract above supports §6h. For **PMÁP/BMÁP** during sale, dirty ask remains **calculable** (100 + accrued) once sale windows + rates exist; PDF asks are validation. Future coupon **dates** still come from **offerings** (§6i), not from a coupon-calendar API.
+Confirmed fetch contract above supports §6h. For **PMÁP/BMÁP** during sale, dirty ask remains **calculable** (100 + accrued) once sale windows + rates exist; PDF asks are validation. Future coupon **dates** still come from **offerings** (§6k), not from a coupon-calendar API.

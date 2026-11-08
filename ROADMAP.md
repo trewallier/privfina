@@ -397,14 +397,15 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Goal: stop growing family-shaped `if/else` trees in `app-controller.js` before the next §6j product host. Extract a commercial investment composer host + family registry; share a `coupon-bearing` profile for PMÁP / BMÁP / FixMÁP so follow-on families register instead of cloning PMÁP. No second browser calculation surface (ADR 0017 / 0032). Deliver as a **gh-stack**; temporary tip→`master` CI head PR (do not merge).
 
 Plan slices
-- [ ] ADR 0040 + ownership / spec ACs for host + registry boundary; §6j remaining families must register (prefer `coupon-bearing`), not clone PMÁP/FixMÁP form modules.
-- [ ] Extract `commercial-investment-composer-host.js` (behavior-preserving move of DKJ/PMÁP/BMÁP/FixMÁP orchestration out of `app-controller.js`).
-- [ ] Introduce `commercial-investment-family-registry.js`; host dispatches via lookup (no host-level productCode forests).
-- [ ] Shared coupon-bearing helpers for PMÁP/BMÁP/FixMÁP; remap FixMÁP onto the shared profile without product-behavior change.
+- [x] ADR 0040 + ownership / spec ACs for host + registry boundary; §6j remaining families must register (prefer `coupon-bearing`), not clone PMÁP/FixMÁP form modules.
+- [x] Extract `commercial-investment-composer-host.js` (behavior-preserving move of DKJ/PMÁP/BMÁP/FixMÁP orchestration out of `app-controller.js`).
+- [x] Introduce `commercial-investment-family-registry.js`; host dispatches via lookup (no host-level productCode forests).
+- [x] Shared coupon-bearing helpers for PMÁP/BMÁP/FixMÁP; remap FixMÁP onto the shared profile without product-behavior change.
 
 #### Remaining families (follow-on stacks under §6j)
 Constraints (after ADR 0040 platform refactor)
 - Register each family on the commercial investment **family registry** with an existing `composerProfile` (prefer `coupon-bearing`). Do **not** clone PMÁP/FixMÁP form/host modules or add `app-controller` / host `productCode` forests.
+- FixMÁP is already on shared `commercial-investment-coupon-profile.js` helpers (`composerProfile: 'coupon-bearing'`). Follow-on ÁKK coupon families must reuse those helpers — no PMÁP/FixMÁP form clone.
 
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`mapp`, `baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).

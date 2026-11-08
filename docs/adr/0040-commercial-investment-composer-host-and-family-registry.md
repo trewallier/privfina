@@ -29,7 +29,7 @@ Related: 0015 (data-driven variants), 0016 (declarative UI schema), 0017 / 0032 
 ## Consequences
 
 - ROADMAP §6j follow-on stacks depend on host + registry + shared coupon-bearing helpers landing first.
-- FixMÁP is remapped onto `composerProfile: 'coupon-bearing'` shared helpers in the same delivery stack (no product-behavior change required).
+- FixMÁP is remapped onto `composerProfile: 'coupon-bearing'` shared helpers in `commercial-investment-coupon-profile.js` (no product-behavior change). Follow-on ÁKK coupon families must reuse those helpers — do not clone PMÁP/FixMÁP form modules.
 - Separate per-family HTML wraps may remain temporarily; shared JS profile is the anti-clone guarantee until a later HTML dedupe.
 - String contracts / tests that assumed commercial investment symbols live only in `app-controller.js` move to the host (and registry) modules.
 - Generators and amortizers remain free of productCode forks (ADR 0015 unchanged).

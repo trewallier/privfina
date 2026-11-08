@@ -1,6 +1,8 @@
 /**
  * Commercial investment family registry (ADR 0040).
  * Host orchestration dispatches through lookup — no productCode forests in the host.
+ * Coupon-bearing entries (pmap/bmap/fixmap) share helpers from
+ * commercial-investment-coupon-profile.js; §6j follow-ons register on that profile.
  */
 import {
   BMAP_PRODUCT_SPEC,
@@ -36,47 +38,18 @@ import {
   migratePmapConfigForEdit,
   migrateFixmapConfigForEdit
 } from './govsec-config-migrate.js'
+import {
+  couponBearingDomPrefix,
+  buildCouponBearingMarketFieldSelectors,
+  buildCouponBearingInputIds,
+  buildCouponBearingFieldLabelClass,
+  buildCouponBearingPurchaseOrSettlementSelector,
+  readCouponBearingMarketFields,
+  populateCouponBearingEditFields
+} from './commercial-investment-coupon-profile.js'
 
 function readFormValue(form, selector) {
   return form?.querySelector(selector)?.value || ''
-}
-
-function populateCouponEditFields(form, prefix, migrated, formatMoneyAmount) {
-  const principal = form.querySelector(`#${prefix}-principal`)
-  const annualCouponRatePct = form.querySelector(`#${prefix}-annual-coupon-rate-pct`)
-  const maturityDate = form.querySelector(`#${prefix}-maturity-date`)
-  const purchaseDate = form.querySelector(`#${prefix}-purchase-date`)
-  const issueDate = form.querySelector(`#${prefix}-issue-date`)
-  const firstCouponDate = form.querySelector(`#${prefix}-first-coupon-date`)
-  const couponSchedule = form.querySelector(`#${prefix}-coupon-schedule`)
-
-  if (principal) {
-    principal.value =
-      migrated.principal !== undefined
-        ? formatMoneyAmount(migrated.principal, { fractionDigits: 0 })
-        : ''
-  }
-  if (annualCouponRatePct) {
-    annualCouponRatePct.value =
-      migrated.annualCouponRatePct !== undefined ? String(migrated.annualCouponRatePct) : ''
-  }
-  if (maturityDate) {
-    maturityDate.value = migrated.maturityDate || ''
-  }
-  if (purchaseDate) {
-    purchaseDate.value = migrated.purchaseDate || migrated.transactionDate || ''
-  }
-  if (issueDate) {
-    issueDate.value = migrated.issueDate || ''
-  }
-  if (firstCouponDate) {
-    firstCouponDate.value = migrated.firstCouponDate || migrated.couponPeriod || ''
-  }
-  if (couponSchedule) {
-    couponSchedule.value = Array.isArray(migrated.couponSchedule)
-      ? JSON.stringify(migrated.couponSchedule)
-      : ''
-  }
 }
 
 /** @type {Map<string, object>} */
@@ -185,34 +158,59 @@ registerCommercialInvestmentFamily({
   }
 })
 
-registerCommercialInvestmentFamily({
+function registerCouponBearingFamily({
+  productCode,
+  discountYieldPreview = false,
+  discountCurrentValuePreview = false,
+  inflationSchedulePreview = false,
+  productSpec,
+  applySpecToForm,
+  setFieldVisibility,
+  mapFormDataToSpecInputs,
+  migrateConfigForEdit,
+  buildBundle,
+  populateEditOptions = {}
+}) {
+  const prefix = couponBearingDomPrefix(productCode)
+  registerCommercialInvestmentFamily({
+    productCode,
+    marketFamily: productCode,
+    composerProfile: 'coupon-bearing',
+    hostWrapId: `investment-${prefix}-wrap`,
+    discountYieldPreview,
+    discountCurrentValuePreview,
+    inflationSchedulePreview,
+    denomination: { formField: 'principal', unit: productSpec.denominationUnit },
+    productSpec,
+    fieldLabelClass: buildCouponBearingFieldLabelClass(prefix),
+    inputIds: buildCouponBearingInputIds(prefix),
+    marketFieldSelectors: buildCouponBearingMarketFieldSelectors(prefix),
+    purchaseOrSettlementSelector: buildCouponBearingPurchaseOrSettlementSelector(prefix),
+    applySpecToForm,
+    setFieldVisibility,
+    mapFormDataToSpecInputs,
+    migrateConfigForEdit,
+    buildBundle,
+    readCurrentMarketFields(form) {
+      return readCouponBearingMarketFields(form, prefix)
+    },
+    populateEdit(form, config, { formatMoneyAmount } = {}) {
+      const migrated = migrateConfigForEdit(config)
+      populateCouponBearingEditFields(
+        form,
+        prefix,
+        migrated,
+        formatMoneyAmount,
+        populateEditOptions
+      )
+    }
+  })
+}
+
+registerCouponBearingFamily({
   productCode: 'pmap',
-  marketFamily: 'pmap',
-  composerProfile: 'coupon-bearing',
-  hostWrapId: 'investment-pmap-wrap',
-  discountYieldPreview: false,
-  discountCurrentValuePreview: false,
   inflationSchedulePreview: true,
-  denomination: { formField: 'principal', unit: PMAP_PRODUCT_SPEC.denominationUnit },
   productSpec: PMAP_PRODUCT_SPEC,
-  fieldLabelClass: 'pmap-field-label',
-  inputIds: [
-    'pmap-principal',
-    'pmap-annual-coupon-rate-pct',
-    'pmap-maturity-date',
-    'pmap-purchase-date',
-    'pmap-issue-date',
-    'pmap-first-coupon-date'
-  ],
-  marketFieldSelectors: {
-    annualCouponRatePct: '#pmap-annual-coupon-rate-pct',
-    maturityDate: '#pmap-maturity-date',
-    issueDate: '#pmap-issue-date',
-    firstCouponDate: '#pmap-first-coupon-date',
-    couponSchedule: '#pmap-coupon-schedule',
-    dayCountConvention: '#pmap-day-count-convention'
-  },
-  purchaseOrSettlementSelector: '#pmap-purchase-date',
   applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
     applyPmapSpecToForm({
       investmentForm: form,
@@ -229,51 +227,13 @@ registerCommercialInvestmentFamily({
       ...meta,
       label: meta.label || PMAP_PRODUCT_SPEC.ui.formTitle
     })
-  },
-  readCurrentMarketFields(form) {
-    return {
-      principal: readFormValue(form, '#pmap-principal'),
-      annualCouponRatePct: readFormValue(form, '#pmap-annual-coupon-rate-pct'),
-      maturityDate: readFormValue(form, '#pmap-maturity-date'),
-      purchaseDate: readFormValue(form, '#pmap-purchase-date'),
-      issueDate: readFormValue(form, '#pmap-issue-date'),
-      firstCouponDate: readFormValue(form, '#pmap-first-coupon-date')
-    }
-  },
-  populateEdit(form, config, { formatMoneyAmount } = {}) {
-    const migrated = migratePmapConfigForEdit(config)
-    populateCouponEditFields(form, 'pmap', migrated, formatMoneyAmount)
   }
+  // populateEditOptions defaults: transactionDate + couponPeriod fallbacks on
 })
 
-registerCommercialInvestmentFamily({
+registerCouponBearingFamily({
   productCode: 'bmap',
-  marketFamily: 'bmap',
-  composerProfile: 'coupon-bearing',
-  hostWrapId: 'investment-bmap-wrap',
-  discountYieldPreview: false,
-  discountCurrentValuePreview: false,
-  inflationSchedulePreview: false,
-  denomination: { formField: 'principal', unit: BMAP_PRODUCT_SPEC.denominationUnit },
   productSpec: BMAP_PRODUCT_SPEC,
-  fieldLabelClass: 'bmap-field-label',
-  inputIds: [
-    'bmap-principal',
-    'bmap-annual-coupon-rate-pct',
-    'bmap-maturity-date',
-    'bmap-purchase-date',
-    'bmap-issue-date',
-    'bmap-first-coupon-date'
-  ],
-  marketFieldSelectors: {
-    annualCouponRatePct: '#bmap-annual-coupon-rate-pct',
-    maturityDate: '#bmap-maturity-date',
-    issueDate: '#bmap-issue-date',
-    firstCouponDate: '#bmap-first-coupon-date',
-    couponSchedule: '#bmap-coupon-schedule',
-    dayCountConvention: '#bmap-day-count-convention'
-  },
-  purchaseOrSettlementSelector: '#bmap-purchase-date',
   applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
     applyBmapSpecToForm({
       bmapForm: form,
@@ -295,77 +255,17 @@ registerCommercialInvestmentFamily({
       { createInvestmentMaturityPreview: deps.createInvestmentMaturityPreview }
     )
   },
-  readCurrentMarketFields(form) {
-    return {
-      principal: readFormValue(form, '#bmap-principal'),
-      annualCouponRatePct: readFormValue(form, '#bmap-annual-coupon-rate-pct'),
-      maturityDate: readFormValue(form, '#bmap-maturity-date'),
-      purchaseDate: readFormValue(form, '#bmap-purchase-date'),
-      issueDate: readFormValue(form, '#bmap-issue-date'),
-      firstCouponDate: readFormValue(form, '#bmap-first-coupon-date')
-    }
-  },
-  populateEdit(form, config, { formatMoneyAmount } = {}) {
-    const migrated = migrateBmapConfigForEdit(config)
-    // BMÁP edit historically did not fall back to transactionDate / couponPeriod.
-    if (form.querySelector('#bmap-principal')) {
-      form.querySelector('#bmap-principal').value =
-        migrated.principal !== undefined
-          ? formatMoneyAmount(migrated.principal, { fractionDigits: 0 })
-          : ''
-    }
-    if (form.querySelector('#bmap-annual-coupon-rate-pct')) {
-      form.querySelector('#bmap-annual-coupon-rate-pct').value =
-        migrated.annualCouponRatePct !== undefined ? String(migrated.annualCouponRatePct) : ''
-    }
-    if (form.querySelector('#bmap-maturity-date')) {
-      form.querySelector('#bmap-maturity-date').value = migrated.maturityDate || ''
-    }
-    if (form.querySelector('#bmap-purchase-date')) {
-      form.querySelector('#bmap-purchase-date').value = migrated.purchaseDate || ''
-    }
-    if (form.querySelector('#bmap-issue-date')) {
-      form.querySelector('#bmap-issue-date').value = migrated.issueDate || ''
-    }
-    if (form.querySelector('#bmap-first-coupon-date')) {
-      form.querySelector('#bmap-first-coupon-date').value = migrated.firstCouponDate || ''
-    }
-    if (form.querySelector('#bmap-coupon-schedule')) {
-      form.querySelector('#bmap-coupon-schedule').value = Array.isArray(migrated.couponSchedule)
-        ? JSON.stringify(migrated.couponSchedule)
-        : ''
-    }
+  // BMÁP edit historically did not fall back to transactionDate / couponPeriod.
+  populateEditOptions: {
+    allowTransactionDateFallback: false,
+    allowCouponPeriodFallback: false
   }
 })
 
-registerCommercialInvestmentFamily({
+registerCouponBearingFamily({
   productCode: 'fixmap',
-  marketFamily: 'fixmap',
-  composerProfile: 'coupon-bearing',
-  hostWrapId: 'investment-fixmap-wrap',
-  discountYieldPreview: false,
-  discountCurrentValuePreview: false,
   inflationSchedulePreview: true,
-  denomination: { formField: 'principal', unit: FIXMAP_PRODUCT_SPEC.denominationUnit },
   productSpec: FIXMAP_PRODUCT_SPEC,
-  fieldLabelClass: 'fixmap-field-label',
-  inputIds: [
-    'fixmap-principal',
-    'fixmap-annual-coupon-rate-pct',
-    'fixmap-maturity-date',
-    'fixmap-purchase-date',
-    'fixmap-issue-date',
-    'fixmap-first-coupon-date'
-  ],
-  marketFieldSelectors: {
-    annualCouponRatePct: '#fixmap-annual-coupon-rate-pct',
-    maturityDate: '#fixmap-maturity-date',
-    issueDate: '#fixmap-issue-date',
-    firstCouponDate: '#fixmap-first-coupon-date',
-    couponSchedule: '#fixmap-coupon-schedule',
-    dayCountConvention: '#fixmap-day-count-convention'
-  },
-  purchaseOrSettlementSelector: '#fixmap-purchase-date',
   applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
     applyFixmapSpecToForm({
       investmentForm: form,
@@ -382,20 +282,6 @@ registerCommercialInvestmentFamily({
       ...meta,
       label: meta.label || FIXMAP_PRODUCT_SPEC.ui.formTitle
     })
-  },
-  readCurrentMarketFields(form) {
-    return {
-      principal: readFormValue(form, '#fixmap-principal'),
-      annualCouponRatePct: readFormValue(form, '#fixmap-annual-coupon-rate-pct'),
-      maturityDate: readFormValue(form, '#fixmap-maturity-date'),
-      purchaseDate: readFormValue(form, '#fixmap-purchase-date'),
-      issueDate: readFormValue(form, '#fixmap-issue-date'),
-      firstCouponDate: readFormValue(form, '#fixmap-first-coupon-date')
-    }
-  },
-  populateEdit(form, config, { formatMoneyAmount } = {}) {
-    const migrated = migrateFixmapConfigForEdit(config)
-    populateCouponEditFields(form, 'fixmap', migrated, formatMoneyAmount)
   }
 })
 

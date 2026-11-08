@@ -5,6 +5,7 @@ import {
 } from './spec-form-utils.js'
 import { applyFieldChrome, ensureFieldLabelTitleElement } from './field-chrome.js'
 import { applyDenominationToMoneyInput, parseMoneyAmount } from './money-format.js'
+import { parseCouponScheduleField } from './commercial-investment-coupon-profile.js'
 
 const BMAP_PRODUCT_SPEC = {
   specVersion: 'v2alpha3',
@@ -191,17 +192,6 @@ function setBmapFieldVisibility(investmentForm, visible) {
   const wrap = investmentForm.querySelector('#investment-bmap-wrap')
   if (wrap) {
     wrap.hidden = !visible
-  }
-}
-
-function parseCouponScheduleField(raw) {
-  const text = String(raw || '').trim()
-  if (!text) return undefined
-  try {
-    const parsed = JSON.parse(text)
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined
-  } catch {
-    return undefined
   }
 }
 

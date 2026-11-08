@@ -52,6 +52,10 @@ describe('commercial investment UI markup contracts', () => {
     resolve(process.cwd(), 'public/controller/commercial-investment-family-registry.js'),
     'utf8'
   )
+  const commercialCouponProfile = readFileSync(
+    resolve(process.cwd(), 'public/controller/commercial-investment-coupon-profile.js'),
+    'utf8'
+  )
 
   it('does not render catalog readiness / migration-status copy', () => {
     expect(indexHtml).not.toContain('commercial-investment-readiness-hint')
@@ -104,11 +108,10 @@ describe('commercial investment UI markup contracts', () => {
       'ensureDefaultPurchaseDate(commercialPurchaseOrSettlementInput(code))'
     )
     expect(commercialFamilyRegistry).toContain("composerProfile: 'coupon-bearing'")
-    expect(commercialFamilyRegistry).toContain("purchaseOrSettlementSelector: '#pmap-purchase-date'")
-    expect(commercialFamilyRegistry).toContain(
-      "purchaseOrSettlementSelector: '#fixmap-purchase-date'"
-    )
-    expect(commercialFamilyRegistry).toContain("purchaseOrSettlementSelector: '#bmap-purchase-date'")
+    expect(commercialFamilyRegistry).toContain('buildCouponBearingPurchaseOrSettlementSelector')
+    expect(commercialFamilyRegistry).toContain("productCode: 'pmap'")
+    expect(commercialFamilyRegistry).toContain("productCode: 'bmap'")
+    expect(commercialFamilyRegistry).toContain("productCode: 'fixmap'")
   })
 
   it('wires series + purchase/settlement autofill, stale clear, and apply-token guard', () => {
@@ -142,20 +145,14 @@ describe('commercial investment UI markup contracts', () => {
     expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]pmap['"]/)
     expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]bmap['"]/)
     expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]fixmap['"]/)
-    expect(commercialFamilyRegistry).toContain("firstCouponDate: '#bmap-first-coupon-date'")
-    expect(commercialFamilyRegistry).toContain("annualCouponRatePct: '#bmap-annual-coupon-rate-pct'")
-    expect(commercialFamilyRegistry).toContain("maturityDate: '#bmap-maturity-date'")
-    expect(commercialFamilyRegistry).toContain("dayCountConvention: '#bmap-day-count-convention'")
-    expect(commercialFamilyRegistry).toContain("annualCouponRatePct: '#pmap-annual-coupon-rate-pct'")
-    expect(commercialFamilyRegistry).toContain("maturityDate: '#pmap-maturity-date'")
-    expect(commercialFamilyRegistry).toContain("dayCountConvention: '#pmap-day-count-convention'")
-    expect(commercialFamilyRegistry).toContain(
-      "annualCouponRatePct: '#fixmap-annual-coupon-rate-pct'"
+    expect(commercialFamilyRegistry).toContain('buildCouponBearingMarketFieldSelectors')
+    expect(commercialFamilyRegistry).toContain('commercial-investment-coupon-profile.js')
+    expect(commercialCouponProfile).toContain('annualCouponRatePct: `#${prefix}-annual-coupon-rate-pct`')
+    expect(commercialCouponProfile).toContain('maturityDate: `#${prefix}-maturity-date`')
+    expect(commercialCouponProfile).toContain(
+      'dayCountConvention: `#${prefix}-day-count-convention`'
     )
-    expect(commercialFamilyRegistry).toContain("maturityDate: '#fixmap-maturity-date'")
-    expect(commercialFamilyRegistry).toContain(
-      "dayCountConvention: '#fixmap-day-count-convention'"
-    )
+    expect(commercialCouponProfile).toContain('firstCouponDate: `#${prefix}-first-coupon-date`')
     expect(commercialHost).not.toContain('bmap-dkj-base-yield-pct')
     expect(commercialHost).not.toContain('pmap-previous-year-inflation-pct')
     expect(indexHtml).toContain('id="commercial-investment-market-attribution"')

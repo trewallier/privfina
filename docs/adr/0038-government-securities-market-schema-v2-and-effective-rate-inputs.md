@@ -38,4 +38,4 @@ Related: 0015, 0017, 0027, 0034, 0035, 0036, 0037, ROADMAP §6f / §6j
 
 ## Out of scope
 
-- Browser → ÁKK / allampapir / KSH fetches; auto-authoring product YAML; `refs/dkj-base.json`; commercial composers for optional families (ROADMAP §6j); full historical sale-window reconstruction beyond `offered` + issue/maturity.
+- Browser → ÁKK / allampapir / KSH fetches; auto-authoring product YAML; `refs/dkj-base.json`; commercial composers for optional families (ROADMAP §6j); full historical sale-window reconstruction beyond `offered` + issue/maturity (offering capture §6k; SPA consumer §6l).

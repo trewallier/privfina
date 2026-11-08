@@ -126,7 +126,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Schedule-usable review follow-ups (before / with commercially-usable; from PR #83+)
 - [x] Collapse browser home-savings product-spec mapper (`home-savings-calculation-adapter.js`) onto shared primitives — avoid a third formula surface beyond ADR 0017 TS↔`instruments.js`; keep locked-example engine↔browser parity green.
 - [x] Assert hand-authored `HOME_SAVINGS_PRODUCTS` metadata against product YAML (rates, fees, promo bands, migrationStatus).
-- [x] Extract commercial home-savings composer host from `app-controller.js` (god-controller; securities partially did this).
+- [x] Extract commercial home-savings composer host from `app-controller.js` (god-controller; securities host extract tracked under §6j platform refactor / ADR 0040).
 - [x] Lock OTP product-page calculator fee / Premium / contract / at-maturity as authoritative; implement OTP-aligned allocation maturity payout dating (`resolveHomeSavingsMaturityPayoutDate`); pin ≤4 Ft engine residuals with packaging caveat.
 - [x] Composer UX declutter: short picker labels (no sale-window dates), “Unavailable since …” (or hidden) under picker, fixed módozat term, Budapest-local start-date default + saleWindow min/max, housing-purpose / opening-fee / total-account-fees info chips (early sell still out of scope).
 - [x] Home-savings field chrome parity with commercial loan: required / optional / calculated markers on all composer inputs and calculated outputs (`home-savings-field-help.js` + `applyFieldChrome`).
@@ -393,10 +393,22 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] SPA: `MARKET_FAMILIES` + `fixmap` host / adapter / picker / autofill → **`schedule-usable`**.
 - [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off FixMÁP; temporary tip→`master` CI head PR (close, do not merge). Note: commercially-usable bar was met on the SPA layer; catalog stamped **`fully-spec-backed`** without an intermediate `commercially-usable` row (same as DKJ/PMÁP/BMÁP).
 
+#### Platform refactor before remaining §6j families (ADR 0040)
+Goal: stop growing family-shaped `if/else` trees in `app-controller.js` before the next §6j product host. Extract a commercial investment composer host + family registry; share a `coupon-bearing` profile for PMÁP / BMÁP / FixMÁP so follow-on families register instead of cloning PMÁP. No second browser calculation surface (ADR 0017 / 0032). Deliver as a **gh-stack**; temporary tip→`master` CI head PR (do not merge).
+
+Plan slices
+- [ ] ADR 0040 + ownership / spec ACs for host + registry boundary; §6j remaining families must register (prefer `coupon-bearing`), not clone PMÁP/FixMÁP form modules.
+- [ ] Extract `commercial-investment-composer-host.js` (behavior-preserving move of DKJ/PMÁP/BMÁP/FixMÁP orchestration out of `app-controller.js`).
+- [ ] Introduce `commercial-investment-family-registry.js`; host dispatches via lookup (no host-level productCode forests).
+- [ ] Shared coupon-bearing helpers for PMÁP/BMÁP/FixMÁP; remap FixMÁP onto the shared profile without product-behavior change.
+
 #### Remaining families (follow-on stacks under §6j)
+Constraints (after ADR 0040 platform refactor)
+- Register each family on the commercial investment **family registry** with an existing `composerProfile` (prefer `coupon-bearing`). Do **not** clone PMÁP/FixMÁP form/host modules or add `app-controller` / host `productCode` forests.
+
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`mapp`, `baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).
-- [ ] SPA series picker + autofill per remaining family; parity tests.
+- [ ] SPA series picker + autofill per remaining family via registry registration; parity tests.
 
 Out of scope for §6j until named
 - Live auction DKJ-base derivation; non-ÁKK retail products outside published families.

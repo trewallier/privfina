@@ -111,6 +111,18 @@ export {
 export type { MappRateOutputs, MappSpecInputs } from './instruments/mapp'
 
 export {
+  deriveBabaRateOutputs,
+  deriveBabaAccruedInterestAmount,
+  resolveBabaAccrualStartIso,
+  babaFirstPeriodRatePct,
+  babaTechnicalAnniversaryDates,
+  roundCouponRatePctToHundredth,
+  listBabaPaymentDatesIso,
+  generateBabaAnnualCouponFlows
+} from './instruments/baba'
+export type { BabaRateOutputs, BabaSpecInputs } from './instruments/baba'
+
+export {
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,
   calendarDaysBetweenIso,

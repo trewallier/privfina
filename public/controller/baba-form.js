@@ -118,6 +118,7 @@ function applyBabaSpecToForm({
 }
 
 function setBabaFieldVisibility(investmentForm, visible) {
+  // Main host wrap is toggled by the family registry hostWrapId (ADR 0040).
   void investmentForm
   void visible
 }

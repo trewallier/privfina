@@ -1,0 +1,24 @@
+specVersion: v2alpha3
+productId: government-security.baba.standard
+exampleId: nominal-case
+title: Nominal Babakötvény 2045/S purchase on issue
+description: Baseline 2045/S purchased on issue — no accrued interest; first-period published ga 7.40%.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 7.4
+  purchaseDate: 2026-02-02
+  issueDate: 2026-02-02
+  maturityDate: 2045-02-01
+  firstCouponDate: 2027-02-01
+  dayCountConvention: ACT/ACT
+
+expected:
+  annualCouponRatePct: 7.4
+  accruedInterestAmount: 0
+  purchaseAmount: 1000000
+
+notes:
+  - Mirrors ÁKK nyilvános ajánlattétel 2045/S issue/maturity/first coupon.
+  - Purchase on issue → accrued 0; purchaseAmount = principal.
+  - ISIN HU0000407549; interest premium 3.00%; first-period base 4.40% (2025 CPI) → ga 7.40%.

@@ -1,0 +1,24 @@
+specVersion: v2alpha3
+productId: government-security.baba.standard
+exampleId: first-period-coupon-case
+title: Babakötvény 2045/S first cash coupon rate
+description: Pins the ajánlattétel first-period payable coupon rate 7.38% = 7.40% × 364/365 (round to 0.01%).
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 7.4
+  purchaseDate: 2026-02-02
+  issueDate: 2026-02-02
+  maturityDate: 2045-02-01
+  firstCouponDate: 2027-02-01
+  dayCountConvention: ACT/ACT
+
+expected:
+  annualCouponRatePct: 7.4
+  firstPeriodCouponRatePct: 7.38
+  # First cash coupon on 2027-02-01 = principal × 7.38% (before whole-Ft settlement rounding).
+  firstCouponAmount: 73800
+
+notes:
+  - First period length 2026-02-02 → 2027-02-01 = 364 days; regular ACT/ACT year grid dt1→d1 = 365 days.
+  - 'Ajánlattétel arithmetic: 7,40% * 364 nap / 365 nap = 7,38%.'

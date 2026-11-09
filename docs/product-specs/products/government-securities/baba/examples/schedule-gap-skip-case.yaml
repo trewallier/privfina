@@ -1,0 +1,38 @@
+specVersion: v2alpha3
+productId: government-security.baba.standard
+exampleId: schedule-gap-skip-case
+title: Babakötvény couponSchedule skips unpublished cash coupons
+description: When couponSchedule is active, periods without a published rate do not invent cash flows; known bands still pay (first-period fraction applies to the first payment).
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 7.4
+  purchaseDate: 2026-02-02
+  issueDate: 2026-02-02
+  maturityDate: 2029-02-01
+  firstCouponDate: 2027-02-01
+  dayCountConvention: ACT/ACT
+  couponSchedule:
+    - from: 2026-02-02
+      to: 2027-02-01
+      rate: 7.4
+    - from: 2027-02-01
+      to: 2028-02-01
+      rate: null
+    - from: 2028-02-01
+      to: 2029-02-01
+      rate: 7.4
+
+expected:
+  annualCouponRatePct: 7.4
+  accruedInterestAmount: 0
+  purchaseAmount: 1000000
+  # Cash coupons only on published bands: 2027-02-01 (first-period 7.38%) and 2029-02-01 (7.40%); 2028-02-01 skipped.
+  firstCouponAmount: 73800
+  secondPublishedCouponAmount: 74000
+  couponPaymentCount: 2
+
+notes:
+  - Unpublished middle band (rate null) skips the 2028-02-01 cash coupon without inventing a rate.
+  - First payment still uses irregular first-period gp from covering ga 7.40%.
+  - Maturity truncated to 2029-02-01 so the skip is observable without scanning the full 2045/S grid.

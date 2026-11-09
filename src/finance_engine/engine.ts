@@ -212,6 +212,17 @@ export {
   generateMappCouponFlows,
   generateMappSemiAnnualCouponFlows
 } from './instruments/mapp'
+export type { BabaRateOutputs, BabaSpecInputs } from './instruments/baba'
+export {
+  deriveBabaRateOutputs,
+  deriveBabaAccruedInterestAmount,
+  resolveBabaAccrualStartIso,
+  babaFirstPeriodRatePct,
+  babaTechnicalAnniversaryDates,
+  roundCouponRatePctToHundredth,
+  listBabaPaymentDatesIso,
+  generateBabaAnnualCouponFlows
+} from './instruments/baba'
 export {
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,

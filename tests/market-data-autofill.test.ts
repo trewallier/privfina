@@ -269,6 +269,25 @@ describe('market-data-autofill', () => {
     })
     expect(fixmapAnnualSameDates.fields.firstCouponDate).toBe('2027-06-15')
 
+    // Babakötvény shares the annual (12-month) coupon-bearing path; no couponFrequencyMonths.
+    const baba = buildMarketAutofillPatch({
+      family: 'baba',
+      series: { issue: '2026-02-02', mat: '2045-02-01', offered: true },
+      quote: { d: '2026-08-01', ask: 100.0, bid: 99.5, ay: 7.4, by: 7.3 },
+      coupons,
+      offering: {
+        paymentDates: ['2027-02-01', '2028-02-01', '2029-02-01']
+      },
+      current: { principal: '1000000', purchaseDate: '2026-08-01' }
+    })
+    expect(baba.fields.annualCouponRatePct).toBe(4.5)
+    expect(baba.fields.maturityDate).toBe('2045-02-01')
+    expect(baba.fields.issueDate).toBe('2026-02-02')
+    expect(baba.fields.firstCouponDate).toBe('2027-02-01')
+    expect(baba.fields).not.toHaveProperty('couponFrequencyMonths')
+    expect(baba.fields).not.toHaveProperty('principal')
+    expect(baba.fields).not.toHaveProperty('purchaseDate')
+
     const withOffering = buildMarketAutofillPatch({
       family: 'pmap',
       series: { issue: '2022-01-21', mat: '2027-03-24', dayCount: 'ACT/360' },

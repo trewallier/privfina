@@ -1,8 +1,9 @@
 /**
  * Shared coupon-bearing commercial investment profile (ADR 0040).
- * PMÁP / BMÁP / FixMÁP / MÁP Plusz (and remaining §6j ÁKK coupon families)
- * derive DOM selectors, read/populate maps from these helpers — register on
- * this profile rather than growing host/`previews.js` productCode forests.
+ * PMÁP / BMÁP / FixMÁP / MÁP Plusz / Babakötvény (and remaining §6j ÁKK coupon
+ * families) derive DOM selectors, read/populate maps from these helpers —
+ * register on this profile rather than growing host/`previews.js` productCode
+ * forests.
  */
 
 function couponBearingDomPrefix(productCode) {

@@ -94,6 +94,12 @@ describe('commercial investment family registry (ADR 0040)', () => {
         config: { subtype: 'mapp' }
       })
     ).toBe('mapp')
+    expect(
+      resolveCommercialInvestmentProductCodeFromBundle({
+        productId: BABA_PRODUCT_SPEC.id,
+        config: { subtype: 'baba' }
+      })
+    ).toBe('baba')
     expect(resolveCommercialInvestmentProductCodeFromBundle(null)).toBeNull()
     expect(
       resolveCommercialInvestmentProductCodeFromBundle({
@@ -288,5 +294,6 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]bmap['"]/)
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]fixmap['"]/)
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]mapp['"]/)
+    expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]baba['"]/)
   })
 })

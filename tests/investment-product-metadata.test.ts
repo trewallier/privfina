@@ -17,7 +17,7 @@ function inputByName(spec: any, inputName: string) {
 }
 
 describe('commercial investment product metadata (ADR 0027)', () => {
-  it('builds BMAP, DKJ, PMAP, FixMÁP, and MÁP Plusz commercial product options from spec metadata', () => {
+  it('builds BMAP, DKJ, PMAP, FixMÁP, MÁP Plusz, and Babakötvény commercial product options from spec metadata', () => {
     const options = buildCommercialInvestmentProductOptions()
     const optionByValue = new Map(options.map((entry) => [entry.value, entry]))
 

@@ -191,6 +191,7 @@
       #investment-dkj-wrap,
       #investment-pmap-wrap,
       #investment-fixmap-wrap,
+      #investment-mapp-wrap,
       #investment-bmap-wrap {
         display: grid;
         gap: 12px;
@@ -247,6 +248,7 @@
       .label-title .dkj-field-label,
       .label-title .pmap-field-label,
       .label-title .fixmap-field-label,
+      .label-title .mapp-field-label,
       .label-title .bmap-field-label {
         min-width: 0;
       }
@@ -2245,6 +2247,60 @@
                       />
                       <input
                         id="fixmap-day-count-convention"
+                        name="dayCountConvention"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                    </div>
+                  </div>
+
+                  <div id="investment-mapp-wrap" hidden>
+                    <div class="row">
+                      <label id="mapp-principal-wrap">
+                        <span class="label-title"><span class="mapp-field-label">Principal</span></span>
+                        <input id="mapp-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
+                      </label>
+                      <label id="mapp-purchase-date-wrap">
+                        <span class="label-title"><span class="mapp-field-label">Purchase Date</span></span>
+                        <input id="mapp-purchase-date" name="purchaseDate" type="date" required />
+                      </label>
+                    </div>
+                    <div class="row">
+                      <label id="mapp-annual-coupon-rate-pct-wrap">
+                        <span class="label-title"><span class="mapp-field-label">Annual Coupon Rate</span></span>
+                        <input id="mapp-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      </label>
+                      <label id="mapp-maturity-date-wrap">
+                        <span class="label-title"><span class="mapp-field-label">Maturity Date</span></span>
+                        <input id="mapp-maturity-date" name="maturityDate" type="date" required />
+                      </label>
+                    </div>
+                    <div class="row">
+                      <label id="mapp-issue-date-wrap">
+                        <span class="label-title"><span class="mapp-field-label">Issue Date</span></span>
+                        <input id="mapp-issue-date" name="issueDate" type="date" required />
+                      </label>
+                      <label id="mapp-first-coupon-date-wrap">
+                        <span class="label-title"><span class="mapp-field-label">First Coupon Date</span></span>
+                        <input id="mapp-first-coupon-date" name="firstCouponDate" type="date" />
+                      </label>
+                      <input
+                        id="mapp-coupon-schedule"
+                        name="couponSchedule"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                      <input
+                        id="mapp-coupon-frequency-months"
+                        name="couponFrequencyMonths"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                      <input
+                        id="mapp-day-count-convention"
                         name="dayCountConvention"
                         type="hidden"
                         value=""

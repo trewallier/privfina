@@ -1,7 +1,8 @@
 /**
  * Shared coupon-bearing commercial investment profile (ADR 0040).
- * PMÁP / BMÁP / FixMÁP (and future §6j ÁKK coupon families) derive DOM
- * selectors, read/populate maps from these helpers — do not clone PMÁP.
+ * PMÁP / BMÁP / FixMÁP / MÁP Plusz (and remaining §6j ÁKK coupon families)
+ * derive DOM selectors, read/populate maps from these helpers — register on
+ * this profile rather than growing host/`previews.js` productCode forests.
  */
 
 function couponBearingDomPrefix(productCode) {
@@ -15,6 +16,7 @@ function buildCouponBearingMarketFieldSelectors(prefix) {
     issueDate: `#${prefix}-issue-date`,
     firstCouponDate: `#${prefix}-first-coupon-date`,
     couponSchedule: `#${prefix}-coupon-schedule`,
+    couponFrequencyMonths: `#${prefix}-coupon-frequency-months`,
     dayCountConvention: `#${prefix}-day-count-convention`
   }
 }
@@ -76,6 +78,8 @@ function populateCouponBearingEditFields(
   const issueDate = form.querySelector(`#${prefix}-issue-date`)
   const firstCouponDate = form.querySelector(`#${prefix}-first-coupon-date`)
   const couponSchedule = form.querySelector(`#${prefix}-coupon-schedule`)
+  const couponFrequencyMonths = form.querySelector(`#${prefix}-coupon-frequency-months`)
+  const dayCountConvention = form.querySelector(`#${prefix}-day-count-convention`)
 
   if (principal) {
     principal.value =
@@ -107,6 +111,15 @@ function populateCouponBearingEditFields(
     couponSchedule.value = Array.isArray(migrated.couponSchedule)
       ? JSON.stringify(migrated.couponSchedule)
       : ''
+  }
+  if (couponFrequencyMonths) {
+    couponFrequencyMonths.value =
+      migrated.couponFrequencyMonths !== undefined && migrated.couponFrequencyMonths !== null
+        ? String(migrated.couponFrequencyMonths)
+        : ''
+  }
+  if (dayCountConvention) {
+    dayCountConvention.value = migrated.dayCountConvention || ''
   }
 }
 

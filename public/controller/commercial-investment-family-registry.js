@@ -1,7 +1,7 @@
 /**
  * Commercial investment family registry (ADR 0040).
  * Host orchestration dispatches through lookup — no productCode forests in the host.
- * Coupon-bearing entries (pmap/bmap/fixmap) share helpers from
+ * Coupon-bearing entries (pmap/bmap/fixmap/mapp) share helpers from
  * commercial-investment-coupon-profile.js; §6j follow-ons register on that profile.
  *
  * Registry is the addition path for: preview adapters, marketable required fields,
@@ -42,9 +42,18 @@ import {
 } from './fixmap-form.js'
 import { calculateFixmapFromSpecInputs } from './fixmap-calculation-adapter.js'
 import {
+  MAPP_PRODUCT_SPEC,
+  applyMappSpecToForm,
+  setMappFieldVisibility,
+  mapFormDataToMappSpecInputs,
+  generateMappInstrumentBundleFromSpecInputs
+} from './mapp-form.js'
+import { calculateMappFromSpecInputs } from './mapp-calculation-adapter.js'
+import {
   migrateBmapConfigForEdit,
   migratePmapConfigForEdit,
-  migrateFixmapConfigForEdit
+  migrateFixmapConfigForEdit,
+  migrateMappConfigForEdit
 } from './govsec-config-migrate.js'
 import {
   couponBearingDomPrefix,
@@ -191,6 +200,7 @@ function registerCouponBearingFamily({
   discountYieldPreview = false,
   discountCurrentValuePreview = false,
   inflationSchedulePreview = false,
+  migrationStatus = 'fully-spec-backed',
   productSpec,
   applySpecToForm,
   setFieldVisibility,
@@ -198,7 +208,8 @@ function registerCouponBearingFamily({
   calculateFromSpecInputs,
   migrateConfigForEdit,
   buildBundle,
-  populateEditOptions = {}
+  populateEditOptions = {},
+  marketableRequiredFields = COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
 }) {
   const prefix = couponBearingDomPrefix(productCode)
   registerCommercialInvestmentFamily({
@@ -206,14 +217,14 @@ function registerCouponBearingFamily({
     marketFamily: productCode,
     composerProfile: 'coupon-bearing',
     hostWrapId: `investment-${prefix}-wrap`,
-    migrationStatus: 'fully-spec-backed',
+    migrationStatus,
     discountYieldPreview,
     discountCurrentValuePreview,
     inflationSchedulePreview,
     denomination: { formField: 'principal', unit: productSpec.denominationUnit },
     productSpec,
     fieldLabelClass: buildCouponBearingFieldLabelClass(prefix),
-    marketableRequiredFields: COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS,
+    marketableRequiredFields,
     inputIds: buildCouponBearingInputIds(prefix),
     marketFieldSelectors: buildCouponBearingMarketFieldSelectors(prefix),
     purchaseOrSettlementSelector: buildCouponBearingPurchaseOrSettlementSelector(prefix),
@@ -316,6 +327,35 @@ registerCouponBearingFamily({
     return generateFixmapInstrumentBundleFromSpecInputs(specInputs, {
       ...meta,
       label: meta.label || FIXMAP_PRODUCT_SPEC.ui.formTitle
+    })
+  }
+})
+
+registerCouponBearingFamily({
+  productCode: 'mapp',
+  inflationSchedulePreview: true,
+  migrationStatus: 'schedule-usable',
+  productSpec: MAPP_PRODUCT_SPEC,
+  marketableRequiredFields: Object.freeze([
+    ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS,
+    'couponFrequencyMonths'
+  ]),
+  applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
+    applyMappSpecToForm({
+      investmentForm: form,
+      investmentBox: box,
+      setAmountDefaultIfEmpty
+    })
+  },
+  setFieldVisibility: setMappFieldVisibility,
+  mapFormDataToSpecInputs: mapFormDataToMappSpecInputs,
+  calculateFromSpecInputs: calculateMappFromSpecInputs,
+  migrateConfigForEdit: migrateMappConfigForEdit,
+  buildBundle(formData, meta) {
+    const specInputs = mapFormDataToMappSpecInputs(formData)
+    return generateMappInstrumentBundleFromSpecInputs(specInputs, {
+      ...meta,
+      label: meta.label || MAPP_PRODUCT_SPEC.ui.formTitle
     })
   }
 })

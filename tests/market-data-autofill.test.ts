@@ -20,6 +20,7 @@ import {
   pickCouponRatePct,
   pickFirstOfferingPaymentDate,
   pickPurchasePricePct,
+  inferMappCouponFrequencyMonths,
   resolveSaleWindow
 } from '../public/controller/market-data-autofill.js'
 
@@ -33,6 +34,9 @@ describe('market-data-autofill', () => {
   it('derives first coupon from maturity month/day schedule', () => {
     expect(deriveFirstCouponDate('2022-01-21', '2027-03-24', 12)).toBe('2022-03-24')
     expect(deriveFirstCouponDate('2017-10-03', '2028-03-22', 3)).toBe('2017-12-22')
+    // Discriminating semi-annual vs annual anniversary (same for 3/6/12 on some mat dates).
+    expect(deriveFirstCouponDate('2026-12-01', '2031-06-15', 6)).toBe('2026-12-15')
+    expect(deriveFirstCouponDate('2026-12-01', '2031-06-15', 12)).toBe('2027-06-15')
   })
 
   it('prefers ask over bid for purchase price percent', () => {
@@ -214,6 +218,57 @@ describe('market-data-autofill', () => {
     expect(fixmap.fields).not.toHaveProperty('principal')
     expect(fixmap.fields).not.toHaveProperty('purchaseDate')
 
+    // Newer MÁP Plusz defaults to annual (12) when offering spacing is absent.
+    const mapp = buildMarketAutofillPatch({
+      family: 'mapp',
+      series: { issue: '2026-10-02', mat: '2031-11-27', offered: true },
+      quote: { d: '2026-11-02', ask: 100.0, bid: 99.0, ay: 5.46, by: 5.69 },
+      coupons,
+      current: { principal: '1000000', purchaseDate: '2026-11-02' }
+    })
+    expect(mapp.fields.annualCouponRatePct).toBe(4.5)
+    expect(mapp.fields.maturityDate).toBe('2031-11-27')
+    expect(mapp.fields.issueDate).toBe('2026-10-02')
+    expect(mapp.fields.couponFrequencyMonths).toBe(12)
+    // Annual anniversary of mat month/day on/after issue (same date as 6-mo for this mat).
+    expect(mapp.fields.firstCouponDate).toBe('2026-11-27')
+    expect(mapp.fields).not.toHaveProperty('principal')
+    expect(mapp.fields).not.toHaveProperty('purchaseDate')
+
+    // Without offering, discriminating dates use annual default → 2027-06-15.
+    const mappAnnualDefault = buildMarketAutofillPatch({
+      family: 'mapp',
+      series: { issue: '2026-12-01', mat: '2031-06-15', offered: true },
+      quote: { d: '2026-12-10', ask: 100.0, bid: 99.0 },
+      coupons,
+      current: { principal: '1000000', purchaseDate: '2026-12-10' }
+    })
+    expect(mappAnnualDefault.fields.couponFrequencyMonths).toBe(12)
+    expect(mappAnnualDefault.fields.firstCouponDate).toBe('2027-06-15')
+
+    // Offering paymentDates ~6 months apart → older semi-annual cadence.
+    const mappSemiFromOffering = buildMarketAutofillPatch({
+      family: 'mapp',
+      series: { issue: '2026-12-01', mat: '2031-06-15', offered: true },
+      quote: { d: '2026-12-10', ask: 100.0, bid: 99.0 },
+      coupons,
+      offering: {
+        paymentDates: ['2026-12-15', '2027-06-15', '2027-12-15']
+      },
+      current: { principal: '1000000', purchaseDate: '2026-12-10' }
+    })
+    expect(mappSemiFromOffering.fields.couponFrequencyMonths).toBe(6)
+    expect(mappSemiFromOffering.fields.firstCouponDate).toBe('2026-12-15')
+
+    const fixmapAnnualSameDates = buildMarketAutofillPatch({
+      family: 'fixmap',
+      series: { issue: '2026-12-01', mat: '2031-06-15', offered: true },
+      quote: { d: '2026-12-10', ask: 100.0, bid: 99.0 },
+      coupons,
+      current: { principal: '1000000', purchaseDate: '2026-12-10' }
+    })
+    expect(fixmapAnnualSameDates.fields.firstCouponDate).toBe('2027-06-15')
+
     const withOffering = buildMarketAutofillPatch({
       family: 'pmap',
       series: { issue: '2022-01-21', mat: '2027-03-24', dayCount: 'ACT/360' },
@@ -227,6 +282,21 @@ describe('market-data-autofill', () => {
     })
     expect(withOffering.fields.firstCouponDate).toBe('2022-04-01')
     expect(withOffering.fields.dayCountConvention).toBe('ACT/365F')
+  })
+
+  it('infers MÁP Plusz couponFrequencyMonths from offering payment spacing', () => {
+    expect(inferMappCouponFrequencyMonths(null)).toBe(12)
+    expect(inferMappCouponFrequencyMonths({ paymentDates: ['2027-11-27'] })).toBe(12)
+    expect(
+      inferMappCouponFrequencyMonths({
+        paymentDates: ['2027-11-27', '2028-11-27', '2029-11-27']
+      })
+    ).toBe(12)
+    expect(
+      inferMappCouponFrequencyMonths({
+        paymentDates: ['2020-12-01', '2021-06-01', '2021-12-01']
+      })
+    ).toBe(6)
   })
 
   it('omits annualCouponRatePct when coupon schedule has no defined rate', () => {
@@ -293,6 +363,15 @@ describe('market-data-autofill', () => {
       'firstCouponDate',
       'couponSchedule',
       'dayCountConvention'
+    ])
+    expect(marketableFieldsMissingFromPatch('mapp', [])).toEqual([
+      'annualCouponRatePct',
+      'maturityDate',
+      'issueDate',
+      'firstCouponDate',
+      'couponSchedule',
+      'dayCountConvention',
+      'couponFrequencyMonths'
     ])
     expect(
       marketableFieldsMissingFromPatch('pmap', [

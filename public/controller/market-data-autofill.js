@@ -49,10 +49,46 @@ export function deriveRemainingDays(settlementDate, maturityDate) {
 }
 
 /**
+ * Infer MÁP Plusz couponFrequencyMonths (6|12) from offering paymentDates spacing.
+ * Prefers the median gap between consecutive sorted ISO dates; defaults to 12
+ * (newer annual-pay) when spacing is ambiguous or sparse.
+ * @param {{ paymentDates?: unknown }|null|undefined} offering
+ * @returns {6|12}
+ */
+export function inferMappCouponFrequencyMonths(offering) {
+  const raw = Array.isArray(offering?.paymentDates) ? offering.paymentDates : []
+  const dates = raw
+    .map((entry) => String(entry || '').trim())
+    .filter((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry))
+    .sort()
+    .map((iso) => parseIsoDateUtc(iso))
+    .filter(Boolean)
+  if (dates.length < 2) {
+    return 12
+  }
+  const gapsMonths = []
+  for (let i = 1; i < dates.length; i += 1) {
+    const prev = dates[i - 1]
+    const next = dates[i]
+    const days = (next.getTime() - prev.getTime()) / 86400000
+    if (days > 0) {
+      gapsMonths.push(days / 30.4375)
+    }
+  }
+  if (!gapsMonths.length) {
+    return 12
+  }
+  gapsMonths.sort((a, b) => a - b)
+  const median = gapsMonths[Math.floor(gapsMonths.length / 2)]
+  // Closer to 6 than to 12 → older semi-annual series.
+  return Math.abs(median - 6) < Math.abs(median - 12) ? 6 : 12
+}
+
+/**
  * First coupon on the maturity month/day schedule at/after issue.
  * @param {string|null|undefined} issue
  * @param {string|null|undefined} mat
- * @param {number} frequencyMonths 12 = annual (PMÁP), 3 = quarterly (BMÁP)
+ * @param {number} frequencyMonths 12 = annual (PMÁP/FixMÁP/newer MÁP Plusz), 6 = older semi-annual MÁP Plusz, 3 = quarterly (BMÁP)
  */
 export function deriveFirstCouponDate(issue, mat, frequencyMonths) {
   const issueDate = parseIsoDateUtc(issue)
@@ -435,7 +471,12 @@ export function buildMarketAutofillPatch({
     if (remaining != null) {
       setField('remainingDays', remaining)
     }
-  } else if (family === 'pmap' || family === 'bmap' || family === 'fixmap') {
+  } else if (
+    family === 'pmap' ||
+    family === 'bmap' ||
+    family === 'fixmap' ||
+    family === 'mapp'
+  ) {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
     const onIso = String(current.purchaseDate || series?.issue || '').trim()
     const couponRate = pickCouponRatePct(coupons, onIso)
@@ -453,9 +494,18 @@ export function buildMarketAutofillPatch({
       setField('issueDate', series.issue)
     }
     // ROADMAP §6l: prefer offering payment calendar over anniversary heuristic.
+    // BMÁP quarterly (3); PMÁP/FixMÁP annual (12); MÁP Plusz series-authored
+    // (12 newer annual default; 6 older semi-annual inferred from paymentDates).
+    let frequencyMonths = 12
+    if (family === 'bmap') {
+      frequencyMonths = 3
+    } else if (family === 'mapp') {
+      frequencyMonths = inferMappCouponFrequencyMonths(offering)
+      setField('couponFrequencyMonths', frequencyMonths)
+    }
     const firstCoupon =
       pickFirstOfferingPaymentDate(offering) ||
-      deriveFirstCouponDate(series?.issue, series?.mat, family === 'bmap' ? 3 : 12)
+      deriveFirstCouponDate(series?.issue, series?.mat, frequencyMonths)
     if (firstCoupon) {
       setField('firstCouponDate', firstCoupon)
     }

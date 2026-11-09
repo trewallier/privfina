@@ -1,6 +1,7 @@
 import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from './dkj-form.js'
 import { FIXMAP_PRODUCT_SPEC } from './fixmap-form.js'
+import { MAPP_PRODUCT_SPEC } from './mapp-form.js'
 import { PMAP_PRODUCT_SPEC } from './pmap-form.js'
 import { listCommercialInvestmentFamilies } from './commercial-investment-family-registry.js'
 
@@ -150,6 +151,12 @@ function buildSpecBackedInvestmentSubtypeUiConfig() {
       inflationSchedulePreview: true,
       annualRateNote:
         'FixMÁP uses the published effective annual coupon rate instead of the generic annual rate field.'
+    }),
+    mapp: buildDedicatedHostSubtypeUiConfig(MAPP_PRODUCT_SPEC, {
+      hostId: 'investment-mapp-wrap',
+      inflationSchedulePreview: true,
+      annualRateNote:
+        'MÁP Plusz uses the published effective annual coupon rate instead of the generic annual rate field.'
     }),
     pmap: buildDedicatedHostSubtypeUiConfig(PMAP_PRODUCT_SPEC, {
       hostId: 'investment-pmap-wrap',

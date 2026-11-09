@@ -75,3 +75,18 @@ export function migrateFixmapConfigForEdit(config = {}) {
   delete next.startDate
   return next
 }
+
+/**
+ * Normalize MÁP Plusz configs for edit (ADR 0038 effective rate + maturity).
+ * MÁP Plusz never used inflation+premium storage; keep annualCouponRatePct as-is.
+ */
+export function migrateMappConfigForEdit(config = {}) {
+  const next = { ...config }
+  const existing = toFiniteNumber(next.annualCouponRatePct)
+  if (existing != null) {
+    next.annualCouponRatePct = existing
+  }
+  next.maturityDate = next.maturityDate || next.dueDate || ''
+  delete next.startDate
+  return next
+}

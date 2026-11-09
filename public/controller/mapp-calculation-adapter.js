@@ -9,7 +9,7 @@ import {
 } from '@finance_engine/instruments/mapp'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
-import { MAPP_PRODUCT_SPEC } from './mapp-form.js'
+import { MAPP_PRODUCT_SPEC } from './mapp-product-spec.js'
 
 function calculateMappFromSpecInputs(specInputs, options) {
   void options

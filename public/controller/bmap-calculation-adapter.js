@@ -9,7 +9,7 @@ import {
 } from '@finance_engine/instruments/bmap'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
-import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
+import { BMAP_PRODUCT_SPEC } from './bmap-product-spec.js'
 
 function buildBmapLegacyInvestmentInput(specInputs, purchaseAmount, annualCouponRatePct) {
   const issueDateIso = String(specInputs.issueDate || '').trim()

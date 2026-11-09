@@ -9,7 +9,7 @@ import {
 } from '@finance_engine/instruments/baba'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
-import { BABA_PRODUCT_SPEC } from './baba-form.js'
+import { BABA_PRODUCT_SPEC } from './baba-product-spec.js'
 
 function calculateBabaFromSpecInputs(specInputs, options) {
   void options

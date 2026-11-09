@@ -33,4 +33,4 @@ Published market family folders already (or soon) available on the `market-data`
 | `ktj` | KTJ I / KTJ II | Follow-on; routing stub in v2 |
 | `map2` | 2MÁP | Follow-on; routing stub in v2 |
 
-When adding a family: author `product.yaml` + examples first, register catalog `spec-only`, then engine → schedule-usable → commercially-usable → fully-spec-backed on the commercial investment picker. Prefer an explicit `commercially-usable` catalog stamp; FixMÁP (§6j) omitted that middle row after the SPA bar cleared (DKJ/PMÁP/BMÁP precedent) — document the skip in the catalog notes if repeating. Reuse ADR 0038 series/coupon shapes.
+When adding a family: author `product.yaml` + examples first, register catalog `spec-only`, then engine → schedule-usable → commercially-usable → fully-spec-backed on the commercial investment picker. Prefer an explicit `commercially-usable` catalog stamp; FixMÁP / MÁP Plusz / Babakötvény (§6j) omitted that middle row after the SPA bar cleared (DKJ/PMÁP/BMÁP precedent) — document the skip in the catalog notes if repeating. Reuse ADR 0038 series/coupon shapes.

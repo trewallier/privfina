@@ -1,6 +1,6 @@
 # Product Catalog
 
-This catalog tracks product specs across supported families. The active schema folder is `schema/v2/` (ADR 0020). Most products stamp `specVersion: v2alpha1`. Government securities stamp **`v2alpha2`** (DKJ) or **`v2alpha3`** (PMÁP / BMÁP / FixMÁP) for the ADR 0038+ commercial input contract (effective `annualCouponRatePct` + required `maturityDate`; PMÁP/BMÁP/FixMÁP drop optional `startDate` in v2alpha3; coupons under `data/market/v2/`). Schema v1 / `v1alpha1` is frozen.
+This catalog tracks product specs across supported families. The active schema folder is `schema/v2/` (ADR 0020). Most products stamp `specVersion: v2alpha1`. Government securities stamp **`v2alpha2`** (DKJ) or **`v2alpha3`** (PMÁP / BMÁP / FixMÁP / MÁP Plusz / Babakötvény) for the ADR 0038+ commercial input contract (effective `annualCouponRatePct` + required `maturityDate`; PMÁP/BMÁP/FixMÁP/MÁP Plusz/Babakötvény drop optional `startDate` in v2alpha3; coupons under `data/market/v2/`). Schema v1 / `v1alpha1` is frozen.
 
 ## Migration Statuses
 

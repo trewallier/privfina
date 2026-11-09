@@ -1,0 +1,156 @@
+specVersion: v2alpha3
+kind: financial-product
+id: government-security.baba.standard
+family: government-security
+variant: baba
+productCode: baba
+displayName: Baby Bond (Babakötvény)
+description: Hungarian retail inflation-linked government bond for Start-értékpapírszámla holders (Babakötvény). Annual cash coupons; commercial inputs use published effective annual rates.
+
+category: retail-government-bond
+denominationCurrency: HUF
+denominationUnit: 1
+issuanceModel: phased-public-offering
+yieldModel: coupon-plus-redemption
+couponModel: annual-variable
+referenceIndex: prior-calendar-year-average-inflation
+offeringPriceModel: par-plus-accrued-interest
+earlyRedemptionByIssuer: false
+investorEligibility: Primary-market acquisition requires a Magyar Államkincstár Start-értékpapírszámla. Each series is limited to a birth cohort (2045/S — children born 2026-02-01 through 2027-01-31 inclusive). After the child turns 18, further purchases of the same series may use only coupon income from that series. Soft composer hints only — not hard blockers.
+transferRestrictions: Babakötvény is non-transferable. Issuer buyback at the child’s 18th birthday (and other Fétám. tv. cases) pays par plus accrued interest; modeling that path is out of scope for this iteration.
+
+inputs:
+  - name: principal
+    type: number
+    label: Principal
+    required: true
+    unit: currency
+    description: Face amount you invest in forints (HUF). Denomination unit is 1 HUF.
+    constraints:
+      minimum: 1
+
+  - name: annualCouponRatePct
+    type: number
+    label: Annual Coupon Rate
+    required: true
+    unit: percent
+    description: Published yearly coupon rate (p.a.) for the current period (effective rate = KSH prior-year average CPI floored at 0% + series interest premium). Stepped bands live in couponSchedule when present. Do not require separate CPI and premium composer inputs.
+    constraints:
+      minimum: 0
+      maximum: 100
+
+  - name: purchaseDate
+    type: string
+    label: Purchase Date
+    required: true
+    unit: date
+    description: Date when the purchase is accounted for. Used to compute interest already earned.
+
+  - name: issueDate
+    type: string
+    label: Issue Date
+    required: true
+    unit: date
+    description: Date this series was issued (kamatozás kezdőnapja).
+
+  - name: maturityDate
+    type: string
+    label: Maturity Date
+    required: true
+    unit: date
+    description: Date the bond repays principal. Taken from the series when autofilled.
+
+  - name: firstCouponDate
+    type: string
+    label: First Coupon Date
+    required: false
+    unit: date
+    description: First interest payment date. Prefer offering paymentDates when autofilled (2045/S — every 1 February; first 2027-02-01).
+
+  - name: dayCountConvention
+    type: string
+    label: Day Count Convention
+    required: false
+    unit: text
+    description: Accrued interest and irregular first-period cash coupons follow the Ismertető ACT/ACT (Tényleges/tényleges) period-fraction formulas. This field is retained for parity with sibling govsec hosts; Babakötvény calculators use ACT/ACT for accrued and first-period gp.
+    constraints:
+      enum: [ACT/ACT, ACT/360, ACT/365F, 30E/360]
+
+  - name: couponSchedule
+    type: array
+    label: Coupon Schedule
+    required: false
+    unit: text
+    description: Optional published rate bands. Each row needs a start date; end date and rate may be empty for future unknown periods. Commercial autofill maps published coupons into this schedule for accrued interest and cash-flow skips.
+    constraints:
+      items:
+        type: object
+        additionalProperties: false
+        required: [from]
+        properties:
+          from:
+            type: string
+            format: date
+            description: Period start date.
+          to:
+            type: ["string", "null"]
+            format: date
+            description: Period end date, or null when open-ended.
+          rate:
+            type: ["number", "null"]
+            description: Annual coupon percent for the period, or null when not yet published.
+
+outputs:
+  - name: annualCouponRatePct
+    type: number
+    label: Annual Coupon Rate
+    required: true
+    unit: percent
+    description: Yearly interest rate (ga) applied for the current period.
+
+  - name: accruedInterestAmount
+    type: number
+    label: Accrued Interest
+    required: false
+    unit: currency
+    description: Interest already earned through the purchase date per the Ismertető ACT/ACT period-fraction formula (irregular first period supported).
+
+  - name: purchaseAmount
+    type: number
+    label: Purchase Amount
+    required: false
+    unit: currency
+    description: Total paid at purchase — principal plus accrued interest when applicable.
+
+assumptions:
+  - Babakötvény is an annual-pay inflation-linked retail bond held on a Start-értékpapírszámla; commercial inputs use the published effective annual coupon rate ga (CPI base floored at 0% + interest premium). Do not require live CPI + premium composer fields (ADR 0038).
+  - For series 2045/S the interest premium is 3.00% p.a.; the first period publishes ga = 4.40% + 3.00% = 7.40% p.a. (ÁKK nyilvános ajánlattétel, 2026-01-28).
+  - Day-count is ACT/ACT (Tényleges/tényleges). Coupon frequency is annual (product-type constant).
+  - "First cash coupon rate gp is the time-proportion of ga over actual days in the (possibly short) first period, rounded to 0.01%. For 2045/S, 7.40% × 364/365 = 7.38%. Technical anniversary dates step back one/two years from firstCouponDate (dt1/dt0) as in the Ismertető."
+  - Later cash coupons pay the time-proportion of the period ga over actual calendar days between payment dates (leap days included); a full non-leap annual grid pays ga.
+  - Accrued interest uses Ismertető ACT/ACT period-fraction formulas with the same technical dates; offering price is par on the first offering day and par plus accrued afterwards.
+  - Interest/accrued on the 1 Ft face is computed to four decimal places, multiplied by quantity, then rounded to whole forints for customer settlement; engine examples may assert unrounded intermediate amounts where noted.
+  - Principal is repaid at maturity in one amount. Intermediate coupons are HUF cash inflows (not kamatjuttatás).
+  - Issuer buyback at age 18 / other Fétám cases, Start-számla annual deposit caps, tax treatment, and non-transferability enforcement are out of scope for this iteration (eligibility copy only).
+  - Maturity and sale windows come from the series / offering; calculators must not invent a fixed term length.
+  - When a couponSchedule is supplied, periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
+  - Breaking input contract aligns with ADR 0038 / v2alpha3 shapes used by PMÁP and FixMÁP (no couponFrequencyMonths — annual only).
+
+ui:
+  formTitle: Baby Bond (Babakötvény)
+  sections:
+    - id: baba-core
+      title: Babakötvény Inputs
+      fieldNames:
+        - principal
+        - purchaseDate
+        - annualCouponRatePct
+        - issueDate
+        - maturityDate
+        - firstCouponDate
+        - dayCountConvention
+
+exampleRefs:
+  - ./examples/nominal-case.yaml
+  - ./examples/first-period-coupon-case.yaml
+  - ./examples/mid-period-accrued-case.yaml

@@ -334,7 +334,7 @@ registerCouponBearingFamily({
 registerCouponBearingFamily({
   productCode: 'mapp',
   inflationSchedulePreview: true,
-  migrationStatus: 'schedule-usable',
+  migrationStatus: 'fully-spec-backed',
   productSpec: MAPP_PRODUCT_SPEC,
   marketableRequiredFields: Object.freeze([
     ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS,

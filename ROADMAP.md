@@ -417,7 +417,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Author `mapp/product.yaml` + examples; catalog `government-security.mapp.standard` at **`spec-only`**.
 - [x] Engine family mapper + frequency-parameterized coupon primitives (Ismertető accrued / `gp`; kamatjuttatás) → **`calc-aligned`**.
 - [x] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill (frequency from offering spacing) → **`schedule-usable`**.
-- [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off MÁP Plusz; temporary tip→`master` CI head PR (close, do not merge). Prefer omit-middle-rung catalog stamp with note (DKJ–FixMÁP precedent) unless an explicit `commercially-usable` row is useful.
+- [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off MÁP Plusz; temporary tip→`master` CI head PR (close, do not merge). Note: commercially-usable bar was met on the SPA layer; catalog stamped **`fully-spec-backed`** without an intermediate `commercially-usable` row (DKJ–FixMÁP precedent).
 
 #### Later remaining families
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.

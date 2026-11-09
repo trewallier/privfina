@@ -1,0 +1,25 @@
+specVersion: v2alpha3
+productId: government-security.mapp.standard
+exampleId: nominal-case
+title: Nominal MÁP Plusz 2031/M6 purchase on issue
+description: Baseline newer annual-pay MÁP Plusz (2031/M6-shaped) purchased on issue — no accrued interest.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 5.0
+  purchaseDate: 2026-10-02
+  issueDate: 2026-10-02
+  maturityDate: 2031-11-27
+  firstCouponDate: 2027-11-27
+  couponFrequencyMonths: 12
+  dayCountConvention: ACT/ACT
+
+expected:
+  annualCouponRatePct: 5.0
+  accruedInterestAmount: 0
+  purchaseAmount: 1000000
+
+notes:
+  - Mirrors nyilvános ajánlattétel 2031/M6 issue/maturity/first coupon.
+  - couponFrequencyMonths 12 = annual kamatteljesítés (newer MÁP Plusz).
+  - Purchase on issue → accrued 0; purchaseAmount = principal.

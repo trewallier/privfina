@@ -1,0 +1,24 @@
+specVersion: v2alpha3
+productId: government-security.mapp.standard
+exampleId: semi-annual-legacy-case
+title: Legacy semi-annual MÁP Plusz purchase on issue
+description: Older MÁP Plusz series pay every 6 months; same product code with couponFrequencyMonths=6. Purchase on issue — no accrued.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 4.0
+  purchaseDate: 2020-06-01
+  issueDate: 2020-06-01
+  maturityDate: 2025-06-01
+  firstCouponDate: 2020-12-01
+  couponFrequencyMonths: 6
+  dayCountConvention: ACT/ACT
+
+expected:
+  annualCouponRatePct: 4.0
+  accruedInterestAmount: 0
+  purchaseAmount: 1000000
+
+notes:
+  - couponFrequencyMonths 6 selects semi-annual kamatteljesítés (older MÁP Plusz).
+  - Regular period gp = ga × 6/12 = 2.0% of face per payment; intermediate payments remain kamatjuttatás (in-kind face).

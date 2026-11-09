@@ -1,0 +1,42 @@
+specVersion: v2alpha3
+productId: government-security.mapp.standard
+exampleId: mid-period-after-coupon-case
+title: Mid-holding MÁP Plusz purchase after first annual coupon
+description: Purchase after the first kamatjuttatás date; accrued from last payment 2027-11-27 under the covering band using regular ACT/ACT period fraction.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 5.5
+  purchaseDate: 2028-05-01
+  issueDate: 2026-10-02
+  maturityDate: 2031-11-27
+  firstCouponDate: 2027-11-27
+  couponFrequencyMonths: 12
+  dayCountConvention: ACT/ACT
+  couponSchedule:
+    - from: 2026-10-02
+      to: 2027-11-27
+      rate: 5.0
+    - from: 2027-11-27
+      to: 2028-11-27
+      rate: 5.25
+    - from: 2028-11-27
+      to: 2029-11-27
+      rate: 5.5
+    - from: 2029-11-27
+      to: 2030-11-27
+      rate: 5.75
+    - from: 2030-11-27
+      to: 2031-11-27
+      rate: 6.0
+
+expected:
+  annualCouponRatePct: 5.25
+  # Regular period: ga * (ds - di-1) / (di - di-1) = 0.0525 * 156/366 (2028 leap year period 2027-11-27→2028-11-27)
+  accruedInterestAmount: 22377.04918032787
+  purchaseAmount: 1022377.0491803279
+
+notes:
+  - "Accrual starts at last payment 2027-11-27, not at year-band from."
+  - "Covering ga at purchase is 5.25%."
+  - "On a coupon payment date, accrued is zero."

@@ -1,0 +1,43 @@
+specVersion: v2alpha3
+productId: government-security.mapp.standard
+exampleId: stepped-coupon-case
+title: Stepped MÁP Plusz 2031/M6 mid-offering purchase
+description: Purchase inside the long first annual period of 2031/M6; covering ga from published bands; accrued via Ismertető first-period ACT/ACT formula.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 5.5
+  purchaseDate: 2027-01-15
+  issueDate: 2026-10-02
+  maturityDate: 2031-11-27
+  firstCouponDate: 2027-11-27
+  couponFrequencyMonths: 12
+  dayCountConvention: ACT/ACT
+  couponSchedule:
+    - from: 2026-10-02
+      to: 2027-11-27
+      rate: 5.0
+    - from: 2027-11-27
+      to: 2028-11-27
+      rate: 5.25
+    - from: 2028-11-27
+      to: 2029-11-27
+      rate: 5.5
+    - from: 2029-11-27
+      to: 2030-11-27
+      rate: 5.75
+    - from: 2030-11-27
+      to: 2031-11-27
+      rate: 6.0
+
+expected:
+  annualCouponRatePct: 5.0
+  # d0=2026-10-02, d1=2027-11-27, dt1=2026-11-27, dt0=2025-11-27; ds=2027-01-15 > dt1
+  # accrued/face = ga*((dt1-d0)/(dt1-dt0) + (ds-dt1)/(d1-dt1)) = 0.05*(56/365 + 49/365)
+  accruedInterestAmount: 14383.561643835616
+  purchaseAmount: 1014383.5616438356
+
+notes:
+  - "Derived annualCouponRatePct is covering-band ga at purchase (5.0), not the input fallback (5.5)."
+  - "First-period accrued uses Ismertető formula with technical dates stepped back one/two annual periods from firstCouponDate."
+  - "First tényleges kamat at 2027-11-27 is gp=5.77% (=5+5*56/365), paid as kamatjuttatás (additional face), not HUF cash."

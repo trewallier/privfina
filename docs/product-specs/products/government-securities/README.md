@@ -18,13 +18,13 @@ Commercial inputs use **effective** period coupon rates and **real** maturities 
 
 Published market family folders already (or soon) available on the `market-data` branch — commercial hosts land under §6j (not §6f).
 
-**Delivery:** FixMÁP (`fixmap`) and MÁP Plusz (`mapp`) done; remaining families follow in later stacks (register on ADR 0040 `coupon-bearing` profile — do not clone form modules). Open a temporary tip→`master` CI head PR for each stack (close, do not merge).
+**Delivery:** FixMÁP (`fixmap`) and MÁP Plusz (`mapp`) done; **Babakötvény (`baba`) is the current §6j stack** (register on ADR 0040 `coupon-bearing` profile — do not clone form modules). Remaining families follow later. Open a temporary tip→`master` CI head PR for each stack (close, do not merge).
 
 | Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
 | `fixmap` | FixMÁP | **Done (fully-spec-backed)** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
 | `mapp` | MÁP Plusz (incl. nyomdai) | **Done (fully-spec-backed)** — series `couponFrequencyMonths` 12 (newer annual) or 6 (older semi-annual); Ismertető ACT/ACT accrued + kamatjuttatás; multi-band rates; kamatok min–max dual rows preserved as published |
-| `baba` | Babakötvény | Follow-on; optional prices already ingested |
+| `baba` | Babakötvény | **This stack** — locked example **2045/S** (ÁKK ajánlattétel + Ismertető): effective `ga` (CPI floored + 3% premium; first period 7.40%); ACT/ACT accrued; irregular first cash coupon (364/365 → 7.38%); annual HUF coupons; Start-számla / birth-cohort eligibility as soft hints; optional prices already ingested |
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
 | *(possible `pemap`)* | PEMÁP | Split only if needed |
 | `omap` | 1MÁP | Follow-on |

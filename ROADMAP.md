@@ -419,8 +419,18 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill (frequency from offering spacing) → **`schedule-usable`**.
 - [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off MÁP Plusz; temporary tip→`master` CI head PR (close, do not merge). Note: commercially-usable bar was met on the SPA layer; catalog stamped **`fully-spec-backed`** without an intermediate `commercially-usable` row (DKJ–FixMÁP precedent).
 
+#### Babakötvény next (`baba`) — this stack
+Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on the commercial investment picker. Market ingest already publishes optional `families/baba/`. Locked example series **2045/S** (ISIN HU0000407549; ÁKK nyilvános ajánlattétel + Ismertető): CPI base (floored at 0%) + **3.00%** premium → commercial **effective** `ga` (first period **7.40%**); **ACT/ACT** (Tényleges/tényleges) accrued with irregular first coupon (**364** days → **7.38%** first cash coupon); annual **HUF** coupons every 1 February; Start-értékpapírszámla / birth-cohort eligibility as YAML soft hints. Register on shared `coupon-bearing` profile (ADR 0040); dedicated engine primitives (reuse MÁP Plusz–style ACT/ACT helpers, **no** kamatjuttatás) — do not thin-wrap PMÁP/FixMÁP ACT/360. Temporary tip→`master` CI head PR (close, do not merge).
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ROADMAP / spec / ownership / gov-sec README: Babakötvény-next delivery + temporary CI head; 2045/S Ismertető notes (ACT/ACT, irregular first coupon, Start-számla).
+- [ ] Author `baba/product.yaml` + examples; catalog `government-security.baba.standard` at **`spec-only`**.
+- [ ] Engine family mapper + ACT/ACT coupon primitives (Ismertető accrued / first-period fraction; annual cash coupons) → **`calc-aligned`**.
+- [ ] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill → **`schedule-usable`**.
+- [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off Babakötvény; temporary tip→`master` CI head PR (close, do not merge). Prefer omit-middle-rung catalog stamp with a note (DKJ–FixMÁP / MÁP Plusz precedent).
+
 #### Later remaining families
-- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`baba`, `emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
+- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).
 - [ ] SPA series picker + autofill per remaining family via registry registration; parity tests.
 

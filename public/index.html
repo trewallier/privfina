@@ -192,6 +192,7 @@
       #investment-pmap-wrap,
       #investment-fixmap-wrap,
       #investment-mapp-wrap,
+      #investment-baba-wrap,
       #investment-bmap-wrap {
         display: grid;
         gap: 12px;
@@ -249,6 +250,7 @@
       .label-title .pmap-field-label,
       .label-title .fixmap-field-label,
       .label-title .mapp-field-label,
+      .label-title .baba-field-label,
       .label-title .bmap-field-label {
         min-width: 0;
       }
@@ -2301,6 +2303,53 @@
                       />
                       <input
                         id="mapp-day-count-convention"
+                        name="dayCountConvention"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                    </div>
+                  </div>
+
+                  <div id="investment-baba-wrap" hidden>
+                    <div class="row">
+                      <label id="baba-principal-wrap">
+                        <span class="label-title"><span class="baba-field-label">Principal</span></span>
+                        <input id="baba-principal" name="principal" class="money-amount" type="text" inputmode="decimal" data-fraction-digits="0" required />
+                      </label>
+                      <label id="baba-purchase-date-wrap">
+                        <span class="label-title"><span class="baba-field-label">Purchase Date</span></span>
+                        <input id="baba-purchase-date" name="purchaseDate" type="date" required />
+                      </label>
+                    </div>
+                    <div class="row">
+                      <label id="baba-annual-coupon-rate-pct-wrap">
+                        <span class="label-title"><span class="baba-field-label">Annual Coupon Rate</span></span>
+                        <input id="baba-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      </label>
+                      <label id="baba-maturity-date-wrap">
+                        <span class="label-title"><span class="baba-field-label">Maturity Date</span></span>
+                        <input id="baba-maturity-date" name="maturityDate" type="date" required />
+                      </label>
+                    </div>
+                    <div class="row">
+                      <label id="baba-issue-date-wrap">
+                        <span class="label-title"><span class="baba-field-label">Issue Date</span></span>
+                        <input id="baba-issue-date" name="issueDate" type="date" required />
+                      </label>
+                      <label id="baba-first-coupon-date-wrap">
+                        <span class="label-title"><span class="baba-field-label">First Coupon Date</span></span>
+                        <input id="baba-first-coupon-date" name="firstCouponDate" type="date" />
+                      </label>
+                      <input
+                        id="baba-coupon-schedule"
+                        name="couponSchedule"
+                        type="hidden"
+                        value=""
+                        autocomplete="off"
+                      />
+                      <input
+                        id="baba-day-count-convention"
                         name="dayCountConvention"
                         type="hidden"
                         value=""

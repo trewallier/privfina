@@ -24,6 +24,7 @@ import { BMAP_PRODUCT_SPEC } from '../public/controller/bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from '../public/controller/dkj-form.js'
 import { FIXMAP_PRODUCT_SPEC } from '../public/controller/fixmap-form.js'
 import { MAPP_PRODUCT_SPEC } from '../public/controller/mapp-form.js'
+import { BABA_PRODUCT_SPEC } from '../public/controller/baba-form.js'
 import { PMAP_PRODUCT_SPEC } from '../public/controller/pmap-form.js'
 
 const PICKER_STATUSES = new Set([
@@ -39,10 +40,11 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(getCommercialInvestmentFamily('bmap')?.productSpec.id).toBe(BMAP_PRODUCT_SPEC.id)
     expect(getCommercialInvestmentFamily('fixmap')?.productSpec.id).toBe(FIXMAP_PRODUCT_SPEC.id)
     expect(getCommercialInvestmentFamily('mapp')?.productSpec.id).toBe(MAPP_PRODUCT_SPEC.id)
+    expect(getCommercialInvestmentFamily('baba')?.productSpec.id).toBe(BABA_PRODUCT_SPEC.id)
   })
 
   it('returns null for unsupported product codes', () => {
-    expect(getCommercialInvestmentFamily('baba')).toBeNull()
+    expect(getCommercialInvestmentFamily('emap')).toBeNull()
     expect(getCommercialInvestmentFamily('regular-bond')).toBeNull()
     expect(getCommercialInvestmentFamily('')).toBeNull()
     expect(getCommercialInvestmentFamily(undefined as unknown as string)).toBeNull()
@@ -54,12 +56,13 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(getCommercialInvestmentFamily('bmap')?.composerProfile).toBe('coupon-bearing')
     expect(getCommercialInvestmentFamily('fixmap')?.composerProfile).toBe('coupon-bearing')
     expect(getCommercialInvestmentFamily('mapp')?.composerProfile).toBe('coupon-bearing')
+    expect(getCommercialInvestmentFamily('baba')?.composerProfile).toBe('coupon-bearing')
   })
 
-  it('lists registered family codes including FixMÁP and MÁP Plusz', () => {
+  it('lists registered family codes including FixMÁP, MÁP Plusz, and Babakötvény', () => {
     const codes = listCommercialInvestmentFamilyCodes()
-    expect(codes.sort()).toEqual(['bmap', 'dkj', 'fixmap', 'mapp', 'pmap'])
-    expect(listCommercialInvestmentFamilies()).toHaveLength(5)
+    expect(codes.sort()).toEqual(['baba', 'bmap', 'dkj', 'fixmap', 'mapp', 'pmap'])
+    expect(listCommercialInvestmentFamilies()).toHaveLength(6)
   })
 
   it('resolves productCode from bundle productSpec id or subtype', () => {
@@ -91,6 +94,12 @@ describe('commercial investment family registry (ADR 0040)', () => {
         config: { subtype: 'mapp' }
       })
     ).toBe('mapp')
+    expect(
+      resolveCommercialInvestmentProductCodeFromBundle({
+        productId: BABA_PRODUCT_SPEC.id,
+        config: { subtype: 'baba' }
+      })
+    ).toBe('baba')
     expect(resolveCommercialInvestmentProductCodeFromBundle(null)).toBeNull()
     expect(
       resolveCommercialInvestmentProductCodeFromBundle({
@@ -105,10 +114,11 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(new Set(registryCodes)).toEqual(new Set(pickerCodes))
     expect(pickerCodes).toContain('fixmap')
     expect(pickerCodes).toContain('mapp')
+    expect(pickerCodes).toContain('baba')
   })
 
   it('derives coupon-bearing selectors/inputIds from shared profile helpers', () => {
-    for (const code of ['pmap', 'bmap', 'fixmap', 'mapp'] as const) {
+    for (const code of ['pmap', 'bmap', 'fixmap', 'mapp', 'baba'] as const) {
       const prefix = couponBearingDomPrefix(code)
       const entry = getCommercialInvestmentFamily(code)
       expect(entry?.composerProfile).toBe('coupon-bearing')
@@ -156,6 +166,8 @@ describe('commercial investment family registry (ADR 0040)', () => {
     }
     expect(getCommercialInvestmentFamily('mapp')?.migrationStatus).toBe('fully-spec-backed')
     expect(getCommercialInvestmentFamily('mapp')?.hostWrapId).toBe('investment-mapp-wrap')
+    expect(getCommercialInvestmentFamily('baba')?.migrationStatus).toBe('schedule-usable')
+    expect(getCommercialInvestmentFamily('baba')?.hostWrapId).toBe('investment-baba-wrap')
     expect(getCommercialInvestmentFamily('dkj')?.marketableRequiredFields).toEqual([
       'purchasePricePct',
       'termMonths',
@@ -165,11 +177,15 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(getCommercialInvestmentFamily('pmap')?.marketableRequiredFields).toEqual([
       ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
     ])
+    expect(getCommercialInvestmentFamily('baba')?.marketableRequiredFields).toEqual([
+      ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
+    ])
   })
 
   it('derives MARKET_MARKETABLE_REQUIRED_FIELDS from the registry', () => {
     expect(MARKET_MARKETABLE_REQUIRED_FIELDS).toEqual(buildMarketMarketableRequiredFields())
     expect(Object.keys(MARKET_MARKETABLE_REQUIRED_FIELDS).sort()).toEqual([
+      'baba',
       'bmap',
       'dkj',
       'fixmap',
@@ -278,5 +294,6 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]bmap['"]/)
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]fixmap['"]/)
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]mapp['"]/)
+    expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]baba['"]/)
   })
 })

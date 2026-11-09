@@ -372,7 +372,7 @@ registerCouponBearingFamily({
 registerCouponBearingFamily({
   productCode: 'baba',
   inflationSchedulePreview: true,
-  migrationStatus: 'schedule-usable',
+  migrationStatus: 'fully-spec-backed',
   productSpec: BABA_PRODUCT_SPEC,
   applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
     applyBabaSpecToForm({

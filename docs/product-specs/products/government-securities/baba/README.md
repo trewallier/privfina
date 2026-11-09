@@ -4,7 +4,7 @@ Hungarian retail inflation-linked government bond for Start-értékpapírszámla
 
 ## Scope
 
-This specification models Babakötvény from the ÁKK Ismertető / nyilvános ajánlattétel contract for locked example series **2045/S** (ISIN HU0000407549): ACT/ACT (Tényleges/tényleges) accrued, irregular first-period cash coupon (`7.40% × 364/365 = 7.38%`), annual HUF coupons every 1 February, principal at maturity. Catalog status advances under ROADMAP §6j on the commercial investment composer (ADR 0027 / 0038 / 0040); register on shared `coupon-bearing` profile — do not clone PMÁP/FixMÁP form modules.
+This specification models Babakötvény from the ÁKK Ismertető / nyilvános ajánlattétel contract for locked example series **2045/S** (ISIN HU0000407549): ACT/ACT (Tényleges/tényleges) accrued, irregular first-period cash coupon (`7.40% × 364/365 = 7.38%`), annual HUF coupons every 1 February, principal at maturity. Catalog status is **fully-spec-backed** on the commercial investment composer (ADR 0027 / 0038 / 0040 / ROADMAP §6j); commercially-usable composer bar was satisfied when the SPA host landed (omit-middle-rung catalog stamp, DKJ–FixMÁP / MÁP Plusz precedent). Register on shared `coupon-bearing` profile — do not clone PMÁP/FixMÁP form modules.
 
 ## Out of Scope
 

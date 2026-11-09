@@ -68,12 +68,12 @@ Inventory (by product)
   - Browser path: `public/controller/mapp-calculation-adapter.js` + embedded `mapp-product-spec.js` + registry `coupon-bearing` entry (`#investment-mapp-wrap`); market family `mapp`; autofill sets `couponFrequencyMonths` (default 12; infer 6 from offering `paymentDates` spacing)
   - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP precedent)
 
-- Babakötvény (`government-security.baba.standard`) — **schedule-usable** (ROADMAP §6j)
+- Babakötvény (`government-security.baba.standard`) — **fully-spec-backed** (ROADMAP §6j)
   - Spec: `docs/product-specs/products/government-securities/baba/product.yaml`
   - Engine primitives: `src/finance_engine/instruments/baba.ts` (annual HUF cash coupons; Ismertető ACT/ACT accrued; first-period `gp` round-to-0.01%; no kamatjuttatás; no `productCode` forks)
   - Family mapper: `src/finance_engine/product_specs/baba.ts`
   - Browser path: `public/controller/baba-calculation-adapter.js` + embedded `baba-product-spec.js` + registry `coupon-bearing` entry (`#investment-baba-wrap`); market family `baba`
-  - Status: commercial host + autofill on SPA; 2045/S first-period 7.38% goldens; fully-spec-backed embed follows in close layer
+  - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP / MÁP Plusz precedent)
 
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`

@@ -166,7 +166,7 @@ describe('commercial investment family registry (ADR 0040)', () => {
     }
     expect(getCommercialInvestmentFamily('mapp')?.migrationStatus).toBe('fully-spec-backed')
     expect(getCommercialInvestmentFamily('mapp')?.hostWrapId).toBe('investment-mapp-wrap')
-    expect(getCommercialInvestmentFamily('baba')?.migrationStatus).toBe('schedule-usable')
+    expect(getCommercialInvestmentFamily('baba')?.migrationStatus).toBe('fully-spec-backed')
     expect(getCommercialInvestmentFamily('baba')?.hostWrapId).toBe('investment-baba-wrap')
     expect(getCommercialInvestmentFamily('dkj')?.marketableRequiredFields).toEqual([
       'purchasePricePct',

@@ -9,22 +9,23 @@ This family contains Hungarian government securities in the product-specificatio
 - Bonus Hungarian Government Security (BMÁP) — `government-security.bmap.standard`
 - Fixed Hungarian Government Security (FixMÁP) — `government-security.fixmap.standard` (**fully-spec-backed**; ROADMAP §6j)
 - Hungarian Government Security Plus (MÁP Plusz) — `government-security.mapp.standard` (**fully-spec-backed**; ROADMAP §6j)
+- Baby Bond (Babakötvény) — `government-security.baba.standard` (**fully-spec-backed**; ROADMAP §6j)
 
 Product differences live primarily in product specifications, assumptions, worked examples, and metadata rather than engine branches (ADR 0015).
 
-Commercial inputs use **effective** period coupon rates and **real** maturities from published market data (`data/market/v2/`), not base+premium composition. Optional `couponSchedule` entries may leave future `rate` undefined. Day-count is series-/product-parameterized (default ACT/360 for current ÁKK retail bonds).
+Commercial inputs use **effective** period coupon rates and **real** maturities from published market data (`data/market/v2/`), not base+premium composition. Optional `couponSchedule` entries may leave future `rate` undefined. Day-count is series-/product-parameterized (default ACT/360 for current ÁKK retail bonds; Babakötvény ACT/ACT).
 
 ## Subsequent inclusion matrix (ROADMAP §6j)
 
 Published market family folders already (or soon) available on the `market-data` branch — commercial hosts land under §6j (not §6f).
 
-**Delivery:** FixMÁP (`fixmap`) and MÁP Plusz (`mapp`) done; **Babakötvény (`baba`) is the current §6j stack** (register on ADR 0040 `coupon-bearing` profile — do not clone form modules). Remaining families follow later. Open a temporary tip→`master` CI head PR for each stack (close, do not merge).
+**Delivery:** FixMÁP (`fixmap`), MÁP Plusz (`mapp`), and Babakötvény (`baba`) done; remaining families follow in later stacks (register on ADR 0040 `coupon-bearing` profile — do not clone form modules). Open a temporary tip→`master` CI head PR for each stack (close, do not merge).
 
 | Market family | Typical offerings | Notes for §6j |
 | --- | --- | --- |
 | `fixmap` | FixMÁP | **Done (fully-spec-backed)** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
 | `mapp` | MÁP Plusz (incl. nyomdai) | **Done (fully-spec-backed)** — series `couponFrequencyMonths` 12 (newer annual) or 6 (older semi-annual); Ismertető ACT/ACT accrued + kamatjuttatás; multi-band rates; kamatok min–max dual rows preserved as published |
-| `baba` | Babakötvény | **This stack** — locked example **2045/S** (ÁKK ajánlattétel + Ismertető): effective `ga` (CPI floored + 3% premium; first period 7.40%); ACT/ACT accrued; irregular first cash coupon (364/365 → 7.38%); annual HUF coupons; Start-számla / birth-cohort eligibility as soft hints; optional prices already ingested |
+| `baba` | Babakötvény | **Done (fully-spec-backed)** — locked example **2045/S**: effective `ga` (CPI floored + 3% premium); ACT/ACT accrued; irregular first cash coupon (364/365 → 7.38%); annual HUF coupons; Start-számla / birth-cohort eligibility as soft hints |
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
 | *(possible `pemap`)* | PEMÁP | Split only if needed |
 | `omap` | 1MÁP | Follow-on |
@@ -32,4 +33,4 @@ Published market family folders already (or soon) available on the `market-data`
 | `ktj` | KTJ I / KTJ II | Follow-on; routing stub in v2 |
 | `map2` | 2MÁP | Follow-on; routing stub in v2 |
 
-When adding a family: author `product.yaml` + examples first, register catalog `spec-only`, then engine → schedule-usable → commercially-usable → fully-spec-backed on the commercial investment picker. Prefer an explicit `commercially-usable` catalog stamp; FixMÁP (§6j) omitted that middle row after the SPA bar cleared (DKJ/PMÁP/BMÁP precedent) — document the skip in the catalog notes if repeating. Reuse ADR 0038 series/coupon shapes.
+When adding a family: author `product.yaml` + examples first, register catalog `spec-only`, then engine → schedule-usable → commercially-usable → fully-spec-backed on the commercial investment picker. Prefer an explicit `commercially-usable` catalog stamp; FixMÁP / MÁP Plusz / Babakötvény (§6j) omitted that middle row after the SPA bar cleared (DKJ/PMÁP/BMÁP precedent) — document the skip in the catalog notes if repeating. Reuse ADR 0038 series/coupon shapes.

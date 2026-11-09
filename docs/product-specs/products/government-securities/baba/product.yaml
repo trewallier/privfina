@@ -127,7 +127,7 @@ assumptions:
   - For series 2045/S the interest premium is 3.00% p.a.; the first period publishes ga = 4.40% + 3.00% = 7.40% p.a. (ÁKK nyilvános ajánlattétel, 2026-01-28).
   - Day-count is ACT/ACT (Tényleges/tényleges). Coupon frequency is annual (product-type constant).
   - "First cash coupon rate gp is the time-proportion of ga over actual days in the (possibly short) first period, rounded to 0.01%. For 2045/S, 7.40% × 364/365 = 7.38%. Technical anniversary dates step back one/two years from firstCouponDate (dt1/dt0) as in the Ismertető."
-  - Later cash coupons pay the time-proportion of the period ga over actual calendar days between payment dates (leap days included); a full non-leap annual grid pays ga.
+  - Later (regular) cash coupons pay the covering period ga as the payable rate gp (annual grid); leap days are included in ACT/ACT accrued day counts between payment dates, not as a separate cash-coupon day-proportion beyond ga on a full anniversary period.
   - Accrued interest uses Ismertető ACT/ACT period-fraction formulas with the same technical dates; offering price is par on the first offering day and par plus accrued afterwards.
   - Interest/accrued on the 1 Ft face is computed to four decimal places, multiplied by quantity, then rounded to whole forints for customer settlement; engine examples may assert unrounded intermediate amounts where noted.
   - Principal is repaid at maturity in one amount. Intermediate coupons are HUF cash inflows (not kamatjuttatás).
@@ -154,3 +154,5 @@ exampleRefs:
   - ./examples/nominal-case.yaml
   - ./examples/first-period-coupon-case.yaml
   - ./examples/mid-period-accrued-case.yaml
+  - ./examples/mid-period-after-coupon-case.yaml
+  - ./examples/schedule-gap-skip-case.yaml

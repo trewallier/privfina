@@ -1,4 +1,4 @@
-# Baby Bond / Babakötvény (BABA)
+# Baby Bond (Babakötvény)
 
 Hungarian retail inflation-linked government bond for Start-értékpapírszámla holders. Coupons pay annually in HUF. Commercial inputs use published **effective** annual rates (KSH prior-year CPI floored at 0% + series premium), not live base+premium fields.
 
@@ -22,3 +22,5 @@ The examples in this folder are executable acceptance criteria for the specifica
 - `nominal-case` — 2045/S purchased on issue (accrued 0)
 - `first-period-coupon-case` — pins first cash coupon rate **7.38%** from ajánlattétel arithmetic
 - `mid-period-accrued-case` — purchase inside the short first period with ACT/ACT accrued
+- `mid-period-after-coupon-case` — purchase after first coupon; accrued from last payment
+- `schedule-gap-skip-case` — unpublished `couponSchedule` band skips cash coupons

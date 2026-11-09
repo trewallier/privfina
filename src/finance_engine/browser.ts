@@ -98,6 +98,19 @@ export {
 export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
 
 export {
+  deriveMappRateOutputs,
+  deriveMappAccruedInterestAmount,
+  resolveMappAccrualStartIso,
+  normalizeMappCouponFrequencyMonths,
+  mappRegularPeriodRatePct,
+  mappFirstPeriodRatePct,
+  listMappPaymentDatesIso,
+  generateMappCouponFlows,
+  generateMappSemiAnnualCouponFlows
+} from './instruments/mapp'
+export type { MappRateOutputs, MappSpecInputs } from './instruments/mapp'
+
+export {
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,
   calendarDaysBetweenIso,

@@ -61,6 +61,13 @@ Inventory (by product)
   - Browser path: `public/controller/fixmap-calculation-adapter.js` + embedded `fixmap-product-spec.js` + commercial host `#investment-fixmap-wrap`; market family `fixmap`
   - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ/PMÁP/BMÁP precedent)
 
+- MÁP Plusz (`government-security.mapp.standard`) — **calc-aligned** (ROADMAP §6j)
+  - Spec: `docs/product-specs/products/government-securities/mapp/product.yaml`
+  - Engine primitives: `src/finance_engine/instruments/mapp.ts` (`couponFrequencyMonths` 6|12; Ismertető ACT/ACT accrued + first-period `gp`; kamatjuttatás compounds face; shared covering-period helpers; no `productCode` forks)
+  - Family mapper: `src/finance_engine/product_specs/mapp.ts`
+  - Browser path: deferred to SPA stack layer (ADR 0040 `coupon-bearing` registry entry + thin adapter)
+  - Status: executable YAML example goldens green; commercial composer not yet wired
+
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
   - Embedded: `public/controller/home-savings-product-spec.js` (YAML parity tests)

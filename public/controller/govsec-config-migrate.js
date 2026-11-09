@@ -90,3 +90,18 @@ export function migrateMappConfigForEdit(config = {}) {
   delete next.startDate
   return next
 }
+
+/**
+ * Normalize Babakötvény configs for edit (ADR 0038 effective rate + maturity).
+ * Babakötvény never used inflation+premium storage; keep annualCouponRatePct as-is.
+ */
+export function migrateBabaConfigForEdit(config = {}) {
+  const next = { ...config }
+  const existing = toFiniteNumber(next.annualCouponRatePct)
+  if (existing != null) {
+    next.annualCouponRatePct = existing
+  }
+  next.maturityDate = next.maturityDate || next.dueDate || ''
+  delete next.startDate
+  return next
+}

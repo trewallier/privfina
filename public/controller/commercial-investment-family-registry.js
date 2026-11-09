@@ -1,7 +1,7 @@
 /**
  * Commercial investment family registry (ADR 0040).
  * Host orchestration dispatches through lookup — no productCode forests in the host.
- * Coupon-bearing entries (pmap/bmap/fixmap/mapp) share helpers from
+ * Coupon-bearing entries (pmap/bmap/fixmap/mapp/baba) share helpers from
  * commercial-investment-coupon-profile.js; §6j follow-ons register on that profile.
  *
  * Registry is the addition path for: preview adapters, marketable required fields,
@@ -50,10 +50,19 @@ import {
 } from './mapp-form.js'
 import { calculateMappFromSpecInputs } from './mapp-calculation-adapter.js'
 import {
+  BABA_PRODUCT_SPEC,
+  applyBabaSpecToForm,
+  setBabaFieldVisibility,
+  mapFormDataToBabaSpecInputs,
+  generateBabaInstrumentBundleFromSpecInputs
+} from './baba-form.js'
+import { calculateBabaFromSpecInputs } from './baba-calculation-adapter.js'
+import {
   migrateBmapConfigForEdit,
   migratePmapConfigForEdit,
   migrateFixmapConfigForEdit,
-  migrateMappConfigForEdit
+  migrateMappConfigForEdit,
+  migrateBabaConfigForEdit
 } from './govsec-config-migrate.js'
 import {
   couponBearingDomPrefix,
@@ -356,6 +365,31 @@ registerCouponBearingFamily({
     return generateMappInstrumentBundleFromSpecInputs(specInputs, {
       ...meta,
       label: meta.label || MAPP_PRODUCT_SPEC.ui.formTitle
+    })
+  }
+})
+
+registerCouponBearingFamily({
+  productCode: 'baba',
+  inflationSchedulePreview: true,
+  migrationStatus: 'schedule-usable',
+  productSpec: BABA_PRODUCT_SPEC,
+  applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
+    applyBabaSpecToForm({
+      investmentForm: form,
+      investmentBox: box,
+      setAmountDefaultIfEmpty
+    })
+  },
+  setFieldVisibility: setBabaFieldVisibility,
+  mapFormDataToSpecInputs: mapFormDataToBabaSpecInputs,
+  calculateFromSpecInputs: calculateBabaFromSpecInputs,
+  migrateConfigForEdit: migrateBabaConfigForEdit,
+  buildBundle(formData, meta) {
+    const specInputs = mapFormDataToBabaSpecInputs(formData)
+    return generateBabaInstrumentBundleFromSpecInputs(specInputs, {
+      ...meta,
+      label: meta.label || BABA_PRODUCT_SPEC.ui.formTitle
     })
   }
 })

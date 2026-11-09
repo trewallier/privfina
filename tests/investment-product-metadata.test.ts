@@ -7,6 +7,7 @@ import {
 import { buildGenericBondSubtypeUiConfig } from '../public/controller/generic-bond-presentation.js'
 import { BMAP_PRODUCT_SPEC } from '../public/controller/bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from '../public/controller/dkj-form.js'
+import { BABA_PRODUCT_SPEC } from '../public/controller/baba-form.js'
 import { FIXMAP_PRODUCT_SPEC } from '../public/controller/fixmap-form.js'
 import { MAPP_PRODUCT_SPEC } from '../public/controller/mapp-form.js'
 import { PMAP_PRODUCT_SPEC } from '../public/controller/pmap-form.js'
@@ -25,11 +26,13 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(optionByValue.get('pmap')?.label).toBe(PMAP_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('fixmap')?.label).toBe(FIXMAP_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('mapp')?.label).toBe(MAPP_PRODUCT_SPEC.ui.formTitle)
+    expect(optionByValue.get('baba')?.label).toBe(BABA_PRODUCT_SPEC.ui.formTitle)
     expect(optionByValue.get('bmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('dkj')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('pmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('fixmap')?.migrationStatus).toBe('fully-spec-backed')
     expect(optionByValue.get('mapp')?.migrationStatus).toBe('fully-spec-backed')
+    expect(optionByValue.get('baba')?.migrationStatus).toBe('schedule-usable')
     expect(options.every((entry) => entry.available)).toBe(true)
   })
 
@@ -39,6 +42,7 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(findCommercialInvestmentProduct('bmap')?.spec.id).toBe(BMAP_PRODUCT_SPEC.id)
     expect(findCommercialInvestmentProduct('fixmap')?.spec.id).toBe(FIXMAP_PRODUCT_SPEC.id)
     expect(findCommercialInvestmentProduct('mapp')?.spec.id).toBe(MAPP_PRODUCT_SPEC.id)
+    expect(findCommercialInvestmentProduct('baba')?.spec.id).toBe(BABA_PRODUCT_SPEC.id)
     expect(findCommercialInvestmentProduct('regular-bond')).toBeNull()
   })
 
@@ -49,11 +53,13 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     expect(config.pmap.usesDedicatedHost).toBe(true)
     expect(config.fixmap.usesDedicatedHost).toBe(true)
     expect(config.mapp.usesDedicatedHost).toBe(true)
+    expect(config.baba.usesDedicatedHost).toBe(true)
     expect(config.bmap.hostId).toBe('investment-bmap-wrap')
     expect(config.dkj.hostId).toBe('investment-dkj-wrap')
     expect(config.pmap.hostId).toBe('investment-pmap-wrap')
     expect(config.fixmap.hostId).toBe('investment-fixmap-wrap')
     expect(config.mapp.hostId).toBe('investment-mapp-wrap')
+    expect(config.baba.hostId).toBe('investment-baba-wrap')
   })
 
   it('keeps catalog field descriptions aligned with embedded product specs', () => {
@@ -91,6 +97,15 @@ describe('commercial investment product metadata (ADR 0027)', () => {
     )
     expect(config.mapp.fields.annualCouponRatePct.description).toBe(
       inputByName(MAPP_PRODUCT_SPEC, 'annualCouponRatePct')?.description
+    )
+    expect(config.baba.fields.annualCouponRatePct.required).toBe(
+      inputByName(BABA_PRODUCT_SPEC, 'annualCouponRatePct')?.required
+    )
+    expect(config.baba.fields.maturityDate.required).toBe(
+      inputByName(BABA_PRODUCT_SPEC, 'maturityDate')?.required
+    )
+    expect(config.baba.fields.annualCouponRatePct.description).toBe(
+      inputByName(BABA_PRODUCT_SPEC, 'annualCouponRatePct')?.description
     )
   })
 })

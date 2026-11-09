@@ -1,3 +1,4 @@
+import { BABA_PRODUCT_SPEC } from './baba-form.js'
 import { BMAP_PRODUCT_SPEC } from './bmap-form.js'
 import { DKJ_PRODUCT_SPEC } from './dkj-form.js'
 import { FIXMAP_PRODUCT_SPEC } from './fixmap-form.js'
@@ -157,6 +158,12 @@ function buildSpecBackedInvestmentSubtypeUiConfig() {
       inflationSchedulePreview: true,
       annualRateNote:
         'MÁP Plusz uses the published effective annual coupon rate instead of the generic annual rate field.'
+    }),
+    baba: buildDedicatedHostSubtypeUiConfig(BABA_PRODUCT_SPEC, {
+      hostId: 'investment-baba-wrap',
+      inflationSchedulePreview: true,
+      annualRateNote:
+        'Babakötvény uses the published effective annual coupon rate instead of the generic annual rate field.'
     }),
     pmap: buildDedicatedHostSubtypeUiConfig(PMAP_PRODUCT_SPEC, {
       hostId: 'investment-pmap-wrap',

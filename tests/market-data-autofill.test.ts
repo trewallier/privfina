@@ -373,6 +373,14 @@ describe('market-data-autofill', () => {
       'dayCountConvention',
       'couponFrequencyMonths'
     ])
+    expect(marketableFieldsMissingFromPatch('baba', [])).toEqual([
+      'annualCouponRatePct',
+      'maturityDate',
+      'issueDate',
+      'firstCouponDate',
+      'couponSchedule',
+      'dayCountConvention'
+    ])
     expect(
       marketableFieldsMissingFromPatch('pmap', [
         'annualCouponRatePct',

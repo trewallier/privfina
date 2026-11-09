@@ -475,7 +475,8 @@ export function buildMarketAutofillPatch({
     family === 'pmap' ||
     family === 'bmap' ||
     family === 'fixmap' ||
-    family === 'mapp'
+    family === 'mapp' ||
+    family === 'baba'
   ) {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
     const onIso = String(current.purchaseDate || series?.issue || '').trim()
@@ -494,7 +495,7 @@ export function buildMarketAutofillPatch({
       setField('issueDate', series.issue)
     }
     // ROADMAP §6l: prefer offering payment calendar over anniversary heuristic.
-    // BMÁP quarterly (3); PMÁP/FixMÁP annual (12); MÁP Plusz series-authored
+    // BMÁP quarterly (3); PMÁP/FixMÁP/Babakötvény annual (12); MÁP Plusz series-authored
     // (12 newer annual default; 6 older semi-annual inferred from paymentDates).
     let frequencyMonths = 12
     if (family === 'bmap') {

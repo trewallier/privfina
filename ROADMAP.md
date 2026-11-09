@@ -426,7 +426,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ROADMAP / spec / ownership / gov-sec README: Babakötvény-next delivery + temporary CI head; 2045/S Ismertető notes (ACT/ACT, irregular first coupon, Start-számla).
 - [x] Author `baba/product.yaml` + examples; catalog `government-security.baba.standard` at **`spec-only`**.
 - [x] Engine family mapper + ACT/ACT coupon primitives (Ismertető accrued / first-period fraction; annual cash coupons) → **`calc-aligned`**.
-- [ ] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill → **`schedule-usable`**.
+- [x] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill → **`schedule-usable`**.
 - [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off Babakötvény; temporary tip→`master` CI head PR (close, do not merge). Prefer omit-middle-rung catalog stamp with a note (DKJ–FixMÁP / MÁP Plusz precedent).
 
 #### Later remaining families

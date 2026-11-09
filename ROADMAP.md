@@ -427,7 +427,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] Author `baba/product.yaml` + examples; catalog `government-security.baba.standard` at **`spec-only`**.
 - [x] Engine family mapper + ACT/ACT coupon primitives (Ismertető accrued / first-period fraction; annual cash coupons) → **`calc-aligned`**.
 - [x] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill → **`schedule-usable`**.
-- [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off Babakötvény; temporary tip→`master` CI head PR (close, do not merge). Prefer omit-middle-rung catalog stamp with a note (DKJ–FixMÁP / MÁP Plusz precedent).
+- [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off Babakötvény; temporary tip→`master` CI head PR (close, do not merge). Note: commercially-usable bar was met on the SPA layer; catalog stamped **`fully-spec-backed`** without an intermediate `commercially-usable` row (DKJ–FixMÁP / MÁP Plusz precedent).
 
 #### Later remaining families
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.

@@ -287,7 +287,7 @@ export function generateBabaAnnualCouponFlows(
     if (paymentIso < purchaseDateIso) continue
     const gp = periodRatePctForPayment({
       paymentIso,
-      isFirstPayment: i === 0,
+      isFirstPayment: paymentIso === firstCouponDateIso,
       annualRatePct: fallbackAnnualRatePct,
       issueDateIso,
       firstCouponDateIso,

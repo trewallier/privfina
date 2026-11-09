@@ -6,7 +6,8 @@ import {
   babaFirstPeriodRatePct,
   deriveBabaAccruedInterestAmount,
   deriveBabaRateOutputs,
-  generateBabaAnnualCouponFlows
+  generateBabaAnnualCouponFlows,
+  resolveBabaAccrualStartIso
 } from '../src/finance_engine/instruments/baba'
 import { loadBabaProductSpecYamlFromFiles } from '../src/finance_engine/product_specs/baba'
 import type { BabaSpecInputs } from '../src/finance_engine/instruments/baba'
@@ -102,5 +103,45 @@ describe('Babakötvény TypeScript primitives (ADR 0017 / 0038 / ROADMAP §6j)',
     const maturityFlows = inflows.filter((f) => f.date === '2045-02-01')
     expect(maturityFlows).toHaveLength(2)
     expect(maturityFlows.some((f) => f.amount === 1_000_000)).toBe(true)
+  })
+
+  it('locks mid-period-after-coupon accrual from last payment', () => {
+    const { inputs, expected } = readExample(
+      'docs/product-specs/products/government-securities/baba/examples/mid-period-after-coupon-case.yaml'
+    )
+    expect(resolveBabaAccrualStartIso(inputs)).toBe('2027-02-01')
+
+    const rates = deriveBabaRateOutputs(inputs)
+    const accrued = deriveBabaAccruedInterestAmount(inputs, rates.annualCouponRatePct)
+    const purchaseAmount = Number(inputs.principal) + accrued
+
+    expect(rates.annualCouponRatePct).toBe(expected.annualCouponRatePct)
+    expect(accrued).toBeCloseTo(expected.accruedInterestAmount, 10)
+    expect(purchaseAmount).toBeCloseTo(expected.purchaseAmount, 10)
+
+    const onCoupon = deriveBabaAccruedInterestAmount(
+      { ...inputs, purchaseDate: '2027-02-01' },
+      rates.annualCouponRatePct
+    )
+    expect(onCoupon).toBe(0)
+  })
+
+  it('skips unpublished couponSchedule bands without inventing cash coupons', () => {
+    const { inputs, expected } = readExample(
+      'docs/product-specs/products/government-securities/baba/examples/schedule-gap-skip-case.yaml'
+    )
+    const rates = deriveBabaRateOutputs(inputs)
+    expect(rates.annualCouponRatePct).toBe(expected.annualCouponRatePct)
+
+    const flows = generateBabaAnnualCouponFlows(inputs, 1_000_000, rates.annualCouponRatePct)
+    const couponInflows = flows.filter(
+      (f) => f.direction === 'inflow' && f.amount !== Number(inputs.principal)
+    )
+    expect(couponInflows).toHaveLength(expected.couponPaymentCount)
+    expect(couponInflows[0].date).toBe('2027-02-01')
+    expect(couponInflows[0].amount).toBe(expected.firstCouponAmount)
+    expect(couponInflows[1].date).toBe('2029-02-01')
+    expect(couponInflows[1].amount).toBe(expected.secondPublishedCouponAmount)
+    expect(couponInflows.some((f) => f.date === '2028-02-01')).toBe(false)
   })
 })

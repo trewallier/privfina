@@ -9,7 +9,7 @@ import {
 } from '@finance_engine/instruments/pmap'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
-import { PMAP_PRODUCT_SPEC } from './pmap-form.js'
+import { PMAP_PRODUCT_SPEC } from './pmap-product-spec.js'
 
 function calculatePmapFromSpecInputs(specInputs, options) {
   void options

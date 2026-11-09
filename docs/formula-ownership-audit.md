@@ -51,7 +51,7 @@ Inventory (by product)
 - BMAP (`government-security.bmap.standard`) — **fully-spec-backed** (auction derivation future)
   - Spec: `docs/product-specs/products/government-securities/bmap/product.yaml`
   - Engine primitives: `src/finance_engine/instruments/bmap.ts` + shared `day_count.ts` (ADR 0017 / 0038); commercial input is effective `annualCouponRatePct` + real `maturityDate`
-  - Browser path: `public/controller/bmap-calculation-adapter.js` delegates to TS; market autofill from `coupons/<id>.json`
+  - Browser path: `public/controller/bmap-calculation-adapter.js` + embedded `bmap-product-spec.js` delegates to TS; market autofill from `coupons/<id>.json`
   - Status: effective-rate + schedule-aware coupons; weighted auction DKJ-base derivation (`refs/dkj-base.json`) remains future work
 
 - FixMÁP (`government-security.fixmap.standard`) — **fully-spec-backed** (ROADMAP §6j)

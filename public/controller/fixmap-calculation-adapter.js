@@ -9,7 +9,7 @@ import {
 } from '@finance_engine/instruments/fixmap'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
-import { FIXMAP_PRODUCT_SPEC } from './fixmap-form.js'
+import { FIXMAP_PRODUCT_SPEC } from './fixmap-product-spec.js'
 
 function calculateFixmapFromSpecInputs(specInputs, options) {
   void options

@@ -296,4 +296,24 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]mapp['"]/)
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]baba['"]/)
   })
+
+  it('keeps calculation adapters importing PRODUCT_SPEC from leaf product-spec modules', () => {
+    // form ↔ adapter cycles: adapters must not import PRODUCT_SPEC from *-form.js.
+    const adapters = [
+      'baba-calculation-adapter.js',
+      'bmap-calculation-adapter.js',
+      'fixmap-calculation-adapter.js',
+      'mapp-calculation-adapter.js',
+      'pmap-calculation-adapter.js'
+    ]
+    for (const file of adapters) {
+      const src = readFileSync(resolve(process.cwd(), 'public/controller', file), 'utf8')
+      expect(src).not.toMatch(
+        /import\s*\{[^}]*PRODUCT_SPEC[^}]*\}\s*from\s*['"]\.\/[a-z]+-form\.js['"]/
+      )
+      expect(src).toMatch(
+        /import\s*\{[^}]*PRODUCT_SPEC[^}]*\}\s*from\s*['"]\.\/[a-z]+-product-spec\.js['"]/
+      )
+    }
+  })
 })

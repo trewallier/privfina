@@ -208,6 +208,34 @@ describe('fetchAkkOfferingListings soft-fail isolation', () => {
   })
 })
 
+describe('parseOfferingPdfText', () => {
+  it('extracts PMÁP explicit payment dates and ACT/ACT day-count', async () => {
+    const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/pmap-2036-i1.txt'),
+      'utf8'
+    )
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.dayCount).toBe('ACT/ACT')
+    expect(parsed.paymentDates[0]).toBe('2027-02-21')
+    expect(parsed.paymentDates.at(-1)).toBe('2036-02-21')
+    expect(parsed.paymentDates).toHaveLength(10)
+  })
+
+  it('expands Babakötvény recurring Feb-1 coupons through maturity', async () => {
+    const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/baba-2045-s.txt'),
+      'utf8'
+    )
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.dayCount).toBe('ACT/ACT')
+    expect(parsed.paymentDates[0]).toBe('2027-02-01')
+    expect(parsed.paymentDates.at(-1)).toBe('2045-02-01')
+    expect(parsed.paymentDates.length).toBeGreaterThan(10)
+  })
+})
+
 describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
   function pdfResponse(body = '%PDF-1.4 fake'): Response {
     return new Response(body, {

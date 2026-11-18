@@ -15,10 +15,13 @@ import { fetchOfferingPdfsForListings } from './fetch-offering-pdf.ts'
 import {
   archiveDocumentFromListing,
   diffOfferingsAgainstArchive,
-  normalizeOfferingEnvelope
+  normalizeOfferingEnvelope,
+  offeringStubFromListing
 } from './normalize-offerings.ts'
 import { mergeOfferingsState } from './merge-offerings.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
+import { parseOfferingPdfText } from './parse-offering-pdf.ts'
+import { pdfBytesToTextLayout } from './pdf-text.ts'
 import { priceCalendarFileFromDays } from './merge-price-calendar.ts'
 import { normalizeAkkSnapshots } from './normalize.ts'
 import { normalizeAllampapirSnapshots } from './normalize-allampapir.ts'
@@ -436,6 +439,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           .map((row) => archiveDocumentFromListing(row, 'listed'))
           .filter((d): d is NonNullable<typeof d> => d != null)
 
+        const offeringUpdates: OfferingFile[] = []
+
         // Offline fixture runs without a live fetchImpl for PDFs: only download when
         // not purely offline, or when a custom fetchImpl is supplied for tests.
         const shouldDownloadPdfs = !offlineAkk || Boolean(options.fetchImpl)
@@ -448,9 +453,44 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
               fetchImpl: options.fetchImpl
             }
           )
-          archiveUpserts.push(...pdfResult.archiveUpserts)
           offeringPdfsDownloaded = pdfResult.downloadedCount
           offeringPdfsPending = pdfResult.pendingCount
+
+          for (const dl of pdfResult.downloaded) {
+            try {
+              const text = await pdfBytesToTextLayout(dl.bytes)
+              const parsed = parseOfferingPdfText(text)
+              const stub = offeringStubFromListing(dl.row, {
+                paymentDates: parsed.paymentDates,
+                dayCount: parsed.dayCount
+              })
+              offeringUpdates.push(stub)
+              const transcribed = archiveDocumentFromListing(dl.row, 'transcribed', {
+                sha256: dl.sha256,
+                bytes: dl.bytes.byteLength,
+                sourceHost: dl.sourceHost
+              })
+              if (transcribed) archiveUpserts.push(transcribed)
+            } catch (err) {
+              console.error(
+                `[market-data] offering PDF parse failed for ${dl.row.pathUuid}: ${
+                  err instanceof Error ? err.message : String(err)
+                }`
+              )
+              const failed = archiveDocumentFromListing(dl.row, 'parse_failed', {
+                sha256: dl.sha256,
+                bytes: dl.bytes.byteLength,
+                sourceHost: dl.sourceHost
+              })
+              if (failed) archiveUpserts.push(failed)
+            }
+          }
+
+          // Keep pending / download_failed upserts that were not transcribed.
+          for (const doc of pdfResult.archiveUpserts) {
+            if (doc.status === 'downloaded') continue
+            archiveUpserts.push(doc)
+          }
         } else if (diff.unknownDocuments.length > 0) {
           // Offline listing fixtures: leave unknowns as listed (no network PDFs).
           offeringPdfsPending = 0
@@ -467,6 +507,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             listingRows,
             saleWindowsBySeries: diff.saleWindowsBySeries,
             archiveUpserts,
+            offeringUpdates,
             generatedAt
           }
         )

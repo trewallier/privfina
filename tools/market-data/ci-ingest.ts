@@ -1,5 +1,5 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
-import { writeGithubOutput } from './github-output.ts'
+import { writeGithubOutput, writeGithubStepSummary } from './github-output.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
 import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 import type { WebkincstarReportName } from './webkincstar-reports.ts'
@@ -22,6 +22,7 @@ export interface CiIngestOptions {
   skipWebkincstar?: boolean
   offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
   skipOfferings?: boolean
+  reparseParseFailed?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -29,6 +30,10 @@ export interface CiIngestOptions {
 export interface CiIngestResult {
   changed: boolean
   asOf: string | null
+  offeringPdfsDownloaded: number
+  offeringPdfsPending: number
+  offeringPdfsParseFailed: number
+  webkincstarFetchFailedDays: number
   exitCode: typeof EXIT_UPDATED | typeof EXIT_UNCHANGED | typeof EXIT_ERROR
 }
 
@@ -56,16 +61,43 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     skipWebkincstar: options.skipWebkincstar,
     offeringEnvelopesByFamily: options.offeringEnvelopesByFamily,
     skipOfferings: options.skipOfferings,
+    reparseParseFailed: options.reparseParseFailed,
     fetchImpl: options.fetchImpl,
     generatedAt: options.generatedAt
   })
 
   writeGithubOutput('changed', report.changed ? 'true' : 'false')
   writeGithubOutput('as_of', report.asOf ?? '')
+  writeGithubOutput('offering_pdfs_downloaded', String(report.offeringPdfsDownloaded))
+  writeGithubOutput('offering_pdfs_pending', String(report.offeringPdfsPending))
+  writeGithubOutput('offering_pdfs_parse_failed', String(report.offeringPdfsParseFailed))
+  writeGithubOutput('webkincstar_fetch_failed_days', String(report.webkincstarFetchFailedDays))
+
+  writeGithubStepSummary(
+    [
+      '### Market-data ingest',
+      '',
+      '| Metric | Value |',
+      '| --- | --- |',
+      `| changed | ${report.changed} |`,
+      `| as_of | ${report.asOf ?? ''} |`,
+      `| offering PDFs downloaded | ${report.offeringPdfsDownloaded} |`,
+      `| offering PDFs pending | ${report.offeringPdfsPending} |`,
+      `| offering PDF parse_failed | ${report.offeringPdfsParseFailed} |`,
+      `| WebKincstár fetch_failed days | ${report.webkincstarFetchFailedDays} |`,
+      `| offerings soft-failed | ${report.offeringsSoftFailed} |`,
+      `| WebKincstár soft-failed | ${report.webkincstarSoftFailed} |`,
+      ''
+    ].join('\n')
+  )
 
   return {
     changed: report.changed,
     asOf: report.asOf,
+    offeringPdfsDownloaded: report.offeringPdfsDownloaded,
+    offeringPdfsPending: report.offeringPdfsPending,
+    offeringPdfsParseFailed: report.offeringPdfsParseFailed,
+    webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
     exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
   }
 }

@@ -29,6 +29,9 @@ const HU_MONTHS: Record<string, number> = {
 const HU_DATE =
   /(\d{4})\.\s*(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december|januar|februar|marcius|aprilis|majus|junius|julius|oktober)\s+(\d{1,2})\.?/gi
 
+/** Compact table dates as printed in MÁPP kamatteljesítés tables: 2027.02.27 */
+const DOTTED_DATE = /(\d{4})\.(\d{2})\.(\d{2})/g
+
 export class OfferingPdfParseError extends Error {
   constructor(message: string) {
     super(message)
@@ -56,6 +59,20 @@ export function parseHungarianDate(raw: string): string | null {
   return `${year}-${pad2(month)}-${pad2(day)}`
 }
 
+function parseDottedDate(raw: string): string | null {
+  const m = /^(\d{4})\.(\d{2})\.(\d{2})$/.exec(raw.trim())
+  if (!m) return null
+  return `${m[1]}-${m[2]}-${m[3]}`
+}
+
+function firstDateInWindow(window: string): string | null {
+  const hu = new RegExp(HU_DATE.source, 'i').exec(window)
+  if (hu) return parseHungarianDate(hu[0])
+  const dotted = /(\d{4})\.(\d{2})\.(\d{2})/.exec(window)
+  if (dotted) return parseDottedDate(dotted[0])
+  return null
+}
+
 export function mapOfferingDayCount(text: string): string | null {
   const algo = /Kamatszámítás\s+algoritmusa\s*:\s*([^\n\r]+)/i.exec(text)
   const phrase = (algo?.[1] ?? text).toLowerCase()
@@ -72,18 +89,24 @@ export function mapOfferingDayCount(text: string): string | null {
 }
 
 function extractMaturity(text: string): string | null {
-  const m =
-    /Lejárat\s+napja\s*:\s*([^\n\r]+)/i.exec(text) ||
-    /Lejárat\s*:\s*([^\n\r]+)/i.exec(text)
-  if (!m) return null
-  return parseHungarianDate(m[1])
+  const label = /Lejárat\s+napja\s*:/i.exec(text) || /Lejárat\s*:/i.exec(text)
+  if (!label || label.index == null) return null
+  const after = text.slice(label.index + label[0].length, label.index + label[0].length + 160)
+  return firstDateInWindow(after)
+}
+
+function isDiscountTreasuryBill(text: string): boolean {
+  return /Diszkont\s+Kincstárjegy/i.test(text)
 }
 
 /**
- * Explicit list after "A kamat fizetése az alábbi napokon történik".
+ * Explicit list after PMÁP-style or FixMAP-style "kamat … napokon történik" markers.
+ * FixMAP often splits "A kamatfizetés … az alábbi napokon történik:" across lines.
  */
 function extractExplicitPaymentDates(text: string): string[] {
-  const marker = /A\s+kamat\s+fizetése\s+az\s+alábbi\s+napokon\s+történik\s*:/i.exec(text)
+  const marker =
+    /A\s+kamat\s+fizetése\s+az\s+alábbi\s+napokon\s+történik\s*:/i.exec(text) ||
+    /A\s+kamatfizetés[\s\S]{0,160}?az\s+alábbi\s+napokon\s+történik\s*:/i.exec(text)
   if (!marker || marker.index == null) return []
   const after = text.slice(marker.index + marker[0].length)
   const stop = /Kamatszámítás\s+algoritmusa|Törlesztés\s*:/i.exec(after)
@@ -96,6 +119,52 @@ function extractExplicitPaymentDates(text: string): string[] {
     seen.add(iso)
     dates.push(iso)
   }
+  return dates.sort()
+}
+
+/**
+ * MÁPP table: "Kamatteljesítési napok…" rows like
+ * `2026.01.06 - 2027.02.27 2027.02.27 6,50% 7,43%` — take the payment column date.
+ */
+function extractMappTablePaymentDates(text: string): string[] {
+  const marker = /Kamatteljesítési\s+napok/i.exec(text)
+  if (!marker || marker.index == null) return []
+  const after = text.slice(marker.index)
+  const stop = /Kamatszámítás\s+algoritmusa|Kamatteljesítés\s*:|Másodlagos\s+piac/i.exec(
+    after.slice(marker[0].length)
+  )
+  const block = stop
+    ? after.slice(0, marker[0].length + stop.index)
+    : after.slice(0, 2500)
+
+  const dates: string[] = []
+  const seen = new Set<string>()
+  for (const line of block.split(/\r?\n/)) {
+    // Prefer "periodStart - periodEnd paymentDate rate..." shape.
+    const ranged =
+      /(\d{4})\.(\d{2})\.(\d{2})\s*[-–]\s*(\d{4})\.(\d{2})\.(\d{2})\s+(\d{4})\.(\d{2})\.(\d{2})/.exec(
+        line
+      )
+    if (ranged) {
+      const iso = `${ranged[7]}-${ranged[8]}-${ranged[9]}`
+      if (!seen.has(iso)) {
+        seen.add(iso)
+        dates.push(iso)
+      }
+      continue
+    }
+  }
+
+  // Fallback: "Kamatjuttatás napja" follow-on table (often omits final maturity coupon).
+  if (dates.length === 0) {
+    for (const m of block.matchAll(new RegExp(DOTTED_DATE.source, 'g'))) {
+      const iso = parseDottedDate(m[0])
+      if (!iso || seen.has(iso)) continue
+      seen.add(iso)
+      dates.push(iso)
+    }
+  }
+
   return dates.sort()
 }
 
@@ -123,13 +192,19 @@ function extractRecurringPaymentDates(text: string): string[] {
   }
   if (!first) {
     // Fallback: anniversary of month/day in the year after issue start.
-    const issue =
-      /kibocsátásának\s+kezdő\s+időpontja\s*:\s*([^\n\r]+)/i.exec(text) ||
-      /kezdő\s+időpontja\s*:\s*([^\n\r]+)/i.exec(text)
-    const issueIso = issue ? parseHungarianDate(issue[1]) : null
-    if (issueIso) {
-      const y = Number(issueIso.slice(0, 4)) + 1
-      first = `${y}-${pad2(month)}-${pad2(day)}`
+    const issueLabel =
+      /kibocsátásának\s+kezdő\s+időpontja\s*:/i.exec(text) ||
+      /kezdő\s+időpontja\s*:/i.exec(text)
+    if (issueLabel && issueLabel.index != null) {
+      const after = text.slice(
+        issueLabel.index + issueLabel[0].length,
+        issueLabel.index + issueLabel[0].length + 120
+      )
+      const issueIso = firstDateInWindow(after)
+      if (issueIso) {
+        const y = Number(issueIso.slice(0, 4)) + 1
+        first = `${y}-${pad2(month)}-${pad2(day)}`
+      }
     }
   }
   const maturity = extractMaturity(text)
@@ -157,7 +232,8 @@ function extractRecurringPaymentDates(text: string): string[] {
 
 /**
  * Parse offering PDF text into payment dates + day-count (ADR 0041).
- * Throws OfferingPdfParseError when neither dates nor dayCount can be recovered.
+ * Throws OfferingPdfParseError when neither dates nor dayCount can be recovered
+ * (except DKJ zero-coupon offerings, which succeed with empty paymentDates + ACT/360).
  */
 export function parseOfferingPdfText(text: string): ParsedOfferingPdf {
   const normalized = text.replace(/\u00a0/g, ' ')
@@ -165,8 +241,16 @@ export function parseOfferingPdfText(text: string): ParsedOfferingPdf {
   const maturity = extractMaturity(normalized)
   let paymentDates = extractExplicitPaymentDates(normalized)
   if (paymentDates.length === 0) {
+    paymentDates = extractMappTablePaymentDates(normalized)
+  }
+  if (paymentDates.length === 0) {
     paymentDates = extractRecurringPaymentDates(normalized)
   }
+
+  if (paymentDates.length === 0 && !dayCount && isDiscountTreasuryBill(normalized) && maturity) {
+    return { paymentDates: [], dayCount: 'ACT/360', maturity }
+  }
+
   if (paymentDates.length === 0 && !dayCount) {
     throw new OfferingPdfParseError('No paymentDates or dayCount found in offering PDF text')
   }

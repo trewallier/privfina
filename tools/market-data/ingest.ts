@@ -120,6 +120,12 @@ export interface IngestOptions {
    * When set, skips live Poppler extract for that UUID after download (WebKincstár-style).
    */
   offeringPdfTextByUuid?: Record<string, string>
+  /**
+   * When true, ISSUE archive rows with sticky `parse_failed` re-enter the PDF
+   * download queue (operator recovery after a parser fix). Also honored via
+   * `MARKET_REPARSE_PARSE_FAILED=1`.
+   */
+  reparseParseFailed?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -142,6 +148,10 @@ export interface IngestReport extends MergeResult {
   offeringPdfsDownloaded: number
   /** Unknown docs left as pending_download due to the per-family cap. */
   offeringPdfsPending: number
+  /** PDF downloads that hashed but failed transcription this run. */
+  offeringPdfsParseFailed: number
+  /** WebKincstár (report, datum) rows appended as fetch_failed this run. */
+  webkincstarFetchFailedDays: number
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -299,6 +309,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let priceCalendarUpdate: PriceCalendarFile | undefined
   let webkincstarSoftFailed = false
   let webkincstarHasQuotes = false
+  let webkincstarFetchFailedDays = 0
   let mergeSnapshotInput = combined.snapshot
 
   const webkincstarDatum = options.webkincstarDatum ?? budapestYesterdayIso()
@@ -337,6 +348,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           previous.priceCalendar
         )
         if (appendable.length > 0) {
+          webkincstarFetchFailedDays += appendable.length
           priceCalendarUpdate = priceCalendarFileFromDays(appendable, generatedAt)
         }
       } else {
@@ -365,6 +377,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           failedReportNames,
           previous.priceCalendar
         )
+        webkincstarFetchFailedDays += failedDays.length
         priceCalendarUpdate = priceCalendarFileFromDays(
           [...normalized.calendarDays, ...failedDays],
           generatedAt
@@ -380,6 +393,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         previous.priceCalendar
       )
       if (appendable.length > 0) {
+        webkincstarFetchFailedDays += appendable.length
         priceCalendarUpdate = priceCalendarFileFromDays(appendable, generatedAt)
       }
     }
@@ -389,11 +403,17 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let offeringsSoftFailed = false
   let offeringPdfsDownloaded = 0
   let offeringPdfsPending = 0
+  let offeringPdfsParseFailed = 0
   let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
   let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
   let seriesSaleWindows:
     | Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
     | undefined
+
+  const reparseParseFailed =
+    options.reparseParseFailed === true ||
+    process.env.MARKET_REPARSE_PARSE_FAILED === '1' ||
+    process.env.MARKET_REPARSE_PARSE_FAILED === 'true'
 
   const shouldFetchOfferings =
     !options.skipOfferings &&
@@ -434,7 +454,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         )
         const diff = diffOfferingsAgainstArchive(
           listingRows,
-          previous.offeringArchive?.documents
+          previous.offeringArchive?.documents,
+          { reparseParseFailed }
         )
 
         const knownByUuid = new Map(
@@ -442,6 +463,11 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             d.pathUuid.toLowerCase(),
             d
           ])
+        )
+        const transcribedSeriesIds = new Set(
+          (previous.offeringArchive?.documents ?? [])
+            .filter((d) => d.status === 'transcribed')
+            .map((d) => `${d.family}\0${d.seriesId}`)
         )
 
         // Always index listing rows as listed first; PDF gate upgrades unknowns.
@@ -460,7 +486,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             knownByUuid,
             {
               rawDir: path.join(options.rawDir, 'offerings', 'pdf'),
-              fetchImpl: options.fetchImpl
+              fetchImpl: options.fetchImpl,
+              reparseParseFailed,
+              transcribedSeriesIds
             }
           )
           offeringPdfsDownloaded = pdfResult.downloadedCount
@@ -487,6 +515,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
               })
               if (transcribed) archiveUpserts.push(transcribed)
             } catch (err) {
+              offeringPdfsParseFailed += 1
               console.error(
                 `[market-data] offering PDF parse failed for ${dl.row.pathUuid}: ${
                   err instanceof Error ? err.message : String(err)
@@ -585,7 +614,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     offeringsUpdated,
     offeringsSoftFailed,
     offeringPdfsDownloaded,
-    offeringPdfsPending
+    offeringPdfsPending,
+    offeringPdfsParseFailed,
+    webkincstarFetchFailedDays
   }
 }
 

@@ -37,11 +37,16 @@ describe('offering listing normalize/diff (ADR 0041)', () => {
     )
   })
 
-  it('marks unknown path UUIDs when archive is empty; skips known sha256', async () => {
+  it('marks unknown ISSUE UUIDs when archive is empty; skips TAP and known sha256', async () => {
     const envelope = await loadJson('offerings/getPublicOfferings_pmap.json')
     const rows = normalizeOfferingEnvelope(envelope, 'pmap')
     const emptyDiff = diffOfferingsAgainstArchive(rows, [])
-    expect(emptyDiff.unknownDocuments).toHaveLength(2)
+    // Fixture has ISSUE + TAP_CLOSED — only ISSUE is PDF-eligible.
+    expect(emptyDiff.unknownDocuments).toHaveLength(1)
+    expect(emptyDiff.unknownDocuments[0]?.pathUuid).toBe(
+      '5a3cb5cb-121f-4517-bd62-c06b078b8aa9'
+    )
+    expect(emptyDiff.unknownDocuments[0]?.resourceType).toBe('ISSUE')
 
     const withHash = diffOfferingsAgainstArchive(rows, [
       {
@@ -59,9 +64,49 @@ describe('offering listing normalize/diff (ADR 0041)', () => {
         sourceHost: 'documents.akk.hu'
       }
     ])
-    expect(withHash.unknownDocuments.map((r) => r.pathUuid)).toEqual([
-      '9b403e1a-a2a2-4d78-a391-b62ad4fb9d3c'
-    ])
+    expect(withHash.unknownDocuments).toHaveLength(0)
+  })
+
+  it('reparseParseFailed requeues sticky parse_failed ISSUE rows only', async () => {
+    const envelope = await loadJson('offerings/getPublicOfferings_pmap.json')
+    const rows = normalizeOfferingEnvelope(envelope, 'pmap')
+    const issue = rows.find((r) => r.resourceType === 'ISSUE')!
+    const tap = rows.find((r) => r.resourceType === 'TAP_CLOSED')!
+    const diff = diffOfferingsAgainstArchive(
+      rows,
+      [
+        {
+          pathId: issue.pathId,
+          pathUuid: issue.pathUuid!,
+          family: 'pmap',
+          seriesId: issue.seriesId,
+          isin: issue.isin,
+          published: issue.published,
+          modifiedOn: issue.modifiedOn,
+          resourceType: issue.resourceType,
+          sha256: 'c'.repeat(64),
+          bytes: 10,
+          status: 'parse_failed',
+          sourceHost: 'documents.akk.hu'
+        },
+        {
+          pathId: tap.pathId,
+          pathUuid: tap.pathUuid!,
+          family: 'pmap',
+          seriesId: tap.seriesId,
+          isin: tap.isin,
+          published: tap.published,
+          modifiedOn: tap.modifiedOn,
+          resourceType: tap.resourceType,
+          sha256: 'd'.repeat(64),
+          bytes: 10,
+          status: 'parse_failed',
+          sourceHost: 'documents.akk.hu'
+        }
+      ],
+      { reparseParseFailed: true }
+    )
+    expect(diff.unknownDocuments.map((r) => r.pathUuid)).toEqual([issue.pathUuid])
   })
 
   it('prefers non-archive tip for series saleWindow', async () => {
@@ -208,7 +253,6 @@ describe('offering ingest budget (quiet day) + paymentDates E2E', () => {
       'utf8'
     )
     const tipPmapUuid = '5a3cb5cb-121f-4517-bd62-c06b078b8aa9'
-    const archivedPmapUuid = '9b403e1a-a2a2-4d78-a391-b62ad4fb9d3c'
     const babaUuid = 'd1599c29-cd4a-417a-ae7a-932bfa987a70'
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-offerings-quiet-'))
     const rawDir = path.join(tmp, 'raw')
@@ -239,14 +283,15 @@ describe('offering ingest budget (quiet day) + paymentDates E2E', () => {
       fetchImpl,
       offeringPdfTextByUuid: {
         [tipPmapUuid]: pmapText,
-        [archivedPmapUuid]: pmapText,
         [babaUuid]: babaText
       },
       generatedAt: '2026-11-18T18:00:00.000Z'
     })
     expect(first.offeringsUpdated).toBe(true)
-    expect(first.offeringPdfsDownloaded).toBe(3)
-    expect(pdfHits).toBeGreaterThanOrEqual(3)
+    // ISSUE-only gate: PMÁP ISSUE + BABA ISSUE (TAP_CLOSED is metadata-only).
+    expect(first.offeringPdfsDownloaded).toBe(2)
+    expect(first.offeringPdfsParseFailed).toBe(0)
+    expect(pdfHits).toBeGreaterThanOrEqual(2)
 
     const tree = await loadMarketTree(tmp)
     expect(tree.families.pmap.offerings.A360221I26?.paymentDates?.[0]).toBe('2027-02-21')
@@ -254,7 +299,12 @@ describe('offering ingest budget (quiet day) + paymentDates E2E', () => {
     expect(tree.families.baba.offerings.A450201S26?.paymentDates?.[0]).toBe('2027-02-01')
     expect(
       tree.offeringArchive?.documents.filter((d) => d.sha256 != null).length
-    ).toBeGreaterThanOrEqual(3)
+    ).toBeGreaterThanOrEqual(2)
+    expect(
+      tree.offeringArchive?.documents.find(
+        (d) => d.pathUuid === '9b403e1a-a2a2-4d78-a391-b62ad4fb9d3c'
+      )?.status
+    ).toBe('listed')
 
     const pdfHitsBeforeSecond = pdfHits
     const second = await ingestMarketData({
@@ -271,7 +321,6 @@ describe('offering ingest budget (quiet day) + paymentDates E2E', () => {
       fetchImpl,
       offeringPdfTextByUuid: {
         [tipPmapUuid]: pmapText,
-        [archivedPmapUuid]: pmapText,
         [babaUuid]: babaText
       },
       generatedAt: '2026-11-18T19:00:00.000Z'
@@ -330,6 +379,50 @@ describe('parseOfferingPdfText', () => {
     expect(parsed.paymentDates.at(-1)).toBe('2045-02-01')
     expect(parsed.paymentDates.length).toBeGreaterThan(10)
   })
+
+  it('parses FixMAP split kamatfizetés date list', async () => {
+    const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/fixmap-2029-q26.txt'),
+      'utf8'
+    )
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.dayCount).toBe('ACT/ACT')
+    expect(parsed.maturity).toBe('2029-07-24')
+    expect(parsed.paymentDates[0]).toBe('2026-10-24')
+    expect(parsed.paymentDates.at(-1)).toBe('2029-07-24')
+    expect(parsed.paymentDates).toHaveLength(12)
+  })
+
+  it('parses MÁPP Kamatteljesítés table payment dates', async () => {
+    const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/mapp-2031-m26.txt'),
+      'utf8'
+    )
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.dayCount).toBe('ACT/ACT')
+    expect(parsed.maturity).toBe('2031-02-27')
+    expect(parsed.paymentDates).toEqual([
+      '2027-02-27',
+      '2028-02-27',
+      '2029-02-27',
+      '2030-02-27',
+      '2031-02-27'
+    ])
+  })
+
+  it('accepts DKJ zero-coupon ISSUE with empty paymentDates + ACT/360', async () => {
+    const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/dkj-d270623.txt'),
+      'utf8'
+    )
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.dayCount).toBe('ACT/360')
+    expect(parsed.maturity).toBe('2027-06-23')
+    expect(parsed.paymentDates).toEqual([])
+  })
 })
 
 describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
@@ -340,7 +433,7 @@ describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
     })
   }
 
-  it('skips UUIDs that already have sha256 in the archive', async () => {
+  it('skips UUIDs that already have sha256 and ignores TAP unknowns', async () => {
     const { fetchOfferingPdfsForListings } = await import(
       '../tools/market-data/fetch-offering-pdf.ts'
     )
@@ -376,9 +469,9 @@ describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
         return pdfResponse()
       }
     })
-    expect(result.downloadedCount).toBe(1)
-    expect(fetches).toBe(1)
-    expect(result.downloaded[0]?.row.pathUuid).toBe(rows[1]?.pathUuid)
+    // Remaining fixture row is TAP_CLOSED — not downloaded.
+    expect(result.downloadedCount).toBe(0)
+    expect(fetches).toBe(0)
   })
 
   it('downloads at most 10 unknowns per family and leaves the rest pending', async () => {

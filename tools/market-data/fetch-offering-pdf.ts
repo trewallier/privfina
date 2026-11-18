@@ -26,6 +26,13 @@ export interface FetchOfferingPdfOptions {
   maxPerFamily?: number
   /** Override max PDF body bytes (tests). */
   maxBytes?: number
+  /**
+   * When true, allow re-download of archive rows with sticky `parse_failed`
+   * (operator recovery after a parser fix).
+   */
+  reparseParseFailed?: boolean
+  /** Series keys `family\0seriesId` that already have a transcribed offering. */
+  transcribedSeriesIds?: ReadonlySet<string>
 }
 
 export interface OfferingPdfDownload {
@@ -227,7 +234,11 @@ export async function fetchOfferingPdfsForListings(
     if (!row.pathUuid) continue
     const key = row.pathUuid.toLowerCase()
     const known = knownByUuid.get(key)
-    if (known?.sha256) continue
+    if (known?.sha256) {
+      const allowReparse =
+        options.reparseParseFailed === true && known.status === 'parse_failed'
+      if (!allowReparse) continue
+    }
     const list = byFamily.get(row.family) ?? []
     list.push(row)
     byFamily.set(row.family, list)
@@ -239,7 +250,9 @@ export async function fetchOfferingPdfsForListings(
   let failedCount = 0
 
   for (const [, rows] of byFamily) {
-    const ranked = rankOfferingDownloads(rows)
+    const ranked = rankOfferingDownloads(rows, {
+      transcribedSeriesIds: options.transcribedSeriesIds
+    })
     // Dedupe by pathUuid within the family ranking.
     const seen = new Set<string>()
     const unique: NormalizedOfferingListingRow[] = []

@@ -52,6 +52,9 @@ export interface DiffOfferingsOptions {
   /**
    * When true, ISSUE rows archived as sticky `parse_failed` re-enter the download
    * queue (operator recovery after a parser fix). Default false (ADR 0041 sticky).
+   * Skips series that already have a transcribed sibling and never requeues
+   * `skipped_no_schedule`. Also synthesizes rows for archive-only sticky ISSUEs
+   * that fell out of the current listing window.
    */
   reparseParseFailed?: boolean
 }
@@ -59,6 +62,28 @@ export interface DiffOfferingsOptions {
 /** PDF transcription is only attempted for ISSUE documents (not TAP amendments). */
 export function isOfferingPdfEligible(row: NormalizedOfferingListingRow): boolean {
   return (row.resourceType ?? '').toUpperCase() === 'ISSUE'
+}
+
+/** Synthesize a listing row from an archive document (archive-only reparse). */
+export function listingRowFromArchiveDocument(
+  doc: OfferingArchiveDocument
+): NormalizedOfferingListingRow {
+  const uuid = doc.pathUuid.toLowerCase()
+  return {
+    family: doc.family as OfferingFamilyCode,
+    seriesId: doc.seriesId,
+    name: doc.seriesId,
+    isin: doc.isin,
+    saleWindow: null,
+    pathId: doc.pathId,
+    pathUuid: uuid,
+    path: `public_offerings/${uuid}.pdf`,
+    published: doc.published,
+    modifiedOn: doc.modifiedOn,
+    resourceType: doc.resourceType,
+    archive: true,
+    longName: null
+  }
 }
 
 function asString(value: unknown): string | null {
@@ -150,7 +175,8 @@ export function normalizeOfferingEnvelope(
 /**
  * Compare listing rows to the tip archive. Unknown = ISSUE pathUuid absent from
  * archive, sha256 still null (pending / failed download), or sticky parse_failed
- * when `reparseParseFailed` is set. TAP_* never enqueue for PDF download.
+ * when `reparseParseFailed` is set (excluding series that already have a
+ * transcribed sibling). TAP_* and `skipped_no_schedule` never enqueue for PDF.
  */
 export function diffOfferingsAgainstArchive(
   rows: NormalizedOfferingListingRow[],
@@ -158,21 +184,50 @@ export function diffOfferingsAgainstArchive(
   options: DiffOfferingsOptions = {}
 ): OfferingListingDiff {
   const byUuid = new Map<string, OfferingArchiveDocument>()
+  const transcribedSeriesIds = new Set<string>()
   for (const doc of previousDocuments ?? []) {
     byUuid.set(doc.pathUuid.toLowerCase(), doc)
+    if (doc.status === 'transcribed') {
+      transcribedSeriesIds.add(`${doc.family}\0${doc.seriesId}`)
+    }
   }
 
   const unknownDocuments: NormalizedOfferingListingRow[] = []
+  const queuedUuids = new Set<string>()
   for (const row of rows) {
     if (!row.pathUuid) continue
     if (!isOfferingPdfEligible(row)) continue
-    const existing = byUuid.get(row.pathUuid.toLowerCase())
+    const uuid = row.pathUuid.toLowerCase()
+    const existing = byUuid.get(uuid)
     if (!existing || existing.sha256 == null) {
       unknownDocuments.push(row)
+      queuedUuids.add(uuid)
       continue
     }
-    if (options.reparseParseFailed && existing.status === 'parse_failed') {
+    if (existing.status === 'skipped_no_schedule') continue
+    if (
+      options.reparseParseFailed &&
+      existing.status === 'parse_failed' &&
+      !transcribedSeriesIds.has(`${row.family}\0${row.seriesId}`)
+    ) {
       unknownDocuments.push(row)
+      queuedUuids.add(uuid)
+    }
+  }
+
+  // Operator reparse: also enqueue archive-only ISSUE parse_failed that fell out
+  // of today's listing window (still lacking a transcribed sibling).
+  if (options.reparseParseFailed) {
+    for (const doc of previousDocuments ?? []) {
+      if (doc.status !== 'parse_failed') continue
+      if ((doc.resourceType ?? '').toUpperCase() !== 'ISSUE') continue
+      if (doc.sha256 == null) continue
+      const uuid = doc.pathUuid.toLowerCase()
+      if (queuedUuids.has(uuid)) continue
+      const seriesKey = `${doc.family}\0${doc.seriesId}`
+      if (transcribedSeriesIds.has(seriesKey)) continue
+      unknownDocuments.push(listingRowFromArchiveDocument(doc))
+      queuedUuids.add(uuid)
     }
   }
 
@@ -277,4 +332,34 @@ export function rankOfferingDownloads(
       if (pub !== 0) return pub
       return (b.modifiedOn ?? '').localeCompare(a.modifiedOn ?? '')
     })
+}
+
+/**
+ * After ranking, keep at most one UUID per series that still lacks a
+ * transcription so one success unblocks the series instead of burning the
+ * family cap on duplicates. Series that already have a transcription keep all
+ * ranked UUIDs (historical extras). Dedupe by pathUuid first.
+ */
+export function selectOfferingDownloads(
+  ranked: NormalizedOfferingListingRow[],
+  options: RankOfferingDownloadsOptions = {}
+): NormalizedOfferingListingRow[] {
+  const transcribed = options.transcribedSeriesIds
+  const seenUuid = new Set<string>()
+  const seenLackingSeries = new Set<string>()
+  const out: NormalizedOfferingListingRow[] = []
+  for (const row of ranked) {
+    if (!row.pathUuid) continue
+    const uuid = row.pathUuid.toLowerCase()
+    if (seenUuid.has(uuid)) continue
+    seenUuid.add(uuid)
+    const seriesKey = `${row.family}\0${row.seriesId}`
+    const lacking = !transcribed || !transcribed.has(seriesKey)
+    if (lacking) {
+      if (seenLackingSeries.has(seriesKey)) continue
+      seenLackingSeries.add(seriesKey)
+    }
+    out.push(row)
+  }
+  return out
 }

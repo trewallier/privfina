@@ -109,6 +109,121 @@ describe('offering listing normalize/diff (ADR 0041)', () => {
     expect(diff.unknownDocuments.map((r) => r.pathUuid)).toEqual([issue.pathUuid])
   })
 
+  it('reparse skips series with transcribed sibling and enqueues archive-only ISSUE', async () => {
+    const envelope = await loadJson('offerings/getPublicOfferings_pmap.json')
+    const rows = normalizeOfferingEnvelope(envelope, 'pmap')
+    const issue = rows.find((r) => r.resourceType === 'ISSUE')!
+    const archiveOnlyUuid = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+    const diff = diffOfferingsAgainstArchive(
+      rows,
+      [
+        {
+          pathId: issue.pathId,
+          pathUuid: issue.pathUuid!,
+          family: 'pmap',
+          seriesId: issue.seriesId,
+          isin: issue.isin,
+          published: issue.published,
+          modifiedOn: issue.modifiedOn,
+          resourceType: 'ISSUE',
+          sha256: 'c'.repeat(64),
+          bytes: 10,
+          status: 'parse_failed',
+          sourceHost: 'documents.akk.hu'
+        },
+        {
+          pathId: null,
+          pathUuid: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          family: 'pmap',
+          seriesId: issue.seriesId,
+          isin: issue.isin,
+          published: issue.published,
+          modifiedOn: issue.modifiedOn,
+          resourceType: 'ISSUE',
+          sha256: 'e'.repeat(64),
+          bytes: 10,
+          status: 'transcribed',
+          sourceHost: 'documents.akk.hu'
+        },
+        {
+          pathId: null,
+          pathUuid: archiveOnlyUuid,
+          family: 'dkj',
+          seriesId: 'D270120',
+          isin: 'HU0000529999',
+          published: '2026-10-01 14:00:00',
+          modifiedOn: null,
+          resourceType: 'ISSUE',
+          sha256: 'f'.repeat(64),
+          bytes: 10,
+          status: 'parse_failed',
+          sourceHost: 'documents.akk.hu'
+        }
+      ],
+      { reparseParseFailed: true }
+    )
+    expect(diff.unknownDocuments.map((r) => r.pathUuid)).toEqual([archiveOnlyUuid])
+    expect(diff.unknownDocuments[0]?.archive).toBe(true)
+  })
+
+  it('selectOfferingDownloads keeps one UUID per lacking series', async () => {
+    const { selectOfferingDownloads } = await import(
+      '../tools/market-data/normalize-offerings.ts'
+    )
+    const rows = [
+      {
+        family: 'dkj' as const,
+        seriesId: 'D270120',
+        name: 'D270120',
+        isin: null,
+        saleWindow: null,
+        pathId: null,
+        pathUuid: '11111111-1111-1111-1111-111111111111',
+        path: null,
+        published: '2026-10-01',
+        modifiedOn: null,
+        resourceType: 'ISSUE',
+        archive: false,
+        longName: null
+      },
+      {
+        family: 'dkj' as const,
+        seriesId: 'D270120',
+        name: 'D270120',
+        isin: null,
+        saleWindow: null,
+        pathId: null,
+        pathUuid: '22222222-2222-2222-2222-222222222222',
+        path: null,
+        published: '2026-09-24',
+        modifiedOn: null,
+        resourceType: 'ISSUE',
+        archive: false,
+        longName: null
+      },
+      {
+        family: 'dkj' as const,
+        seriesId: 'D270818',
+        name: 'D270818',
+        isin: null,
+        saleWindow: null,
+        pathId: null,
+        pathUuid: '33333333-3333-3333-3333-333333333333',
+        path: null,
+        published: '2026-10-05',
+        modifiedOn: null,
+        resourceType: 'ISSUE',
+        archive: false,
+        longName: null
+      }
+    ]
+    const selected = selectOfferingDownloads(rows, { transcribedSeriesIds: new Set() })
+    expect(selected.map((r) => r.pathUuid)).toEqual([
+      '11111111-1111-1111-1111-111111111111',
+      '33333333-3333-3333-3333-333333333333'
+    ])
+  })
+
   it('prefers non-archive tip for series saleWindow', async () => {
     const envelope = await loadJson('offerings/getPublicOfferings_pmap.json')
     const rows = normalizeOfferingEnvelope(envelope, 'pmap')
@@ -136,6 +251,47 @@ describe('mergeOfferingsState', () => {
     expect(merged.offeringsByFamily.pmap?.A360221I26?.source.host).toBe('www.akk.hu')
     expect(merged.offeringArchive.documents.length).toBeGreaterThanOrEqual(2)
     expect(merged.seriesSaleWindows.some((p) => p.seriesId === 'A360221I26')).toBe(true)
+  })
+
+  it('migrates TAP parse_failed archive rows to skipped_no_schedule', async () => {
+    const envelope = await loadJson('offerings/getPublicOfferings_pmap.json')
+    const rows = normalizeOfferingEnvelope(envelope, 'pmap')
+    const tap = rows.find((r) => r.resourceType === 'TAP_CLOSED')!
+    const previousArchive = {
+      schemaVersion: 2 as const,
+      generatedAt: '2026-11-18T12:00:00.000Z',
+      source: {
+        id: 'akk-public-offerings',
+        host: 'www.akk.hu',
+        disclaimer: 'test'
+      },
+      documents: [
+        {
+          pathId: tap.pathId,
+          pathUuid: tap.pathUuid!,
+          family: 'pmap' as const,
+          seriesId: tap.seriesId,
+          isin: tap.isin,
+          published: tap.published,
+          modifiedOn: tap.modifiedOn,
+          resourceType: tap.resourceType,
+          sha256: 'a'.repeat(64),
+          bytes: 12,
+          status: 'parse_failed' as const,
+          sourceHost: 'documents.akk.hu'
+        }
+      ]
+    }
+    const diff = diffOfferingsAgainstArchive(rows, previousArchive.documents)
+    const merged = mergeOfferingsState({}, previousArchive, {
+      listingRows: rows,
+      saleWindowsBySeries: diff.saleWindowsBySeries,
+      archiveUpserts: [],
+      generatedAt: '2026-11-18T18:00:00.000Z'
+    })
+    const doc = merged.offeringArchive.documents.find((d) => d.pathUuid === tap.pathUuid)
+    expect(doc?.status).toBe('skipped_no_schedule')
+    expect(doc?.sha256).toBe('a'.repeat(64))
   })
 })
 
@@ -422,6 +578,26 @@ describe('parseOfferingPdfText', () => {
     expect(parsed.dayCount).toBe('ACT/360')
     expect(parsed.maturity).toBe('2027-06-23')
     expect(parsed.paymentDates).toEqual([])
+  })
+
+  it('classifies Babakötvény KÖZLEMÉNY amendments as skip_no_schedule', async () => {
+    const { classifyOfferingPdfText, parseOfferingPdfText } = await import(
+      '../tools/market-data/parse-offering-pdf.ts'
+    )
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/baba-kozlemeny-modositas.txt'),
+      'utf8'
+    )
+    expect(classifyOfferingPdfText(text)).toBe('skip_no_schedule')
+    expect(() => parseOfferingPdfText(text)).toThrow(/No paymentDates or dayCount/)
+  })
+
+  it('classifies real Baba and DKJ offering text as parse', async () => {
+    const { classifyOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
+    const baba = await readFile(path.join(fixtures, 'offerings/pdf-text/baba-2045-s.txt'), 'utf8')
+    const dkj = await readFile(path.join(fixtures, 'offerings/pdf-text/dkj-d270623.txt'), 'utf8')
+    expect(classifyOfferingPdfText(baba)).toBe('parse')
+    expect(classifyOfferingPdfText(dkj)).toBe('parse')
   })
 })
 

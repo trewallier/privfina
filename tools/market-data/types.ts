@@ -281,6 +281,7 @@ export type OfferingDocumentStatus =
   | 'downloaded'
   | 'transcribed'
   | 'parse_failed'
+  | 'skipped_no_schedule'
   | 'pending_download'
   | 'download_failed'
 

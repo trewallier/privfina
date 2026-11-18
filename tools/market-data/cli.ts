@@ -240,7 +240,8 @@ async function main(argv: string[]): Promise<number> {
         offeringsSoftFailed: report.offeringsSoftFailed,
         offeringPdfsDownloaded: report.offeringPdfsDownloaded,
         offeringPdfsPending: report.offeringPdfsPending,
-        offeringPdfsParseFailed: report.offeringPdfsParseFailed
+        offeringPdfsParseFailed: report.offeringPdfsParseFailed,
+        offeringPdfsSkippedNoSchedule: report.offeringPdfsSkippedNoSchedule
       })}\n`
     )
     return report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -282,6 +283,7 @@ async function main(argv: string[]): Promise<number> {
         offeringPdfsDownloaded: result.offeringPdfsDownloaded,
         offeringPdfsPending: result.offeringPdfsPending,
         offeringPdfsParseFailed: result.offeringPdfsParseFailed,
+        offeringPdfsSkippedNoSchedule: result.offeringPdfsSkippedNoSchedule,
         webkincstarFetchFailedDays: result.webkincstarFetchFailedDays
       })}\n`
     )

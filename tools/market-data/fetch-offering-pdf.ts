@@ -10,6 +10,7 @@ import {
 import {
   archiveDocumentFromListing,
   rankOfferingDownloads,
+  selectOfferingDownloads,
   type NormalizedOfferingListingRow
 } from './normalize-offerings.ts'
 import type { OfferingArchiveDocument } from './types.ts'
@@ -238,6 +239,8 @@ export async function fetchOfferingPdfsForListings(
       const allowReparse =
         options.reparseParseFailed === true && known.status === 'parse_failed'
       if (!allowReparse) continue
+      // Never reparse permanent no-schedule skips.
+      if (known.status === 'skipped_no_schedule') continue
     }
     const list = byFamily.get(row.family) ?? []
     list.push(row)
@@ -253,15 +256,10 @@ export async function fetchOfferingPdfsForListings(
     const ranked = rankOfferingDownloads(rows, {
       transcribedSeriesIds: options.transcribedSeriesIds
     })
-    // Dedupe by pathUuid within the family ranking.
-    const seen = new Set<string>()
-    const unique: NormalizedOfferingListingRow[] = []
-    for (const row of ranked) {
-      const uuid = row.pathUuid!.toLowerCase()
-      if (seen.has(uuid)) continue
-      seen.add(uuid)
-      unique.push(row)
-    }
+    // Dedupe UUID + at most one UUID per series still lacking transcription.
+    const unique = selectOfferingDownloads(ranked, {
+      transcribedSeriesIds: options.transcribedSeriesIds
+    })
     const take = unique.slice(0, maxPerFamily)
     const pending = unique.slice(maxPerFamily)
     pendingCount += pending.length

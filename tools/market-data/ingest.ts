@@ -22,7 +22,10 @@ import {
 } from './normalize-offerings.ts'
 import { mergeOfferingsState } from './merge-offerings.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
-import { parseOfferingPdfText } from './parse-offering-pdf.ts'
+import {
+  classifyOfferingPdfText,
+  parseOfferingPdfText
+} from './parse-offering-pdf.ts'
 import { pdfBytesToTextLayout } from './pdf-text.ts'
 import { priceCalendarFileFromDays } from './merge-price-calendar.ts'
 import { normalizeAkkSnapshots } from './normalize.ts'
@@ -152,6 +155,8 @@ export interface IngestReport extends MergeResult {
   offeringPdfsPending: number
   /** PDF downloads that hashed but failed transcription this run. */
   offeringPdfsParseFailed: number
+  /** PDF downloads classified as no-schedule (KÖZLEMÉNY / amendment) this run. */
+  offeringPdfsSkippedNoSchedule: number
   /** WebKincstár (report, datum) rows appended as fetch_failed this run. */
   webkincstarFetchFailedDays: number
 }
@@ -418,6 +423,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let offeringPdfsDownloaded = 0
   let offeringPdfsPending = 0
   let offeringPdfsParseFailed = 0
+  let offeringPdfsSkippedNoSchedule = 0
   let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
   let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
   let seriesSaleWindows:
@@ -516,6 +522,19 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 injected != null && injected !== ''
                   ? injected
                   : await pdfBytesToTextLayout(dl.bytes)
+              if (classifyOfferingPdfText(text) === 'skip_no_schedule') {
+                offeringPdfsSkippedNoSchedule += 1
+                console.error(
+                  `[market-data] offering PDF skipped (no schedule) for ${dl.row.pathUuid}`
+                )
+                const skipped = archiveDocumentFromListing(dl.row, 'skipped_no_schedule', {
+                  sha256: dl.sha256,
+                  bytes: dl.bytes.byteLength,
+                  sourceHost: dl.sourceHost
+                })
+                if (skipped) archiveUpserts.push(skipped)
+                continue
+              }
               const parsed = parseOfferingPdfText(text)
               const stub = offeringStubFromListing(dl.row, {
                 paymentDates: parsed.paymentDates,
@@ -630,6 +649,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     offeringPdfsDownloaded,
     offeringPdfsPending,
     offeringPdfsParseFailed,
+    offeringPdfsSkippedNoSchedule,
     webkincstarFetchFailedDays
   }
 }

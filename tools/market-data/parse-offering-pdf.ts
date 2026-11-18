@@ -99,6 +99,56 @@ function isDiscountTreasuryBill(text: string): boolean {
   return /Diszkont\s+Kincstárjegy/i.test(text)
 }
 
+function hasCouponScheduleMarkers(text: string): boolean {
+  return (
+    /A\s+kamat\s+fizetése\s+az\s+alábbi\s+napokon\s+történik/i.test(text) ||
+    /A\s+kamatfizetés[\s\S]{0,160}?az\s+alábbi\s+napokon\s+történik/i.test(text) ||
+    /Kamatteljesítési\s+napok/i.test(text) ||
+    /A\s+kamat\s+fizetése\s+a\s+futamidő\s+alatt\s+minden\s+év/i.test(text) ||
+    /Kamatszámítás\s+algoritmusa/i.test(text)
+  )
+}
+
+function isKozlemenyWithoutSchedule(text: string): boolean {
+  const head = text.slice(0, 1200)
+  const looksLikeKozlemeny =
+    /^\s*KÖZLEMÉNY\b/im.test(head) ||
+    /\bKÖZLEMÉNY\b[\s\S]{0,200}MÓDOSÍTÁS/i.test(head)
+  if (!looksLikeKozlemeny) return false
+  return !hasCouponScheduleMarkers(text) && !isDiscountTreasuryBill(text)
+}
+
+function looksLikePublicOffering(text: string): boolean {
+  const head = text.slice(0, 800)
+  return (
+    /NYILVÁNOS\s+AJÁNLATTÉTEL/i.test(head) ||
+    /N\s*Y\s*I\s*L\s*V\s*[ÁA]\s*N\s*O\s*S[\s\S]{0,40}A\s*J\s*[ÁA]\s*N\s*L\s*A\s*T\s*T\s*[ÉE]\s*T\s*E\s*L/i.test(
+      head
+    )
+  )
+}
+
+/** Whether extracted PDF text should be parsed or archived as no-schedule skip. */
+export type OfferingPdfContentClass = 'parse' | 'skip_no_schedule'
+
+/**
+ * Content gate before transcription: ÁKK sometimes labels amendment KÖZLEMÉNY
+ * PDFs as resourceType ISSUE. Those have no coupon schedule — skip permanently.
+ */
+export function classifyOfferingPdfText(text: string): OfferingPdfContentClass {
+  const normalized = text.replace(/\u00a0/g, ' ')
+  if (isDiscountTreasuryBill(normalized) || hasCouponScheduleMarkers(normalized)) {
+    return 'parse'
+  }
+  if (isKozlemenyWithoutSchedule(normalized)) {
+    return 'skip_no_schedule'
+  }
+  if (looksLikePublicOffering(normalized)) {
+    return 'parse'
+  }
+  return 'parse'
+}
+
 /**
  * Explicit list after PMÁP-style or FixMAP-style "kamat … napokon történik" markers.
  * FixMAP often splits "A kamatfizetés … az alábbi napokon történik:" across lines.

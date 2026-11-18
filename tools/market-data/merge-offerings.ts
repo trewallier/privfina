@@ -91,12 +91,43 @@ function preferArchiveStatus(
     ) {
       next.status = incoming.status
     }
-    if (incoming.status === 'parse_failed' && existing.status !== 'transcribed') {
+    if (
+      incoming.status === 'skipped_no_schedule' &&
+      existing.status !== 'transcribed'
+    ) {
+      next.status = 'skipped_no_schedule'
+    }
+    if (
+      incoming.status === 'parse_failed' &&
+      existing.status !== 'transcribed' &&
+      existing.status !== 'skipped_no_schedule'
+    ) {
       next.status = 'parse_failed'
     }
     return next
   }
   return { ...incoming }
+}
+
+/** TAP_* PDFs never carry coupon schedules — migrate sticky parse_failed → skip. */
+export function isTapResourceType(resourceType: string | null | undefined): boolean {
+  const rt = (resourceType ?? '').toUpperCase()
+  return rt.startsWith('TAP')
+}
+
+/**
+ * Rewrite TAP_* `parse_failed` rows to `skipped_no_schedule` (keeps sha256).
+ * Called during merge so daily ingest clears legacy false alarms without PDF hits.
+ */
+export function migrateTapParseFailedToSkipped(
+  documents: OfferingArchiveDocument[]
+): OfferingArchiveDocument[] {
+  return documents.map((doc) => {
+    if (doc.status !== 'parse_failed' || !isTapResourceType(doc.resourceType)) {
+      return doc
+    }
+    return { ...doc, status: 'skipped_no_schedule' }
+  })
 }
 
 /**
@@ -203,6 +234,8 @@ export function mergeOfferingsState(
     }
   }
 
+  const migratedDocs = migrateTapParseFailedToSkipped([...byUuid.values()])
+
   const mergedArchive: OfferingArchiveFile = {
     schemaVersion: SCHEMA_VERSION,
     generatedAt: input.generatedAt,
@@ -211,9 +244,7 @@ export function mergeOfferingsState(
       host: 'www.akk.hu',
       disclaimer: OFFERING_TRANSCRIPTION_DISCLAIMER
     },
-    documents: [...byUuid.values()].sort((a, b) =>
-      a.pathUuid.localeCompare(b.pathUuid)
-    )
+    documents: migratedDocs.sort((a, b) => a.pathUuid.localeCompare(b.pathUuid))
   }
 
   let archiveChanged = true

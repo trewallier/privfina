@@ -182,21 +182,103 @@ export async function fetchWebkincstarSnapshots(
   return { datum: options.datum, reports: out, failures }
 }
 
+const BUDAPEST_DATE_FMT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Budapest',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+})
+
+/** Europe/Budapest calendar today as YYYY-MM-DD. */
+export function budapestTodayIso(now: Date = new Date()): string {
+  return BUDAPEST_DATE_FMT.format(now)
+}
+
 /**
  * Europe/Budapest calendar yesterday as YYYY-MM-DD (ADR 0039 default datum).
  */
 export function budapestYesterdayIso(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Budapest',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-  // en-CA → YYYY-MM-DD
-  const today = fmt.format(now)
-  const [y, m, d] = today.split('-').map((x) => Number(x))
-  // Construct a UTC noon date for the Budapest calendar day, then subtract one day.
+  return shiftIsoDate(budapestTodayIso(now), -1)
+}
+
+/** Shift a YYYY-MM-DD calendar date by whole days (UTC noon arithmetic). */
+export function shiftIsoDate(iso: string, deltaDays: number): string {
+  const [y, m, d] = iso.split('-').map((x) => Number(x))
   const utcNoon = Date.UTC(y, m - 1, d, 12, 0, 0)
-  const yday = new Date(utcNoon - 24 * 60 * 60 * 1000)
-  return fmt.format(yday)
+  const shifted = new Date(utcNoon + deltaDays * 24 * 60 * 60 * 1000)
+  // Format without timezone conversion (UTC components == calendar day).
+  const yy = shifted.getUTCFullYear()
+  const mm = String(shifted.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(shifted.getUTCDate()).padStart(2, '0')
+  return `${yy}-${mm}-${dd}`
+}
+
+/** Monday=0 … Sunday=6 for a YYYY-MM-DD calendar date. */
+export function isoWeekdayIndex(iso: string): number {
+  const [y, m, d] = iso.split('-').map((x) => Number(x))
+  // Date.UTC Sunday=0 … Saturday=6 → convert to Mon=0 … Sun=6
+  const sun0 = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)).getUTCDay()
+  return (sun0 + 6) % 7
+}
+
+export function isIsoWeekday(iso: string): boolean {
+  return isoWeekdayIndex(iso) < 5
+}
+
+/** Default max prior weekdays (excluding yesterday) filled when the calendar has holes. */
+export const WEBKINCSTAR_LOOKBACK_EXTRA_WEEKDAYS = 3
+
+export interface WebkincstarLookbackOptions {
+  /** Always included as the first target (typically Budapest yesterday). */
+  primaryDatum: string
+  /** Tip price calendar (may be null on first run). */
+  previousDays?: ReadonlyArray<{ datum: string; report: string; status: string }> | null
+  reports?: readonly WebkincstarReportName[]
+  /** Max prior weekdays to backfill besides primaryDatum (default 3). */
+  maxExtraWeekdays?: number
+}
+
+/**
+ * True when any configured report is missing a durable (priced / no_price) row for datum.
+ * Absent rows and prior fetch_failed both count as needing a fetch.
+ */
+export function webkincstarDatumNeedsFetch(
+  datum: string,
+  previousDays: ReadonlyArray<{ datum: string; report: string; status: string }> | null | undefined,
+  reports: readonly WebkincstarReportName[] = WEBKINCSTAR_REPORTS
+): boolean {
+  const byReport = new Map<string, string>()
+  for (const day of previousDays ?? []) {
+    if (day.datum !== datum) continue
+    byReport.set(day.report, day.status)
+  }
+  for (const report of reports) {
+    const status = byReport.get(report)
+    if (status !== 'priced' && status !== 'no_price') return true
+  }
+  return false
+}
+
+/**
+ * Build WebKincstár fetch datums: primary (yesterday) plus up to N prior weekdays
+ * that still need a durable calendar row for any configured report.
+ * Closes holes when Actions schedule drift skips a Budapest "yesterday".
+ */
+export function resolveWebkincstarLookbackDatums(
+  options: WebkincstarLookbackOptions
+): string[] {
+  const reports = options.reports ?? WEBKINCSTAR_REPORTS
+  const maxExtra = options.maxExtraWeekdays ?? WEBKINCSTAR_LOOKBACK_EXTRA_WEEKDAYS
+  const datums = [options.primaryDatum]
+  let cursor = shiftIsoDate(options.primaryDatum, -1)
+  let added = 0
+  // Scan at most ~2 calendar weeks of prior days to collect maxExtra weekdays.
+  for (let i = 0; i < 14 && added < maxExtra; i += 1) {
+    if (isIsoWeekday(cursor) && webkincstarDatumNeedsFetch(cursor, options.previousDays, reports)) {
+      datums.push(cursor)
+      added += 1
+    }
+    cursor = shiftIsoDate(cursor, -1)
+  }
+  return datums
 }

@@ -7,8 +7,10 @@ import { fetchKshInflationCsv } from './fetch-ksh-inflation.ts'
 import { fetchRetailInterestSnapshots } from './fetch-retail-interest.ts'
 import {
   budapestYesterdayIso,
-  fetchWebkincstarSnapshots
+  fetchWebkincstarSnapshots,
+  resolveWebkincstarLookbackDatums
 } from './fetch-webkincstar.ts'
+import type { PriceCalendarDay } from './normalize-webkincstar.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
 import { fetchOfferingPdfsForListings } from './fetch-offering-pdf.ts'
@@ -312,90 +314,102 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let webkincstarFetchFailedDays = 0
   let mergeSnapshotInput = combined.snapshot
 
-  const webkincstarDatum = options.webkincstarDatum ?? budapestYesterdayIso()
+  const webkincstarPrimaryDatum = options.webkincstarDatum ?? budapestYesterdayIso()
+  // Explicit --datum is a single-day operator backfill; default runs add short lookback.
+  const webkincstarDatums = options.webkincstarDatum
+    ? [options.webkincstarDatum]
+    : resolveWebkincstarLookbackDatums({
+        primaryDatum: webkincstarPrimaryDatum,
+        previousDays: previous.priceCalendar?.days,
+        reports: WEBKINCSTAR_REPORTS
+      })
   const shouldFetchWebkincstar =
     !options.skipWebkincstar &&
     (Boolean(options.webkincstarTextByReport) || !offlineAkk)
 
   if (shouldFetchWebkincstar) {
-    try {
-      const fetched = await fetchWebkincstarSnapshots({
-        datum: webkincstarDatum,
-        rawDir: path.join(options.rawDir, 'webkincstar'),
-        fetchImpl: options.fetchImpl,
-        textByReport: options.webkincstarTextByReport
-      })
+    const calendarDaysAccum: PriceCalendarDay[] = []
+    // Offline textByReport fixtures only cover one datum — fetch that primary once.
+    const datumsToFetch =
+      options.webkincstarTextByReport && !options.webkincstarDatum
+        ? [webkincstarPrimaryDatum]
+        : webkincstarDatums
 
-      if (fetched.failures.length > 0) {
-        webkincstarSoftFailed = true
-        for (const failure of fetched.failures) {
-          logWebkincstarSoftFail(
-            failure.error instanceof Error
-              ? failure.error
-              : new Error(String(failure.error))
-          )
-          console.error(
-            `[market-data] WebKincstár report soft-fail: ${failure.reportName}`
-          )
+    for (const webkincstarDatum of datumsToFetch) {
+      try {
+        const fetched = await fetchWebkincstarSnapshots({
+          datum: webkincstarDatum,
+          rawDir: path.join(options.rawDir, 'webkincstar', webkincstarDatum),
+          fetchImpl: options.fetchImpl,
+          textByReport: options.webkincstarTextByReport
+        })
+
+        if (fetched.failures.length > 0) {
+          webkincstarSoftFailed = true
+          for (const failure of fetched.failures) {
+            logWebkincstarSoftFail(
+              failure.error instanceof Error
+                ? failure.error
+                : new Error(String(failure.error))
+            )
+            console.error(
+              `[market-data] WebKincstár report soft-fail: ${failure.reportName} datum=${webkincstarDatum}`
+            )
+          }
         }
-      }
 
-      if (fetched.reports.length === 0) {
-        // Full outage: no successful report — calendar fetch_failed only when absent.
+        if (fetched.reports.length === 0) {
+          const appendable = fetchFailedCalendarDaysAppendable(
+            webkincstarDatum,
+            WEBKINCSTAR_REPORTS,
+            previous.priceCalendar
+          )
+          webkincstarFetchFailedDays += appendable.length
+          calendarDaysAccum.push(...appendable)
+        } else {
+          const normalized = normalizeWebkincstarReports(
+            fetched.reports.map((r) => r.parsed)
+          )
+          if (normalized.unmatchedNames.length > 0) {
+            console.error(
+              `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalized.unmatchedNames.join(', ')}`
+            )
+          }
+          const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalized.snapshot, {
+            extraSeries: previousSeriesForJoin(previous)
+          })
+          if (overlay.skippedUnmatched > 0) {
+            console.error(
+              `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match`
+            )
+          }
+          mergeSnapshotInput = overlay.snapshot
+          if (overlay.hasQuotes) webkincstarHasQuotes = true
+
+          const failedReportNames = fetched.failures.map((f) => f.reportName)
+          const failedDays = fetchFailedCalendarDaysAppendable(
+            webkincstarDatum,
+            failedReportNames,
+            previous.priceCalendar
+          )
+          webkincstarFetchFailedDays += failedDays.length
+          calendarDaysAccum.push(...normalized.calendarDays, ...failedDays)
+        }
+      } catch (err) {
+        logWebkincstarSoftFail(err)
+        webkincstarSoftFailed = true
         const appendable = fetchFailedCalendarDaysAppendable(
           webkincstarDatum,
           WEBKINCSTAR_REPORTS,
           previous.priceCalendar
         )
-        if (appendable.length > 0) {
-          webkincstarFetchFailedDays += appendable.length
-          priceCalendarUpdate = priceCalendarFileFromDays(appendable, generatedAt)
-        }
-      } else {
-        const normalized = normalizeWebkincstarReports(
-          fetched.reports.map((r) => r.parsed)
-        )
-        if (normalized.unmatchedNames.length > 0) {
-          console.error(
-            `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalized.unmatchedNames.join(', ')}`
-          )
-        }
-        const overlay = applyWebkincstarQuotes(combined.snapshot, normalized.snapshot, {
-          extraSeries: previousSeriesForJoin(previous)
-        })
-        if (overlay.skippedUnmatched > 0) {
-          console.error(
-            `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match`
-          )
-        }
-        mergeSnapshotInput = overlay.snapshot
-        webkincstarHasQuotes = overlay.hasQuotes
-
-        const failedReportNames = fetched.failures.map((f) => f.reportName)
-        const failedDays = fetchFailedCalendarDaysAppendable(
-          webkincstarDatum,
-          failedReportNames,
-          previous.priceCalendar
-        )
-        webkincstarFetchFailedDays += failedDays.length
-        priceCalendarUpdate = priceCalendarFileFromDays(
-          [...normalized.calendarDays, ...failedDays],
-          generatedAt
-        )
-      }
-    } catch (err) {
-      // Unexpected soft-fail path (should be rare now that fetch isolates per report).
-      logWebkincstarSoftFail(err)
-      webkincstarSoftFailed = true
-      const appendable = fetchFailedCalendarDaysAppendable(
-        webkincstarDatum,
-        WEBKINCSTAR_REPORTS,
-        previous.priceCalendar
-      )
-      if (appendable.length > 0) {
         webkincstarFetchFailedDays += appendable.length
-        priceCalendarUpdate = priceCalendarFileFromDays(appendable, generatedAt)
+        calendarDaysAccum.push(...appendable)
       }
+    }
+
+    if (calendarDaysAccum.length > 0) {
+      priceCalendarUpdate = priceCalendarFileFromDays(calendarDaysAccum, generatedAt)
     }
   }
 

@@ -14,6 +14,8 @@ import path from 'node:path'
 import { runCiIngest } from './ci-ingest.ts'
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import { resolveBranch } from './resolve-branch.ts'
+import type { OfferingFamilyCode } from './offering-families.ts'
+import { OFFERING_FAMILIES } from './offering-families.ts'
 import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 import { assertPublishedTree } from './validate.ts'
 import {
@@ -28,11 +30,13 @@ function printHelp(): void {
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
+      [--offerings-dir <dir>] [--skip-offerings]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>]
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
+      [--offerings-dir <dir>] [--skip-offerings]
   market-data validate-tree --root <repo-or-v2>
   market-data resolve-branch --repository <owner/repo> --branch <name>
 
@@ -95,6 +99,24 @@ async function loadWebkincstarDir(
   return textByReport
 }
 
+async function loadOfferingsDir(
+  dir: string
+): Promise<Partial<Record<OfferingFamilyCode, AkkEnvelope>>> {
+  const out: Partial<Record<OfferingFamilyCode, AkkEnvelope>> = {}
+  const entries = await readdir(dir)
+  for (const family of OFFERING_FAMILIES) {
+    const preferred = entries.find(
+      (name) =>
+        name === `getPublicOfferings_${family}.json` ||
+        name === `${family}.json`
+    )
+    if (!preferred) continue
+    const text = await readFile(path.join(dir, preferred), 'utf8')
+    out[family] = JSON.parse(text) as AkkEnvelope
+  }
+  return out
+}
+
 async function loadOptionalSources(args: string[]): Promise<{
   catalog?: AkkEnvelope
   networkRates?: AkkEnvelope
@@ -107,6 +129,8 @@ async function loadOptionalSources(args: string[]): Promise<{
   webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
   webkincstarDatum?: string
   skipWebkincstar?: boolean
+  offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
+  skipOfferings?: boolean
 }> {
   const catalogPath = getFlag(args, '--catalog')
   const ratesPath = getFlag(args, '--rates')
@@ -133,6 +157,11 @@ async function loadOptionalSources(args: string[]): Promise<{
   if (skipWebkincstar && webkincstarDir) {
     throw new Error('Use either --webkincstar-dir or --skip-webkincstar, not both.')
   }
+  const offeringsDir = getFlag(args, '--offerings-dir')
+  const skipOfferings = hasFlag(args, '--skip-offerings')
+  if (skipOfferings && offeringsDir) {
+    throw new Error('Use either --offerings-dir or --skip-offerings, not both.')
+  }
   const webkincstarDatum = getFlag(args, '--datum')
   return {
     catalog: catalogPath ? await loadEnvelope(catalogPath) : undefined,
@@ -149,7 +178,9 @@ async function loadOptionalSources(args: string[]): Promise<{
       ? await loadWebkincstarDir(webkincstarDir)
       : undefined,
     webkincstarDatum,
-    skipWebkincstar
+    skipWebkincstar,
+    offeringEnvelopesByFamily: offeringsDir ? await loadOfferingsDir(offeringsDir) : undefined,
+    skipOfferings
   }
 }
 
@@ -179,7 +210,9 @@ async function main(argv: string[]): Promise<number> {
       skipInflation: sources.skipInflation,
       webkincstarTextByReport: sources.webkincstarTextByReport,
       webkincstarDatum: sources.webkincstarDatum,
-      skipWebkincstar: sources.skipWebkincstar
+      skipWebkincstar: sources.skipWebkincstar,
+      offeringEnvelopesByFamily: sources.offeringEnvelopesByFamily,
+      skipOfferings: sources.skipOfferings
     })
     process.stdout.write(
       `${JSON.stringify({
@@ -193,7 +226,11 @@ async function main(argv: string[]): Promise<number> {
         inflationAppendedRows: report.inflationAppendedRows,
         webkincstarUpdated: report.webkincstarUpdated,
         webkincstarSoftFailed: report.webkincstarSoftFailed,
-        priceCalendarAppendedDays: report.priceCalendarAppendedDays
+        priceCalendarAppendedDays: report.priceCalendarAppendedDays,
+        offeringsUpdated: report.offeringsUpdated,
+        offeringsSoftFailed: report.offeringsSoftFailed,
+        offeringPdfsDownloaded: report.offeringPdfsDownloaded,
+        offeringPdfsPending: report.offeringPdfsPending
       })}\n`
     )
     return report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -223,7 +260,9 @@ async function main(argv: string[]): Promise<number> {
       skipInflation: sources.skipInflation,
       webkincstarTextByReport: sources.webkincstarTextByReport,
       webkincstarDatum: sources.webkincstarDatum,
-      skipWebkincstar: sources.skipWebkincstar
+      skipWebkincstar: sources.skipWebkincstar,
+      offeringEnvelopesByFamily: sources.offeringEnvelopesByFamily,
+      skipOfferings: sources.skipOfferings
     })
     process.stdout.write(`${JSON.stringify({ changed: result.changed, asOf: result.asOf })}\n`)
     return EXIT_UPDATED

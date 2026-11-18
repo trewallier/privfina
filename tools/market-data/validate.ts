@@ -1,10 +1,16 @@
-import { digestCanonical, digestInflation, digestPriceCalendar } from './digests.ts'
+import {
+  digestCanonical,
+  digestInflation,
+  digestOfferingArchive,
+  digestPriceCalendar
+} from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import { publishedFamilies, type MarketTreeState } from './merge.ts'
 import {
   COUPON_COLS,
   INFLATION_REF_PATH,
+  OFFERING_ARCHIVE_REF_PATH,
   PRICE_CALENDAR_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
@@ -108,6 +114,44 @@ export function validateMarketTree(tree: MarketTreeState): void {
         }
       }
     }
+    for (const [id, o] of Object.entries(fam.offerings ?? {})) {
+      try {
+        assertSeriesId(id)
+      } catch (err) {
+        throw new ValidateError(
+          `Non-canonical offering key in ${family}: ${err instanceof Error ? err.message : String(err)}`
+        )
+      }
+      if (o.id !== id) throw new ValidateError(`Offering id mismatch ${family}/${id}`)
+      if (o.schemaVersion !== SCHEMA_VERSION) {
+        throw new ValidateError(`Bad offering schemaVersion for ${family}/${id}`)
+      }
+      if (!o.source || typeof o.source.host !== 'string' || !o.source.disclaimer?.trim()) {
+        throw new ValidateError(`Offering source attribution required for ${family}/${id}`)
+      }
+      if (o.saleWindow != null) {
+        if (typeof o.saleWindow.from !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.saleWindow.from)) {
+          throw new ValidateError(`Bad offering saleWindow.from for ${family}/${id}`)
+        }
+        if (
+          o.saleWindow.to != null &&
+          o.saleWindow.to !== '' &&
+          !/^\d{4}-\d{2}-\d{2}$/.test(o.saleWindow.to)
+        ) {
+          throw new ValidateError(`Bad offering saleWindow.to for ${family}/${id}`)
+        }
+      }
+      if (o.paymentDates != null) {
+        if (!Array.isArray(o.paymentDates)) {
+          throw new ValidateError(`Offering paymentDates must be an array for ${family}/${id}`)
+        }
+        for (const d of o.paymentDates) {
+          if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+            throw new ValidateError(`Bad offering paymentDate in ${family}/${id}`)
+          }
+        }
+      }
+    }
   }
   if (tree.manifest.refs?.retailInterest) {
     throw new ValidateError(
@@ -126,6 +170,14 @@ export function validateMarketTree(tree: MarketTreeState): void {
     tree.manifest.digests[PRICE_CALENDAR_REF_PATH]
   ) {
     throw new ValidateError('manifest references priceCalendar but file is missing')
+  }
+  if (tree.offeringArchive) {
+    validateOfferingArchive(tree)
+  } else if (
+    tree.manifest.refs?.offeringArchive ||
+    tree.manifest.digests[OFFERING_ARCHIVE_REF_PATH]
+  ) {
+    throw new ValidateError('manifest references offeringArchive but file is missing')
   }
   verifyManifestDigests(tree)
 }
@@ -251,6 +303,46 @@ function validatePriceCalendar(tree: MarketTreeState): void {
   }
 }
 
+function validateOfferingArchive(tree: MarketTreeState): void {
+  const file = tree.offeringArchive
+  if (!file) return
+  if (file.schemaVersion !== SCHEMA_VERSION) {
+    throw new ValidateError(`offeringArchive schemaVersion must be ${SCHEMA_VERSION}`)
+  }
+  if (!file.source || file.source.id !== 'akk-public-offerings') {
+    throw new ValidateError('offeringArchive.source.id must be akk-public-offerings')
+  }
+  if (!file.source.disclaimer || !file.source.disclaimer.trim()) {
+    throw new ValidateError('offeringArchive.source.disclaimer is required')
+  }
+  if (!Array.isArray(file.documents)) {
+    throw new ValidateError('offeringArchive.documents must be an array')
+  }
+  const seen = new Set<string>()
+  for (const doc of file.documents) {
+    if (!doc?.pathUuid || typeof doc.pathUuid !== 'string') {
+      throw new ValidateError('offeringArchive document missing pathUuid')
+    }
+    const key = doc.pathUuid.toLowerCase()
+    if (seen.has(key)) {
+      throw new ValidateError(`Duplicate offeringArchive pathUuid ${doc.pathUuid}`)
+    }
+    seen.add(key)
+    if (typeof doc.seriesId !== 'string' || !doc.seriesId) {
+      throw new ValidateError(`offeringArchive document missing seriesId for ${doc.pathUuid}`)
+    }
+    if (doc.sha256 != null && (typeof doc.sha256 !== 'string' || !/^[0-9a-f]{64}$/i.test(doc.sha256))) {
+      throw new ValidateError(`Bad offeringArchive sha256 for ${doc.pathUuid}`)
+    }
+  }
+  const refPath = tree.manifest?.refs?.offeringArchive
+  if (refPath && refPath !== OFFERING_ARCHIVE_REF_PATH) {
+    throw new ValidateError(
+      `manifest.refs.offeringArchive must be ${OFFERING_ARCHIVE_REF_PATH}, got ${refPath}`
+    )
+  }
+}
+
 /** Recompute file digests and require an exact match to manifest.digests. */
 export function verifyManifestDigests(tree: MarketTreeState): void {
   if (!tree.manifest) {
@@ -281,12 +373,18 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
     for (const [id, c] of Object.entries(fam.coupons ?? {})) {
       digests[`families/${family}/coupons/${id}.json`] = digestCanonical(c)
     }
+    for (const [id, o] of Object.entries(fam.offerings ?? {})) {
+      digests[`families/${family}/offerings/${id}.json`] = digestCanonical(o)
+    }
   }
   if (tree.inflation) {
     digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
   }
   if (tree.priceCalendar) {
     digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)
+  }
+  if (tree.offeringArchive) {
+    digests[OFFERING_ARCHIVE_REF_PATH] = digestOfferingArchive(tree.offeringArchive)
   }
   return digests
 }

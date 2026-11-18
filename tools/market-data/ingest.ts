@@ -1,6 +1,7 @@
 import { combineSnapshots } from './combine.ts'
 import { applyWebkincstarQuotes } from './combine-webkincstar.ts'
 import { fetchAkkSnapshots } from './fetch-akk.ts'
+import { fetchAkkOfferingListings } from './fetch-akk-offerings.ts'
 import { CsrfSession, fetchAllampapirSnapshots } from './fetch-allampapir.ts'
 import { fetchKshInflationCsv } from './fetch-ksh-inflation.ts'
 import { fetchRetailInterestSnapshots } from './fetch-retail-interest.ts'
@@ -10,6 +11,13 @@ import {
 } from './fetch-webkincstar.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
+import {
+  archiveDocumentFromListing,
+  diffOfferingsAgainstArchive,
+  normalizeOfferingEnvelope
+} from './normalize-offerings.ts'
+import { mergeOfferingsState } from './merge-offerings.ts'
+import type { OfferingFamilyCode } from './offering-families.ts'
 import { priceCalendarFileFromDays } from './merge-price-calendar.ts'
 import { normalizeAkkSnapshots } from './normalize.ts'
 import { normalizeAllampapirSnapshots } from './normalize-allampapir.ts'
@@ -27,8 +35,11 @@ import {
   type FamilyCode,
   type InflationFile,
   type NormalizedSnapshot,
+  type OfferingArchiveFile,
+  type OfferingFile,
   type PriceCalendarFile,
   type RetailInterestFile,
+  type SaleWindow,
   type SeriesRecord
 } from './types.ts'
 import { validateMarketTree } from './validate.ts'
@@ -93,6 +104,13 @@ export interface IngestOptions {
   webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
   /** Skip WebKincstár fetch/overlay (keep previous price calendar). */
   skipWebkincstar?: boolean
+  /**
+   * Offline getPublicOfferings envelopes keyed by offering family (tests).
+   * When set with fixture ÁKK, skips live offering listing fetch.
+   */
+  offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
+  /** Skip offering listing/merge (keep previous offerings/archive). */
+  skipOfferings?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -108,6 +126,13 @@ export interface IngestReport extends MergeResult {
   webkincstarUpdated: boolean
   /** True when WebKincstár soft-failed and calendar recorded fetch_failed. */
   webkincstarSoftFailed: boolean
+  offeringsUpdated: boolean
+  /** True when offering listing soft-failed and previous offerings were kept. */
+  offeringsSoftFailed: boolean
+  /** PDF downloads attempted this run (0 until PDF gate lands). */
+  offeringPdfsDownloaded: number
+  /** Unknown docs left as pending_download due to the per-family cap. */
+  offeringPdfsPending: number
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -125,6 +150,13 @@ function logWebkincstarSoftFail(err: unknown): void {
   const message = err instanceof Error ? err.message : String(err)
   console.error(
     `[market-data] WebKincstár soft-fail; recording fetch_failed calendar when possible and continuing dual-source publish: ${message}`
+  )
+}
+
+function logOfferingsSoftFail(err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err)
+  console.error(
+    `[market-data] offerings soft-fail; keeping previous offerings/archive and continuing price publish: ${message}`
   )
 }
 
@@ -344,6 +376,85 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     }
   }
 
+  let offeringsUpdated = false
+  let offeringsSoftFailed = false
+  const offeringPdfsDownloaded = 0
+  const offeringPdfsPending = 0
+  let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
+  let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
+  let seriesSaleWindows:
+    | Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
+    | undefined
+
+  const shouldFetchOfferings =
+    !options.skipOfferings &&
+    (Boolean(options.offeringEnvelopesByFamily) || !offlineAkk)
+
+  if (shouldFetchOfferings) {
+    try {
+      const fetched = await fetchAkkOfferingListings({
+        rawDir: path.join(options.rawDir, 'offerings'),
+        fetchImpl: options.fetchImpl,
+        envelopesByFamily: options.offeringEnvelopesByFamily
+      })
+
+      if (fetched.failures.length > 0) {
+        offeringsSoftFailed = true
+        for (const failure of fetched.failures) {
+          logOfferingsSoftFail(
+            failure.error instanceof Error
+              ? failure.error
+              : new Error(String(failure.error))
+          )
+          console.error(`[market-data] offerings family soft-fail: ${failure.family}`)
+        }
+      }
+
+      if (fetched.byFamily.length === 0) {
+        if (fetched.failures.length > 0) {
+          offeringsSoftFailed = true
+        }
+      } else {
+        const listingRows = fetched.byFamily.flatMap((f) =>
+          normalizeOfferingEnvelope(f.envelope, f.family)
+        )
+        const diff = diffOfferingsAgainstArchive(
+          listingRows,
+          previous.offeringArchive?.documents
+        )
+        // Listing-only path: index every path UUID as `listed` (PDF gate is a later slice).
+        const archiveUpserts = listingRows
+          .map((row) => archiveDocumentFromListing(row, 'listed'))
+          .filter((d): d is NonNullable<typeof d> => d != null)
+
+        const previousOfferings: Partial<Record<FamilyCode, Record<string, OfferingFile>>> =
+          Object.fromEntries(
+            FAMILIES.map((family) => [family, previous.families[family].offerings ?? {}])
+          )
+        const mergedOfferings = mergeOfferingsState(
+          previousOfferings,
+          previous.offeringArchive,
+          {
+            listingRows,
+            saleWindowsBySeries: diff.saleWindowsBySeries,
+            archiveUpserts,
+            generatedAt
+          }
+        )
+        offeringsByFamily = mergedOfferings.offeringsByFamily
+        offeringArchiveUpdate = mergedOfferings.offeringArchive
+        seriesSaleWindows = mergedOfferings.seriesSaleWindows
+        offeringsUpdated =
+          mergedOfferings.offeringsChanged ||
+          mergedOfferings.archiveChanged ||
+          mergedOfferings.saleWindowsChanged
+      }
+    } catch (err) {
+      logOfferingsSoftFail(err)
+      offeringsSoftFailed = true
+    }
+  }
+
   // Dual-source or WebKincstár overlay may rewrite same settleDate vs prior tip.
   const mergeOptions: Parameters<typeof mergeSnapshot>[2] = {
     generatedAt,
@@ -357,6 +468,15 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   }
   if (priceCalendarUpdate !== undefined) {
     mergeOptions.priceCalendar = priceCalendarUpdate
+  }
+  if (offeringsByFamily !== undefined) {
+    mergeOptions.offeringsByFamily = offeringsByFamily
+  }
+  if (offeringArchiveUpdate !== undefined) {
+    mergeOptions.offeringArchive = offeringArchiveUpdate
+  }
+  if (seriesSaleWindows !== undefined) {
+    mergeOptions.seriesSaleWindows = seriesSaleWindows
   }
   const merged = mergeSnapshot(previous, mergeSnapshotInput, mergeOptions)
   validateMarketTree(merged.tree)
@@ -376,7 +496,11 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     retailInterestSoftFailed,
     inflationUpdated: inflationUpdate !== undefined,
     webkincstarUpdated: priceCalendarUpdate !== undefined,
-    webkincstarSoftFailed
+    webkincstarSoftFailed,
+    offeringsUpdated,
+    offeringsSoftFailed,
+    offeringPdfsDownloaded,
+    offeringPdfsPending
   }
 }
 

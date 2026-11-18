@@ -1,5 +1,6 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import { writeGithubOutput } from './github-output.ts'
+import type { OfferingFamilyCode } from './offering-families.ts'
 import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 import type { WebkincstarReportName } from './webkincstar-reports.ts'
 
@@ -19,6 +20,8 @@ export interface CiIngestOptions {
   webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
   webkincstarDatum?: string
   skipWebkincstar?: boolean
+  offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
+  skipOfferings?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -51,6 +54,8 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     webkincstarTextByReport: options.webkincstarTextByReport,
     webkincstarDatum: options.webkincstarDatum,
     skipWebkincstar: options.skipWebkincstar,
+    offeringEnvelopesByFamily: options.offeringEnvelopesByFamily,
+    skipOfferings: options.skipOfferings,
     fetchImpl: options.fetchImpl,
     generatedAt: options.generatedAt
   })

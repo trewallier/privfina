@@ -1,0 +1,20 @@
+{
+  "meta": { "function": "getPublicOfferings", "status": "OK", "message": null },
+  "data": [
+    {
+      "endPeriod": "2045-01-30",
+      "pathId": "d1599c29-cd4a-417a-ae7a-932bfa987a70",
+      "startPeriod": "2026-02-02",
+      "path": "public_offerings/d1599c29-cd4a-417a-ae7a-932bfa987a70.pdf",
+      "modifiedOn": "2026-01-28 12:00:00",
+      "offeringName": "2045/S",
+      "archive": false,
+      "label": "BABA",
+      "published": "2026-01-28 14:00:00",
+      "name": "2045/S",
+      "isin": "HU0000407549",
+      "longName": "A450201S26",
+      "resourceType": "ISSUE"
+    }
+  ]
+}

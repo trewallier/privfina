@@ -1,6 +1,6 @@
-# Market-data tooling (ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039 / ROADMAP §6b–§6h)
+# Market-data tooling (ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039 / 0041 / ROADMAP §6b–§6h / §6k)
 
-Normalize and publish compact government-security market JSON under `data/market/v2/` from **ÁKK** (catalog + network rates), **allampapir.hu** (CSRF retail **prices** + Lakossági kamatok **retail interest** → per-series coupons), **KSH** STADAT ara0040 (**inflation** Összesen), and **WebKincstár** daily price PDFs (Kincstári árfolyamjegyzés → quotes + **price calendar**), combined in one ingest.
+Normalize and publish compact government-security market JSON under `data/market/v2/` from **ÁKK** (catalog + network rates + **public offerings**), **allampapir.hu** (CSRF retail **prices** + Lakossági kamatok **retail interest** → per-series coupons; offering PDF fallback), **KSH** STADAT ara0040 (**inflation** Összesen), and **WebKincstár** daily price PDFs (Kincstári árfolyamjegyzés → quotes + **price calendar**), combined in one ingest.
 
 ## Commands
 
@@ -18,6 +18,10 @@ npm run market-data:ingest -- --root /tmp/out \
 
 # Skip WebKincstár PDF fetch (keep previous price calendar / quotes from that source)
 npm run market-data:ingest -- --root /tmp/out --skip-webkincstar …
+
+# Offline ÁKK public-offering listings (getPublicOfferings_<family>.json) or skip
+npm run market-data:ingest -- --root /tmp/out --offerings-dir tests/fixtures/market-data/offerings …
+npm run market-data:ingest -- --root /tmp/out --skip-offerings …
 
 # CI helpers (.github/workflows/market-data.yml — single-line run steps)
 npx tsx tools/market-data/cli.ts ci-ingest
@@ -41,7 +45,8 @@ Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). 
 - **Series**: identity + `mat` (required when source provides it for quoted series) + optional `dayCount` / `offered` / `ref`. **No `prem`.**
 - **Coupons**: `families/{fam}/coupons/<id>.json` from retailInterest periods joined onto series id (name / slug). `rate` and `to` nullable; multi-band / stepped rate strings → distinct rows.
 - **Price sources**: ÁKK (2 GETs) + allampapir.hu (CSRF once per jar → all `data.papers` → `get_prices`). Combine before merge: join prefer shared ISIN else `longName` id; ÁKK wins catalog identity; allampapir wins conflicting same-day quote numerics. **Then** overlay WebKincstár PDF rows (ADR 0039): prefer non-null; conflicting numerics → **WebKincstár wins**. Same-day rewrite when dual-source **or** WebKincstár quotes are present.
-- **WebKincstár (ADR 0039 / ROADMAP §6h)**: Actions-only `POST …/report-service/report` for `_20631_arfolyam_dkj` + `_20633_arfolyam_mak` at Europe/Budapest yesterday (or `--datum`). Assert `%PDF` → `pdftotext -layout` → pure text parser (`Értéknap` must match `datum`). Soft-fail like retailInterest (per-report isolation; append `fetch_failed` only when that `(report, datum)` is still absent — never rewrite a prior priced/no_price row). Publish `refs/price-calendar.json` (`priced` | `no_price` | `fetch_failed`) with Magyar Államkincstár (WebKincstár) attribution — republished figures are informational, may lag or differ from the live table, and are not investment advice. Parser is reusable for §6m backfill; backfill itself is out of scope here. SPA offering / sale-window consumption is ROADMAP §6l (ingest capture remains §6k).
+- **WebKincstár (ADR 0039 / ROADMAP §6h)**: Actions-only `POST …/report-service/report` for `_20631_arfolyam_dkj` + `_20633_arfolyam_mak` at Europe/Budapest yesterday (or `--datum`). Assert `%PDF` → `pdftotext -layout` → pure text parser (`Értéknap` must match `datum`). Soft-fail like retailInterest (per-report isolation; append `fetch_failed` only when that `(report, datum)` is still absent — never rewrite a prior priced/no_price row). Publish `refs/price-calendar.json` (`priced` | `no_price` | `fetch_failed`) with Magyar Államkincstár (WebKincstár) attribution — republished figures are informational, may lag or differ from the live table, and are not investment advice. Parser is reusable for §6m backfill; backfill itself is out of scope here.
+- **Public offerings (ADR 0041 / ROADMAP §6k)**: Actions-only ÁKK `getPublicOfferings` once per commercial family (`dkj`/`pmap`/`bmap`/`fixmap`/`mapp`/`baba`) every run; always diff vs tip `refs/offering-archive.json`. Metadata-first: publish `families/{fam}/offerings/<id>.json` saleWindow + series-adjacent `saleWindow` without PDF. PDF download (later stack layers) only for unknown path UUIDs, ÁKK documents host with allampapir fallback, **≤10 PDFs per family per run**, never re-download a UUID once `sha256` is recorded. Soft-fail offerings so price ingest still publishes. Attribution: informational transcription; not a substitute for the official nyilvános ajánlattétel. SPA consumption is ROADMAP §6l.
 - **Retail interest**: same job `POST /api/retailInterest/get_all_data` (reuses price-fetch CSRF). Soft-fail on retailInterest errors: keep previous coupons/offered, still publish prices. **Do not** use the kamatok XLSX download as production source.
 - **Inflation (ADR 0037)**: KSH `ara0040.csv` → `refs/inflation.json` (Összesen only). Append-first; historical conflicts fail ingest. Fetch retries log each attempt with `httpStatus=…` or `httpResponse=none` plus undici `cause` (transport failures previously collapsed to bare `fetch failed`).
 - **Families**: required `dkj` | `pmap` | `bmap`; optional `fixmap` | `ktv` | `mapp` | `baba` | `emap` | `omap` | `ktj` | `map2`.

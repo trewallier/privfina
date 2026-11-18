@@ -268,6 +268,39 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
     const lateUtc = new Date('2026-11-07T23:30:00.000Z')
     expect(budapestYesterdayIso(lateUtc)).toBe('2026-11-07')
   })
+
+  it('resolveWebkincstarLookbackDatums fills weekday holes after schedule drift', async () => {
+    const {
+      resolveWebkincstarLookbackDatums,
+      webkincstarDatumNeedsFetch,
+      shiftIsoDate,
+      isIsoWeekday
+    } = await import('../tools/market-data/fetch-webkincstar.ts')
+    const { WEBKINCSTAR_REPORTS } = await import('../tools/market-data/webkincstar-reports.ts')
+
+    expect(isIsoWeekday('2026-11-10')).toBe(true) // Tuesday
+    expect(isIsoWeekday('2026-11-08')).toBe(false) // Sunday
+    expect(shiftIsoDate('2026-11-11', -1)).toBe('2026-11-10')
+
+    const previousDays = [
+      // Nov 9 and Nov 11 present for all reports; Nov 10 missing (the drift hole).
+      ...WEBKINCSTAR_REPORTS.flatMap((report) => [
+        { datum: '2026-11-09', report, status: 'priced' },
+        { datum: '2026-11-11', report, status: 'priced' }
+      ])
+    ]
+    expect(webkincstarDatumNeedsFetch('2026-11-10', previousDays)).toBe(true)
+    expect(webkincstarDatumNeedsFetch('2026-11-11', previousDays)).toBe(false)
+
+    const datums = resolveWebkincstarLookbackDatums({
+      primaryDatum: '2026-11-11',
+      previousDays,
+      maxExtraWeekdays: 3
+    })
+    expect(datums[0]).toBe('2026-11-11')
+    expect(datums).toContain('2026-11-10')
+    expect(datums.every((d) => isIsoWeekday(d) || d === '2026-11-11')).toBe(true)
+  })
 })
 
 describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () => {

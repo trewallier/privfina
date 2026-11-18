@@ -1,0 +1,70 @@
+                                  Jelenleg forgalmazott értékpapírok árfolyamai a Magyar Államkincstár állampapír-forgalmazó ügyfélszolgálatain
+
+Babakötvény                                                                                                                                                        Értéknap: 2026.11.05
+
+                                               Vételi    Vételi     Vételi                                                     Eladási   Eladási    Következő    Lejárati vagy  Lejáratig
+                             Vételi nettó                                      Eladási nettó   Felhalmozott   Eladási bruttó                                                                    Lejárat
+    Értékpapír elnevezése                     bruttó     hozam      hozam                                                      hozam     hozam     esedékesség    következő hátralévő napok
+                              árfolyam                                           árfolyam         kamat          árfolyam                                                                       dátuma
+                                             árfolyam     EHM        ISMA                                                       EHM       ISMA       dátuma        kifizetés     száma
+
+
+      2032/S_BABA           100.0000 %      106.2044 %    Vált.      Vált.     100.0000 %       6.2044 %      106.2044 %        Vált.     Vált.    2026.12.02      6.70 %        2,219        2032.12.02
+
+      2033/S_BABA           100.0000 %      105.6159 %    Vált.      Vált.     100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        2,280        2033.02.01
+
+      2034/S_BABA           100.0000 %      105.6159 %    Vált.      Vált.     100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        2,645        2034.02.01
+
+      2035/S_BABA           100.0000 %      105.6159 %    Vált.      Vált.     100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        3,010        2035.02.01
+
+      2036/S_BABA           100.0000 %      105.6159 %    Vált.      Vált.     100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        3,375        2036.02.01
+
+      2037/S_BABA           100.0000 %      105.6159 %    Vált.      Vált.     100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        3,741        2037.02.01
+
+      2038/S_BABA           100.0000 %      105.6159 %    Vált.      Vált.     100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        4,106        2038.02.01
+
+      2039/S_BABA           100.0000 %      105.6159 %    Vált.      Vált.     100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        4,471        2039.02.01
+
+
+
+A Babakötvény a fiatalok életkezdési támogatásáról szóló 2005. évi CLXXIV. törvény (a továbbiakban: Fétám tv.) értelmében a Magyar Államkincstárnál (a továbbiakban: Forgalmazó) Kincstári Start-
+értékpapírszámlával rendelkező gyermek javára vásárolható. A Babakötvény forgalomba hozatal során történő megszerzésének előfeltétele, hogy az azt megszerezni szándékozó befektető a Forgalmazónál
+Kincstári Start-értékpapírszámlával rendelkezzen. A Babakötvény nem ruházható át. A Babakötvény a Forgalmazó általi visszavásárlása a vonatkozó jogszabályokkal - így különösen a Fétám tv. 5. § (7)
+bekezdésével - összhangban kezdeményezhető.A Babakötvényt a Forgalmazó legkorábban a lejárat előtt a gyermek 18. életévének betöltésének napján vásárolja vissza a névérték felhalmozott kamattal
+növelt értékén.Bármely árfolyam változtatásának, és a forgalmazás felfüggesztésének jogát a Forgalmazó fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az esedékes összeg meghatározása
+az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik. Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig felhalmozott kamat, az esedékességet megelőző
+munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal. Befektetési megbízásait a Forgalmazó - az értéknap-váltásra figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott
+feltételek mellett teljesíti.
+
+
+
+
+ Az adatok tájékoztató jellegűek
+
+2026.11.18. 21:25                                                                                                                                                                             1/ 1
+                                                                                                                                                               Értéknap: 2026.11.05
+
+                                               Vételi    Vételi   Vételi                                                   Eladási   Eladási    Következő    Lejárati vagy  Lejáratig
+                             Vételi nettó                                  Eladási nettó   Felhalmozott   Eladási bruttó                                                                    Lejárat
+    Értékpapír elnevezése                     bruttó     hozam    hozam                                                    hozam     hozam     esedékesség    következő hátralévő napok
+                              árfolyam                                       árfolyam         kamat          árfolyam                                                                       dátuma
+                                             árfolyam     EHM      ISMA                                                     EHM       ISMA       dátuma        kifizetés     száma
+
+
+      2040/S_BABA           100.0000 %      105.6159 %    Vált.    Vált.   100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        4,836        2040.02.01
+
+      2041/S_BABA           100.0000 %      105.6159 %    Vált.    Vált.   100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        5,202        2041.02.01
+
+      2042/S_BABA           100.0000 %      105.6159 %    Vált.    Vált.   100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        5,567        2042.02.01
+
+      2043/S_BABA           100.0000 %      105.6159 %    Vált.    Vált.   100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        5,932        2043.02.01
+
+      2044/S_BABA           100.0000 %      105.6159 %    Vált.    Vált.   100.0000 %       5.6159 %      105.6159 %        Vált.     Vált.    2027.02.01      7.40 %        6,297        2044.02.01
+
+      2045/S_BABA           100.0000 %      105.5956 %    Vált.    Vált.   100.0000 %       5.5956 %      105.5956 %        Vált.     Vált.    2027.02.01      7.38 %        6,663        2045.02.01
+
+
+
+
+2026.11.18. 21:25                                                                                                                                                                         2/ 2
+

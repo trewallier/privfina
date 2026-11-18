@@ -14,7 +14,7 @@ export class WebkincstarParseError extends Error {
 
 /** One parsed instrument row from a WebKincstár daily price table. */
 export interface WebkincstarParsedRow {
-  /** Display / PDF instrument label (e.g. `D261223`, `2036/I1`). */
+  /** Display / PDF instrument label (e.g. `D261223`, `2036/I1`, `2031/M6`). */
   name: string
   /** Canonical id from `toSeriesId(name)`. */
   id: string
@@ -41,7 +41,12 @@ export interface WebkincstarParseResult {
 
 const ERTEKNAP_RE = /Értéknap:\s*(\d{4})[.\-/](\d{2})[.\-/](\d{2})/u
 const DKJ_NAME_RE = /^(D\d{6})\b/
-const MAK_NAME_RE = /^(\d{4}\/[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű0-9]+)\b/u
+/** MAK / PEMÁK / FixMÁP-style `yyyy/…` including `_EUR` / `_BABA` suffixes. */
+const SLASH_NAME_RE =
+  /^(\d{4}\/[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű0-9_]+)\b/u
+/** MÁP Plusz nyomdai `N2026/46` and 1MÁP `K2024/23`. */
+const LETTER_YEAR_SLASH_RE =
+  /^([NK]\d{4}\/[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű0-9_]+)\b/u
 const PCT_TOKEN_RE = /(-|\u2013|Vált\.?|\d{1,3}(?:[.,]\d+)?\s*%)/giu
 
 function huDateToIso(y: string, m: string, d: string): string {
@@ -56,8 +61,8 @@ export function parseErteknap(text: string): string | null {
 }
 
 /**
- * Route MAK table instrument names to published families.
- * PDF sections are not product-typed; use ÁKK-style letter suffixes.
+ * Route instrument names to published families.
+ * Dedicated §6n reports prefer report→family; MAK uses ÁKK-style letter suffixes.
  */
 export function familyFromWebkincstarInstrumentName(
   name: string,
@@ -66,6 +71,11 @@ export function familyFromWebkincstarInstrumentName(
   if (reportName === '_20631_arfolyam_dkj' || /^D\d{6}$/i.test(name)) {
     return 'dkj'
   }
+  if (reportName === '_207461_arfolyam_mapp') return 'mapp'
+  if (reportName === '_20638_arfolyam_pemak') return 'emap'
+  if (reportName === '_20642_arfolyam_start') return 'baba'
+  if (reportName === '_20632_arfolyam_kkj') return 'omap'
+
   const slash = name.indexOf('/')
   if (slash === -1) return null
   const suffix = name.slice(slash + 1).toUpperCase()
@@ -73,6 +83,9 @@ export function familyFromWebkincstarInstrumentName(
   if (/^Q\d*$/.test(suffix)) return 'fixmap'
   if (/^I\d*$/.test(suffix)) return 'pmap'
   if (/^[NR]\d*$/.test(suffix)) return 'bmap'
+  if (/^M\d*$/.test(suffix)) return 'mapp'
+  if (/_EUR$/.test(suffix) || /^[UXY]\d*_EUR$/.test(suffix)) return 'emap'
+  if (/_BABA$/.test(suffix) || /^S\d*_BABA$/.test(suffix)) return 'baba'
   // Conventional fixed KTV letters (A–H, …) and other unclassified MÁK rows.
   if (/^[A-Z]\d*$/.test(suffix)) return 'ktv'
   return null
@@ -105,6 +118,23 @@ function parseHuMaturity(raw: string): string | null {
   return huDateToIso(m[1], m[2], m[3])
 }
 
+function lastMaturityOnLine(line: string): string | null {
+  const dates = [...line.matchAll(/(\d{4}[.\-/]\d{2}[.\-/]\d{2})/g)].map((m) => m[1])
+  return dates.length > 0 ? parseHuMaturity(dates[dates.length - 1]) : null
+}
+
+function matchInstrumentName(
+  trimmed: string
+): { name: string; matchLen: number } | null {
+  const dkj = DKJ_NAME_RE.exec(trimmed)
+  if (dkj) return { name: dkj[1], matchLen: dkj[0].length }
+  const letter = LETTER_YEAR_SLASH_RE.exec(trimmed)
+  if (letter) return { name: letter[1], matchLen: letter[0].length }
+  const slash = SLASH_NAME_RE.exec(trimmed)
+  if (slash) return { name: slash[1], matchLen: slash[0].length }
+  return null
+}
+
 function parseDkjLine(line: string): WebkincstarParsedRow | null {
   const trimmed = line.trim()
   const nameMatch = DKJ_NAME_RE.exec(trimmed)
@@ -118,9 +148,7 @@ function parseDkjLine(line: string): WebkincstarParsedRow | null {
   // skip ISMA vételi (tokens[2])
   const ask = parseNumericToken(tokens[3] ?? '')
   const ay = parseNumericToken(tokens[4] ?? '')
-  // maturity is last YYYY.MM.DD on the line
-  const matMatch = /(\d{4}[.\-/]\d{2}[.\-/]\d{2})\s*$/.exec(trimmed)
-  const maturity = matMatch ? parseHuMaturity(matMatch[1]) : null
+  const maturity = lastMaturityOnLine(trimmed)
   return {
     name,
     id: toSeriesId(name),
@@ -134,14 +162,27 @@ function parseDkjLine(line: string): WebkincstarParsedRow | null {
   }
 }
 
-function parseMakLine(line: string): WebkincstarParsedRow | null {
+/**
+ * Shared nettó / AI / bruttó / EHM / ISMA × vételi+eladási layout
+ * (MAK, MAPP, PEMÁK).
+ */
+function parseDualSideMakStyleLine(
+  line: string,
+  reportName: WebkincstarReportName
+): WebkincstarParsedRow | null {
   const trimmed = line.trim()
-  const nameMatch = MAK_NAME_RE.exec(trimmed)
-  if (!nameMatch) return null
-  const name = nameMatch[1]
-  // Skip disclaimer / narrative lines that happen to mention a series-like token mid-sentence.
-  if (!/^\d{4}\//.test(trimmed)) return null
-  const rest = trimmed.slice(nameMatch[0].length)
+  const matched = matchInstrumentName(trimmed)
+  if (!matched) return null
+  // Skip disclaimer / narrative lines that mention a series-like token mid-sentence.
+  if (
+    !/^\d{4}\//.test(trimmed) &&
+    !/^N\d{4}\//.test(trimmed) &&
+    !/^K\d{4}\//.test(trimmed)
+  ) {
+    return null
+  }
+  const { name, matchLen } = matched
+  const rest = trimmed.slice(matchLen)
   const tokens = extractPctTokens(rest)
   // Vételi nettó, felhalmozott, vételi bruttó, vételi EHM, vételi ISMA,
   // eladási nettó, felhalmozott, eladási bruttó, eladási EHM, eladási ISMA
@@ -150,10 +191,8 @@ function parseMakLine(line: string): WebkincstarParsedRow | null {
   const by = parseNumericToken(tokens[3] ?? '')
   const ask = parseNumericToken(tokens[5] ?? '')
   const ay = parseNumericToken(tokens[8] ?? '')
-  // Last date on the line is maturity.
-  const dates = [...trimmed.matchAll(/(\d{4}[.\-/]\d{2}[.\-/]\d{2})/g)].map((m) => m[1])
-  const maturity = dates.length > 0 ? parseHuMaturity(dates[dates.length - 1]) : null
-  const family = familyFromWebkincstarInstrumentName(name, '_20633_arfolyam_mak')
+  const maturity = lastMaturityOnLine(trimmed)
+  const family = familyFromWebkincstarInstrumentName(name, reportName)
   return {
     name,
     id: toSeriesId(name),
@@ -168,7 +207,82 @@ function parseMakLine(line: string): WebkincstarParsedRow | null {
 }
 
 /**
- * Pure text-layer parser for WebKincstár daily price PDFs (ADR 0039).
+ * Babakötvény Start table: vételi nettó/bruttó/EHM/ISMA then
+ * eladási nettó / felhalmozott / bruttó / EHM / ISMA (no vételi AI column).
+ */
+function parseStartLine(line: string): WebkincstarParsedRow | null {
+  const trimmed = line.trim()
+  const matched = matchInstrumentName(trimmed)
+  if (!matched) return null
+  if (!/^\d{4}\//.test(trimmed)) return null
+  const { name, matchLen } = matched
+  const tokens = extractPctTokens(trimmed.slice(matchLen))
+  const bid = parseNumericToken(tokens[0] ?? '')
+  const ask = parseNumericToken(tokens[4] ?? '')
+  const ai = parseNumericToken(tokens[5] ?? '')
+  return {
+    name,
+    id: toSeriesId(name),
+    family: 'baba',
+    bid,
+    ask,
+    by: null,
+    ay: null,
+    ai,
+    maturity: lastMaturityOnLine(trimmed)
+  }
+}
+
+/**
+ * 1MÁP / KKJ: vételi-only (nettó, AI, bruttó, EHM, …) — never invent ask.
+ */
+function parseKkjLine(line: string): WebkincstarParsedRow | null {
+  const trimmed = line.trim()
+  const matched = matchInstrumentName(trimmed)
+  if (!matched) return null
+  if (!/^K\d{4}\//.test(trimmed)) return null
+  const { name, matchLen } = matched
+  const tokens = extractPctTokens(trimmed.slice(matchLen))
+  const bid = parseNumericToken(tokens[0] ?? '')
+  const ai = parseNumericToken(tokens[1] ?? '')
+  const by = parseNumericToken(tokens[3] ?? '')
+  return {
+    name,
+    id: toSeriesId(name),
+    family: 'omap',
+    bid,
+    ask: null,
+    by,
+    ay: null,
+    ai,
+    maturity: lastMaturityOnLine(trimmed)
+  }
+}
+
+function parseLine(
+  reportName: WebkincstarReportName,
+  line: string
+): WebkincstarParsedRow | null {
+  switch (reportName) {
+    case '_20631_arfolyam_dkj':
+      return parseDkjLine(line)
+    case '_20642_arfolyam_start':
+      return parseStartLine(line)
+    case '_20632_arfolyam_kkj':
+      return parseKkjLine(line)
+    case '_20633_arfolyam_mak':
+    case '_207461_arfolyam_mapp':
+    case '_20638_arfolyam_pemak':
+      return parseDualSideMakStyleLine(line, reportName)
+    default: {
+      const _exhaustive: never = reportName
+      return _exhaustive
+    }
+  }
+}
+
+/**
+ * Pure text-layer parser for WebKincstár daily price PDFs (ADR 0039 / 0042).
  * Input must be `pdftotext -layout` (or equivalent) output — not raw PDF bytes.
  */
 export function parseWebkincstarPdfText(options: {
@@ -189,8 +303,7 @@ export function parseWebkincstarPdfText(options: {
   const rows: WebkincstarParsedRow[] = []
   const seen = new Set<string>()
   for (const line of text.split(/\r?\n/)) {
-    const parsed =
-      reportName === '_20631_arfolyam_dkj' ? parseDkjLine(line) : parseMakLine(line)
+    const parsed = parseLine(reportName, line)
     if (!parsed) continue
     if (seen.has(parsed.id)) continue
     seen.add(parsed.id)

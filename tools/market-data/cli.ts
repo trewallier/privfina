@@ -82,7 +82,11 @@ async function loadWebkincstarDir(
   const entries = await readdir(dir)
   const aliases: Record<WebkincstarReportName, RegExp> = {
     _20631_arfolyam_dkj: /(?:^|[_-])dkj(?:[_-]|$)/i,
-    _20633_arfolyam_mak: /(?:^|[_-])mak(?:[_-]|$)/i
+    _20633_arfolyam_mak: /(?:^|[_-])mak(?:[_-]|$)/i,
+    _207461_arfolyam_mapp: /(?:^|[_-])mapp(?:[_-]|$)/i,
+    _20638_arfolyam_pemak: /(?:^|[_-])pemak(?:[_-]|$)/i,
+    _20642_arfolyam_start: /(?:^|[_-])start(?:[_-]|$)/i,
+    _20632_arfolyam_kkj: /(?:^|[_-])kkj(?:[_-]|$)/i
   }
   for (const report of WEBKINCSTAR_REPORTS) {
     const candidates = entries.filter(

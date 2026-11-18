@@ -11,6 +11,7 @@ import {
 } from './fetch-webkincstar.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
+import { fetchOfferingPdfsForListings } from './fetch-offering-pdf.ts'
 import {
   archiveDocumentFromListing,
   diffOfferingsAgainstArchive,
@@ -378,8 +379,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
 
   let offeringsUpdated = false
   let offeringsSoftFailed = false
-  const offeringPdfsDownloaded = 0
-  const offeringPdfsPending = 0
+  let offeringPdfsDownloaded = 0
+  let offeringPdfsPending = 0
   let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
   let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
   let seriesSaleWindows:
@@ -422,10 +423,38 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           listingRows,
           previous.offeringArchive?.documents
         )
-        // Listing-only path: index every path UUID as `listed` (PDF gate is a later slice).
+
+        const knownByUuid = new Map(
+          (previous.offeringArchive?.documents ?? []).map((d) => [
+            d.pathUuid.toLowerCase(),
+            d
+          ])
+        )
+
+        // Always index listing rows as listed first; PDF gate upgrades unknowns.
         const archiveUpserts = listingRows
           .map((row) => archiveDocumentFromListing(row, 'listed'))
           .filter((d): d is NonNullable<typeof d> => d != null)
+
+        // Offline fixture runs without a live fetchImpl for PDFs: only download when
+        // not purely offline, or when a custom fetchImpl is supplied for tests.
+        const shouldDownloadPdfs = !offlineAkk || Boolean(options.fetchImpl)
+        if (shouldDownloadPdfs && diff.unknownDocuments.length > 0) {
+          const pdfResult = await fetchOfferingPdfsForListings(
+            diff.unknownDocuments,
+            knownByUuid,
+            {
+              rawDir: path.join(options.rawDir, 'offerings', 'pdf'),
+              fetchImpl: options.fetchImpl
+            }
+          )
+          archiveUpserts.push(...pdfResult.archiveUpserts)
+          offeringPdfsDownloaded = pdfResult.downloadedCount
+          offeringPdfsPending = pdfResult.pendingCount
+        } else if (diff.unknownDocuments.length > 0) {
+          // Offline listing fixtures: leave unknowns as listed (no network PDFs).
+          offeringPdfsPending = 0
+        }
 
         const previousOfferings: Partial<Record<FamilyCode, Record<string, OfferingFile>>> =
           Object.fromEntries(

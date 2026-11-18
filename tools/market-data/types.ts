@@ -66,8 +66,19 @@ export interface SeriesRecord {
   dayCount?: DayCountConvention | null
   /** Currently offered for subscription when retailInterest join succeeds. */
   offered?: boolean | null
+  /**
+   * Retail sale window from nyilvános ajánlattétel listing (ADR 0041 / ROADMAP §6k).
+   * Prefer over `offered` for picker labels (SPA §6l).
+   */
+  saleWindow?: SaleWindow | null
   /** Reference curve label when known. */
   ref?: string | null
+}
+
+/** Inclusive retail sale window; `to` null while open. */
+export interface SaleWindow {
+  from: string
+  to: string | null
 }
 
 export interface SeriesFile {
@@ -112,7 +123,7 @@ export interface ManifestFamilyPaths {
   latest: string
 }
 
-/** Path hints for additive refs files (ADR 0037 inflation; ADR 0039 price calendar; deferred DKJ-base). */
+/** Path hints for additive refs files (ADR 0037 inflation; ADR 0039 price calendar; ADR 0041 offering archive; deferred DKJ-base). */
 export interface ManifestRefsPaths {
   /**
    * @deprecated Schema v2 does not publish flat retail-interest; optional only for
@@ -122,6 +133,8 @@ export interface ManifestRefsPaths {
   inflation?: string
   /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
   priceCalendar?: string
+  /** ÁKK public-offering document ledger (ADR 0041). */
+  offeringArchive?: string
 }
 
 export interface ManifestFile {
@@ -253,6 +266,80 @@ export interface PriceCalendarFile {
 
 export const WEBKINCSTAR_PRICE_CALENDAR_DISCLAIMER =
   'Informational republish of Magyar Államkincstár (WebKincstár) daily price tables; may lag or differ from the live treasury table; not investment advice.' as const
+
+/** Published path for ÁKK offering document archive (ADR 0041). */
+export const OFFERING_ARCHIVE_REF_PATH = 'refs/offering-archive.json' as const
+
+/**
+ * Day-count on offering transcriptions may include ACT/ACT (Babakötvény / MÁP Plusz)
+ * beyond the market-data SeriesRecord DayCountConvention union.
+ */
+export type OfferingDayCount = DayCountConvention | 'ACT/ACT'
+
+export type OfferingDocumentStatus =
+  | 'listed'
+  | 'downloaded'
+  | 'transcribed'
+  | 'parse_failed'
+  | 'pending_download'
+  | 'download_failed'
+
+export interface OfferingSourceMeta {
+  id: string
+  host: string
+  document: string
+  disclaimer: string
+}
+
+/**
+ * Per-series public-offering transcription (ADR 0041 → ROADMAP §6l SPA).
+ * `paymentDates` / `dayCount` optional until PDF parse succeeds.
+ */
+export interface OfferingFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  id: string
+  saleWindow?: SaleWindow | null
+  paymentDates?: string[]
+  dayCount?: OfferingDayCount | string | null
+  source: OfferingSourceMeta
+}
+
+export interface OfferingArchiveDocument {
+  /** ÁKK pathId when present. */
+  pathId: string | null
+  /** PDF UUID from `public_offerings/<uuid>.pdf` (dedupe key). */
+  pathUuid: string
+  family: FamilyCode
+  seriesId: string
+  isin: string | null
+  published: string | null
+  modifiedOn: string | null
+  resourceType: string | null
+  /** Content hash once downloaded; null while listed / pending. */
+  sha256: string | null
+  bytes: number | null
+  status: OfferingDocumentStatus
+  sourceHost: string
+}
+
+export interface OfferingArchiveSourceMeta {
+  id: 'akk-public-offerings'
+  host: 'www.akk.hu'
+  disclaimer: string
+}
+
+/**
+ * Tip ledger of known offering PDFs (ADR 0041). Compare every listing run against this.
+ */
+export interface OfferingArchiveFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  generatedAt: string
+  source: OfferingArchiveSourceMeta
+  documents: OfferingArchiveDocument[]
+}
+
+export const OFFERING_TRANSCRIPTION_DISCLAIMER =
+  'Informational transcription of a public offering document; may be incomplete or outdated vs the authoritative PDF; not a substitute for the official nyilvános ajánlattétel; not investment advice.' as const
 
 export const KSH_ARA0040_PAGE_URL =
   'https://www.ksh.hu/stadat_files/ara/hu/ara0040.html' as const

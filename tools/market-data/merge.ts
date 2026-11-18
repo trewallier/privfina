@@ -1,12 +1,20 @@
 import { assertSeriesId } from './ids.ts'
-import { digestCanonical, digestInflation, digestPriceCalendar, digestRetailInterest } from './digests.ts'
+import {
+  digestCanonical,
+  digestInflation,
+  digestOfferingArchive,
+  digestPriceCalendar,
+  digestRetailInterest
+} from './digests.ts'
 import { mergeInflationFile } from './merge-inflation.ts'
+import { applySeriesSaleWindows } from './merge-offerings.ts'
 import { mergePriceCalendarFile } from './merge-price-calendar.ts'
 import { joinRetailInterestToCoupons } from './normalize-retail-interest.ts'
 import {
   COUPON_COLS,
   FAMILIES,
   INFLATION_REF_PATH,
+  OFFERING_ARCHIVE_REF_PATH,
   PRICE_CALENDAR_REF_PATH,
   QUOTE_COLS,
   REQUIRED_FAMILIES,
@@ -19,10 +27,13 @@ import {
   type LatestQuote,
   type ManifestFile,
   type NormalizedSnapshot,
+  type OfferingArchiveFile,
+  type OfferingFile,
   type PriceCalendarFile,
   type QuotesFile,
   type QuoteRow,
   type RetailInterestFile,
+  type SaleWindow,
   type SeriesFile,
   type SeriesRecord,
   type SeriesStatus
@@ -41,6 +52,8 @@ export interface FamilyTreeState {
   quotes: Record<string, QuotesFile>
   /** Per-series coupon schedules (`families/{fam}/coupons/<id>.json`). */
   coupons: Record<string, CouponsFile>
+  /** Per-series public-offering transcriptions (`families/{fam}/offerings/<id>.json`). */
+  offerings: Record<string, OfferingFile>
 }
 
 export interface MarketTreeState {
@@ -55,6 +68,8 @@ export interface MarketTreeState {
   inflation: InflationFile | null
   /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
   priceCalendar: PriceCalendarFile | null
+  /** ÁKK public-offering document ledger (ADR 0041). */
+  offeringArchive: OfferingArchiveFile | null
 }
 
 export interface MergeResult {
@@ -96,10 +111,18 @@ export function emptyMarketTree(): MarketTreeState {
       series: emptySeries(family),
       latest: emptyLatest(),
       quotes: {},
-      coupons: {}
+      coupons: {},
+      offerings: {}
     }
   }
-  return { manifest: null, families, retailInterest: null, inflation: null, priceCalendar: null }
+  return {
+    manifest: null,
+    families,
+    retailInterest: null,
+    inflation: null,
+    priceCalendar: null,
+    offeringArchive: null
+  }
 }
 
 function quoteRowsEqual(a: QuoteRow, b: QuoteRow): boolean {
@@ -186,6 +209,7 @@ export function publishedFamilies(tree: MarketTreeState): FamilyCode[] {
       fam.series.series.length > 0 ||
       Object.keys(fam.quotes).length > 0 ||
       Object.keys(fam.coupons).length > 0 ||
+      Object.keys(fam.offerings).length > 0 ||
       Object.keys(fam.latest.quotes).length > 0
     if (required || hasContent) out.push(family)
   }
@@ -210,6 +234,9 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     for (const [id, c] of Object.entries(fam.coupons)) {
       digests[`families/${family}/coupons/${id}.json`] = digestCanonical(c)
     }
+    for (const [id, o] of Object.entries(fam.offerings)) {
+      digests[`families/${family}/offerings/${id}.json`] = digestCanonical(o)
+    }
   }
   const refs: ManifestFile['refs'] = {}
   if (tree.inflation) {
@@ -219,6 +246,10 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
   if (tree.priceCalendar) {
     refs.priceCalendar = PRICE_CALENDAR_REF_PATH
     digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)
+  }
+  if (tree.offeringArchive) {
+    refs.offeringArchive = OFFERING_ARCHIVE_REF_PATH
+    digests[OFFERING_ARCHIVE_REF_PATH] = digestOfferingArchive(tree.offeringArchive)
   }
   const manifest: ManifestFile = {
     schemaVersion: SCHEMA_VERSION,
@@ -316,6 +347,20 @@ export function mergeSnapshot(
      * When omitted, keep previous price calendar.
      */
     priceCalendar?: PriceCalendarFile | null
+    /**
+     * When provided, replace offerings maps per family (ADR 0041).
+     * When omitted, keep previous offerings.
+     */
+    offeringsByFamily?: Partial<Record<FamilyCode, Record<string, OfferingFile>>>
+    /**
+     * When provided, replace offering-archive refs (ADR 0041).
+     * When omitted, keep previous archive.
+     */
+    offeringArchive?: OfferingArchiveFile | null
+    /**
+     * Series-adjacent saleWindow patches from offering listings (ADR 0041).
+     */
+    seriesSaleWindows?: Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
   }
 ): MergeResult {
   const tree: MarketTreeState = {
@@ -335,6 +380,9 @@ export function mergeSnapshot(
     inflation: previous.inflation ? structuredClone(previous.inflation) : null,
     priceCalendar: previous.priceCalendar
       ? structuredClone(previous.priceCalendar)
+      : null,
+    offeringArchive: previous.offeringArchive
+      ? structuredClone(previous.offeringArchive)
       : null
   }
   for (const family of FAMILIES) {
@@ -454,6 +502,44 @@ export function mergeSnapshot(
     }
   }
 
+  if (options && 'offeringsByFamily' in options) {
+    const incoming = options.offeringsByFamily
+    if (incoming) {
+      for (const family of FAMILIES) {
+        const map = incoming[family]
+        if (map) {
+          tree.families[family].offerings = Object.fromEntries(
+            Object.entries(map).map(([id, o]) => [id, structuredClone(o)])
+          )
+        }
+      }
+    }
+  }
+
+  if (options && 'offeringArchive' in options) {
+    tree.offeringArchive = options.offeringArchive
+      ? structuredClone(options.offeringArchive)
+      : null
+  }
+
+  if (options?.seriesSaleWindows && options.seriesSaleWindows.length > 0) {
+    const byFamily = new Map<FamilyCode, Array<{ seriesId: string; saleWindow: SaleWindow }>>()
+    for (const patch of options.seriesSaleWindows) {
+      const list = byFamily.get(patch.family) ?? []
+      list.push({ seriesId: patch.seriesId, saleWindow: patch.saleWindow })
+      byFamily.set(patch.family, list)
+    }
+    for (const [family, patches] of byFamily) {
+      const fam = tree.families[family]
+      const applied = applySeriesSaleWindows(fam.series.series, patches)
+      fam.series = {
+        schemaVersion: SCHEMA_VERSION,
+        family,
+        series: applied.series
+      }
+    }
+  }
+
   const generatedAt = options?.generatedAt ?? new Date().toISOString()
   const manifest = buildManifest(tree, asOf, generatedAt)
   const changed = !digestsEqual(previous.manifest, manifest)
@@ -499,6 +585,9 @@ function cloneFamily(fam: FamilyTreeState): FamilyTreeState {
     ),
     coupons: Object.fromEntries(
       Object.entries(fam.coupons).map(([id, c]) => [id, cloneCouponsFile(c)])
+    ),
+    offerings: Object.fromEntries(
+      Object.entries(fam.offerings ?? {}).map(([id, o]) => [id, structuredClone(o)])
     )
   }
 }

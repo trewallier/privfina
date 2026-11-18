@@ -1,5 +1,10 @@
 import { createHash } from 'node:crypto'
-import type { InflationFile, PriceCalendarFile, RetailInterestFile } from './types.ts'
+import type {
+  InflationFile,
+  OfferingArchiveFile,
+  PriceCalendarFile,
+  RetailInterestFile
+} from './types.ts'
 
 /** Stable JSON for hashing (sorted object keys; arrays keep order). */
 export function canonicalJson(value: unknown): string {
@@ -73,4 +78,19 @@ export function priceCalendarContentForDigest(
 
 export function digestPriceCalendar(file: PriceCalendarFile): string {
   return digestCanonical(priceCalendarContentForDigest(file))
+}
+
+/**
+ * Offering-archive digest excludes `generatedAt` so a stamp-only re-run does not
+ * force a market-data commit (ADR 0041).
+ */
+export function offeringArchiveContentForDigest(
+  file: OfferingArchiveFile
+): Omit<OfferingArchiveFile, 'generatedAt'> {
+  const { generatedAt: _generatedAt, ...rest } = file
+  return rest
+}
+
+export function digestOfferingArchive(file: OfferingArchiveFile): string {
+  return digestCanonical(offeringArchiveContentForDigest(file))
 }

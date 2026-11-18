@@ -447,8 +447,8 @@ Constraints
 - ADR when architecture / published offering schema is chosen — must satisfy the **SPA consumer contract** locked in §6l (saleWindow, payment dates, offering dayCount, attribution).
 - **Attribution / legal:** attribute each transcribed offering to its public host (ÁKK / Államkincstár as applicable); keep provenance to the source document; document that transcriptions may be incomplete or outdated vs the authoritative PDF, and are **not** a substitute for the official nyilvános ajánlattétel.
 
-Plan slices (high level; detail when scheduled)
-- [ ] Spec / ADR as needed: offering discovery + published offering records on `market-data` + attribution / accuracy notes (shape must feed §6l).
+Plan slices (implement as stacked PRs on `master`; detail in ADR 0041)
+- [ ] Spec / ADR as needed: offering discovery + published offering records on `market-data` + attribution / accuracy notes (shape must feed §6l). *(ADR 0041 + listing/archive stack layer)*
 - [ ] Daily detect new offerings → transcribe into the published tree (with source attribution).
 - [ ] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6m; source credit and accuracy disclaimer present.
 

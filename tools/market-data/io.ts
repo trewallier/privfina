@@ -10,6 +10,7 @@ import {
 import {
   FAMILIES,
   INFLATION_REF_PATH,
+  OFFERING_ARCHIVE_REF_PATH,
   PRICE_CALENDAR_REF_PATH,
   type PriceCalendarFile,
   MARKET_PATH_SEGMENT,
@@ -21,6 +22,8 @@ import {
   type InflationFile,
   type LatestFile,
   type ManifestFile,
+  type OfferingArchiveFile,
+  type OfferingFile,
   type QuotesFile,
   type RetailInterestFile,
   type SeriesFile,
@@ -76,7 +79,9 @@ function v2TreeHasContent(tree: MarketTreeState): boolean {
     if (Object.keys(fam.quotes).length > 0) return true
     if (Object.keys(fam.coupons).length > 0) return true
   }
-  return tree.inflation != null || tree.priceCalendar != null
+  return (
+    tree.inflation != null || tree.priceCalendar != null || tree.offeringArchive != null
+  )
 }
 
 async function loadFamilyDir(
@@ -151,7 +156,29 @@ async function loadFamilyDir(
     const code = (err as NodeJS.ErrnoException).code
     if (code !== 'ENOENT') throw err
   }
-  return { series, latest, quotes, coupons }
+  const offerings: Record<string, OfferingFile> = {}
+  const offeringsDir = path.join(famDir, 'offerings')
+  try {
+    const files = await readdir(offeringsDir)
+    for (const name of files) {
+      if (!name.endsWith('.json')) continue
+      const id = name.slice(0, -'.json'.length)
+      assertSeriesId(id)
+      const o = await readJsonIfExists<OfferingFile>(path.join(offeringsDir, name))
+      if (!o) continue
+      if (o.id !== id) {
+        throw new Error(`Offering file ${name} id mismatch: body.id=${o.id}`)
+      }
+      offerings[id] = {
+        ...o,
+        schemaVersion
+      }
+    }
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code !== 'ENOENT') throw err
+  }
+  return { series, latest, quotes, coupons, offerings }
 }
 
 async function loadTreeAtPath(
@@ -191,6 +218,17 @@ async function loadTreeAtPath(
     ? options?.forceSchemaVersion
       ? bumpSchemaVersion(priceCalendar)
       : priceCalendar
+    : null
+
+  const offeringArchivePath =
+    tree.manifest?.refs?.offeringArchive ?? OFFERING_ARCHIVE_REF_PATH
+  const offeringArchive = await readJsonIfExists<OfferingArchiveFile>(
+    path.join(rootDir, offeringArchivePath)
+  )
+  tree.offeringArchive = offeringArchive
+    ? options?.forceSchemaVersion
+      ? bumpSchemaVersion(offeringArchive)
+      : offeringArchive
     : null
 
   // Internal-only: load flat retail-interest when present (v1 tip) for coupon lift.
@@ -317,6 +355,13 @@ export async function writeMarketTree(root: string, tree: MarketTreeState): Prom
     await writeFile(abs, canonicalJson(tree.priceCalendar), 'utf8')
   }
 
+  if (tree.offeringArchive) {
+    const rel = tree.manifest.refs?.offeringArchive ?? OFFERING_ARCHIVE_REF_PATH
+    const abs = path.join(v2, rel)
+    await mkdir(path.dirname(abs), { recursive: true })
+    await writeFile(abs, canonicalJson(tree.offeringArchive), 'utf8')
+  }
+
   // Never re-publish flat retail-interest under v2.
   const legacyRetail = path.join(v2, 'refs', 'retail-interest.json')
   try {
@@ -342,8 +387,10 @@ async function writeFamily(v2: string, family: FamilyCode, fam: FamilyTreeState)
   const famDir = path.join(v2, 'families', family)
   const quotesDir = path.join(famDir, 'quotes')
   const couponsDir = path.join(famDir, 'coupons')
+  const offeringsDir = path.join(famDir, 'offerings')
   await mkdir(quotesDir, { recursive: true })
   await mkdir(couponsDir, { recursive: true })
+  await mkdir(offeringsDir, { recursive: true })
   await writeFile(path.join(famDir, 'series.json'), canonicalJson(fam.series), 'utf8')
   await writeFile(path.join(famDir, 'latest.json'), canonicalJson(fam.latest), 'utf8')
   const quoteIds = new Set<string>()
@@ -373,6 +420,17 @@ async function writeFamily(v2: string, family: FamilyCode, fam: FamilyTreeState)
     await writeFile(path.join(couponsDir, `${id}.json`), canonicalJson(c), 'utf8')
   }
   await pruneOrphans(couponsDir, couponIds)
+
+  const offeringIds = new Set<string>()
+  for (const [id, o] of Object.entries(fam.offerings ?? {})) {
+    assertSeriesId(id)
+    if (o.id !== id) {
+      throw new Error(`Offering map key ${id} !== body.id ${o.id}`)
+    }
+    offeringIds.add(id)
+    await writeFile(path.join(offeringsDir, `${id}.json`), canonicalJson(o), 'utf8')
+  }
+  await pruneOrphans(offeringsDir, offeringIds)
 }
 
 /** Remove an entire published v2 tree before extracting a fresh artifact (push job). */

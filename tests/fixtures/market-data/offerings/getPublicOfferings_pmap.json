@@ -1,0 +1,35 @@
+{
+  "meta": { "function": "getPublicOfferings", "status": "OK", "message": null },
+  "data": [
+    {
+      "endPeriod": "2027-07-16",
+      "pathId": "077faec0-5260-48f9-8f66-27195d616695",
+      "startPeriod": "2026-07-17",
+      "path": "public_offerings/5a3cb5cb-121f-4517-bd62-c06b078b8aa9.pdf",
+      "modifiedOn": "2026-07-13 12:07:54",
+      "offeringName": "2036/I1",
+      "archive": false,
+      "label": "PMÁP",
+      "published": "2026-07-13 14:00:01",
+      "name": "2036/I1",
+      "isin": "HU0000407671",
+      "longName": "A360221I26",
+      "resourceType": "ISSUE"
+    },
+    {
+      "endPeriod": "2026-07-16",
+      "pathId": "567e4e78-a58b-4160-8280-e5ba916f1db1",
+      "startPeriod": "2025-10-01",
+      "path": "public_offerings/9b403e1a-a2a2-4d78-a391-b62ad4fb9d3c.pdf",
+      "modifiedOn": "2026-09-25 13:41:05",
+      "offeringName": "2035/I2_TC",
+      "archive": true,
+      "label": "PMÁP",
+      "published": "2026-07-13 14:00:00",
+      "name": "2035/I2",
+      "isin": "HU0000407473",
+      "longName": "A350523I25",
+      "resourceType": "TAP_CLOSED"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { formatFetchError, logFetchAttemptFailure } from './fetch-errors.ts'
 import {
+  MAX_OFFERING_PDF_BYTES,
   MAX_OFFERING_PDF_DOWNLOADS_PER_FAMILY,
   type OfferingFamilyCode
 } from './offering-families.ts'
@@ -23,6 +24,8 @@ export interface FetchOfferingPdfOptions {
   backoffMs?: number
   /** Override max downloads per family (tests). */
   maxPerFamily?: number
+  /** Override max PDF body bytes (tests). */
+  maxBytes?: number
 }
 
 export interface OfferingPdfDownload {
@@ -58,12 +61,74 @@ function sha256HexBytes(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex')
 }
 
+/**
+ * Read a Response body with a hard byte cap (Content-Length gate + streaming total).
+ */
+export async function readResponseBodyWithCap(
+  res: Response,
+  maxBytes: number,
+  url: string
+): Promise<Uint8Array> {
+  const contentLength = res.headers.get('content-length')
+  if (contentLength != null && contentLength !== '') {
+    const declared = Number(contentLength)
+    if (Number.isFinite(declared) && declared > maxBytes) {
+      throw new Error(
+        `Offering PDF Content-Length ${declared} exceeds ${maxBytes} bytes for ${url}`
+      )
+    }
+  }
+
+  if (!res.body) {
+    const buf = new Uint8Array(await res.arrayBuffer())
+    if (buf.byteLength > maxBytes) {
+      throw new Error(
+        `Offering PDF body ${buf.byteLength} exceeds ${maxBytes} bytes for ${url}`
+      )
+    }
+    return buf
+  }
+
+  const reader = res.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (!value) continue
+      total += value.byteLength
+      if (total > maxBytes) {
+        throw new Error(
+          `Offering PDF body exceeds ${maxBytes} bytes while streaming ${url}`
+        )
+      }
+      chunks.push(value)
+    }
+  } finally {
+    try {
+      await reader.cancel()
+    } catch {
+      // ignore cancel errors after a size reject or normal end
+    }
+  }
+
+  const out = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    out.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return out
+}
+
 async function downloadPdfOnce(
   url: string,
   fetchImpl: typeof fetch,
   retries: number,
   backoffMs: number,
-  label: string
+  label: string,
+  maxBytes: number = MAX_OFFERING_PDF_BYTES
 ): Promise<Uint8Array> {
   let lastError: unknown
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -78,7 +143,7 @@ async function downloadPdfOnce(
         httpStatus = res.status
         throw new Error(`HTTP ${res.status} ${res.statusText || ''}`.trim() + ` for ${url}`)
       }
-      const buf = new Uint8Array(await res.arrayBuffer())
+      const buf = await readResponseBodyWithCap(res, maxBytes, url)
       if (buf.length < 5 || String.fromCharCode(buf[0], buf[1], buf[2], buf[3]) !== '%PDF') {
         throw new Error(`Response is not a PDF for ${url}`)
       }
@@ -111,11 +176,13 @@ export async function downloadOfferingPdf(
     fetchImpl?: typeof fetch
     retries?: number
     backoffMs?: number
+    maxBytes?: number
   } = {}
 ): Promise<{ bytes: Uint8Array; sha256: string; sourceHost: string; url: string }> {
   const fetchImpl = options.fetchImpl ?? fetch
   const retries = options.retries ?? 2
   const backoffMs = options.backoffMs ?? 400
+  const maxBytes = options.maxBytes ?? MAX_OFFERING_PDF_BYTES
   let lastError: unknown
   for (const candidate of offeringPdfUrls(pathUuid)) {
     try {
@@ -124,7 +191,8 @@ export async function downloadOfferingPdf(
         fetchImpl,
         retries,
         backoffMs,
-        `offering-pdf:${pathUuid}`
+        `offering-pdf:${pathUuid}`,
+        maxBytes
       )
       return {
         bytes,
@@ -196,7 +264,8 @@ export async function fetchOfferingPdfsForListings(
         const result = await downloadOfferingPdf(uuid, {
           fetchImpl,
           retries: options.retries,
-          backoffMs: options.backoffMs
+          backoffMs: options.backoffMs,
+          maxBytes: options.maxBytes
         })
         const rawPath = path.join(options.rawDir, `${uuid}.pdf`)
         await writeFile(rawPath, result.bytes)

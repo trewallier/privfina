@@ -57,3 +57,10 @@ export function offeringFamilyFromLabel(label: unknown): OfferingFamilyCode | nu
 
 /** Max PDF downloads per security family in a single ingest run (ADR 0041). */
 export const MAX_OFFERING_PDF_DOWNLOADS_PER_FAMILY = 10 as const
+
+/**
+ * Hard cap on a single offering PDF body (8 MiB).
+ * Rejects oversized Content-Length before buffering and streams with a running total
+ * so a busy day (≤60 PDF GETs) cannot balloon runner memory (ADR 0041).
+ */
+export const MAX_OFFERING_PDF_BYTES = 8 * 1024 * 1024

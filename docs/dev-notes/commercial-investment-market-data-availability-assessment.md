@@ -78,12 +78,16 @@ Supporting published inputs (not prices themselves):
    - **Report names** (from public `GET …/instrument-service/instrumentgroup/group?lang=hu` → `priceReportName`):
      - `_20631_arfolyam_dkj` — Diszkont Kincstárjegy
      - `_20633_arfolyam_mak` — MÁK / BMÁP / PMÁP / FixMÁP (retail gov bonds table)
-     - also available: `_20632_arfolyam_kkj`, `_20638_arfolyam_pemak`, `_20642_arfolyam_start`, `_207461_arfolyam_mapp` (out of current commercial PMÁP/BMÁP/DKJ focus unless needed later)
+     - `_207461_arfolyam_mapp` — MÁP Plusz (**in pipeline** — ADR 0042 / ROADMAP §6n)
+     - `_20638_arfolyam_pemak` — EMÁP / PEMÁP (**in pipeline** — ADR 0042 / ROADMAP §6n)
+     - `_20642_arfolyam_start` — Babakötvény (**in pipeline** — ADR 0042 / ROADMAP §6n)
+     - `_20632_arfolyam_kkj` — Egyéves Magyar Állampapír / 1MÁP (**in pipeline** — ADR 0042 / ROADMAP §6n; vételi-only table — no invented ask)
+     - also available, still out of scope: `_20644_arfolyam_belf_koz`, `_20664_arfolyam_omak`
    - **Proven outputs (probes):** populated PDFs with `Értéknap` set and data rows, e.g. DKJ `2026-11-05` / `2024-06-03`; MAK `2026-11-05`, `2024-06-03`, `2022-01-04` (multi-page). Columns include vételi/eladási (bid/ask) net, felhalmozott kamat (AI), yields, maturity.
 
    **Daily GH Actions shape (not implemented in this PR):**
 
-   1. For yesterday’s (or last) business `datum`, POST once per needed `reportName` (`_20631_…`, `_20633_…`).
+   1. For yesterday’s (or last) business `datum`, POST once per needed `reportName` (DKJ + MAK + §6n MAPP / PEMÁK / Start / KKJ).
    2. Assert response is `application/pdf` and starts with `%PDF`.
    3. Extract text layer (`pdftotext -layout`) → parse rows → merge into `data/market/v2/` quote files (append-first by settle date).
    4. Prefer committing **parsed JSON** (per settle / per series), not binary PDFs, on `market-data`.

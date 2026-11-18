@@ -491,18 +491,36 @@ Out of scope for §6l
 - Inflation as commercial composer inputs; `refs/dkj-base.json`.
 
 #### 6m) Historical market-data backfill
-Goal: one-shot (or batched) backfill of historical market artifacts into `market-data`, reusing the daily ingest parsers from §6h / §6k where possible.
+Goal: one-shot (or batched) backfill of historical market artifacts into `market-data`, reusing the daily ingest parsers from §6h / §6k / §6n where possible.
 
 Constraints
 - Detail and sequencing TBD when this epic is planned; do not start until §6h / §6k daily paths exist.
 - Prefer official sources already used by daily ingest.
-- Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6k); do not imply backfilled history is more authoritative than the original publications.
+- Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6k / §6n); do not imply backfilled history is more authoritative than the original publications.
 
 Plan slices
 - [ ] Plan and implement historical backfill (scope, sources, cutover, and attribution/legal notes TBD).
 
 Out of scope until planned
 - Concrete date ranges, report inventories, or SPA UX for deep history.
+
+#### 6n) WebKincstár remaining price reports — sell / `ask` coverage
+Goal: extend the daily WebKincstár collect (ADR 0039) so optional government-security families that publish regular Kincstári árfolyamjegyzés tables also land **eladási → `ask`** (and vételi → `bid`) in existing `data/market/v2/` quote columns, with calendar rows per report. Ingest-only; no pricing models or SPA autofill. Architecture: ADR 0042.
+
+Constraints
+- Actions-only; browser must not call WebKincstár.
+- Keep `QUOTE_COLS = [d, bid, ask, by, ay, ai]`; WebKincstár-prefer overlay and soft-fail unchanged.
+- Do **not** invent `ask` for closed coupon series or for 1MÁP (`omap`) when the KKJ table is vételi-only.
+- Belföldi közület / Önkormányzati MÁK reports stay out of scope unless a later slice names them.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [ ] ADR 0042 + ROADMAP / ownership / market-data README / CI playbook / availability assessment: remaining reports (`_207461_arfolyam_mapp`, `_20638_arfolyam_pemak`, `_20642_arfolyam_start`, `_20632_arfolyam_kkj`) → `mapp` / `emap` / `baba` / `omap`.
+- [ ] `pdftotext` fixtures + parsers/family routing + Vitest (priced + no_price; KKJ bid-only).
+- [ ] Expand `WEBKINCSTAR_REPORTS`; calendar merge; offline `textByReport` never POSTs missing keys; fixture ingest proves `ask` when the PDF prints eladási.
+- [ ] Acceptance: check off §6n; live `workflow_dispatch` cutover note (tip calendar lists six reports).
+
+Out of scope for §6n
+- Historical backfill (§6m); SPA composer changes; synthesizing 100+accrued asks; early-sell/`bid` product math.
 
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).

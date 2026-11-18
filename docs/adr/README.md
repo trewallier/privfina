@@ -38,6 +38,7 @@ Recent decisions
 - `0039-webkincstar-daily-price-pdf-market-data.md` — same workflow also fetches WebKincstár daily price PDFs; WebKincstár-prefer quote overlay; `refs/price-calendar.json` for priced / no-price / fetch_failed days (ROADMAP §6h).
 - `0040-commercial-investment-composer-host-and-family-registry.md` — extract commercial investment composer host + family registry; §6j registers `composerProfile`s (prefer `coupon-bearing`), does not clone PMÁP (ROADMAP §6j platform refactor).
 - `0041-akk-public-offering-capture.md` — same workflow discovers ÁKK `getPublicOfferings`, archives PDF UUIDs (≤10 downloads/family/run), publishes `offerings/<id>.json` + series `saleWindow` + `refs/offering-archive.json` (ROADMAP §6k).
+- `0042-webkincstar-remaining-price-reports.md` — same workflow also fetches MÁP Plusz / PEMÁK / Start / KKJ WebKincstár price PDFs into existing `ask`/`bid` columns + price calendar (ROADMAP §6n).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

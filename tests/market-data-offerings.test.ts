@@ -186,15 +186,43 @@ describe('ingestMarketData offerings listing', () => {
   })
 })
 
-describe('offering ingest budget (quiet day)', () => {
-  it('second identical listing run downloads zero PDFs', async () => {
+describe('offering ingest budget (quiet day) + paymentDates E2E', () => {
+  function pdfResponse(body = '%PDF-1.4 fake-offering'): Response {
+    return new Response(body, {
+      status: 200,
+      headers: { 'Content-Type': 'application/pdf' }
+    })
+  }
+
+  it('downloads+parses once via fetchImpl; archive-match second run hits zero PDFs', async () => {
     const catalog = await loadJson('catalog.json')
     const rates = await loadJson('network-rates.json')
     const pmap = await loadJson('offerings/getPublicOfferings_pmap.json')
     const baba = await loadJson('offerings/getPublicOfferings_baba.json')
+    const pmapText = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/pmap-2036-i1.txt'),
+      'utf8'
+    )
+    const babaText = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/baba-2045-s.txt'),
+      'utf8'
+    )
+    const tipPmapUuid = '5a3cb5cb-121f-4517-bd62-c06b078b8aa9'
+    const archivedPmapUuid = '9b403e1a-a2a2-4d78-a391-b62ad4fb9d3c'
+    const babaUuid = 'd1599c29-cd4a-417a-ae7a-932bfa987a70'
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-offerings-quiet-'))
     const rawDir = path.join(tmp, 'raw')
     const envelopes = { pmap, baba }
+
+    let pdfHits = 0
+    const fetchImpl: typeof fetch = async (input) => {
+      const url = String(input)
+      if (url.includes('.pdf')) {
+        pdfHits += 1
+        return pdfResponse()
+      }
+      return new Response('nope', { status: 404 })
+    }
 
     const first = await ingestMarketData({
       root: tmp,
@@ -206,11 +234,29 @@ describe('offering ingest budget (quiet day)', () => {
       skipInflation: true,
       skipWebkincstar: true,
       offeringEnvelopesByFamily: envelopes,
+      // Offline ÁKK fixtures alone skip the PDF gate; fetchImpl enables it so
+      // archive-match dedupe is actually exercised (ADR 0041 quiet-day budget).
+      fetchImpl,
+      offeringPdfTextByUuid: {
+        [tipPmapUuid]: pmapText,
+        [archivedPmapUuid]: pmapText,
+        [babaUuid]: babaText
+      },
       generatedAt: '2026-11-18T18:00:00.000Z'
     })
     expect(first.offeringsUpdated).toBe(true)
-    expect(first.offeringPdfsDownloaded).toBe(0)
+    expect(first.offeringPdfsDownloaded).toBe(3)
+    expect(pdfHits).toBeGreaterThanOrEqual(3)
 
+    const tree = await loadMarketTree(tmp)
+    expect(tree.families.pmap.offerings.A360221I26?.paymentDates?.[0]).toBe('2027-02-21')
+    expect(tree.families.pmap.offerings.A360221I26?.dayCount).toBe('ACT/ACT')
+    expect(tree.families.baba.offerings.A450201S26?.paymentDates?.[0]).toBe('2027-02-01')
+    expect(
+      tree.offeringArchive?.documents.filter((d) => d.sha256 != null).length
+    ).toBeGreaterThanOrEqual(3)
+
+    const pdfHitsBeforeSecond = pdfHits
     const second = await ingestMarketData({
       root: tmp,
       previousRoot: tmp,
@@ -222,11 +268,17 @@ describe('offering ingest budget (quiet day)', () => {
       skipInflation: true,
       skipWebkincstar: true,
       offeringEnvelopesByFamily: envelopes,
+      fetchImpl,
+      offeringPdfTextByUuid: {
+        [tipPmapUuid]: pmapText,
+        [archivedPmapUuid]: pmapText,
+        [babaUuid]: babaText
+      },
       generatedAt: '2026-11-18T19:00:00.000Z'
     })
-    expect(second.changed).toBe(false)
     expect(second.offeringPdfsDownloaded).toBe(0)
     expect(second.offeringPdfsPending).toBe(0)
+    expect(pdfHits).toBe(pdfHitsBeforeSecond)
   })
 })
 
@@ -397,5 +449,40 @@ describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
     })
     expect(second.downloadedCount).toBe(0)
     expect(fetches).toBe(0)
+  })
+
+  it('rejects oversized PDF bodies via Content-Length and streaming cap', async () => {
+    const { downloadOfferingPdf, readResponseBodyWithCap } = await import(
+      '../tools/market-data/fetch-offering-pdf.ts'
+    )
+    const { MAX_OFFERING_PDF_BYTES } = await import(
+      '../tools/market-data/offering-families.ts'
+    )
+
+    await expect(
+      readResponseBodyWithCap(
+        new Response('x', {
+          status: 200,
+          headers: { 'content-length': String(MAX_OFFERING_PDF_BYTES + 1) }
+        }),
+        MAX_OFFERING_PDF_BYTES,
+        'https://example.test/big.pdf'
+      )
+    ).rejects.toThrow(/Content-Length/)
+
+    const oversize = new Uint8Array(64)
+    oversize.set([0x25, 0x50, 0x44, 0x46]) // %PDF
+    await expect(
+      downloadOfferingPdf('00000000-0000-4000-8000-000000000099', {
+        retries: 1,
+        backoffMs: 1,
+        maxBytes: 16,
+        fetchImpl: async () =>
+          new Response(oversize, {
+            status: 200,
+            headers: { 'Content-Type': 'application/pdf' }
+          })
+      })
+    ).rejects.toThrow(/exceeds 16 bytes|ÁKK and allampapir/)
   })
 })

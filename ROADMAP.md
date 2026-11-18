@@ -450,7 +450,7 @@ Constraints
 Plan slices (implement as stacked PRs on `master`; detail in ADR 0041)
 - [x] Spec / ADR as needed: offering discovery + published offering records on `market-data` + attribution / accuracy notes (shape must feed §6l). *(ADR 0041 + listing/archive stack layer)*
 - [x] Daily detect new offerings → transcribe into the published tree (with source attribution).
-- [x] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6m; source credit and accuracy disclaimer present.
+- [x] Acceptance (code): ingest publishes offerings with saleWindow / paymentDates / dayCount / attribution when documents are available; parsers reusable for §6m; source credit and accuracy disclaimer present. **Live cutover pending** — confirm via `workflow_dispatch` market-data that tip has `refs/offering-archive.json` + `families/*/offerings/*.json` (same posture as §6f: code complete; cutover pending).
 
 Out of scope for §6k
 - Backfilling older offerings (§6m).

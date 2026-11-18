@@ -115,6 +115,11 @@ export interface IngestOptions {
   offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
   /** Skip offering listing/merge (keep previous offerings/archive). */
   skipOfferings?: boolean
+  /**
+   * Offline pre-extracted `pdftotext -layout` texts keyed by offering path UUID (tests).
+   * When set, skips live Poppler extract for that UUID after download (WebKincstár-style).
+   */
+  offeringPdfTextByUuid?: Record<string, string>
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -133,7 +138,7 @@ export interface IngestReport extends MergeResult {
   offeringsUpdated: boolean
   /** True when offering listing soft-failed and previous offerings were kept. */
   offeringsSoftFailed: boolean
-  /** PDF downloads attempted this run (0 until PDF gate lands). */
+  /** PDF downloads completed this run (unknown path UUIDs only; 0 on quiet archive-match days). */
   offeringPdfsDownloaded: number
   /** Unknown docs left as pending_download due to the per-family cap. */
   offeringPdfsPending: number
@@ -396,10 +401,15 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
 
   if (shouldFetchOfferings) {
     try {
+      const offeringFamilies = options.offeringEnvelopesByFamily
+        ? (Object.keys(options.offeringEnvelopesByFamily) as OfferingFamilyCode[])
+        : undefined
       const fetched = await fetchAkkOfferingListings({
         rawDir: path.join(options.rawDir, 'offerings'),
         fetchImpl: options.fetchImpl,
-        envelopesByFamily: options.offeringEnvelopesByFamily
+        envelopesByFamily: options.offeringEnvelopesByFamily,
+        // Offline fixtures are partial — do not soft-fail-retry missing labels via fetchImpl.
+        families: offeringFamilies
       })
 
       if (fetched.failures.length > 0) {
@@ -458,7 +468,12 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
 
           for (const dl of pdfResult.downloaded) {
             try {
-              const text = await pdfBytesToTextLayout(dl.bytes)
+              const uuidKey = (dl.row.pathUuid ?? '').toLowerCase()
+              const injected = options.offeringPdfTextByUuid?.[uuidKey]
+              const text =
+                injected != null && injected !== ''
+                  ? injected
+                  : await pdfBytesToTextLayout(dl.bytes)
               const parsed = parseOfferingPdfText(text)
               const stub = offeringStubFromListing(dl.row, {
                 paymentDates: parsed.paymentDates,

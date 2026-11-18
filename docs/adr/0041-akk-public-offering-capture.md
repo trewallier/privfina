@@ -22,9 +22,10 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
   - Families: `dkj`, `pmap`, `bmap`, `fixmap`, `mapp`, `baba` (commercial SPA hosts). Other ÁKK labels deferred.
   - **Always diff** listing rows against tip `refs/offering-archive.json` (and existing `offerings/*.json`).
   - **Metadata-first:** listing alone may publish/update `saleWindow` on `offerings/<id>.json` and series-adjacent `series[].saleWindow` without downloading a PDF.
-  - **PDF download** only for unknown path UUIDs (archive lacks `sha256` for that UUID). Primary host `documents.akk.hu`; fallback `allampapir.hu/dokumentumok/<uuid>.pdf`. **Hard cap: 10 PDF downloads per family per run**; overflow stays `pending_download` for the next run.
+  - **PDF download** only for unknown path UUIDs (archive lacks `sha256` for that UUID). Primary host `documents.akk.hu`; fallback `allampapir.hu/dokumentumok/<uuid>.pdf`. **Hard cap: 10 PDF downloads per family per run**; overflow stays `pending_download` for the next run. **Hard cap: 8 MiB per PDF body** (Content-Length gate + streaming total) so a busy day (≤60 PDF GETs) cannot balloon runner memory.
   - **Never re-download** a UUID once `sha256` is recorded (new ÁKK versions use new UUIDs).
   - Extract text with system `pdftotext -layout` (already on ingest for WebKincstár). Pure text parser for `paymentDates` / `dayCount` (reusable by §6m). Vitest uses pre-extracted text — never commit raw PDFs.
+  - **Sticky `parse_failed`:** a download that hashes but fails transcription is archived as `parse_failed` **with** `sha256`. Subsequent runs skip the UUID (no host re-hit, no automatic reparse). Retry requires a new ÁKK path UUID or an operator clearing that archive row after a parser fix.
 - **Published shape** (schemaVersion 2):
   - `families/{fam}/offerings/<seriesId>.json` — §6l contract (`id`, `saleWindow`, optional `paymentDates` / `dayCount`, `source`).
   - Series-adjacent `saleWindow` on `series.json` for picker labels without N+1.
@@ -36,10 +37,10 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 
 ## Consequences
 
-- Daily quiet runs cost ~6 listing GETs and 0 PDF GETs when the archive matches.
-- Busy runs download at most 10 new PDFs per family; backlog drains across subsequent days.
+- Daily quiet runs cost ~6 listing GETs and 0 PDF GETs when the archive matches (archive-match dedupe is exercised with a real download gate, not offline listing-only skips).
+- Busy runs download at most 10 new PDFs per family (worst case 60 PDF GETs across six families); backlog drains across subsequent days.
 - Digest-gated commits may fire on offerings/archive/saleWindow-only changes.
-- SPA sale-window labels and coupon-date autofill become live once offerings land on `market-data`.
+- SPA sale-window labels and coupon-date autofill become live once offerings land on `market-data` (code complete on merge; live tip / Pages cutover still needs `workflow_dispatch`, same posture as §6f).
 
 ## Out of scope
 

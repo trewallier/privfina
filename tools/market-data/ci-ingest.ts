@@ -33,6 +33,7 @@ export interface CiIngestResult {
   offeringPdfsDownloaded: number
   offeringPdfsPending: number
   offeringPdfsParseFailed: number
+  offeringPdfsSkippedNoSchedule: number
   webkincstarFetchFailedDays: number
   exitCode: typeof EXIT_UPDATED | typeof EXIT_UNCHANGED | typeof EXIT_ERROR
 }
@@ -71,6 +72,10 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
   writeGithubOutput('offering_pdfs_downloaded', String(report.offeringPdfsDownloaded))
   writeGithubOutput('offering_pdfs_pending', String(report.offeringPdfsPending))
   writeGithubOutput('offering_pdfs_parse_failed', String(report.offeringPdfsParseFailed))
+  writeGithubOutput(
+    'offering_pdfs_skipped_no_schedule',
+    String(report.offeringPdfsSkippedNoSchedule)
+  )
   writeGithubOutput('webkincstar_fetch_failed_days', String(report.webkincstarFetchFailedDays))
 
   writeGithubStepSummary(
@@ -84,6 +89,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
       `| offering PDFs downloaded | ${report.offeringPdfsDownloaded} |`,
       `| offering PDFs pending | ${report.offeringPdfsPending} |`,
       `| offering PDF parse_failed | ${report.offeringPdfsParseFailed} |`,
+      `| offering PDF skipped_no_schedule | ${report.offeringPdfsSkippedNoSchedule} |`,
       `| WebKincstár fetch_failed days | ${report.webkincstarFetchFailedDays} |`,
       `| offerings soft-failed | ${report.offeringsSoftFailed} |`,
       `| WebKincstár soft-failed | ${report.webkincstarSoftFailed} |`,
@@ -97,6 +103,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringPdfsDownloaded: report.offeringPdfsDownloaded,
     offeringPdfsPending: report.offeringPdfsPending,
     offeringPdfsParseFailed: report.offeringPdfsParseFailed,
+    offeringPdfsSkippedNoSchedule: report.offeringPdfsSkippedNoSchedule,
     webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
     exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
   }

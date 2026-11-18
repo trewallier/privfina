@@ -186,6 +186,50 @@ describe('ingestMarketData offerings listing', () => {
   })
 })
 
+describe('offering ingest budget (quiet day)', () => {
+  it('second identical listing run downloads zero PDFs', async () => {
+    const catalog = await loadJson('catalog.json')
+    const rates = await loadJson('network-rates.json')
+    const pmap = await loadJson('offerings/getPublicOfferings_pmap.json')
+    const baba = await loadJson('offerings/getPublicOfferings_baba.json')
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-offerings-quiet-'))
+    const rawDir = path.join(tmp, 'raw')
+    const envelopes = { pmap, baba }
+
+    const first = await ingestMarketData({
+      root: tmp,
+      rawDir,
+      catalog,
+      networkRates: rates,
+      skipAllampapir: true,
+      skipRetailInterest: true,
+      skipInflation: true,
+      skipWebkincstar: true,
+      offeringEnvelopesByFamily: envelopes,
+      generatedAt: '2026-11-18T18:00:00.000Z'
+    })
+    expect(first.offeringsUpdated).toBe(true)
+    expect(first.offeringPdfsDownloaded).toBe(0)
+
+    const second = await ingestMarketData({
+      root: tmp,
+      previousRoot: tmp,
+      rawDir,
+      catalog,
+      networkRates: rates,
+      skipAllampapir: true,
+      skipRetailInterest: true,
+      skipInflation: true,
+      skipWebkincstar: true,
+      offeringEnvelopesByFamily: envelopes,
+      generatedAt: '2026-11-18T19:00:00.000Z'
+    })
+    expect(second.changed).toBe(false)
+    expect(second.offeringPdfsDownloaded).toBe(0)
+    expect(second.offeringPdfsPending).toBe(0)
+  })
+})
+
 describe('fetchAkkOfferingListings soft-fail isolation', () => {
   it('isolates per-family failures without aborting siblings', async () => {
     const { fetchAkkOfferingListings } = await import(

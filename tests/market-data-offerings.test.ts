@@ -207,3 +207,123 @@ describe('fetchAkkOfferingListings soft-fail isolation', () => {
     expect(result.failures.map((f) => f.family)).toEqual(['bmap'])
   })
 })
+
+describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
+  function pdfResponse(body = '%PDF-1.4 fake'): Response {
+    return new Response(body, {
+      status: 200,
+      headers: { 'Content-Type': 'application/pdf' }
+    })
+  }
+
+  it('skips UUIDs that already have sha256 in the archive', async () => {
+    const { fetchOfferingPdfsForListings } = await import(
+      '../tools/market-data/fetch-offering-pdf.ts'
+    )
+    const envelope = await loadJson('offerings/getPublicOfferings_pmap.json')
+    const rows = normalizeOfferingEnvelope(envelope, 'pmap')
+    const known = rows[0]!
+    let fetches = 0
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'offerings-pdf-'))
+    const result = await fetchOfferingPdfsForListings(rows, new Map([
+      [
+        known.pathUuid!,
+        {
+          pathId: known.pathId,
+          pathUuid: known.pathUuid!,
+          family: 'pmap',
+          seriesId: known.seriesId,
+          isin: known.isin,
+          published: known.published,
+          modifiedOn: known.modifiedOn,
+          resourceType: known.resourceType,
+          sha256: 'b'.repeat(64),
+          bytes: 12,
+          status: 'downloaded',
+          sourceHost: 'documents.akk.hu'
+        }
+      ]
+    ]), {
+      rawDir: tmp,
+      retries: 1,
+      backoffMs: 1,
+      fetchImpl: async () => {
+        fetches += 1
+        return pdfResponse()
+      }
+    })
+    expect(result.downloadedCount).toBe(1)
+    expect(fetches).toBe(1)
+    expect(result.downloaded[0]?.row.pathUuid).toBe(rows[1]?.pathUuid)
+  })
+
+  it('downloads at most 10 unknowns per family and leaves the rest pending', async () => {
+    const { fetchOfferingPdfsForListings } = await import(
+      '../tools/market-data/fetch-offering-pdf.ts'
+    )
+    const rows = Array.from({ length: 11 }, (_, i) => ({
+      family: 'pmap' as const,
+      seriesId: `S${i}`,
+      name: `S${i}`,
+      isin: null,
+      saleWindow: { from: '2026-01-01', to: '2026-12-31' },
+      pathId: `id-${i}`,
+      pathUuid: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+      path: `public_offerings/00000000-0000-4000-8000-${String(i).padStart(12, '0')}.pdf`,
+      published: `2026-01-${String((i % 28) + 1).padStart(2, '0')} 12:00:00`,
+      modifiedOn: null,
+      resourceType: 'ISSUE',
+      archive: false,
+      longName: `S${i}`
+    }))
+    let fetches = 0
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'offerings-pdf-cap-'))
+    const result = await fetchOfferingPdfsForListings(rows, new Map(), {
+      rawDir: tmp,
+      maxPerFamily: 10,
+      retries: 1,
+      backoffMs: 1,
+      fetchImpl: async () => {
+        fetches += 1
+        return pdfResponse()
+      }
+    })
+    expect(result.downloadedCount).toBe(10)
+    expect(result.pendingCount).toBe(1)
+    expect(fetches).toBe(10)
+    expect(result.archiveUpserts.filter((d) => d.status === 'pending_download')).toHaveLength(1)
+  })
+
+  it('second pass downloads zero when sha256 already recorded', async () => {
+    const { fetchOfferingPdfsForListings } = await import(
+      '../tools/market-data/fetch-offering-pdf.ts'
+    )
+    const envelope = await loadJson('offerings/getPublicOfferings_baba.json')
+    const rows = normalizeOfferingEnvelope(envelope, 'baba')
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'offerings-pdf-2-'))
+    const first = await fetchOfferingPdfsForListings(rows, new Map(), {
+      rawDir: tmp,
+      retries: 1,
+      backoffMs: 1,
+      fetchImpl: async () => pdfResponse('%PDF-1.4 once')
+    })
+    expect(first.downloadedCount).toBe(1)
+    const known = new Map(
+      first.archiveUpserts
+        .filter((d) => d.sha256)
+        .map((d) => [d.pathUuid, d] as const)
+    )
+    let fetches = 0
+    const second = await fetchOfferingPdfsForListings(rows, known, {
+      rawDir: tmp,
+      retries: 1,
+      backoffMs: 1,
+      fetchImpl: async () => {
+        fetches += 1
+        return pdfResponse()
+      }
+    })
+    expect(second.downloadedCount).toBe(0)
+    expect(fetches).toBe(0)
+  })
+})

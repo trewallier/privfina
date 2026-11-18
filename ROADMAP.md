@@ -514,10 +514,10 @@ Constraints
 - Belföldi közület / Önkormányzati MÁK reports stay out of scope unless a later slice names them.
 
 Plan slices (implement in order; each slice should stay PR-sized)
-- [ ] ADR 0042 + ROADMAP / ownership / market-data README / CI playbook / availability assessment: remaining reports (`_207461_arfolyam_mapp`, `_20638_arfolyam_pemak`, `_20642_arfolyam_start`, `_20632_arfolyam_kkj`) → `mapp` / `emap` / `baba` / `omap`.
-- [ ] `pdftotext` fixtures + parsers/family routing + Vitest (priced + no_price; KKJ bid-only).
-- [ ] Expand `WEBKINCSTAR_REPORTS`; calendar merge; offline `textByReport` never POSTs missing keys; fixture ingest proves `ask` when the PDF prints eladási.
-- [ ] Acceptance: check off §6n; live `workflow_dispatch` cutover note (tip calendar lists six reports).
+- [x] ADR 0042 + ROADMAP / ownership / market-data README / CI playbook / availability assessment: remaining reports (`_207461_arfolyam_mapp`, `_20638_arfolyam_pemak`, `_20642_arfolyam_start`, `_20632_arfolyam_kkj`) → `mapp` / `emap` / `baba` / `omap`.
+- [x] `pdftotext` fixtures + parsers/family routing + Vitest (priced + no_price; KKJ bid-only).
+- [x] Expand `WEBKINCSTAR_REPORTS`; calendar merge; offline `textByReport` never POSTs missing keys; fixture ingest proves `ask` when the PDF prints eladási.
+- [x] Acceptance: check off §6n; live `workflow_dispatch` cutover note (tip calendar lists six reports).
 
 Out of scope for §6n
 - Historical backfill (§6m); SPA composer changes; synthesizing 100+accrued asks; early-sell/`bid` product math.

@@ -1,0 +1,29 @@
+                                       Jelenleg forgalmazott állampapírok árfolyamai a Magyar Államkincstár állampapír-forgalmazó ügyfélszolgálatain
+
+Euró devizanemben kibocsátott állampapírok                                                                                                                       Értéknap: 2026.11.08
+
+                                                    Vételi   Vételi   Vételi                                                 Eladási   Eladási    Következő    Lejárati vagy  Lejáratig
+  Értékpapír        Vételi nettó   Felhalmozott                                Eladási nettó   Felhalmozott Eladási bruttó                                                                    Lejárat
+                                                   bruttó    hozam    hozam                                                  hozam     hozam     esedékesség    következő hátralévő napok
+  elnevezése         árfolyam         kamat                                      árfolyam         kamat        árfolyam                                                                       dátuma
+                                                  árfolyam    EHM      ISMA                                                   EHM       ISMA       dátuma        kifizetés     száma
+
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 100.000 euró névérték visszavételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik. Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal. Az EMÁP vásárlására adott megbízás a fedezet ügyfélszámlán való
+jóváírását követően teljesülhet. Az EMÁP vásárlására adott megbízást a Forgalmazó - az értéknap-váltásra figyelemmel -, a mindenkor hatályos Üzletszabályzatában meghatározott
+feltételek mellett teljesíti. A forgalmazás további részleteit az euró devizanemben kibocsátott állampapírokhoz kapcsolódó Speciális Szerződési Feltételek tartalmazzák. (EHM:
+kormányrendeletben rögzített módon számított egységesített hozammutató, ISMA: Nemzetközi Értékpapírpiaci Szövetség PEMÁP esetében Actual/Actual, EMÁP esetében Actual/360
+nap módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+2026.11.18. 21:25                                                                                                                                                                           1/ 1
+

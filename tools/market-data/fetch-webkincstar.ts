@@ -25,7 +25,7 @@ export interface FetchWebkincstarOptions {
   datum: string
   /** Directory for ephemeral raw PDFs (gitignored). */
   rawDir: string
-  /** Reports to fetch (defaults to §6h v1 pair). */
+  /** Reports to fetch (defaults to ADR 0039 + 0042 / §6n list). */
   reports?: readonly WebkincstarReportName[]
   fetchImpl?: typeof fetch
   retries?: number
@@ -34,7 +34,7 @@ export interface FetchWebkincstarOptions {
   pdfToText?: PdfToTextOptions
   /**
    * When set, skip network and parse these pre-extracted texts (tests / offline).
-   * Keys are report names.
+   * Keys are report names. Missing keys are soft-failed without POSTing (ADR 0042).
    */
   textByReport?: Partial<Record<WebkincstarReportName, string>>
 }
@@ -152,12 +152,19 @@ export async function fetchWebkincstarSnapshots(
   const out: FetchWebkincstarReportResult[] = []
   const failures: FetchWebkincstarReportFailure[] = []
 
+  const offlineMode = options.textByReport != null
+
   for (const reportName of reports) {
     try {
       let text: string
       let rawPath: string | null = null
-      const offline = options.textByReport?.[reportName]
-      if (offline != null) {
+      if (offlineMode) {
+        const offline = options.textByReport?.[reportName]
+        if (offline == null) {
+          throw new WebkincstarFetchError(
+            `Offline textByReport missing ${reportName} (no network in fixture mode)`
+          )
+        }
         text = offline
       } else {
         const { bytes, rawPath: saved } = await postPdf(reportName, options.datum, options)

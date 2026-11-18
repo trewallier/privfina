@@ -1,0 +1,545 @@
+                                   Jelenleg forgalmazott értékpapírok árfolyamai a Magyar Államkincstár állampapír-forgalmazó ügyfélszolgálatain
+
+
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+2030/M10       99.0000 %          7.1055 %       106.1055 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        7.39 %          1477         2026.11.21    2030.11.21
+
+2031/M1        99.0000 %          5.3959 %       104.3959 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        7.43 %          1575         2027.02.27    2031.02.27
+
+2031/M2        99.0000 %          3.8644 %       102.8644 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        7.39 %          1659         2027.05.22    2031.05.22
+
+2031/M3        99.0000 %          2.6795 %       101.6795 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.49 %          1693         2027.06.25    2031.06.25
+
+2031/M4        99.0000 %          2.1397 %       101.1397 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.65 %          1694         2027.06.26    2031.06.26
+
+2031/M5        99.0000 %          1.4795 %       100.4795 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.44 %          1750         2027.08.21    2031.08.21
+
+2031/M6        99.0000 %          0.4658 %       99.4658 %       0.00 %     0.00 %    100.0000 %     0.4658 %   100.4658 % 0.00 %       0.00 %        5.77 %          1848         2027.11.27    2031.11.27
+
+N2026/46       99.0000 %          5.8356 %       104.8356 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            10         2026.11.15    2026.11.15
+
+N2026/47       99.0000 %          5.7205 %       104.7205 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            17         2026.11.22    2026.11.22
+
+N2026/48       99.0000 %          5.6055 %       104.6055 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            24         2026.11.29    2026.11.29
+
+N2026/49       99.0000 %          5.4904 %       104.4904 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            31         2026.12.06    2026.12.06
+
+N2026/50       99.0000 %          5.3753 %       104.3753 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            38         2026.12.13    2026.12.13
+
+N2026/51       99.0000 %          5.2603 %       104.2603 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            45         2026.12.20    2026.12.20
+
+N2026/52       99.0000 %          5.1452 %       104.1452 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            52         2026.12.27    2026.12.27
+
+N2027/01       99.0000 %          5.0301 %       104.0301 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            59         2027.01.03    2027.01.03
+
+N2027/02       99.0000 %          4.9151 %       103.9151 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            66         2027.01.10    2027.01.10
+
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   1/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2027/03       99.0000 %          4.8000 %       103.8000 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            73         2027.01.17    2027.01.17
+
+N2027/04       99.0000 %          4.6849 %       103.6849 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            80         2027.01.24    2027.01.24
+
+N2027/05       99.0000 %          4.5699 %       103.5699 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            87         2027.01.31    2027.01.31
+
+N2027/06       99.0000 %          4.4548 %       103.4548 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %            94         2027.02.07    2027.02.07
+
+N2027/07       99.0000 %          4.3397 %       103.3397 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           101         2027.02.14    2027.02.14
+
+N2027/08       99.0000 %          4.2247 %       103.2247 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           108         2027.02.21    2027.02.21
+
+N2027/09       99.0000 %          4.1096 %       103.1096 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           115         2027.02.28    2027.02.28
+
+N2027/10       99.0000 %          3.9945 %       102.9945 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           122         2027.03.07    2027.03.07
+
+N2027/11       99.0000 %          3.8466 %       102.8466 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           131         2027.03.16    2027.03.16
+
+N2027/12       99.0000 %          3.7644 %       102.7644 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           136         2027.03.21    2027.03.21
+
+N2027/13       99.0000 %          3.6493 %       102.6493 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           143         2027.03.28    2027.03.28
+
+N2027/14       99.0000 %          3.5342 %       102.5342 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           150         2027.04.04    2027.04.04
+
+N2027/15       99.0000 %          3.4192 %       102.4192 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           157         2027.04.11    2027.04.11
+
+N2027/16       99.0000 %          3.2877 %       102.2877 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           165         2027.04.19    2027.04.19
+
+N2027/17       99.0000 %          3.1890 %       102.1890 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           171         2027.04.25    2027.04.25
+
+N2027/18       99.0000 %          3.0740 %       102.0740 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           178         2027.05.02    2027.05.02
+
+N2027/19       99.0000 %          2.9589 %       101.9589 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           185         2027.05.09    2027.05.09
+
+N2027/20       99.0000 %          2.8438 %       101.8438 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           192         2027.05.16    2027.05.16
+
+N2027/21       99.0000 %          2.7288 %       101.7288 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           199         2027.05.23    2027.05.23
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   2/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2027/22       99.0000 %          2.6137 %       101.6137 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           206         2027.05.30    2027.05.30
+
+N2027/23       99.0000 %          2.4822 %       101.4822 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           214         2027.06.07    2027.06.07
+
+N2027/24       99.0000 %          2.3836 %       101.3836 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           220         2027.06.13    2027.06.13
+
+N2027/25       99.0000 %          2.2685 %       101.2685 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           227         2027.06.20    2027.06.20
+
+N2027/26       99.0000 %          2.1534 %       101.1534 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           234         2027.06.27    2027.06.27
+
+N2027/27       99.0000 %          2.0384 %       101.0384 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           241         2027.07.04    2027.07.04
+
+N2027/28       99.0000 %          1.9233 %       100.9233 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           248         2027.07.11    2027.07.11
+
+N2027/29       99.0000 %          1.8082 %       100.8082 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           255         2027.07.18    2027.07.18
+
+N2027/30       99.0000 %          1.6932 %       100.6932 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           262         2027.07.25    2027.07.25
+
+N2027/31       99.0000 %          1.5781 %       100.5781 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           269         2027.08.01    2027.08.01
+
+N2027/32       99.0000 %          1.4630 %       100.4630 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           276         2027.08.08    2027.08.08
+
+N2027/33       99.0000 %          1.3479 %       100.3479 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           283         2027.08.15    2027.08.15
+
+N2027/34       99.0000 %          1.2329 %       100.2329 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           290         2027.08.22    2027.08.22
+
+N2027/35       99.0000 %          1.1178 %       100.1178 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           297         2027.08.29    2027.08.29
+
+N2027/36       99.0000 %          1.0027 %       100.0027 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           304         2027.09.05    2027.09.05
+
+N2027/37       99.0000 %          0.8877 %       99.8877 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           311         2027.09.12    2027.09.12
+
+N2027/38       99.0000 %          0.7726 %       99.7726 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           318         2027.09.19    2027.09.19
+
+N2027/39       99.0000 %          0.6575 %       99.6575 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           325         2027.09.26    2027.09.26
+
+N2027/40       99.0000 %          0.5425 %       99.5425 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           332         2027.10.03    2027.10.03
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   3/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2027/41       99.0000 %          0.4274 %       99.4274 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           339         2027.10.10    2027.10.10
+
+N2027/42       99.0000 %          0.3123 %       99.3123 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           346         2027.10.17    2027.10.17
+
+N2027/43       99.0000 %          0.1973 %       99.1973 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           353         2027.10.24    2027.10.24
+
+N2027/44       100.0000 %         0.0493 %       100.0493 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %      106.00 %           362         2027.11.02    2027.11.02
+
+N2027/45       99.0000 %          5.4699 %       104.4699 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           367         2026.11.07    2027.11.07
+
+N2027/46       99.0000 %          5.3644 %       104.3644 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           374         2026.11.14    2027.11.14
+
+N2027/47       99.0000 %          5.2589 %       104.2589 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           381         2026.11.21    2027.11.21
+
+N2027/48       99.0000 %          5.1534 %       104.1534 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           388         2026.11.28    2027.11.28
+
+N2027/49       99.0000 %          5.0479 %       104.0479 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           395         2026.12.05    2027.12.05
+
+N2027/50       99.0000 %          4.9425 %       103.9425 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           402         2026.12.12    2027.12.12
+
+N2027/51       99.0000 %          4.8370 %       103.8370 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           409         2026.12.19    2027.12.19
+
+N2027/52       99.0000 %          4.7164 %       103.7164 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           417         2026.12.27    2027.12.27
+
+N2028/01       99.0000 %          4.6260 %       103.6260 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           423         2027.01.02    2028.01.02
+
+N2028/02       99.0000 %          4.5205 %       103.5205 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           430         2027.01.09    2028.01.09
+
+N2028/03       99.0000 %          4.4151 %       103.4151 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           437         2027.01.16    2028.01.16
+
+N2028/04       99.0000 %          4.3096 %       103.3096 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           444         2027.01.23    2028.01.23
+
+N2028/05       99.0000 %          4.2041 %       103.2041 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           451         2027.01.30    2028.01.30
+
+N2028/06       99.0000 %          4.0986 %       103.0986 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           458         2027.02.06    2028.02.06
+
+N2028/07       99.0000 %          3.9932 %       102.9932 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           465         2027.02.13    2028.02.13
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   4/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2028/08       99.0000 %          3.8877 %       102.8877 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           472         2027.02.20    2028.02.20
+
+N2028/09       99.0000 %          3.7822 %       102.7822 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           479         2027.02.27    2028.02.27
+
+N2028/10       99.0000 %          3.6767 %       102.6767 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           487         2027.03.06    2028.03.06
+
+N2028/11       99.0000 %          3.5712 %       102.5712 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           494         2027.03.13    2028.03.13
+
+N2028/12       99.0000 %          3.4658 %       102.4658 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           501         2027.03.20    2028.03.20
+
+N2028/13       99.0000 %          3.3603 %       102.3603 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           508         2027.03.27    2028.03.27
+
+N2028/14       99.0000 %          3.2548 %       102.2548 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           515         2027.04.03    2028.04.03
+
+N2028/15       99.0000 %          3.1342 %       102.1342 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           523         2027.04.11    2028.04.11
+
+N2028/16       99.0000 %          3.0438 %       102.0438 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           529         2027.04.17    2028.04.17
+
+N2028/17       99.0000 %          2.9384 %       101.9384 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           536         2027.04.24    2028.04.24
+
+N2028/18       99.0000 %          2.8178 %       101.8178 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           544         2027.05.02    2028.05.02
+
+N2028/19       99.0000 %          2.7274 %       101.7274 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           550         2027.05.08    2028.05.08
+
+N2028/20       99.0000 %          2.6219 %       101.6219 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           557         2027.05.15    2028.05.15
+
+N2028/21       99.0000 %          2.5164 %       101.5164 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           564         2027.05.22    2028.05.22
+
+N2028/22       99.0000 %          2.3959 %       101.3959 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           572         2027.05.30    2028.05.30
+
+N2028/23       99.0000 %          2.3055 %       101.3055 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           578         2027.06.05    2028.06.05
+
+N2028/24       99.0000 %          2.2000 %       101.2000 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           585         2027.06.12    2028.06.12
+
+N2028/25       99.0000 %          2.0945 %       101.0945 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           592         2027.06.19    2028.06.19
+
+N2028/26       99.0000 %          1.9890 %       100.9890 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           599         2027.06.26    2028.06.26
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   5/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2028/27       99.0000 %          1.8836 %       100.8836 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           606         2027.07.03    2028.07.03
+
+N2028/28       99.0000 %          1.7781 %       100.7781 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           613         2027.07.10    2028.07.10
+
+N2028/29       99.0000 %          1.6726 %       100.6726 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           620         2027.07.17    2028.07.17
+
+N2028/30       99.0000 %          1.5671 %       100.5671 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           627         2027.07.24    2028.07.24
+
+N2028/31       99.0000 %          1.4616 %       100.4616 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           634         2027.07.31    2028.07.31
+
+N2028/32       99.0000 %          1.3562 %       100.3562 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           641         2027.08.07    2028.08.07
+
+N2028/33       99.0000 %          1.2507 %       100.2507 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           648         2027.08.14    2028.08.14
+
+N2028/34       99.0000 %          1.1452 %       100.1452 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           655         2027.08.21    2028.08.21
+
+N2028/35       99.0000 %          1.0397 %       100.0397 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           662         2027.08.28    2028.08.28
+
+N2028/36       99.0000 %          0.9342 %       99.9342 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           669         2027.09.04    2028.09.04
+
+N2028/37       99.0000 %          0.8288 %       99.8288 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           676         2027.09.11    2028.09.11
+
+N2028/38       99.0000 %          0.7233 %       99.7233 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           683         2027.09.18    2028.09.18
+
+N2028/39       99.0000 %          0.6178 %       99.6178 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           690         2027.09.25    2028.09.25
+
+N2028/40       99.0000 %          0.5123 %       99.5123 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           697         2027.10.02    2028.10.02
+
+N2028/41       99.0000 %          0.4068 %       99.4068 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           704         2027.10.09    2028.10.09
+
+N2028/42       99.0000 %          0.3014 %       99.3014 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           711         2027.10.16    2028.10.16
+
+N2028/43       99.0000 %          0.1808 %       99.1808 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           719         2027.10.24    2028.10.24
+
+N2028/44       100.0000 %         0.0904 %       100.0904 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.50 %           725         2027.10.30    2028.10.30
+
+N2028/45       99.0000 %          0.0000 %       99.0000 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           732         2026.11.06    2028.11.06
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   6/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2028/46       99.0000 %          4.8904 %       103.8904 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           739         2026.11.13    2028.11.13
+
+N2028/47       99.0000 %          4.7945 %       103.7945 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           746         2026.11.20    2028.11.20
+
+N2028/48       99.0000 %          4.6986 %       103.6986 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           753         2026.11.27    2028.11.27
+
+N2028/49       99.0000 %          4.6027 %       103.6027 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           760         2026.12.04    2028.12.04
+
+N2028/50       99.0000 %          4.5068 %       103.5068 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           767         2026.12.11    2028.12.11
+
+N2028/51       99.0000 %          4.4110 %       103.4110 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           774         2026.12.18    2028.12.18
+
+N2028/52       99.0000 %          4.2877 %       103.2877 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           783         2026.12.27    2028.12.27
+
+N2029/01       99.0000 %          4.2055 %       103.2055 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           789         2027.01.02    2029.01.02
+
+N2029/02       99.0000 %          4.1233 %       103.1233 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           795         2027.01.08    2029.01.08
+
+N2029/03       99.0000 %          4.0274 %       103.0274 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           802         2027.01.15    2029.01.15
+
+N2029/04       99.0000 %          3.9315 %       102.9315 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           809         2027.01.22    2029.01.22
+
+N2029/05       99.0000 %          3.8356 %       102.8356 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           816         2027.01.29    2029.01.29
+
+N2029/06       99.0000 %          3.7397 %       102.7397 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           823         2027.02.05    2029.02.05
+
+N2029/07       99.0000 %          3.6438 %       102.6438 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           830         2027.02.12    2029.02.12
+
+N2029/08       99.0000 %          3.5479 %       102.5479 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           837         2027.02.19    2029.02.19
+
+N2029/09       99.0000 %          3.4521 %       102.4521 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           844         2027.02.26    2029.02.26
+
+N2029/10       99.0000 %          3.3699 %       102.3699 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           850         2027.03.04    2029.03.04
+
+N2029/11       99.0000 %          3.2740 %       102.2740 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           857         2027.03.11    2029.03.11
+
+N2029/12       99.0000 %          3.1781 %       102.1781 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           864         2027.03.18    2029.03.18
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   7/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2029/13       99.0000 %          3.0822 %       102.0822 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           871         2027.03.25    2029.03.25
+
+N2029/14       99.0000 %          2.9726 %       101.9726 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           879         2027.04.02    2029.04.02
+
+N2029/15       99.0000 %          2.8904 %       101.8904 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           885         2027.04.08    2029.04.08
+
+N2029/16       99.0000 %          2.7945 %       101.7945 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           892         2027.04.15    2029.04.15
+
+N2029/17       99.0000 %          2.6986 %       101.6986 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           899         2027.04.22    2029.04.22
+
+N2029/18       99.0000 %          2.6027 %       101.6027 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           906         2027.04.29    2029.04.29
+
+N2029/19       99.0000 %          2.5068 %       101.5068 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           913         2027.05.06    2029.05.06
+
+N2029/20       99.0000 %          2.4110 %       101.4110 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           920         2027.05.13    2029.05.13
+
+N2029/21       99.0000 %          2.3014 %       101.3014 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           928         2027.05.21    2029.05.21
+
+N2029/22       99.0000 %          2.2192 %       101.2192 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           934         2027.05.27    2029.05.27
+
+N2029/23       99.0000 %          2.1233 %       101.1233 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        5.00 %           941         2027.06.03    2029.06.03
+
+N2029/M1       99.0000 %          2.4226 %       101.4226 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.75 %           965         2027.06.27    2029.06.27
+
+N2029/M2       99.0000 %          1.9048 %       100.9048 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.75 %           993         2027.07.25    2029.07.25
+
+N2029/M3       99.0000 %          1.2575 %       100.2575 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.75 %          1028         2027.08.29    2029.08.29
+
+N2029/M4       99.0000 %          0.7123 %       99.7123 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        6.50 %          1056         2027.09.26    2029.09.26
+
+N2029/M5       99.0000 %          0.2055 %       99.2055 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        6.25 %          1084         2027.10.24    2029.10.24
+
+N2029/M6       99.0000 %          5.6219 %       104.6219 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1119         2026.11.28    2029.11.28
+
+N2029/M7       99.0000 %          5.1452 %       104.1452 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1148         2026.12.27    2029.12.27
+
+N2030/M1       99.0000 %          4.5863 %       103.5863 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1182         2027.01.30    2030.01.30
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   8/9
+Magyar Állampapír Plusz                                                                                                                                                           Értéknap:       2026.11.05
+
+
+                                                                 Vételi                                                                             Lejárati vagy     Lejáratig     Következő
+  Értékpapír       Vételi nettó   Felhalmozott   Vételi bruttó            Vételi hozam Eladási nettó Felhalmozott Eladási bruttó Eladási Eladási
+                                                                 hozam                                                                               következő        hátralévő    esedékesség   Lejárat dátuma
+  elnevezése        árfolyam         kamat        árfolyam                   ISMA        árfolyam       kamat       árfolyam hozam EHM hozam ISMA
+                                                                 EHM                                                                                  kifizetés     napok száma      dátuma
+
+N2030/M2       99.0000 %          4.1260 %       103.1260 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1210         2027.02.27    2030.02.27
+
+N2030/M3       99.0000 %          3.6658 %       102.6658 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1238         2027.03.27    2030.03.27
+
+N2030/M4       99.0000 %          3.2055 %       102.2055 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1266         2027.04.24    2030.04.24
+
+N2030/M5       99.0000 %          2.6301 %       101.6301 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1301         2027.05.29    2030.05.29
+
+N2030/M6       99.0000 %          2.1699 %       101.1699 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1329         2027.06.26    2030.06.26
+
+N2030/M7       99.0000 %          1.7096 %       100.7096 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1357         2027.07.24    2030.07.24
+
+N2030/M8       99.0000 %          1.1342 %       100.1342 % 0.00 %          0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1392         2027.08.28    2030.08.28
+
+N2030/M9       99.0000 %          0.6740 %       99.6740 %       0.00 %     0.00 %          -            -            -      0.00 %     0.00 %        6.00 %          1420         2027.09.25    2030.09.25
+
+
+
+
+Az Államadósság Kezelő Központ Zrt. által meghatározott fenti árfolyamok napi maximum 10 millió Ft névértékű állampapír vételére jelentenek kötelezettséget. Bármely árfolyam
+változtatásának, és a forgalmazás felfüggesztésének jogát a Magyar Államkincstár (a továbbiakban: Forgalmazó) fenntartja. Az adott állampapír árfolyamjegyzése folyamatos. Az
+esedékes összeg meghatározása az esedékességfizetést megelőző 2 munkanapi értékpapír záróállomány szerint történik.Bruttó árfolyam = Nettó árfolyam + esedékesség napjáig
+felhalmozott kamat, az esedékességet megelőző munkanapon a bruttó árfolyam megegyezik a nettó árfolyammal.Befektetési megbízásait a Forgalmazó - az értéknap-váltásra
+figyelemmel -, a mindenkori hatályos Üzletszabályzatában meghatározott feltételek mellett teljesíti. A Forgalmazó a mindenkor hatályos adójogszabályoknak megfelelően teljesíti az adó
+levonását, melynek megállapítása és levonása a kifizetés napján történik. (EHM: kormányrendeletben rögzített módon számított egységes hozammutató, ISMA: Nemzetközi
+Értékpapírpiaci Szövetség Tényleges/Tényleges módszeren alapuló ajánlása)
+
+
+
+
+Az adatok tájékoztató jellegűek
+
+11/18/26 9:25 PM                                                                                                                                                                                   9/9
+

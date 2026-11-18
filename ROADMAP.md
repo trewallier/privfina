@@ -438,7 +438,7 @@ Out of scope for §6j until named
 - Live auction DKJ-base derivation; non-ÁKK retail products outside published families.
 
 #### 6k) Daily public-offering capture (ÁKK + Államkincstár)
-Goal: extend the daily scrape pipeline to detect **new nyilvános ajánlattétel (public offering)** documents on **akk.hu** and **allamkincstar.hu**, and transcribe their content into published market data over time (sale windows, coupon calendars, and other offering details — e.g. BMÁP coupon days). Exact sources, layout, and transcription shape are decided when this epic is planned in detail.
+Goal: extend the daily scrape pipeline to detect **new nyilvános ajánlattétel (public offering)** documents on **akk.hu** and **allamkincstar.hu**, and transcribe their content into published market data over time (sale windows, coupon calendars, and other offering details — e.g. BMÁP coupon days). Architecture: ADR 0041 (ÁKK `getPublicOfferings` + archive ledger + ≤10 PDF downloads/family/run; allampapir PDF fallback).
 
 Constraints
 - Actions-only contact; browser must not scrape those hosts.
@@ -448,9 +448,9 @@ Constraints
 - **Attribution / legal:** attribute each transcribed offering to its public host (ÁKK / Államkincstár as applicable); keep provenance to the source document; document that transcriptions may be incomplete or outdated vs the authoritative PDF, and are **not** a substitute for the official nyilvános ajánlattétel.
 
 Plan slices (implement as stacked PRs on `master`; detail in ADR 0041)
-- [ ] Spec / ADR as needed: offering discovery + published offering records on `market-data` + attribution / accuracy notes (shape must feed §6l). *(ADR 0041 + listing/archive stack layer)*
-- [ ] Daily detect new offerings → transcribe into the published tree (with source attribution).
-- [ ] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6m; source credit and accuracy disclaimer present.
+- [x] Spec / ADR as needed: offering discovery + published offering records on `market-data` + attribution / accuracy notes (shape must feed §6l). *(ADR 0041 + listing/archive stack layer)*
+- [x] Daily detect new offerings → transcribe into the published tree (with source attribution).
+- [x] Acceptance: new offerings appear in repo market data with the details needed for availability / coupon calendars; parsers reusable for §6m; source credit and accuracy disclaimer present.
 
 Out of scope for §6k
 - Backfilling older offerings (§6m).

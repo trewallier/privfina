@@ -20,6 +20,12 @@ on:
     # (write only when digests change).
     - cron: "30 17 * * *"
   workflow_dispatch:
+    inputs:
+      reparse_parse_failed:
+        description: "Re-download ISSUE PDFs previously sticky parse_failed (after parser fix)"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: market-data-ingest
@@ -81,6 +87,7 @@ jobs:
           MARKET_BASELINE_ROOT: ${{ github.workspace }}/baseline
           MARKET_OUT_ROOT: ${{ github.workspace }}/out
           MARKET_RAW_DIR: ${{ runner.temp }}/market-raw
+          MARKET_REPARSE_PARSE_FAILED: ${{ github.event_name == 'workflow_dispatch' && inputs.reparse_parse_failed && '1' || '' }}
         run: npx tsx tools/market-data/cli.ts ci-ingest
 
       - name: Upload published market-data artifact

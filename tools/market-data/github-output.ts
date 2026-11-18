@@ -10,3 +10,10 @@ export function writeGithubOutput(key: string, value: string): void {
   }
   appendFileSync(out, `${key}=${value}\n`, 'utf8')
 }
+
+/** Append markdown to the Actions job summary when GITHUB_STEP_SUMMARY is set. */
+export function writeGithubStepSummary(markdown: string): void {
+  const out = process.env.GITHUB_STEP_SUMMARY
+  if (!out) return
+  appendFileSync(out, markdown.endsWith('\n') ? markdown : `${markdown}\n`, 'utf8')
+}

@@ -30,13 +30,13 @@ function printHelp(): void {
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
-      [--offerings-dir <dir>] [--skip-offerings]
+      [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>]
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
-      [--offerings-dir <dir>] [--skip-offerings]
+      [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
   market-data validate-tree --root <repo-or-v2>
   market-data resolve-branch --repository <owner/repo> --branch <name>
 
@@ -135,6 +135,7 @@ async function loadOptionalSources(args: string[]): Promise<{
   skipWebkincstar?: boolean
   offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
   skipOfferings?: boolean
+  reparseParseFailed?: boolean
 }> {
   const catalogPath = getFlag(args, '--catalog')
   const ratesPath = getFlag(args, '--rates')
@@ -166,6 +167,7 @@ async function loadOptionalSources(args: string[]): Promise<{
   if (skipOfferings && offeringsDir) {
     throw new Error('Use either --offerings-dir or --skip-offerings, not both.')
   }
+  const reparseParseFailed = hasFlag(args, '--reparse-parse-failed')
   const webkincstarDatum = getFlag(args, '--datum')
   return {
     catalog: catalogPath ? await loadEnvelope(catalogPath) : undefined,
@@ -184,7 +186,8 @@ async function loadOptionalSources(args: string[]): Promise<{
     webkincstarDatum,
     skipWebkincstar,
     offeringEnvelopesByFamily: offeringsDir ? await loadOfferingsDir(offeringsDir) : undefined,
-    skipOfferings
+    skipOfferings,
+    reparseParseFailed
   }
 }
 
@@ -216,7 +219,8 @@ async function main(argv: string[]): Promise<number> {
       webkincstarDatum: sources.webkincstarDatum,
       skipWebkincstar: sources.skipWebkincstar,
       offeringEnvelopesByFamily: sources.offeringEnvelopesByFamily,
-      skipOfferings: sources.skipOfferings
+      skipOfferings: sources.skipOfferings,
+      reparseParseFailed: sources.reparseParseFailed
     })
     process.stdout.write(
       `${JSON.stringify({
@@ -230,11 +234,13 @@ async function main(argv: string[]): Promise<number> {
         inflationAppendedRows: report.inflationAppendedRows,
         webkincstarUpdated: report.webkincstarUpdated,
         webkincstarSoftFailed: report.webkincstarSoftFailed,
+        webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
         priceCalendarAppendedDays: report.priceCalendarAppendedDays,
         offeringsUpdated: report.offeringsUpdated,
         offeringsSoftFailed: report.offeringsSoftFailed,
         offeringPdfsDownloaded: report.offeringPdfsDownloaded,
-        offeringPdfsPending: report.offeringPdfsPending
+        offeringPdfsPending: report.offeringPdfsPending,
+        offeringPdfsParseFailed: report.offeringPdfsParseFailed
       })}\n`
     )
     return report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -266,9 +272,19 @@ async function main(argv: string[]): Promise<number> {
       webkincstarDatum: sources.webkincstarDatum,
       skipWebkincstar: sources.skipWebkincstar,
       offeringEnvelopesByFamily: sources.offeringEnvelopesByFamily,
-      skipOfferings: sources.skipOfferings
+      skipOfferings: sources.skipOfferings,
+      reparseParseFailed: sources.reparseParseFailed
     })
-    process.stdout.write(`${JSON.stringify({ changed: result.changed, asOf: result.asOf })}\n`)
+    process.stdout.write(
+      `${JSON.stringify({
+        changed: result.changed,
+        asOf: result.asOf,
+        offeringPdfsDownloaded: result.offeringPdfsDownloaded,
+        offeringPdfsPending: result.offeringPdfsPending,
+        offeringPdfsParseFailed: result.offeringPdfsParseFailed,
+        webkincstarFetchFailedDays: result.webkincstarFetchFailedDays
+      })}\n`
+    )
     return EXIT_UPDATED
   }
 

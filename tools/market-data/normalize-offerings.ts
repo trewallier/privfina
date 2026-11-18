@@ -38,10 +38,27 @@ export interface NormalizedOfferingListingRow {
 export interface OfferingListingDiff {
   /** Rows from the listing (all parseable). */
   rows: NormalizedOfferingListingRow[]
-  /** Documents whose pathUuid is absent from the previous archive (or archive has no sha256). */
+  /**
+   * ISSUE documents eligible for PDF download whose pathUuid is absent from the
+   * previous archive, lacks sha256, or (when reparseParseFailed) is sticky parse_failed.
+   * TAP_* rows stay listing/metadata-only and never appear here.
+   */
   unknownDocuments: NormalizedOfferingListingRow[]
   /** Series tip sale windows from preferred non-archive rows. */
   saleWindowsBySeries: Map<string, { family: OfferingFamilyCode; window: SaleWindow }>
+}
+
+export interface DiffOfferingsOptions {
+  /**
+   * When true, ISSUE rows archived as sticky `parse_failed` re-enter the download
+   * queue (operator recovery after a parser fix). Default false (ADR 0041 sticky).
+   */
+  reparseParseFailed?: boolean
+}
+
+/** PDF transcription is only attempted for ISSUE documents (not TAP amendments). */
+export function isOfferingPdfEligible(row: NormalizedOfferingListingRow): boolean {
+  return (row.resourceType ?? '').toUpperCase() === 'ISSUE'
 }
 
 function asString(value: unknown): string | null {
@@ -131,12 +148,14 @@ export function normalizeOfferingEnvelope(
 }
 
 /**
- * Compare listing rows to the tip archive. Unknown = no pathUuid in archive, or
- * archive entry exists but sha256 is still null (pending / failed download).
+ * Compare listing rows to the tip archive. Unknown = ISSUE pathUuid absent from
+ * archive, sha256 still null (pending / failed download), or sticky parse_failed
+ * when `reparseParseFailed` is set. TAP_* never enqueue for PDF download.
  */
 export function diffOfferingsAgainstArchive(
   rows: NormalizedOfferingListingRow[],
-  previousDocuments: OfferingArchiveDocument[] | null | undefined
+  previousDocuments: OfferingArchiveDocument[] | null | undefined,
+  options: DiffOfferingsOptions = {}
 ): OfferingListingDiff {
   const byUuid = new Map<string, OfferingArchiveDocument>()
   for (const doc of previousDocuments ?? []) {
@@ -146,8 +165,13 @@ export function diffOfferingsAgainstArchive(
   const unknownDocuments: NormalizedOfferingListingRow[] = []
   for (const row of rows) {
     if (!row.pathUuid) continue
+    if (!isOfferingPdfEligible(row)) continue
     const existing = byUuid.get(row.pathUuid.toLowerCase())
     if (!existing || existing.sha256 == null) {
+      unknownDocuments.push(row)
+      continue
+    }
+    if (options.reparseParseFailed && existing.status === 'parse_failed') {
       unknownDocuments.push(row)
     }
   }
@@ -224,15 +248,30 @@ export function archiveDocumentFromListing(
   }
 }
 
+export interface RankOfferingDownloadsOptions {
+  /** Series keys `family\0seriesId` that already have a transcribed offering PDF. */
+  transcribedSeriesIds?: ReadonlySet<string>
+}
+
 /**
- * Rank unknown docs for download: non-archive first, then newest published/modified.
+ * Rank ISSUE docs for download: prefer series still lacking a transcription,
+ * then non-archive, then newest published/modified.
  */
 export function rankOfferingDownloads(
-  rows: NormalizedOfferingListingRow[]
+  rows: NormalizedOfferingListingRow[],
+  options: RankOfferingDownloadsOptions = {}
 ): NormalizedOfferingListingRow[] {
+  const transcribed = options.transcribedSeriesIds
   return [...rows]
-    .filter((r) => r.pathUuid)
+    .filter((r) => r.pathUuid && isOfferingPdfEligible(r))
     .sort((a, b) => {
+      if (transcribed) {
+        const aKey = `${a.family}\0${a.seriesId}`
+        const bKey = `${b.family}\0${b.seriesId}`
+        const aDone = transcribed.has(aKey) ? 1 : 0
+        const bDone = transcribed.has(bKey) ? 1 : 0
+        if (aDone !== bDone) return aDone - bDone
+      }
       if (a.archive !== b.archive) return a.archive ? 1 : -1
       const pub = (b.published ?? '').localeCompare(a.published ?? '')
       if (pub !== 0) return pub

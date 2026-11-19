@@ -24,7 +24,7 @@ describe('market-data bash git helpers', () => {
           MARKET_BRANCH_EXISTS: 'false',
           GITHUB_REPOSITORY: 'example/privfina',
           GITHUB_TOKEN: 'test-token-not-for-push',
-          MARKET_DATA_APP_ID: '12345',
+          MARKET_DATA_BOT_USER_ID: '998877',
           MARKET_DATA_GIT_NAME: 'privfina-market-data[bot]'
         }
       })
@@ -34,7 +34,7 @@ describe('market-data bash git helpers', () => {
         encoding: 'utf8'
       })
       expect(identity.stdout.trim()).toBe(
-        '12345+privfina-market-data[bot]@users.noreply.github.com'
+        '998877+privfina-market-data[bot]@users.noreply.github.com'
       )
       expect(identity.stdout).not.toContain('github-actions')
 
@@ -93,5 +93,35 @@ describe('market-data bash git helpers', () => {
     })
     expect(result.status).not.toBe(0)
     expect(result.stderr).toMatch(/\.git is missing/i)
+  })
+
+  it('ensure-clone.sh falls back to MARKET_DATA_APP_ID when bot user id is unset', async () => {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'privfina-sh-appid-'))
+    const clone = path.join(tmp, 'market-data')
+    try {
+      const ensure = spawnSync('bash', [path.join(scriptsDir, 'ensure-clone.sh')], {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          MARKET_DATA_PATH: clone,
+          MARKET_DATA_BRANCH: 'market-data',
+          MARKET_BRANCH_EXISTS: 'false',
+          GITHUB_REPOSITORY: 'example/privfina',
+          GITHUB_TOKEN: 'test-token-not-for-push',
+          MARKET_DATA_APP_ID: '12345',
+          MARKET_DATA_GIT_NAME: 'privfina-market-data[bot]'
+        }
+      })
+      expect(ensure.status, ensure.stderr).toBe(0)
+      const identity = spawnSync('git', ['config', '--get', 'user.email'], {
+        cwd: clone,
+        encoding: 'utf8'
+      })
+      expect(identity.stdout.trim()).toBe(
+        '12345+privfina-market-data[bot]@users.noreply.github.com'
+      )
+    } finally {
+      await rm(tmp, { recursive: true, force: true })
+    }
   })
 })

@@ -38,7 +38,7 @@ Status on first impl PR: `proposed` → `accepted` when merged.
 | No-price calendar | New additive file `refs/price-calendar.json` (schemaVersion 2 refs path) | Empty settle today means “no commit” (ADR 0034) — cannot distinguish gaps without an explicit record |
 | Calendar shape | Append-first `(reportName, datum)`; status `priced` \| `no_price` \| `fetch_failed`; digest excludes `generatedAt`; source meta on file | Mirror inflation attribution pattern |
 | Soft vs hard fail | Soft-fail WebKincstár like retailInterest: append `fetch_failed` only when `(report, datum)` is absent; never MergeError over an existing priced/no_price row; isolate failures per report; ÁKK/allampapir/KSH still publish | One PDF outage must not block daily dual-source; calendar distinguishes miss vs no-price without rewriting history |
-| PDF→text | System **`pdftotext -layout`** (Poppler) in Actions (`apt-get install -y poppler-utils` on ingest job); Vitest fixtures are **pre-extracted text** (no binary PDF in git) | Assessment recommendation; no npm PDF dependency |
+| PDF→text | System **`pdftotext -layout`** (Poppler) in Actions (pinned + SHA256-verified debs via `tools/market-data/poppler.manifest` + `install-poppler.sh` on ingest job; not a floating `apt-get install`); Vitest fixtures are **pre-extracted text** (no binary PDF in git) | Assessment recommendation; no npm PDF dependency |
 | Parser API | Pure `parseWebkincstarPdfText({ reportName, text }) → { erteknap, rows[] }` over text, not bytes | §6m reuses parser with archived text or `pdftotext` offline |
 | Attribution / legal | Document in ADR + ownership + market-data README + `refs/price-calendar.json` `source` / `disclaimer`: credit Magyar Államkincstár (WebKincstár); figures informational; may lag/differ; not advice / not a substitute for live treasury publications | ROADMAP §6h constraint |
 
@@ -117,7 +117,7 @@ New modules (suggested names under `tools/market-data/`):
 
 CLI flags (mirror existing pattern): `--webkincstar-dir` / `--datum` / `--skip-webkincstar`.
 
-Workflow: install Poppler on **ingest** job only; keep push job offline to external hosts.
+Workflow: install pinned Poppler on **ingest** job only; keep push job offline to external hosts.
 
 ---
 
@@ -145,7 +145,7 @@ Workflow: install Poppler on **ingest** job only; keep push job offline to exter
 
 ### PR4 — Workflow wire + acceptance close — **done**
 
-- `market-data.yml`: Poppler (`poppler-utils`) on **ingest** job only; push stays offline to WebKincstár.
+- `market-data.yml`: pinned Poppler (`poppler.manifest` + `install-poppler.sh`) on **ingest** job only; push stays offline to WebKincstár.
 - Acceptance in ROADMAP/spec: Actions-only; no raw PDF in git; priced + no-price; attribution present; `parseWebkincstarPdfText` documented for §6m.
 - §6h marked complete (SPA unchanged).
 
@@ -169,7 +169,7 @@ Workflow: install Poppler on **ingest** job only; keep push job offline to exter
 
 1. **Name→id join quality** for MAK multi-family PDF — expect some soft-skips until ISIN column mapping is confirmed from real text fixtures; log unmatched names.
 2. **Multi-page MAK layout** drift — pin fixtures from real `pdftotext -layout` captures; fail closed on unexpected headers rather than inventing columns.
-3. **Poppler availability** on `ubuntu-latest` — install explicitly in workflow; document for local maintainers.
+3. **Poppler availability** on `ubuntu-26.04` — install pinned + hash-verified debs in workflow; document for local maintainers.
 4. **Timezone around midnight UTC cron** (`30 17 * * *`) — “yesterday” in Europe/Budapest is unambiguous for the 17:30 UTC run; document in ADR.
 5. Live §6f cutover gate is independent; §6h assumes `v2` publish path (code-complete).
 

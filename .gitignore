@@ -11,6 +11,7 @@ data/intake/**/raw/**
 data/intake/**/staged/**
 temp/
 .tmp-market-data/
+tools/market-data/.poppler-debs/
 
 # Allow documentation and templates in data/ to be committed
 !data/README.md

@@ -36,12 +36,17 @@ else
   exit 1
 fi
 
-# Commit identity matches App auth (not github-actions[bot]). Override via env when App slug differs.
+# Commit identity matches App auth (not github-actions[bot]). Prefer bot user id (official
+# App committer form); fall back to numeric App ID only for local/tests without API.
 GIT_NAME="${MARKET_DATA_GIT_NAME:-privfina-market-data[bot]}"
-if [[ -n "${MARKET_DATA_APP_ID:-}" ]]; then
-  GIT_EMAIL="${MARKET_DATA_GIT_EMAIL:-${MARKET_DATA_APP_ID}+privfina-market-data[bot]@users.noreply.github.com}"
+if [[ -n "${MARKET_DATA_GIT_EMAIL:-}" ]]; then
+  GIT_EMAIL="${MARKET_DATA_GIT_EMAIL}"
+elif [[ -n "${MARKET_DATA_BOT_USER_ID:-}" ]]; then
+  GIT_EMAIL="${MARKET_DATA_BOT_USER_ID}+${GIT_NAME}@users.noreply.github.com"
+elif [[ -n "${MARKET_DATA_APP_ID:-}" ]]; then
+  GIT_EMAIL="${MARKET_DATA_APP_ID}+${GIT_NAME}@users.noreply.github.com"
 else
-  GIT_EMAIL="${MARKET_DATA_GIT_EMAIL:-privfina-market-data[bot]@users.noreply.github.com}"
+  GIT_EMAIL="${GIT_NAME}@users.noreply.github.com"
 fi
 git -C "${MARKET_DATA_PATH}" config user.name "${GIT_NAME}"
 git -C "${MARKET_DATA_PATH}" config user.email "${GIT_EMAIL}"

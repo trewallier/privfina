@@ -293,6 +293,63 @@ describe('mergeOfferingsState', () => {
     expect(doc?.status).toBe('skipped_no_schedule')
     expect(doc?.sha256).toBe('a'.repeat(64))
   })
+
+  it('migrates ISSUE parse_failed to skipped_already_transcribed when series has transcription', async () => {
+    const envelope = await loadJson('offerings/getPublicOfferings_pmap.json')
+    const rows = normalizeOfferingEnvelope(envelope, 'pmap')
+    const issue = rows.find((r) => r.resourceType === 'ISSUE')!
+    const failedUuid = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    const previousArchive = {
+      schemaVersion: 2 as const,
+      generatedAt: '2026-11-18T12:00:00.000Z',
+      source: {
+        id: 'akk-public-offerings',
+        host: 'www.akk.hu',
+        disclaimer: 'test'
+      },
+      documents: [
+        {
+          pathId: null,
+          pathUuid: failedUuid,
+          family: 'pmap' as const,
+          seriesId: issue.seriesId,
+          isin: issue.isin,
+          published: issue.published,
+          modifiedOn: issue.modifiedOn,
+          resourceType: 'ISSUE',
+          sha256: 'b'.repeat(64),
+          bytes: 12,
+          status: 'parse_failed' as const,
+          sourceHost: 'documents.akk.hu'
+        },
+        {
+          pathId: issue.pathId,
+          pathUuid: issue.pathUuid!,
+          family: 'pmap' as const,
+          seriesId: issue.seriesId,
+          isin: issue.isin,
+          published: issue.published,
+          modifiedOn: issue.modifiedOn,
+          resourceType: 'ISSUE',
+          sha256: 'c'.repeat(64),
+          bytes: 20,
+          status: 'transcribed' as const,
+          sourceHost: 'documents.akk.hu'
+        }
+      ]
+    }
+    const diff = diffOfferingsAgainstArchive(rows, previousArchive.documents)
+    const merged = mergeOfferingsState({}, previousArchive, {
+      listingRows: rows,
+      saleWindowsBySeries: diff.saleWindowsBySeries,
+      archiveUpserts: [],
+      generatedAt: '2026-11-18T18:00:00.000Z'
+    })
+    const doc = merged.offeringArchive.documents.find((d) => d.pathUuid === failedUuid)
+    expect(doc?.status).toBe('skipped_already_transcribed')
+    expect(doc?.sha256).toBe('b'.repeat(64))
+    expect(merged.archiveSkippedAlreadyTranscribed).toBe(1)
+  })
 })
 
 describe('ingestMarketData offerings listing', () => {

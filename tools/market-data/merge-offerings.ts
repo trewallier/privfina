@@ -41,6 +41,8 @@ export interface MergeOfferingsResult {
   offeringsChanged: boolean
   archiveChanged: boolean
   saleWindowsChanged: boolean
+  /** ISSUE parse_failed rows rewritten to skipped_already_transcribed this merge. */
+  archiveSkippedAlreadyTranscribed: number
 }
 
 function cloneArchive(file: OfferingArchiveFile): OfferingArchiveFile {
@@ -92,15 +94,17 @@ function preferArchiveStatus(
       next.status = incoming.status
     }
     if (
-      incoming.status === 'skipped_no_schedule' &&
+      (incoming.status === 'skipped_no_schedule' ||
+        incoming.status === 'skipped_already_transcribed') &&
       existing.status !== 'transcribed'
     ) {
-      next.status = 'skipped_no_schedule'
+      next.status = incoming.status
     }
     if (
       incoming.status === 'parse_failed' &&
       existing.status !== 'transcribed' &&
-      existing.status !== 'skipped_no_schedule'
+      existing.status !== 'skipped_no_schedule' &&
+      existing.status !== 'skipped_already_transcribed'
     ) {
       next.status = 'parse_failed'
     }
@@ -128,6 +132,29 @@ export function migrateTapParseFailedToSkipped(
     }
     return { ...doc, status: 'skipped_no_schedule' }
   })
+}
+
+/**
+ * Rewrite ISSUE `parse_failed` rows to `skipped_already_transcribed` when the
+ * same family/series already has a transcribed document (keeps sha256; no PDF).
+ */
+export function migrateParseFailedWhenSeriesTranscribed(
+  documents: OfferingArchiveDocument[]
+): { documents: OfferingArchiveDocument[]; migratedCount: number } {
+  const transcribedSeries = new Set(
+    documents
+      .filter((d) => d.status === 'transcribed')
+      .map((d) => `${d.family}\0${d.seriesId}`)
+  )
+  let migratedCount = 0
+  const next = documents.map((doc) => {
+    if (doc.status !== 'parse_failed') return doc
+    if ((doc.resourceType ?? '').toUpperCase() !== 'ISSUE') return doc
+    if (!transcribedSeries.has(`${doc.family}\0${doc.seriesId}`)) return doc
+    migratedCount += 1
+    return { ...doc, status: 'skipped_already_transcribed' as const }
+  })
+  return { documents: next, migratedCount }
 }
 
 /**
@@ -234,7 +261,14 @@ export function mergeOfferingsState(
     }
   }
 
-  const migratedDocs = migrateTapParseFailedToSkipped([...byUuid.values()])
+  const afterTap = migrateTapParseFailedToSkipped([...byUuid.values()])
+  const { documents: migratedDocs, migratedCount: archiveSkippedAlreadyTranscribed } =
+    migrateParseFailedWhenSeriesTranscribed(afterTap)
+  if (archiveSkippedAlreadyTranscribed > 0) {
+    console.error(
+      `[market-data] offering archive: ${archiveSkippedAlreadyTranscribed} parse_failed marked skipped (series already transcribed)`
+    )
+  }
 
   const mergedArchive: OfferingArchiveFile = {
     schemaVersion: SCHEMA_VERSION,
@@ -273,7 +307,8 @@ export function mergeOfferingsState(
     seriesSaleWindows,
     offeringsChanged,
     archiveChanged,
-    saleWindowsChanged: seriesSaleWindows.length > 0
+    saleWindowsChanged: seriesSaleWindows.length > 0,
+    archiveSkippedAlreadyTranscribed
   }
 }
 

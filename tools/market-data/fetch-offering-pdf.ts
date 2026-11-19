@@ -239,8 +239,13 @@ export async function fetchOfferingPdfsForListings(
       const allowReparse =
         options.reparseParseFailed === true && known.status === 'parse_failed'
       if (!allowReparse) continue
-      // Never reparse permanent no-schedule skips.
-      if (known.status === 'skipped_no_schedule') continue
+      // Never reparse permanent skips.
+      if (
+        known.status === 'skipped_no_schedule' ||
+        known.status === 'skipped_already_transcribed'
+      ) {
+        continue
+      }
     }
     const list = byFamily.get(row.family) ?? []
     list.push(row)

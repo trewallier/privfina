@@ -204,7 +204,12 @@ export function diffOfferingsAgainstArchive(
       queuedUuids.add(uuid)
       continue
     }
-    if (existing.status === 'skipped_no_schedule') continue
+    if (
+      existing.status === 'skipped_no_schedule' ||
+      existing.status === 'skipped_already_transcribed'
+    ) {
+      continue
+    }
     if (
       options.reparseParseFailed &&
       existing.status === 'parse_failed' &&

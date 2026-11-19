@@ -282,6 +282,8 @@ export type OfferingDocumentStatus =
   | 'transcribed'
   | 'parse_failed'
   | 'skipped_no_schedule'
+  /** Sticky hash kept; series already has a transcribed ISSUE — never reparse. */
+  | 'skipped_already_transcribed'
   | 'pending_download'
   | 'download_failed'
 

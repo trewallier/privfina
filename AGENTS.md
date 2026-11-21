@@ -40,6 +40,7 @@ Human-oriented hubs: [`README.md`](README.md), [`docs/README.md`](docs/README.md
 ```bash
 npm install
 npm test
+npm run test:e2e     # Playwright Chromium UI smoke (ADR 0043)
 npm run build        # Vite SPA → dist-web/
 npm run build:lib    # tsc → dist/
 ```

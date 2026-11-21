@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   CURRENT_EXPORT_SCHEMA_VERSION,
   calculateCumulativeSeries,
@@ -24,7 +24,12 @@ import {
   buildEffectiveFlows
 } from '../public/app.js'
 import { parseRecurringSchedule } from '../public/recurrence.js'
-import { downsampleSeriesForChart, formatAxisAmount, renderChart } from '../public/render.js'
+import {
+  downsampleSeriesForChart,
+  formatAxisAmount,
+  renderChart,
+  updateChartCrosshair
+} from '../public/render.js'
 
 describe('browser recurrence validation helpers', () => {
   it('normalizes valid one-time flows and rejects invalid entries', () => {
@@ -610,9 +615,112 @@ describe('browser recurrence validation helpers', () => {
     expect(container.innerHTML).toContain('Cumulative total amount')
     expect(container.innerHTML).toContain('class="grid-line"')
     expect(container.innerHTML).toContain('class="y-tick-label"')
+    expect(container.innerHTML).toContain('class="x-tick-label"')
     expect(container.innerHTML).toContain('class="series-line"')
+    expect(container.innerHTML).toContain('class="series-area"')
     expect(container.innerHTML).toContain(' H ')
     expect(container.innerHTML).toContain(' V ')
+  })
+
+  it('renders nice round Y tick labels and crosshair scaffolding', () => {
+    const attrs: Record<string, string> = {}
+    const container: {
+      innerHTML: string
+      setAttribute: (name: string, value: string) => void
+      querySelector: (selector: string) => null
+    } = {
+      innerHTML: '',
+      setAttribute(name, value) {
+        attrs[name] = value
+      },
+      querySelector() {
+        return null
+      }
+    }
+
+    const layout = renderChart(
+      [
+        { date: '2024-01-01', cumulativeTotal: 0 },
+        { date: '2024-06-01', cumulativeTotal: 1000 },
+        { date: '2024-12-01', cumulativeTotal: 2000 }
+      ],
+      container,
+      { width: 640, height: 280 }
+    )
+
+    expect(container.innerHTML).toContain('class="y-tick-label"')
+    expect(container.innerHTML).toMatch(/>0\.00</)
+    expect(container.innerHTML).toContain('class="chart-crosshair-point"')
+    expect(container.innerHTML).toContain('class="chart-tooltip"')
+    expect(attrs['aria-label']).toContain('Cumulative cash-flow chart')
+    expect(layout).toMatchObject({ width: 640, height: 280 })
+  })
+
+  it('updates crosshair/tooltip nodes in place via updateChartCrosshair', () => {
+    const lineX = { setAttribute: vi.fn() }
+    const lineY = { setAttribute: vi.fn() }
+    const point = { setAttribute: vi.fn() }
+    const tooltip = { hidden: true, textContent: '', style: { left: '', top: '' } }
+    const container = {
+      querySelector(selector: string) {
+        if (selector === '.chart-crosshair-x') return lineX
+        if (selector === '.chart-crosshair-y') return lineY
+        if (selector === '.chart-crosshair-point') return point
+        if (selector === '.chart-tooltip') return tooltip
+        return null
+      }
+    }
+    const layout = {
+      leftPad: 80,
+      plotRight: 620,
+      topPad: 28,
+      plotBottom: 260,
+      plotWidth: 540,
+      plotHeight: 232,
+      width: 640,
+      height: 300,
+      minTime: Date.parse('2024-01-01T00:00:00Z'),
+      maxTime: Date.parse('2024-12-01T00:00:00Z'),
+      yMin: 0,
+      yMax: 2000
+    }
+
+    updateChartCrosshair(
+      container,
+      { date: '2024-06-01', cumulativeTotal: 1000, dayDelta: 1000 },
+      layout
+    )
+
+    expect(point.setAttribute).toHaveBeenCalledWith('visibility', 'visible')
+    expect(tooltip.hidden).toBe(false)
+    expect(tooltip.textContent).toContain('1 000.00')
+  })
+
+  it('filters then downsamples so a zoomed viewport keeps denser local points', () => {
+    const daily = Array.from({ length: 2000 }, (_, index) => {
+      const time = Date.UTC(2020, 0, 1) + index * 24 * 60 * 60 * 1000
+      return {
+        date: new Date(time).toISOString().slice(0, 10),
+        cumulativeTotal: index
+      }
+    })
+    const domainStart = Date.parse(`${daily[0].date}T00:00:00Z`)
+    const domainEnd = Date.parse(`${daily[daily.length - 1].date}T00:00:00Z`)
+    const zoomed = {
+      xMin: domainStart + (domainEnd - domainStart) * 0.4,
+      xMax: domainStart + (domainEnd - domainStart) * 0.55
+    }
+    const container = { innerHTML: '', querySelector: () => null, setAttribute: () => {} }
+    renderChart(daily, container, {
+      width: 800,
+      height: 300,
+      viewport: zoomed,
+      domain: { xMin: domainStart, xMax: domainEnd }
+    })
+    const pathMatch = container.innerHTML.match(/class="series-line" d="([^"]+)"/)
+    const path = pathMatch ? pathMatch[1] : ''
+    const segments = (path.match(/ H /g) || []).length
+    expect(segments).toBeGreaterThan(20)
   })
 
   it('colors zero axis red when cumulative totals cross zero', () => {

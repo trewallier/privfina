@@ -6,8 +6,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 
 | Workflow | File | When | Job / check name | Privileges |
 | --- | --- | --- | --- | --- |
-| CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`** | top-level deny; job `contents: read` |
-| CI (planned) | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | same | **`e2e`** (Playwright Chromium smoke; ADR 0043) — **lands with ROADMAP §6 Playwright CI stack layer** | top-level deny; job `contents: read` |
+| CI | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | PR / push targeting **repository default branch** | **`validate`**, **`e2e`** (Playwright Chromium smoke; ADR 0043) | top-level deny; jobs `contents: read` |
 | CodeQL | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) | same + weekly schedule | **`Analyze`** | top-level deny; job `contents`/`actions` read + `security-events: write` |
 | Deploy | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) | push to **repository default branch** only | build (+ materialize `market-data` tip) + deploy | top-level deny; build read; deploy `pages: write` + `id-token: write` |
 | Market data | [`.github/workflows/market-data.yml`](../../.github/workflows/market-data.yml) | daily schedule + `workflow_dispatch` (not every default-branch push) | **`ingest`** (read) → artifact → **`push`** (App token) | top-level deny; ingest `contents: read` (ÁKK + allampapir.hu prices + retailInterest kamatok + KSH ara0040 CSV + WebKincstár daily price PDFs + ÁKK `getPublicOfferings` / offering PDFs ≤10 per family); push uses GitHub App installation token only; no PR to default branch; skips full app `validate` (ADR 0034 / 0035 / 0036 / 0037 / 0039 / 0041 / 0042 / ROADMAP §6b–§6e / §6h / §6k / §6n) |
@@ -24,11 +23,11 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 
 1. Do not commit secrets, credentials, private keys, or `.env` files (`.gitignore` already ignores `.env`).
 2. Prefer `npm ci` locally when validating lockfile changes; keep [`package-lock.json`](../../package-lock.json) committed.
-3. PRs must keep **`validate`** green (`npm run verify:gh-stack-skill`, `npm test`, `npm run build:lib`, `npm run build`). Vendored skill pin: [`gh-stack-skill.md`](gh-stack-skill.md). After the Playwright CI stack layer lands, PRs must also keep **`e2e`** green (`npm run test:e2e`; ADR 0043).
+3. PRs must keep **`validate`** green (`npm run verify:gh-stack-skill`, `npm test`, `npm run build:lib`, `npm run build`) and **`e2e`** green (`npm run test:e2e`; ADR 0043). Vendored skill pin: [`gh-stack-skill.md`](gh-stack-skill.md).
 4. Do not add custom secrets to workflows; the SPA needs none for Pages.
 5. When editing workflows: keep the invariants above; CODEOWNERS will request maintainer review ([`.github/CODEOWNERS`](../../.github/CODEOWNERS)).
 6. EBKM diagnosis / probe suites under [`tests/exploratory/`](../../tests/exploratory/) are **not** part of `npm test` / CI. Run them only when working that diagnosis: `npm run test:exploratory`.
-7. Playwright UI smoke lives under [`e2e/`](../../e2e/) and is **not** part of `npm test`. Formula / YAML parity stays in Vitest. Local: `npx playwright install chromium` once, then `npm run test:e2e` (script lands with the harness stack layer).
+7. Playwright UI smoke lives under [`e2e/`](../../e2e/) and is **not** part of `npm test`. Formula / YAML parity stays in Vitest. Local: `npx playwright install chromium` once, then `npm run test:e2e`.
 
 ## Maintainer checklist (one-time + ongoing)
 
@@ -63,7 +62,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 
 ### D. Reviewing Dependabot / workflow PRs
 
-1. Require green **`validate`** (and CodeQL when required) before merge.
+1. Require green **`validate`** and **`e2e`** (and CodeQL when required) before merge.
 2. For `github-actions` bumps: confirm the PR updates the **SHA pin** (and version comment), not only a tag.
 3. Prefer first-party or widely audited Actions; avoid new third-party Actions without explicit vetting (ADR 0007).
 4. Do not expand deploy privileges to PR events.
@@ -75,7 +74,7 @@ npm ci
 npm test                 # product / regression suite (excludes tests/exploratory)
 npm run build:lib
 npm run build
-npm run test:e2e         # Playwright Chromium UI smoke (ADR 0043; after harness layer)
+npm run test:e2e         # Playwright Chromium UI smoke (ADR 0043)
 npm run test:exploratory # optional EBKM diagnosis probes only
 ```
 

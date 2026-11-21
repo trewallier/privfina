@@ -175,11 +175,12 @@ Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f
 - [x] Define supply-chain security policy: Dependabot (npm + Actions), CodeQL, lockfile + `npm ci`, `SECURITY.md` / private reporting; signing deferred with Node package ADR
 - [ ] Document update strategy and release process (patch/minor/major cadence)
 - [ ] Maintainer: flip Pages source to GitHub Actions, enable branch protection requiring `validate` (+ CodeQL `Analyze`), secret scanning / push protection, then delete obsolete `gh-pages` branch (checklist in CI playbook)
-- [ ] Playwright Chromium UI smoke on PR CI (ADR 0043) — stacked slices:
+- [x] Playwright Chromium UI smoke on PR CI (ADR 0043) — stacked slices:
   - [x] ADR + ROADMAP/spec/playbook framing (smoke vs Vitest; planned `e2e` job)
   - [x] Harness under `e2e/` + boot smoke (`npm run test:e2e`)
   - [x] Remaining smoke specs (one-time, edit/delete, narrow shell, import/export, commercial-loan open)
-  - [ ] Least-privilege `e2e` CI job alongside `validate`; maintainer requires check after first green
+  - [x] Least-privilege `e2e` CI job alongside `validate`
+- [ ] Maintainer: require the `e2e` status check on the default branch after the first green run (ADR 0043 / CI playbook; same pattern as CodeQL `Analyze`)
 
 #### 6a) Vite bundler — single browser calculation surface (ADR 0017 → 0032)
 Goal: ship one calculation surface so the GitHub Pages SPA imports TypeScript from `src/finance_engine/` via Vite and dual-surface formula copies under `public/` can be deleted (`instruments.js`, `loan-fees.js`, `thm.js`, `eval-cache.js`, BMAP helper mirrors). Static Pages hosting unchanged (ADR 0003). WASM remains §8.

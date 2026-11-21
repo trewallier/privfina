@@ -56,6 +56,7 @@ import {
 } from './flows.js'
 import { sharedEvalResultCache } from './eval-cache.js'
 import { renderConfiguredLists, renderChart } from './render.js'
+import { createChartInteraction, resolveRangePreset } from './controller/chart-viewport.js'
 import { createComposerManager } from './controller/composer.js'
 import {
   createResponsiveShell,
@@ -161,6 +162,9 @@ function initController() {
   const rows = document.getElementById('configured-flow-rows')
   const cards = document.getElementById('configured-flow-cards')
   const chart = document.getElementById('chart')
+  const chartToolbar = document.getElementById('chart-toolbar')
+  const chartViewStatus = document.getElementById('chart-view-status')
+  const rangePresetGroup = document.querySelector('.viz-range-presets')
   const startInput = document.getElementById('range-start')
   const endInput = document.getElementById('range-end')
   const shellRoot = document.querySelector('main')
@@ -1405,6 +1409,27 @@ function initController() {
   startInput.value = defaultRange.startDate
   endInput.value = defaultRange.endDate
 
+  const chartInteraction =
+    chart &&
+    createChartInteraction({
+      host: chart,
+      toolbar: chartToolbar,
+      statusNode: chartViewStatus,
+      render: (state) => {
+        renderChart(state.series, chart, {
+          startDate: state.startDate,
+          endDate: state.endDate,
+          viewport: state.viewport,
+          domain: state.domain,
+          fitY: state.fitY,
+          width: state.width,
+          height: state.height,
+          crosshair: state.crosshair,
+          showSamplingNote: false
+        })
+      }
+    })
+
   function handleListDrop(payload, target) {
     if (!payload || !target) {
       return
@@ -1589,8 +1614,14 @@ function initController() {
     const startDate = startInput.value
     const endDate = endInput.value
     if (!startDate || !endDate || startDate > endDate) {
+      if (chartInteraction) {
+        chartInteraction.setSeries([], { startDate, endDate, resetViewport: true })
+      }
       chart.innerHTML = '<div class="empty"></div>'
       chart.querySelector('.empty').textContent = 'Select a valid date range.'
+      if (chartViewStatus) {
+        chartViewStatus.textContent = ''
+      }
       return
     }
 
@@ -1606,14 +1637,18 @@ function initController() {
         includedBundles
       )
       const series = calculateCumulativeSeries(effectiveFlows)
-      renderChart(series, chart, {
-        startDate,
-        endDate
-      })
+      if (chartInteraction) {
+        chartInteraction.setSeries(series, { startDate, endDate, resetViewport: true })
+      } else {
+        renderChart(series, chart, { startDate, endDate })
+      }
     } catch (error) {
       // Constant HTML shell only; error text via textContent (CodeQL js/xss-through-exception).
       chart.innerHTML = '<div class="empty"></div>'
       chart.querySelector('.empty').textContent = error.message
+      if (chartViewStatus) {
+        chartViewStatus.textContent = ''
+      }
     }
   }
 
@@ -2051,6 +2086,37 @@ function initController() {
 
   startInput.addEventListener('change', rerender)
   endInput.addEventListener('change', rerender)
+
+  if (rangePresetGroup) {
+    rangePresetGroup.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-range-preset]')
+      if (!button) {
+        return
+      }
+      const preset = button.getAttribute('data-range-preset')
+      const flowDates = [
+        ...oneTimeFlows.map((entry) => entry.date),
+        ...recurringFlows.map((entry) => entry.startDate),
+        ...instrumentBundles.flatMap((bundle) =>
+          (bundle.generatedFlows || []).map((flow) => flow.date)
+        )
+      ].filter(Boolean)
+      const sortedDates = flowDates.slice().sort()
+      const maxStart = sortedDates[0] || startInput.value
+      const maxEnd = sortedDates[sortedDates.length - 1] || endInput.value
+      const next = resolveRangePreset(preset, {
+        endDate: endInput.value || maxEnd || new Date().toISOString().slice(0, 10),
+        maxStart,
+        maxEnd
+      })
+      startInput.value = next.startDate
+      endInput.value = next.endDate
+      rangePresetGroup.querySelectorAll('[data-range-preset]').forEach((node) => {
+        node.setAttribute('aria-pressed', node === button ? 'true' : 'false')
+      })
+      rerender()
+    })
+  }
 
   if (newFolderButton) {
     newFolderButton.addEventListener('click', () => {

@@ -385,6 +385,15 @@ The page should include a cumulative cash-flow diagram built from generated date
 - Toggling flow inclusion in the configured-flow list should re-render the chart immediately using only included definitions.
 - If no flows exist in range, render an empty-state chart with zero baseline.
 
+### Data domain vs viewport (interactive chart)
+
+- **Data domain**: start/end date pickers (and range presets that set those pickers) define which dated flows are computed into the cumulative series.
+- **Viewport**: pan/zoom explore a visible window inside the already-loaded series without rewriting the date pickers on every gesture.
+- Axis chrome (Y/X tick labels) stays in screen space at a fixed readable font size; only the clipped plot group follows the viewport.
+- Gestures: drag to pan; wheel/trackpad zoom toward pointer (desktop); one-finger drag + pinch zoom (mobile); double-click/double-tap or Reset restores the full data domain; Fit Y (default on) auto-scales vertical range to visible points.
+- Crosshair/tooltip snaps to the nearest day and shows date + cumulative amount.
+- Keyboard when the chart is focused: `+`/`-` zoom, arrow keys pan, `0` resets the viewport.
+
 Performance note: charting over long ranges should prefer aggregate or lazy evaluation strategies where possible; the engine must avoid generating flows outside the requested range.
 
 ## Platform & Hosting

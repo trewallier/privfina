@@ -657,19 +657,104 @@
         white-space: normal;
       }
 
+      .viz-range-presets,
+      .chart-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .viz-range-presets {
+        margin-bottom: 2px;
+      }
+
+      .viz-range-presets button,
+      .chart-toolbar button {
+        min-height: 40px;
+        min-width: 40px;
+        padding: 0.4rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .viz-range-presets button[aria-pressed='true'],
+      .chart-toolbar button[aria-pressed='true'] {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+
+      .viz-range-presets button:hover,
+      .chart-toolbar button:hover {
+        border-color: #94a3b8;
+      }
+
+      .chart-view-status {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-left: auto;
+      }
+
       #chart {
+        position: relative;
         width: 100%;
         min-height: 240px;
         border: 1px solid var(--border);
         border-radius: 10px;
         background: #fff;
         overflow: hidden;
+        outline: none;
       }
 
-      #chart svg {
+      #chart:focus-visible {
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);
+      }
+
+      #chart.chart-host {
+        cursor: grab;
+        touch-action: none;
+      }
+
+      #chart.chart-host:active {
+        cursor: grabbing;
+      }
+
+      #chart .chart-svg {
         display: block;
         width: 100%;
-        height: 260px;
+        height: auto;
+        max-width: 100%;
+      }
+
+      #chart .y-tick-label,
+      #chart .x-tick-label,
+      #chart .chart-title,
+      #chart .chart-sampling-note {
+        font-family: inherit;
+      }
+
+      #chart .chart-tooltip {
+        position: absolute;
+        transform: translate(-50%, -100%);
+        pointer-events: none;
+        z-index: 2;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--text);
+        font-size: 0.8rem;
+        white-space: nowrap;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+      }
+
+      #chart .chart-tooltip[hidden] {
+        display: none;
       }
 
       .empty {
@@ -1211,8 +1296,17 @@
           min-height: 44px;
         }
 
-        #chart svg {
-          height: 220px;
+        main[data-shell-view='chart'] #chart {
+          min-height: min(50vh, 360px);
+        }
+
+        main[data-shell-view='chart'] #chart .chart-svg {
+          min-height: 260px;
+        }
+
+        .chart-view-status {
+          margin-left: 0;
+          width: 100%;
         }
 
         .import-group {
@@ -2667,7 +2761,13 @@
         <section id="viz-pane" class="card stack" aria-labelledby="viz-pane-title">
           <div>
             <h2 id="viz-pane-title" class="pane-title">Visualization Workspace</h2>
-            <p class="pane-copy">Review cumulative cash-flow behavior across the selected date range.</p>
+            <p class="pane-copy">Review cumulative cash-flow behavior across the selected date range. Drag, scroll, or pinch to explore; labels stay readable.</p>
+          </div>
+          <div class="viz-range-presets" role="group" aria-label="Date range presets">
+            <button type="button" data-range-preset="1m">1M</button>
+            <button type="button" data-range-preset="3m">3M</button>
+            <button type="button" data-range-preset="ytd">YTD</button>
+            <button type="button" data-range-preset="max">Max</button>
           </div>
           <div class="row viz-range">
             <label>
@@ -2678,6 +2778,13 @@
               End date
               <input id="range-end" type="date" />
             </label>
+          </div>
+          <div class="chart-toolbar" id="chart-toolbar" role="toolbar" aria-label="Chart navigation">
+            <button type="button" data-chart-action="zoom-in" aria-label="Zoom in">+</button>
+            <button type="button" data-chart-action="zoom-out" aria-label="Zoom out">−</button>
+            <button type="button" data-chart-action="reset">Reset</button>
+            <button type="button" data-chart-action="fit-y" aria-pressed="true" title="Auto-scale vertical axis to visible points">Fit Y</button>
+            <span id="chart-view-status" class="chart-view-status" aria-live="polite"></span>
           </div>
           <div id="chart"></div>
         </section>

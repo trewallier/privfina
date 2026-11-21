@@ -610,9 +610,42 @@ describe('browser recurrence validation helpers', () => {
     expect(container.innerHTML).toContain('Cumulative total amount')
     expect(container.innerHTML).toContain('class="grid-line"')
     expect(container.innerHTML).toContain('class="y-tick-label"')
+    expect(container.innerHTML).toContain('class="x-tick-label"')
     expect(container.innerHTML).toContain('class="series-line"')
+    expect(container.innerHTML).toContain('class="series-area"')
     expect(container.innerHTML).toContain(' H ')
     expect(container.innerHTML).toContain(' V ')
+  })
+
+  it('renders nice round Y tick labels and a crosshair tooltip', () => {
+    const container: { innerHTML: string; setAttribute?: (name: string, value: string) => void } = {
+      innerHTML: ''
+    }
+    const attrs: Record<string, string> = {}
+    container.setAttribute = (name, value) => {
+      attrs[name] = value
+    }
+
+    renderChart(
+      [
+        { date: '2024-01-01', cumulativeTotal: 0 },
+        { date: '2024-06-01', cumulativeTotal: 1000 },
+        { date: '2024-12-01', cumulativeTotal: 2000 }
+      ],
+      container,
+      {
+        width: 640,
+        height: 280,
+        crosshair: { date: '2024-06-01', cumulativeTotal: 1000, dayDelta: 1000 }
+      }
+    )
+
+    expect(container.innerHTML).toContain('class="y-tick-label"')
+    expect(container.innerHTML).toMatch(/>0\.00</)
+    expect(container.innerHTML).toContain('class="chart-crosshair-point"')
+    expect(container.innerHTML).toContain('class="chart-tooltip"')
+    expect(container.innerHTML).toContain('1 000.00')
+    expect(attrs['aria-label']).toContain('Cumulative cash-flow chart')
   })
 
   it('colors zero axis red when cumulative totals cross zero', () => {

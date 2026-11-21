@@ -48,6 +48,14 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Follow-on list organization (post §4; schema bump allowed)
 - [x] Flat collapsible folders for configured flows (desktop table + mobile cards), drag-and-drop / touch long-press membership and reorder, persisted `listStatus`, export/import schema v5.
 
+Follow-on interactive chart UX (post §4; UI-only; no domain/persistence changes)
+Goal: make the cumulative chart easy to navigate on mobile and desktop — pan, zoom, always-readable axis labels — while keeping the same series pipeline and visual language.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] Readable axes and chart chrome: ResizeObserver-sized SVG, screen-space labels, nice Y ticks, adaptive X ticks, taller mobile chart height.
+- [x] Pan and zoom viewport: wheel/pinch/drag, clamp, Fit Y, toolbar zoom/reset; date pickers remain the data domain; viewport explores within it.
+- [x] Flexibility and polish: crosshair tooltip, 1M/3M/YTD/Max presets, area fill, keyboard a11y; unit + e2e smoke.
+
 Out of scope for this epic
 - Native apps, redesign of investment subtype math/forms beyond layout/navigation, new analytics features from §5, bundler/WASM work.
 

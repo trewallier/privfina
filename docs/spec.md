@@ -102,6 +102,9 @@ Acceptance criteria
 - [x] Cumulative chart renders clear empty-state messaging when no flows overlap the selected range.
 - [x] Cumulative chart rendering remains responsive on large ranges by reducing plotted point density without changing boundary values.
 - [x] Add/edit/delete operations, date-range changes, and include/exclude toggles trigger diagram recalculation using current data.
+- [x] Cumulative chart sizes to its pane (ResizeObserver) with screen-space axis labels that stay readable on narrow and wide viewports; Y ticks use nice round steps; X ticks adapt density to width.
+- [x] Users can pan and zoom the chart viewport inside the selected date-picker data domain (wheel/pinch/drag + toolbar zoom/reset) without recomputing the series on every gesture; Fit Y keeps vertical scale readable for the visible window.
+- [x] Chart offers crosshair/tooltip (date + cumulative amount), 1M/3M/YTD/Max range presets that update the date pickers, and keyboard zoom/pan/reset when the chart is focused.
 - [x] User data persists between browser sessions using browser storage, and export/import JSON can back up and restore state.
 - [x] Export/import JSON includes explicit schema versioning; schema changes trigger warnings and preserve a migration path for backward compatibility.
 - [x] The calculation engine exposes a clean interface to UI/controller code.

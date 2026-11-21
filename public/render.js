@@ -1,4 +1,13 @@
 import { formatMoneyAmount } from './controller/money-format.js'
+import {
+  computeAdaptiveXTicks,
+  computeNiceYTicks,
+  estimateTextWidth,
+  filterSeriesToViewport,
+  isViewportFull,
+  seriesTimeDomain,
+  yExtentForSeries
+} from './controller/chart-viewport.js'
 import { buildListOutline } from './list-status.js'
 import { bindDraggable, bindDropSurface, cancelActiveListDrag } from './list-dnd.js'
 
@@ -535,15 +544,26 @@ function formatAxisAmount(value) {
   return formatMoneyAmount(value, { fractionDigits: 2 })
 }
 
-function formatDateLabel(isoDate) {
+function formatDateLabel(isoDate, { compact = false } = {}) {
   const [year, month, day] = isoDate.split('-').map((value) => Number(value))
   const parsed = new Date(Date.UTC(year, month - 1, day))
+  if (compact) {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: '2-digit',
+      timeZone: 'UTC'
+    }).format(parsed)
+  }
   return new Intl.DateTimeFormat(undefined, {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
     timeZone: 'UTC'
   }).format(parsed)
+}
+
+function formatTimestampLabel(timestamp, { compact = false } = {}) {
+  return formatDateLabel(new Date(timestamp).toISOString().slice(0, 10), { compact })
 }
 
 function downsampleSeriesForChart(series, maxPoints = 900) {
@@ -584,6 +604,17 @@ function buildHoldPath(series, xScale, yScale) {
   return path
 }
 
+function buildHoldAreaPath(series, xScale, yScale, baselineY, xMin, xMax) {
+  if (!series.length) {
+    return ''
+  }
+  const line = buildHoldPath(series, xScale, yScale)
+  const last = series[series.length - 1]
+  const lastX = xScale(Math.min(xMax, new Date(last.date).getTime()))
+  const firstX = xScale(Math.max(xMin, new Date(series[0].date).getTime()))
+  return `${line} L ${lastX} ${baselineY} L ${firstX} ${baselineY} Z`
+}
+
 function renderChart(series, container, options = {}) {
   const startDate = options.startDate
   const endDate = options.endDate
@@ -598,79 +629,154 @@ function renderChart(series, container, options = {}) {
   }
 
   const sampledSeries = downsampleSeriesForChart(series)
-  const width = 880
-  const height = 300
-  const leftPad = 82
-  const rightPad = 24
-  const topPad = 24
-  const bottomPad = 36
-  const yTickCount = 5
+  const domain = options.domain || seriesTimeDomain(sampledSeries)
+  const viewport = options.viewport
+    ? options.viewport
+    : domain
+      ? { ...domain }
+      : { xMin: 0, xMax: 1 }
+  const fitY = options.fitY !== false
+  const width = Math.max(280, Math.floor(options.width || 880))
+  const height = Math.max(200, Math.floor(options.height || 300))
+  const rightPad = 20
+  const topPad = 28
+  const bottomPad = 40
+  const plotRight = width - rightPad
 
-  const timestamps = sampledSeries.map((point) => new Date(point.date).getTime())
-  const totals = sampledSeries.map((point) => point.cumulativeTotal)
+  const { minTotal, maxTotal } = yExtentForSeries(sampledSeries, fitY, viewport)
+  const yTickValues = computeNiceYTicks(minTotal, maxTotal, 5)
+  const yLabelWidths = yTickValues.map((value) => estimateTextWidth(formatAxisAmount(value), 11))
+  const leftPad = Math.max(72, Math.min(128, Math.max(...yLabelWidths, 0) + 16))
+  const plotWidth = Math.max(40, plotRight - leftPad)
+  const plotBottom = height - bottomPad
+  const plotHeight = Math.max(40, plotBottom - topPad)
 
-  const minTime = Math.min(...timestamps)
-  const maxTime = Math.max(...timestamps)
-  const minTotal = Math.min(0, ...totals)
-  const maxTotal = Math.max(0, ...totals)
+  const minTime = viewport.xMin
+  const maxTime = viewport.xMax
+  const yMin = Math.min(minTotal, ...yTickValues)
+  const yMax = Math.max(maxTotal, ...yTickValues)
 
   const xScale = (value) => {
     if (maxTime === minTime) {
-      return (leftPad + (width - rightPad)) / 2
+      return leftPad + plotWidth / 2
     }
-    return leftPad + ((value - minTime) / (maxTime - minTime)) * (width - leftPad - rightPad)
+    return leftPad + ((value - minTime) / (maxTime - minTime)) * plotWidth
   }
 
   const yScale = (value) => {
-    if (maxTotal === minTotal) {
-      return (topPad + (height - bottomPad)) / 2
+    if (yMax === yMin) {
+      return topPad + plotHeight / 2
     }
-    return topPad + ((maxTotal - value) / (maxTotal - minTotal)) * (height - topPad - bottomPad)
+    return topPad + ((yMax - value) / (yMax - yMin)) * plotHeight
   }
 
-  const holdPath = buildHoldPath(sampledSeries, xScale, yScale)
-
-  const yTicks = Array.from({ length: yTickCount }, (_, index) => {
-    const ratio = yTickCount === 1 ? 0 : index / (yTickCount - 1)
-    const value = maxTotal - (maxTotal - minTotal) * ratio
-    return {
-      y: yScale(value),
-      value
+  // Extend step series with synthetic edge points so the hold line fills the viewport.
+  const visibleCore = filterSeriesToViewport(sampledSeries, viewport)
+  const plotSeries = []
+  if (visibleCore.length) {
+    const first = visibleCore[0]
+    plotSeries.push({
+      date: new Date(Math.max(minTime, new Date(first.date).getTime())).toISOString().slice(0, 10),
+      cumulativeTotal: first.cumulativeTotal
+    })
+    for (let index = 1; index < visibleCore.length; index += 1) {
+      plotSeries.push(visibleCore[index])
     }
-  })
+    const last = visibleCore[visibleCore.length - 1]
+    const lastTime = new Date(last.date).getTime()
+    if (lastTime < maxTime) {
+      plotSeries.push({
+        date: new Date(maxTime).toISOString().slice(0, 10),
+        cumulativeTotal: last.cumulativeTotal
+      })
+    }
+  }
 
-  const yTickMarkup = yTicks
-    .map(
-      (tick) => `
-      <line class="grid-line" x1="${leftPad}" y1="${tick.y}" x2="${width - rightPad}" y2="${tick.y}" stroke="#dce4ee" stroke-width="1" />
-      <text class="y-tick-label" x="${leftPad - 10}" y="${tick.y + 4}" text-anchor="end" fill="#5a6a7d" font-size="11">${formatAxisAmount(tick.value)}</text>
+  const holdPath = buildHoldPath(plotSeries, xScale, yScale)
+  const zeroY = yScale(0)
+  const areaPath = buildHoldAreaPath(plotSeries, xScale, yScale, zeroY, minTime, maxTime)
+
+  const yTickMarkup = yTickValues
+    .map((value) => {
+      const y = yScale(value)
+      return `
+      <line class="grid-line" x1="${leftPad}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="#dce4ee" stroke-width="1" />
+      <text class="y-tick-label" x="${leftPad - 10}" y="${y + 4}" text-anchor="end" fill="#5a6a7d" font-size="11">${formatAxisAmount(value)}</text>
     `
-    )
+    })
     .join('')
 
-  const zeroY = yScale(0)
+  const compactX = width < 520
+  const xTickTimes = computeAdaptiveXTicks(minTime, maxTime, plotWidth)
+  const xTickMarkup = xTickTimes
+    .map((time, index) => {
+      const x = xScale(time)
+      const isEnd = index === 0 || index === xTickTimes.length - 1
+      const anchor = index === 0 ? 'start' : index === xTickTimes.length - 1 ? 'end' : 'middle'
+      const label = formatTimestampLabel(time, { compact: compactX && !isEnd })
+      return `<text class="x-tick-label" x="${x}" y="${height - 12}" text-anchor="${anchor}" fill="#5a6a7d" font-size="12">${label}</text>`
+    })
+    .join('')
+
   const hasZeroCrossing = minTotal < 0 && maxTotal > 0
   const zeroAxisColor = hasZeroCrossing ? '#c0392b' : '#a8b4c4'
-  const startLabel = formatDateLabel(sampledSeries[0].date)
-  const endLabel = formatDateLabel(sampledSeries[sampledSeries.length - 1].date)
-  const samplingNote =
-    sampledSeries.length < series.length
-      ? `<text x="${width - rightPad}" y="18" text-anchor="end" fill="#5a6a7d" font-size="11">Showing ${sampledSeries.length.toLocaleString()} of ${series.length.toLocaleString()} points</text>`
-      : ''
+  const showSamplingInSvg =
+    options.showSamplingNote !== false &&
+    sampledSeries.length < series.length &&
+    isViewportFull(viewport, domain)
+  const samplingNote = showSamplingInSvg
+    ? `<text class="chart-sampling-note" x="${plotRight}" y="18" text-anchor="end" fill="#5a6a7d" font-size="11">Showing ${sampledSeries.length.toLocaleString()} of ${series.length.toLocaleString()} points</text>`
+    : ''
 
+  let crosshairMarkup = ''
+  let tooltipHtml = ''
+  if (options.crosshair && options.crosshair.date) {
+    const cx = xScale(new Date(options.crosshair.date).getTime())
+    const cy = yScale(options.crosshair.cumulativeTotal)
+    crosshairMarkup = `
+      <line class="chart-crosshair-x" x1="${cx}" y1="${topPad}" x2="${cx}" y2="${plotBottom}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" />
+      <line class="chart-crosshair-y" x1="${leftPad}" y1="${cy}" x2="${plotRight}" y2="${cy}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" />
+      <circle class="chart-crosshair-point" cx="${cx}" cy="${cy}" r="4.5" fill="#2563eb" stroke="#fff" stroke-width="2" />
+    `
+    const delta =
+      options.crosshair.dayDelta !== null && options.crosshair.dayDelta !== undefined
+        ? ` · day ${formatAxisAmount(options.crosshair.dayDelta)}`
+        : ''
+    tooltipHtml = `<div class="chart-tooltip" style="left:${Math.min(width - 12, Math.max(12, cx))}px;top:${Math.max(8, cy - 36)}px">${formatDateLabel(options.crosshair.date)} · ${formatAxisAmount(options.crosshair.cumulativeTotal)}${delta}</div>`
+  } else {
+    tooltipHtml = '<div class="chart-tooltip" hidden></div>'
+  }
+
+  const ariaRange = `${formatTimestampLabel(minTime)} to ${formatTimestampLabel(maxTime)}`
   container.innerHTML = `
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Cumulative cash-flow chart">
-      ${yTickMarkup}
-      <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${height - bottomPad}" stroke="#b0bdce" stroke-width="1" />
-      <line x1="${leftPad}" y1="${height - bottomPad}" x2="${width - rightPad}" y2="${height - bottomPad}" stroke="#b0bdce" stroke-width="1" />
-      <line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${width - rightPad}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />
-      <path class="series-line" d="${holdPath}" fill="none" stroke="#2563eb" stroke-width="3" />
-      <text x="${leftPad}" y="18" fill="#5a6a7d" font-size="12">Cumulative total amount</text>
+    <svg class="chart-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="presentation" aria-hidden="true">
+      <defs>
+        <clipPath id="chart-plot-clip-${width}x${height}">
+          <rect x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" />
+        </clipPath>
+      </defs>
+      <text class="chart-title" x="${leftPad}" y="18" fill="#5a6a7d" font-size="12">Cumulative total amount</text>
       ${samplingNote}
-      <text x="${leftPad}" y="${height - 10}" fill="#5a6a7d" font-size="12">${startLabel}</text>
-      <text x="${width - rightPad}" y="${height - 10}" text-anchor="end" fill="#5a6a7d" font-size="12">${endLabel}</text>
+      ${yTickMarkup}
+      <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="#b0bdce" stroke-width="1" />
+      <line x1="${leftPad}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}" stroke="#b0bdce" stroke-width="1" />
+      <g data-chart-plot="true" clip-path="url(#chart-plot-clip-${width}x${height})">
+        <rect class="chart-plot-hit" x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" fill="transparent" />
+        <path class="series-area" d="${areaPath}" fill="#2563eb" fill-opacity="0.12" stroke="none" />
+        <line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${plotRight}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />
+        <path class="series-line" d="${holdPath}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" />
+        ${crosshairMarkup}
+      </g>
+      ${xTickMarkup}
     </svg>
+    ${tooltipHtml}
   `
+  if (container.setAttribute) {
+    container.setAttribute(
+      'aria-label',
+      `Cumulative cash-flow chart, visible range ${ariaRange}`
+    )
+  }
 }
 
 export {
@@ -681,5 +787,8 @@ export {
   renderChart,
   downsampleSeriesForChart,
   formatAxisAmount,
-  formatSignedAmount
+  formatDateLabel,
+  formatSignedAmount,
+  buildHoldPath,
+  buildHoldAreaPath
 }

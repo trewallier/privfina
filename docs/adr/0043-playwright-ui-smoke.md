@@ -24,11 +24,11 @@ Related: 0007 (CI / supply-chain guardrails), 0019 (responsive shell), ROADMAP �
 - Prefer existing stable `#id` / `data-*` hooks from `public/index.html`. Add `data-testid` only when a smoke assert is blocked.
 - Serve the built SPA via Vite preview at the Pages base path `/privfina/` (ADR 0032).
 - Wire a separate least-privilege CI job named **`e2e`** alongside **`validate`** (ADR 0007 invariants). Do not fold Playwright into `validate`.
-- Delivery is a stacked PR chain: docs → harness + boot → remaining smoke specs → CI job (ROADMAP §6).
+- Delivery is a stacked PR chain: docs → harness + boot → remaining smoke specs → CI job (ROADMAP §6). The `e2e` job in `.github/workflows/ci.yml` is the live gate.
 
 ## Consequences
 
 - Contributors run `npm run test:e2e` locally after installing Playwright browsers; CI installs Chromium with OS deps on the `e2e` job only.
-- Maintainers should require the `e2e` check on the default branch after the first green run (same pattern as CodeQL `Analyze`).
+- Maintainers should require the `e2e` check on the default branch after the first green run (same pattern as CodeQL `Analyze`) — see [`docs/dev-playbooks/ci-and-supply-chain.md`](../dev-playbooks/ci-and-supply-chain.md).
 - UI/shell regressions get automated coverage without duplicating the formula suite.
 - Workflow changes remain CODEOWNERS-reviewed; Playwright stays a first-party / widely audited dependency pinned via lockfile.

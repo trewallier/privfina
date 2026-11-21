@@ -27,7 +27,7 @@ Implements [ADR 0007](../adr/0007-security-basics-public-repo-workflows-guardrai
 4. Do not add custom secrets to workflows; the SPA needs none for Pages.
 5. When editing workflows: keep the invariants above; CODEOWNERS will request maintainer review ([`.github/CODEOWNERS`](../../.github/CODEOWNERS)).
 6. EBKM diagnosis / probe suites under [`tests/exploratory/`](../../tests/exploratory/) are **not** part of `npm test` / CI. Run them only when working that diagnosis: `npm run test:exploratory`.
-7. Playwright UI smoke lives under [`e2e/`](../../e2e/) and is **not** part of `npm test`. Formula / YAML parity stays in Vitest. Local: `npx playwright install chromium` once, then `npm run test:e2e`.
+7. Playwright UI smoke lives under [`e2e/`](../../e2e/) and is **not** part of `npm test`. Formula / YAML parity stays in Vitest. Local: `npx playwright install chromium` once, then `npm run test:e2e` (builds + previews). The CI **`e2e`** job caches Chromium at `~/.cache/ms-playwright` with key `playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}` (SHA-pinned `actions/cache`, same pattern as Poppler): **miss** → `npx playwright install --with-deps chromium`; **hit** → `npx playwright install-deps chromium` only. CI builds `dist-web` in a prior step and runs preview-only via `webServer`; keep `workers: 1` while smoke stays localStorage-heavy / fixture-bound.
 
 ## Maintainer checklist (one-time + ongoing)
 

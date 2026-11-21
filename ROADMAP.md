@@ -181,6 +181,7 @@ Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f
   - [x] Harness under `e2e/` + boot smoke (`npm run test:e2e`)
   - [x] Remaining smoke specs (one-time, edit/delete, narrow shell, import/export, commercial-loan open)
   - [x] Least-privilege `e2e` CI job alongside `validate`
+  - [x] Cache Playwright Chromium under `~/.cache/ms-playwright` + CI build-once / preview-only webServer (workers stay 1)
 - [ ] Maintainer: require the `e2e` status check on the default branch after the first green run (ADR 0043 / CI playbook; same pattern as CodeQL `Analyze`)
 
 #### 6a) Vite bundler — single browser calculation surface (ADR 0017 → 0032)

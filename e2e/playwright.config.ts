@@ -20,9 +20,12 @@ export default defineConfig({
     video: 'retain-on-failure'
   },
   webServer: {
-    // Config lives under e2e/; build/preview must run from the repo root.
+    // Config lives under e2e/; preview must run from the repo root.
+    // CI builds dist-web in a prior workflow step; local keeps one-command DX.
     cwd: repoRoot,
-    command: 'npm run build && npx vite preview --host 127.0.0.1 --port 4173 --strictPort',
+    command: process.env.CI
+      ? 'npx vite preview --host 127.0.0.1 --port 4173 --strictPort'
+      : 'npm run build && npx vite preview --host 127.0.0.1 --port 4173 --strictPort',
     url: `http://127.0.0.1:${previewPort}${basePath}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000

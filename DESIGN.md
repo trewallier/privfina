@@ -387,12 +387,13 @@ The page should include a cumulative cash-flow diagram built from generated date
 
 ### Data domain vs viewport (interactive chart)
 
-- **Data domain**: start/end date pickers (and range presets that set those pickers) define which dated flows are computed into the cumulative series.
-- **Viewport**: pan/zoom explore a visible window inside the already-loaded series without rewriting the date pickers on every gesture.
-- Axis chrome (Y/X tick labels) stays in screen space at a fixed readable font size; only the clipped plot group follows the viewport.
-- Gestures: drag to pan; wheel/trackpad zoom toward pointer (desktop); one-finger drag + pinch zoom (mobile); double-click/double-tap or Reset restores the full data domain; Fit Y (default on) auto-scales vertical range to visible points.
-- Crosshair/tooltip snaps to the nearest day and shows date + cumulative amount.
-- Keyboard when the chart is focused: `+`/`-` zoom, arrow keys pan, `0` resets the viewport.
+- **Computed range**: start/end date pickers (and range presets that set those pickers) define which dated flows are computed into the cumulative series.
+- **Viewport domain**: pan/zoom clamps to the already-loaded series’ first/last timestamps (not empty picker head/tail beyond those points).
+- **Viewport**: pan/zoom explore a visible window inside that series without rewriting the date pickers on every gesture.
+- Axis chrome (Y/X tick labels) stays in screen space at a fixed readable font size; only the clipped plot group follows the viewport. Long series are filtered to the visible window first, then downsampled.
+- Gestures: horizontal drag to pan; wheel/trackpad zoom toward pointer (desktop); pinch zoom (mobile, Pointer Events); mostly-vertical touch drags defer to page scroll; double-click/double-tap or Reset restores the full series domain; Fit Y (default on) auto-scales vertical range to visible points.
+- Crosshair/tooltip snaps to the nearest day and shows date + cumulative amount (DOM update without full SVG rebuild).
+- Keyboard when the chart is focused (`role="application"`): `+`/`-` zoom, arrow keys pan, `0` resets the viewport.
 
 Performance note: charting over long ranges should prefer aggregate or lazy evaluation strategies where possible; the engine must avoid generating flows outside the requested range.
 

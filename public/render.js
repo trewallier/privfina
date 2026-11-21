@@ -615,6 +615,67 @@ function buildHoldAreaPath(series, xScale, yScale, baselineY, xMin, xMax) {
   return `${line} L ${lastX} ${baselineY} L ${firstX} ${baselineY} Z`
 }
 
+function updateChartCrosshair(container, crosshair, layout) {
+  if (!container || !container.querySelector) {
+    return
+  }
+  const lineX = container.querySelector('.chart-crosshair-x')
+  const lineY = container.querySelector('.chart-crosshair-y')
+  const point = container.querySelector('.chart-crosshair-point')
+  const tooltip = container.querySelector('.chart-tooltip')
+  if (!lineX || !lineY || !point || !tooltip || !layout) {
+    return
+  }
+
+  if (!crosshair || !crosshair.date) {
+    lineX.setAttribute('visibility', 'hidden')
+    lineY.setAttribute('visibility', 'hidden')
+    point.setAttribute('visibility', 'hidden')
+    tooltip.hidden = true
+    tooltip.textContent = ''
+    return
+  }
+
+  const cx =
+    layout.maxTime === layout.minTime
+      ? layout.leftPad + layout.plotWidth / 2
+      : layout.leftPad +
+        ((new Date(crosshair.date).getTime() - layout.minTime) /
+          (layout.maxTime - layout.minTime)) *
+          layout.plotWidth
+  const cy =
+    layout.yMax === layout.yMin
+      ? layout.topPad + layout.plotHeight / 2
+      : layout.topPad +
+        ((layout.yMax - crosshair.cumulativeTotal) / (layout.yMax - layout.yMin)) *
+          layout.plotHeight
+
+  lineX.setAttribute('x1', String(cx))
+  lineX.setAttribute('x2', String(cx))
+  lineX.setAttribute('y1', String(layout.topPad))
+  lineX.setAttribute('y2', String(layout.plotBottom))
+  lineX.setAttribute('visibility', 'visible')
+
+  lineY.setAttribute('x1', String(layout.leftPad))
+  lineY.setAttribute('x2', String(layout.plotRight))
+  lineY.setAttribute('y1', String(cy))
+  lineY.setAttribute('y2', String(cy))
+  lineY.setAttribute('visibility', 'visible')
+
+  point.setAttribute('cx', String(cx))
+  point.setAttribute('cy', String(cy))
+  point.setAttribute('visibility', 'visible')
+
+  const delta =
+    crosshair.dayDelta !== null && crosshair.dayDelta !== undefined
+      ? ` · day ${formatAxisAmount(crosshair.dayDelta)}`
+      : ''
+  tooltip.hidden = false
+  tooltip.style.left = `${Math.min(layout.width - 12, Math.max(12, cx))}px`
+  tooltip.style.top = `${Math.max(8, cy - 36)}px`
+  tooltip.textContent = `${formatDateLabel(crosshair.date)} · ${formatAxisAmount(crosshair.cumulativeTotal)}${delta}`
+}
+
 function renderChart(series, container, options = {}) {
   const startDate = options.startDate
   const endDate = options.endDate
@@ -625,16 +686,18 @@ function renderChart(series, container, options = {}) {
     // Constant HTML shell only; put dynamic text via textContent (CodeQL js/xss-through-dom).
     container.innerHTML = '<div class="empty"></div>'
     container.querySelector('.empty').textContent = message
-    return
+    return null
   }
 
-  const sampledSeries = downsampleSeriesForChart(series)
-  const domain = options.domain || seriesTimeDomain(sampledSeries)
+  const domain = options.domain || seriesTimeDomain(series)
   const viewport = options.viewport
     ? options.viewport
     : domain
       ? { ...domain }
       : { xMin: 0, xMax: 1 }
+  // Filter to the visible window first, then downsample so zoomed views stay dense.
+  const visibleRaw = filterSeriesToViewport(series, viewport)
+  const sampledVisible = downsampleSeriesForChart(visibleRaw)
   const fitY = options.fitY !== false
   const width = Math.max(280, Math.floor(options.width || 880))
   const height = Math.max(200, Math.floor(options.height || 300))
@@ -643,7 +706,7 @@ function renderChart(series, container, options = {}) {
   const bottomPad = 40
   const plotRight = width - rightPad
 
-  const { minTotal, maxTotal } = yExtentForSeries(sampledSeries, fitY, viewport)
+  const { minTotal, maxTotal } = yExtentForSeries(series, fitY, viewport)
   const yTickValues = computeNiceYTicks(minTotal, maxTotal, 5)
   const yLabelWidths = yTickValues.map((value) => estimateTextWidth(formatAxisAmount(value), 11))
   const leftPad = Math.max(72, Math.min(128, Math.max(...yLabelWidths, 0) + 16))
@@ -670,19 +733,17 @@ function renderChart(series, container, options = {}) {
     return topPad + ((yMax - value) / (yMax - yMin)) * plotHeight
   }
 
-  // Extend step series with synthetic edge points so the hold line fills the viewport.
-  const visibleCore = filterSeriesToViewport(sampledSeries, viewport)
   const plotSeries = []
-  if (visibleCore.length) {
-    const first = visibleCore[0]
+  if (sampledVisible.length) {
+    const first = sampledVisible[0]
     plotSeries.push({
       date: new Date(Math.max(minTime, new Date(first.date).getTime())).toISOString().slice(0, 10),
       cumulativeTotal: first.cumulativeTotal
     })
-    for (let index = 1; index < visibleCore.length; index += 1) {
-      plotSeries.push(visibleCore[index])
+    for (let index = 1; index < sampledVisible.length; index += 1) {
+      plotSeries.push(sampledVisible[index])
     }
-    const last = visibleCore[visibleCore.length - 1]
+    const last = sampledVisible[sampledVisible.length - 1]
     const lastTime = new Date(last.date).getTime()
     if (lastTime < maxTime) {
       plotSeries.push({
@@ -722,36 +783,18 @@ function renderChart(series, container, options = {}) {
   const zeroAxisColor = hasZeroCrossing ? '#c0392b' : '#a8b4c4'
   const showSamplingInSvg =
     options.showSamplingNote !== false &&
-    sampledSeries.length < series.length &&
+    sampledVisible.length < visibleRaw.length &&
     isViewportFull(viewport, domain)
   const samplingNote = showSamplingInSvg
-    ? `<text class="chart-sampling-note" x="${plotRight}" y="18" text-anchor="end" fill="#5a6a7d" font-size="11">Showing ${sampledSeries.length.toLocaleString()} of ${series.length.toLocaleString()} points</text>`
+    ? `<text class="chart-sampling-note" x="${plotRight}" y="18" text-anchor="end" fill="#5a6a7d" font-size="11">Showing ${sampledVisible.length.toLocaleString()} of ${visibleRaw.length.toLocaleString()} points</text>`
     : ''
 
-  let crosshairMarkup = ''
-  let tooltipHtml = ''
-  if (options.crosshair && options.crosshair.date) {
-    const cx = xScale(new Date(options.crosshair.date).getTime())
-    const cy = yScale(options.crosshair.cumulativeTotal)
-    crosshairMarkup = `
-      <line class="chart-crosshair-x" x1="${cx}" y1="${topPad}" x2="${cx}" y2="${plotBottom}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" />
-      <line class="chart-crosshair-y" x1="${leftPad}" y1="${cy}" x2="${plotRight}" y2="${cy}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" />
-      <circle class="chart-crosshair-point" cx="${cx}" cy="${cy}" r="4.5" fill="#2563eb" stroke="#fff" stroke-width="2" />
-    `
-    const delta =
-      options.crosshair.dayDelta !== null && options.crosshair.dayDelta !== undefined
-        ? ` · day ${formatAxisAmount(options.crosshair.dayDelta)}`
-        : ''
-    tooltipHtml = `<div class="chart-tooltip" style="left:${Math.min(width - 12, Math.max(12, cx))}px;top:${Math.max(8, cy - 36)}px">${formatDateLabel(options.crosshair.date)} · ${formatAxisAmount(options.crosshair.cumulativeTotal)}${delta}</div>`
-  } else {
-    tooltipHtml = '<div class="chart-tooltip" hidden></div>'
-  }
-
   const ariaRange = `${formatTimestampLabel(minTime)} to ${formatTimestampLabel(maxTime)}`
+  const clipId = `chart-plot-clip-${width}x${height}`
   container.innerHTML = `
     <svg class="chart-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="presentation" aria-hidden="true">
       <defs>
-        <clipPath id="chart-plot-clip-${width}x${height}">
+        <clipPath id="${clipId}">
           <rect x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" />
         </clipPath>
       </defs>
@@ -760,16 +803,18 @@ function renderChart(series, container, options = {}) {
       ${yTickMarkup}
       <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="#b0bdce" stroke-width="1" />
       <line x1="${leftPad}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}" stroke="#b0bdce" stroke-width="1" />
-      <g data-chart-plot="true" clip-path="url(#chart-plot-clip-${width}x${height})">
+      <g data-chart-plot="true" clip-path="url(#${clipId})">
         <rect class="chart-plot-hit" x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" fill="transparent" />
         <path class="series-area" d="${areaPath}" fill="#2563eb" fill-opacity="0.12" stroke="none" />
         <line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${plotRight}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />
         <path class="series-line" d="${holdPath}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" />
-        ${crosshairMarkup}
+        <line class="chart-crosshair-x" x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
+        <line class="chart-crosshair-y" x1="${leftPad}" y1="${topPad}" x2="${plotRight}" y2="${topPad}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
+        <circle class="chart-crosshair-point" cx="${leftPad}" cy="${topPad}" r="4.5" fill="#2563eb" stroke="#fff" stroke-width="2" visibility="hidden" />
       </g>
       ${xTickMarkup}
     </svg>
-    ${tooltipHtml}
+    <div class="chart-tooltip" hidden></div>
   `
   if (container.setAttribute) {
     container.setAttribute(
@@ -777,6 +822,27 @@ function renderChart(series, container, options = {}) {
       `Cumulative cash-flow chart, visible range ${ariaRange}`
     )
   }
+
+  const layout = {
+    leftPad,
+    plotRight,
+    topPad,
+    plotBottom,
+    plotWidth,
+    plotHeight,
+    width,
+    height,
+    minTime,
+    maxTime,
+    yMin,
+    yMax
+  }
+
+  if (options.crosshair) {
+    updateChartCrosshair(container, options.crosshair, layout)
+  }
+
+  return layout
 }
 
 export {
@@ -785,6 +851,7 @@ export {
   renderConfiguredCards,
   renderConfiguredLists,
   renderChart,
+  updateChartCrosshair,
   downsampleSeriesForChart,
   formatAxisAmount,
   formatDateLabel,

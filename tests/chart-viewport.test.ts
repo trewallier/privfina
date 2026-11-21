@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   clampViewport,
   computeAdaptiveXTicks,
   computeNiceYTicks,
+  createChartInteraction,
   filterSeriesToViewport,
   isViewportFull,
   panViewport,
@@ -63,12 +64,19 @@ describe('chart viewport math', () => {
     expect(ticks[ticks.length - 1]).toBeGreaterThanOrEqual(250)
   })
 
-  it('adapts X tick density to plot width', () => {
+  it('adapts calendar-aligned X tick density to plot width', () => {
     const narrow = computeAdaptiveXTicks(domain.xMin, domain.xMax, 280)
     const wide = computeAdaptiveXTicks(domain.xMin, domain.xMax, 900)
     expect(narrow[0]).toBe(domain.xMin)
     expect(narrow[narrow.length - 1]).toBe(domain.xMax)
     expect(wide.length).toBeGreaterThanOrEqual(narrow.length)
+    // Intermediate ticks land on month starts for a year-long span at wide width.
+    const mid = wide.slice(1, -1)
+    expect(mid.length).toBeGreaterThan(0)
+    for (const time of mid) {
+      const date = new Date(time)
+      expect(date.getUTCDate()).toBe(1)
+    }
   })
 
   it('filters series with a hold point at the left viewport edge', () => {
@@ -89,6 +97,8 @@ describe('chart viewport math', () => {
 
   it('resolves range presets relative to the end date', () => {
     expect(shiftIsoDateByMonths('2024-06-15', -1)).toBe('2024-05-15')
+    expect(shiftIsoDateByMonths('2024-03-31', -1)).toBe('2024-02-29')
+    expect(shiftIsoDateByMonths('2023-03-31', -1)).toBe('2023-02-28')
     expect(resolveRangePreset('1m', { endDate: '2024-06-15' })).toEqual({
       startDate: '2024-05-15',
       endDate: '2024-06-15'
@@ -107,5 +117,88 @@ describe('chart viewport math', () => {
       startDate: '2023-01-01',
       endDate: '2024-12-01'
     })
+  })
+
+  it('preserves viewport across setSeries when resetViewport is false and domain matches', () => {
+    const listeners = new Map<string, Array<(event: { key?: string; preventDefault: () => void }) => void>>()
+    const host = {
+      style: { touchAction: '' },
+      classList: { add() {}, remove() {} },
+      setAttribute() {},
+      addEventListener(type: string, fn: (event: { key?: string; preventDefault: () => void }) => void) {
+        if (!listeners.has(type)) listeners.set(type, [])
+        listeners.get(type)!.push(fn)
+      },
+      removeEventListener(
+        type: string,
+        fn: (event: { key?: string; preventDefault: () => void }) => void
+      ) {
+        listeners.set(
+          type,
+          (listeners.get(type) || []).filter((entry) => entry !== fn)
+        )
+      },
+      dispatchEvent(event: { type: string; key?: string; preventDefault: () => void }) {
+        for (const fn of listeners.get(event.type) || []) {
+          fn(event)
+        }
+        return true
+      },
+      getBoundingClientRect: () => ({
+        width: 640,
+        height: 300,
+        top: 0,
+        left: 0,
+        right: 640,
+        bottom: 300
+      }),
+      setPointerCapture() {},
+      releasePointerCapture() {},
+      querySelector() {
+        return null
+      }
+    }
+
+    let capturedViewport: { xMin: number; xMax: number } | null = null
+    const interaction = createChartInteraction({
+      host: host as unknown as HTMLElement,
+      render: (state) => {
+        capturedViewport = state.viewport
+        return {
+          leftPad: 80,
+          plotRight: 620,
+          topPad: 28,
+          plotBottom: 260,
+          plotWidth: 540,
+          plotHeight: 232,
+          width: 640,
+          height: 300,
+          minTime: domain.xMin,
+          maxTime: domain.xMax,
+          yMin: 0,
+          yMax: 100
+        }
+      }
+    })
+
+    const series = [
+      { date: '2024-01-01', cumulativeTotal: 0 },
+      { date: '2024-12-31', cumulativeTotal: 100 }
+    ]
+    interaction.setSeries(series, { resetViewport: true })
+    host.dispatchEvent({ type: 'keydown', key: '+', preventDefault() {} })
+    const zoomed = { ...capturedViewport! }
+    expect(isViewportFull(zoomed, domain)).toBe(false)
+
+    interaction.setSeries(
+      [
+        { date: '2024-01-01', cumulativeTotal: 5 },
+        { date: '2024-12-31', cumulativeTotal: 105 }
+      ],
+      { resetViewport: false }
+    )
+    expect(interaction.getViewport()).toEqual(zoomed)
+    expect(capturedViewport).toEqual(zoomed)
+    interaction.destroy()
   })
 })

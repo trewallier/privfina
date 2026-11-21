@@ -2,44 +2,86 @@ import { expect, test } from '@playwright/test'
 import { fillOneTimeFlow, openOneTimeComposerDesktop, submitOneTimeFlow } from '../pages/composer'
 import { clearAppStorage, openWorkspace } from '../pages/workspace'
 
+async function seedChartSeries(page: import('@playwright/test').Page): Promise<void> {
+  await page.locator('#range-start').fill('2026-01-01')
+  await page.locator('#range-end').fill('2026-12-31')
+  await page.locator('#range-end').dispatchEvent('change')
+
+  await openOneTimeComposerDesktop(page)
+  await fillOneTimeFlow(page, {
+    date: '2026-03-01',
+    amount: '500',
+    direction: 'inflow',
+    category: 'chart-desktop'
+  })
+  await submitOneTimeFlow(page)
+
+  await openOneTimeComposerDesktop(page)
+  await fillOneTimeFlow(page, {
+    date: '2026-09-01',
+    amount: '250',
+    direction: 'outflow',
+    category: 'chart-desktop-2'
+  })
+  await submitOneTimeFlow(page)
+
+  await expect(page.locator('#chart .series-line')).toBeVisible()
+}
+
 test.describe('chart interaction smoke', () => {
   test.use({ viewport: { width: 1280, height: 900 } })
 
-  test('shows zoom controls and an interactive chart on desktop', async ({ page }) => {
+  test('zoom/reset, presets, keyboard, and Fit Y without changing pickers on pan/zoom', async ({
+    page
+  }) => {
     await clearAppStorage(page)
     await openWorkspace(page)
 
     await expect(page.locator('#chart-toolbar')).toBeVisible()
     await expect(page.locator('[data-chart-action="zoom-in"]')).toBeVisible()
     await expect(page.locator('[data-range-preset="1m"]')).toBeVisible()
+    await expect(page.locator('#chart')).toHaveAttribute('role', 'application')
+
+    await seedChartSeries(page)
+
+    const startBeforeZoom = await page.locator('#range-start').inputValue()
+    const endBeforeZoom = await page.locator('#range-end').inputValue()
+
+    await page.locator('[data-chart-action="zoom-in"]').click()
+    await expect(page.locator('#chart-view-status')).toContainText('Viewing')
+    await expect(page.locator('#range-start')).toHaveValue(startBeforeZoom)
+    await expect(page.locator('#range-end')).toHaveValue(endBeforeZoom)
+
+    await page.locator('[data-chart-action="reset"]').click()
+    await expect(page.locator('#chart-view-status')).toHaveText('')
+
+    await page.locator('[data-range-preset="ytd"]').click()
+    await expect(page.locator('#range-start')).toHaveValue('2026-01-01')
+    await expect(page.locator('[data-range-preset="ytd"]')).toHaveAttribute('aria-pressed', 'true')
+
+    await page.locator('#range-end').fill('2026-11-30')
+    await page.locator('#range-end').dispatchEvent('change')
+    await expect(page.locator('[data-range-preset="ytd"]')).toHaveAttribute('aria-pressed', 'false')
 
     await page.locator('#range-start').fill('2026-01-01')
     await page.locator('#range-end').fill('2026-12-31')
     await page.locator('#range-end').dispatchEvent('change')
 
-    await openOneTimeComposerDesktop(page)
-    await fillOneTimeFlow(page, {
-      date: '2026-03-01',
-      amount: '500',
-      direction: 'inflow',
-      category: 'chart-desktop'
-    })
-    await submitOneTimeFlow(page)
+    const fitY = page.locator('[data-chart-action="fit-y"]')
+    await expect(fitY).toHaveAttribute('aria-pressed', 'true')
+    await fitY.click()
+    await expect(fitY).toHaveAttribute('aria-pressed', 'false')
+    await fitY.click()
+    await expect(fitY).toHaveAttribute('aria-pressed', 'true')
 
-    await openOneTimeComposerDesktop(page)
-    await fillOneTimeFlow(page, {
-      date: '2026-09-01',
-      amount: '250',
-      direction: 'outflow',
-      category: 'chart-desktop-2'
-    })
-    await submitOneTimeFlow(page)
-
-    await expect(page.locator('#chart .series-line')).toBeVisible()
-    await expect(page.locator('#chart .y-tick-label').first()).toBeVisible()
-    await page.locator('[data-chart-action="zoom-in"]').click()
+    const startBeforeKeys = await page.locator('#range-start').inputValue()
+    const endBeforeKeys = await page.locator('#range-end').inputValue()
+    await page.locator('#chart').focus()
+    await page.keyboard.press('+')
     await expect(page.locator('#chart-view-status')).toContainText('Viewing')
-    await page.locator('[data-chart-action="reset"]').click()
+    await expect(page.locator('#range-start')).toHaveValue(startBeforeKeys)
+    await expect(page.locator('#range-end')).toHaveValue(endBeforeKeys)
+    await page.keyboard.press('0')
     await expect(page.locator('#chart-view-status')).toHaveText('')
   })
 })
@@ -57,5 +99,6 @@ test.describe('chart interaction smoke (narrow)', () => {
     await expect(page.locator('#chart-toolbar')).toBeVisible()
     await expect(page.locator('[data-range-preset="ytd"]')).toBeVisible()
     await expect(page.locator('#chart')).toBeVisible()
+    await expect(page.locator('#chart')).toHaveCSS('touch-action', 'pan-y')
   })
 })

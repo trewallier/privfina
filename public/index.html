@@ -717,11 +717,15 @@
 
       #chart.chart-host {
         cursor: grab;
-        touch-action: none;
+        touch-action: pan-y;
       }
 
       #chart.chart-host:active {
         cursor: grabbing;
+      }
+
+      #chart .chart-plot-hit {
+        touch-action: none;
       }
 
       #chart .chart-svg {

@@ -51,9 +51,9 @@ Follow-on list organization (post §4; schema bump allowed)
 Follow-on interactive chart UX (post §4; UI-only; no domain/persistence changes)
 Goal: make the cumulative chart easy to navigate on mobile and desktop — pan, zoom, always-readable axis labels — while keeping the same series pipeline and visual language.
 
-Plan slices (implement in order; each slice should stay PR-sized)
+Delivered as one intentional UI PR (readable chrome + pan/zoom viewport + presets/tooltip/a11y together): stacking was optional; the slices below are checklist detail, not separate merge units.
 - [x] Readable axes and chart chrome: ResizeObserver-sized SVG, screen-space labels, nice Y ticks, adaptive X ticks, taller mobile chart height.
-- [x] Pan and zoom viewport: wheel/pinch/drag, clamp, Fit Y, toolbar zoom/reset; date pickers remain the data domain; viewport explores within it.
+- [x] Pan and zoom viewport: wheel/pinch/drag, clamp, Fit Y, toolbar zoom/reset; viewport explores the already-loaded series; date pickers still choose which series is computed.
 - [x] Flexibility and polish: crosshair tooltip, 1M/3M/YTD/Max presets, area fill, keyboard a11y; unit + e2e smoke.
 
 Out of scope for this epic

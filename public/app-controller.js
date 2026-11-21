@@ -55,7 +55,7 @@ import {
   extendRange
 } from './flows.js'
 import { sharedEvalResultCache } from './eval-cache.js'
-import { renderConfiguredLists, renderChart } from './render.js'
+import { renderConfiguredLists, renderChart, updateChartCrosshair } from './render.js'
 import { createChartInteraction, resolveRangePreset } from './controller/chart-viewport.js'
 import { createComposerManager } from './controller/composer.js'
 import {
@@ -1409,13 +1409,22 @@ function initController() {
   startInput.value = defaultRange.startDate
   endInput.value = defaultRange.endDate
 
+  const clearRangePresetPressed = () => {
+    if (!rangePresetGroup) {
+      return
+    }
+    rangePresetGroup.querySelectorAll('[data-range-preset]').forEach((node) => {
+      node.setAttribute('aria-pressed', 'false')
+    })
+  }
+
   const chartInteraction =
     chart &&
     createChartInteraction({
       host: chart,
       toolbar: chartToolbar,
       statusNode: chartViewStatus,
-      render: (state) => {
+      render: (state) =>
         renderChart(state.series, chart, {
           startDate: state.startDate,
           endDate: state.endDate,
@@ -1424,9 +1433,10 @@ function initController() {
           fitY: state.fitY,
           width: state.width,
           height: state.height,
-          crosshair: state.crosshair,
           showSamplingNote: false
-        })
+        }),
+      updateCrosshair: (host, crosshair, layout) => {
+        updateChartCrosshair(host, crosshair, layout)
       }
     })
 
@@ -2084,8 +2094,14 @@ function initController() {
     }
   })
 
-  startInput.addEventListener('change', rerender)
-  endInput.addEventListener('change', rerender)
+  startInput.addEventListener('change', () => {
+    clearRangePresetPressed()
+    rerender()
+  })
+  endInput.addEventListener('change', () => {
+    clearRangePresetPressed()
+    rerender()
+  })
 
   if (rangePresetGroup) {
     rangePresetGroup.addEventListener('click', (event) => {

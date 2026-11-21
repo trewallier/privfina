@@ -55,6 +55,6 @@ Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). 
 
 ## Workflow security
 
-- **ingest** job (`ubuntu-26.04`): `contents: read`; ÁKK + allampapir prices + retailInterest + KSH ara0040 + WebKincstár PDFs + ÁKK `getPublicOfferings` / offering PDFs (pinned Poppler on this job only); artifact when digests change. Runtime installs: `npm ci` (lockfile + setup-node npm cache) and hash-verified Poppler debs (manifest + Actions cache).
-- **push** job (`ubuntu-26.04`): GitHub App installation token via **`client-id`** (`vars.MARKET_DATA_APP_CLIENT_ID`) + private key secret; bot user id for committer email; `validate-tree` before commit; clears HTTPS auth extraheader after push; does not call external market hosts (including WebKincstár / akk.hu / documents.akk.hu).
-- CLI steps use `./node_modules/.bin/tsx` after `npm ci` (not floating `npx` fetches).
+- **ingest** job (`ubuntu-26.04`): `contents: read`; ÁKK + allampapir prices + retailInterest + KSH ara0040 + WebKincstár PDFs + ÁKK `getPublicOfferings` / offering PDFs (pinned Poppler on this job only); artifact when digests change. Runtime installs: `npm ci` (lockfile + setup-node npm cache) and hash-verified Poppler debs (HTTPS URLs in `poppler.manifest` + Actions cache; corrupt cache → one re-download then fail closed).
+- **push** job (`ubuntu-26.04`): requires non-empty `vars.MARKET_DATA_APP_CLIENT_ID`; GitHub App installation token via **`client-id`** + private key secret; bot user id + `app-slug` for committer identity; `validate-tree` before commit; clears HTTPS auth extraheader after push; does not call external market hosts (including WebKincstár / akk.hu / documents.akk.hu).
+- CLI steps use `./node_modules/.bin/tsx` after `npm ci` (not floating `npx` fetches). `install-poppler.sh` supports `POPPLER_SKIP_INSTALL=1` for Vitest dry-run / hash recovery coverage.

@@ -178,7 +178,7 @@ Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f
 - [ ] Playwright Chromium UI smoke on PR CI (ADR 0043) — stacked slices:
   - [x] ADR + ROADMAP/spec/playbook framing (smoke vs Vitest; planned `e2e` job)
   - [x] Harness under `e2e/` + boot smoke (`npm run test:e2e`)
-  - [ ] Remaining smoke specs (one-time, edit/delete, narrow shell, import/export, commercial-loan open)
+  - [x] Remaining smoke specs (one-time, edit/delete, narrow shell, import/export, commercial-loan open)
   - [ ] Least-privilege `e2e` CI job alongside `validate`; maintainer requires check after first green
 
 #### 6a) Vite bundler — single browser calculation surface (ADR 0017 → 0032)

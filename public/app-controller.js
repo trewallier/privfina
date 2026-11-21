@@ -2074,7 +2074,8 @@ function initController() {
       anchor.href = url
       anchor.download = `privfina-export-v${exportDoc.schemaVersion}-${stamp}.json`
       anchor.click()
-      URL.revokeObjectURL(url)
+      // Defer revoke so Chromium can start the download from the blob URL (Playwright smoke).
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
       setStorageStatus(`Exported JSON backup with schema v${exportDoc.schemaVersion}.`, 'success')
     })
   }

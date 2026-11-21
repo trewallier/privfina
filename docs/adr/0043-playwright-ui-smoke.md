@@ -29,6 +29,8 @@ Related: 0007 (CI / supply-chain guardrails), 0019 (responsive shell), ROADMAP �
 ## Consequences
 
 - Contributors run `npm run test:e2e` locally after installing Playwright browsers; CI installs Chromium with OS deps on the `e2e` job only.
-- Maintainers should require the `e2e` check on the default branch after the first green run (same pattern as CodeQL `Analyze`) — see [`docs/dev-playbooks/ci-and-supply-chain.md`](../dev-playbooks/ci-and-supply-chain.md).
+- CI caches Chromium binaries under `~/.cache/ms-playwright` (SHA-pinned `actions/cache`; lockfile-keyed). Cache hits still run `playwright install-deps` for apt OS libraries on fresh runners; browser re-download is skipped. See [`docs/dev-playbooks/ci-and-supply-chain.md`](../dev-playbooks/ci-and-supply-chain.md).
+- CI builds the SPA once, then serves preview-only from Playwright `webServer`. Keep CI `workers: 1` while smoke relies on browser storage / upcoming fixtures.
+- Maintainers should require the `e2e` check on the default branch after the first green run (same pattern as CodeQL `Analyze`) — see the CI playbook.
 - UI/shell regressions get automated coverage without duplicating the formula suite.
 - Workflow changes remain CODEOWNERS-reviewed; Playwright stays a first-party / widely audited dependency pinned via lockfile.

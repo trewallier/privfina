@@ -1,0 +1,9 @@
+# Pinned Poppler stack for GitHub Actions market-data ingest (ubuntu-26.04 / resolute amd64).
+# Columns (TAB-separated): package	version	filename	sha256	url
+# Install order is top→bottom (dependency first). Bump versions + hashes together when updating.
+# URLs must be HTTPS (install-poppler.sh refuses http://).
+libgpgme45	2.0.1-2build1	libgpgme45_2.0.1-2build1_amd64.deb	b95f81d26bd4922510eb58a08f9c0bf143781cb23a907ce9ede7a3b1c6024be6	https://archive.ubuntu.com/ubuntu/pool/main/g/gpgme1.0/libgpgme45_2.0.1-2build1_amd64.deb
+libgpgmepp7	2.0.0-2	libgpgmepp7_2.0.0-2_amd64.deb	3dd75723159c2c171382f836e491d83d71f5fdf7a58c9f6754d85ff0c725b761	https://archive.ubuntu.com/ubuntu/pool/main/g/gpgmepp/libgpgmepp7_2.0.0-2_amd64.deb
+poppler-data	0.4.12-1build1	poppler-data_0.4.12-1build1_all.deb	6d2d873d2a77a76ea2a156c15a5ae798fe3711d8736cd2ff3872f53d57567e0e	https://archive.ubuntu.com/ubuntu/pool/main/p/poppler-data/poppler-data_0.4.12-1build1_all.deb
+libpoppler156	26.01.0-2ubuntu0.3	libpoppler156_26.01.0-2ubuntu0.3_amd64.deb	42946e57f97a5e1fd1c7f297ed635d3c0cb04f23bcb89f949fe1cfd16c2076db	https://archive.ubuntu.com/ubuntu/pool/main/p/poppler/libpoppler156_26.01.0-2ubuntu0.3_amd64.deb
+poppler-utils	26.01.0-2ubuntu0.3	poppler-utils_26.01.0-2ubuntu0.3_amd64.deb	139e8b66d030d8ec9a558092ad9edeec7bd7102d3657075d44ebdc8da0f31d02	https://archive.ubuntu.com/ubuntu/pool/main/p/poppler/poppler-utils_26.01.0-2ubuntu0.3_amd64.deb

@@ -35,7 +35,7 @@ bash tools/market-data/scripts/commit-push.sh
 Exit codes: `ingest` → `0` updated / `2` unchanged / `1` error.  
 `ci-ingest` → `0` on success; sets `changed` / `as_of` on `GITHUB_OUTPUT`.
 
-Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). Vitest uses pre-extracted text fixtures — raw PDFs are never committed.
+Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). Actions installs a **pinned + SHA256-verified** Poppler stack from [`poppler.manifest`](poppler.manifest) via [`scripts/install-poppler.sh`](scripts/install-poppler.sh) (cached `.deb`s under `.poppler-debs/`, gitignored). Vitest uses pre-extracted text fixtures — raw PDFs are never committed.
 
 ## Domain rules (schemaVersion 2)
 
@@ -55,5 +55,6 @@ Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). 
 
 ## Workflow security
 
-- **ingest** job: `contents: read`; ÁKK + allampapir prices + retailInterest + KSH ara0040 + WebKincstár PDFs + ÁKK `getPublicOfferings` / offering PDFs (Poppler installed on this job only); artifact when digests change.
-- **push** job: GitHub App installation token only; `validate-tree` before commit; clears HTTPS auth extraheader after push; does not call external market hosts (including WebKincstár / akk.hu / documents.akk.hu).
+- **ingest** job (`ubuntu-26.04`): `contents: read`; ÁKK + allampapir prices + retailInterest + KSH ara0040 + WebKincstár PDFs + ÁKK `getPublicOfferings` / offering PDFs (pinned Poppler on this job only); artifact when digests change. Runtime installs: `npm ci` (lockfile + setup-node npm cache) and hash-verified Poppler debs (HTTPS URLs in `poppler.manifest` + Actions cache; corrupt cache → one re-download then fail closed).
+- **push** job (`ubuntu-26.04`): requires non-empty `vars.MARKET_DATA_APP_CLIENT_ID`; GitHub App installation token via **`client-id`** + private key secret; bot user id + `app-slug` for committer identity; `validate-tree` before commit; clears HTTPS auth extraheader after push; does not call external market hosts (including WebKincstár / akk.hu / documents.akk.hu).
+- CLI steps use `./node_modules/.bin/tsx` after `npm ci` (not floating `npx` fetches). `install-poppler.sh` supports `POPPLER_SKIP_INSTALL=1` for Vitest dry-run / hash recovery coverage.

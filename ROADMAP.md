@@ -176,8 +176,8 @@ Deferred interest / EBKM fine-tuning (explicitly out of scope until a later §5f
 - [ ] Document update strategy and release process (patch/minor/major cadence)
 - [ ] Maintainer: flip Pages source to GitHub Actions, enable branch protection requiring `validate` (+ CodeQL `Analyze`), secret scanning / push protection, then delete obsolete `gh-pages` branch (checklist in CI playbook)
 - [ ] Playwright Chromium UI smoke on PR CI (ADR 0043) — stacked slices:
-  - [ ] ADR + ROADMAP/spec/playbook framing (smoke vs Vitest; planned `e2e` job)
-  - [ ] Harness under `e2e/` + boot smoke (`npm run test:e2e`)
+  - [x] ADR + ROADMAP/spec/playbook framing (smoke vs Vitest; planned `e2e` job)
+  - [x] Harness under `e2e/` + boot smoke (`npm run test:e2e`)
   - [ ] Remaining smoke specs (one-time, edit/delete, narrow shell, import/export, commercial-loan open)
   - [ ] Least-privilege `e2e` CI job alongside `validate`; maintainer requires check after first green
 

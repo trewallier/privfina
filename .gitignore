@@ -56,6 +56,12 @@ node_modules/
 dist/
 dist-web/
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # OS
 .DS_Store
 .env

@@ -14,6 +14,7 @@
     "build:lib": "tsc -p tsconfig.json",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "test:exploratory": "VITEST_EXPLORATORY=1 vitest run tests/exploratory",
     "verify:gh-stack-skill": "bash scripts/verify-gh-stack-skill.sh",
     "market-data:ingest": "tsx tools/market-data/cli.ts ingest",
@@ -26,6 +27,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

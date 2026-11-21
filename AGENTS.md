@@ -42,6 +42,7 @@ npm install
 npm test
 npm run build        # Vite SPA → dist-web/
 npm run build:lib    # tsc → dist/
+npm run test:e2e     # Playwright Chromium UI smoke (ADR 0043; npx playwright install chromium once)
 ```
 
 More process detail for humans: [`README.md`](README.md). Docs index: [`docs/README.md`](docs/README.md).

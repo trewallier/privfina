@@ -41,6 +41,7 @@ Browser-hosted personal finance planning for static deployment on GitHub Pages: 
 ```bash
 npm install
 npm test                 # product / regression suite
+npm run test:e2e         # Playwright Chromium UI smoke (ADR 0043; install Chromium once: npx playwright install chromium)
 npm run test:exploratory # optional EBKM diagnosis probes (not in CI)
 npm run build            # Vite SPA → dist-web/ (GitHub Pages artifact)
 npm run build:lib        # tsc library/types → dist/
@@ -48,7 +49,7 @@ npm run build:lib        # tsc library/types → dist/
 
 Default branch: `master` (workflows key off the repository default branch, not a hard-coded name). Node ≥ 22. Local SPA: `npm run dev` (Vite; project base `/privfina/`).
 
-Pull requests must pass the **`validate`** CI job (and CodeQL once required) before merge. Workflow security and maintainer setup: [`docs/dev-playbooks/ci-and-supply-chain.md`](docs/dev-playbooks/ci-and-supply-chain.md); vulnerability reporting: [`SECURITY.md`](SECURITY.md).
+Pull requests must pass the **`validate`** and **`e2e`** CI jobs (and CodeQL once required) before merge. Workflow security and maintainer setup: [`docs/dev-playbooks/ci-and-supply-chain.md`](docs/dev-playbooks/ci-and-supply-chain.md); vulnerability reporting: [`SECURITY.md`](SECURITY.md).
 
 ## Documentation & Decision Workflow
 

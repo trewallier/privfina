@@ -1,15 +1,13 @@
 import { expect, test } from '@playwright/test'
 import { fillOneTimeFlow, submitOneTimeFlow } from '../pages/composer'
 import { configuredCards } from '../pages/configured-list'
-import { clearAppStorage } from '../pages/workspace'
+import { openWorkspace } from '../pages/workspace'
 
 test.describe('narrow shell', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test('browse → add → compose → save → cards', async ({ page }) => {
-    await clearAppStorage(page)
-    await page.goto('./')
-    await page.locator('#manage-pane-title').waitFor({ state: 'visible' })
+    await openWorkspace(page)
 
     const mobileNav = page.locator('#mobile-nav')
     await expect(mobileNav).toBeVisible()

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { openCommercialLoanComposerDesktop } from '../pages/composer'
+import { configuredTableRows } from '../pages/configured-list'
 import { openWorkspace } from '../pages/workspace'
 
 test.describe('commercial loan open', () => {
@@ -17,6 +18,6 @@ test.describe('commercial loan open', () => {
     // Collapse without submitting — no market stub and no formula asserts.
     await page.locator('#commercial-loan-box summary').click()
     await expect(page.locator('#commercial-loan-form')).toBeHidden()
-    await expect(page.locator('#configured-flow-rows tr[data-id]')).toHaveCount(0)
+    await expect(configuredTableRows(page)).toHaveCount(0)
   })
 })

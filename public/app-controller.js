@@ -1625,7 +1625,8 @@ function initController() {
     const endDate = endInput.value
     if (!startDate || !endDate || startDate > endDate) {
       if (chartInteraction) {
-        chartInteraction.setSeries([], { startDate, endDate, resetViewport: true })
+        // Invalid picker range: clear series; setSeries resets when picker dates change.
+        chartInteraction.setSeries([], { startDate, endDate })
       }
       chart.innerHTML = '<div class="empty"></div>'
       chart.querySelector('.empty').textContent = 'Select a valid date range.'
@@ -1648,7 +1649,9 @@ function initController() {
       )
       const series = calculateCumulativeSeries(effectiveFlows)
       if (chartInteraction) {
-        chartInteraction.setSeries(series, { startDate, endDate, resetViewport: true })
+        // Preserve zoom/pan across include/exclude and CRUD; setSeries resets only
+        // when picker dates or series endpoints change.
+        chartInteraction.setSeries(series, { startDate, endDate })
       } else {
         renderChart(series, chart, { startDate, endDate })
       }

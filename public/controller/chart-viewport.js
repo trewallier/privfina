@@ -465,16 +465,26 @@ function createChartInteraction({
 
   const sameDomain = (a, b) => Boolean(a && b && a.xMin === b.xMin && a.xMax === b.xMax)
 
-  const setSeries = (nextSeries, { startDate = '', endDate = '', resetViewport = true } = {}) => {
+  /**
+   * Replace the loaded series. By default preserves pan/zoom when the series
+   * time domain is unchanged (include/exclude, CRUD with same endpoints).
+   * Resets the viewport when resetViewport is true, picker dates change, or
+   * the series first/last timestamps move.
+   */
+  const setSeries = (nextSeries, { startDate = '', endDate = '', resetViewport = false } = {}) => {
+    const pickerChanged =
+      rangeMeta.startDate !== startDate || rangeMeta.endDate !== endDate
     series = Array.isArray(nextSeries) ? nextSeries : []
     rangeMeta = { startDate, endDate }
     const previousDomain = domain
     domain = seriesTimeDomain(series)
-    if (resetViewport || !viewport || !domain) {
+    if (resetViewport || pickerChanged || !viewport || !domain) {
       viewport = domain ? { ...domain } : null
-    } else if (sameDomain(previousDomain, domain)) {
-      viewport = clampViewport(viewport, domain)
+    } else if (!sameDomain(previousDomain, domain)) {
+      // Endpoints moved (e.g. excluded a boundary flow) — fit the new domain.
+      viewport = { ...domain }
     } else {
+      // Same domain: keep the user's zoom/pan window.
       viewport = clampViewport(viewport, domain)
     }
     crosshair = null

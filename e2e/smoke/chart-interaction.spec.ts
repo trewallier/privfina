@@ -7,23 +7,16 @@ async function seedChartSeries(page: import('@playwright/test').Page): Promise<v
   await page.locator('#range-end').fill('2026-12-31')
   await page.locator('#range-end').dispatchEvent('change')
 
-  await openOneTimeComposerDesktop(page)
-  await fillOneTimeFlow(page, {
-    date: '2026-03-01',
-    amount: '500',
-    direction: 'inflow',
-    category: 'chart-desktop'
-  })
-  await submitOneTimeFlow(page)
-
-  await openOneTimeComposerDesktop(page)
-  await fillOneTimeFlow(page, {
-    date: '2026-09-01',
-    amount: '250',
-    direction: 'outflow',
-    category: 'chart-desktop-2'
-  })
-  await submitOneTimeFlow(page)
+  const flows = [
+    { date: '2026-01-15', amount: '500', direction: 'inflow' as const, category: 'chart-start' },
+    { date: '2026-06-15', amount: '250', direction: 'outflow' as const, category: 'chart-mid' },
+    { date: '2026-12-15', amount: '100', direction: 'inflow' as const, category: 'chart-end' }
+  ]
+  for (const flow of flows) {
+    await openOneTimeComposerDesktop(page)
+    await fillOneTimeFlow(page, flow)
+    await submitOneTimeFlow(page)
+  }
 
   await expect(page.locator('#chart .series-line')).toBeVisible()
 }
@@ -83,6 +76,19 @@ test.describe('chart interaction smoke', () => {
     await expect(page.locator('#range-end')).toHaveValue(endBeforeKeys)
     await page.keyboard.press('0')
     await expect(page.locator('#chart-view-status')).toHaveText('')
+
+    // Zoom, then include/exclude a mid-range flow (endpoints unchanged): viewport survives.
+    await page.locator('[data-chart-action="zoom-in"]').click()
+    await expect(page.locator('#chart-view-status')).toContainText('Viewing')
+    const statusWhileZoomed = await page.locator('#chart-view-status').textContent()
+    const midToggle = page
+      .locator('#configured-flow-rows tr')
+      .filter({ hasText: 'chart-mid' })
+      .locator('.action-toggle-include')
+    await midToggle.click()
+    await expect(page.locator('#chart-view-status')).toHaveText(statusWhileZoomed || '')
+    await midToggle.click()
+    await expect(page.locator('#chart-view-status')).toHaveText(statusWhileZoomed || '')
   })
 })
 

@@ -185,20 +185,41 @@ describe('chart viewport math', () => {
       { date: '2024-01-01', cumulativeTotal: 0 },
       { date: '2024-12-31', cumulativeTotal: 100 }
     ]
-    interaction.setSeries(series, { resetViewport: true })
+    interaction.setSeries(series, { startDate: '2024-01-01', endDate: '2024-12-31' })
     host.dispatchEvent({ type: 'keydown', key: '+', preventDefault() {} })
     const zoomed = { ...capturedViewport! }
     expect(isViewportFull(zoomed, domain)).toBe(false)
 
+    // Same picker dates + same series endpoints (CRUD/include-style refresh).
     interaction.setSeries(
       [
         { date: '2024-01-01', cumulativeTotal: 5 },
         { date: '2024-12-31', cumulativeTotal: 105 }
       ],
-      { resetViewport: false }
+      { startDate: '2024-01-01', endDate: '2024-12-31' }
     )
     expect(interaction.getViewport()).toEqual(zoomed)
     expect(capturedViewport).toEqual(zoomed)
+
+    // Picker date change resets the viewport even when series endpoints match.
+    interaction.setSeries(series, { startDate: '2024-02-01', endDate: '2024-12-31' })
+    expect(isViewportFull(interaction.getViewport(), domain)).toBe(true)
+
+    // Domain endpoint change (e.g. exclude a boundary flow) also resets.
+    host.dispatchEvent({ type: 'keydown', key: '+', preventDefault() {} })
+    expect(isViewportFull(interaction.getViewport(), domain)).toBe(false)
+    interaction.setSeries(
+      [
+        { date: '2024-03-01', cumulativeTotal: 10 },
+        { date: '2024-12-31', cumulativeTotal: 100 }
+      ],
+      { startDate: '2024-02-01', endDate: '2024-12-31' }
+    )
+    const nextDomain = seriesTimeDomain([
+      { date: '2024-03-01', cumulativeTotal: 10 },
+      { date: '2024-12-31', cumulativeTotal: 100 }
+    ])
+    expect(isViewportFull(interaction.getViewport(), nextDomain)).toBe(true)
     interaction.destroy()
   })
 })

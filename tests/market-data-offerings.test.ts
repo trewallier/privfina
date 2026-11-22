@@ -452,12 +452,16 @@ describe('ktv / MÁK offering ingest E2E (ADR 0044)', () => {
     })
   }
 
-  it('publishes ktv offerings with MAK paymentDates and null listing saleWindow', async () => {
+  it('publishes FIX+FLOAT ktv offerings; FLOAT keeps dates and invents no coupons', async () => {
     const catalog = await loadJson('catalog.json')
     const rates = await loadJson('network-rates.json')
     const ktv = await loadJson('offerings/getPublicOfferings_ktv.json')
     const makText = await readFile(
       path.join(fixtures, 'offerings/pdf-text/ktv-mak-2037-a.txt'),
+      'utf8'
+    )
+    const floatText = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/ktv-mak-2036-b-float.txt'),
       'utf8'
     )
     const fixUuid = '97f2a5b9-1ebf-4202-bc86-3f7e2f5f2e96'
@@ -487,8 +491,8 @@ describe('ktv / MÁK offering ingest E2E (ADR 0044)', () => {
       offeringEnvelopesByFamily: { ktv },
       fetchImpl,
       offeringPdfTextByUuid: {
-        [fixUuid]: makText
-        // FLOAT 2036/B intentionally omitted → sticky parse_failed / download without text
+        [fixUuid]: makText,
+        [floatUuid]: floatText
       },
       generatedAt: '2026-11-22T15:00:00.000Z'
     })
@@ -507,9 +511,20 @@ describe('ktv / MÁK offering ingest E2E (ADR 0044)', () => {
     expect(offering?.dayCount).toBeUndefined()
     expect(offering?.source?.host).toMatch(/akk\.hu/i)
 
+    const floatOffering = tree.families.ktv.offerings.A361126B26
+    expect(floatOffering?.paymentDates?.[0]).toBe('2027-11-26')
+    expect(floatOffering?.paymentDates?.at(-1)).toBe('2036-11-26')
+    expect(floatOffering?.paymentDates).toHaveLength(10)
+    expect(floatOffering?.saleWindow).toBeUndefined()
+    expect(floatOffering?.dayCount).toBeUndefined()
+    // Offering ingest never invents FLOAT coupon rates / coupon files (ADR 0044).
+    expect(tree.families.ktv.coupons.A361126B26).toBeUndefined()
+    expect(Object.keys(tree.families.ktv.coupons)).toHaveLength(0)
+
     const floatDoc = tree.offeringArchive?.documents.find((d) => d.pathUuid === floatUuid)
     expect(floatDoc?.sha256).toBeTruthy()
-    expect(['parse_failed', 'skipped_no_schedule']).toContain(floatDoc?.status)
+    expect(floatDoc?.status).toBe('transcribed')
+    expect(floatDoc?.family).toBe('ktv')
 
     const fixDoc = tree.offeringArchive?.documents.find((d) => d.pathUuid === fixUuid)
     expect(fixDoc?.status).toBe('transcribed')

@@ -2,6 +2,8 @@
 
 Hungarian government bond (machine id **`ktv`**; ÁKK/allampapir label `KTV`). FIX and Green series share this host; FLOAT cash-flow modeling is deferred.
 
+**Catalog status:** fully-spec-backed (ROADMAP §6j). Commercially-usable bar met on SPA; catalog omitted the middle rung (DKJ–FixMÁP / baba precedent).
+
 ## Scope
 
 This specification models FIX MÁK for the commercial investment composer (ADR 0027 / 0038 / 0040 / 0044 / ROADMAP §6j MÁK-next). Commercial inputs use published effective annual rates (`ga`). Principal is repaid at maturity in one amount.

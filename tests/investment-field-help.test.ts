@@ -8,6 +8,10 @@ import {
   FIXMAP_PRODUCT_SPEC,
   FIXMAP_FRONTEND_FIELD_ADAPTER
 } from '../public/controller/fixmap-form.js'
+import {
+  KTV_PRODUCT_SPEC,
+  KTV_FRONTEND_FIELD_ADAPTER
+} from '../public/controller/ktv-form.js'
 import { PMAP_PRODUCT_SPEC, PMAP_FRONTEND_FIELD_ADAPTER } from '../public/controller/pmap-form.js'
 
 function readRepoFile(relativePath: string): string {
@@ -39,7 +43,7 @@ describe('investment field help and dedicated hosts', () => {
   const simplifiedFormHtml = extractFormHtml(indexHtml, 'investment-form')
   const commercialFormHtml = extractFormHtml(indexHtml, 'commercial-investment-form')
 
-  it('keeps embedded DKJ/BMAP/PMAP/FixMÁP input descriptions aligned with YAML', () => {
+  it('keeps embedded DKJ/BMAP/PMAP/FixMÁP/MÁK input descriptions aligned with YAML', () => {
     const dkj = YAML.parse(
       readRepoFile('docs/product-specs/products/government-securities/dkj/product.yaml')
     ) as any
@@ -52,16 +56,21 @@ describe('investment field help and dedicated hosts', () => {
     const fixmap = YAML.parse(
       readRepoFile('docs/product-specs/products/government-securities/fixmap/product.yaml')
     ) as any
+    const ktv = YAML.parse(
+      readRepoFile('docs/product-specs/products/government-securities/ktv/product.yaml')
+    ) as any
 
     expect(DKJ_PRODUCT_SPEC.specVersion).toBe(dkj.specVersion)
     expect(BMAP_PRODUCT_SPEC.specVersion).toBe(bmap.specVersion)
     expect(PMAP_PRODUCT_SPEC.specVersion).toBe(pmap.specVersion)
     expect(FIXMAP_PRODUCT_SPEC.specVersion).toBe(fixmap.specVersion)
+    expect(KTV_PRODUCT_SPEC.specVersion).toBe(ktv.specVersion)
 
     assertEmbeddedInputDescriptionsMatchYaml(DKJ_PRODUCT_SPEC, dkj)
     assertEmbeddedInputDescriptionsMatchYaml(BMAP_PRODUCT_SPEC, bmap)
     assertEmbeddedInputDescriptionsMatchYaml(PMAP_PRODUCT_SPEC, pmap)
     assertEmbeddedInputDescriptionsMatchYaml(FIXMAP_PRODUCT_SPEC, fixmap)
+    assertEmbeddedInputDescriptionsMatchYaml(KTV_PRODUCT_SPEC, ktv)
   })
 
   it('keeps investment-field-help.js free of product field maps', () => {
@@ -90,13 +99,14 @@ describe('investment field help and dedicated hosts', () => {
     expect(simplifiedFormHtml).toContain('data-help-button="investment-category-help"')
   })
 
-  it('hosts DKJ/PMAP/FixMÁP/BMAP on the commercial investment form', () => {
+  it('hosts DKJ/PMAP/FixMÁP/BMAP/MÁK on the commercial investment form', () => {
     expect(commercialFormHtml).toContain('id="commercial-investment-product"')
     expect(commercialFormHtml).not.toContain('id="commercial-investment-readiness-hint"')
     expect(commercialFormHtml).not.toMatch(/Readiness:\s*fully-spec-backed/)
     expect(commercialFormHtml).toContain('id="investment-dkj-wrap"')
     expect(commercialFormHtml).toContain('id="investment-pmap-wrap"')
     expect(commercialFormHtml).toContain('id="investment-fixmap-wrap"')
+    expect(commercialFormHtml).toContain('id="investment-ktv-wrap"')
     expect(commercialFormHtml).toContain('id="investment-bmap-wrap"')
     expect(commercialFormHtml).toContain('id="commercial-investment-form-status"')
     expect(commercialFormHtml).toContain('id="dkj-face-value"')
@@ -104,6 +114,8 @@ describe('investment field help and dedicated hosts', () => {
     expect(commercialFormHtml).toContain('id="pmap-maturity-date"')
     expect(commercialFormHtml).toContain('id="fixmap-annual-coupon-rate-pct"')
     expect(commercialFormHtml).toContain('id="fixmap-maturity-date"')
+    expect(commercialFormHtml).toContain('id="ktv-annual-coupon-rate-pct"')
+    expect(commercialFormHtml).toContain('id="ktv-maturity-date"')
     expect(commercialFormHtml).toContain('id="bmap-annual-coupon-rate-pct"')
     expect(commercialFormHtml).toContain('id="bmap-maturity-date"')
     expect(commercialFormHtml).toContain('id="commercial-investment-maturity-preview-help"')
@@ -120,6 +132,9 @@ describe('investment field help and dedicated hosts', () => {
       expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
     }
     for (const adapter of Object.values(BMAP_FRONTEND_FIELD_ADAPTER)) {
+      expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
+    }
+    for (const adapter of Object.values(KTV_FRONTEND_FIELD_ADAPTER)) {
       expect(commercialFormHtml).toContain(`id="${adapter.inputId}"`)
     }
   })

@@ -406,7 +406,7 @@ registerCouponBearingFamily({
 registerCouponBearingFamily({
   productCode: 'ktv',
   inflationSchedulePreview: true,
-  migrationStatus: 'schedule-usable',
+  migrationStatus: 'fully-spec-backed',
   productSpec: KTV_PRODUCT_SPEC,
   applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
     applyKtvSpecToForm({

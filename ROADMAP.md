@@ -459,7 +459,7 @@ Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usabl
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ROADMAP / spec / ownership / gov-sec README: MÁK-next delivery + temporary CI head; 2037/A FIX notes (ACT/365F / Actual/365; stub `6.25%×217/365=3.72%`; FLOAT deferred).
-- [ ] Author `ktv/product.yaml` + examples; catalog `government-security.ktv.standard` at **`spec-only`**.
+- [x] Author `ktv/product.yaml` + examples; catalog `government-security.ktv.standard` at **`spec-only`**.
 - [ ] Engine family mapper + annual coupon primitives (ACT/365F + Babakötvény-style first-period stub on `ga`; not FixMÁP ACT/360 covering-band wrap) → **`calc-aligned`**.
 - [ ] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill → **`schedule-usable`**.
 - [ ] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off MÁK; temporary tip→`master` CI head PR (close, do not merge). Prefer explicit commercially-usable or document omit-middle-rung (DKJ–FixMÁP / baba precedent).

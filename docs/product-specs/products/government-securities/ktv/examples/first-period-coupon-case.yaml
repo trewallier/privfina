@@ -1,0 +1,25 @@
+specVersion: v2alpha3
+productId: government-security.ktv.standard
+exampleId: first-period-coupon-case
+title: MÁK 2037/A first cash coupon stub
+description: Pins the ajánlattétel first-period payable stub 3.72% = 6.25% × 217/365 (round to 0.01%). Keep ga 6.25% — do not treat 3.72% as a FixMÁP covering annual band.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 6.25
+  purchaseDate: 2026-02-18
+  issueDate: 2026-02-18
+  maturityDate: 2037-09-23
+  firstCouponDate: 2026-09-23
+  dayCountConvention: ACT/365F
+
+expected:
+  annualCouponRatePct: 6.25
+  firstPeriodCouponRatePct: 3.72
+  # First cash coupon on 2026-09-23 = principal × 3.72% (before whole-Ft settlement rounding).
+  firstCouponAmount: 37200
+
+notes:
+  - First period length 2026-02-18 → 2026-09-23 = 217 days; ACT/365F year denominator = 365.
+  - "Ajánlattétel arithmetic: 6,25% * 217nap / 365nap = 3,72%."
+  - Accrue on ga (6.25%), not the payable stub; later anniversary coupons pay 6.25%.

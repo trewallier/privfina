@@ -445,19 +445,28 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill → **`schedule-usable`**.
 - [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off Babakötvény; temporary tip→`master` CI head PR (close, do not merge). Note: commercially-usable bar was met on the SPA layer; catalog stamped **`fully-spec-backed`** without an intermediate `commercially-usable` row (DKJ–FixMÁP / MÁP Plusz precedent).
 
+#### Magyar Államkötvény (MÁK) / `ktv` — offering ingest first (ADR 0044)
+Goal: publish ÁKK nyilvános ajánlattétel transcriptions into `families/ktv/offerings/` before any §6j product/SPA stack. Machine id stays **`ktv`** (ÁKK/allampapir label `KTV`); display name is **Hungarian Government Bond (MÁK)**. Államkincstár pages are a hub only — PDFs come from ÁKK (ADR 0041 path). Product YAML / composer remain out of scope here.
+
+Plan slices (ingest-only gh-stack; open a temporary tip→`master` CI head PR — close, do not merge)
+- [x] ADR 0044 + ROADMAP / ownership / gov-sec README / naming glossary: MÁK ↔ `ktv` / `KTV` mapping; hub vs ÁKK document hosts; FIX/FLOAT/Green notes; ADR 0041 family/budget supersession note.
+- [ ] Register `ktv` offering family (`label: KTV`, `mode: auction`) — this is the real ingest wiring onto `OFFERING_FAMILIES`; listing soft-fail isolation; no invented saleWindow from auctionDate.
+- [ ] MAK auction PDF text parser (annual date ± rate tables) + Vitest fixtures (no raw PDFs); FLOAT fixture locks null rates (no invented coupons).
+- [ ] Fixture E2E for `families/ktv/offerings/<id>.json` + archive (**code complete**; live tip / Pages cutover pending `workflow_dispatch` — same posture as §6k / §6f).
+
 #### Later remaining families
-- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktv`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
+- [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktv` after ADR 0044 ingest, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).
 - [ ] SPA series picker + autofill per remaining family via registry registration; parity tests.
 
 Out of scope for §6j until named
-- Live auction DKJ-base derivation; non-ÁKK retail products outside published families.
+- Live auction DKJ-base derivation; non-ÁKK retail products outside published families; MÁK product YAML / commercial host until after ADR 0044 ingest lands.
 
-#### 6k) Daily public-offering capture (ÁKK + Államkincstár)
-Goal: extend the daily scrape pipeline to detect **new nyilvános ajánlattétel (public offering)** documents on **akk.hu** and **allamkincstar.hu**, and transcribe their content into published market data over time (sale windows, coupon calendars, and other offering details — e.g. BMÁP coupon days). Architecture: ADR 0041 (ÁKK `getPublicOfferings` + archive ledger + ≤10 PDF downloads/family/run; allampapir PDF fallback).
+#### 6k) Daily public-offering capture (ÁKK; Államkincstár hub)
+Goal: extend the daily Actions ingest to detect **new nyilvános ajánlattétel (public offering)** documents via **ÁKK** `getPublicOfferings` (+ PDF hosts), and transcribe their content into published market data over time (sale windows, coupon calendars, and other offering details — e.g. BMÁP coupon days). **`allamkincstar.gov.hu` is a human hub only** (ADR 0041 / 0044) — not scraped; documents remain on `documents.akk.hu` (allampapir fallback). Architecture: ADR 0041 (+ ADR 0044 for `ktv` / MÁK).
 
 Constraints
-- Actions-only contact; browser must not scrape those hosts.
+- Actions-only contact; browser must not scrape ÁKK / documents / allampapir / allamkincstar hubs.
 - Accumulate offerings going forward; design transcription so a later backfill (§6m) can reuse parsers.
 - Product YAML auto-authoring remains out of scope unless a later ADR says otherwise.
 - ADR when architecture / published offering schema is chosen — must satisfy the **SPA consumer contract** locked in §6l (saleWindow, payment dates, offering dayCount, attribution).

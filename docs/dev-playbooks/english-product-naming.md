@@ -28,6 +28,7 @@ Issuer phrasing for treasury products: **ÁKK / Hungarian State Treasury**.
 | Fixed Hungarian Government Security (FixMÁP) | Fix Magyar Állampapír |
 | Hungarian Government Security Plus (MÁP Plusz) | Magyar Állampapír Plusz |
 | Baby Bond (Babakötvény) | Babakötvény |
+| Hungarian Government Bond (MÁK) | Magyar Államkötvény (machine id `ktv` / ÁKK label `KTV`) |
 | Home Savings (LTP / lakástakarékpénztár) | lakás-előtakarékosság |
 | OTP Home Savings Premium Plus 10x30 (Lakástakarék PRÉMIUM PLUSZ 10x30) | — |
 | OTP Home Savings Premium Plus 4x10 (Lakástakarék PRÉMIUM PLUSZ 4x10) | — |

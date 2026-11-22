@@ -29,7 +29,7 @@ Published market family folders already (or soon) available on the `market-data`
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
 | *(possible `pemap`)* | PEMÁP | Split only if needed |
 | `omap` | 1MÁP | Follow-on |
-| `ktv` | Kincstárjegy / KTV | Follow-on |
+| `ktv` | Hungarian Government Bond (MÁK) / Magyar Államkötvény | Machine id `ktv` = ÁKK/allampapir label `KTV`. **Offering ingest** under ADR 0044 / ROADMAP §6j (before product/SPA). Quotes/series already on `market-data`. Do not confuse with DKJ or WebKincstár report `_20633_arfolyam_mak` (multi-family price umbrella). |
 | `ktj` | KTJ I / KTJ II | Follow-on; routing stub in v2 |
 | `map2` | 2MÁP | Follow-on; routing stub in v2 |
 

@@ -1,14 +1,14 @@
-# Scheduled ÁKK + allampapir.hu + KSH inflation + WebKincstár daily price PDFs
+# Scheduled ÁKK + allampapir.hu + KSH inflation + MNB BUBOR + WebKincstár daily price PDFs
 # + ÁKK public-offering capture → compact data/market/v2 on the market-data branch
-# (ADR 0034 / 0035 / 0036 / 0037 / 0039 / 0041 / ROADMAP §6b–§6e / §6h / §6k).
+# (ADR 0034 / 0035 / 0036 / 0037 / 0039 / 0041 / 0045 / ROADMAP §6b–§6e / §6h / §6k / §6o).
 #
 # Security split:
 # - ingest: contents:read; contacts ÁKK + allampapir.hu (prices + retailInterest kamatok
-#   + offering PDF fallback) + KSH STADAT ara0040 CSV + WebKincstár report-service PDFs
-#   + ÁKK getPublicOfferings (+ documents.akk.hu PDFs, ≤10/family); Poppler pdftotext;
-#   never holds a write token
+#   + offering PDF fallback) + KSH STADAT ara0040 CSV + MNB bubor2.xls + WebKincstár
+#   report-service PDFs + ÁKK getPublicOfferings (+ documents.akk.hu PDFs, ≤10/family);
+#   Poppler pdftotext; never holds a write token
 # - push: GitHub App installation token only (not GITHUB_TOKEN) for market-data checkout/push;
-#   does not call ÁKK, allampapir.hu, ksh.hu, WebKincstár, or documents.akk.hu
+#   does not call ÁKK, allampapir.hu, ksh.hu, mnb.hu, WebKincstár, or documents.akk.hu
 # Paths via env; single-line run: steps; TS via lockfile-local tsx (not --experimental-strip-types).
 name: Market data ingest
 
@@ -16,7 +16,7 @@ permissions: {}
 
 on:
   schedule:
-    # Daily: securities quotes + KSH inflation + WebKincstár prices + offerings
+    # Daily: securities quotes + KSH inflation + MNB BUBOR + WebKincstár prices + offerings
     # (write only when digests change).
     - cron: "30 17 * * *"
   workflow_dispatch:

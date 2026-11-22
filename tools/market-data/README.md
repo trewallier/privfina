@@ -1,6 +1,6 @@
-# Market-data tooling (ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039 / 0041 / 0042 / 0044 / ROADMAP §6b–§6h / §6k / §6n / §6j MÁK ingest)
+# Market-data tooling (ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039 / 0041 / 0042 / 0044 / 0045 / ROADMAP §6b–§6h / §6k / §6n / §6o / §6j MÁK ingest)
 
-Normalize and publish compact government-security market JSON under `data/market/v2/` from **ÁKK** (catalog + network rates + **public offerings**), **allampapir.hu** (CSRF retail **prices** + Lakossági kamatok **retail interest** → per-series coupons; offering PDF fallback), **KSH** STADAT ara0040 (**inflation** Összesen), and **WebKincstár** daily price PDFs (Kincstári árfolyamjegyzés → quotes + **price calendar**), combined in one ingest.
+Normalize and publish compact government-security market JSON under `data/market/v2/` from **ÁKK** (catalog + network rates + **public offerings**), **allampapir.hu** (CSRF retail **prices** + Lakossági kamatok **retail interest** → per-series coupons; offering PDF fallback), **KSH** STADAT ara0040 (**inflation** Összesen), **MNB** `bubor2.xls` (**BUBOR** fixings), and **WebKincstár** daily price PDFs (Kincstári árfolyamjegyzés → quotes + **price calendar**), combined in one ingest.
 
 ## Commands
 
@@ -8,13 +8,14 @@ Normalize and publish compact government-security market JSON under `data/market
 # Live ingest into a working tree (ephemeral raw under .tmp-market-data/; gitignored)
 npm run market-data:ingest -- --root . --raw-dir .tmp-market-data
 
-# Offline from fixture envelopes (ÁKK + optional allampapir dir + retail interest + inflation CSV)
+# Offline from fixture envelopes (ÁKK + optional allampapir dir + retail interest + inflation CSV + BUBOR XLS)
 npm run market-data:ingest -- --root /tmp/out \
   --catalog tests/fixtures/market-data/catalog.json \
   --rates tests/fixtures/market-data/network-rates.json \
   --allampapir-dir tests/fixtures/market-data/allampapir \
   --retail-interest tests/fixtures/market-data/retail-interest/get_all_data.json \
-  --inflation-csv tests/fixtures/market-data/inflation/ara0040-sample.csv
+  --inflation-csv tests/fixtures/market-data/inflation/ara0040-sample.csv \
+  --bubor-xls tests/fixtures/market-data/bubor/bubor-sample.xls
 
 # Skip WebKincstár PDF fetch (keep previous price calendar / quotes from that source)
 npm run market-data:ingest -- --root /tmp/out --skip-webkincstar …
@@ -49,6 +50,7 @@ Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). 
 - **Public offerings (ADR 0041 / 0044 / ROADMAP §6k / §6j MÁK ingest)**: Actions-only ÁKK `getPublicOfferings` once per in-scope family (`dkj`/`pmap`/`bmap`/`fixmap`/`mapp`/`baba`/`ktv`) every run; always diff vs tip `refs/offering-archive.json`. **`ktv`** is Magyar Államkötvény (MÁK) — ÁKK label `KTV`, auction mode like DKJ; display name MÁK; Államkincstár pages are hub-only (no HTML scrape). Metadata-first: publish `families/{fam}/offerings/<id>.json` saleWindow + series-adjacent `saleWindow` without PDF (auction listings without `startPeriod`/`endPeriod` leave saleWindow null — do not invent from `auctionDate`). **PDF download is ISSUE-only** — TAP_ISSUE / TAP_CLOSED / TAP_EXTENDED stay listing/`listed` for saleWindow metadata (amendments have no coupon schedule). Unknown ISSUE path UUIDs (`documents.akk.hu` primary, allampapir `/dokumentumok/` fallback), **≤10 PDFs per family per run**, **≤8 MiB per PDF body**, never re-download a UUID once `sha256` is recorded. Ranking prefers series still lacking a transcription (**≤1 UUID per such series per run**). `pdftotext -layout` → content gate (`skipped_no_schedule` for KÖZLEMÉNY / no-schedule amendments) → pure parser fills `paymentDates` / `dayCount` (FixMAP split kamatfizetés lists, MÁPP Kamatteljesítés tables, **MÁK annual date±rate tables**, DKJ zero-coupon → empty dates + ACT/360); `parse_failed` keeps the saleWindow stub and still records `sha256` (sticky — **no automatic daily retry**). Legacy TAP_* `parse_failed` migrate to `skipped_no_schedule` on merge; ISSUE `parse_failed` whose series already has a transcription migrate to `skipped_already_transcribed` (logged as skipped, not failed). Operator recovery after a parser fix: `workflow_dispatch` with **reparse parse_failed** (or `--reparse-parse-failed` / `MARKET_REPARSE_PARSE_FAILED=1`) requeues sticky ISSUE `parse_failed` lacking a transcribed sibling (including archive-only UUIDs); never requeues `skipped_no_schedule` / `skipped_already_transcribed`. Soft-fail offerings so price ingest still publishes. Attribution: informational transcription; not a substitute for the official nyilvános ajánlattétel. SPA consumption is ROADMAP §6l (MÁK composer still §6j follow-on). Live tip publish after merge remains a cutover step (`workflow_dispatch` market-data), same posture as §6f.
 - **Retail interest**: same job `POST /api/retailInterest/get_all_data` (reuses price-fetch CSRF). Soft-fail on retailInterest errors: keep previous coupons/offered, still publish prices. **Do not** use the kamatok XLSX download as production source.
 - **Inflation (ADR 0037)**: KSH `ara0040.csv` → `refs/inflation.json` (Összesen only). Append-first; historical conflicts fail ingest. Fetch retries log each attempt with `httpStatus=…` or `httpResponse=none` plus undici `cause` (transport failures previously collapsed to bare `fetch failed`).
+- **BUBOR (ADR 0045 / ROADMAP §6o)**: MNB `bubor2.xls` → `refs/bubor.json` (canonical tenors `ON`…`12M`; sparse daily rows). First tip without the file publishes **full** workbook history; later runs append-first and hard-fail on fixing revisions. SheetJS (`xlsx`) parses `.xls` (no CSV alternative). Raw XLS never committed. Browser must not call `mnb.hu`; FLOAT coupon / SPA autofill stay out of scope (ADR 0044).
 - **Families**: required `dkj` | `pmap` | `bmap`; optional `fixmap` | `ktv` | `mapp` | `baba` | `emap` | `omap` | `ktj` | `map2`.
 - **Accumulating `series.json`**: never drop an id with quote history; status is `active` | `matured` | `delisted`.
 - **Same-day quotes**: identical `(id, settleDate)` → skip. Different values → fail for ÁKK-only merges; **rewrite** when dual-source or WebKincstár overlay (`allowSameDayRewrite`).

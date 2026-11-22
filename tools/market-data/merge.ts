@@ -1,16 +1,19 @@
 import { assertSeriesId } from './ids.ts'
 import {
+  digestBubor,
   digestCanonical,
   digestInflation,
   digestOfferingArchive,
   digestPriceCalendar,
   digestRetailInterest
 } from './digests.ts'
+import { mergeBuborFile } from './merge-bubor.ts'
 import { mergeInflationFile } from './merge-inflation.ts'
 import { applySeriesSaleWindows } from './merge-offerings.ts'
 import { mergePriceCalendarFile } from './merge-price-calendar.ts'
 import { joinRetailInterestToCoupons } from './normalize-retail-interest.ts'
 import {
+  BUBOR_REF_PATH,
   COUPON_COLS,
   FAMILIES,
   INFLATION_REF_PATH,
@@ -19,6 +22,7 @@ import {
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
+  type BuborFile,
   type CouponsFile,
   type CouponRow,
   type FamilyCode,
@@ -66,6 +70,8 @@ export interface MarketTreeState {
   retailInterest: RetailInterestFile | null
   /** KSH CPI Összesen refs (ADR 0037); null when never ingested. */
   inflation: InflationFile | null
+  /** MNB BUBOR fixings (ADR 0045); null when never ingested. */
+  bubor: BuborFile | null
   /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
   priceCalendar: PriceCalendarFile | null
   /** ÁKK public-offering document ledger (ADR 0041). */
@@ -82,6 +88,8 @@ export interface MergeResult {
   rewrittenRows: number
   /** Inflation month/year rows appended this merge. */
   inflationAppendedRows: number
+  /** BUBOR tenor×date rows appended this merge. */
+  buborAppendedRows: number
   /** Price-calendar days appended this merge. */
   priceCalendarAppendedDays: number
 }
@@ -120,6 +128,7 @@ export function emptyMarketTree(): MarketTreeState {
     families,
     retailInterest: null,
     inflation: null,
+    bubor: null,
     priceCalendar: null,
     offeringArchive: null
   }
@@ -243,6 +252,10 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     refs.inflation = INFLATION_REF_PATH
     digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
   }
+  if (tree.bubor) {
+    refs.bubor = BUBOR_REF_PATH
+    digests[BUBOR_REF_PATH] = digestBubor(tree.bubor)
+  }
   if (tree.priceCalendar) {
     refs.priceCalendar = PRICE_CALENDAR_REF_PATH
     digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)
@@ -343,6 +356,11 @@ export function mergeSnapshot(
      */
     inflation?: InflationFile | null
     /**
+     * When provided, append-first merge into BUBOR refs (historical conflicts fail).
+     * When omitted, keep previous bubor.
+     */
+    bubor?: BuborFile | null
+    /**
      * When provided, append-first merge into price-calendar refs (ADR 0039).
      * When omitted, keep previous price calendar.
      */
@@ -378,6 +396,7 @@ export function mergeSnapshot(
         }
       : null,
     inflation: previous.inflation ? structuredClone(previous.inflation) : null,
+    bubor: previous.bubor ? structuredClone(previous.bubor) : null,
     priceCalendar: previous.priceCalendar
       ? structuredClone(previous.priceCalendar)
       : null,
@@ -393,6 +412,7 @@ export function mergeSnapshot(
   let skippedDuplicates = 0
   let rewrittenRows = 0
   let inflationAppendedRows = 0
+  let buborAppendedRows = 0
   let priceCalendarAppendedDays = 0
   const allowSameDayRewrite = options?.allowSameDayRewrite === true
   const asOf = snapshot.asOf
@@ -490,6 +510,18 @@ export function mergeSnapshot(
     }
   }
 
+  if (options && 'bubor' in options) {
+    const incoming = options.bubor
+    if (incoming) {
+      const mergedBubor = mergeBuborFile(previous.bubor, incoming)
+      tree.bubor = mergedBubor.file
+      buborAppendedRows = mergedBubor.appendedRows
+      skippedDuplicates += mergedBubor.skippedDuplicates
+    } else {
+      tree.bubor = null
+    }
+  }
+
   if (options && 'priceCalendar' in options) {
     const incoming = options.priceCalendar
     if (incoming) {
@@ -553,6 +585,7 @@ export function mergeSnapshot(
     skippedDuplicates,
     rewrittenRows,
     inflationAppendedRows,
+    buborAppendedRows,
     priceCalendarAppendedDays
   }
 }

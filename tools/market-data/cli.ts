@@ -29,12 +29,14 @@ function printHelp(): void {
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
+      [--bubor-xls <xls>] [--skip-bubor]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>]
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
+      [--bubor-xls <xls>] [--skip-bubor]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
   market-data validate-tree --root <repo-or-v2>
@@ -130,6 +132,8 @@ async function loadOptionalSources(args: string[]): Promise<{
   skipRetailInterest?: boolean
   inflationCsvPath?: string
   skipInflation?: boolean
+  buborXlsPath?: string
+  skipBubor?: boolean
   webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
   webkincstarDatum?: string
   skipWebkincstar?: boolean
@@ -157,6 +161,11 @@ async function loadOptionalSources(args: string[]): Promise<{
   if (skipInflation && inflationCsvPath) {
     throw new Error('Use either --inflation-csv or --skip-inflation, not both.')
   }
+  const buborXlsPath = getFlag(args, '--bubor-xls')
+  const skipBubor = hasFlag(args, '--skip-bubor')
+  if (skipBubor && buborXlsPath) {
+    throw new Error('Use either --bubor-xls or --skip-bubor, not both.')
+  }
   const webkincstarDir = getFlag(args, '--webkincstar-dir')
   const skipWebkincstar = hasFlag(args, '--skip-webkincstar')
   if (skipWebkincstar && webkincstarDir) {
@@ -180,6 +189,8 @@ async function loadOptionalSources(args: string[]): Promise<{
     skipRetailInterest,
     inflationCsvPath,
     skipInflation,
+    buborXlsPath,
+    skipBubor,
     webkincstarTextByReport: webkincstarDir
       ? await loadWebkincstarDir(webkincstarDir)
       : undefined,
@@ -215,6 +226,8 @@ async function main(argv: string[]): Promise<number> {
       skipRetailInterest: sources.skipRetailInterest,
       inflationCsvPath: sources.inflationCsvPath,
       skipInflation: sources.skipInflation,
+      buborXlsPath: sources.buborXlsPath,
+      skipBubor: sources.skipBubor,
       webkincstarTextByReport: sources.webkincstarTextByReport,
       webkincstarDatum: sources.webkincstarDatum,
       skipWebkincstar: sources.skipWebkincstar,
@@ -232,6 +245,8 @@ async function main(argv: string[]): Promise<number> {
         retailInterestUpdated: report.retailInterestUpdated,
         inflationUpdated: report.inflationUpdated,
         inflationAppendedRows: report.inflationAppendedRows,
+        buborUpdated: report.buborUpdated,
+        buborAppendedRows: report.buborAppendedRows,
         webkincstarUpdated: report.webkincstarUpdated,
         webkincstarSoftFailed: report.webkincstarSoftFailed,
         webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
@@ -269,6 +284,8 @@ async function main(argv: string[]): Promise<number> {
       skipRetailInterest: sources.skipRetailInterest,
       inflationCsvPath: sources.inflationCsvPath,
       skipInflation: sources.skipInflation,
+      buborXlsPath: sources.buborXlsPath,
+      skipBubor: sources.skipBubor,
       webkincstarTextByReport: sources.webkincstarTextByReport,
       webkincstarDatum: sources.webkincstarDatum,
       skipWebkincstar: sources.skipWebkincstar,

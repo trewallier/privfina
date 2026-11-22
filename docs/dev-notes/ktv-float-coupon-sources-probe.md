@@ -99,9 +99,10 @@ No documented JSON API; XLS download is the production-shaped source.
 
 ## Implications (non-binding; for later stacks)
 
-1. **FLOAT autofill** needs either: (a) MNB BUBOR ingest + series reset calendar / margin from offering|ismertető, or (b) parse offering **Aktuális kamatláb** when an ISSUE PDF exists, or (c) keep manual entry (current ADR 0044 posture).
-2. **FIX ktv** annual rates already exist on ÁKK/allampapir `coupon` — a separate small ingest could populate `coupons/<id>.json` without retailInterest.
-3. Do **not** treat quote `ai` or WebKincstár payable % as a silent substitute for `coupons/<id>.json` without an ADR.
+1. **Index ingest:** ADR 0045 / ROADMAP §6o publishes MNB BUBOR into `refs/bubor.json` (full history on first tip). That closes the index gap; it does **not** autofill FLOAT coupons.
+2. **FLOAT autofill** still needs either: (a) `refs/bubor.json` + series reset calendar / margin from offering|ismertető, or (b) parse offering **Aktuális kamatláb** when an ISSUE PDF exists, or (c) keep manual entry (current ADR 0044 posture).
+3. **FIX ktv** annual rates already exist on ÁKK/allampapir `coupon` — a separate small ingest could populate `coupons/<id>.json` without retailInterest.
+4. Do **not** treat quote `ai` or WebKincstár payable % as a silent substitute for `coupons/<id>.json` without an ADR.
 
 ---
 

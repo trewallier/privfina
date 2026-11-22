@@ -1,4 +1,5 @@
 import {
+  digestBubor,
   digestCanonical,
   digestInflation,
   digestOfferingArchive,
@@ -8,6 +9,8 @@ import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import { publishedFamilies, type MarketTreeState } from './merge.ts'
 import {
+  BUBOR_REF_PATH,
+  BUBOR_TENORS,
   COUPON_COLS,
   INFLATION_REF_PATH,
   OFFERING_ARCHIVE_REF_PATH,
@@ -15,6 +18,7 @@ import {
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
+  type BuborTenor,
   type FamilyCode,
   type InflationSeriesKey,
   type ManifestFile,
@@ -163,6 +167,11 @@ export function validateMarketTree(tree: MarketTreeState): void {
   } else if (tree.manifest.refs?.inflation || tree.manifest.digests[INFLATION_REF_PATH]) {
     throw new ValidateError('manifest references inflation but file is missing')
   }
+  if (tree.bubor) {
+    validateBubor(tree)
+  } else if (tree.manifest.refs?.bubor || tree.manifest.digests[BUBOR_REF_PATH]) {
+    throw new ValidateError('manifest references bubor but file is missing')
+  }
   if (tree.priceCalendar) {
     validatePriceCalendar(tree)
   } else if (
@@ -250,6 +259,51 @@ function validateInflation(tree: MarketTreeState): void {
     throw new ValidateError(
       `manifest.refs.inflation must be ${INFLATION_REF_PATH}, got ${refPath}`
     )
+  }
+}
+
+function validateBubor(tree: MarketTreeState): void {
+  const file = tree.bubor
+  if (!file) return
+  if (file.schemaVersion !== SCHEMA_VERSION) {
+    throw new ValidateError(`bubor schemaVersion must be ${SCHEMA_VERSION}`)
+  }
+  if (file.metric !== 'bubor' || file.unit !== 'pct') {
+    throw new ValidateError('bubor metric/unit must be bubor / pct')
+  }
+  if (!file.source || file.source.id !== 'mnb-bubor2-xls') {
+    throw new ValidateError('bubor.source.id must be mnb-bubor2-xls')
+  }
+  if (!Array.isArray(file.tenors) || file.tenors.length !== BUBOR_TENORS.length) {
+    throw new ValidateError('bubor.tenors must list the canonical tenor set')
+  }
+  for (let i = 0; i < BUBOR_TENORS.length; i++) {
+    if (file.tenors[i] !== BUBOR_TENORS[i]) {
+      throw new ValidateError(`bubor.tenors[${i}] must be ${BUBOR_TENORS[i]}`)
+    }
+  }
+  for (const key of BUBOR_TENORS) {
+    const block = file.series?.[key as BuborTenor]
+    if (!block) throw new ValidateError(`bubor.series missing ${key}`)
+    if (!Array.isArray(block.rows)) {
+      throw new ValidateError(`bubor.series.${key}.rows must be an array`)
+    }
+    for (const row of block.rows) {
+      if (!Array.isArray(row) || row.length !== 2) {
+        throw new ValidateError(`Bad bubor row shape in ${key}`)
+      }
+      const [d, pct] = row
+      if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        throw new ValidateError(`Bad bubor date in ${key}: ${String(d)}`)
+      }
+      if (typeof pct !== 'number' || !Number.isFinite(pct)) {
+        throw new ValidateError(`Bad bubor pct in ${key} ${d}`)
+      }
+    }
+  }
+  const refPath = tree.manifest?.refs?.bubor
+  if (refPath && refPath !== BUBOR_REF_PATH) {
+    throw new ValidateError(`manifest.refs.bubor must be ${BUBOR_REF_PATH}, got ${refPath}`)
   }
 }
 
@@ -379,6 +433,9 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
   }
   if (tree.inflation) {
     digests[INFLATION_REF_PATH] = digestInflation(tree.inflation)
+  }
+  if (tree.bubor) {
+    digests[BUBOR_REF_PATH] = digestBubor(tree.bubor)
   }
   if (tree.priceCalendar) {
     digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)

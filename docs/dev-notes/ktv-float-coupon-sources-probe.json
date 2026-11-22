@@ -1,0 +1,347 @@
+{
+  "probedAt": "2026-11-22T19:47:12Z",
+  "sources": {
+    "akkCatalog": "https://www.akk.hu/api/data/xpose3-dwh/data?query=getSecurityWithOutstanding&securityType=KTV",
+    "akkNetworkRates": "https://www.akk.hu/api/data/xpose3-dwh/data?query=getNetworkRates&type=KTV",
+    "akkOfferings": "https://www.akk.hu/api/data/xpose3-dwh/data?query=getPublicOfferings&label=KTV&auctionType=ISSUE",
+    "pagesMarketV2": "https://trewallier.github.io/privfina/data/market/v2",
+    "mnbBuborXls": "https://www.mnb.hu/letoltes/bubor2.xls",
+    "webkincstarMak": "_20633_arfolyam_mak"
+  },
+  "akk": {
+    "catalogCount": 232,
+    "quotedCount": 24,
+    "catalogFields": [
+      "coupon",
+      "currency",
+      "ehm",
+      "ehmString",
+      "endPeriod",
+      "faceValue",
+      "green",
+      "interestConvention",
+      "interestPeriod",
+      "interestType",
+      "isin",
+      "issueDate",
+      "issueType",
+      "longName",
+      "maturityDate",
+      "name",
+      "outstanding",
+      "outstandingDate",
+      "outstandingpts",
+      "referenceCurve",
+      "securityType",
+      "startPeriod"
+    ],
+    "rateFields": [
+      "accruedInterest",
+      "askEhmYield",
+      "askPrice",
+      "askYield",
+      "bidEhmYield",
+      "bidPrice",
+      "bidYield",
+      "coupon",
+      "currency",
+      "green",
+      "issueDate",
+      "longName",
+      "maturityDate",
+      "maturityInDays",
+      "name",
+      "securityType",
+      "settleDate"
+    ],
+    "witnessClosed": {
+      "ehmString": null,
+      "green": 0.0,
+      "outstanding": 998343940000.0,
+      "endPeriod": null,
+      "coupon": null,
+      "outstandingDate": "2026-10-31",
+      "interestType": "FLOAT",
+      "ehm": null,
+      "outstandingpts": "2026-11-11 08:53:00",
+      "issueType": "PUBLIC",
+      "startPeriod": null,
+      "referenceCurve": "BUBOR 3M",
+      "securityType": "KTV",
+      "maturityDate": "2027-04-22",
+      "faceValue": 10000.0,
+      "name": "2027/B",
+      "interestConvention": "_ACT_360",
+      "currency": "HUF",
+      "issueDate": "2020-01-15",
+      "isin": "HU0000404157",
+      "longName": "A270422B20",
+      "interestPeriod": "3M"
+    },
+    "witnessActive": {
+      "ehmString": null,
+      "green": 0.0,
+      "outstanding": 394622590000.0,
+      "endPeriod": null,
+      "coupon": null,
+      "outstandingDate": "2026-10-31",
+      "interestType": "FLOAT",
+      "ehm": null,
+      "outstandingpts": "2026-11-11 08:53:00",
+      "issueType": "PUBLIC",
+      "startPeriod": null,
+      "referenceCurve": "BUBOR 3M",
+      "securityType": "KTV",
+      "maturityDate": "2036-11-26",
+      "faceValue": 10000.0,
+      "name": "2036/B",
+      "interestConvention": "_ACT_360",
+      "currency": "HUF",
+      "issueDate": "2026-01-14",
+      "isin": "HU0000407531",
+      "longName": "A361126B26",
+      "interestPeriod": "3M"
+    },
+    "quotedFloat": [
+      {
+        "name": "2027/B",
+        "longName": "A270422B20",
+        "catalogCoupon": null,
+        "ratesCoupon": null,
+        "referenceCurve": "BUBOR 3M",
+        "interestPeriod": "3M",
+        "accruedInterest": 0.4889,
+        "bidPrice": 99.998,
+        "askPrice": 100.93,
+        "bidYield": null,
+        "askYield": null
+      },
+      {
+        "name": "2029/B",
+        "longName": "A290822B21",
+        "catalogCoupon": null,
+        "ratesCoupon": null,
+        "referenceCurve": "BUBOR 3M",
+        "interestPeriod": "3M",
+        "accruedInterest": 0.0153,
+        "bidPrice": 99.9,
+        "askPrice": 100.8292,
+        "bidYield": null,
+        "askYield": null
+      },
+      {
+        "name": "2032/B",
+        "longName": "A320825B22",
+        "catalogCoupon": null,
+        "ratesCoupon": null,
+        "referenceCurve": "BUBOR 3M",
+        "interestPeriod": "3M",
+        "accruedInterest": 1.385,
+        "bidPrice": 99.4,
+        "askPrice": 100.65,
+        "bidYield": null,
+        "askYield": null
+      },
+      {
+        "name": "2036/B",
+        "longName": "A361126B26",
+        "catalogCoupon": null,
+        "ratesCoupon": null,
+        "referenceCurve": "BUBOR 3M",
+        "interestPeriod": "3M",
+        "accruedInterest": 1.3696,
+        "bidPrice": 98.75,
+        "askPrice": 100.28,
+        "bidYield": null,
+        "askYield": null
+      }
+    ]
+  },
+  "published": {
+    "manifestStatus": 200,
+    "asOf": "2026-11-23",
+    "series2027B": {
+      "ccy": "HUF",
+      "dayCount": "ACT/360",
+      "id": "A270422B20",
+      "isin": null,
+      "issue": "2020-01-15",
+      "mat": "2027-04-22",
+      "name": "2027/B",
+      "status": "active"
+    },
+    "quotesStatus": 200,
+    "quotesTail": [
+      [
+        "2026-11-19",
+        100,
+        100.95,
+        null,
+        null,
+        0.4278
+      ],
+      [
+        "2026-11-20",
+        99.998,
+        100.93,
+        null,
+        null,
+        0.4431
+      ],
+      [
+        "2026-11-23",
+        99.998,
+        100.93,
+        null,
+        null,
+        0.4889
+      ]
+    ],
+    "couponsStatus": 404,
+    "offering2036BStatus": 200,
+    "offering2036B": {
+      "dayCount": "ACT/360",
+      "id": "A361126B26",
+      "schemaVersion": 2,
+      "source": {
+        "disclaimer": "Informational transcription of a public offering document; may be incomplete or outdated vs the authoritative PDF; not a substitute for the official nyilvános ajánlattétel; not investment advice.",
+        "document": "ÁKK nyilvános ajánlattétel 2036/B (public_offerings/8eb21c40-060c-4c25-87b1-71207d22fa86.pdf)",
+        "host": "www.akk.hu",
+        "id": "akk-nyilvanos-ajanlattetel"
+      }
+    },
+    "note": "No families/ktv/coupons/* digests on tip (retailInterest has no KTV place). Published series omit iType/ref because live ÁKK ingest types are DKJ/PMÁP/BMÁP only; ktv identity currently comes from allampapir prices."
+  },
+  "aiImplied": {
+    "settle": "2026-11-23",
+    "assumedReset": "2026-10-22",
+    "days": 32,
+    "aiPctOfPar": 0.4889,
+    "impliedAnnualAct360Pct": 5.5001,
+    "note": "Diagnostic only — ADR 0044: do not invent FLOAT rates for publish/autofill."
+  },
+  "mnbBubor": {
+    "latest": {
+      "date": "2026-11-20",
+      "bubor3mPct": 5.5,
+      "sheet": "2026",
+      "column": "3hónap/3months"
+    },
+    "spotChecks": {
+      "2026-10-19": 5.5,
+      "2026-08-19": 5.54,
+      "2026-11-20": 5.5
+    },
+    "sheets": [
+      "Sheet1",
+      "1996",
+      "1997",
+      "1998",
+      "1999",
+      "…"
+    ],
+    "bytes": 1526784
+  },
+  "webkincstar": {
+    "datum": "2026-11-23",
+    "pdfBytes": 131860,
+    "found": true,
+    "lineSnippet": "2027/B 99.9980 % 0.4889 % 100.4869 % Vált. Vált. 100.9300 % 101.4189 % Vált. Vált. 2027.01.22 1.41 % 2027.04.221500.4889 % 2027/I 99.0000 % 3.9441 % 102.9441 % Vált. Vált. - - - - 2027.03.24 105.90 % 2027.03.24121- 2027/J 99.0000 % 4.2329 %",
+    "note": "Trailing tokens after bid/ai/ask include next payment date + payable period % (e.g. 2027.01.22 1.41%) — not ingested by parse-webkincstar-pdf today."
+  },
+  "akkOfferings": {
+    "count": 50,
+    "fields": [
+      "announced",
+      "archive",
+      "archiveDate",
+      "auctionDate",
+      "auctionType",
+      "coupon",
+      "currency",
+      "ehm",
+      "ehmString",
+      "endPeriod",
+      "green",
+      "interestType",
+      "isin",
+      "label",
+      "longName",
+      "maturity",
+      "modifiedOn",
+      "name",
+      "offeringName",
+      "path",
+      "pathEn",
+      "pathEnId",
+      "pathId",
+      "published",
+      "resourceType",
+      "settleDate",
+      "startPeriod",
+      "tenor"
+    ],
+    "floatRows": [
+      {
+        "name": "2036/B",
+        "longName": "A361126B26",
+        "coupon": null,
+        "interestType": "FLOAT",
+        "offeringName": "2036/B_13",
+        "published": "2026-11-02 14:00:00",
+        "path": "public_offerings/8eb21c40-060c-4c25-87b1-71207d22fa86.pdf"
+      },
+      {
+        "name": "2036/B",
+        "longName": "A361126B26",
+        "coupon": null,
+        "interestType": "FLOAT",
+        "offeringName": "2036/B_12",
+        "published": "2026-10-05 14:00:00",
+        "path": "public_offerings/da2cba2f-08a5-4280-a031-91960a3fcaf9.pdf"
+      },
+      {
+        "name": "2036/B",
+        "longName": "A361126B26",
+        "coupon": null,
+        "interestType": "FLOAT",
+        "offeringName": "2036/B_11",
+        "published": "2026-09-07 14:00:00",
+        "path": "public_offerings/28b79271-278c-453e-9cbb-08c944a33cca.pdf"
+      },
+      {
+        "name": "2036/B",
+        "longName": "A361126B26",
+        "coupon": null,
+        "interestType": "FLOAT",
+        "offeringName": "2036/B_10",
+        "published": "2026-08-10 14:00:00",
+        "path": "public_offerings/249f47e2-7a51-4fc4-83f8-1c86109dd43d.pdf"
+      },
+      {
+        "name": "2036/B",
+        "longName": "A361126B26",
+        "coupon": null,
+        "interestType": "FLOAT",
+        "offeringName": "2036/B_9",
+        "published": "2026-07-13 14:00:00",
+        "path": "public_offerings/fa6208e3-1a45-40d3-bfd5-c46364c790a2.pdf"
+      }
+    ],
+    "note": "FLOAT listing coupon is null. Active-auction PDFs print Aktuális kamatláb (period annual %) + reset rule (= 3M BUBOR). Closed series (2027/B) have no tip offerings."
+  },
+  "verdict": {
+    "fixAnnualRateInAkkCouponField": true,
+    "floatAnnualRateInAkkOrAllampapirCouponField": false,
+    "floatAnnualRateInRetailInterest": false,
+    "floatAnnualRateInPublishedCouponsDir": false,
+    "buborIndexAtMnbXls": true,
+    "unexpectedColumns": [
+      "quotes.ai (accrued) — implies annual rate given reset + ACT/360; not a rate column",
+      "WebKincstár trailing 'következő kifizetés' % — period payable; implies annual rate",
+      "ÁKK catalog interestType/referenceCurve/interestPeriod — metadata only (not published on ktv tip)",
+      "yield columns show Vált. for FLOAT — not BUBOR"
+    ],
+    "doNotInvent": "ADR 0044 / product YAML: never invent FLOAT rates for coupons/<id>.json or SPA autofill."
+  }
+}

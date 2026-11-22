@@ -452,7 +452,7 @@ Plan slices (ingest-only gh-stack; open a temporary tip→`master` CI head PR �
 - [x] ADR 0044 + ROADMAP / ownership / gov-sec README / naming glossary: MÁK ↔ `ktv` / `KTV` mapping; hub vs ÁKK document hosts; FIX/FLOAT/Green notes; ADR 0041 family/budget supersession note.
 - [x] Register `ktv` offering family (`label: KTV`, `mode: auction`) — this is the real ingest wiring onto `OFFERING_FAMILIES`; listing soft-fail isolation; no invented saleWindow from auctionDate.
 - [x] MAK auction PDF text parser (annual date ± rate tables) + Vitest fixtures (no raw PDFs); FLOAT fixture locks null rates (no invented coupons).
-- [ ] Fixture E2E for `families/ktv/offerings/<id>.json` + archive (**code complete**; live tip / Pages cutover pending `workflow_dispatch` — same posture as §6k / §6f).
+- [x] Fixture E2E for `families/ktv/offerings/<id>.json` + archive (**code complete**; live tip / Pages cutover pending `workflow_dispatch` — same posture as §6k / §6f).
 
 #### Later remaining families
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktv` after ADR 0044 ingest, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.

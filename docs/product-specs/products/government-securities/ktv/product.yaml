@@ -128,7 +128,8 @@ assumptions:
   - Commercial inputs use the published effective annual coupon rate (ga); do not invent FLOAT rates when listing or PDF omits them.
   - Coupon payment frequency is annual (product-type constant; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
-  - MÁK denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
+  - MÁK denominationUnit is 1 HUF for commercial composer principal (parity with FixMÁP / Babakötvény); ÁKK 10 000 Ft alapcímlet is market packaging only and is not mirrored here.
+  - issuanceModel stays phased-public-offering (sibling enum); ÁKK auction listing mode lives in offering ingest (ADR 0044), not a separate YAML issuanceModel.
   - Locked 2037/A product day-count is ACT/365F (Actual/365). ADR 0044 ingest ACT/360 when offering dayCount is null is quote/ingest fallback only.
   - Accrued interest uses ga under ACT/365F; the payable first-period stub is not the accrual rate.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.

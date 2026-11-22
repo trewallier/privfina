@@ -13,6 +13,11 @@ Locked example series **2037/A** (ISIN HU0000407564):
 - Product day-count **ACT/365F** (Actual/365); accrue on `ga`, not the stub
 - ADR 0044 ingest `ACT/360` when offering `dayCount` is null is a **quote/ingest fallback only**, not product math for this witness
 
+## Intentional catalog fields
+
+- **`issuanceModel: phased-public-offering`** — same sibling enum as FixMÁP / Babakötvény. ÁKK auction vs continuous offering is an ingest/listing mode (`OFFERING_LABEL_BY_FAMILY.ktv.mode: auction`, ADR 0044), not a separate product-YAML issuanceModel value.
+- **`denominationUnit: 1`** — commercial composer principal unit is 1 HUF (parity with FixMÁP / Babakötvény / PMÁP). ÁKK **10 000 Ft alapcímlet** is market packaging / trading denomination and is not mirrored into `denominationUnit`.
+
 ## Out of Scope
 
 This iteration excludes:

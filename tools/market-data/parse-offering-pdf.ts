@@ -103,6 +103,9 @@ function hasCouponScheduleMarkers(text: string): boolean {
   return (
     /A\s+kamat\s+fizetése\s+az\s+alábbi\s+napokon\s+történik/i.test(text) ||
     /A\s+kamatfizetés[\s\S]{0,160}?az\s+alábbi\s+napokon\s+történik/i.test(text) ||
+    /A\s+kamatfizetés[\s\S]{0,160}?a\s+következő\s+napokon\s+és\s+mértékkel\s+történik/i.test(
+      text
+    ) ||
     /Kamatteljesítési\s+napok/i.test(text) ||
     /A\s+kamat\s+fizetése\s+a\s+futamidő\s+alatt\s+minden\s+év/i.test(text) ||
     /Kamatszámítás\s+algoritmusa/i.test(text)
@@ -161,6 +164,30 @@ function extractExplicitPaymentDates(text: string): string[] {
   const after = text.slice(marker.index + marker[0].length)
   const stop = /Kamatszámítás\s+algoritmusa|Törlesztés\s*:/i.exec(after)
   const block = stop ? after.slice(0, stop.index) : after.slice(0, 2500)
+  return collectHungarianDatesInBlock(block)
+}
+
+/**
+ * Magyar Államkötvény (MÁK / KTV) auction offerings: annual table
+ * "A kamatfizetés évente a következő napokon és mértékkel történik"
+ * with rows like `2027. szeptember 23. 6,25%` (ADR 0044).
+ */
+function extractMakAnnualPaymentDates(text: string): string[] {
+  const marker =
+    /A\s+kamatfizetés[\s\S]{0,200}?a\s+következő\s+napokon\s+és\s+mértékkel\s+történik\s*:/i.exec(
+      text
+    )
+  if (!marker || marker.index == null) return []
+  const after = text.slice(marker.index + marker[0].length)
+  const stop = /Törlesztés\s*,\s*visszaváltás\s*:|Törlesztés\s*:|4\.\s+Az\s+Államkötvény/i.exec(
+    after
+  )
+  // Long tenors (e.g. 2051/G) need a generous window; still stop at törlesztés.
+  const block = stop ? after.slice(0, stop.index) : after.slice(0, 8000)
+  return collectHungarianDatesInBlock(block)
+}
+
+function collectHungarianDatesInBlock(block: string): string[] {
   const dates: string[] = []
   const seen = new Set<string>()
   for (const m of block.matchAll(new RegExp(HU_DATE.source, 'gi'))) {
@@ -281,15 +308,19 @@ function extractRecurringPaymentDates(text: string): string[] {
 }
 
 /**
- * Parse offering PDF text into payment dates + day-count (ADR 0041).
+ * Parse offering PDF text into payment dates + day-count (ADR 0041 / 0044).
  * Throws OfferingPdfParseError when neither dates nor dayCount can be recovered
  * (except DKJ zero-coupon offerings, which succeed with empty paymentDates + ACT/360).
+ * MÁK/KTV auction tables may omit Kamatszámítás — dayCount stays null when absent.
  */
 export function parseOfferingPdfText(text: string): ParsedOfferingPdf {
   const normalized = text.replace(/\u00a0/g, ' ')
   const dayCount = mapOfferingDayCount(normalized)
   const maturity = extractMaturity(normalized)
   let paymentDates = extractExplicitPaymentDates(normalized)
+  if (paymentDates.length === 0) {
+    paymentDates = extractMakAnnualPaymentDates(normalized)
+  }
   if (paymentDates.length === 0) {
     paymentDates = extractMappTablePaymentDates(normalized)
   }

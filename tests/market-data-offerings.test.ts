@@ -698,6 +698,36 @@ describe('parseOfferingPdfText', () => {
     expect(classifyOfferingPdfText(baba)).toBe('parse')
     expect(classifyOfferingPdfText(dkj)).toBe('parse')
   })
+
+  it('parses MÁK/KTV annual date±rate kamatfizetés table (2037/A)', async () => {
+    const { classifyOfferingPdfText, parseOfferingPdfText } = await import(
+      '../tools/market-data/parse-offering-pdf.ts'
+    )
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/ktv-mak-2037-a.txt'),
+      'utf8'
+    )
+    expect(classifyOfferingPdfText(text)).toBe('parse')
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.maturity).toBe('2037-09-23')
+    expect(parsed.dayCount).toBeNull()
+    expect(parsed.paymentDates[0]).toBe('2026-09-23')
+    expect(parsed.paymentDates.at(-1)).toBe('2037-09-23')
+    expect(parsed.paymentDates).toHaveLength(12)
+  })
+
+  it('parses Green MÁK/KTV long annual table (2051/G)', async () => {
+    const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/ktv-mak-2051-g-green.txt'),
+      'utf8'
+    )
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.maturity).toBe('2051-04-28')
+    expect(parsed.paymentDates[0]).toBe('2022-04-28')
+    expect(parsed.paymentDates.at(-1)).toBe('2051-04-28')
+    expect(parsed.paymentDates).toHaveLength(30)
+  })
 })
 
 describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {

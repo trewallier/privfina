@@ -36,33 +36,100 @@ export function isWeekendUtc(date: Date): boolean {
   return weekday === 0 || weekday === 6
 }
 
+/**
+ * Mon–Fri exception calendar (ADR 0046).
+ * `closed` = non-business weekdays; `open` = business weekends (relocated Saturdays).
+ */
+export interface BusinessCalendar {
+  closed?: ReadonlyArray<string>
+  open?: ReadonlyArray<string>
+}
+
+/** Caller-supplied holiday list (closed-only) or full business calendar. */
+export type BusinessDayHolidays = ReadonlyArray<string> | BusinessCalendar
+
+export interface BusinessCalendarSets {
+  closed: ReadonlySet<string>
+  open: ReadonlySet<string>
+}
+
+function isBusinessCalendar(value: unknown): value is BusinessCalendar {
+  return (
+    value != null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    !(value instanceof Set) &&
+    ('closed' in value || 'open' in value || Object.keys(value as object).length === 0)
+  )
+}
+
+/**
+ * Normalize a holiday list, Set, or BusinessCalendar into closed/open sets.
+ * Plain arrays / Sets are treated as closed-only (salary backward compatibility).
+ */
+export function toBusinessCalendarSets(
+  input: BusinessDayHolidays | ReadonlySet<string> | BusinessCalendarSets = []
+): BusinessCalendarSets {
+  if (Array.isArray(input)) {
+    return { closed: new Set(input), open: new Set() }
+  }
+  if (input instanceof Set) {
+    return { closed: input, open: new Set() }
+  }
+  if (isBusinessCalendar(input)) {
+    const closed = (input as BusinessCalendar | BusinessCalendarSets).closed
+    const open = (input as BusinessCalendar | BusinessCalendarSets).open
+    return {
+      closed: closed instanceof Set ? closed : new Set(closed ?? []),
+      open: open instanceof Set ? open : new Set(open ?? [])
+    }
+  }
+  // ReadonlySet duck-type (salary / older call sites).
+  if (
+    input != null &&
+    typeof input === 'object' &&
+    typeof (input as ReadonlySet<string>).has === 'function'
+  ) {
+    return { closed: input as ReadonlySet<string>, open: new Set() }
+  }
+  return { closed: new Set(), open: new Set() }
+}
+
+/** @deprecated Prefer toBusinessCalendarSets; kept for salary holiday-list call sites. */
 export function toHolidaySet(holidays: ReadonlyArray<string> = []): Set<string> {
   return new Set(holidays)
 }
 
-export function isBusinessDayUtc(date: Date, holidays: ReadonlySet<string> = new Set()): boolean {
+export function isBusinessDayUtc(
+  date: Date,
+  holidays: ReadonlySet<string> | BusinessCalendar | BusinessCalendarSets = new Set()
+): boolean {
+  const { closed, open } = toBusinessCalendarSets(holidays)
+  const iso = formatIsoDate(date)
+  if (open.has(iso)) {
+    return true
+  }
   if (isWeekendUtc(date)) {
     return false
   }
-
-  return !holidays.has(formatIsoDate(date))
+  return !closed.has(iso)
 }
 
 function shiftByDays(date: Date, deltaDays: number): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + deltaDays))
 }
 
-function rollFollowing(baseDate: Date, holidays: ReadonlySet<string>): Date {
+function rollFollowing(baseDate: Date, calendar: BusinessCalendarSets): Date {
   let candidate = baseDate
-  while (!isBusinessDayUtc(candidate, holidays)) {
+  while (!isBusinessDayUtc(candidate, calendar)) {
     candidate = shiftByDays(candidate, 1)
   }
   return candidate
 }
 
-function rollPreceding(baseDate: Date, holidays: ReadonlySet<string>): Date {
+function rollPreceding(baseDate: Date, calendar: BusinessCalendarSets): Date {
   let candidate = baseDate
-  while (!isBusinessDayUtc(candidate, holidays)) {
+  while (!isBusinessDayUtc(candidate, calendar)) {
     candidate = shiftByDays(candidate, -1)
   }
   return candidate
@@ -71,35 +138,35 @@ function rollPreceding(baseDate: Date, holidays: ReadonlySet<string>): Date {
 export function rollBusinessDay(
   baseDateIso: string,
   convention: 'unadjusted' | 'following' | 'preceding' | 'modified-following' | 'modified-preceding',
-  holidays: ReadonlyArray<string> = []
+  holidays: BusinessDayHolidays = []
 ): string {
   const baseDate = parseIsoDate(baseDateIso)
   if (convention === 'unadjusted') {
     return baseDateIso
   }
 
-  const holidaySet = toHolidaySet(holidays)
+  const calendar = toBusinessCalendarSets(holidays)
   const baseMonth = baseDate.getUTCMonth()
 
   if (convention === 'following') {
-    return formatIsoDate(rollFollowing(baseDate, holidaySet))
+    return formatIsoDate(rollFollowing(baseDate, calendar))
   }
 
   if (convention === 'preceding') {
-    return formatIsoDate(rollPreceding(baseDate, holidaySet))
+    return formatIsoDate(rollPreceding(baseDate, calendar))
   }
 
   if (convention === 'modified-following') {
-    const following = rollFollowing(baseDate, holidaySet)
+    const following = rollFollowing(baseDate, calendar)
     if (following.getUTCMonth() !== baseMonth) {
-      return formatIsoDate(rollPreceding(baseDate, holidaySet))
+      return formatIsoDate(rollPreceding(baseDate, calendar))
     }
     return formatIsoDate(following)
   }
 
-  const preceding = rollPreceding(baseDate, holidaySet)
+  const preceding = rollPreceding(baseDate, calendar)
   if (preceding.getUTCMonth() !== baseMonth) {
-    return formatIsoDate(rollFollowing(baseDate, holidaySet))
+    return formatIsoDate(rollFollowing(baseDate, calendar))
   }
   return formatIsoDate(preceding)
 }
@@ -108,7 +175,7 @@ export function lastBusinessDayOnOrBefore(
   year: number,
   monthZeroBased: number,
   targetDayOfMonth: number,
-  holidays: ReadonlyArray<string> = []
+  holidays: BusinessDayHolidays = []
 ): string {
   const clampedTarget = Math.min(Math.max(1, targetDayOfMonth), daysInMonthUtc(year, monthZeroBased))
   const targetIso = formatIsoDate(new Date(Date.UTC(year, monthZeroBased, clampedTarget)))

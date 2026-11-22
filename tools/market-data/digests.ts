@@ -4,7 +4,8 @@ import type {
   InflationFile,
   OfferingArchiveFile,
   PriceCalendarFile,
-  RetailInterestFile
+  RetailInterestFile,
+  SettlementCalendarFile
 } from './types.ts'
 
 /** Stable JSON for hashing (sorted object keys; arrays keep order). */
@@ -77,6 +78,21 @@ export function buborContentForDigest(file: BuborFile): Omit<BuborFile, 'generat
 
 export function digestBubor(file: BuborFile): string {
   return digestCanonical(buborContentForDigest(file))
+}
+
+/**
+ * Settlement-calendar digest excludes `generatedAt` so a stamp-only re-run does
+ * not force a market-data commit (ADR 0046).
+ */
+export function settlementCalendarContentForDigest(
+  file: SettlementCalendarFile
+): Omit<SettlementCalendarFile, 'generatedAt'> {
+  const { generatedAt: _generatedAt, ...rest } = file
+  return rest
+}
+
+export function digestSettlementCalendar(file: SettlementCalendarFile): string {
+  return digestCanonical(settlementCalendarContentForDigest(file))
 }
 
 /**

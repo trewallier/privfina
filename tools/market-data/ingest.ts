@@ -5,8 +5,14 @@ import { fetchAkkOfferingListings } from './fetch-akk-offerings.ts'
 import { CsrfSession, fetchAllampapirSnapshots } from './fetch-allampapir.ts'
 import { fetchKshInflationCsv } from './fetch-ksh-inflation.ts'
 import { fetchMnbBuborXls } from './fetch-mnb-bubor.ts'
+import {
+  discoverSettlementCalendarFiles,
+  fetchMnbSettlementCalendars,
+  pickLatestSettlementCalendarFile
+} from './fetch-mnb-settlement-calendar.ts'
 import { fetchRetailInterestSnapshots } from './fetch-retail-interest.ts'
 import {
+  budapestTodayIso,
   budapestYesterdayIso,
   fetchWebkincstarSnapshots,
   resolveWebkincstarLookbackDatums
@@ -33,6 +39,7 @@ import { normalizeAkkSnapshots } from './normalize.ts'
 import { normalizeAllampapirSnapshots } from './normalize-allampapir.ts'
 import { normalizeKshInflationCsv } from './normalize-ksh-inflation.ts'
 import { normalizeMnbBuborXls } from './normalize-mnb-bubor.ts'
+import { normalizeSettlementCalendars } from './normalize-mnb-settlement-calendar.ts'
 import { normalizeRetailInterestEnvelope } from './normalize-retail-interest.ts'
 import {
   fetchFailedCalendarDays,
@@ -52,7 +59,8 @@ import {
   type PriceCalendarFile,
   type RetailInterestFile,
   type SaleWindow,
-  type SeriesRecord
+  type SeriesRecord,
+  type SettlementCalendarFile
 } from './types.ts'
 import { validateMarketTree } from './validate.ts'
 import { WEBKINCSTAR_REPORTS, type WebkincstarReportName } from './webkincstar-reports.ts'
@@ -115,6 +123,19 @@ export interface IngestOptions {
   /** Skip only BUBOR fetch/merge (keep previous refs). */
   skipBubor?: boolean
   /**
+   * Offline directory with hub.html + yearly XLSX files (ADR 0046 tests).
+   * When omitted with fixture ÁKK / skip, previous settlement-calendar refs are kept.
+   * Live runs always fetch the MNB hub + XLSX (hard-fail).
+   */
+  settlementCalendarDir?: string
+  /**
+   * Explicit year list for settlement-calendar fetch (tests). Defaults to
+   * Europe/Budapest current ± 1 plus years already on tip.
+   */
+  settlementCalendarYears?: number[]
+  /** Skip only settlement-calendar fetch/merge (keep previous refs). */
+  skipSettlementCalendar?: boolean
+  /**
    * Europe/Budapest YYYY-MM-DD for WebKincstár PDFs. Defaults to yesterday.
    */
   webkincstarDatum?: string
@@ -156,6 +177,7 @@ export interface IngestReport extends MergeResult {
   retailInterestSoftFailed: boolean
   inflationUpdated: boolean
   buborUpdated: boolean
+  settlementCalendarUpdated: boolean
   webkincstarUpdated: boolean
   /** True when WebKincstár soft-failed and calendar recorded fetch_failed. */
   webkincstarSoftFailed: boolean
@@ -327,6 +349,57 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
 
   const combined = combineSnapshots(akkSnapshot, allampapirSnapshot)
   const previous = await loadMarketTree(options.previousRoot ?? options.root)
+
+  /** undefined = keep previous; file = year-replace merge (ADR 0046). */
+  let settlementCalendarUpdate: SettlementCalendarFile | undefined
+  if (!options.skipSettlementCalendar) {
+    const tipYears = previous.settlementCalendar?.years.map((y) => y.year) ?? []
+    const currentYear = Number(budapestTodayIso().slice(0, 4))
+    const years =
+      options.settlementCalendarYears ??
+      [...new Set([currentYear - 1, currentYear, currentYear + 1, ...tipYears])].sort(
+        (a, b) => a - b
+      )
+
+    if (options.settlementCalendarDir) {
+      const hubHtml = await readFile(
+        path.join(options.settlementCalendarDir, 'hub.html'),
+        'utf8'
+      )
+      const xlsxByFileName: Record<string, Uint8Array> = {}
+      const discovered = discoverSettlementCalendarFiles(hubHtml)
+      for (const year of years) {
+        const pick = pickLatestSettlementCalendarFile(discovered, year)
+        if (!pick) continue
+        const bytes = new Uint8Array(
+          await readFile(path.join(options.settlementCalendarDir, pick.fileName))
+        )
+        xlsxByFileName[pick.fileName] = bytes
+      }
+      const fetched = await fetchMnbSettlementCalendars({
+        rawDir: path.join(options.rawDir, 'mnb-settlement'),
+        years,
+        hubHtml,
+        xlsxByFileName,
+        fetchImpl: options.fetchImpl
+      })
+      settlementCalendarUpdate = normalizeSettlementCalendars(fetched.fetched, {
+        generatedAt,
+        hubUrl: fetched.hubUrl
+      })
+    } else if (!offlineAkk) {
+      // Live / non-fixture runs: hard-fail on MNB hub/XLSX fetch or normalize.
+      const fetched = await fetchMnbSettlementCalendars({
+        rawDir: path.join(options.rawDir, 'mnb-settlement'),
+        years,
+        fetchImpl: options.fetchImpl
+      })
+      settlementCalendarUpdate = normalizeSettlementCalendars(fetched.fetched, {
+        generatedAt,
+        hubUrl: fetched.hubUrl
+      })
+    }
+  }
 
   // Empty successful live retailInterest is treated like soft-fail: keep previous coupons
   // unless this is an intentional full wipe (previous also had no coupons / no retail).
@@ -648,6 +721,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   if (buborUpdate !== undefined) {
     mergeOptions.bubor = buborUpdate
   }
+  if (settlementCalendarUpdate !== undefined) {
+    mergeOptions.settlementCalendar = settlementCalendarUpdate
+  }
   if (priceCalendarUpdate !== undefined) {
     mergeOptions.priceCalendar = priceCalendarUpdate
   }
@@ -678,6 +754,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     retailInterestSoftFailed,
     inflationUpdated: inflationUpdate !== undefined,
     buborUpdated: buborUpdate !== undefined,
+    settlementCalendarUpdated: settlementCalendarUpdate !== undefined,
     webkincstarUpdated: priceCalendarUpdate !== undefined,
     webkincstarSoftFailed,
     offeringsUpdated,

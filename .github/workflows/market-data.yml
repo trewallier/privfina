@@ -1,11 +1,14 @@
-# Scheduled ÁKK + allampapir.hu + KSH inflation + MNB BUBOR + WebKincstár daily price PDFs
-# + ÁKK public-offering capture → compact data/market/v2 on the market-data branch
-# (ADR 0034 / 0035 / 0036 / 0037 / 0039 / 0041 / 0045 / ROADMAP §6b–§6e / §6h / §6k / §6o).
+# Scheduled ÁKK + allampapir.hu + KSH inflation + MNB BUBOR + MNB settlement calendar
+# + WebKincstár daily price PDFs + ÁKK public-offering capture → compact data/market/v2
+# on the market-data branch
+# (ADR 0034 / 0035 / 0036 / 0037 / 0039 / 0041 / 0045 / 0046 /
+#  ROADMAP §6b–§6e / §6h / §6k / §6o / §6p).
 #
 # Security split:
 # - ingest: contents:read; contacts ÁKK + allampapir.hu (prices + retailInterest kamatok
-#   + offering PDF fallback) + KSH STADAT ara0040 CSV + MNB bubor2.xls + WebKincstár
-#   report-service PDFs + ÁKK getPublicOfferings (+ documents.akk.hu PDFs, ≤10/family);
+#   + offering PDF fallback) + KSH STADAT ara0040 CSV + MNB bubor2.xls
+#   + MNB elszámolásforgalmi XLSX + WebKincstár report-service PDFs
+#   + ÁKK getPublicOfferings (+ documents.akk.hu PDFs, ≤10/family);
 #   Poppler pdftotext; never holds a write token
 # - push: GitHub App installation token only (not GITHUB_TOKEN) for market-data checkout/push;
 #   does not call ÁKK, allampapir.hu, ksh.hu, mnb.hu, WebKincstár, or documents.akk.hu
@@ -16,8 +19,8 @@ permissions: {}
 
 on:
   schedule:
-    # Daily: securities quotes + KSH inflation + MNB BUBOR + WebKincstár prices + offerings
-    # (write only when digests change).
+    # Daily: securities quotes + KSH inflation + MNB BUBOR + settlement calendar
+    # + WebKincstár prices + offerings (write only when digests change).
     - cron: "30 17 * * *"
   workflow_dispatch:
     inputs:

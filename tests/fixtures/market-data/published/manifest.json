@@ -18,12 +18,14 @@
     }
   },
   "refs": {
-    "priceCalendar": "refs/price-calendar.json"
+    "priceCalendar": "refs/price-calendar.json",
+    "settlementCalendar": "refs/settlement-calendar.json"
   },
   "digests": {
     "families/dkj/series.json": "fixture",
     "families/dkj/latest.json": "fixture",
     "families/dkj/coupons/D261223.json": "fixture",
-    "refs/price-calendar.json": "fixture"
+    "refs/price-calendar.json": "fixture",
+    "refs/settlement-calendar.json": "fixture"
   }
 }

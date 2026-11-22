@@ -1,6 +1,6 @@
-# Market-data tooling (ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039 / 0041 / 0042 / 0044 / 0045 / ROADMAP §6b–§6h / §6k / §6n / §6o / §6j MÁK ingest)
+# Market-data tooling (ADR 0034 / 0035 / 0036 / 0037 / 0038 / 0039 / 0041 / 0042 / 0044 / 0045 / 0046 / ROADMAP §6b–§6h / §6k / §6n / §6o / §6p / §6j MÁK ingest)
 
-Normalize and publish compact government-security market JSON under `data/market/v2/` from **ÁKK** (catalog + network rates + **public offerings**), **allampapir.hu** (CSRF retail **prices** + Lakossági kamatok **retail interest** → per-series coupons; offering PDF fallback), **KSH** STADAT ara0040 (**inflation** Összesen), **MNB** `bubor2.xls` (**BUBOR** fixings), and **WebKincstár** daily price PDFs (Kincstári árfolyamjegyzés → quotes + **price calendar**), combined in one ingest.
+Normalize and publish compact government-security market JSON under `data/market/v2/` from **ÁKK** (catalog + network rates + **public offerings**), **allampapir.hu** (CSRF retail **prices** + Lakossági kamatok **retail interest** → per-series coupons; offering PDF fallback), **KSH** STADAT ara0040 (**inflation** Összesen), **MNB** `bubor2.xls` (**BUBOR** fixings) + elszámolásforgalmi XLSX (**settlement calendar**), and **WebKincstár** daily price PDFs (Kincstári árfolyamjegyzés → quotes + **price calendar**), combined in one ingest.
 
 ## Commands
 
@@ -15,7 +15,8 @@ npm run market-data:ingest -- --root /tmp/out \
   --allampapir-dir tests/fixtures/market-data/allampapir \
   --retail-interest tests/fixtures/market-data/retail-interest/get_all_data.json \
   --inflation-csv tests/fixtures/market-data/inflation/ara0040-sample.csv \
-  --bubor-xls tests/fixtures/market-data/bubor/bubor-sample.xls
+  --bubor-xls tests/fixtures/market-data/bubor/bubor-sample.xls \
+  --settlement-calendar-dir tests/fixtures/market-data/settlement-calendar
 
 # Skip WebKincstár PDF fetch (keep previous price calendar / quotes from that source)
 npm run market-data:ingest -- --root /tmp/out --skip-webkincstar …
@@ -51,12 +52,13 @@ Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). 
 - **Retail interest**: same job `POST /api/retailInterest/get_all_data` (reuses price-fetch CSRF). Soft-fail on retailInterest errors: keep previous coupons/offered, still publish prices. **Do not** use the kamatok XLSX download as production source.
 - **Inflation (ADR 0037)**: KSH `ara0040.csv` → `refs/inflation.json` (Összesen only). Append-first; historical conflicts fail ingest. Fetch retries log each attempt with `httpStatus=…` or `httpResponse=none` plus undici `cause` (transport failures previously collapsed to bare `fetch failed`).
 - **BUBOR (ADR 0045 / ROADMAP §6o)**: MNB `bubor2.xls` → `refs/bubor.json` (canonical tenors `ON`…`12M`; sparse daily rows). First tip without the file publishes **full** workbook history; later runs append-first and hard-fail on fixing revisions. SheetJS CE (`xlsx@0.20.3` from the official CDN tarball in `devDependencies`, not npm `0.18.5`) parses `.xls` (no CSV alternative; Actions/tooling-only). Raw XLS never committed. Browser must not call `mnb.hu`; FLOAT coupon / SPA autofill stay out of scope (ADR 0044).
+- **Settlement calendar (ADR 0046 / ROADMAP §6p)**: MNB elszámolásforgalmi XLSX hub → `refs/settlement-calendar.json` (`HU-VIBER`; per-year `closed[]` weekday `M` + `open[]` weekend `E`). Discover yearly files from the hub page; pick latest revision per year (dated filename preferred). Years of interest = Europe/Budapest current ± 1 plus years already on tip. **Year-replace** when the chosen file digest changes (mid-year corrections allowed — unlike BUBOR). Hard-fail hub/fetch/normalize. Raw XLSX never committed. Browser must not call `mnb.hu`; FLOAT reset / coupon roll / salary autofill stay out of scope.
 - **Families**: required `dkj` | `pmap` | `bmap`; optional `fixmap` | `ktv` | `mapp` | `baba` | `emap` | `omap` | `ktj` | `map2`.
 - **Accumulating `series.json`**: never drop an id with quote history; status is `active` | `matured` | `delisted`.
 - **Same-day quotes**: identical `(id, settleDate)` → skip. Different values → fail for ÁKK-only merges; **rewrite** when dual-source or WebKincstár overlay (`allowSameDayRewrite`).
 
 ## Workflow security
 
-- **ingest** job (`ubuntu-26.04`): `contents: read`; ÁKK + allampapir prices + retailInterest + KSH ara0040 + WebKincstár PDFs + ÁKK `getPublicOfferings` / offering PDFs (pinned Poppler on this job only); artifact when digests change. Runtime installs: `npm ci` (lockfile + setup-node npm cache) and hash-verified Poppler debs (HTTPS URLs in `poppler.manifest` + Actions cache; corrupt cache → one re-download then fail closed).
+- **ingest** job (`ubuntu-26.04`): `contents: read`; ÁKK + allampapir prices + retailInterest + KSH ara0040 + MNB bubor2.xls + MNB elszámolásforgalmi XLSX + WebKincstár PDFs + ÁKK `getPublicOfferings` / offering PDFs (pinned Poppler on this job only); artifact when digests change. Runtime installs: `npm ci` (lockfile + setup-node npm cache) and hash-verified Poppler debs (HTTPS URLs in `poppler.manifest` + Actions cache; corrupt cache → one re-download then fail closed).
 - **push** job (`ubuntu-26.04`): requires non-empty `vars.MARKET_DATA_APP_CLIENT_ID`; GitHub App installation token via **`client-id`** + private key secret; bot user id + `app-slug` for committer identity; `validate-tree` before commit; clears HTTPS auth extraheader after push; does not call external market hosts (including WebKincstár / akk.hu / documents.akk.hu).
 - CLI steps use `./node_modules/.bin/tsx` after `npm ci` (not floating `npx` fetches). `install-poppler.sh` supports `POPPLER_SKIP_INSTALL=1` for Vitest dry-run / hash recovery coverage.

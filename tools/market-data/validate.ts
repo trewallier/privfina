@@ -3,7 +3,8 @@ import {
   digestCanonical,
   digestInflation,
   digestOfferingArchive,
-  digestPriceCalendar
+  digestPriceCalendar,
+  digestSettlementCalendar
 } from './digests.ts'
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
@@ -18,6 +19,7 @@ import {
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
+  SETTLEMENT_CALENDAR_REF_PATH,
   type BuborTenor,
   type FamilyCode,
   type InflationSeriesKey,
@@ -172,6 +174,14 @@ export function validateMarketTree(tree: MarketTreeState): void {
   } else if (tree.manifest.refs?.bubor || tree.manifest.digests[BUBOR_REF_PATH]) {
     throw new ValidateError('manifest references bubor but file is missing')
   }
+  if (tree.settlementCalendar) {
+    validateSettlementCalendar(tree)
+  } else if (
+    tree.manifest.refs?.settlementCalendar ||
+    tree.manifest.digests[SETTLEMENT_CALENDAR_REF_PATH]
+  ) {
+    throw new ValidateError('manifest references settlementCalendar but file is missing')
+  }
   if (tree.priceCalendar) {
     validatePriceCalendar(tree)
   } else if (
@@ -317,6 +327,91 @@ function validateBubor(tree: MarketTreeState): void {
   }
 }
 
+function validateSettlementCalendar(tree: MarketTreeState): void {
+  const file = tree.settlementCalendar
+  if (!file) return
+  if (file.schemaVersion !== SCHEMA_VERSION) {
+    throw new ValidateError(`settlementCalendar schemaVersion must be ${SCHEMA_VERSION}`)
+  }
+  if (file.calendarId !== 'HU-VIBER') {
+    throw new ValidateError('settlementCalendar.calendarId must be HU-VIBER')
+  }
+  if (file.timezone !== 'Europe/Budapest') {
+    throw new ValidateError('settlementCalendar.timezone must be Europe/Budapest')
+  }
+  if (!file.source || file.source.id !== 'mnb-elszamolasforgalmi-naptar') {
+    throw new ValidateError('settlementCalendar.source.id must be mnb-elszamolasforgalmi-naptar')
+  }
+  if (!file.source.disclaimer || !file.source.disclaimer.trim()) {
+    throw new ValidateError('settlementCalendar.source.disclaimer is required')
+  }
+  if (!Array.isArray(file.years)) {
+    throw new ValidateError('settlementCalendar.years must be an array')
+  }
+  let prevYear: number | null = null
+  const seenYears = new Set<number>()
+  for (const block of file.years) {
+    if (!block || typeof block.year !== 'number' || !Number.isInteger(block.year)) {
+      throw new ValidateError('settlementCalendar year blocks require integer year')
+    }
+    if (seenYears.has(block.year)) {
+      throw new ValidateError(`Duplicate settlementCalendar year ${block.year}`)
+    }
+    seenYears.add(block.year)
+    if (prevYear !== null && block.year <= prevYear) {
+      throw new ValidateError(
+        `Non-ascending settlementCalendar years: ${prevYear} then ${block.year}`
+      )
+    }
+    prevYear = block.year
+    if (typeof block.sourceFile !== 'string' || !block.sourceFile.trim()) {
+      throw new ValidateError(`settlementCalendar ${block.year}: sourceFile required`)
+    }
+    if (typeof block.sourceDigest !== 'string' || !/^[a-f0-9]{64}$/.test(block.sourceDigest)) {
+      throw new ValidateError(`settlementCalendar ${block.year}: sourceDigest must be sha256 hex`)
+    }
+    validateIsoDateList(block.closed, `settlementCalendar ${block.year} closed`)
+    validateIsoDateList(block.open, `settlementCalendar ${block.year} open`)
+    for (const d of block.closed) {
+      if (!d.startsWith(`${block.year}-`)) {
+        throw new ValidateError(`closed date ${d} not in year ${block.year}`)
+      }
+    }
+    for (const d of block.open) {
+      if (!d.startsWith(`${block.year}-`)) {
+        throw new ValidateError(`open date ${d} not in year ${block.year}`)
+      }
+    }
+  }
+  const refPath = tree.manifest?.refs?.settlementCalendar
+  if (refPath && refPath !== SETTLEMENT_CALENDAR_REF_PATH) {
+    throw new ValidateError(
+      `manifest.refs.settlementCalendar must be ${SETTLEMENT_CALENDAR_REF_PATH}, got ${refPath}`
+    )
+  }
+}
+
+function validateIsoDateList(list: unknown, label: string): void {
+  if (!Array.isArray(list)) {
+    throw new ValidateError(`${label} must be an array`)
+  }
+  let prev: string | null = null
+  const seen = new Set<string>()
+  for (const d of list) {
+    if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      throw new ValidateError(`Bad ${label} date: ${String(d)}`)
+    }
+    if (seen.has(d)) {
+      throw new ValidateError(`Duplicate ${label} date: ${d}`)
+    }
+    seen.add(d)
+    if (prev !== null && d <= prev) {
+      throw new ValidateError(`Non-ascending ${label} dates: ${prev} then ${d}`)
+    }
+    prev = d
+  }
+}
+
 function validatePriceCalendar(tree: MarketTreeState): void {
   const file = tree.priceCalendar
   if (!file) return
@@ -446,6 +541,9 @@ export function computeTreeDigests(tree: MarketTreeState): Record<string, string
   }
   if (tree.bubor) {
     digests[BUBOR_REF_PATH] = digestBubor(tree.bubor)
+  }
+  if (tree.settlementCalendar) {
+    digests[SETTLEMENT_CALENDAR_REF_PATH] = digestSettlementCalendar(tree.settlementCalendar)
   }
   if (tree.priceCalendar) {
     digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)

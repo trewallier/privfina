@@ -20,6 +20,9 @@ export interface CiIngestOptions {
   buborXlsPath?: string
   buborXlsBytes?: Uint8Array
   skipBubor?: boolean
+  settlementCalendarDir?: string
+  settlementCalendarYears?: number[]
+  skipSettlementCalendar?: boolean
   webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
   webkincstarDatum?: string
   skipWebkincstar?: boolean
@@ -63,6 +66,9 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     buborXlsPath: options.buborXlsPath,
     buborXlsBytes: options.buborXlsBytes,
     skipBubor: options.skipBubor,
+    settlementCalendarDir: options.settlementCalendarDir,
+    settlementCalendarYears: options.settlementCalendarYears,
+    skipSettlementCalendar: options.skipSettlementCalendar,
     webkincstarTextByReport: options.webkincstarTextByReport,
     webkincstarDatum: options.webkincstarDatum,
     skipWebkincstar: options.skipWebkincstar,

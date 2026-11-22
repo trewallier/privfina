@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "calendarId": "HU-VIBER",
+  "timezone": "Europe/Budapest",
+  "generatedAt": "2026-11-22T12:00:00.000Z",
+  "source": {
+    "id": "mnb-elszamolasforgalmi-naptar",
+    "host": "mnb.hu",
+    "hubUrl": "https://www.mnb.hu/penzforgalom/a-hazai-penzforgalmi-infrastruktura/elszamolasforgalmi-rendszerek-nyitvatartasi-naptara",
+    "disclaimer": "Informational republish of the MNB elszámolásforgalmi nyitvatartási naptár (VIBER/BKR settlement days); may lag mid-year revisions; not a labor-law calendar and not investment advice.",
+    "files": [
+      {
+        "year": 2026,
+        "fileName": "2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx",
+        "url": "https://www.mnb.hu/letoltes/2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx",
+        "contentDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  },
+  "years": [
+    {
+      "year": 2026,
+      "sourceFile": "2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx",
+      "sourceDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "closed": ["2026-01-01", "2026-01-02", "2026-12-24"],
+      "open": ["2026-01-10"]
+    }
+  ]
+}

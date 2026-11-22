@@ -123,7 +123,7 @@ export interface ManifestFamilyPaths {
   latest: string
 }
 
-/** Path hints for additive refs files (ADR 0037 inflation; ADR 0045 BUBOR; ADR 0039 price calendar; ADR 0041 offering archive; deferred DKJ-base). */
+/** Path hints for additive refs files (ADR 0037 inflation; ADR 0045 BUBOR; ADR 0046 settlement calendar; ADR 0039 price calendar; ADR 0041 offering archive; deferred DKJ-base). */
 export interface ManifestRefsPaths {
   /**
    * @deprecated Schema v2 does not publish flat retail-interest; optional only for
@@ -133,6 +133,8 @@ export interface ManifestRefsPaths {
   inflation?: string
   /** MNB BUBOR fixings (ADR 0045). */
   bubor?: string
+  /** MNB HU-VIBER settlement calendar exceptions (ADR 0046). */
+  settlementCalendar?: string
   /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
   priceCalendar?: string
   /** ÁKK public-offering document ledger (ADR 0041). */
@@ -293,6 +295,52 @@ export interface BuborFile {
 /** Published path for BUBOR refs (ADR 0045). */
 export const BUBOR_REF_PATH = 'refs/bubor.json' as const
 
+/** Published path for MNB settlement calendar refs (ADR 0046). */
+export const SETTLEMENT_CALENDAR_REF_PATH = 'refs/settlement-calendar.json' as const
+
+export interface SettlementCalendarFileMeta {
+  year: number
+  fileName: string
+  url: string
+  contentDigest: string
+}
+
+export interface SettlementCalendarSourceMeta {
+  id: 'mnb-elszamolasforgalmi-naptar'
+  host: 'mnb.hu'
+  hubUrl: string
+  disclaimer: string
+  files: SettlementCalendarFileMeta[]
+}
+
+/**
+ * One calendar year of Mon–Fri exceptions from an MNB XLSX grid (ADR 0046).
+ * `closed` = weekday settlement holidays (`M`); `open` = weekend settlement days (`E`).
+ */
+export interface SettlementCalendarYearBlock {
+  year: number
+  sourceFile: string
+  sourceDigest: string
+  closed: string[]
+  open: string[]
+}
+
+/**
+ * Published MNB HU-VIBER settlement calendar (ADR 0046).
+ * Engine rolling uses `closed` + `open` relative to a Mon–Fri default.
+ */
+export interface SettlementCalendarFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  calendarId: 'HU-VIBER'
+  timezone: 'Europe/Budapest'
+  generatedAt: string
+  source: SettlementCalendarSourceMeta
+  years: SettlementCalendarYearBlock[]
+}
+
+export const MNB_SETTLEMENT_CALENDAR_DISCLAIMER =
+  'Informational republish of the MNB elszámolásforgalmi nyitvatartási naptár (VIBER/BKR settlement days); may lag mid-year revisions; not a labor-law calendar and not investment advice.' as const
+
 /** Published path for WebKincstár price calendar (ADR 0039). */
 export const PRICE_CALENDAR_REF_PATH = 'refs/price-calendar.json' as const
 
@@ -411,6 +459,10 @@ export const KSH_ARA0040_CSV_URL =
 export const MNB_BUBOR_PAGE_URL =
   'https://www.mnb.hu/monetaris-politika/penzpiaci-informaciok/referenciamutato-jegyzesi-bizottsag/bubor' as const
 export const MNB_BUBOR_XLS_URL = 'https://www.mnb.hu/letoltes/bubor2.xls' as const
+
+export const MNB_SETTLEMENT_CALENDAR_HUB_URL =
+  'https://www.mnb.hu/penzforgalom/a-hazai-penzforgalmi-infrastruktura/elszamolasforgalmi-rendszerek-nyitvatartasi-naptara' as const
+export const MNB_LETOLTES_BASE_URL = 'https://www.mnb.hu/letoltes' as const
 
 /** Loose ÁKK row (catalog or network rates). */
 export type AkkRow = Record<string, unknown>

@@ -388,6 +388,21 @@ describe('browser recurrence validation helpers', () => {
     expect(rollBusinessDay('2026-01-31', 'modified-following')).toBe('2026-01-30')
   })
 
+  it('honors BusinessCalendar open weekends and closed weekdays (ADR 0046)', () => {
+    const calendar = {
+      closed: ['2026-01-02'],
+      open: ['2026-01-10']
+    }
+    // Friday holiday → preceding Thursday
+    expect(rollBusinessDay('2026-01-02', 'preceding', calendar)).toBe('2026-01-01')
+    // Relocated Saturday is a business day (preceding stays)
+    expect(rollBusinessDay('2026-01-10', 'preceding', calendar)).toBe('2026-01-10')
+    // Sunday preceding lands on open Saturday, not Friday
+    expect(rollBusinessDay('2026-01-11', 'preceding', calendar)).toBe('2026-01-10')
+    // Ordinary Saturday (no open) still rolls preceding to Friday
+    expect(rollBusinessDay('2026-01-17', 'preceding', calendar)).toBe('2026-01-16')
+  })
+
   it('builds salary instrument bundle with custom monthly rule', () => {
     const bundle = generateSalaryInstrumentBundle({
       label: 'Main salary',

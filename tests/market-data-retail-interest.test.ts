@@ -508,6 +508,27 @@ describe('retail interest join → coupons + merge', () => {
           headers: { 'content-type': 'application/vnd.ms-excel' }
         })
       }
+      if (url.includes('elszamolasforgalmi-rendszerek-nyitvatartasi-naptara')) {
+        const hub = readFileSync(
+          path.join(fixtureRoot, 'settlement-calendar/hub.html'),
+          'utf8'
+        )
+        return new Response(hub, {
+          status: 200,
+          headers: { 'content-type': 'text/html; charset=utf-8' }
+        })
+      }
+      if (url.includes('elszamolasforgalmi-naptar') && url.endsWith('.xlsx')) {
+        const fileName = url.split('/').pop()!
+        const xlsx = readFileSync(path.join(fixtureRoot, 'settlement-calendar', fileName))
+        return new Response(xlsx, {
+          status: 200,
+          headers: {
+            'content-type':
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          }
+        })
+      }
       return new Response('nope', { status: 404 })
     }
 

@@ -1,0 +1,293 @@
+/**
+ * MÁK / `ktv` calculation primitives (ADR 0017 / 0038 / 0044 / ROADMAP §6j).
+ *
+ * Babakötvény-style first-period payable stub on published ga under ACT/365F
+ * (Actual/365): stub = round(ga × days/365, 0.01%). Accrue on ga — never treat
+ * the stub as a FixMÁP covering annual band. ADR 0044 ingest ACT/360-when-null
+ * is quote fallback only, not product math for the 2037/A witness.
+ * No productCode forks.
+ */
+
+import { formatIsoDate, parseIsoDate } from '../date_utils'
+import { createCashFlow, sortCashFlowsByDate } from './common'
+import {
+  accrueInterestAmount,
+  calendarDaysBetweenIso,
+  dayCountDenominator,
+  normalizeDayCountConvention,
+  resolveCoveringCouponPeriod,
+  resolveCouponRatePct,
+  type CouponSchedulePeriod,
+  type DayCountConvention
+} from './day_count'
+import { CashFlowDirection } from '../models'
+import type { CashFlow } from '../models'
+
+const MAX_COUPON_STEPS = 240
+/** Product default for MÁK 2037/A witness (Actual/365). */
+export const KTV_DEFAULT_DAY_COUNT: DayCountConvention = 'ACT/365F'
+
+export type KtvRateOutputs = {
+  annualCouponRatePct: number
+}
+
+export type KtvSpecInputs = {
+  principal: number
+  annualCouponRatePct: number
+  purchaseDate: string
+  issueDate: string
+  maturityDate: string
+  firstCouponDate?: string
+  dayCountConvention?: DayCountConvention | string
+  couponSchedule?: CouponSchedulePeriod[]
+}
+
+function addYearsUtc(date: Date, years: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear() + years, date.getUTCMonth(), date.getUTCDate()))
+}
+
+function ensureFiniteNumber(value: number, label: string): number {
+  if (!Number.isFinite(value)) {
+    throw new Error(`${label} must be a finite number.`)
+  }
+  return value
+}
+
+function ensureNonNegativeNumber(value: number, label: string): number {
+  const normalized = ensureFiniteNumber(value, label)
+  if (normalized < 0) {
+    throw new Error(`${label} must be a non-negative finite number.`)
+  }
+  return normalized
+}
+
+function requireIso(value: string | undefined, label: string): string {
+  const iso = String(value || '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    throw new Error(`${label} must be an ISO date.`)
+  }
+  return iso
+}
+
+/** Round rate percent to 0.01 (ajánlattétel kerekítés). */
+export function roundKtvCouponRatePctToHundredth(ratePct: number): number {
+  return Math.round(ensureFiniteNumber(ratePct, 'ratePct') * 100) / 100
+}
+
+function resolveKtvDayCount(value: string | null | undefined): DayCountConvention {
+  const raw = String(value || '').trim()
+  if (!raw) return KTV_DEFAULT_DAY_COUNT
+  return normalizeDayCountConvention(raw)
+}
+
+function resolveFirstCouponDateIso(specInputs: KtvSpecInputs): string {
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const firstCouponDateIso =
+    typeof specInputs.firstCouponDate === 'string' ? String(specInputs.firstCouponDate).trim() : ''
+  if (firstCouponDateIso) return requireIso(firstCouponDateIso, 'firstCouponDate')
+  return formatIsoDate(addYearsUtc(parseIsoDate(issueDateIso), 1))
+}
+
+/**
+ * Irregular first-period payable stub (2037/A: 6.25% × 217/365 = 3.72%).
+ * gp = round(ga × (firstCoupon − issue) / denom, 0.01%) with ACT/365F denom 365.
+ */
+export function ktvFirstPeriodRatePct(args: {
+  annualRatePct: number
+  issueDate: string
+  firstCouponDate: string
+  dayCountConvention?: DayCountConvention | string
+}): number {
+  const ga = ensureNonNegativeNumber(args.annualRatePct, 'annualCouponRatePct')
+  const issueDateIso = requireIso(args.issueDate, 'issueDate')
+  const firstCouponDateIso = requireIso(args.firstCouponDate, 'firstCouponDate')
+  const convention = resolveKtvDayCount(args.dayCountConvention)
+  const numer = calendarDaysBetweenIso(issueDateIso, firstCouponDateIso)
+  const denom = dayCountDenominator(convention)
+  if (denom <= 0 || numer <= 0) return roundKtvCouponRatePctToHundredth(ga)
+  return roundKtvCouponRatePctToHundredth((ga * numer) / denom)
+}
+
+export function deriveKtvRateOutputs(
+  specInputs: Pick<
+    KtvSpecInputs,
+    'annualCouponRatePct' | 'couponSchedule' | 'purchaseDate' | 'issueDate'
+  >
+): KtvRateOutputs {
+  const purchaseDate = String(specInputs.purchaseDate || specInputs.issueDate || '').trim()
+  const fallback = ensureNonNegativeNumber(
+    Number(specInputs.annualCouponRatePct),
+    'annualCouponRatePct'
+  )
+  // Keep published ga; schedule covering is for later stepped bands, not the stub.
+  const annualCouponRatePct = resolveCouponRatePct(
+    specInputs.couponSchedule,
+    purchaseDate || String(specInputs.issueDate || ''),
+    fallback
+  )
+  return { annualCouponRatePct }
+}
+
+/** Last coupon payment ISO on/before purchase, else issueDate. */
+export function resolveKtvAccrualStartIso(
+  specInputs: Pick<KtvSpecInputs, 'purchaseDate' | 'issueDate' | 'firstCouponDate'>
+): string {
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const firstCouponDateIso = resolveFirstCouponDateIso(specInputs as KtvSpecInputs)
+
+  let couponDate = parseIsoDate(firstCouponDateIso)
+  let accrualStartIso = issueDateIso
+  for (let step = 0; step < MAX_COUPON_STEPS; step += 1) {
+    const couponIso = formatIsoDate(couponDate)
+    if (couponIso > purchaseDateIso) break
+    accrualStartIso = couponIso
+    couponDate = addYearsUtc(couponDate, 1)
+  }
+  return accrualStartIso
+}
+
+export function listKtvPaymentDatesIso(
+  specInputs: Pick<KtvSpecInputs, 'issueDate' | 'maturityDate' | 'firstCouponDate'>
+): string[] {
+  const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
+  const firstCouponDateIso = resolveFirstCouponDateIso(specInputs as KtvSpecInputs)
+  const maturityDate = parseIsoDate(maturityDateIso)
+  const dates: string[] = []
+  let couponDate = parseIsoDate(firstCouponDateIso)
+  for (let step = 0; step < MAX_COUPON_STEPS; step += 1) {
+    if (couponDate.getTime() > maturityDate.getTime()) break
+    dates.push(formatIsoDate(couponDate))
+    couponDate = addYearsUtc(couponDate, 1)
+  }
+  return dates
+}
+
+/**
+ * Accrued interest on published ga under ACT/365F (default).
+ * Does not accrue at the payable first-period stub rate.
+ */
+export function deriveKtvAccruedInterestAmount(
+  specInputs: Pick<
+    KtvSpecInputs,
+    | 'principal'
+    | 'purchaseDate'
+    | 'issueDate'
+    | 'firstCouponDate'
+    | 'dayCountConvention'
+    | 'annualCouponRatePct'
+    | 'couponSchedule'
+  >,
+  annualCouponRatePct?: number
+): number {
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const accrualStartIso = resolveKtvAccrualStartIso(specInputs)
+  if (purchaseDateIso < accrualStartIso) {
+    throw new Error('purchaseDate must be on or after accrual start (prior coupon or issueDate).')
+  }
+  const rate =
+    annualCouponRatePct != null
+      ? ensureNonNegativeNumber(annualCouponRatePct, 'annualCouponRatePct')
+      : deriveKtvRateOutputs(specInputs).annualCouponRatePct
+  const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
+  return accrueInterestAmount({
+    principal,
+    annualRatePct: rate,
+    fromIso: accrualStartIso,
+    toIso: purchaseDateIso,
+    dayCount: resolveKtvDayCount(specInputs.dayCountConvention)
+  })
+}
+
+function periodRatePctForPayment(args: {
+  paymentIso: string
+  isFirstPayment: boolean
+  annualRatePct: number
+  issueDateIso: string
+  firstCouponDateIso: string
+  dayCountConvention?: DayCountConvention | string
+  schedule: CouponSchedulePeriod[]
+  scheduleActive: boolean
+  fallbackAnnualRatePct: number
+}): number | null {
+  const covering = resolveCoveringCouponPeriod(args.schedule, args.paymentIso)
+  if (args.scheduleActive) {
+    if (!covering || covering.rate == null || !Number.isFinite(Number(covering.rate))) {
+      // Still allow deriving the first-period stub from ga when schedule omits it.
+      if (!args.isFirstPayment) return null
+    }
+  }
+
+  const ga =
+    covering && covering.rate != null && Number.isFinite(Number(covering.rate)) && !args.isFirstPayment
+      ? Number(covering.rate)
+      : args.fallbackAnnualRatePct
+
+  if (args.isFirstPayment) {
+    return ktvFirstPeriodRatePct({
+      annualRatePct: args.fallbackAnnualRatePct,
+      issueDate: args.issueDateIso,
+      firstCouponDate: args.firstCouponDateIso,
+      dayCountConvention: args.dayCountConvention
+    })
+  }
+  return ensureNonNegativeNumber(ga, 'annualCouponRatePct')
+}
+
+/**
+ * Customer cash flows: purchase outflow; annual HUF coupon inflows; principal at maturity.
+ * First cash uses payable stub from ga × days/365; later coupons use ga (or schedule bands).
+ */
+export function generateKtvAnnualCouponFlows(
+  specInputs: KtvSpecInputs,
+  purchaseAmount: number,
+  annualCouponRatePct: number,
+  description = 'MÁK'
+): CashFlow[] {
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const firstCouponDateIso = resolveFirstCouponDateIso(specInputs)
+  const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
+  const schedule = Array.isArray(specInputs.couponSchedule) ? specInputs.couponSchedule : []
+  const scheduleActive = schedule.length > 0
+  const fallbackAnnualRatePct = ensureNonNegativeNumber(annualCouponRatePct, 'annualCouponRatePct')
+
+  const flows: CashFlow[] = [
+    createCashFlow(
+      purchaseDateIso,
+      purchaseAmount,
+      CashFlowDirection.Outflow,
+      'investment',
+      description
+    )
+  ]
+
+  const paymentDates = listKtvPaymentDatesIso(specInputs)
+  for (let i = 0; i < paymentDates.length; i += 1) {
+    const paymentIso = paymentDates[i]
+    if (paymentIso < purchaseDateIso) continue
+    const gp = periodRatePctForPayment({
+      paymentIso,
+      isFirstPayment: paymentIso === firstCouponDateIso,
+      annualRatePct: fallbackAnnualRatePct,
+      issueDateIso,
+      firstCouponDateIso,
+      dayCountConvention: specInputs.dayCountConvention,
+      schedule,
+      scheduleActive,
+      fallbackAnnualRatePct
+    })
+    if (gp == null) continue
+    const couponAmount = (principal * gp) / 100
+    flows.push(
+      createCashFlow(paymentIso, couponAmount, CashFlowDirection.Inflow, 'investment', description)
+    )
+  }
+
+  flows.push(
+    createCashFlow(maturityDateIso, principal, CashFlowDirection.Inflow, 'investment', description)
+  )
+
+  return sortCashFlowsByDate(flows)
+}

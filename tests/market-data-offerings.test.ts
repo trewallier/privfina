@@ -803,24 +803,26 @@ describe('parseOfferingPdfText', () => {
     expect(parsed.paymentDates.at(-1)).toBe('2037-09-23')
     expect(parsed.paymentDates).toHaveLength(12)
     expect(parsed.paymentRates).toHaveLength(12)
-    // Same-row rates only; first period / orphan `%` lines stay null (no invent).
-    expect(parsed.paymentRates?.[0]).toBeNull()
+    // pdftotext -layout keeps first-period cash coupon rate on the same row as the date.
+    expect(parsed.paymentRates?.[0]).toBe(3.72)
     expect(parsed.paymentRates?.[1]).toBe(6.25)
     expect(parsed.paymentRates?.[2]).toBe(6.25)
   })
 
-  it('parses Green MÁK/KTV long annual table (2051/G)', async () => {
+  it('parses Green MÁK/KTV long annual table with layout-interleaved dates (2051/G)', async () => {
     const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')
     const text = await readFile(
       path.join(fixtures, 'offerings/pdf-text/ktv-mak-2051-g-green.txt'),
       'utf8'
     )
+    // Fixture is real `pdftotext -layout` (dates beside label between következő / napokon).
+    expect(text).toMatch(/következő[\s\S]{0,80}?2022\.\s*április[\s\S]{0,120}?napokon\s+és\s+mértékkel/i)
     const parsed = parseOfferingPdfText(text)
     expect(parsed.maturity).toBe('2051-04-28')
     expect(parsed.paymentDates[0]).toBe('2022-04-28')
     expect(parsed.paymentDates.at(-1)).toBe('2051-04-28')
     expect(parsed.paymentDates).toHaveLength(30)
-    expect(parsed.paymentRates).toHaveLength(30)
+    expect(parsed.paymentRates).toEqual(Array(30).fill(4))
   })
 
   it('FLOAT MÁK table yields paymentDates with null rates (never invent coupons)', async () => {

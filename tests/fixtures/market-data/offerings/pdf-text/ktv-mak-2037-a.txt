@@ -1,144 +1,116 @@
-NYILVÁNOS AJÁNLATTÉTEL  
-Magyar Államkötvények forgalomba hozataláról 
- 
-Általános információk és kibocsátói felhatalmazás 
- 
-A Magyar Államkötvény elnevezésű államkötvény (Államkötvény) forgalomba hozatalára a vonatkozó 
-jogszabályi felhatalmazás alapján és a Magyarország gazdasági stabilitásáról szóló 2011. évi CXCIV. 
-törvény szerint az államháztartásért felelős miniszter által elfogadott éves finanszírozási terv – a jelen 
-sorozatrészlet forgalomba hozatalakor a 2026. évi Finanszírozási Terv – keretében és abban kapott 
-felhatalmazás szerint az ÁKK. Zrt. Finanszírozási Bizottsága által meghozott határozat alapján kerül sor.  
-A Magyar Állam (Kibocsátó) a kötvényről szóló 285/2001 (XII. 26.) Korm. rendelet alapján és az éves 
-központi költségvetési törvény szerint Államkötvényt hoz forgalomba. 
-Az Államkötvényben a Kibocsátó arra vállal kötelezettséget, hogy az abban megjelölt névértéket és 
-annak a vásárlás időpontjában érvényes kamatfeltételek szerint járó kamatát, az értékpapír mindenkori 
-tulajdonosának, illetve birtokosának megfizeti. 
-Az Államkötvény névértékére és kamatára vonatkozó igény nem évül el. 
-Az Államkötvény kibocsátásából befolyó összeg a központi költségvetés hiányának részbeni 
-finanszírozására, valamint az államháztartás központi alrendszere adósságának megújítására szolgál. Az 
-Államkötvény által megtestesített adósság az államadósság részét képezi. 
- 
-1. A forgalomba hozatalra kerülő Államkötvények adatai  
-A Kibocsátó az alábbi Államkötvény-sorozat kiegészítéseként további sorozatrészletet hoz forgalomba 
-(rábocsátás). 
- 
-Elnevezés (egyben sorozatszám):  
- 
-Magyar Államkötvény 2037/A  
-ISIN-kód: 
- 
-HU0000407564  
-Kibocsátás napja: 
- 
-2026. február 18.  
-Lejárat napja: 
- 
-2037. szeptember 23.  
-Alapcímlet: 
- 
-10.000,- Ft, azaz Tízezer forint  
-Az előállítás módja: dematerializált értékpapír  
- 
- 
-2. A forgalomba hozatal feltételei 
- 
-Az Államkötvények forgalomba hozatala aukció útján történik.  
-  
- 
-Az aukció időpontja: 
- 
- 
-2026. november 19. 
-Az aukciós ajánlatok benyújtásának 
-határideje: 
- 
- 
-2026. november 19. 11.00 óráig 
-Aukció típusa: 
- 
-Aukciós értékesítésre meghirdetett 
-mennyiség: 
- 
-klasszikus aukció 
- 
-20.000.000.000,- Ft, azaz Húszmilliárd forint 
- 
-A rábocsátás és egyben teljesítés napja: 2026. november 25. 
- 
-Ellenérték: felhalmozott kamattal növelt aukciós nettó 
-árfolyam (2026. november 25-én a 
-felhalmozott kamat: 1,0788%) 
- 
-3. Kamatozás, kamatfizetés és törlesztés 
- 
-Kamatozás: Az Államkötvény fix kamatozású, éves 
-kamatfizetésű, a kamat mértéke évi 6,25%. 
- Az első kamatidőszak a kibocsátás napja és az első 
-kamatfizetés közötti időszak (217 nap), ezért a 
-kifizetendő kamat mértéke az éves kamat időarányos 
-része (0,01%-ra kerekítve), úgy, hogy az esetleges 
-szökőnap is figyelembevételre kerül, azaz: 
- 
-6,25% * 217nap / 365nap = 3,72% 
- 
-A további kamatfizetési időpontokban kifizetendő 
-kamat mértéke az éves kamat. 
- 
-A kamatfizetés évente a következő 
-napokon és mértékkel történik: 
- 
- 
-2026. szeptember 23. 
- 
- 
-3,72% 
- 2027. szeptember 23. 6,25% 
- 2028. szeptember 23. 6,25% 
- 2029. szeptember 23. 
-2030. szeptember 23. 
-2031. szeptember 23. 
-2032. szeptember 23. 
-2033. szeptember 23. 
-2034. szeptember 23. 
-2035. szeptember 23. 
-2036. szeptember 23. 
-2037. szeptember 23. 
- 
-6,25% 
-6,25% 
-6,25% 
-6,25% 
-6,25% 
-6,25% 
-6,25% 
-6,25% 
-6,25% 
-Törlesztés, visszaváltás: A névérték visszafizetése a lejáratkor egy összegben 
-esedékes. A Magyar Államkötvényt a Kibocsátó a 
-lejárat előtt nem váltja vissza. 
- 
-4. Az Államkötvények vásárlóinak köre 
- 
-Az Államkötvényeket devizabelföldi és devizakülföldi természetes és jogi személyek, jogi személyiség 
-nélküli szervezetek vásárolhatják meg. Devizakülföldiek az Államkötvényt a hatályos devizajogszabályok 
-rendelkezései szerint vásárolhatják meg és ruházhatják át.  
- 
-A Kibocsátó a jogszabályok által előírt befektetői célpiac és azon belül a befektetői célcsoport 
-meghatározásnak a Magyar Államkötvények vásárlására jogosultak körének fenti meghatározásával 
-kíván megfelelni, összhangban azzal, hogy a Magyar Államkötvények kondícióinak kidolgozása során a 
-közép és hosszútávú, a Kibocsátó személyéből fakadóan alacsony kockázatú befektetések iránt 
-érdeklődő befektetők elérését célozta meg minél szélesebb körben, korlátozás nélkül. 
- 
-Egyéb tájékoztatás 
- 
-Az Államkötvények forgalomba hozatalának és forgalmazásának általános feltételeit az „ISMERTETŐ 
-MAGYAR ÁLLAMKÖTVÉNYEK NYILVÁNOS FORGALOMBA HOZATALÁHOZ” című, 2024. december 23. 
-napján kiadott, 2025. január 2. napjától hatályos és 2026. június 26. napján módosított dokumentum 
-tartalmazza, mely megtekinthető a forgalmazóhelyeken, az ÁKK Zrt. saját honlapján (www.akk.hu és 
-www.allampapir.hu), valamint az MNB által üzemeltetett honlapon (kozzetetelek.mnb.hu). 
- 
-Budapest, 2026. november 16. 
- 
- 
- 
-   Államadósság Kezelő Központ Zártkörűen Működő Részvénytársaság 
+                              NYILVÁNOS AJÁNLATTÉTEL
+                         Magyar Államkötvények forgalomba hozataláról
+
+Általános információk és kibocsátói felhatalmazás
+
+A Magyar Államkötvény elnevezésű államkötvény (Államkötvény) forgalomba hozatalára a vonatkozó
+jogszabályi felhatalmazás alapján és a Magyarország gazdasági stabilitásáról szóló 2011. évi CXCIV.
+törvény szerint az államháztartásért felelős miniszter által elfogadott éves finanszírozási terv – a jelen
+sorozatrészlet forgalomba hozatalakor a 2026. évi Finanszírozási Terv – keretében és abban kapott
+felhatalmazás szerint az ÁKK. Zrt. Finanszírozási Bizottsága által meghozott határozat alapján kerül sor.
+A Magyar Állam (Kibocsátó) a kötvényről szóló 285/2001 (XII. 26.) Korm. rendelet alapján és az éves
+központi költségvetési törvény szerint Államkötvényt hoz forgalomba.
+Az Államkötvényben a Kibocsátó arra vállal kötelezettséget, hogy az abban megjelölt névértéket és
+annak a vásárlás időpontjában érvényes kamatfeltételek szerint járó kamatát, az értékpapír mindenkori
+tulajdonosának, illetve birtokosának megfizeti.
+Az Államkötvény névértékére és kamatára vonatkozó igény nem évül el.
+Az Államkötvény kibocsátásából befolyó összeg a központi költségvetés hiányának részbeni
+finanszírozására, valamint az államháztartás központi alrendszere adósságának megújítására szolgál. Az
+Államkötvény által megtestesített adósság az államadósság részét képezi.
+
+1. A forgalomba hozatalra kerülő Államkötvények adatai
+A Kibocsátó az alábbi Államkötvény-sorozat kiegészítéseként további sorozatrészletet hoz forgalomba
+(rábocsátás).
+
+Elnevezés (egyben sorozatszám):                         Magyar Államkötvény 2037/A
+
+ISIN-kód:                                               HU0000407564
+
+Kibocsátás napja:                                       2026. február 18.
+
+Lejárat napja:                                          2037. szeptember 23.
+
+Alapcímlet:                                             10.000,- Ft, azaz Tízezer forint
+
+Az előállítás módja:                                    dematerializált értékpapír
+
+
+2. A forgalomba hozatal feltételei
+
+Az Államkötvények forgalomba hozatala aukció útján történik.
+
+
+Az aukció időpontja:                                    2026. november 19.
+
+Az aukciós ajánlatok benyújtásának
+határideje:                                             2026. november 19. 11.00 óráig
+
+Aukció típusa:                                          klasszikus aukció
+
+Aukciós értékesítésre meghirdetett                      20.000.000.000,- Ft, azaz Húszmilliárd forint
+mennyiség:
+
+A rábocsátás és egyben teljesítés napja:                2026. november 25.
+
+Ellenérték:                                              felhalmozott kamattal növelt aukciós nettó
+                                                         árfolyam    (2026.   november   25-én    a
+                                                         felhalmozott kamat: 1,0788%)
+3. Kamatozás, kamatfizetés és törlesztés
+
+Kamatozás:                                   Az     Államkötvény     fix    kamatozású,    éves
+                                             kamatfizetésű, a kamat mértéke évi 6,25%.
+                                             Az első kamatidőszak a kibocsátás napja és az első
+                                             kamatfizetés közötti időszak (217 nap), ezért a
+                                             kifizetendő kamat mértéke az éves kamat időarányos
+                                             része (0,01%-ra kerekítve), úgy, hogy az esetleges
+                                             szökőnap is figyelembevételre kerül, azaz:
+
+                                             6,25% * 217nap / 365nap = 3,72%
+
+                                             A további kamatfizetési időpontokban       kifizetendő
+                                             kamat mértéke az éves kamat.
+
+A kamatfizetés évente a következő
+napokon és mértékkel történik:    2026. szeptember 23.                      3,72%
+                                  2027. szeptember 23.                      6,25%
+                                  2028. szeptember 23.                      6,25%
+                                  2029. szeptember 23.                      6,25%
+                                  2030. szeptember 23.                      6,25%
+                                  2031. szeptember 23.                      6,25%
+                                  2032. szeptember 23.                      6,25%
+                                  2033. szeptember 23.                      6,25%
+                                  2034. szeptember 23.                      6,25%
+                                  2035. szeptember 23.                      6,25%
+                                  2036. szeptember 23.                      6,25%
+                                  2037. szeptember 23.                      6,25%
+
+Törlesztés, visszaváltás:                    A névérték visszafizetése a lejáratkor egy összegben
+                                             esedékes. A Magyar Államkötvényt a Kibocsátó a
+                                             lejárat előtt nem váltja vissza.
+
+4. Az Államkötvények vásárlóinak köre
+
+Az Államkötvényeket devizabelföldi és devizakülföldi természetes és jogi személyek, jogi személyiség
+nélküli szervezetek vásárolhatják meg. Devizakülföldiek az Államkötvényt a hatályos devizajogszabályok
+rendelkezései szerint vásárolhatják meg és ruházhatják át.
+
+A Kibocsátó a jogszabályok által előírt befektetői célpiac és azon belül a befektetői célcsoport
+meghatározásnak a Magyar Államkötvények vásárlására jogosultak körének fenti meghatározásával
+kíván megfelelni, összhangban azzal, hogy a Magyar Államkötvények kondícióinak kidolgozása során a
+közép és hosszútávú, a Kibocsátó személyéből fakadóan alacsony kockázatú befektetések iránt
+érdeklődő befektetők elérését célozta meg minél szélesebb körben, korlátozás nélkül.
+
+Egyéb tájékoztatás
+
+Az Államkötvények forgalomba hozatalának és forgalmazásának általános feltételeit az „ISMERTETŐ
+MAGYAR ÁLLAMKÖTVÉNYEK NYILVÁNOS FORGALOMBA HOZATALÁHOZ” című, 2024. december 23.
+napján kiadott, 2025. január 2. napjától hatályos és 2026. június 26. napján módosított dokumentum
+tartalmazza, mely megtekinthető a forgalmazóhelyeken, az ÁKK Zrt. saját honlapján (www.akk.hu és
+www.allampapir.hu), valamint az MNB által üzemeltetett honlapon (kozzetetelek.mnb.hu).
+
+Budapest, 2026. november 16.
+
+
+
+                                Államadósság Kezelő Központ Zártkörűen Működő Részvénytársaság
+

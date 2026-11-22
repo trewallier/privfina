@@ -105,13 +105,15 @@ function isDiscountTreasuryBill(text: string): boolean {
   return /Diszkont\s+Kincstárjegy/i.test(text)
 }
 
+/** MAK auction schedule label; pdftotext -layout may interleave date rows between “következő” and “napokon”. */
+const MAK_ANNUAL_SCHEDULE_MARKER =
+  /A\s+kamatfizetés[\s\S]{0,80}?évente\s+a\s+következő[\s\S]{0,500}?napokon\s+és\s+mértékkel\s+történik\s*:/i
+
 function hasCouponScheduleMarkers(text: string): boolean {
   return (
     /A\s+kamat\s+fizetése\s+az\s+alábbi\s+napokon\s+történik/i.test(text) ||
     /A\s+kamatfizetés[\s\S]{0,200}?az\s+alábbi\s+napokon\s+történik/i.test(text) ||
-    /A\s+kamatfizetés[\s\S]{0,200}?a\s+következő\s+napokon\s+és\s+mértékkel\s+történik/i.test(
-      text
-    ) ||
+    MAK_ANNUAL_SCHEDULE_MARKER.test(text) ||
     /Kamatteljesítési\s+napok/i.test(text) ||
     /A\s+kamat\s+fizetése\s+a\s+futamidő\s+alatt\s+minden\s+év/i.test(text) ||
     /Kamatszámítás\s+algoritmusa/i.test(text)
@@ -183,23 +185,23 @@ function parseHuPercent(raw: string): number | null {
  * Magyar Államkötvény (MÁK / KTV) auction offerings: annual table
  * "A kamatfizetés évente a következő napokon és mértékkel történik"
  * with rows like `2027. szeptember 23. 6,25%` (ADR 0044).
- * When a date row has no `%` (FLOAT / omitted), the parallel rate is `null`.
+ * `pdftotext -layout` often places date/rate columns beside the label, so the first
+ * dates can appear *inside* the marker span — collect from marker start through
+ * törlesztés. When a date row has no `%` (FLOAT / omitted), the parallel rate is `null`.
  */
 function extractMakAnnualSchedule(text: string): {
   paymentDates: string[]
   paymentRates: Array<number | null>
 } | null {
-  const marker =
-    /A\s+kamatfizetés[\s\S]{0,200}?a\s+következő\s+napokon\s+és\s+mértékkel\s+történik\s*:/i.exec(
-      text
-    )
+  const marker = MAK_ANNUAL_SCHEDULE_MARKER.exec(text)
   if (!marker || marker.index == null) return null
-  const after = text.slice(marker.index + marker[0].length)
-  const stop = /Törlesztés\s*,\s*visszaváltás\s*:|Törlesztés\s*:|4\.\s+Az\s+Államkötvény/i.exec(
-    after
-  )
+  const fromMarker = text.slice(marker.index)
+  const stop =
+    /Törlesztés\s*,\s*visszaváltás\s*:|Törlesztés\s*:|4\.\s+A(?:z\s+Államkötvény|\s+Zöld)/i.exec(
+      fromMarker
+    )
   // Long tenors (e.g. 2051/G) need a generous window; still stop at törlesztés.
-  const block = stop ? after.slice(0, stop.index) : after.slice(0, 8000)
+  const block = stop ? fromMarker.slice(0, stop.index) : fromMarker.slice(0, 8000)
 
   const paymentDates: string[] = []
   const paymentRates: Array<number | null> = []

@@ -566,6 +566,48 @@ describe('fetchAkkOfferingListings soft-fail isolation', () => {
   })
 })
 
+describe('ktv / MÁK offering family registration (ADR 0044)', () => {
+  it('maps ÁKK label KTV (and MAK gloss) to family ktv with auction URL', async () => {
+    const {
+      OFFERING_FAMILIES,
+      OFFERING_LABEL_BY_FAMILY,
+      isOfferingFamily,
+      offeringFamilyFromLabel
+    } = await import('../tools/market-data/offering-families.ts')
+    const { buildPublicOfferingsUrl } = await import('../tools/market-data/fetch-akk-offerings.ts')
+
+    expect(isOfferingFamily('ktv')).toBe(true)
+    expect(OFFERING_FAMILIES).toContain('ktv')
+    expect(OFFERING_LABEL_BY_FAMILY.ktv).toEqual({ label: 'KTV', mode: 'auction' })
+    expect(offeringFamilyFromLabel('KTV')).toBe('ktv')
+    expect(offeringFamilyFromLabel('MÁK')).toBe('ktv')
+    expect(offeringFamilyFromLabel('MAK')).toBe('ktv')
+
+    const url = buildPublicOfferingsUrl('ktv')
+    expect(url).toContain('label=KTV')
+    expect(url).toContain('auctionStart=')
+    expect(url).toContain('auctionType=ISSUE')
+    expect(url).not.toContain('ptsStart=')
+  })
+
+  it('normalizes KTV auction listings without inventing saleWindow', async () => {
+    const envelope = await loadJson('offerings/getPublicOfferings_ktv.json')
+    const rows = normalizeOfferingEnvelope(envelope, 'ktv')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.family).toBe('ktv')
+    expect(rows[0]?.seriesId).toBe('A370923A26')
+    expect(rows[0]?.saleWindow).toBeNull()
+    expect(rows[0]?.pathUuid).toBe('97f2a5b9-1ebf-4202-bc86-3f7e2f5f2e96')
+    expect(rows[0]?.resourceType).toBe('ISSUE')
+    expect(rows[1]?.seriesId).toBe('A361126B26')
+    expect(rows[1]?.saleWindow).toBeNull()
+
+    const diff = diffOfferingsAgainstArchive(rows, [])
+    expect(diff.unknownDocuments).toHaveLength(2)
+    expect(diff.saleWindowsBySeries.size).toBe(0)
+  })
+})
+
 describe('parseOfferingPdfText', () => {
   it('extracts PMÁP explicit payment dates and ACT/ACT day-count', async () => {
     const { parseOfferingPdfText } = await import('../tools/market-data/parse-offering-pdf.ts')

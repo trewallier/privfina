@@ -1,8 +1,8 @@
 import type { FamilyCode } from './types.ts'
 
 /**
- * ÁKK getPublicOfferings `label` values for commercial SPA families (ADR 0041).
- * DKJ uses auctionStart + auctionType=ISSUE instead of ptsStart.
+ * ÁKK getPublicOfferings `label` values for in-scope offering families (ADR 0041 / 0044).
+ * DKJ and ktv (MÁK) use auctionStart + auctionType=ISSUE instead of ptsStart.
  */
 export const OFFERING_LABEL_BY_FAMILY: Record<
   OfferingFamilyCode,
@@ -13,10 +13,19 @@ export const OFFERING_LABEL_BY_FAMILY: Record<
   fixmap: { label: 'FIX_MAP', mode: 'tap' },
   mapp: { label: 'MAPP_T', mode: 'tap' },
   baba: { label: 'BABA', mode: 'tap' },
-  dkj: { label: 'DKJ', mode: 'auction' }
+  dkj: { label: 'DKJ', mode: 'auction' },
+  /** Magyar Államkötvény (MÁK) — display name MÁK; ÁKK label KTV (ADR 0044). */
+  ktv: { label: 'KTV', mode: 'auction' }
 }
 
-export type OfferingFamilyCode = 'dkj' | 'pmap' | 'bmap' | 'fixmap' | 'mapp' | 'baba'
+export type OfferingFamilyCode =
+  | 'dkj'
+  | 'pmap'
+  | 'bmap'
+  | 'fixmap'
+  | 'mapp'
+  | 'baba'
+  | 'ktv'
 
 export const OFFERING_FAMILIES: readonly OfferingFamilyCode[] = [
   'dkj',
@@ -24,7 +33,8 @@ export const OFFERING_FAMILIES: readonly OfferingFamilyCode[] = [
   'bmap',
   'fixmap',
   'mapp',
-  'baba'
+  'baba',
+  'ktv'
 ] as const
 
 const LABEL_TO_FAMILY: Record<string, OfferingFamilyCode> = {
@@ -42,7 +52,10 @@ const LABEL_TO_FAMILY: Record<string, OfferingFamilyCode> = {
   MAPP: 'mapp',
   'MÁP PLUSZ': 'mapp',
   BABA: 'baba',
-  DKJ: 'dkj'
+  DKJ: 'dkj',
+  KTV: 'ktv',
+  MAK: 'ktv',
+  MÁK: 'ktv'
 }
 
 export function isOfferingFamily(family: FamilyCode): family is OfferingFamilyCode {
@@ -61,6 +74,7 @@ export const MAX_OFFERING_PDF_DOWNLOADS_PER_FAMILY = 10 as const
 /**
  * Hard cap on a single offering PDF body (8 MiB).
  * Rejects oversized Content-Length before buffering and streams with a running total
- * so a busy day (≤60 PDF GETs) cannot balloon runner memory (ADR 0041).
+ * so a busy day (≤70 PDF GETs across seven in-scope families) cannot balloon runner
+ * memory (ADR 0041 as amended by ADR 0044).
  */
 export const MAX_OFFERING_PDF_BYTES = 8 * 1024 * 1024

@@ -450,7 +450,7 @@ Goal: publish ÁKK nyilvános ajánlattétel transcriptions into `families/ktv/o
 
 Plan slices (ingest-only gh-stack; open a temporary tip→`master` CI head PR — close, do not merge)
 - [x] ADR 0044 + ROADMAP / ownership / gov-sec README / naming glossary: MÁK ↔ `ktv` / `KTV` mapping; hub vs ÁKK document hosts; FIX/FLOAT/Green notes; ADR 0041 family/budget supersession note.
-- [ ] Register `ktv` offering family (`label: KTV`, `mode: auction`) — this is the real ingest wiring onto `OFFERING_FAMILIES`; listing soft-fail isolation; no invented saleWindow from auctionDate.
+- [x] Register `ktv` offering family (`label: KTV`, `mode: auction`) — this is the real ingest wiring onto `OFFERING_FAMILIES`; listing soft-fail isolation; no invented saleWindow from auctionDate.
 - [ ] MAK auction PDF text parser (annual date ± rate tables) + Vitest fixtures (no raw PDFs); FLOAT fixture locks null rates (no invented coupons).
 - [ ] Fixture E2E for `families/ktv/offerings/<id>.json` + archive (**code complete**; live tip / Pages cutover pending `workflow_dispatch` — same posture as §6k / §6f).
 

@@ -288,6 +288,8 @@ function validateBubor(tree: MarketTreeState): void {
     if (!Array.isArray(block.rows)) {
       throw new ValidateError(`bubor.series.${key}.rows must be an array`)
     }
+    const seenDates = new Set<string>()
+    let prevDate: string | null = null
     for (const row of block.rows) {
       if (!Array.isArray(row) || row.length !== 2) {
         throw new ValidateError(`Bad bubor row shape in ${key}`)
@@ -299,6 +301,14 @@ function validateBubor(tree: MarketTreeState): void {
       if (typeof pct !== 'number' || !Number.isFinite(pct)) {
         throw new ValidateError(`Bad bubor pct in ${key} ${d}`)
       }
+      if (seenDates.has(d)) {
+        throw new ValidateError(`Duplicate bubor date in ${key}: ${d}`)
+      }
+      seenDates.add(d)
+      if (prevDate !== null && d <= prevDate) {
+        throw new ValidateError(`Non-ascending bubor dates in ${key}: ${prevDate} then ${d}`)
+      }
+      prevDate = d
     }
   }
   const refPath = tree.manifest?.refs?.bubor

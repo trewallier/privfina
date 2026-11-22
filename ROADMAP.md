@@ -564,7 +564,7 @@ Constraints
 - Actions-only; browser must not call `mnb.hu`.
 - Mirror ADR 0037 posture (hard-fail fetch/normalize/revision); do not soft-fail like retailInterest / WebKincstár.
 - Collect all meaningful tenors (`ON` … `12M`); sparse history — omit empty/`'-'` cells; never invent zeros.
-- Raw XLS never committed; SheetJS (`xlsx`) is the justified spreadsheet dep (no CSV/JSON alternative).
+- Raw XLS never committed; SheetJS CE via official CDN tarball (`xlsx@0.20.3`) is the justified spreadsheet dep (no CSV/JSON alternative; not npm `0.18.5`).
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0045 + ROADMAP / ownership / market-data README / CI playbook / spec AC / ADR index.

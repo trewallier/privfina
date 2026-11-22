@@ -18,8 +18,8 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0034 (ÁKK publ
 
 - In the **same** `market-data.yml` ingest job as ADR 0034–0037 / 0039 / 0041, also fetch MNB BUBOR:
   - Source URL: `https://www.mnb.hu/letoltes/bubor2.xls` (page: MNB BUBOR hub).
-  - Parse with SheetJS Community (`xlsx`, pure JS). Raw XLS is ephemeral under the ingest raw dir — **never committed**.
-  - Hard-fail on fetch/normalize errors and on historical revision conflicts (same as inflation; unlike retailInterest / WebKincstár soft-fail).
+  - Parse with SheetJS Community Edition via the **official CDN tarball** (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` in root `devDependencies` — not the frozen npm `xlsx@0.18.5` name, which carries unfixed advisories). Pure JS; Actions/tooling-only — never part of the Vite SPA graph. Raw XLS is ephemeral under the ingest raw dir — **never committed**.
+  - Hard-fail on fetch/normalize errors, on conflicting `(tenor, date)` during normalize across year sheets, and on historical revision conflicts at merge (same as inflation; unlike retailInterest / WebKincstár soft-fail).
 - Publish compact JSON at `data/market/v2/refs/bubor.json` (schemaVersion 2 additive refs):
   - `metric: bubor`, `unit: pct` (published fixing percent).
   - Canonical tenor keys: `ON`, `1W`, `2W`, `1M`…`12M` (map bilingual HU/EN headers; skip empty/`'-'` cells — never invent zeros).
@@ -35,7 +35,7 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0034 (ÁKK publ
 - Official BUBOR history is available under the published market tree for later FLOAT / index consumers.
 - First ingest against a tip without bubor adds the refs file (full history) and triggers one digest-gated commit.
 - Operators see hard job failure if MNB revises a past fixing — intentional; investigate before forcing a republish.
-- Root `package.json` gains a pinned `xlsx` dependency used only by market-data tooling.
+- Root `package.json` `devDependencies` pins SheetJS via the CDN tarball URL above (lockfile resolves the exact artifact under `npm ci`); used only by market-data tooling / Actions — residual XLS parse risk is Actions-only against trusted MNB bytes, never user uploads or the browser bundle.
 
 ## Out of scope
 

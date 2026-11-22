@@ -152,7 +152,8 @@ function maxDate(rows: BuborDayRow[]): string | null {
 
 /**
  * Normalize MNB bubor2.xls bytes into published BUBOR refs (all historical sheets).
- * Sparse cells (`''` / `'-'`) are omitted. Duplicate (tenor, date) keeps the last value seen.
+ * Sparse cells (`''` / `'-'`) are omitted. Conflicting `(tenor, date)` pct across sheets
+ * hard-fails (identical values skip); same fail-closed posture as merge.
  */
 export function normalizeMnbBuborXls(
   xlsBytes: Uint8Array,
@@ -194,12 +195,9 @@ export function normalizeMnbBuborXls(
     if (!header) continue
     sheetsParsed += 1
 
-    // Prefer the last header row when both HU and EN are present back-to-back
-    // (e.g. 2023: HU then EN). If the next row also looks like headers, skip it.
+    // Skip a bilingual second header row (HU then EN); keep the first mapped tenor columns.
     let dataStart = header.headerRow + 1
     if (dataStart < rows.length) {
-      const next = findHeaderRow(rows.slice(dataStart, dataStart + 1).concat([[]]))
-      // Re-check only the immediate next row.
       const nextRow = rows[dataStart] ?? []
       let nextLooksHeader = false
       for (const cell of nextRow) {
@@ -209,7 +207,6 @@ export function normalizeMnbBuborXls(
         }
       }
       if (nextLooksHeader) dataStart += 1
-      void next
     }
 
     for (let r = dataStart; r < rows.length; r++) {
@@ -219,7 +216,17 @@ export function normalizeMnbBuborXls(
       for (const { col, tenor } of header.tenorCols) {
         const pct = parsePct(row[col])
         if (pct == null) continue
-        byTenorDate.get(tenor)!.set(date, pct)
+        const map = byTenorDate.get(tenor)!
+        const existing = map.get(date)
+        if (existing !== undefined) {
+          if (!Object.is(existing, pct)) {
+            throw new NormalizeBuborError(
+              `Conflicting BUBOR ${tenor} on ${date}: ${existing} vs ${pct} (sheet ${sheetName})`
+            )
+          }
+          continue
+        }
+        map.set(date, pct)
       }
     }
   }

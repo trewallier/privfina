@@ -9,8 +9,10 @@ import { emptyMarketTree, MergeError, mergeSnapshot } from '../tools/market-data
 import { mergeBuborFile } from '../tools/market-data/merge-bubor.ts'
 import {
   mapBuborHeaderToTenor,
+  NormalizeBuborError,
   normalizeMnbBuborXls
 } from '../tools/market-data/normalize-mnb-bubor.ts'
+import { ValidateError, validateMarketTree } from '../tools/market-data/validate.ts'
 import { normalizeAkkSnapshots } from '../tools/market-data/normalize.ts'
 import { BUBOR_REF_PATH, type AkkEnvelope } from '../tools/market-data/types.ts'
 import { assertPublishedTree } from '../tools/market-data/validate.ts'
@@ -64,6 +66,29 @@ describe('MNB BUBOR normalize (ADR 0045)', () => {
     expect(file.series['4M'].rows).toEqual([])
     expect(file.series['3M'].rows.some(([d]) => d === '2023-01-04')).toBe(true)
   })
+
+  it('hard-fails when the same (tenor, date) has conflicting pct across sheets', async () => {
+    const XLSX = await import('xlsx')
+    const wb = XLSX.utils.book_new()
+    const sheetA = XLSX.utils.aoa_to_sheet([
+      ['Date of fixing', '3 months'],
+      [44927, 5.5] // 2023-01-01-ish serial; exact ISO via number parse
+    ])
+    // Use ISO strings so the conflict fixture is unambiguous.
+    const sheet2022 = XLSX.utils.aoa_to_sheet([
+      ['jegyzési nap', '3 hónap'],
+      ['2022-06-01', 7.1]
+    ])
+    const sheetUj = XLSX.utils.aoa_to_sheet([
+      ['jegyzési nap', '3 hónap'],
+      ['2022-06-01', 9.9]
+    ])
+    XLSX.utils.book_append_sheet(wb, sheet2022, '2002')
+    XLSX.utils.book_append_sheet(wb, sheetUj, 'uj 2002')
+    XLSX.utils.book_append_sheet(wb, sheetA, '2023')
+    const bytes = XLSX.write(wb, { type: 'buffer', bookType: 'xls' }) as Buffer
+    expect(() => normalizeMnbBuborXls(new Uint8Array(bytes))).toThrow(NormalizeBuborError)
+  })
 })
 
 describe('MNB BUBOR merge (ADR 0045)', () => {
@@ -103,6 +128,21 @@ describe('MNB BUBOR merge (ADR 0045)', () => {
     expect(first.contentChanged).toBe(true)
     expect(first.appendedRows).toBeGreaterThan(10)
     expect(first.file.series['3M'].rows.length).toBe(incoming.series['3M'].rows.length)
+  })
+
+  it('validateBubor rejects duplicate or non-ascending dates', async () => {
+    const bytes = await loadXlsBytes('bubor/bubor-sample.xls')
+    const bubor = normalizeMnbBuborXls(bytes, { generatedAt: '2026-11-22T12:00:00.000Z' })
+    const catalog = loadJson<AkkEnvelope>('catalog.json')
+    const rates = loadJson<AkkEnvelope>('network-rates.json')
+    const snapshot = normalizeAkkSnapshots(catalog, rates, { requireFamilies: false })
+    const merged = mergeSnapshot(emptyMarketTree(), snapshot, {
+      generatedAt: '2026-11-22T12:00:00.000Z',
+      bubor
+    })
+    const bad = structuredClone(merged.tree)
+    bad.bubor!.series['3M'].rows.push(['1996-08-01', 1])
+    expect(() => validateMarketTree(bad)).toThrow(ValidateError)
   })
 
   it('wires into mergeSnapshot digests and tree refs', async () => {

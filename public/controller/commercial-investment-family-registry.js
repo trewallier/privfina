@@ -1,7 +1,7 @@
 /**
  * Commercial investment family registry (ADR 0040).
  * Host orchestration dispatches through lookup — no productCode forests in the host.
- * Coupon-bearing entries (pmap/bmap/fixmap/mapp/baba) share helpers from
+ * Coupon-bearing entries (pmap/bmap/fixmap/mapp/baba/ktv) share helpers from
  * commercial-investment-coupon-profile.js; §6j follow-ons register on that profile.
  *
  * Registry is the addition path for: preview adapters, marketable required fields,
@@ -58,11 +58,20 @@ import {
 } from './baba-form.js'
 import { calculateBabaFromSpecInputs } from './baba-calculation-adapter.js'
 import {
+  KTV_PRODUCT_SPEC,
+  applyKtvSpecToForm,
+  setKtvFieldVisibility,
+  mapFormDataToKtvSpecInputs,
+  generateKtvInstrumentBundleFromSpecInputs
+} from './ktv-form.js'
+import { calculateKtvFromSpecInputs } from './ktv-calculation-adapter.js'
+import {
   migrateBmapConfigForEdit,
   migratePmapConfigForEdit,
   migrateFixmapConfigForEdit,
   migrateMappConfigForEdit,
-  migrateBabaConfigForEdit
+  migrateBabaConfigForEdit,
+  migrateKtvConfigForEdit
 } from './govsec-config-migrate.js'
 import {
   couponBearingDomPrefix,
@@ -393,6 +402,32 @@ registerCouponBearingFamily({
     })
   }
 })
+
+registerCouponBearingFamily({
+  productCode: 'ktv',
+  inflationSchedulePreview: true,
+  migrationStatus: 'schedule-usable',
+  productSpec: KTV_PRODUCT_SPEC,
+  applySpecToForm({ form, box, setAmountDefaultIfEmpty = false } = {}) {
+    applyKtvSpecToForm({
+      investmentForm: form,
+      investmentBox: box,
+      setAmountDefaultIfEmpty
+    })
+  },
+  setFieldVisibility: setKtvFieldVisibility,
+  mapFormDataToSpecInputs: mapFormDataToKtvSpecInputs,
+  calculateFromSpecInputs: calculateKtvFromSpecInputs,
+  migrateConfigForEdit: migrateKtvConfigForEdit,
+  buildBundle(formData, meta) {
+    const specInputs = mapFormDataToKtvSpecInputs(formData)
+    return generateKtvInstrumentBundleFromSpecInputs(specInputs, {
+      ...meta,
+      label: meta.label || KTV_PRODUCT_SPEC.ui.formTitle
+    })
+  }
+})
+
 
 function getCommercialInvestmentFamily(productCode) {
   if (!productCode) return null

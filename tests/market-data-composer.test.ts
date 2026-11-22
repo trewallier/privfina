@@ -87,6 +87,9 @@ describe('commercial investment UI markup contracts', () => {
       /id="fixmap-principal-wrap"[\s\S]*?id="fixmap-purchase-date-wrap"[\s\S]*?id="fixmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="fixmap-maturity-date-wrap"[\s\S]*?id="fixmap-issue-date-wrap"[\s\S]*?id="fixmap-first-coupon-date-wrap"/
     )
     expect(indexHtml).toMatch(
+      /id="ktv-principal-wrap"[\s\S]*?id="ktv-purchase-date-wrap"[\s\S]*?id="ktv-annual-coupon-rate-pct-wrap"[\s\S]*?id="ktv-maturity-date-wrap"[\s\S]*?id="ktv-issue-date-wrap"[\s\S]*?id="ktv-first-coupon-date-wrap"/
+    )
+    expect(indexHtml).toMatch(
       /id="mapp-principal-wrap"[\s\S]*?id="mapp-purchase-date-wrap"[\s\S]*?id="mapp-annual-coupon-rate-pct-wrap"[\s\S]*?id="mapp-maturity-date-wrap"[\s\S]*?id="mapp-issue-date-wrap"[\s\S]*?id="mapp-first-coupon-date-wrap"/
     )
     expect(indexHtml).toMatch(
@@ -116,6 +119,7 @@ describe('commercial investment UI markup contracts', () => {
     expect(commercialFamilyRegistry).toContain("productCode: 'bmap'")
     expect(commercialFamilyRegistry).toContain("productCode: 'fixmap'")
     expect(commercialFamilyRegistry).toContain("productCode: 'mapp'")
+    expect(commercialFamilyRegistry).toContain("productCode: 'ktv'")
   })
 
   it('wires series + purchase/settlement autofill, stale clear, and apply-token guard', () => {
@@ -150,6 +154,7 @@ describe('commercial investment UI markup contracts', () => {
     expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]bmap['"]/)
     expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]fixmap['"]/)
     expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]mapp['"]/)
+    expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]ktv['"]/)
     expect(commercialHost).toContain('entry.hostWrapId')
     expect(commercialHost).toContain('entry?.fieldLabelClass')
     expect(commercialHost).toContain('entry?.marketableRequiredFields')
@@ -172,6 +177,7 @@ describe('commercial investment UI markup contracts', () => {
     expect(indexHtml).toContain('id="commercial-investment-market-attribution"')
     expect(indexHtml).toContain('id="pmap-day-count-convention"')
     expect(indexHtml).toContain('id="fixmap-day-count-convention"')
+    expect(indexHtml).toContain('id="ktv-day-count-convention"')
     expect(indexHtml).toContain('id="mapp-day-count-convention"')
     expect(indexHtml).toContain('id="mapp-coupon-frequency-months"')
     expect(indexHtml).toContain('name="couponFrequencyMonths"')

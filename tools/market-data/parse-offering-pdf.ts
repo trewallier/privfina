@@ -43,6 +43,12 @@ export interface ParsedOfferingPdf {
   paymentDates: string[]
   dayCount: string | null
   maturity: string | null
+  /**
+   * Parallel to `paymentDates` when a MAK date±rate table was parsed.
+   * `null` entries mean the PDF published no rate for that date (FLOAT / omitted) —
+   * never invent coupon rates (ADR 0044).
+   */
+  paymentRates?: Array<number | null>
 }
 
 function pad2(n: number): string {
@@ -102,7 +108,10 @@ function isDiscountTreasuryBill(text: string): boolean {
 function hasCouponScheduleMarkers(text: string): boolean {
   return (
     /A\s+kamat\s+fizetése\s+az\s+alábbi\s+napokon\s+történik/i.test(text) ||
-    /A\s+kamatfizetés[\s\S]{0,160}?az\s+alábbi\s+napokon\s+történik/i.test(text) ||
+    /A\s+kamatfizetés[\s\S]{0,200}?az\s+alábbi\s+napokon\s+történik/i.test(text) ||
+    /A\s+kamatfizetés[\s\S]{0,200}?a\s+következő\s+napokon\s+és\s+mértékkel\s+történik/i.test(
+      text
+    ) ||
     /Kamatteljesítési\s+napok/i.test(text) ||
     /A\s+kamat\s+fizetése\s+a\s+futamidő\s+alatt\s+minden\s+év/i.test(text) ||
     /Kamatszámítás\s+algoritmusa/i.test(text)
@@ -156,11 +165,68 @@ export function classifyOfferingPdfText(text: string): OfferingPdfContentClass {
 function extractExplicitPaymentDates(text: string): string[] {
   const marker =
     /A\s+kamat\s+fizetése\s+az\s+alábbi\s+napokon\s+történik\s*:/i.exec(text) ||
-    /A\s+kamatfizetés[\s\S]{0,160}?az\s+alábbi\s+napokon\s+történik\s*:/i.exec(text)
+    /A\s+kamatfizetés[\s\S]{0,200}?az\s+alábbi\s+napokon\s+történik\s*:/i.exec(text)
   if (!marker || marker.index == null) return []
   const after = text.slice(marker.index + marker[0].length)
   const stop = /Kamatszámítás\s+algoritmusa|Törlesztés\s*:/i.exec(after)
   const block = stop ? after.slice(0, stop.index) : after.slice(0, 2500)
+  return collectHungarianDatesInBlock(block)
+}
+
+function parseHuPercent(raw: string): number | null {
+  const m = /(\d+),(\d+)\s*%/.exec(raw)
+  if (!m) return null
+  return Number(`${m[1]}.${m[2]}`)
+}
+
+/**
+ * Magyar Államkötvény (MÁK / KTV) auction offerings: annual table
+ * "A kamatfizetés évente a következő napokon és mértékkel történik"
+ * with rows like `2027. szeptember 23. 6,25%` (ADR 0044).
+ * When a date row has no `%` (FLOAT / omitted), the parallel rate is `null`.
+ */
+function extractMakAnnualSchedule(text: string): {
+  paymentDates: string[]
+  paymentRates: Array<number | null>
+} | null {
+  const marker =
+    /A\s+kamatfizetés[\s\S]{0,200}?a\s+következő\s+napokon\s+és\s+mértékkel\s+történik\s*:/i.exec(
+      text
+    )
+  if (!marker || marker.index == null) return null
+  const after = text.slice(marker.index + marker[0].length)
+  const stop = /Törlesztés\s*,\s*visszaváltás\s*:|Törlesztés\s*:|4\.\s+Az\s+Államkötvény/i.exec(
+    after
+  )
+  // Long tenors (e.g. 2051/G) need a generous window; still stop at törlesztés.
+  const block = stop ? after.slice(0, stop.index) : after.slice(0, 8000)
+
+  const paymentDates: string[] = []
+  const paymentRates: Array<number | null> = []
+  const seen = new Set<string>()
+  for (const line of block.split(/\r?\n/)) {
+    const dateMatch = new RegExp(HU_DATE.source, 'i').exec(line)
+    if (!dateMatch) continue
+    const iso = parseHungarianDate(dateMatch[0])
+    if (!iso || seen.has(iso)) continue
+    seen.add(iso)
+    const afterDate = line.slice((dateMatch.index ?? 0) + dateMatch[0].length)
+    paymentDates.push(iso)
+    // Only rates printed on the same row as the date — never invent / backfill from
+    // nearby orphan `%` lines (FLOAT / split-layout FIX first period stays null).
+    paymentRates.push(parseHuPercent(afterDate))
+  }
+  if (paymentDates.length === 0) return null
+  // Keep date order chronological (stable with parallel rates).
+  const indexed = paymentDates.map((d, i) => ({ d, r: paymentRates[i]! }))
+  indexed.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0))
+  return {
+    paymentDates: indexed.map((x) => x.d),
+    paymentRates: indexed.map((x) => x.r)
+  }
+}
+
+function collectHungarianDatesInBlock(block: string): string[] {
   const dates: string[] = []
   const seen = new Set<string>()
   for (const m of block.matchAll(new RegExp(HU_DATE.source, 'gi'))) {
@@ -281,15 +347,24 @@ function extractRecurringPaymentDates(text: string): string[] {
 }
 
 /**
- * Parse offering PDF text into payment dates + day-count (ADR 0041).
+ * Parse offering PDF text into payment dates + day-count (ADR 0041 / 0044).
  * Throws OfferingPdfParseError when neither dates nor dayCount can be recovered
  * (except DKJ zero-coupon offerings, which succeed with empty paymentDates + ACT/360).
+ * MÁK/KTV auction tables may omit Kamatszámítás — dayCount stays null when absent.
  */
 export function parseOfferingPdfText(text: string): ParsedOfferingPdf {
   const normalized = text.replace(/\u00a0/g, ' ')
   const dayCount = mapOfferingDayCount(normalized)
   const maturity = extractMaturity(normalized)
   let paymentDates = extractExplicitPaymentDates(normalized)
+  let paymentRates: Array<number | null> | undefined
+  if (paymentDates.length === 0) {
+    const mak = extractMakAnnualSchedule(normalized)
+    if (mak) {
+      paymentDates = mak.paymentDates
+      paymentRates = mak.paymentRates
+    }
+  }
   if (paymentDates.length === 0) {
     paymentDates = extractMappTablePaymentDates(normalized)
   }
@@ -304,5 +379,9 @@ export function parseOfferingPdfText(text: string): ParsedOfferingPdf {
   if (paymentDates.length === 0 && !dayCount) {
     throw new OfferingPdfParseError('No paymentDates or dayCount found in offering PDF text')
   }
-  return { paymentDates, dayCount, maturity }
+  const result: ParsedOfferingPdf = { paymentDates, dayCount, maturity }
+  if (paymentRates) {
+    result.paymentRates = paymentRates
+  }
+  return result
 }

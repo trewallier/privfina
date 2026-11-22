@@ -444,6 +444,79 @@ describe('ingestMarketData offerings listing', () => {
   })
 })
 
+describe('ktv / MÁK offering ingest E2E (ADR 0044)', () => {
+  function pdfResponse(body = '%PDF-1.4 fake-mak-offering'): Response {
+    return new Response(body, {
+      status: 200,
+      headers: { 'Content-Type': 'application/pdf' }
+    })
+  }
+
+  it('publishes ktv offerings with MAK paymentDates and null listing saleWindow', async () => {
+    const catalog = await loadJson('catalog.json')
+    const rates = await loadJson('network-rates.json')
+    const ktv = await loadJson('offerings/getPublicOfferings_ktv.json')
+    const makText = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/ktv-mak-2037-a.txt'),
+      'utf8'
+    )
+    const fixUuid = '97f2a5b9-1ebf-4202-bc86-3f7e2f5f2e96'
+    const floatUuid = '8eb21c40-060c-4c25-87b1-71207d22fa86'
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'market-offerings-ktv-'))
+    const rawDir = path.join(tmp, 'raw')
+
+    let pdfHits = 0
+    const fetchImpl: typeof fetch = async (input) => {
+      const url = String(input)
+      if (url.includes('.pdf')) {
+        pdfHits += 1
+        return pdfResponse()
+      }
+      return new Response('nope', { status: 404 })
+    }
+
+    const report = await ingestMarketData({
+      root: tmp,
+      rawDir,
+      catalog,
+      networkRates: rates,
+      skipAllampapir: true,
+      skipRetailInterest: true,
+      skipInflation: true,
+      skipWebkincstar: true,
+      offeringEnvelopesByFamily: { ktv },
+      fetchImpl,
+      offeringPdfTextByUuid: {
+        [fixUuid]: makText
+        // FLOAT 2036/B intentionally omitted → sticky parse_failed / download without text
+      },
+      generatedAt: '2026-11-22T15:00:00.000Z'
+    })
+
+    expect(report.offeringsUpdated).toBe(true)
+    expect(report.offeringsSoftFailed).toBe(false)
+    expect(report.offeringPdfsDownloaded).toBe(2)
+    expect(pdfHits).toBeGreaterThanOrEqual(2)
+
+    const tree = await loadMarketTree(tmp)
+    const offering = tree.families.ktv.offerings.A370923A26
+    expect(offering?.paymentDates?.[0]).toBe('2026-09-23')
+    expect(offering?.paymentDates?.at(-1)).toBe('2037-09-23')
+    expect(offering?.paymentDates).toHaveLength(12)
+    expect(offering?.saleWindow).toBeUndefined()
+    expect(offering?.dayCount).toBeUndefined()
+    expect(offering?.source?.host).toMatch(/akk\.hu/i)
+
+    const floatDoc = tree.offeringArchive?.documents.find((d) => d.pathUuid === floatUuid)
+    expect(floatDoc?.sha256).toBeTruthy()
+    expect(['parse_failed', 'skipped_no_schedule']).toContain(floatDoc?.status)
+
+    const fixDoc = tree.offeringArchive?.documents.find((d) => d.pathUuid === fixUuid)
+    expect(fixDoc?.status).toBe('transcribed')
+    expect(fixDoc?.family).toBe('ktv')
+  })
+})
+
 describe('offering ingest budget (quiet day) + paymentDates E2E', () => {
   function pdfResponse(body = '%PDF-1.4 fake-offering'): Response {
     return new Response(body, {

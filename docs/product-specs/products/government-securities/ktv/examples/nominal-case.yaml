@@ -2,7 +2,7 @@ specVersion: v2alpha3
 productId: government-security.ktv.standard
 exampleId: nominal-case
 title: Nominal MÁK 2037/A example
-description: Baseline FIX MÁK purchase on issue day with flat published effective coupon rate and series maturity (2037/A).
+description: Baseline FIX MÁK purchase on issue day with published effective annual coupon ga and series maturity (2037/A).
 
 inputs:
   principal: 1000000
@@ -11,13 +11,14 @@ inputs:
   issueDate: 2026-02-18
   maturityDate: 2037-09-23
   firstCouponDate: 2026-09-23
-  dayCountConvention: ACT/360
+  dayCountConvention: ACT/365F
 
 expected:
   annualCouponRatePct: 6.25
   purchaseAmount: 1000000
 
 notes:
-  - Locked series 2037/A (ISIN HU0000407564); effective coupon 6.25% after the irregular first cash coupon.
+  - Locked series 2037/A (ISIN HU0000407564); published effective ga 6.25%.
   - Purchase on issue day → no accrued interest; purchaseAmount equals principal.
   - Maturity is series-authored; calculators must not invent a fixed term length.
+  - Product day-count is ACT/365F (Actual/365); ADR 0044 ingest ACT/360-when-null is quote fallback only.

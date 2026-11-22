@@ -34,7 +34,7 @@ inputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Yearly interest rate for the current period, as published (effective period rate; irregular first-period and stepped bands live in couponSchedule when present). Do not invent FLOAT rates.
+    description: Published effective annual coupon rate (ga). Irregular first-period payable stub is derived as ga × days/365 (ACT/365F), not a FixMÁP covering-band rate. Do not invent FLOAT rates.
     constraints:
       minimum: 0
       maximum: 100
@@ -72,7 +72,7 @@ inputs:
     label: Day Count Convention
     required: false
     unit: text
-    description: How days are counted for accrued interest. Defaults to ACT/360 when the offering omits Kamatszámítás (ADR 0044).
+    description: How days are counted for accrued interest and the first-period stub. Locked 2037/A witness uses ACT/365F (Actual/365). ADR 0044 ingest ACT/360 when offering dayCount is null is a quote fallback only — not product math for this series.
     constraints:
       enum: [ACT/360, ACT/365F, 30E/360]
 
@@ -113,7 +113,7 @@ outputs:
     label: Accrued Interest
     required: false
     unit: currency
-    description: Interest already earned from the previous coupon (or issue) through the purchase date.
+    description: Interest already earned from the previous coupon (or issue) through the purchase date. Accrues on published ga under the day-count convention (2037/A — ACT/365F), not on the payable first-period stub.
 
   - name: purchaseAmount
     type: number
@@ -123,23 +123,24 @@ outputs:
     description: Total paid at purchase — principal plus accrued interest when applicable.
 
 assumptions:
-  - MÁK is modeled as an annual-pay fixed-coupon government bond for FIX / Green series; published rates may step across couponSchedule bands (including irregular first cash coupons).
+  - MÁK is modeled as an annual-pay fixed-coupon government bond for FIX / Green series (Babakötvény-style first-period stub on ga; not a FixMÁP ACT/360 covering-band wrap).
   - Machine id stays ktv (ÁKK/allampapir label KTV); display name is Hungarian Government Bond (MÁK).
-  - Commercial inputs use the published effective period coupon rate; do not invent FLOAT rates when listing or PDF omits them.
+  - Commercial inputs use the published effective annual coupon rate (ga); do not invent FLOAT rates when listing or PDF omits them.
   - Coupon payment frequency is annual (product-type constant; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - MÁK denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
-  - Default day-count for accrued interest is ACT/360 unless overridden by offering dayCount or input.
+  - Locked 2037/A product day-count is ACT/365F (Actual/365). ADR 0044 ingest ACT/360 when offering dayCount is null is quote/ingest fallback only.
+  - Accrued interest uses ga under ACT/365F; the payable first-period stub is not the accrual rate.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent.
-  - "The first coupon period may differ from a regular annual period (2037/A first cash 3.72% on 2026-09-23)."
-  - When a couponSchedule is supplied (including from published market coupons / offering autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
+  - "2037/A first cash stub: 6,25% * 217nap / 365nap = 3,72% (round to 0.01%); keep ga 6.25%."
+  - When a couponSchedule is supplied (including from published market coupons / offering autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity. First-period payable stub is still derived from ga × days/365 even when a schedule is absent.
   - Auction listings may leave saleWindow null — do not invent from auctionDate (DKJ precedent).
   - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem MÁK before maturity.
   - Green (Zöld) MÁK shares this product host under ktv.
   - FLOAT cash-flow model is out of scope for this iteration.
-  - Breaking input contract aligns with ADR 0038 / v2alpha3 shapes used by FixMÁP / PMÁP.
+  - Breaking input contract aligns with ADR 0038 / v2alpha3 shapes used by sibling govsec hosts.
 
 ui:
   formTitle: Hungarian Government Bond (MÁK)

@@ -5,7 +5,7 @@ const KTV_PRODUCT_SPEC = {
   variant: 'ktv',
   productCode: 'ktv',
   displayName: 'Hungarian Government Bond (MÁK)',
-  denominationUnit: 1,
+  denominationUnit: 10000,
   inputs: [
     {
       name: 'principal',
@@ -13,8 +13,9 @@ const KTV_PRODUCT_SPEC = {
       label: 'Principal',
       required: true,
       unit: 'currency',
-      description: 'Face amount you invest in forints (HUF). Denomination unit is 1 HUF.',
-      constraints: { minimum: 1 }
+      description:
+        'Face amount you invest in forints (HUF). Official ÁKK alapcímlet is 10 000 Ft — principal must be a multiple of 10 000.',
+      constraints: { minimum: 10000 }
     },
     {
       name: 'annualCouponRatePct',

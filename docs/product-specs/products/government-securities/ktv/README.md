@@ -18,7 +18,7 @@ Locked example series **2037/A** (ISIN HU0000407564):
 ## Intentional catalog fields
 
 - **`issuanceModel: phased-public-offering`** — same sibling enum as FixMÁP / Babakötvény. ÁKK auction vs continuous offering is an ingest/listing mode (`OFFERING_LABEL_BY_FAMILY.ktv.mode: auction`, ADR 0044), not a separate product-YAML issuanceModel value.
-- **`denominationUnit: 1`** — commercial composer principal unit is 1 HUF (parity with FixMÁP / Babakötvény / PMÁP). ÁKK **10 000 Ft alapcímlet** is market packaging / trading denomination and is not mirrored into `denominationUnit`.
+- **`denominationUnit: 10000`** — mirrors the official ÁKK **10 000 Ft alapcímlet**. Composer principal defaults to 10 000 and accepts only multiples of 10 000 (same posture as DKJ).
 
 ## Out of Scope
 

@@ -41,8 +41,8 @@ describe('ktv frontend form metadata seam', () => {
 
   it('exposes denominationUnit matching the product YAML', () => {
     const loadedSpec = loadKtvProductSpecYamlFromFiles() as any
-    expect(KTV_PRODUCT_SPEC.denominationUnit).toBe(1)
-    expect(loadedSpec.denominationUnit).toBe(1)
+    expect(KTV_PRODUCT_SPEC.denominationUnit).toBe(10000)
+    expect(loadedSpec.denominationUnit).toBe(10000)
   })
 
   it('maps KTV fields onto dedicated host controls named like YAML', () => {

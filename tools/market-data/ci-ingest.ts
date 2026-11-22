@@ -17,6 +17,9 @@ export interface CiIngestOptions {
   inflationCsvPath?: string
   inflationCsvBytes?: Uint8Array
   skipInflation?: boolean
+  buborXlsPath?: string
+  buborXlsBytes?: Uint8Array
+  skipBubor?: boolean
   webkincstarTextByReport?: Partial<Record<WebkincstarReportName, string>>
   webkincstarDatum?: string
   skipWebkincstar?: boolean
@@ -57,6 +60,9 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     inflationCsvPath: options.inflationCsvPath,
     inflationCsvBytes: options.inflationCsvBytes,
     skipInflation: options.skipInflation,
+    buborXlsPath: options.buborXlsPath,
+    buborXlsBytes: options.buborXlsBytes,
+    skipBubor: options.skipBubor,
     webkincstarTextByReport: options.webkincstarTextByReport,
     webkincstarDatum: options.webkincstarDatum,
     skipWebkincstar: options.skipWebkincstar,

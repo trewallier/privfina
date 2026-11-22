@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import type {
+  BuborFile,
   InflationFile,
   OfferingArchiveFile,
   PriceCalendarFile,
@@ -63,6 +64,19 @@ export function inflationContentForDigest(file: InflationFile): Omit<InflationFi
 
 export function digestInflation(file: InflationFile): string {
   return digestCanonical(inflationContentForDigest(file))
+}
+
+/**
+ * BUBOR digest excludes `generatedAt` so a fresh stamp alone does not force
+ * a market-data commit (ADR 0045 / digest-gated no-op).
+ */
+export function buborContentForDigest(file: BuborFile): Omit<BuborFile, 'generatedAt'> {
+  const { generatedAt: _generatedAt, ...rest } = file
+  return rest
+}
+
+export function digestBubor(file: BuborFile): string {
+  return digestCanonical(buborContentForDigest(file))
 }
 
 /**

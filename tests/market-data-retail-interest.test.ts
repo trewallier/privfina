@@ -501,6 +501,13 @@ describe('retail interest join → coupons + merge', () => {
           headers: { 'content-type': 'application/octet-stream' }
         })
       }
+      if (url.includes('bubor2.xls')) {
+        const xls = readFileSync(path.join(fixtureRoot, 'bubor/bubor-sample.xls'))
+        return new Response(xls, {
+          status: 200,
+          headers: { 'content-type': 'application/vnd.ms-excel' }
+        })
+      }
       return new Response('nope', { status: 404 })
     }
 

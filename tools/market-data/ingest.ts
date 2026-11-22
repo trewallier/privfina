@@ -4,6 +4,7 @@ import { fetchAkkSnapshots } from './fetch-akk.ts'
 import { fetchAkkOfferingListings } from './fetch-akk-offerings.ts'
 import { CsrfSession, fetchAllampapirSnapshots } from './fetch-allampapir.ts'
 import { fetchKshInflationCsv } from './fetch-ksh-inflation.ts'
+import { fetchMnbBuborXls } from './fetch-mnb-bubor.ts'
 import { fetchRetailInterestSnapshots } from './fetch-retail-interest.ts'
 import {
   budapestYesterdayIso,
@@ -31,6 +32,7 @@ import { priceCalendarFileFromDays } from './merge-price-calendar.ts'
 import { normalizeAkkSnapshots } from './normalize.ts'
 import { normalizeAllampapirSnapshots } from './normalize-allampapir.ts'
 import { normalizeKshInflationCsv } from './normalize-ksh-inflation.ts'
+import { normalizeMnbBuborXls } from './normalize-mnb-bubor.ts'
 import { normalizeRetailInterestEnvelope } from './normalize-retail-interest.ts'
 import {
   fetchFailedCalendarDays,
@@ -42,6 +44,7 @@ import {
   type AkkEnvelope,
   type AllampapirEnvelope,
   type FamilyCode,
+  type BuborFile,
   type InflationFile,
   type NormalizedSnapshot,
   type OfferingArchiveFile,
@@ -103,6 +106,15 @@ export interface IngestOptions {
   /** Skip only inflation fetch/merge (keep previous refs). */
   skipInflation?: boolean
   /**
+   * Offline MNB bubor2.xls path. When omitted with fixture ÁKK / skip,
+   * previous bubor refs are kept. Live runs always fetch MNB XLS (hard-fail).
+   */
+  buborXlsPath?: string
+  /** Raw XLS bytes (tests); takes precedence over buborXlsPath. */
+  buborXlsBytes?: Uint8Array
+  /** Skip only BUBOR fetch/merge (keep previous refs). */
+  skipBubor?: boolean
+  /**
    * Europe/Budapest YYYY-MM-DD for WebKincstár PDFs. Defaults to yesterday.
    */
   webkincstarDatum?: string
@@ -143,6 +155,7 @@ export interface IngestReport extends MergeResult {
   /** True when live retailInterest fetch failed and previous coupons were kept. */
   retailInterestSoftFailed: boolean
   inflationUpdated: boolean
+  buborUpdated: boolean
   webkincstarUpdated: boolean
   /** True when WebKincstár soft-failed and calendar recorded fetch_failed. */
   webkincstarSoftFailed: boolean
@@ -290,6 +303,25 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     inflationUpdate = normalizeKshInflationCsv(fetched.csvBytes, {
       generatedAt,
       csvUrl: fetched.csvUrl
+    })
+  }
+
+  /** undefined = keep previous; file = append-first merge. */
+  let buborUpdate: BuborFile | undefined
+  if (options.buborXlsBytes) {
+    buborUpdate = normalizeMnbBuborXls(options.buborXlsBytes, { generatedAt })
+  } else if (options.buborXlsPath) {
+    const bytes = new Uint8Array(await readFile(options.buborXlsPath))
+    buborUpdate = normalizeMnbBuborXls(bytes, { generatedAt })
+  } else if (!options.skipBubor && !offlineAkk) {
+    // Live / non-fixture runs: hard-fail on MNB fetch or normalize (ADR 0045).
+    const fetched = await fetchMnbBuborXls({
+      rawDir: path.join(options.rawDir, 'mnb'),
+      fetchImpl: options.fetchImpl
+    })
+    buborUpdate = normalizeMnbBuborXls(fetched.xlsBytes, {
+      generatedAt,
+      xlsUrl: fetched.xlsUrl
     })
   }
 
@@ -613,6 +645,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   if (inflationUpdate !== undefined) {
     mergeOptions.inflation = inflationUpdate
   }
+  if (buborUpdate !== undefined) {
+    mergeOptions.bubor = buborUpdate
+  }
   if (priceCalendarUpdate !== undefined) {
     mergeOptions.priceCalendar = priceCalendarUpdate
   }
@@ -642,6 +677,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     retailInterestUpdated: retailInterestUpdate !== undefined,
     retailInterestSoftFailed,
     inflationUpdated: inflationUpdate !== undefined,
+    buborUpdated: buborUpdate !== undefined,
     webkincstarUpdated: priceCalendarUpdate !== undefined,
     webkincstarSoftFailed,
     offeringsUpdated,

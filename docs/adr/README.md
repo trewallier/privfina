@@ -41,6 +41,7 @@ Recent decisions
 - `0042-webkincstar-remaining-price-reports.md` — same workflow also fetches MÁP Plusz / PEMÁK / Start / KKJ WebKincstár price PDFs into existing `ask`/`bid` columns + price calendar (ROADMAP §6n).
 - `0043-playwright-ui-smoke.md` — Chromium Playwright UI smoke under `e2e/` separate from Vitest; no formula asserts; least-privilege `e2e` CI job (ROADMAP §6).
 - `0044-mak-ktv-public-offering-ingest.md` — extend ADR 0041 offering capture to Magyar Államkötvény (MÁK); machine id `ktv` / ÁKK label `KTV`; auction PDF schedule parser; product/SPA deferred (ROADMAP §6j / §6k).
+- `0045-mnb-bubor-published-refs.md` — same workflow also fetches MNB `bubor2.xls`; publishes append-only `refs/bubor.json` (full history on first tip; ROADMAP §6o).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

@@ -8,10 +8,12 @@ import {
   joinRetailInterestToCoupons
 } from './normalize-retail-interest.ts'
 import {
+  BUBOR_REF_PATH,
   FAMILIES,
   INFLATION_REF_PATH,
   OFFERING_ARCHIVE_REF_PATH,
   PRICE_CALENDAR_REF_PATH,
+  type BuborFile,
   type PriceCalendarFile,
   MARKET_PATH_SEGMENT,
   QUOTE_COLS,
@@ -80,7 +82,10 @@ function v2TreeHasContent(tree: MarketTreeState): boolean {
     if (Object.keys(fam.coupons).length > 0) return true
   }
   return (
-    tree.inflation != null || tree.priceCalendar != null || tree.offeringArchive != null
+    tree.inflation != null ||
+    tree.bubor != null ||
+    tree.priceCalendar != null ||
+    tree.offeringArchive != null
   )
 }
 
@@ -207,6 +212,14 @@ async function loadTreeAtPath(
     ? options?.forceSchemaVersion
       ? bumpSchemaVersion(inflation)
       : inflation
+    : null
+
+  const buborPath = tree.manifest?.refs?.bubor ?? BUBOR_REF_PATH
+  const bubor = await readJsonIfExists<BuborFile>(path.join(rootDir, buborPath))
+  tree.bubor = bubor
+    ? options?.forceSchemaVersion
+      ? bumpSchemaVersion(bubor)
+      : bubor
     : null
 
   const priceCalendarPath =
@@ -346,6 +359,13 @@ export async function writeMarketTree(root: string, tree: MarketTreeState): Prom
     const abs = path.join(v2, rel)
     await mkdir(path.dirname(abs), { recursive: true })
     await writeFile(abs, canonicalJson(tree.inflation), 'utf8')
+  }
+
+  if (tree.bubor) {
+    const rel = tree.manifest.refs?.bubor ?? BUBOR_REF_PATH
+    const abs = path.join(v2, rel)
+    await mkdir(path.dirname(abs), { recursive: true })
+    await writeFile(abs, canonicalJson(tree.bubor), 'utf8')
   }
 
   if (tree.priceCalendar) {

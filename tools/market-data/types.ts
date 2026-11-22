@@ -123,7 +123,7 @@ export interface ManifestFamilyPaths {
   latest: string
 }
 
-/** Path hints for additive refs files (ADR 0037 inflation; ADR 0039 price calendar; ADR 0041 offering archive; deferred DKJ-base). */
+/** Path hints for additive refs files (ADR 0037 inflation; ADR 0045 BUBOR; ADR 0039 price calendar; ADR 0041 offering archive; deferred DKJ-base). */
 export interface ManifestRefsPaths {
   /**
    * @deprecated Schema v2 does not publish flat retail-interest; optional only for
@@ -131,6 +131,8 @@ export interface ManifestRefsPaths {
    */
   retailInterest?: string
   inflation?: string
+  /** MNB BUBOR fixings (ADR 0045). */
+  bubor?: string
   /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
   priceCalendar?: string
   /** ÁKK public-offering document ledger (ADR 0041). */
@@ -233,6 +235,63 @@ export interface InflationFile {
 
 /** Published path for inflation refs (ADR 0037). */
 export const INFLATION_REF_PATH = 'refs/inflation.json' as const
+
+/**
+ * Canonical BUBOR tenor keys published from MNB bubor2.xls (ADR 0045).
+ * Sparse history: early years omit many keys; later intermediate months may be `-`.
+ */
+export const BUBOR_TENORS = [
+  'ON',
+  '1W',
+  '2W',
+  '1M',
+  '2M',
+  '3M',
+  '4M',
+  '5M',
+  '6M',
+  '7M',
+  '8M',
+  '9M',
+  '10M',
+  '11M',
+  '12M'
+] as const
+
+export type BuborTenor = (typeof BUBOR_TENORS)[number]
+
+/** One daily BUBOR fixing: [YYYY-MM-DD, pct]. */
+export type BuborDayRow = [string, number]
+
+export interface BuborSeriesBlock {
+  cols: ['date', 'pct']
+  rows: BuborDayRow[]
+}
+
+export interface BuborSourceMeta {
+  id: 'mnb-bubor2-xls'
+  pageUrl: string
+  xlsUrl: string
+}
+
+/**
+ * Published MNB BUBOR fixings (ADR 0045).
+ * Values are fixing percent; missing/`'-'` cells are omitted (never invent zeros).
+ */
+export interface BuborFile {
+  schemaVersion: typeof SCHEMA_VERSION
+  source: BuborSourceMeta
+  asOf: string | null
+  generatedAt: string
+  metric: 'bubor'
+  unit: 'pct'
+  /** Canonical tenor order; every key is always present (rows may be empty). */
+  tenors: typeof BUBOR_TENORS
+  series: Record<BuborTenor, BuborSeriesBlock>
+}
+
+/** Published path for BUBOR refs (ADR 0045). */
+export const BUBOR_REF_PATH = 'refs/bubor.json' as const
 
 /** Published path for WebKincstár price calendar (ADR 0039). */
 export const PRICE_CALENDAR_REF_PATH = 'refs/price-calendar.json' as const
@@ -348,6 +407,10 @@ export const KSH_ARA0040_PAGE_URL =
   'https://www.ksh.hu/stadat_files/ara/hu/ara0040.html' as const
 export const KSH_ARA0040_CSV_URL =
   'https://www.ksh.hu/stadat_files/ara/hu/ara0040.csv' as const
+
+export const MNB_BUBOR_PAGE_URL =
+  'https://www.mnb.hu/monetaris-politika/penzpiaci-informaciok/referenciamutato-jegyzesi-bizottsag/bubor' as const
+export const MNB_BUBOR_XLS_URL = 'https://www.mnb.hu/letoltes/bubor2.xls' as const
 
 /** Loose ÁKK row (catalog or network rates). */
 export type AkkRow = Record<string, unknown>

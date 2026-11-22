@@ -557,6 +557,24 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Out of scope for §6n
 - Historical backfill (§6m); SPA composer changes; synthesizing 100+accrued asks; early-sell/`bid` product math.
 
+#### 6o) MNB BUBOR refs — bubor2.xls (ADR 0045)
+Goal: publish official BUBOR fixings from MNB `bubor2.xls` into `data/market/v2/refs/bubor.json` in the **same** scheduled Actions run as KSH inflation, with **full history on first tip** and append-only merges thereafter (hard fail on historical revisions), so later slices can drive FLOAT / index consumers without inventing coupon rates (ADR 0044).
+
+Constraints
+- Actions-only; browser must not call `mnb.hu`.
+- Mirror ADR 0037 posture (hard-fail fetch/normalize/revision); do not soft-fail like retailInterest / WebKincstár.
+- Collect all meaningful tenors (`ON` … `12M`); sparse history — omit empty/`'-'` cells; never invent zeros.
+- Raw XLS never committed; SheetJS CE via official CDN tarball (`xlsx@0.20.3`) is the justified spreadsheet dep (no CSV/JSON alternative; not npm `0.18.5`).
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0045 + ROADMAP / ownership / market-data README / CI playbook / spec AC / ADR index.
+- [x] `tools/market-data/`: fetch-mnb-bubor + normalize (SheetJS) + immutable merge + validate digests; Vitest fixtures.
+- [x] Wire ingest/cli/`market-data.yml` comments; first empty tip → full workbook history.
+- [ ] **Close §6o only after live cutover:** `workflow_dispatch` market-data → tip has `data/market/v2/refs/bubor.json` with full history. Until then: **code complete; cutover pending**.
+
+Out of scope for §6o
+- SPA loader or FLOAT coupon autofill; deriving rates from quote `ai` / WebKincstár payable %; FIX ktv coupons from ÁKK `coupon`.
+
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).
 

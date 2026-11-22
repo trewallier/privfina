@@ -7,6 +7,9 @@ data/*.sqlite
 # Offline / ephemeral intake dumps (never commit)
 *.xlsx
 *.xls
+# Tiny committed fixtures for market-data Vitest (ADR 0045 BUBOR sample)
+!tests/fixtures/market-data/**/*.xls
+!tests/fixtures/market-data/**/*.xlsx
 data/intake/**/raw/**
 data/intake/**/staged/**
 temp/

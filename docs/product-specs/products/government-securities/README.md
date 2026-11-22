@@ -14,7 +14,7 @@ This family contains Hungarian government securities in the product-specificatio
 
 Product differences live primarily in product specifications, assumptions, worked examples, and metadata rather than engine branches (ADR 0015).
 
-Commercial inputs use **effective** period coupon rates and **real** maturities from published market data (`data/market/v2/`), not base+premium composition. Optional `couponSchedule` entries may leave future `rate` undefined. Day-count is series-/product-parameterized (default ACT/360 for current ÁKK retail bonds; Babakötvény ACT/ACT).
+Commercial inputs use **effective** period coupon rates and **real** maturities from published market data (`data/market/v2/`), not base+premium composition. Optional `couponSchedule` entries may leave future `rate` undefined. Day-count is series-/product-parameterized (default ACT/360 for many ÁKK retail bonds; Babakötvény ACT/ACT; MÁK/`ktv` 2037/A witness ACT/365F — ingest ACT/360-when-null is not product math).
 
 ## Subsequent inclusion matrix (ROADMAP §6j)
 
@@ -27,7 +27,7 @@ Published market family folders already (or soon) available on the `market-data`
 | `fixmap` | FixMÁP | **Done (fully-spec-backed)** — fixed / stepped coupons via `coupons/<id>.json`; do not revive `series.prem` |
 | `mapp` | MÁP Plusz (incl. nyomdai) | **Done (fully-spec-backed)** — series `couponFrequencyMonths` 12 (newer annual) or 6 (older semi-annual); Ismertető ACT/ACT accrued + kamatjuttatás; multi-band rates; kamatok min–max dual rows preserved as published |
 | `baba` | Babakötvény | **Done (fully-spec-backed)** — locked example **2045/S**: effective `ga` (CPI floored + 3% premium); ACT/ACT accrued; irregular first cash coupon (364/365 → 7.38%); annual HUF coupons; Start-számla / birth-cohort eligibility as soft hints |
-| `ktv` | Hungarian Government Bond (MÁK) / Magyar Államkötvény | **MÁK-next (this stack)** — machine id `ktv` = ÁKK/allampapir `KTV`. Offering ingest done (ADR 0044). Locked FIX example **2037/A** (6.25%; irregular first cash 3.72%; maturity 2037-09-23; ACT/360 default). Green stays under `ktv`. FLOAT cash-flow deferred. Auction `saleWindow` may be null. Do not confuse with WebKincstár `_20633_arfolyam_mak`. |
+| `ktv` | Hungarian Government Bond (MÁK) / Magyar Államkötvény | **MÁK-next (this stack)** — machine id `ktv` = ÁKK/allampapir `KTV`. Offering ingest done (ADR 0044). Locked FIX example **2037/A**: `ga` 6.25%; payable stub **3.72% = 6.25% × 217/365**; maturity 2037-09-23; product day-count **ACT/365F** (accrue on `ga`). ADR 0044 ingest ACT/360-when-null is quote fallback only. Green stays under `ktv`. FLOAT cash-flow deferred. Auction `saleWindow` may be null. Do not confuse with WebKincstár `_20633_arfolyam_mak`. |
 | `emap` | EMÁP + PEMÁP | Follow-on; **PEMÁP stays routed into `emap`** until product rules diverge (no `pemap` folder yet) |
 | *(possible `pemap`)* | PEMÁP | Split only if needed |
 | `omap` | 1MÁP | Follow-on |

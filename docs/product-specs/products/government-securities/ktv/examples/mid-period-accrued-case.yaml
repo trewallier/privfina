@@ -1,0 +1,30 @@
+specVersion: v2alpha3
+productId: government-security.ktv.standard
+exampleId: mid-period-accrued-case
+title: MÁK mid-period accrued interest
+description: Purchase mid first coupon period under the irregular 3.72% band (ACT/360 accrued from issue through purchase).
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 6.25
+  purchaseDate: 2026-06-18
+  issueDate: 2026-02-18
+  maturityDate: 2037-09-23
+  firstCouponDate: 2026-09-23
+  dayCountConvention: ACT/360
+  couponSchedule:
+    - from: 2026-02-18
+      to: 2026-09-23
+      rate: 3.72
+    - from: 2026-09-23
+      to: 2027-09-23
+      rate: 6.25
+
+expected:
+  annualCouponRatePct: 3.72
+  accruedInterestAmount: 12400
+  purchaseAmount: 1012400
+
+notes:
+  - Accrued from 2026-02-18 through 2026-06-18 under 3.72% ACT/360: 1000000 * 0.0372 * 120/360 = 12400.
+  - Derived annualCouponRatePct is the covering-band rate at purchase (3.72).

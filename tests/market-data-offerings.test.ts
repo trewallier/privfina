@@ -714,6 +714,11 @@ describe('parseOfferingPdfText', () => {
     expect(parsed.paymentDates[0]).toBe('2026-09-23')
     expect(parsed.paymentDates.at(-1)).toBe('2037-09-23')
     expect(parsed.paymentDates).toHaveLength(12)
+    expect(parsed.paymentRates).toHaveLength(12)
+    // Same-row rates only; first period / orphan `%` lines stay null (no invent).
+    expect(parsed.paymentRates?.[0]).toBeNull()
+    expect(parsed.paymentRates?.[1]).toBe(6.25)
+    expect(parsed.paymentRates?.[2]).toBe(6.25)
   })
 
   it('parses Green MÁK/KTV long annual table (2051/G)', async () => {
@@ -727,6 +732,25 @@ describe('parseOfferingPdfText', () => {
     expect(parsed.paymentDates[0]).toBe('2022-04-28')
     expect(parsed.paymentDates.at(-1)).toBe('2051-04-28')
     expect(parsed.paymentDates).toHaveLength(30)
+    expect(parsed.paymentRates).toHaveLength(30)
+  })
+
+  it('FLOAT MÁK table yields paymentDates with null rates (never invent coupons)', async () => {
+    const { classifyOfferingPdfText, parseOfferingPdfText } = await import(
+      '../tools/market-data/parse-offering-pdf.ts'
+    )
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/ktv-mak-2036-b-float.txt'),
+      'utf8'
+    )
+    expect(classifyOfferingPdfText(text)).toBe('parse')
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.maturity).toBe('2036-11-26')
+    expect(parsed.dayCount).toBeNull()
+    expect(parsed.paymentDates[0]).toBe('2027-11-26')
+    expect(parsed.paymentDates.at(-1)).toBe('2036-11-26')
+    expect(parsed.paymentDates).toHaveLength(10)
+    expect(parsed.paymentRates).toEqual(Array(10).fill(null))
   })
 })
 

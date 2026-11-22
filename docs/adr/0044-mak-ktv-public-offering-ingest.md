@@ -4,7 +4,7 @@ Status: accepted
 
 Date: 2026-11-22
 
-Supersedes: none (extends ADR 0041; additive offering-family + MAK PDF schedule parser)
+Supersedes: ADR 0041 in part — in-scope offering **family list** and quiet/busy-day **listing/PDF budget** (six → seven families; ≤60 → ≤70 PDF GETs). Discovery / archive / per-family caps / soft-fail otherwise remain as in 0041.
 
 Related: 0034, 0035, 0038, 0039, 0041, 0042, ROADMAP §6j / §6k
 
@@ -31,7 +31,7 @@ Related: 0034, 0035, 0038, 0039, 0041, 0042, ROADMAP §6j / §6k
 - Daily ingest discovers KTV offerings into `families/ktv/offerings/<id>.json` + archive rows once this stack merges and `workflow_dispatch` refreshes `market-data`.
 - Parser fixtures lock 2037/A-style (and Green 2051/G-style) annual date tables so §6m can reuse the same text API.
 - SPA / product composer for MÁK still waits on a later §6j stack; catalog picker must not list `ktv` until that stack lands.
-- ADR 0041’s “six families” quiet-day cost becomes seven listing GETs; worst-case PDF budget grows by one family’s ≤10 downloads.
+- Quiet-day listing GETs: **7** (was 6). Busy-day worst-case PDF GETs: **≤70** (10 × 7; was ≤60). Per-family caps (10 PDFs / 8 MiB) unchanged.
 
 ## Out of scope
 

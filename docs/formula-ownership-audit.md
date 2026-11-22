@@ -75,6 +75,12 @@ Inventory (by product)
   - Browser path: `public/controller/baba-calculation-adapter.js` + embedded `baba-product-spec.js` + registry `coupon-bearing` entry (`#investment-baba-wrap`); market family `baba`
   - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP / MÁP Plusz precedent)
 
+- Hungarian Government Bond / MÁK (`government-security.ktv.standard`) — **calc-aligned** (ROADMAP §6j)
+  - Spec: `docs/product-specs/products/government-securities/ktv/product.yaml`
+  - Engine primitives: `src/finance_engine/instruments/ktv.ts` (ACT/365F + Babakötvény-style first-period stub on published ga; accrue on ga — not a FixMÁP ACT/360 covering-band wrap; no `productCode` forks)
+  - Family mapper: `src/finance_engine/product_specs/ktv.ts`
+  - Status: FIX 2037/A examples green; FLOAT cash-flow deferred; SPA/embed commercial host follows
+
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
   - Embedded: `public/controller/home-savings-product-spec.js` (YAML parity tests)
@@ -127,6 +133,9 @@ Files referenced
 - `src/finance_engine/product_specs/fixmap.ts`
 - `public/controller/fixmap-product-spec.js`
 - `public/controller/fixmap-calculation-adapter.js`
+- `docs/product-specs/products/government-securities/ktv/product.yaml`
+- `src/finance_engine/instruments/ktv.ts`
+- `src/finance_engine/product_specs/ktv.ts`
 - `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
 - `src/finance_engine/instruments/home_savings.ts`
 - `src/finance_engine/product_specs/home_savings.ts`

@@ -40,7 +40,7 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 ## Consequences
 
 - Daily quiet runs cost ~6 listing GETs and 0 PDF GETs when the archive matches (archive-match dedupe is exercised with a real download gate, not offline listing-only skips). **Amended by ADR 0044:** in-scope set is seven families (`+ktv`) → quiet day ~7 listing GETs; busy-day worst case ≤70 PDF GETs (10 × 7).
-- Busy runs download at most 10 new PDFs per family (worst case 60 PDF GETs across six families); backlog drains across subsequent days. *(See ADR 0044 for the seven-family / ≤70 figure.)*
+- Busy runs download at most 10 new PDFs per family (worst case ≤70 PDF GETs across seven families per ADR 0044); backlog drains across subsequent days.
 - Digest-gated commits may fire on offerings/archive/saleWindow-only changes.
 - SPA sale-window labels and coupon-date autofill become live once offerings land on `market-data` (code complete on merge; live tip / Pages cutover still needs `workflow_dispatch`, same posture as §6f).
 

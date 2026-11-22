@@ -476,7 +476,8 @@ export function buildMarketAutofillPatch({
     family === 'bmap' ||
     family === 'fixmap' ||
     family === 'mapp' ||
-    family === 'baba'
+    family === 'baba' ||
+    family === 'ktv'
   ) {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
     const onIso = String(current.purchaseDate || series?.issue || '').trim()

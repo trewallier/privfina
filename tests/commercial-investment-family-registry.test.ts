@@ -25,6 +25,7 @@ import { DKJ_PRODUCT_SPEC } from '../public/controller/dkj-form.js'
 import { FIXMAP_PRODUCT_SPEC } from '../public/controller/fixmap-form.js'
 import { MAPP_PRODUCT_SPEC } from '../public/controller/mapp-form.js'
 import { BABA_PRODUCT_SPEC } from '../public/controller/baba-form.js'
+import { KTV_PRODUCT_SPEC } from '../public/controller/ktv-form.js'
 import { PMAP_PRODUCT_SPEC } from '../public/controller/pmap-form.js'
 
 const PICKER_STATUSES = new Set([
@@ -41,6 +42,7 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(getCommercialInvestmentFamily('fixmap')?.productSpec.id).toBe(FIXMAP_PRODUCT_SPEC.id)
     expect(getCommercialInvestmentFamily('mapp')?.productSpec.id).toBe(MAPP_PRODUCT_SPEC.id)
     expect(getCommercialInvestmentFamily('baba')?.productSpec.id).toBe(BABA_PRODUCT_SPEC.id)
+    expect(getCommercialInvestmentFamily('ktv')?.productSpec.id).toBe(KTV_PRODUCT_SPEC.id)
   })
 
   it('returns null for unsupported product codes', () => {
@@ -57,12 +59,13 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(getCommercialInvestmentFamily('fixmap')?.composerProfile).toBe('coupon-bearing')
     expect(getCommercialInvestmentFamily('mapp')?.composerProfile).toBe('coupon-bearing')
     expect(getCommercialInvestmentFamily('baba')?.composerProfile).toBe('coupon-bearing')
+    expect(getCommercialInvestmentFamily('ktv')?.composerProfile).toBe('coupon-bearing')
   })
 
-  it('lists registered family codes including FixMÁP, MÁP Plusz, and Babakötvény', () => {
+  it('lists registered family codes including FixMÁP, MÁP Plusz, Babakötvény, and MÁK', () => {
     const codes = listCommercialInvestmentFamilyCodes()
-    expect(codes.sort()).toEqual(['baba', 'bmap', 'dkj', 'fixmap', 'mapp', 'pmap'])
-    expect(listCommercialInvestmentFamilies()).toHaveLength(6)
+    expect(codes.sort()).toEqual(['baba', 'bmap', 'dkj', 'fixmap', 'ktv', 'mapp', 'pmap'])
+    expect(listCommercialInvestmentFamilies()).toHaveLength(7)
   })
 
   it('resolves productCode from bundle productSpec id or subtype', () => {
@@ -100,6 +103,12 @@ describe('commercial investment family registry (ADR 0040)', () => {
         config: { subtype: 'baba' }
       })
     ).toBe('baba')
+    expect(
+      resolveCommercialInvestmentProductCodeFromBundle({
+        productId: KTV_PRODUCT_SPEC.id,
+        config: { subtype: 'ktv' }
+      })
+    ).toBe('ktv')
     expect(resolveCommercialInvestmentProductCodeFromBundle(null)).toBeNull()
     expect(
       resolveCommercialInvestmentProductCodeFromBundle({
@@ -115,10 +124,11 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(pickerCodes).toContain('fixmap')
     expect(pickerCodes).toContain('mapp')
     expect(pickerCodes).toContain('baba')
+    expect(pickerCodes).toContain('ktv')
   })
 
   it('derives coupon-bearing selectors/inputIds from shared profile helpers', () => {
-    for (const code of ['pmap', 'bmap', 'fixmap', 'mapp', 'baba'] as const) {
+    for (const code of ['pmap', 'bmap', 'fixmap', 'mapp', 'baba', 'ktv'] as const) {
       const prefix = couponBearingDomPrefix(code)
       const entry = getCommercialInvestmentFamily(code)
       expect(entry?.composerProfile).toBe('coupon-bearing')
@@ -168,6 +178,8 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(getCommercialInvestmentFamily('mapp')?.hostWrapId).toBe('investment-mapp-wrap')
     expect(getCommercialInvestmentFamily('baba')?.migrationStatus).toBe('fully-spec-backed')
     expect(getCommercialInvestmentFamily('baba')?.hostWrapId).toBe('investment-baba-wrap')
+    expect(getCommercialInvestmentFamily('ktv')?.migrationStatus).toBe('schedule-usable')
+    expect(getCommercialInvestmentFamily('ktv')?.hostWrapId).toBe('investment-ktv-wrap')
     expect(getCommercialInvestmentFamily('dkj')?.marketableRequiredFields).toEqual([
       'purchasePricePct',
       'termMonths',
@@ -180,6 +192,9 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(getCommercialInvestmentFamily('baba')?.marketableRequiredFields).toEqual([
       ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
     ])
+    expect(getCommercialInvestmentFamily('ktv')?.marketableRequiredFields).toEqual([
+      ...COUPON_BEARING_MARKETABLE_REQUIRED_FIELDS
+    ])
   })
 
   it('derives MARKET_MARKETABLE_REQUIRED_FIELDS from the registry', () => {
@@ -189,6 +204,7 @@ describe('commercial investment family registry (ADR 0040)', () => {
       'bmap',
       'dkj',
       'fixmap',
+      'ktv',
       'mapp',
       'pmap'
     ])
@@ -295,6 +311,7 @@ describe('commercial investment family registry (ADR 0040)', () => {
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]fixmap['"]/)
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]mapp['"]/)
     expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]baba['"]/)
+    expect(previewsSrc).not.toMatch(/subtype\s*===\s*['"]ktv['"]/)
   })
 
   it('keeps calculation adapters importing PRODUCT_SPEC from leaf product-spec modules', () => {
@@ -303,6 +320,7 @@ describe('commercial investment family registry (ADR 0040)', () => {
       'baba-calculation-adapter.js',
       'bmap-calculation-adapter.js',
       'fixmap-calculation-adapter.js',
+      'ktv-calculation-adapter.js',
       'mapp-calculation-adapter.js',
       'pmap-calculation-adapter.js'
     ]

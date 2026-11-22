@@ -105,3 +105,18 @@ export function migrateBabaConfigForEdit(config = {}) {
   delete next.startDate
   return next
 }
+
+/**
+ * Normalize MÁK / ktv configs for edit (ADR 0038 effective rate + maturity).
+ * Keep annualCouponRatePct as-is; do not invent FLOAT rates.
+ */
+export function migrateKtvConfigForEdit(config = {}) {
+  const next = { ...config }
+  const existing = toFiniteNumber(next.annualCouponRatePct)
+  if (existing != null) {
+    next.annualCouponRatePct = existing
+  }
+  next.maturityDate = next.maturityDate || next.dueDate || ''
+  delete next.startDate
+  return next
+}

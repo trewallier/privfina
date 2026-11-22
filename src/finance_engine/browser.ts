@@ -98,6 +98,13 @@ export {
 export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
 
 export {
+  deriveKtvRateOutputs,
+  deriveKtvAccruedInterestAmount,
+  generateKtvAnnualCouponFlows
+} from './instruments/ktv'
+export type { KtvRateOutputs, KtvSpecInputs } from './instruments/ktv'
+
+export {
   deriveMappRateOutputs,
   deriveMappAccruedInterestAmount,
   resolveMappAccrualStartIso,

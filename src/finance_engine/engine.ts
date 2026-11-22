@@ -200,6 +200,12 @@ export {
   deriveFixmapAccruedInterestAmount,
   generateFixmapAnnualCouponFlows
 } from './instruments/fixmap'
+export type { KtvRateOutputs, KtvSpecInputs } from './instruments/ktv'
+export {
+  deriveKtvRateOutputs,
+  deriveKtvAccruedInterestAmount,
+  generateKtvAnnualCouponFlows
+} from './instruments/ktv'
 export type { MappRateOutputs, MappSpecInputs } from './instruments/mapp'
 export {
   deriveMappRateOutputs,

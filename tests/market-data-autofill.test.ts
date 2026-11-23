@@ -319,6 +319,15 @@ describe('market-data-autofill', () => {
         { dayCount: 'ACT/360' }
       )
     ).toBe('ACT/ACT')
+
+    const dkjActActOffering = buildMarketAutofillPatch({
+      family: 'dkj',
+      series: { issue: '2026-01-01', mat: '2026-12-23', dayCount: 'ACT/360' },
+      quote: { d: '2026-11-02', ask: 98.5 },
+      offering: { dayCount: 'ACT/ACT' },
+      current: { settlementDate: '2026-11-02' }
+    })
+    expect(dkjActActOffering.fields.dayCountConvention).toBe('ACT/360')
   })
 
   it('infers MÁP Plusz couponFrequencyMonths from offering payment spacing', () => {

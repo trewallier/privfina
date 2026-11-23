@@ -511,7 +511,7 @@ Goal: commercial investment composer (DKJ / PMÁP / BMÁP) consumes the publishe
 | --- | --- |
 | `saleWindow` `{ from, to }` (`to` nullable while open) | Prefer over `series.offered` / name-year heuristic for available/past and purchase-in-window hints |
 | Coupon **payment dates** through maturity | Prefer over SPA `deriveFirstCouponDate(issue, mat, 12\|3)` for PMÁP/BMÁP |
-| `dayCount` from the offering when present | Prefer over family default / kamatok-joined series dayCount for accrued |
+| `dayCount` from the offering when present | Prefer for accrued when it is a valid accrued convention for the family; **BMÁP/DKJ:** ignore offering `ACT/ACT` (Tényleges/tényleges payable-coupon label) and keep ACT/360 |
 | Attribution (`source` host + document provenance + accuracy / non-advice note) | Show beside WebKincstár price-calendar disclaimer |
 
 Preferred hot-path layout (soft-fail if absent): per-series `families/{dkj,pmap,bmap}/offerings/<id>.json` (schemaVersion 2) and/or series-adjacent `saleWindow` for picker labels without N+1 fetches. Do not invent sale history from quote rows.

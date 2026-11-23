@@ -131,6 +131,7 @@ export {
   calendarDaysBetweenIso,
   dayCountDenominator,
   deriveDkjRemainingDays,
+  isActActDayCountConvention,
   normalizeDayCountConvention,
   resolveAccrualStartIso,
   resolveCouponRatePct,
@@ -140,7 +141,6 @@ export {
 export type { CouponSchedulePeriod, DayCountConvention } from './instruments/day_count'
 export {
   accrueIsmertetoActActAmount,
-  isActActDayCountConvention,
   ismertetoPeriodRatePct,
   resolveIsmertetoAccrualStartIso,
   resolveIsmertetoFirstCouponDateIso

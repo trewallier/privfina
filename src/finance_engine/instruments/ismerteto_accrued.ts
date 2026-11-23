@@ -1,11 +1,21 @@
 /**
  * ÁKK Ismertető ACT/ACT (Tényleges/tényleges) accrued-interest period fractions.
- * Shared by PMÁP (annual, ga) and FixMÁP (quarterly, ga/n) — same structure as
- * MÁP Plusz / Babakötvény. Not ISDA Actual/Actual calendar-year fraction.
+ *
+ * Used by PMÁP (annual, ga) and FixMÁP (quarterly, ga/n). Same *contract* shape
+ * as MÁP Plusz / Babakötvény, but this module is intentionally separate for now:
+ * - Short-first (`issue > dt1`) uses denom `dt1→d1` (Ismertető case 2).
+ * - `mapp.ts` currently falls through to partA/partB and can yield a negative
+ *   partA when `issue > dt1`; do not route MÁP Plusz through this helper until
+ *   that divergence is reconciled in a dedicated follow-up.
+ * - Babakötvény keeps its own annual path (first-period cash-coupon rounding).
+ *
+ * Not ISDA Actual/Actual calendar-year fraction (`actActIsdaYearFraction`).
  */
 
 import { formatIsoDate, parseIsoDate } from '../date_utils'
-import { calendarDaysBetweenIso } from './day_count'
+import { calendarDaysBetweenIso, isActActDayCountConvention } from './day_count'
+
+export { isActActDayCountConvention }
 
 const MAX_COUPON_STEPS = 240
 
@@ -157,14 +167,4 @@ export function accrueIsmertetoActActAmount(args: {
   if (denom <= 0) return 0
   const numer = calendarDaysBetweenIso(accrualStartIso, purchaseDateIso)
   return (principal * gBase * numer) / (100 * denom)
-}
-
-export function isActActDayCountConvention(value: string | null | undefined): boolean {
-  const raw = String(value || '').trim().toUpperCase().replace(/\s+/g, '')
-  return (
-    raw === 'ACT/ACT' ||
-    raw === 'ACTACT' ||
-    raw === 'ACTUAL/ACTUAL' ||
-    raw === 'ACTUALACTUAL'
-  )
 }

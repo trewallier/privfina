@@ -18,16 +18,20 @@ export function normalizeDayCountConvention(
   if (raw === 'ACT/365F' || raw === 'ACT/365' || raw === 'ACT365F' || raw === 'ACT365') {
     return 'ACT/365F'
   }
-  if (
+  if (isActActDayCountConvention(value)) return 'ACT/ACT'
+  if (raw === '30E/360' || raw === '30/360' || raw === '30E360') return '30E/360'
+  throw new Error(`Unsupported day-count convention: ${value}`)
+}
+
+/** True for ACT/ACT / Actual/Actual aliases (ÁKK Tényleges/tényleges token). */
+export function isActActDayCountConvention(value: string | null | undefined): boolean {
+  const raw = String(value || '').trim().toUpperCase().replace(/\s+/g, '')
+  return (
     raw === 'ACT/ACT' ||
     raw === 'ACTACT' ||
     raw === 'ACTUAL/ACTUAL' ||
     raw === 'ACTUALACTUAL'
-  ) {
-    return 'ACT/ACT'
-  }
-  if (raw === '30E/360' || raw === '30/360' || raw === '30E360') return '30E/360'
-  throw new Error(`Unsupported day-count convention: ${value}`)
+  )
 }
 
 export function dayCountDenominator(convention: DayCountConvention): number {
@@ -51,8 +55,11 @@ function isUtcLeapYear(year: number): boolean {
 /**
  * ISDA Actual/Actual year fraction between ISO dates (UTC).
  * Splits on calendar-year boundaries; each portion uses days / (365 or 366
- * when that calendar year is a leap year). Used for ÁKK Tényleges/tényleges
- * on the shared PMÁP/BMÁP/FixMÁP accrued path when offering dayCount is ACT/ACT.
+ * when that calendar year is a leap year).
+ *
+ * Used only by the generic `accrueInterestAmount` ACT/ACT branch. PMÁP/FixMÁP
+ * offering ACT/ACT accrued uses ÁKK Ismertető period fractions
+ * (`accrueIsmertetoActActAmount`); BMÁP remaps ACT/ACT → ACT/360.
  */
 export function actActIsdaYearFraction(fromIso: string, toIso: string): number {
   const start = parseIsoDate(fromIso)
@@ -87,7 +94,9 @@ export function calendarDaysBetweenIso(startIso: string, endIso: string): number
 /**
  * Accrued interest amount: principal × annualRatePct/100 × day-count fraction.
  * ACT/360 and ACT/365F use calendar days over a fixed year length; ACT/ACT uses
- * ISDA Actual/Actual year fraction; 30E/360 uses 30/360-style day count.
+ * ISDA Actual/Actual year fraction (generic fallback only — govsec ACT/ACT
+ * product paths prefer `accrueIsmertetoActActAmount`); 30E/360 uses 30/360-style
+ * day count.
  */
 export function accrueInterestAmount(args: {
   principal: number

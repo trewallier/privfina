@@ -158,6 +158,7 @@ export {
   calendarDaysBetweenIso,
   dayCountDenominator,
   deriveDkjRemainingDays,
+  isActActDayCountConvention,
   normalizeDayCountConvention,
   resolveAccrualStartIso,
   resolveCouponRatePct,

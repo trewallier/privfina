@@ -67,8 +67,8 @@ const BMAP_PRODUCT_SPEC = {
       required: false,
       unit: 'text',
       description:
-        'How days are counted for accrued interest. BMÁP Ismertető felhalmozott kamat is ACT/360 (actual days / 360). Offering Tényleges/tényleges labels describe payable-coupon language only — autofill and accrued keep ACT/360 even when the offering dayCount token is ACT/ACT.',
-      constraints: { enum: ['ACT/360', 'ACT/365F', 'ACT/ACT', '30E/360'] }
+        'How days are counted for accrued interest. BMÁP Ismertető felhalmozott kamat is ACT/360 (actual days / 360). Offering Tényleges/tényleges is payable-coupon language only — autofill ignores offering ACT/ACT and does not expose it as a BMÁP input.',
+      constraints: { enum: ['ACT/360', 'ACT/365F', '30E/360'] }
     }
   ],
   outputs: [

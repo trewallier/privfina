@@ -23,6 +23,11 @@ describe('ACT/ACT day-count (offering Tényleges/tényleges)', () => {
 
   it('keeps ISDA Actual/Actual helper for generic accrueInterestAmount', () => {
     expect(actActIsdaYearFraction('2027-01-01', '2027-04-11')).toBeCloseTo(100 / 365, 12)
+    // Cross leap-year boundary: 2024-12-01 → 2025-01-31
+    expect(actActIsdaYearFraction('2024-12-01', '2025-01-31')).toBeCloseTo(
+      31 / 366 + 30 / 365,
+      12
+    )
     const accrued = accrueInterestAmount({
       principal: 1_000_000,
       annualRatePct: 6.5,
@@ -98,6 +103,40 @@ describe('ACT/ACT day-count (offering Tényleges/tényleges)', () => {
     const numer = calendarDaysBetweenIso('2026-08-01', '2026-09-01')
     const expected = (1_000_000 * (5.5 / 4) * numer) / (100 * denom)
     expect(deriveFixmapAccruedInterestAmount(inputs)).toBeCloseTo(expected, 8)
+  })
+
+  it('PMÁP ACT/ACT equal first period (issue === dt1)', () => {
+    const inputs = {
+      principal: 1_000_000,
+      purchaseDate: '2026-11-01',
+      issueDate: '2026-02-21',
+      firstCouponDate: '2027-02-21',
+      dayCountConvention: 'ACT/ACT',
+      annualCouponRatePct: 4.5
+    }
+    const denom = calendarDaysBetweenIso('2026-02-21', '2027-02-21')
+    const numer = calendarDaysBetweenIso('2026-02-21', '2026-11-01')
+    expect(derivePmapAccruedInterestAmount(inputs)).toBeCloseTo(
+      (1_000_000 * 4.5 * numer) / (100 * denom),
+      8
+    )
+  })
+
+  it('PMÁP ACT/ACT post-first-coupon uses prior→next payment denom', () => {
+    const inputs = {
+      principal: 1_000_000,
+      purchaseDate: '2027-08-21',
+      issueDate: '2026-02-21',
+      firstCouponDate: '2027-02-21',
+      dayCountConvention: 'ACT/ACT',
+      annualCouponRatePct: 4.5
+    }
+    const denom = calendarDaysBetweenIso('2027-02-21', '2028-02-21')
+    const numer = calendarDaysBetweenIso('2027-02-21', '2027-08-21')
+    expect(derivePmapAccruedInterestAmount(inputs)).toBeCloseTo(
+      (1_000_000 * 4.5 * numer) / (100 * denom),
+      8
+    )
   })
 
   it('BMÁP keeps ACT/360 accrued when dayCountConvention is ACT/ACT', () => {

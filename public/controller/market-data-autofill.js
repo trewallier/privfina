@@ -3,7 +3,10 @@
  * Never returns amount fields (principal / faceValue) or purchase/settlement dates.
  */
 
-import { deriveDkjRemainingDays } from '@finance_engine/instruments/day_count'
+import {
+  deriveDkjRemainingDays,
+  isActActDayCountConvention
+} from '@finance_engine/instruments/day_count'
 import {
   listKtvFloatPeriodTurnsIso
 } from '@finance_engine/instruments/ktv'
@@ -60,18 +63,6 @@ export function deriveRemainingDays(settlementDate, maturityDate) {
  * @param {{ paymentDates?: unknown }|null|undefined} offering
  * @returns {6|12}
  */
-function normalizeDayCountToken(value) {
-  return String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '')
-}
-
-function isActActDayCountToken(value) {
-  const raw = normalizeDayCountToken(value)
-  return raw === 'ACT/ACT' || raw === 'ACTACT' || raw === 'ACTUAL/ACTUAL' || raw === 'ACTUALACTUAL'
-}
-
 /**
  * Prefer offering dayCount when it is a valid accrued convention for the family.
  * BMÁP/DKJ Ismertető accrued is ACT/360 — offering Tényleges/tényleges (ACT/ACT)
@@ -85,8 +76,8 @@ export function resolveCommercialDayCountAutofill(family, offering, series) {
   const offeringDc = offering?.dayCount != null ? String(offering.dayCount).trim() : ''
   const seriesDc = series?.dayCount != null ? String(series.dayCount).trim() : ''
   if (family === 'bmap' || family === 'dkj') {
-    if (offeringDc && !isActActDayCountToken(offeringDc)) return offeringDc
-    if (seriesDc && !isActActDayCountToken(seriesDc)) return seriesDc
+    if (offeringDc && !isActActDayCountConvention(offeringDc)) return offeringDc
+    if (seriesDc && !isActActDayCountConvention(seriesDc)) return seriesDc
     // Offering ACT/ACT (or missing): keep ACT/360 accrued convention.
     if (offeringDc || seriesDc) return 'ACT/360'
     return null
@@ -531,6 +522,10 @@ export function buildMarketAutofillPatch({
     const remaining = deriveRemainingDays(settlement, maturity)
     if (remaining != null) {
       setField('remainingDays', remaining)
+    }
+    const dayCount = resolveCommercialDayCountAutofill(family, offering, series)
+    if (dayCount) {
+      setField('dayCountConvention', dayCount)
     }
   } else if (
     family === 'pmap' ||

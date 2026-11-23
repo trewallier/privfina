@@ -582,7 +582,7 @@ Constraints
 - Actions-only; browser must not call `mnb.hu`.
 - Authority is MNB settlement days — not OpenHolidays / Nager.Date / NGM labor decrees / third-party munkanap APIs / WebKincstár `price-calendar`.
 - Publish Mon–Fri exception shape: `closed[]` (weekday `M`) + `open[]` (weekend `E`); engine calendar API must honor `open`.
-- Raw XLSX never committed; SheetJS CE via official CDN tarball (`xlsx@0.20.3`) remains the spreadsheet dep (same as §6o).
+- Raw XLSX never committed to the `market-data` tip (Vitest fixtures under `tests/fixtures/` may pin samples, same posture as §6o BUBOR `.xls`); SheetJS CE via official CDN tarball (`xlsx@0.20.3`) remains the spreadsheet dep.
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ADR 0046 + ROADMAP / ownership / market-data README / CI playbook / spec AC / ADR index.

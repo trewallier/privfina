@@ -129,8 +129,10 @@ export interface IngestOptions {
    */
   settlementCalendarDir?: string
   /**
-   * Explicit year list for settlement-calendar fetch (tests). Defaults to
-   * Europe/Budapest current ± 1 plus years already on tip.
+   * Explicit **required** year list for settlement-calendar fetch (tests).
+   * When set, every listed year hard-fails if missing and optional years are
+   * empty. When omitted, defaults are required `[current−1, current]` and
+   * optional `[current+1, …tipYears]` (soft-skip missing optional; tip kept).
    */
   settlementCalendarYears?: number[]
   /** Skip only settlement-calendar fetch/merge (keep previous refs). */

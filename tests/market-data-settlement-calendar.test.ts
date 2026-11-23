@@ -17,7 +17,7 @@ import {
   normalizeSettlementCalendarXlsx,
   normalizeSettlementCalendars
 } from '../tools/market-data/normalize-mnb-settlement-calendar.ts'
-import { assertPublishedTree, ValidateError, validateMarketTree } from '../tools/market-data/validate.ts'
+import { assertPublishedTree, validateMarketTree } from '../tools/market-data/validate.ts'
 import type { AkkEnvelope, SettlementCalendarFile } from '../tools/market-data/types.ts'
 import { SETTLEMENT_CALENDAR_REF_PATH } from '../tools/market-data/types.ts'
 

@@ -1,11 +1,13 @@
 import { familyFromSecurityType } from './families.ts'
 import { toSeriesId } from './ids.ts'
 import {
+  FAMILIES,
   REQUIRED_FAMILIES,
   defaultDayCountForFamily,
   emptyNormalizedByFamily,
   type AkkEnvelope,
   type AkkRow,
+  type DayCountConvention,
   type FamilyCode,
   type NormalizedSnapshot,
   type QuoteRow,
@@ -60,6 +62,27 @@ function rawLabelFromRow(row: AkkRow): string | null {
   return asString(row.longName) ?? asString(row.name)
 }
 
+/** Map ÁKK `interestPeriod` labels (`3M`, `12M`, …) to month counts. */
+export function periodMonthsFromInterestPeriod(raw: unknown): number | null {
+  const s = asString(raw)
+  if (!s) return null
+  const m = /^(\d+)\s*M$/i.exec(s)
+  if (!m) return null
+  const n = Number(m[1])
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/** Map ÁKK `interestConvention` tokens onto published day-count enums. */
+export function dayCountFromInterestConvention(raw: unknown): DayCountConvention | null {
+  const s = asString(raw)
+  if (!s) return null
+  const norm = s.toUpperCase().replace(/^_/, '').replace(/-/g, '/')
+  if (norm === 'ACT/360' || norm === 'ACT360') return 'ACT/360'
+  if (norm === 'ACT/365F' || norm === 'ACT/365' || norm === 'ACT365F') return 'ACT/365F'
+  if (norm === '30E/360' || norm === '30/360') return '30E/360'
+  return null
+}
+
 function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
   const family = familyFromSecurityType(row.securityType)
   if (!family) return null
@@ -75,6 +98,7 @@ function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
     asOf && mat && mat < asOf ? 'matured' : 'active'
   const face = asNumber(row.faceValue, 'faceValue', id)
   const displayName = asString(row.name) ?? label
+  const fromConvention = dayCountFromInterestConvention(row.interestConvention)
   const rec: SeriesRecord = {
     id,
     isin: asString(row.isin),
@@ -83,11 +107,13 @@ function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
     mat,
     ccy: asString(row.currency),
     status,
-    dayCount: defaultDayCountForFamily(family)
+    dayCount: fromConvention ?? defaultDayCountForFamily(family)
   }
   if (face != null) rec.face = face
   if (asString(row.interestType)) rec.iType = asString(row.interestType)
   if (asString(row.referenceCurve)) rec.ref = asString(row.referenceCurve)
+  const periodMonths = periodMonthsFromInterestPeriod(row.interestPeriod)
+  if (periodMonths != null) rec.periodMonths = periodMonths
   return rec
 }
 
@@ -159,7 +185,8 @@ export function normalizeAkkSnapshots(
   const joinMisses: string[] = []
   const missingMat: string[] = []
   const seen = new Set<string>()
-  for (const family of REQUIRED_FAMILIES) {
+  // Join catalog onto every quoted family (required + optional e.g. ktv — ADR 0047).
+  for (const family of FAMILIES) {
     for (const q of byFamily[family].quotes) {
       if (seen.has(q.id)) continue
       seen.add(q.id)

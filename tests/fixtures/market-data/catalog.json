@@ -53,6 +53,51 @@
       "currency": "HUF",
       "coupon": 0,
       "referenceCurve": null
+    },
+    {
+      "longName": "A270422B20",
+      "name": "2027/B",
+      "isin": "HU0000404157",
+      "securityType": "KTV",
+      "issueDate": "2020-01-15",
+      "maturityDate": "2027-04-22",
+      "faceValue": 10000,
+      "interestType": "FLOAT",
+      "currency": "HUF",
+      "coupon": null,
+      "referenceCurve": "BUBOR 3M",
+      "interestPeriod": "3M",
+      "interestConvention": "_ACT_360"
+    },
+    {
+      "longName": "A361126B21",
+      "name": "2036/B",
+      "isin": "HU0000405550",
+      "securityType": "KTV",
+      "issueDate": "2021-11-26",
+      "maturityDate": "2036-11-26",
+      "faceValue": 10000,
+      "interestType": "FLOAT",
+      "currency": "HUF",
+      "coupon": null,
+      "referenceCurve": "BUBOR 3M",
+      "interestPeriod": "3M",
+      "interestConvention": "_ACT_360"
+    },
+    {
+      "longName": "A280623A18",
+      "name": "2028/A",
+      "isin": "HU0000403118",
+      "securityType": "KTV",
+      "issueDate": "2018-06-22",
+      "maturityDate": "2028-06-22",
+      "faceValue": 10000,
+      "interestType": "FIX",
+      "currency": "HUF",
+      "coupon": 1.5,
+      "referenceCurve": null,
+      "interestPeriod": "12M",
+      "interestConvention": "_ACT_365"
     }
   ]
 }

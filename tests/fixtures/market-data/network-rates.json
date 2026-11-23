@@ -43,6 +43,34 @@
       "issueDate": "2017-10-03",
       "maturityDate": "2028-03-22",
       "currency": "HUF"
+    },
+    {
+      "longName": "A270422B20",
+      "name": "2027/B",
+      "securityType": "KTV",
+      "settleDate": "2026-11-02",
+      "bidPrice": 99.8,
+      "askPrice": 100.1,
+      "bidYield": 5.6,
+      "askYield": 5.4,
+      "accruedInterest": 0.4,
+      "issueDate": "2020-01-15",
+      "maturityDate": "2027-04-22",
+      "currency": "HUF"
+    },
+    {
+      "longName": "A361126B21",
+      "name": "2036/B",
+      "securityType": "KTV",
+      "settleDate": "2026-11-02",
+      "bidPrice": 98.5,
+      "askPrice": 98.9,
+      "bidYield": 5.7,
+      "askYield": 5.5,
+      "accruedInterest": 0.2,
+      "issueDate": "2021-11-26",
+      "maturityDate": "2036-11-26",
+      "currency": "HUF"
     }
   ]
 }

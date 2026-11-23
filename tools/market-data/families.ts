@@ -112,4 +112,5 @@ export function familyFromAllampapirPaper(
   }
 }
 
-export const AKK_SECURITY_TYPES = ['DKJ', 'PMÁP', 'BMÁP'] as const
+/** ÁKK getSecurityWithOutstanding / getNetworkRates type filters (ADR 0047: include KTV for FLOAT metadata). */
+export const AKK_SECURITY_TYPES = ['DKJ', 'PMÁP', 'BMÁP', 'KTV'] as const

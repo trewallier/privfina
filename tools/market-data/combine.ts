@@ -48,6 +48,7 @@ function preferSeries(akk: SeriesRecord | undefined, ap: SeriesRecord | undefine
     if (akk.dayCount == null && ap.dayCount != null) merged.dayCount = ap.dayCount
     if (akk.offered == null && ap.offered != null) merged.offered = ap.offered
     if (akk.ref == null && ap.ref != null) merged.ref = ap.ref
+    if (akk.periodMonths == null && ap.periodMonths != null) merged.periodMonths = ap.periodMonths
     return merged
   }
   if (akk) return { ...akk, status: 'active' }

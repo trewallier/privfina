@@ -73,6 +73,11 @@ export interface SeriesRecord {
   saleWindow?: SaleWindow | null
   /** Reference curve label when known. */
   ref?: string | null
+  /**
+   * Coupon / reset period length in months when ÁKK publishes `interestPeriod`
+   * (e.g. `3M` → 3). Used by FLOAT MÁK resolve (ADR 0047); not a coupon rate.
+   */
+  periodMonths?: number | null
 }
 
 /** Inclusive retail sale window; `to` null while open. */

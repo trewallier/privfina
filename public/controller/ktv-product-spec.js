@@ -23,7 +23,8 @@ const KTV_PRODUCT_SPEC = {
       label: 'Annual Coupon Rate',
       required: true,
       unit: 'percent',
-      description: 'Published effective annual coupon rate (ga). Irregular first-period payable stub is derived as ga × days/365 (ACT/365F), not a FixMÁP covering-band rate. Do not invent FLOAT rates.',
+      description:
+        'Published effective annual coupon rate (ga) for FIX, or the FLOAT period rate resolved from indexReset + refs/bubor.json + refs/settlement-calendar.json at calculation / SPA autofill time. Never invent rates; never persist resolved FLOAT rates into families/ktv/coupons.',
       constraints: { minimum: 0, maximum: 100 }
     },
     {
@@ -56,7 +57,8 @@ const KTV_PRODUCT_SPEC = {
       label: 'First Coupon Date',
       required: false,
       unit: 'date',
-      description: 'First interest payment date. Prefer offering paymentDates when autofilled (2037/A — 2026-09-23).'
+      description:
+        'First interest payment date. Prefer offering paymentDates when autofilled (2037/A — 2026-09-23). FLOAT turns prefer offering paymentDates; else maturity-anniversary every periodMonths.'
     },
     {
       name: 'dayCountConvention',
@@ -64,7 +66,8 @@ const KTV_PRODUCT_SPEC = {
       label: 'Day Count Convention',
       required: false,
       unit: 'text',
-      description: 'How days are counted for accrued interest and the first-period stub. Locked 2037/A witness uses ACT/365F (Actual/365). ADR 0044 ingest ACT/360 when offering dayCount is null is a quote fallback only — not product math for this series.',
+      description:
+        'How days are counted for accrued interest and stubs. Locked FIX 2037/A uses ACT/365F. FLOAT indexReset uses ACT/360. ADR 0044 ingest ACT/360 when offering dayCount is null is a quote fallback only — not product math for FIX 2037/A.',
       constraints: { enum: [
   'ACT/360',
   'ACT/365F',
@@ -87,7 +90,8 @@ const KTV_PRODUCT_SPEC = {
       label: 'Accrued Interest',
       required: false,
       unit: 'currency',
-      description: 'Interest already earned from the previous coupon (or issue) through the purchase date. Accrues on published ga under the day-count convention (2037/A — ACT/365F), not on the payable first-period stub.'
+      description:
+        'Interest already earned from the previous coupon (or issue) through the purchase date. FIX accrues on published ga under ACT/365F; FLOAT accrues under indexReset ACT/360 when the period rate is known.'
     },
     {
       name: 'purchaseAmount',

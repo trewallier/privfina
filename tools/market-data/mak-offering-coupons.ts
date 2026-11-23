@@ -53,18 +53,28 @@ export function couponsFileFromMakPaymentTable(args: {
   if (family !== 'ktv') return null
   if (!hasDefinedPaymentRates(args.paymentRates)) return null
 
-  const payments = (Array.isArray(args.paymentDates) ? args.paymentDates : [])
-    .map((d) => String(d || '').trim())
-    .filter(isIsoDate)
-    .sort()
-  if (payments.length === 0) return null
+  const rawDates = Array.isArray(args.paymentDates) ? args.paymentDates : []
+  const rawRates = Array.isArray(args.paymentRates) ? args.paymentRates : []
+  // Zip then sort so unsorted parallel arrays cannot mis-pair rates.
+  const paired = rawDates
+    .map((d, i) => {
+      const from = String(d || '').trim()
+      if (!isIsoDate(from)) return null
+      const raw = rawRates[i]
+      const rate =
+        raw == null || raw === ('' as unknown)
+          ? null
+          : Number.isFinite(Number(raw))
+            ? Number(raw)
+            : null
+      return { from, rate }
+    })
+    .filter((row): row is { from: string; rate: number | null } => row != null)
+    .sort((a, b) => a.from.localeCompare(b.from))
+  if (paired.length === 0) return null
 
-  const rates = payments.map((_, i) => {
-    const raw = args.paymentRates[i]
-    if (raw == null || raw === ('' as unknown)) return null
-    const n = Number(raw)
-    return Number.isFinite(n) ? n : null
-  })
+  const payments = paired.map((row) => row.from)
+  const rates = paired.map((row) => row.rate)
 
   const rows: CouponRow[] = []
   const issue = isIsoDate(args.issueDate) ? args.issueDate : null

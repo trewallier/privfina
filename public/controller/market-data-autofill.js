@@ -284,8 +284,13 @@ export function mergeCouponScheduleWithOfferingPayments({
     const next = froms[index + 1]
     const existing = fromCoupons.find((row) => row.from === from)
     let to = existing?.to ?? null
-    if (to == null && next) {
-      to = addCalendarDaysIso(next, -1)
+    // Always clamp against the next merged From so inserted payment/issue
+    // boundaries cannot leave overlapping [from, to] windows.
+    if (next) {
+      const capped = addCalendarDaysIso(next, -1)
+      if (to == null || (capped && to >= next)) {
+        to = capped
+      }
     }
     return {
       from,

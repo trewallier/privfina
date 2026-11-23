@@ -212,9 +212,10 @@ describe('market-data-autofill', () => {
       current: { principal: '1000000', purchaseDate: '2027-02-03' }
     })
     expect(fixmap.fields.annualCouponRatePct).toBe(4.5)
+    // Issue inserted mid-band clamps prior `to` to day-before-issue (no overlap).
     expect(fixmap.fields.couponSchedule).toEqual([
       { from: '2025-03-24', to: '2026-03-23', rate: 3.5 },
-      { from: '2026-03-24', to: '2027-03-23', rate: 4.5 },
+      { from: '2026-03-24', to: '2026-08-02', rate: 4.5 },
       { from: '2026-08-03', to: null, rate: 4.5 }
     ])
     expect(fixmap.fields.maturityDate).toBe('2031-08-03')
@@ -416,6 +417,43 @@ describe('market-data-autofill', () => {
     expect(pmap.softHints).not.toContain(
       'Full coupon calendar unavailable — offering payment dates missing.'
     )
+  })
+
+  it('clamps multi-year coupon bands so inserted paymentDates never overlap', () => {
+    const coupons = {
+      cols: ['from', 'to', 'rate'],
+      rows: [
+        ['2022-03-24', '2025-03-23', 3.5],
+        ['2025-03-24', '2027-03-23', 4.5]
+      ]
+    }
+    const offering = {
+      paymentDates: [
+        '2022-03-24',
+        '2023-03-24',
+        '2024-03-24',
+        '2025-03-24',
+        '2026-03-24',
+        '2027-03-24'
+      ]
+    }
+    const merged = mergeCouponScheduleWithOfferingPayments({
+      coupons,
+      offering,
+      issueDate: '2022-01-21'
+    })
+    expect(merged.schedule).toBeTruthy()
+    const schedule = merged.schedule!
+    expect(schedule.find((r) => r.from === '2022-03-24')?.to).toBe('2023-03-23')
+    expect(schedule.find((r) => r.from === '2025-03-24')?.to).toBe('2026-03-23')
+    expect(schedule.find((r) => r.from === '2026-03-24')?.rate).toBe(4.5)
+    for (let i = 0; i < schedule.length - 1; i += 1) {
+      const cur = schedule[i]!
+      const next = schedule[i + 1]!
+      if (cur.to != null) {
+        expect(cur.to < next.from).toBe(true)
+      }
+    }
   })
 
   it('ktv FIX uses modal coupon rate for ga and shows PDF stub bands', () => {

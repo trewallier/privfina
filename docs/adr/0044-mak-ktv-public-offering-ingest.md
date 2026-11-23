@@ -30,7 +30,7 @@ Related: 0034, 0035, 0038, 0039, 0041, 0042, ROADMAP §6j / §6k
 
 - Daily ingest discovers KTV offerings into `families/ktv/offerings/<id>.json` + archive rows once this stack merges and `workflow_dispatch` refreshes `market-data`.
 - Parser fixtures lock 2037/A-style (and Green 2051/G-style) annual date tables **and** 2036/B-style FLOAT quarterly turn expansion so §6m can reuse the same text API.
-- FIX offering rates can populate `families/ktv/coupons/` for SPA coupon-period display; FLOAT calendars stay on `offerings.paymentDates` only.
+- FIX offering rates can populate `families/ktv/coupons/` for SPA coupon-period display; FLOAT calendars stay on `offerings.paymentDates` only. **Latest transcribed FIX offering upsert wins** over any prior retailInterest (or earlier offering) coupon file for that series id — retailInterest has no KTV place today, so this is the authoritative FIX rate source.
 - SPA / product composer for MÁK still waits on a later §6j stack; catalog picker must not list `ktv` until that stack lands.
 - Quiet-day listing GETs: **7** (was 6). Busy-day worst-case PDF GETs: **≤70** (10 × 7; was ≤60). Per-family caps (10 PDFs / 8 MiB) unchanged.
 

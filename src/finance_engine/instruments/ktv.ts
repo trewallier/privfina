@@ -1,10 +1,12 @@
 /**
- * MÁK / `ktv` calculation primitives (ADR 0017 / 0038 / 0044 / ROADMAP §6j).
+ * MÁK / `ktv` calculation primitives (ADR 0017 / 0038 / 0044 / 0047 / ROADMAP §6j / §6q).
  *
  * Babakötvény-style first-period payable stub on published ga under ACT/365F
  * (Actual/365): stub = round(ga × days/365, 0.01%). Accrue on ga — never treat
  * the stub as a FixMÁP covering annual band. ADR 0044 ingest ACT/360-when-null
  * is quote fallback only, not product math for the 2037/A witness.
+ * FLOAT (§6q / ADR 0047): quarterly ACT/360 payable from resolved period ga;
+ * skip periods with null rate; never invent / never write ktv coupons.
  * No productCode forks.
  */
 
@@ -26,6 +28,10 @@ import type { CashFlow } from '../models'
 const MAX_COUPON_STEPS = 240
 /** Product default for MÁK 2037/A witness (Actual/365). */
 export const KTV_DEFAULT_DAY_COUNT: DayCountConvention = 'ACT/365F'
+/** FLOAT indexReset default day-count (ÁKK ISSUE ACT/360). */
+export const KTV_FLOAT_DAY_COUNT: DayCountConvention = 'ACT/360'
+/** FLOAT default period length when indexReset.periodMonths omitted. */
+export const KTV_FLOAT_DEFAULT_PERIOD_MONTHS = 3
 
 export type KtvRateOutputs = {
   annualCouponRatePct: number
@@ -40,10 +46,27 @@ export type KtvSpecInputs = {
   firstCouponDate?: string
   dayCountConvention?: DayCountConvention | string
   couponSchedule?: CouponSchedulePeriod[]
+  /**
+   * Optional offering / derived payment dates (period turns). When present for
+   * FLOAT, prefer these over maturity-anniversary generation (ADR 0047).
+   */
+  paymentDates?: string[]
+  /** FLOAT interest period length in months (default 3). */
+  periodMonths?: number
 }
 
 function addYearsUtc(date: Date, years: number): Date {
   return new Date(Date.UTC(date.getUTCFullYear() + years, date.getUTCMonth(), date.getUTCDate()))
+}
+
+function addMonthsUtc(date: Date, months: number): Date {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth() + months
+  const day = date.getUTCDate()
+  const targetYear = year + Math.floor(month / 12)
+  const targetMonth = ((month % 12) + 12) % 12
+  const dim = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate()
+  return new Date(Date.UTC(targetYear, targetMonth, Math.min(day, dim)))
 }
 
 function ensureFiniteNumber(value: number, label: string): number {
@@ -283,6 +306,117 @@ export function generateKtvAnnualCouponFlows(
     flows.push(
       createCashFlow(paymentIso, couponAmount, CashFlowDirection.Inflow, 'investment', description)
     )
+  }
+
+  flows.push(
+    createCashFlow(maturityDateIso, principal, CashFlowDirection.Inflow, 'investment', description)
+  )
+
+  return sortCashFlowsByDate(flows)
+}
+
+/**
+ * Period-turn dates for FLOAT MÁK: prefer explicit paymentDates; else
+ * maturity-anniversary every `periodMonths` back from maturity through issue
+ * (ADR 0047). Always includes maturity when it is a turn.
+ */
+export function listKtvFloatPeriodTurnsIso(
+  specInputs: Pick<
+    KtvSpecInputs,
+    'issueDate' | 'maturityDate' | 'paymentDates' | 'periodMonths' | 'firstCouponDate'
+  >
+): string[] {
+  const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const explicit = Array.isArray(specInputs.paymentDates)
+    ? specInputs.paymentDates
+        .map((d) => String(d || '').trim())
+        .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+        .sort()
+    : []
+  if (explicit.length > 0) {
+    return explicit.filter((d) => d >= issueDateIso && d <= maturityDateIso)
+  }
+
+  const periodMonths = Math.max(
+    1,
+    Number(specInputs.periodMonths) || KTV_FLOAT_DEFAULT_PERIOD_MONTHS
+  )
+  const maturityDate = parseIsoDate(maturityDateIso)
+  const issueDate = parseIsoDate(issueDateIso)
+  const turns: string[] = []
+  let cursor = maturityDate
+  for (let step = 0; step < MAX_COUPON_STEPS; step += 1) {
+    if (cursor.getTime() < issueDate.getTime()) break
+    turns.push(formatIsoDate(cursor))
+    cursor = addMonthsUtc(cursor, -periodMonths)
+  }
+  turns.reverse()
+  const firstCoupon =
+    typeof specInputs.firstCouponDate === 'string' ? String(specInputs.firstCouponDate).trim() : ''
+  if (firstCoupon && /^\d{4}-\d{2}-\d{2}$/.test(firstCoupon) && !turns.includes(firstCoupon)) {
+    turns.push(firstCoupon)
+    turns.sort()
+  }
+  return turns
+}
+
+/**
+ * FLOAT MÁK cash flows: purchase outflow; ACT/360 period payables when rate known;
+ * skip null-rate periods; principal at maturity (ADR 0047).
+ * `periodRatesByTurnIso` maps each period-end (payment) turn → annual ga, or null to skip.
+ */
+export function generateKtvFloatCouponFlows(
+  specInputs: KtvSpecInputs,
+  purchaseAmount: number,
+  periodRatesByTurnIso: ReadonlyMap<string, number | null> | Record<string, number | null>,
+  description = 'MÁK'
+): CashFlow[] {
+  const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
+  const convention = normalizeDayCountConvention(
+    specInputs.dayCountConvention || KTV_FLOAT_DAY_COUNT
+  )
+  const rateMap =
+    periodRatesByTurnIso instanceof Map
+      ? periodRatesByTurnIso
+      : new Map(Object.entries(periodRatesByTurnIso))
+
+  const flows: CashFlow[] = [
+    createCashFlow(
+      purchaseDateIso,
+      purchaseAmount,
+      CashFlowDirection.Outflow,
+      'investment',
+      description
+    )
+  ]
+
+  const turns = listKtvFloatPeriodTurnsIso(specInputs)
+  for (let i = 0; i < turns.length; i += 1) {
+    const paymentIso = turns[i]
+    if (paymentIso < purchaseDateIso) continue
+    if (paymentIso === maturityDateIso && i === turns.length - 1) {
+      // Maturity principal is added separately; coupon for final period still pays when rated.
+    }
+    const rateRaw = rateMap.has(paymentIso) ? rateMap.get(paymentIso) : undefined
+    if (rateRaw == null || !Number.isFinite(Number(rateRaw))) continue
+    const ratePct = ensureNonNegativeNumber(Number(rateRaw), 'periodRatePct')
+    const periodStartIso = i === 0 ? issueDateIso : turns[i - 1]
+    const amount = accrueInterestAmount({
+      principal,
+      annualRatePct: ratePct,
+      fromIso: periodStartIso,
+      toIso: paymentIso,
+      dayCount: convention
+    })
+    if (amount > 0) {
+      flows.push(
+        createCashFlow(paymentIso, amount, CashFlowDirection.Inflow, 'investment', description)
+      )
+    }
   }
 
   flows.push(

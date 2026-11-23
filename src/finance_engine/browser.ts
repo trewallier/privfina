@@ -16,6 +16,7 @@ export {
   toBusinessCalendarSets,
   businessCalendarFromYearBlocks,
   isBusinessDayUtc,
+  nthBusinessDayBefore,
   rollBusinessDay,
   lastBusinessDayOnOrBefore
 } from './date_utils'
@@ -103,9 +104,25 @@ export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
 export {
   deriveKtvRateOutputs,
   deriveKtvAccruedInterestAmount,
-  generateKtvAnnualCouponFlows
+  generateKtvAnnualCouponFlows,
+  listKtvFloatPeriodTurnsIso,
+  generateKtvFloatCouponFlows,
+  KTV_FLOAT_DAY_COUNT,
+  KTV_FLOAT_DEFAULT_PERIOD_MONTHS
 } from './instruments/ktv'
 export type { KtvRateOutputs, KtvSpecInputs } from './instruments/ktv'
+
+export {
+  lookupBuborFixingPct,
+  resolveMakFloatAnnualRatePct,
+  resolveMakFloatObservationDateIso
+} from './instruments/mak_float_rate'
+export type {
+  MakFloatIndexReset,
+  BuborLookupSource,
+  SettlementCalendarLookupSource,
+  ResolveMakFloatAnnualRateArgs
+} from './instruments/mak_float_rate'
 
 export {
   deriveMappRateOutputs,

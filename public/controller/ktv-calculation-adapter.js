@@ -56,13 +56,18 @@ function mapLegacyKtvPreviewToSpecOutputs(_legacyPreview, specInputs) {
   return calculateKtvFromSpecInputs(specInputs)
 }
 
+/**
+ * Preview approximation: project the *current* resolved period ga onto every
+ * future period-end turn (strictly after purchase). Future BUBOR fixings are
+ * unknown — multi-period FLOAT cash flows are not period-true (ADR 0047).
+ */
 function buildFloatPeriodRateMap(specInputs, annualCouponRatePct) {
   const turns = listKtvFloatPeriodTurnsIso(specInputs)
   const rateMap = {}
   const purchaseIso = String(specInputs.purchaseDate || '').trim()
   for (const turn of turns) {
-    // Period-end payments on/after purchase use the current resolved ga when known.
-    if (purchaseIso && turn < purchaseIso) continue
+    // Skip purchase-day turn (period start / prior-period payment) — only future ends.
+    if (purchaseIso && turn <= purchaseIso) continue
     rateMap[turn] = annualCouponRatePct
   }
   return rateMap

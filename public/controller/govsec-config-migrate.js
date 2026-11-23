@@ -109,6 +109,7 @@ export function migrateBabaConfigForEdit(config = {}) {
 /**
  * Normalize MÁK / ktv configs for edit (ADR 0038 effective rate + maturity).
  * Keep annualCouponRatePct as-is; do not invent FLOAT rates.
+ * Preserve periodMonths when present so FLOAT cash path stays engaged (ADR 0047).
  */
 export function migrateKtvConfigForEdit(config = {}) {
   const next = { ...config }
@@ -117,6 +118,10 @@ export function migrateKtvConfigForEdit(config = {}) {
     next.annualCouponRatePct = existing
   }
   next.maturityDate = next.maturityDate || next.dueDate || ''
+  const periodMonths = toFiniteNumber(next.periodMonths)
+  if (periodMonths != null && periodMonths > 0) {
+    next.periodMonths = periodMonths
+  }
   delete next.startDate
   return next
 }

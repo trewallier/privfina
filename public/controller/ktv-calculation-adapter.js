@@ -1,12 +1,16 @@
 /**
- * MÁK commercial calculation adapter (ADR 0032 / 0038 / 0044).
- * Rate / accrued / coupon math from `@finance_engine/instruments/ktv`
- * (ACT/365F + Babakötvény-style first-period stub on ga).
+ * MÁK commercial calculation adapter (ADR 0032 / 0038 / 0044 / 0047).
+ * Rate / accrued / coupon math from `@finance_engine/instruments/ktv`.
+ * FIX: ACT/365F + Babakötvény-style first-period stub on ga.
+ * FLOAT: when periodMonths is set, ACT/360 quarterly cash path + period-turn accrual.
  */
 import {
   deriveKtvRateOutputs,
   deriveKtvAccruedInterestAmount,
-  generateKtvAnnualCouponFlows
+  generateKtvAnnualCouponFlows,
+  generateKtvFloatCouponFlows,
+  isKtvFloatSpecInputs,
+  listKtvFloatPeriodTurnsIso
 } from '@finance_engine/instruments/ktv'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
@@ -52,13 +56,38 @@ function mapLegacyKtvPreviewToSpecOutputs(_legacyPreview, specInputs) {
   return calculateKtvFromSpecInputs(specInputs)
 }
 
+/**
+ * Preview approximation: project the *current* resolved period ga onto every
+ * future period-end turn (strictly after purchase). Future BUBOR fixings are
+ * unknown — multi-period FLOAT cash flows are not period-true (ADR 0047).
+ */
+function buildFloatPeriodRateMap(specInputs, annualCouponRatePct) {
+  const turns = listKtvFloatPeriodTurnsIso(specInputs)
+  const rateMap = {}
+  const purchaseIso = String(specInputs.purchaseDate || '').trim()
+  for (const turn of turns) {
+    // Skip purchase-day turn (period start / prior-period payment) — only future ends.
+    if (purchaseIso && turn <= purchaseIso) continue
+    rateMap[turn] = annualCouponRatePct
+  }
+  return rateMap
+}
+
 function generateKtvInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
   const calculated = calculateKtvFromSpecInputs(specInputs)
-  const flows = generateKtvAnnualCouponFlows(
-    specInputs,
-    calculated.purchaseAmount,
-    calculated.annualCouponRatePct
-  ).map((flow) => ({
+  const useFloat = isKtvFloatSpecInputs(specInputs)
+  const rawFlows = useFloat
+    ? generateKtvFloatCouponFlows(
+        specInputs,
+        calculated.purchaseAmount,
+        buildFloatPeriodRateMap(specInputs, calculated.annualCouponRatePct)
+      )
+    : generateKtvAnnualCouponFlows(
+        specInputs,
+        calculated.purchaseAmount,
+        calculated.annualCouponRatePct
+      )
+  const flows = rawFlows.map((flow) => ({
     date: flow.date,
     amount: flow.amount,
     direction: flow.direction === 'outflow' ? 'outflow' : 'inflow',
@@ -89,10 +118,12 @@ function generateKtvInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
         typeof specInputs.firstCouponDate === 'string'
           ? String(specInputs.firstCouponDate).trim() || undefined
           : undefined,
-      dayCountConvention: specInputs.dayCountConvention || 'ACT/365F',
+      dayCountConvention:
+        specInputs.dayCountConvention || (useFloat ? 'ACT/360' : 'ACT/365F'),
       couponSchedule: Array.isArray(specInputs.couponSchedule)
         ? specInputs.couponSchedule
         : undefined,
+      periodMonths: useFloat ? Number(specInputs.periodMonths) : undefined,
       purchaseAmount: calculated.purchaseAmount,
       accruedInterestAmount: calculated.accruedInterestAmount,
       category: extras.category || 'investment',

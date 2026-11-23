@@ -101,7 +101,9 @@ function createCommercialInvestmentComposerHost({
     generatedAt: null,
     couponsById: {},
     offeringsById: {},
-    priceCalendar: null
+    priceCalendar: null,
+    bubor: null,
+    settlementCalendar: null
   }
 
   function formatCommercialMarketUpdatedHint(generatedAt) {
@@ -520,7 +522,9 @@ function createCommercialInvestmentComposerHost({
       generatedAt: null,
       couponsById: {},
       offeringsById: {},
-      priceCalendar: null
+      priceCalendar: null,
+      bubor: null,
+      settlementCalendar: null
     }
     rebuildCommercialMarketSeriesOptions('')
     clearCommercialMarketSelection()
@@ -533,9 +537,11 @@ function createCommercialInvestmentComposerHost({
       commercialInvestmentProductInput?.value ||
       DEFAULT_COMMERCIAL_INVESTMENT_PRODUCT
     const token = ++commercialMarketApplyToken
-    const [loaded, priceCalendar] = await Promise.all([
+    const [loaded, priceCalendar, bubor, settlementCalendar] = await Promise.all([
       marketDataLoader.loadFamily(code),
-      marketDataLoader.loadPriceCalendar()
+      marketDataLoader.loadPriceCalendar(),
+      marketDataLoader.loadBubor(),
+      marketDataLoader.loadSettlementCalendar()
     ])
     if (token !== commercialMarketApplyToken) {
       return
@@ -550,7 +556,9 @@ function createCommercialInvestmentComposerHost({
       generatedAt: loaded.generatedAt || null,
       couponsById: {},
       offeringsById: {},
-      priceCalendar: priceCalendar || null
+      priceCalendar: priceCalendar || null,
+      bubor: bubor || null,
+      settlementCalendar: settlementCalendar || null
     }
 
     if (!commercialMarketFamilyState.available) {
@@ -707,7 +715,9 @@ function createCommercialInvestmentComposerHost({
       quote: lookup.quote,
       coupons,
       offering,
-      current
+      current,
+      bubor: commercialMarketFamilyState.bubor,
+      settlementCalendar: commercialMarketFamilyState.settlementCalendar
     })
     clearMarketableFieldsMissingFromPatch(family, patch.sourced)
     applyCommercialMarketFields(family, patch.fields)
@@ -724,6 +734,7 @@ function createCommercialInvestmentComposerHost({
             maximumFractionDigits: 3
           })}%`
         : ''
+    const softHint = Array.isArray(patch.softHints) ? patch.softHints.filter(Boolean).join(' · ') : ''
     const purchaseIso =
       familyEntry?.composerProfile === 'discount'
         ? String(current.settlementDate || dateInput?.value || '').trim()
@@ -736,7 +747,7 @@ function createCommercialInvestmentComposerHost({
       clampDate: lookup.clamped && lookup.date ? lookup.date : null,
       clampReason: lookup.clamped ? lookup.clampReason || null : null
     })
-    const hint = [baseHint, rateHint, windowHint].filter(Boolean).join(' · ')
+    const hint = [baseHint, rateHint, softHint, windowHint].filter(Boolean).join(' · ')
     setCommercialMarketHint(hint, Boolean(hint))
     setCommercialMarketAttribution({
       calendar: commercialMarketFamilyState.priceCalendar,

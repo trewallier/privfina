@@ -18,7 +18,9 @@ function buildCouponBearingMarketFieldSelectors(prefix) {
     firstCouponDate: `#${prefix}-first-coupon-date`,
     couponSchedule: `#${prefix}-coupon-schedule`,
     couponFrequencyMonths: `#${prefix}-coupon-frequency-months`,
-    dayCountConvention: `#${prefix}-day-count-convention`
+    dayCountConvention: `#${prefix}-day-count-convention`,
+    /** FLOAT MÁK (ktv) period length; absent for FIX / other families. */
+    periodMonths: `#${prefix}-period-months`
   }
 }
 
@@ -81,6 +83,7 @@ function populateCouponBearingEditFields(
   const couponSchedule = form.querySelector(`#${prefix}-coupon-schedule`)
   const couponFrequencyMonths = form.querySelector(`#${prefix}-coupon-frequency-months`)
   const dayCountConvention = form.querySelector(`#${prefix}-day-count-convention`)
+  const periodMonths = form.querySelector(`#${prefix}-period-months`)
 
   if (principal) {
     principal.value =
@@ -121,6 +124,12 @@ function populateCouponBearingEditFields(
   }
   if (dayCountConvention) {
     dayCountConvention.value = migrated.dayCountConvention || ''
+  }
+  if (periodMonths) {
+    periodMonths.value =
+      migrated.periodMonths !== undefined && migrated.periodMonths !== null
+        ? String(migrated.periodMonths)
+        : ''
   }
 }
 

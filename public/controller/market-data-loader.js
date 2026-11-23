@@ -1,11 +1,12 @@
 /**
  * Runtime loader for published government-security market JSON
- * (ADR 0034 / 0035 / 0036 / 0038 / 0039 / 0046 / ROADMAP §6b–§6l / §6p).
+ * (ADR 0034 / 0035 / 0036 / 0038 / 0039 / 0045 / 0046 / 0047 / ROADMAP §6b–§6l / §6p / §6q).
  * Fetches same-origin Pages files under data/market/v2/ — never official market hosts.
  */
 
 export const PRICE_CALENDAR_REF_PATH = 'refs/price-calendar.json'
 export const SETTLEMENT_CALENDAR_REF_PATH = 'refs/settlement-calendar.json'
+export const BUBOR_REF_PATH = 'refs/bubor.json'
 
 export const MARKET_SCHEMA_VERSION = 2
 export const MARKET_FAMILIES = Object.freeze(['dkj', 'pmap', 'bmap', 'fixmap', 'mapp', 'baba', 'ktv'])
@@ -108,6 +109,22 @@ function validateSettlementCalendar(data) {
     return null
   }
   if (!Array.isArray(data.years)) {
+    return null
+  }
+  return data
+}
+
+function validateBubor(data) {
+  if (!isPlainObject(data) || data.schemaVersion !== MARKET_SCHEMA_VERSION) {
+    return null
+  }
+  if (data.metric !== 'bubor' || data.unit !== 'pct') {
+    return null
+  }
+  if (!isPlainObject(data.source) || data.source.id !== 'mnb-bubor2-xls') {
+    return null
+  }
+  if (!Array.isArray(data.tenors) || !isPlainObject(data.series)) {
     return null
   }
   return data
@@ -235,6 +252,9 @@ export function createMarketDataLoader(options = {}) {
       async loadSettlementCalendar() {
         return null
       },
+      async loadBubor() {
+        return null
+      },
       async loadOffering() {
         return null
       },
@@ -305,7 +325,7 @@ export function createMarketDataLoader(options = {}) {
 
     /**
      * MNB HU-VIBER settlement calendar exceptions (ADR 0046 / ROADMAP §6p).
-     * Soft-null when missing or invalid. No composer wiring yet.
+     * Soft-null when missing or invalid.
      * @returns {Promise<object|null>}
      */
     async loadSettlementCalendar() {
@@ -315,6 +335,22 @@ export function createMarketDataLoader(options = {}) {
           (manifest && manifest.refs && manifest.refs.settlementCalendar) ||
           SETTLEMENT_CALENDAR_REF_PATH
         return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validateSettlementCalendar)
+      } catch {
+        return null
+      }
+    },
+
+    /**
+     * MNB BUBOR fixings (ADR 0045 / 0047 / ROADMAP §6q). Soft-null when missing/invalid.
+     * Used for FLOAT MÁK period-rate resolve — never written into ktv coupons.
+     * @returns {Promise<object|null>}
+     */
+    async loadBubor() {
+      try {
+        const manifest = await this.loadManifest()
+        const relative =
+          (manifest && manifest.refs && manifest.refs.bubor) || BUBOR_REF_PATH
+        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validateBubor)
       } catch {
         return null
       }

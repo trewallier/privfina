@@ -260,6 +260,67 @@ export function webkincstarDatumNeedsFetch(
 }
 
 /**
+ * Inclusive YYYY-MM-DD calendar range (UTC noon arithmetic).
+ * @throws when from/to are not ISO dates or from > to
+ */
+export function listIsoDatesInclusive(fromIso: string, toIso: string): string[] {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromIso) || !/^\d{4}-\d{2}-\d{2}$/.test(toIso)) {
+    throw new WebkincstarFetchError(
+      `Backfill range requires YYYY-MM-DD from/to (got ${fromIso} … ${toIso})`
+    )
+  }
+  if (fromIso > toIso) {
+    throw new WebkincstarFetchError(
+      `Backfill from ${fromIso} is after to ${toIso}`
+    )
+  }
+  const out: string[] = []
+  let cursor = fromIso
+  // Guard: ~40 years of daily dates.
+  for (let i = 0; i < 366 * 40; i += 1) {
+    out.push(cursor)
+    if (cursor === toIso) return out
+    cursor = shiftIsoDate(cursor, 1)
+  }
+  throw new WebkincstarFetchError(`Backfill range too large: ${fromIso} … ${toIso}`)
+}
+
+/**
+ * Historical WebKincstár date-loop targets (ROADMAP §6m).
+ * Default includes weekends so `no_price` calendar rows are recorded.
+ * Pass `weekdaysOnly: true` to skip Sat/Sun (operator speed vs calendar fidelity).
+ *
+ * Default floor for FixMÁP/PMÁP/BMÁP secondary quotes: earliest published FixMÁP
+ * sale start on tip (`2025-04-23` for 2030/Q2); callers may pass an earlier from.
+ */
+export const WEBKINCSTAR_BACKFILL_DEFAULT_FROM = '2025-04-23'
+
+export interface WebkincstarBackfillDatumOptions {
+  from: string
+  to: string
+  weekdaysOnly?: boolean
+  /**
+   * When set with previousDays, skip datums that already have durable
+   * priced/no_price rows for every requested report (resume-friendly).
+   */
+  previousDays?: ReadonlyArray<{ datum: string; report: string; status: string }> | null
+  reports?: readonly WebkincstarReportName[]
+  skipDurable?: boolean
+}
+
+export function resolveWebkincstarBackfillDatums(
+  options: WebkincstarBackfillDatumOptions
+): string[] {
+  const reports = options.reports ?? WEBKINCSTAR_REPORTS
+  const all = listIsoDatesInclusive(options.from, options.to)
+  const filtered = options.weekdaysOnly ? all.filter((d) => isIsoWeekday(d)) : all
+  if (!options.skipDurable) return filtered
+  return filtered.filter((datum) =>
+    webkincstarDatumNeedsFetch(datum, options.previousDays, reports)
+  )
+}
+
+/**
  * Build WebKincstár fetch datums: primary (yesterday) plus up to N prior weekdays
  * that still need a durable calendar row for any configured report.
  * Closes holes when Actions schedule drift skips a Budapest "yesterday".

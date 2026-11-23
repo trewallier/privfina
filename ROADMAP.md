@@ -550,15 +550,17 @@ Out of scope for §6l
 Goal: one-shot (or batched) backfill of historical market artifacts into `market-data`, reusing the daily ingest parsers from §6h / §6k / §6n where possible.
 
 Constraints
-- Detail and sequencing TBD when this epic is planned; do not start until §6h / §6k daily paths exist.
-- Prefer official sources already used by daily ingest.
+- Prefer official sources already used by daily ingest (WebKincstár report API + existing parsers).
 - Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6k / §6n); do not imply backfilled history is more authoritative than the original publications.
+- Default FixMÁP/PMÁP/BMÁP floor: `2025-04-23` (earliest FixMÁP `2030/Q2` sale start on tip); `--to` defaults to Budapest yesterday.
 
 Plan slices
-- [ ] Plan and implement historical backfill (scope, sources, cutover, and attribution/legal notes TBD).
+- [x] WebKincstár date-loop CLI (`market-data backfill-webkincstar --from --to`) reusing `fetchWebkincstarSnapshots` / parsers; default report `_20633_arfolyam_mak`; optional `--weekdays-only` / `--skip-durable`; ingest accepts `webkincstarDatums` + `webkincstarReports`.
+- [ ] Operator cutover: run backfill against a `market-data` tip clone (`--from 2025-04-23 --to <day-before-first-daily-ingest>`), commit/push tip, redeploy Pages so SPA history deepens.
+- [ ] Optional follow-ons: DKJ `_20631` / remaining §6n reports; offering PDF historical archive loop.
 
-Out of scope until planned
-- Concrete date ranges, report inventories, or SPA UX for deep history.
+Out of scope for this slice
+- Automatic scheduled full-history refetch; inventing asks for closed coupon series; SPA deep-history UI beyond quote-range hints (§6l UX).
 
 #### 6n) WebKincstár remaining price reports — sell / `ask` coverage
 Goal: extend the daily WebKincstár collect (ADR 0039) so optional government-security families that publish regular Kincstári árfolyamjegyzés tables also land **eladási → `ask`** (and vételi → `bid`) in existing `data/market/v2/` quote columns, with calendar rows per report. Ingest-only; no pricing models or SPA autofill. Architecture: ADR 0042.

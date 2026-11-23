@@ -301,6 +301,51 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
     expect(datums).toContain('2026-11-10')
     expect(datums.every((d) => isIsoWeekday(d) || d === '2026-11-11')).toBe(true)
   })
+
+  it('resolveWebkincstarBackfillDatums builds §6m historical date loops', async () => {
+    const {
+      listIsoDatesInclusive,
+      resolveWebkincstarBackfillDatums,
+      WEBKINCSTAR_BACKFILL_DEFAULT_FROM,
+      isIsoWeekday
+    } = await import('../tools/market-data/fetch-webkincstar.ts')
+
+    expect(WEBKINCSTAR_BACKFILL_DEFAULT_FROM).toBe('2025-04-23')
+    expect(listIsoDatesInclusive('2026-11-01', '2026-11-03')).toEqual([
+      '2026-11-01',
+      '2026-11-02',
+      '2026-11-03'
+    ])
+    expect(() => listIsoDatesInclusive('2026-11-03', '2026-11-01')).toThrow(/after to/)
+
+    const all = resolveWebkincstarBackfillDatums({
+      from: '2026-11-06',
+      to: '2026-11-09'
+    })
+    expect(all).toEqual(['2026-11-06', '2026-11-07', '2026-11-08', '2026-11-09'])
+
+    const weekdays = resolveWebkincstarBackfillDatums({
+      from: '2026-11-06',
+      to: '2026-11-09',
+      weekdaysOnly: true
+    })
+    expect(weekdays.every((d) => isIsoWeekday(d))).toBe(true)
+    expect(weekdays).toEqual(['2026-11-06', '2026-11-09'])
+
+    const previousDays = [
+      { datum: '2026-11-06', report: '_20633_arfolyam_mak', status: 'priced' },
+      { datum: '2026-11-09', report: '_20633_arfolyam_mak', status: 'no_price' }
+    ]
+    const resume = resolveWebkincstarBackfillDatums({
+      from: '2026-11-06',
+      to: '2026-11-09',
+      weekdaysOnly: true,
+      skipDurable: true,
+      previousDays,
+      reports: ['_20633_arfolyam_mak']
+    })
+    expect(resume).toEqual([])
+  })
 })
 
 describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () => {

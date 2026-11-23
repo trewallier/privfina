@@ -547,20 +547,23 @@ Out of scope for §6l
 - Inflation as commercial composer inputs; `refs/dkj-base.json`.
 
 #### 6m) Historical market-data backfill
-Goal: one-shot (or batched) backfill of historical market artifacts into `market-data`, reusing the daily ingest parsers from §6h / §6k / §6n where possible.
+Goal: deepen WebKincstár price history on `market-data` by walking backward from the tip, reusing daily ingest parsers from §6h / §6k / §6n.
 
 Constraints
 - Prefer official sources already used by daily ingest (WebKincstár report API + existing parsers).
 - Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6k / §6n); do not imply backfilled history is more authoritative than the original publications.
-- Default FixMÁP/PMÁP/BMÁP floor: `2025-04-23` (earliest FixMÁP `2030/Q2` sale start on tip); `--to` defaults to Budapest yesterday.
+- Tip path unchanged: Budapest yesterday + ≤3 prior weekday hole-fill (ADR 0039).
+- Rolling history: each scheduled run also fetches the **6 calendar days** immediately before the oldest durable `refs/price-calendar.json` datum (all configured reports); scrape floor **`1990-01-01`** (refine later). When oldest ≤ floor, omit historical window.
+- One-shot CLI remains an operator escape hatch (`--from` defaults to the same floor; `--to` defaults to Budapest yesterday).
 
 Plan slices
 - [x] WebKincstár date-loop CLI (`market-data backfill-webkincstar --from --to`) reusing `fetchWebkincstarSnapshots` / parsers; default report `_20633_arfolyam_mak`; optional `--weekdays-only` / `--skip-durable`; ingest accepts `webkincstarDatums` + `webkincstarReports`.
-- [ ] Operator cutover: run backfill against a `market-data` tip clone (`--from 2025-04-23 --to <day-before-first-daily-ingest>`), commit/push tip, redeploy Pages so SPA history deepens.
-- [ ] Optional follow-ons: DKJ `_20631` / remaining §6n reports; offering PDF historical archive loop.
+- [x] Scheduled rolling historical window in daily ingest (tip lookback ∪ 6 days before oldest durable calendar datum; floor `1990-01-01`).
+- [ ] Live tip cutover / Pages redeploy so SPA quote history deepens as the calendar walks back.
+- [ ] Optional follow-ons: refine scrape floor once archive bounds are confirmed; offering PDF historical archive loop.
 
 Out of scope for this slice
-- Automatic scheduled full-history refetch; inventing asks for closed coupon series; SPA deep-history UI beyond quote-range hints (§6l UX).
+- Changing primary Értéknap / next-morning rules; inventing asks for closed coupon series; SPA deep-history UI beyond quote-range hints (§6l UX).
 
 #### 6n) WebKincstár remaining price reports — sell / `ask` coverage
 Goal: extend the daily WebKincstár collect (ADR 0039) so optional government-security families that publish regular Kincstári árfolyamjegyzés tables also land **eladási → `ask`** (and vételi → `bid`) in existing `data/market/v2/` quote columns, with calendar rows per report. Ingest-only; no pricing models or SPA autofill. Architecture: ADR 0042.

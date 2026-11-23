@@ -15,6 +15,9 @@ import {
   budapestTodayIso,
   budapestYesterdayIso,
   fetchWebkincstarSnapshots,
+  mergeWebkincstarFetchDatums,
+  oldestDurablePriceCalendarDatum,
+  resolveWebkincstarHistoricalBackfillDatums,
   resolveWebkincstarLookbackDatums
 } from './fetch-webkincstar.ts'
 import type { PriceCalendarDay } from './normalize-webkincstar.ts'
@@ -152,7 +155,7 @@ export interface IngestOptions {
   webkincstarDatums?: string[]
   /**
    * Subset of WebKincstár reports to fetch (defaults to full ADR 0039 / 0042 list).
-   * §6m FixMÁP/PMÁP/BMÁP backfill typically uses `_20633_arfolyam_mak` only.
+   * Operator one-shot §6m CLI may pass a subset (e.g. `_20633_arfolyam_mak` only).
    */
   webkincstarReports?: readonly WebkincstarReportName[]
   /**
@@ -447,17 +450,29 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
 
   const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
   const webkincstarPrimaryDatum = options.webkincstarDatum ?? budapestYesterdayIso()
-  // Explicit multi-day list (§6m) wins; else single --datum; else yesterday + lookback.
+  // Explicit multi-day list (§6m CLI) wins; else single --datum; else tip path
+  // (yesterday + ≤3 weekday lookback) ∪ rolling historical window (6 days before
+  // oldest durable price-calendar datum, floor 1990-01-01).
   const webkincstarDatums =
     Array.isArray(options.webkincstarDatums) && options.webkincstarDatums.length > 0
       ? options.webkincstarDatums
       : options.webkincstarDatum
         ? [options.webkincstarDatum]
-        : resolveWebkincstarLookbackDatums({
-            primaryDatum: webkincstarPrimaryDatum,
-            previousDays: previous.priceCalendar?.days,
-            reports: webkincstarReports
-          })
+        : mergeWebkincstarFetchDatums(
+            resolveWebkincstarLookbackDatums({
+              primaryDatum: webkincstarPrimaryDatum,
+              previousDays: previous.priceCalendar?.days,
+              reports: webkincstarReports
+            }),
+            resolveWebkincstarHistoricalBackfillDatums({
+              oldestDatum: oldestDurablePriceCalendarDatum(
+                previous.priceCalendar?.days,
+                webkincstarReports
+              ),
+              previousDays: previous.priceCalendar?.days,
+              reports: webkincstarReports
+            })
+          )
   const shouldFetchWebkincstar =
     !options.skipWebkincstar &&
     (Boolean(options.webkincstarTextByReport) || !offlineAkk)

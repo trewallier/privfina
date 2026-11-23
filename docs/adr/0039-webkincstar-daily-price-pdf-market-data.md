@@ -42,9 +42,15 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 - Operators must install `poppler-utils` locally to run live PDF extract; offline ingest uses text fixtures / `--skip-webkincstar`.
 - Name→id join quality for multi-family MAK PDFs may soft-skip some rows until fixtures confirm columns; unmatched names stay in logs, not invented series.
 
+## Consequences (follow-on — ROADMAP §6m)
+
+- Daily ingest keeps this ADR’s primary datum (Budapest yesterday) and ≤3 prior-weekday tip lookback.
+- Scheduled runs also union a rolling historical window: the 6 calendar days immediately before the oldest durable `refs/price-calendar.json` datum (all configured reports), clamped to scrape floor `1990-01-01` (refine later). When oldest ≤ floor, the historical window is empty.
+- Operator one-shot CLI (`market-data backfill-webkincstar`) remains available; scheduled rolling history is the preferred deepening path.
+
 ## Out of scope
 
-- Historical date-loop backfill (§6m).
+- Changing primary Értéknap selection (e.g. next-morning rules) — deferred.
 - SPA composer / loader changes (quote columns unchanged; calendar optional for later UX — ROADMAP §6i).
 - Other WebKincstár report names unless needed for a required family.
 - Per-row provenance columns; sale-window / offering capture (§6k); SPA offering consumer (§6l); `refs/dkj-base.json`.

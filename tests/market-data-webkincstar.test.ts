@@ -310,7 +310,7 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
       isIsoWeekday
     } = await import('../tools/market-data/fetch-webkincstar.ts')
 
-    expect(WEBKINCSTAR_BACKFILL_DEFAULT_FROM).toBe('2025-04-23')
+    expect(WEBKINCSTAR_BACKFILL_DEFAULT_FROM).toBe('1990-01-01')
     expect(listIsoDatesInclusive('2026-11-01', '2026-11-03')).toEqual([
       '2026-11-01',
       '2026-11-02',
@@ -345,6 +345,102 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
       reports: ['_20633_arfolyam_mak']
     })
     expect(resume).toEqual([])
+  })
+
+  it('resolveWebkincstarHistoricalBackfillDatums walks 6 calendar days before oldest', async () => {
+    const {
+      oldestDurablePriceCalendarDatum,
+      resolveWebkincstarHistoricalBackfillDatums,
+      resolveWebkincstarLookbackDatums,
+      mergeWebkincstarFetchDatums,
+      WEBKINCSTAR_BACKFILL_DEFAULT_FROM,
+      WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH
+    } = await import('../tools/market-data/fetch-webkincstar.ts')
+    const { WEBKINCSTAR_REPORTS } = await import('../tools/market-data/webkincstar-reports.ts')
+
+    expect(WEBKINCSTAR_BACKFILL_DEFAULT_FROM).toBe('1990-01-01')
+    expect(WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH).toBe(6)
+
+    const oldestOnly = WEBKINCSTAR_REPORTS.map((report) => ({
+      datum: '2026-11-05',
+      report,
+      status: 'priced' as const
+    }))
+    expect(oldestDurablePriceCalendarDatum(oldestOnly)).toBe('2026-11-05')
+
+    const hist = resolveWebkincstarHistoricalBackfillDatums({
+      oldestDatum: '2026-11-05',
+      previousDays: oldestOnly
+    })
+    expect(hist).toEqual([
+      '2026-10-30',
+      '2026-10-31',
+      '2026-11-01',
+      '2026-11-02',
+      '2026-11-03',
+      '2026-11-04'
+    ])
+
+    // Durable days inside the window are omitted.
+    const withDurableGap = [
+      ...oldestOnly,
+      ...WEBKINCSTAR_REPORTS.map((report) => ({
+        datum: '2026-11-02',
+        report,
+        status: 'no_price' as const
+      }))
+    ]
+    expect(
+      resolveWebkincstarHistoricalBackfillDatums({
+        oldestDatum: '2026-11-05',
+        previousDays: withDurableGap
+      })
+    ).toEqual(['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-03', '2026-11-04'])
+
+    expect(
+      resolveWebkincstarHistoricalBackfillDatums({
+        oldestDatum: '1990-01-01',
+        previousDays: []
+      })
+    ).toEqual([])
+    expect(
+      resolveWebkincstarHistoricalBackfillDatums({
+        oldestDatum: null,
+        previousDays: []
+      })
+    ).toEqual([])
+    expect(oldestDurablePriceCalendarDatum([])).toBeNull()
+
+    // Clamp: oldest 1990-01-03 → only days ≥ floor in the 6-day window.
+    expect(
+      resolveWebkincstarHistoricalBackfillDatums({
+        oldestDatum: '1990-01-03',
+        previousDays: []
+      })
+    ).toEqual(['1990-01-01', '1990-01-02'])
+
+    // Ingest composition smoke: tip lookback ∪ historical both present.
+    const tipPrevious = [
+      ...WEBKINCSTAR_REPORTS.flatMap((report) => [
+        { datum: '2026-11-05', report, status: 'priced' },
+        { datum: '2026-11-11', report, status: 'priced' }
+      ])
+    ]
+    const tip = resolveWebkincstarLookbackDatums({
+      primaryDatum: '2026-11-11',
+      previousDays: tipPrevious,
+      maxExtraWeekdays: 3
+    })
+    const historical = resolveWebkincstarHistoricalBackfillDatums({
+      oldestDatum: oldestDurablePriceCalendarDatum(tipPrevious),
+      previousDays: tipPrevious
+    })
+    const merged = mergeWebkincstarFetchDatums(tip, historical)
+    expect(merged).toContain('2026-11-11')
+    expect(merged).toContain('2026-11-10') // tip lookback hole
+    expect(merged).toContain('2026-10-30') // historical window start
+    expect(merged).toContain('2026-11-04') // historical window end
+    expect(merged).not.toContain('2026-11-05') // already durable oldest
   })
 })
 

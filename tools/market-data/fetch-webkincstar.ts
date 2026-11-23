@@ -286,14 +286,13 @@ export function listIsoDatesInclusive(fromIso: string, toIso: string): string[] 
 }
 
 /**
- * Historical WebKincstár date-loop targets (ROADMAP §6m).
- * Default includes weekends so `no_price` calendar rows are recorded.
- * Pass `weekdaysOnly: true` to skip Sat/Sun (operator speed vs calendar fidelity).
- *
- * Default floor for FixMÁP/PMÁP/BMÁP secondary quotes: earliest published FixMÁP
- * sale start on tip (`2025-04-23` for 2030/Q2); callers may pass an earlier from.
+ * Historical WebKincstár scrape floor (ROADMAP §6m). Refine later once archive
+ * bounds are confirmed; rolling daily history stops at/before this date.
  */
-export const WEBKINCSTAR_BACKFILL_DEFAULT_FROM = '2025-04-23'
+export const WEBKINCSTAR_BACKFILL_DEFAULT_FROM = '1990-01-01'
+
+/** Calendar days scraped behind the oldest durable tip datum each scheduled run. */
+export const WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH = 6
 
 export interface WebkincstarBackfillDatumOptions {
   from: string
@@ -321,6 +320,66 @@ export function resolveWebkincstarBackfillDatums(
 }
 
 /**
+ * Oldest durable (`priced` | `no_price`) price-calendar datum across the given
+ * reports. Ignores `fetch_failed` / absent rows. Null when none exist.
+ */
+export function oldestDurablePriceCalendarDatum(
+  previousDays: ReadonlyArray<{ datum: string; report: string; status: string }> | null | undefined,
+  reports: readonly WebkincstarReportName[] = WEBKINCSTAR_REPORTS
+): string | null {
+  const reportSet = new Set<string>(reports)
+  let oldest: string | null = null
+  for (const day of previousDays ?? []) {
+    if (!reportSet.has(day.report)) continue
+    if (day.status !== 'priced' && day.status !== 'no_price') continue
+    const datum = String(day.datum || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datum)) continue
+    if (oldest == null || datum < oldest) oldest = datum
+  }
+  return oldest
+}
+
+export interface WebkincstarHistoricalBackfillOptions {
+  /** Min durable tip calendar datum; null/missing → no historical window. */
+  oldestDatum?: string | null
+  previousDays?: ReadonlyArray<{ datum: string; report: string; status: string }> | null
+  reports?: readonly WebkincstarReportName[]
+  /** Inclusive floor; no candidate before this date (default 1990-01-01). */
+  floor?: string
+  /** Calendar days immediately before oldest (default 6). */
+  depth?: number
+}
+
+/**
+ * Rolling historical scrape window (ROADMAP §6m): the `depth` calendar days
+ * immediately before the oldest durable tip datum, clamped to `floor`, omitting
+ * days already durable for every configured report. Empty when oldest is missing
+ * or already at/below the floor. Tip primary + lookback stay separate.
+ */
+export function resolveWebkincstarHistoricalBackfillDatums(
+  options: WebkincstarHistoricalBackfillOptions
+): string[] {
+  const oldest = String(options.oldestDatum || '').trim()
+  const floor = String(options.floor || WEBKINCSTAR_BACKFILL_DEFAULT_FROM).trim()
+  const depth = Number(options.depth ?? WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH)
+  const reports = options.reports ?? WEBKINCSTAR_REPORTS
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(oldest)) return []
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(floor)) return []
+  if (!Number.isFinite(depth) || depth <= 0) return []
+  if (oldest <= floor) return []
+
+  const windowEnd = shiftIsoDate(oldest, -1)
+  if (windowEnd < floor) return []
+  const rawStart = shiftIsoDate(oldest, -depth)
+  const windowStart = rawStart < floor ? floor : rawStart
+  if (windowStart > windowEnd) return []
+
+  return listIsoDatesInclusive(windowStart, windowEnd).filter((datum) =>
+    webkincstarDatumNeedsFetch(datum, options.previousDays, reports)
+  )
+}
+
+/**
  * Build WebKincstár fetch datums: primary (yesterday) plus up to N prior weekdays
  * that still need a durable calendar row for any configured report.
  * Closes holes when Actions schedule drift skips a Budapest "yesterday".
@@ -342,4 +401,14 @@ export function resolveWebkincstarLookbackDatums(
     cursor = shiftIsoDate(cursor, -1)
   }
   return datums
+}
+
+/**
+ * Union tip lookback with rolling historical backfill; sorted unique ISO dates.
+ */
+export function mergeWebkincstarFetchDatums(
+  tipDatums: readonly string[],
+  historicalDatums: readonly string[]
+): string[] {
+  return [...new Set([...tipDatums, ...historicalDatums].filter(Boolean))].sort()
 }

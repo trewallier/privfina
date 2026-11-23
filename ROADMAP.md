@@ -470,7 +470,8 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [ ] SPA series picker + autofill per remaining family via registry registration; parity tests.
 
 Out of scope for §6j until named
-- Live auction DKJ-base derivation; non-ÁKK retail products outside published families; FLOAT MÁK cash-flow model; renaming published folder `ktv` → `mak`.
+- Live auction DKJ-base derivation; non-ÁKK retail products outside published families; renaming published folder `ktv` → `mak`.
+- FLOAT MÁK BUBOR resolve is tracked under **§6q** (not deferred here).
 
 #### 6k) Daily public-offering capture (ÁKK; Államkincstár hub)
 Goal: extend the daily Actions ingest to detect **new nyilvános ajánlattétel (public offering)** documents via **ÁKK** `getPublicOfferings` (+ PDF hosts), and transcribe their content into published market data over time (sale windows, coupon calendars, and other offering details — e.g. BMÁP coupon days). **`allamkincstar.gov.hu` is a human hub only** (ADR 0041 / 0044) — not scraped; documents remain on `documents.akk.hu` (allampapir fallback). Architecture: ADR 0041 (+ ADR 0044 for `ktv` / MÁK).
@@ -592,7 +593,27 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [ ] **Close §6p only after live cutover:** `workflow_dispatch` market-data → tip has `data/market/v2/refs/settlement-calendar.json`. Until then: **code complete; cutover pending**.
 
 Out of scope for §6p
-- FLOAT “3rd business day” reset wiring; offering `paymentDates` adjustment; salary autofill from published days; separate labor-calendar ref.
+- FLOAT “3rd business day” reset wiring (see §6q); offering `paymentDates` adjustment; salary autofill from published days; separate labor-calendar ref.
+
+#### 6q) FLOAT MÁK — BUBOR resolve without ktv coupon writes (ADR 0047)
+Goal: make FLOAT MÁK (`ktv`) truthful to ÁKK ISSUE rules — period annual rate = **3M BUBOR** on the **3rd HU-VIBER business day before period turn**, round **0.01%**, floor **0.01%**, day-count **ACT/360** — by resolving at engine/SPA time from published `refs/bubor.json` + `refs/settlement-calendar.json` + product YAML `indexReset` rules. **Never** write derived rates into `families/ktv/coupons/` (ADR 0044 / 0045 / 0047). FIX 2037/A path unchanged. Temporary tip→`master` CI head PR (close, do not merge).
+
+Constraints
+- Specs hold rules only; rates resolve from published refs — no inventing, no quote-`ai` / WebKincstár payable % back-solve.
+- Browser never calls mnb.hu / akk.hu; SPA soft-loads BUBOR + settlement calendar.
+- Period turns: prefer offering `paymentDates`; else maturity-anniversary every `periodMonths` (3M FLOAT pattern).
+- Missing fixing/calendar/metadata → null rate / soft hint.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [ ] ADR 0047 + ROADMAP / ownership / spec / gov-sec README: FLOAT resolve-without-coupon-write boundary.
+- [ ] ÁKK KTV catalog join → series `iType` / `ref` / period metadata; Vitest locks no BUBOR→coupons writes.
+- [ ] `ktv/product.yaml` + schema `indexReset` + FLOAT example (2027/B ga from published BUBOR fixing).
+- [ ] Engine: `nthBusinessDayBefore` + BUBOR lookup + FLOAT cash path (ACT/360); goldens vs probe witnesses.
+- [ ] SPA: `loadBubor` + FLOAT form autofill from rules; soft-null when missing.
+- [ ] Embed parity + catalog / formula-audit; temporary tip→`master` CI head PR (close, do not merge).
+
+Out of scope for §6q
+- Writing FLOAT or FIX rates into `families/ktv/coupons/`; FIX coupon ingest from ÁKK `coupon`; labor-law calendars; browser CORS to official hosts.
 
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).

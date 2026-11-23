@@ -98,6 +98,21 @@
       "referenceCurve": null,
       "interestPeriod": "12M",
       "interestConvention": "_ACT_365"
+    },
+    {
+      "longName": "A370923A26",
+      "name": "2037/A",
+      "isin": "HU0000407564",
+      "securityType": "KTV",
+      "issueDate": "2026-02-18",
+      "maturityDate": "2037-09-23",
+      "faceValue": 10000,
+      "interestType": "FIX",
+      "currency": "HUF",
+      "coupon": 6.25,
+      "referenceCurve": null,
+      "interestPeriod": "12M",
+      "interestConvention": "_ACT_365"
     }
   ]
 }

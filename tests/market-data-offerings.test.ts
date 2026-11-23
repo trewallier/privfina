@@ -511,15 +511,26 @@ describe('ktv / MÁK offering ingest E2E (ADR 0044)', () => {
     expect(offering?.dayCount).toBeUndefined()
     expect(offering?.source?.host).toMatch(/akk\.hu/i)
 
+    // ADR 0044 FIX: paymentRates land in coupons/<id>.json (issue + payment bands).
+    const fixCoupons = tree.families.ktv.coupons.A370923A26
+    expect(fixCoupons).toBeTruthy()
+    expect(fixCoupons?.rows[0]?.[0]).toBe('2026-02-18')
+    expect(fixCoupons?.rows[0]?.[2]).toBe(3.72)
+    expect(fixCoupons?.rows[1]?.[0]).toBe('2026-09-23')
+    expect(fixCoupons?.rows[1]?.[2]).toBe(3.72)
+    expect(fixCoupons?.rows[2]?.[0]).toBe('2027-09-23')
+    expect(fixCoupons?.rows[2]?.[2]).toBe(6.25)
+    expect(fixCoupons?.rows.at(-1)?.[2]).toBe(6.25)
+
     const floatOffering = tree.families.ktv.offerings.A361126B26
     expect(floatOffering?.paymentDates?.[0]).toBe('2027-11-26')
     expect(floatOffering?.paymentDates?.at(-1)).toBe('2036-11-26')
     expect(floatOffering?.paymentDates).toHaveLength(10)
     expect(floatOffering?.saleWindow).toBeUndefined()
     expect(floatOffering?.dayCount).toBeUndefined()
-    // Offering ingest never invents FLOAT coupon rates / coupon files (ADR 0044).
+    // Offering ingest never invents FLOAT coupon rates / coupon files (ADR 0044 / 0047).
     expect(tree.families.ktv.coupons.A361126B26).toBeUndefined()
-    expect(Object.keys(tree.families.ktv.coupons)).toHaveLength(0)
+    expect(Object.keys(tree.families.ktv.coupons)).toEqual(['A370923A26'])
 
     const floatDoc = tree.offeringArchive?.documents.find((d) => d.pathUuid === floatUuid)
     expect(floatDoc?.sha256).toBeTruthy()
@@ -841,6 +852,29 @@ describe('parseOfferingPdfText', () => {
     expect(parsed.paymentDates.at(-1)).toBe('2036-11-26')
     expect(parsed.paymentDates).toHaveLength(10)
     expect(parsed.paymentRates).toEqual(Array(10).fill(null))
+  })
+
+  it('FLOAT MÁK rábocsátás expands quarterly fordulónap turns (live tip layout)', async () => {
+    const { classifyOfferingPdfText, parseOfferingPdfText } = await import(
+      '../tools/market-data/parse-offering-pdf.ts'
+    )
+    const text = await readFile(
+      path.join(fixtures, 'offerings/pdf-text/ktv-mak-2036-b-float-rabocsatas.txt'),
+      'utf8'
+    )
+    expect(classifyOfferingPdfText(text)).toBe('parse')
+    const parsed = parseOfferingPdfText(text)
+    expect(parsed.maturity).toBe('2036-11-26')
+    expect(parsed.dayCount).toBe('ACT/360')
+    // Issue 2026-01-14 → first turn 2026-02-26; maturity anniversary included.
+    expect(parsed.paymentDates[0]).toBe('2026-02-26')
+    expect(parsed.paymentDates).toContain('2026-05-26')
+    expect(parsed.paymentDates).toContain('2026-08-26')
+    expect(parsed.paymentDates).toContain('2026-11-26')
+    expect(parsed.paymentDates.at(-1)).toBe('2036-11-26')
+    // 4 turns/year × ~11 years from Feb 2026 through Nov 2036.
+    expect(parsed.paymentDates.length).toBeGreaterThan(40)
+    expect(parsed.paymentRates).toEqual(Array(parsed.paymentDates.length).fill(null))
   })
 })
 

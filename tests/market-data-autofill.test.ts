@@ -4,6 +4,8 @@ import {
   budapestTodayIso,
   buildMarketAutofillPatch,
   couponsFileToCouponSchedule,
+  mergeCouponScheduleWithOfferingPayments,
+  pickModalCouponRatePct,
   marketableFieldsMissingFromPatch,
   deriveFirstCouponDate,
   deriveLastAvailabilityDate,
@@ -166,16 +168,19 @@ describe('market-data-autofill', () => {
       coupons,
       current: { principal: '1000000', purchaseDate: '2026-06-01' }
     })
-    expect(pmap.fields).toEqual({
-      annualCouponRatePct: 4.5,
-      couponSchedule: [
-        { from: '2025-03-24', to: '2026-03-23', rate: 3.5 },
-        { from: '2026-03-24', to: '2027-03-23', rate: 4.5 }
-      ],
-      maturityDate: '2027-03-24',
-      issueDate: '2022-01-21',
-      firstCouponDate: '2022-03-24'
-    })
+    expect(pmap.fields.annualCouponRatePct).toBe(4.5)
+    // Without offering paymentDates, still merge issue into the schedule.
+    expect(pmap.fields.couponSchedule).toEqual([
+      { from: '2022-01-21', to: '2025-03-23', rate: null },
+      { from: '2025-03-24', to: '2026-03-23', rate: 3.5 },
+      { from: '2026-03-24', to: '2027-03-23', rate: 4.5 }
+    ])
+    expect(pmap.fields.maturityDate).toBe('2027-03-24')
+    expect(pmap.fields.issueDate).toBe('2022-01-21')
+    expect(pmap.fields.firstCouponDate).toBe('2022-03-24')
+    expect(pmap.softHints).toContain(
+      'Full coupon calendar unavailable — offering payment dates missing.'
+    )
     expect(pmap.fields).not.toHaveProperty('principal')
     expect(pmap.fields).not.toHaveProperty('purchaseDate')
 
@@ -189,13 +194,14 @@ describe('market-data-autofill', () => {
       },
       current: { purchaseDate: '2026-04-01' }
     })
-    expect(bmap.fields).toEqual({
-      annualCouponRatePct: 5.47,
-      couponSchedule: [{ from: '2026-03-22', to: '2026-06-21', rate: 5.47 }],
-      maturityDate: '2028-03-22',
-      issueDate: '2017-10-03',
-      firstCouponDate: '2017-12-22'
-    })
+    expect(bmap.fields.annualCouponRatePct).toBe(5.47)
+    expect(bmap.fields.couponSchedule).toEqual([
+      { from: '2017-10-03', to: '2026-03-21', rate: null },
+      { from: '2026-03-22', to: '2026-06-21', rate: 5.47 }
+    ])
+    expect(bmap.fields.maturityDate).toBe('2028-03-22')
+    expect(bmap.fields.issueDate).toBe('2017-10-03')
+    expect(bmap.fields.firstCouponDate).toBe('2017-12-22')
 
     // FixMÁP shares the annual (12-month) first-coupon derivation with PMÁP, not BMÁP's quarterly.
     const fixmap = buildMarketAutofillPatch({
@@ -205,17 +211,17 @@ describe('market-data-autofill', () => {
       coupons,
       current: { principal: '1000000', purchaseDate: '2027-02-03' }
     })
-    expect(fixmap.fields).toEqual({
-      annualCouponRatePct: 4.5,
-      couponSchedule: [
-        { from: '2025-03-24', to: '2026-03-23', rate: 3.5 },
-        { from: '2026-03-24', to: '2027-03-23', rate: 4.5 }
-      ],
-      maturityDate: '2031-08-03',
-      issueDate: '2026-08-03',
-      // Annual anniversary of mat month/day on/after issue (same as PMÁP path).
-      firstCouponDate: '2026-08-03'
-    })
+    expect(fixmap.fields.annualCouponRatePct).toBe(4.5)
+    // Issue inserted mid-band clamps prior `to` to day-before-issue (no overlap).
+    expect(fixmap.fields.couponSchedule).toEqual([
+      { from: '2025-03-24', to: '2026-03-23', rate: 3.5 },
+      { from: '2026-03-24', to: '2026-08-02', rate: 4.5 },
+      { from: '2026-08-03', to: null, rate: 4.5 }
+    ])
+    expect(fixmap.fields.maturityDate).toBe('2031-08-03')
+    expect(fixmap.fields.issueDate).toBe('2026-08-03')
+    // Annual anniversary of mat month/day on/after issue (same as PMÁP path).
+    expect(fixmap.fields.firstCouponDate).toBe('2026-08-03')
     expect(fixmap.fields).not.toHaveProperty('principal')
     expect(fixmap.fields).not.toHaveProperty('purchaseDate')
 
@@ -354,9 +360,154 @@ describe('market-data-autofill', () => {
       current: { purchaseDate: '2026-04-01' }
     })
     expect(bmap.fields.annualCouponRatePct).toBeUndefined()
-    expect(bmap.fields.couponSchedule).toEqual([{ from: '2027-01-01', to: null, rate: null }])
+    expect(bmap.fields.couponSchedule).toEqual([
+      { from: '2017-10-03', to: '2026-12-31', rate: null },
+      { from: '2027-01-01', to: null, rate: null }
+    ])
     expect(bmap.fields.maturityDate).toBe('2028-03-22')
     expect(bmap.fields.firstCouponDate).toBe('2017-12-22')
+  })
+
+  it('merges offering paymentDates into couponSchedule with null rates for unknown periods', () => {
+    const coupons = {
+      cols: ['from', 'to', 'rate'],
+      rows: [
+        ['2025-03-24', '2026-03-23', 3.5],
+        ['2026-03-24', '2027-03-23', 4.5]
+      ]
+    }
+    const offering = {
+      paymentDates: [
+        '2022-03-24',
+        '2023-03-24',
+        '2024-03-24',
+        '2025-03-24',
+        '2026-03-24',
+        '2027-03-24'
+      ]
+    }
+    const merged = mergeCouponScheduleWithOfferingPayments({
+      coupons,
+      offering,
+      issueDate: '2022-01-21'
+    })
+    expect(merged.missingPaymentCalendar).toBe(false)
+    expect(merged.schedule?.map((r) => r.from)).toEqual([
+      '2022-01-21',
+      '2022-03-24',
+      '2023-03-24',
+      '2024-03-24',
+      '2025-03-24',
+      '2026-03-24',
+      '2027-03-24'
+    ])
+    expect(merged.schedule?.find((r) => r.from === '2025-03-24')?.rate).toBe(3.5)
+    expect(merged.schedule?.find((r) => r.from === '2026-03-24')?.rate).toBe(4.5)
+    expect(merged.schedule?.find((r) => r.from === '2027-03-24')?.rate).toBeNull()
+
+    const pmap = buildMarketAutofillPatch({
+      family: 'pmap',
+      series: { issue: '2022-01-21', mat: '2027-03-24', offered: true },
+      quote: { d: '2026-11-02', ask: 100.25, bid: 100.12 },
+      coupons,
+      offering,
+      current: { purchaseDate: '2026-06-01' }
+    })
+    expect(pmap.fields.couponSchedule).toHaveLength(7)
+    expect(pmap.softHints).not.toContain(
+      'Full coupon calendar unavailable — offering payment dates missing.'
+    )
+  })
+
+  it('clamps multi-year coupon bands so inserted paymentDates never overlap', () => {
+    const coupons = {
+      cols: ['from', 'to', 'rate'],
+      rows: [
+        ['2022-03-24', '2025-03-23', 3.5],
+        ['2025-03-24', '2027-03-23', 4.5]
+      ]
+    }
+    const offering = {
+      paymentDates: [
+        '2022-03-24',
+        '2023-03-24',
+        '2024-03-24',
+        '2025-03-24',
+        '2026-03-24',
+        '2027-03-24'
+      ]
+    }
+    const merged = mergeCouponScheduleWithOfferingPayments({
+      coupons,
+      offering,
+      issueDate: '2022-01-21'
+    })
+    expect(merged.schedule).toBeTruthy()
+    const schedule = merged.schedule!
+    expect(schedule.find((r) => r.from === '2022-03-24')?.to).toBe('2023-03-23')
+    expect(schedule.find((r) => r.from === '2025-03-24')?.to).toBe('2026-03-23')
+    expect(schedule.find((r) => r.from === '2026-03-24')?.rate).toBe(4.5)
+    for (let i = 0; i < schedule.length - 1; i += 1) {
+      const cur = schedule[i]!
+      const next = schedule[i + 1]!
+      if (cur.to != null) {
+        expect(cur.to < next.from).toBe(true)
+      }
+    }
+  })
+
+  it('ktv FIX uses modal coupon rate for ga and shows PDF stub bands', () => {
+    const coupons = {
+      cols: ['from', 'to', 'rate'],
+      rows: [
+        ['2026-02-18', '2026-09-22', 3.72],
+        ['2026-09-23', '2027-09-22', 3.72],
+        ['2027-09-23', '2028-09-22', 6.25],
+        ['2028-09-23', null, 6.25]
+      ]
+    }
+    expect(pickModalCouponRatePct(coupons)).toBe(6.25)
+    const ktv = buildMarketAutofillPatch({
+      family: 'ktv',
+      series: { issue: '2026-02-18', mat: '2037-09-23', iType: 'FIX' },
+      quote: { d: '2026-11-02', ask: 100.0, bid: 99.5 },
+      coupons,
+      offering: {
+        paymentDates: ['2026-09-23', '2027-09-23', '2028-09-23', '2029-09-23']
+      },
+      current: { purchaseDate: '2026-02-18' }
+    })
+    expect(ktv.fields.annualCouponRatePct).toBe(6.25)
+    expect(ktv.fields.couponSchedule?.map((r) => r.from)).toEqual([
+      '2026-02-18',
+      '2026-09-23',
+      '2027-09-23',
+      '2028-09-23',
+      '2029-09-23'
+    ])
+    expect(ktv.fields.couponSchedule?.find((r) => r.from === '2029-09-23')?.rate).toBeNull()
+  })
+
+  it('ktv FLOAT keeps null schedule rates while merging paymentDates', () => {
+    const ktv = buildMarketAutofillPatch({
+      family: 'ktv',
+      series: { issue: '2026-01-14', mat: '2036-11-26', iType: 'FLOAT' },
+      quote: { d: '2026-11-02', ask: 100.0, bid: 99.5 },
+      coupons: null,
+      offering: {
+        paymentDates: ['2026-02-26', '2026-05-26', '2026-08-26', '2026-11-26']
+      },
+      current: { purchaseDate: '2026-04-01' }
+    })
+    expect(ktv.fields.couponSchedule?.map((r) => r.from)).toEqual([
+      '2026-01-14',
+      '2026-02-26',
+      '2026-05-26',
+      '2026-08-26',
+      '2026-11-26'
+    ])
+    expect(ktv.fields.couponSchedule?.every((r) => r.rate == null)).toBe(true)
+    expect(ktv.fields.annualCouponRatePct).toBeUndefined()
   })
 
   it('resolves FLOAT ktv annualCouponRatePct from BUBOR + VIBER (ADR 0047)', () => {

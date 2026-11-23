@@ -1,0 +1,54 @@
+NYILVÁNOS AJÁNLATTÉTEL
+Magyar Államkötvények forgalomba hozataláról
+
+1. A forgalomba hozatalra kerülő Államkötvények adatai
+A Kibocsátó az alábbi Államkötvény-sorozat kiegészítéseként további sorozatrészletet hoz
+forgalomba (rábocsátás).
+
+Elnevezés (egyben sorozatszám): Magyar Államkötvény 2036/B
+ISIN-kód: HU0000407531
+Az eredeti kibocsátás napja: 2026. január 14.
+Lejárat napja: 2036. november 26.
+Alapcímlet: 10.000,- Ft, azaz Tízezer forint
+
+3. Kamatozás, kamatfizetés és törlesztés
+
+Kamatozás: Az Államkötvény változó kamatozású.
+
+A kamatláb meghatározásának időpontja: A kamatláb megállapítására minden évben
+négy alkalommal, a kamatperiódus fordulónapját megelőző harmadik munkanapon
+kerül sor a következő kamatperiódusra vonatkozóan.
+
+A kamatperiódus fordulónapja a futamidő alatt
+minden év február 26., május 26., augusztus
+26. és november 26. napja.
+
+A kamatláb meghatározásának módja: A kamatláb – a 2026. május 26-tól 2026.
+augusztus 26-ig terjedő kamatperiódus
+kivételével (lásd Aktuális kamatláb lentebb) – a
+kamatperiódus fordulónapját megelőző
+harmadik munkanapon, az ezen napra mint
+jegyzési napra vonatkozóan a Magyar Nemzeti
+Bank által közzétett 3 (három) havi BUBOR-ral
+egyenlő, amely a kerekítés szabályai szerint,
+0,01%-ra kerekítetten kerül meghatározásra.
+
+Kamatszámítás algoritmusa: Tényleges/360
+
+Kamatozás kezdő napja:
+2026. január 14.
+
+Kamatfizetési napok:
+Évente négy alkalommal, minden év február
+26., május 26., augusztus 26. és november
+26. napja.
+
+Aktuális kamatláb:
+A 2026. május 26-tól 2026. augusztus 26-ig
+tartó kamatperiódusra vonatkozóan az
+Államkötvény éves névleges kamata 6,05%, a
+kifizetendő kamat 1,55%.
+
+Törlesztés, visszaváltás: A névérték visszafizetése a lejáratkor egy
+összegben esedékes. A Magyar Államkötvényt
+a Kibocsátó a lejárat előtt nem váltja vissza.

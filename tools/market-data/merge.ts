@@ -397,6 +397,11 @@ export function mergeSnapshot(
      * Series-adjacent saleWindow patches from offering listings (ADR 0041).
      */
     seriesSaleWindows?: Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
+    /**
+     * Upsert per-series coupon files after retailInterest join (ADR 0044 MÁK FIX
+     * transcription). Does not clear other ids. When omitted, keep coupons as-is.
+     */
+    couponUpsertsByFamily?: Partial<Record<FamilyCode, Record<string, CouponsFile>>>
   }
 ): MergeResult {
   const tree: MarketTreeState = {
@@ -602,6 +607,20 @@ export function mergeSnapshot(
         schemaVersion: SCHEMA_VERSION,
         family,
         series: applied.series
+      }
+    }
+  }
+
+  if (options?.couponUpsertsByFamily) {
+    for (const family of FAMILIES) {
+      const upserts = options.couponUpsertsByFamily[family]
+      if (!upserts) continue
+      const fam = tree.families[family]
+      const seriesIds = new Set(fam.series.series.map((s) => s.id))
+      for (const [id, file] of Object.entries(upserts)) {
+        // Coupons must join an existing series row (same gate as retailInterest).
+        if (!seriesIds.has(id)) continue
+        fam.coupons[id] = cloneCouponsFile(file)
       }
     }
   }

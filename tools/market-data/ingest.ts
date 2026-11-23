@@ -29,8 +29,10 @@ import {
 } from './normalize-offerings.ts'
 import { mergeOfferingsState } from './merge-offerings.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
+import { couponsFileFromMakPaymentTable } from './mak-offering-coupons.ts'
 import {
   classifyOfferingPdfText,
+  extractIssueDate,
   parseOfferingPdfText
 } from './parse-offering-pdf.ts'
 import { pdfBytesToTextLayout } from './pdf-text.ts'
@@ -54,6 +56,7 @@ import {
   type BuborFile,
   type InflationFile,
   type NormalizedSnapshot,
+  type CouponsFile,
   type OfferingArchiveFile,
   type OfferingFile,
   type PriceCalendarFile,
@@ -541,6 +544,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let seriesSaleWindows:
     | Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
     | undefined
+  /** MÁK FIX paymentRates → coupons/<id>.json (never FLOAT inventions). */
+  let couponUpsertsByFamily: Partial<Record<FamilyCode, Record<string, CouponsFile>>> | undefined
 
   const reparseParseFailed =
     options.reparseParseFailed === true ||
@@ -608,6 +613,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           .filter((d): d is NonNullable<typeof d> => d != null)
 
         const offeringUpdates: OfferingFile[] = []
+        const couponUpserts: Partial<Record<FamilyCode, Record<string, CouponsFile>>> = {}
 
         // Offline fixture runs without a live fetchImpl for PDFs: only download when
         // not purely offline, or when a custom fetchImpl is supplied for tests.
@@ -653,6 +659,29 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 dayCount: parsed.dayCount
               })
               offeringUpdates.push(stub)
+              // ADR 0044: FIX paymentRates → coupons/<id>.json; FLOAT all-null → skip.
+              if (
+                dl.row.family === 'ktv' &&
+                Array.isArray(parsed.paymentRates) &&
+                parsed.paymentDates.length > 0
+              ) {
+                const issueDate =
+                  extractIssueDate(text) ||
+                  previous.families.ktv?.series.series.find((s) => s.id === dl.row.seriesId)
+                    ?.issue ||
+                  null
+                const coupons = couponsFileFromMakPaymentTable({
+                  family: 'ktv',
+                  seriesId: dl.row.seriesId,
+                  issueDate,
+                  paymentDates: parsed.paymentDates,
+                  paymentRates: parsed.paymentRates
+                })
+                if (coupons) {
+                  if (!couponUpserts.ktv) couponUpserts.ktv = {}
+                  couponUpserts.ktv[dl.row.seriesId] = coupons
+                }
+              }
               const transcribed = archiveDocumentFromListing(dl.row, 'transcribed', {
                 sha256: dl.sha256,
                 bytes: dl.bytes.byteLength,
@@ -703,10 +732,14 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         offeringsByFamily = mergedOfferings.offeringsByFamily
         offeringArchiveUpdate = mergedOfferings.offeringArchive
         seriesSaleWindows = mergedOfferings.seriesSaleWindows
+        if (Object.keys(couponUpserts).length > 0) {
+          couponUpsertsByFamily = couponUpserts
+        }
         offeringsUpdated =
           mergedOfferings.offeringsChanged ||
           mergedOfferings.archiveChanged ||
-          mergedOfferings.saleWindowsChanged
+          mergedOfferings.saleWindowsChanged ||
+          Boolean(couponUpsertsByFamily)
       }
     } catch (err) {
       logOfferingsSoftFail(err)
@@ -742,6 +775,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   }
   if (seriesSaleWindows !== undefined) {
     mergeOptions.seriesSaleWindows = seriesSaleWindows
+  }
+  if (couponUpsertsByFamily !== undefined) {
+    mergeOptions.couponUpsertsByFamily = couponUpsertsByFamily
   }
   const merged = mergeSnapshot(previous, mergeSnapshotInput, mergeOptions)
   validateMarketTree(merged.tree)

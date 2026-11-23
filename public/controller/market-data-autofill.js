@@ -188,6 +188,119 @@ export function couponsFileToCouponSchedule(coupons) {
   return schedule.length > 0 ? schedule : null
 }
 
+function addCalendarDaysIso(iso, deltaDays) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return null
+  const [y, m, d] = String(iso).split('-').map(Number)
+  const utc = new Date(Date.UTC(y, m - 1, d))
+  utc.setUTCDate(utc.getUTCDate() + deltaDays)
+  return formatIsoDateUtc(utc)
+}
+
+/**
+ * Most frequent defined rate in a coupons file / schedule (MÁK FIX ga when first
+ * payable stub differs from flat anniversary rates).
+ * @param {{ cols?: string[], rows?: Array<Array<string|number|null>> }|null|undefined} coupons
+ * @returns {number|null}
+ */
+export function pickModalCouponRatePct(coupons) {
+  const rows = Array.isArray(coupons?.rows) ? coupons.rows : []
+  const counts = new Map()
+  for (const row of rows) {
+    const raw = row?.[2]
+    if (raw == null || raw === '') continue
+    const n = Number(raw)
+    if (!Number.isFinite(n)) continue
+    counts.set(n, (counts.get(n) || 0) + 1)
+  }
+  let best = null
+  let bestN = 0
+  for (const [rate, n] of counts) {
+    // Tie-break toward the higher rate so irregular first stubs do not beat flat ga.
+    if (n > bestN || (n === bestN && best != null && rate > best)) {
+      best = rate
+      bestN = n
+    }
+  }
+  return best
+}
+
+/**
+ * Union offering paymentDates (+ issue) with coupon rate bands for the coupon periods table.
+ * Unknown periods keep rate null — do not invent anniversary dates when payments are missing.
+ * @returns {{ schedule: Array<{ from: string, to: string|null, rate: number|null }>|null, missingPaymentCalendar: boolean }}
+ */
+export function mergeCouponScheduleWithOfferingPayments({
+  coupons = null,
+  offering = null,
+  issueDate = null
+} = {}) {
+  const fromCoupons = couponsFileToCouponSchedule(coupons) || []
+  const rateByFrom = new Map()
+  for (const row of fromCoupons) {
+    if (row.rate != null) rateByFrom.set(row.from, row.rate)
+  }
+
+  function rateForFrom(from) {
+    if (rateByFrom.has(from)) return rateByFrom.get(from)
+    // Covering only inside an explicit closed [from,to] window — do not let an
+    // open-ended last band paint future offering payment dates with a known rate.
+    const covering = fromCoupons.find((row) => {
+      if (!row.from || row.from > from) return false
+      if (row.to == null || row.to === '') return false
+      if (String(row.to) < from) return false
+      return row.rate != null
+    })
+    return covering?.rate ?? null
+  }
+
+  const paymentDates = (Array.isArray(offering?.paymentDates) ? offering.paymentDates : [])
+    .map((entry) => String(entry || '').trim())
+    .filter((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry))
+    .sort()
+  const missingPaymentCalendar = paymentDates.length === 0
+
+  const fromSet = new Set()
+  for (const row of fromCoupons) {
+    if (row.from) fromSet.add(row.from)
+  }
+  for (const iso of paymentDates) {
+    fromSet.add(iso)
+  }
+  // Issue alone is not a coupon calendar — only add it when bands or payments exist.
+  const issue = String(issueDate || '').trim()
+  if (
+    fromSet.size > 0 &&
+    /^\d{4}-\d{2}-\d{2}$/.test(issue)
+  ) {
+    fromSet.add(issue)
+  }
+
+  const froms = [...fromSet].sort()
+  if (froms.length === 0) {
+    return { schedule: null, missingPaymentCalendar }
+  }
+
+  const schedule = froms.map((from, index) => {
+    const next = froms[index + 1]
+    const existing = fromCoupons.find((row) => row.from === from)
+    let to = existing?.to ?? null
+    // Always clamp against the next merged From so inserted payment/issue
+    // boundaries cannot leave overlapping [from, to] windows.
+    if (next) {
+      const capped = addCalendarDaysIso(next, -1)
+      if (to == null || (capped && to >= next)) {
+        to = capped
+      }
+    }
+    return {
+      from,
+      to,
+      rate: rateForFrom(from)
+    }
+  })
+  return { schedule, missingPaymentCalendar }
+}
+
 /**
  * Pick effective annual coupon % from a coupons/<id>.json file for onIso.
  * Prefer a covering period with a defined rate; else latest prior defined rate.
@@ -542,15 +655,28 @@ export function buildMarketAutofillPatch({
       family === 'ktv' && String(series?.iType || '').toUpperCase() === 'FLOAT'
 
     if (!isKtvFloat) {
-      const couponRate = pickCouponRatePct(coupons, onIso)
+      // MÁK FIX: prefer modal published ga when the table includes an irregular stub.
+      const couponRate =
+        family === 'ktv'
+          ? pickModalCouponRatePct(coupons) ?? pickCouponRatePct(coupons, onIso)
+          : pickCouponRatePct(coupons, onIso)
       if (couponRate != null) {
         setField('annualCouponRatePct', couponRate)
       }
     }
 
-    const schedule = couponsFileToCouponSchedule(coupons)
-    if (schedule) {
-      setField('couponSchedule', schedule)
+    const merged = mergeCouponScheduleWithOfferingPayments({
+      coupons,
+      offering,
+      issueDate: series?.issue
+    })
+    if (merged.schedule) {
+      setField('couponSchedule', merged.schedule)
+    }
+    if (merged.missingPaymentCalendar && couponsFileToCouponSchedule(coupons)) {
+      softHints.push(
+        'Full coupon calendar unavailable — offering payment dates missing.'
+      )
     }
     if (series?.mat) {
       setField('maturityDate', series.mat)

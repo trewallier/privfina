@@ -215,7 +215,7 @@
 
       .coupon-schedule-editor {
         display: grid;
-        gap: 8px;
+        gap: 6px;
         min-width: 0;
         margin-top: 4px;
       }
@@ -233,105 +233,141 @@
       .coupon-schedule-header,
       .coupon-schedule-period {
         display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) auto;
-        gap: 8px;
-        align-items: end;
+        /* Date flexes; rate stays narrow; actions keep a 44px tap column. */
+        grid-template-columns: minmax(0, 1fr) minmax(3.75rem, 5rem) 44px;
+        gap: 4px 6px;
+        align-items: center;
         min-width: 0;
       }
 
       .coupon-schedule-header {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         font-weight: 600;
         padding: 0 2px;
+        color: var(--muted, #5c6570);
       }
 
       .coupon-schedule-rows {
         display: grid;
-        gap: 8px;
+        gap: 2px;
         min-width: 0;
       }
 
       .coupon-schedule-period {
+        position: relative;
         margin: 0;
-        padding: 0;
+        padding: 2px 0;
         border: 0;
+        border-radius: 0;
+        background: transparent;
       }
 
-      .coupon-schedule-period-caption {
-        grid-column: 1 / -1;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--muted, #5c6570);
+      .coupon-schedule-period + .coupon-schedule-period {
+        border-top: 1px solid var(--border);
+        padding-top: 4px;
+      }
+
+      /* Keep captions in the DOM for semantics/tests; hide the full-width second row. */
+      .coupon-schedule-period-caption,
+      .coupon-schedule-field-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
 
       .coupon-schedule-from-wrap,
       .coupon-schedule-rate-wrap {
-        display: grid;
-        gap: 4px;
+        display: block;
         min-width: 0;
-      }
-
-      .coupon-schedule-field-label {
-        font-size: 0.8rem;
+        margin: 0;
+        position: relative;
       }
 
       .coupon-schedule-period input[type='date'],
       .coupon-schedule-period input[type='number'] {
         width: 100%;
         min-width: 0;
+        padding: 6px 8px;
+      }
+
+      .coupon-schedule-period input[type='number'] {
+        font-variant-numeric: tabular-nums;
+        text-align: right;
       }
 
       .coupon-schedule-actions-col {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         white-space: nowrap;
       }
 
-      .coupon-schedule-add,
-      .coupon-schedule-remove {
+      /*
+        Explicit color + hover so global `button { color: #fff }` / accent hover
+        cannot leave Add/Remove blank white-on-white (esp. iOS Safari).
+      */
+      .coupon-schedule-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         font: inherit;
         font-size: 0.85rem;
         padding: 6px 10px;
         border-radius: 8px;
         border: 1px solid var(--border);
         background: #fff;
+        color: var(--text);
         cursor: pointer;
+      }
+
+      .coupon-schedule-add svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        flex-shrink: 0;
+      }
+
+      /* Keep shared 44×44 hit area; icon stays visually compact at 14px. */
+      .coupon-schedule-remove.icon-button {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: #a94442;
+        cursor: pointer;
+      }
+
+      .coupon-schedule-remove.icon-button svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+      }
+
+      .coupon-schedule-add:hover,
+      .coupon-schedule-remove.icon-button:hover {
+        background: #eef3f9;
+        color: var(--text);
+      }
+
+      .coupon-schedule-remove.icon-button:hover {
+        color: #a94442;
+        background: color-mix(in srgb, #a94442 10%, #fff);
       }
 
       .coupon-schedule-add:disabled,
       .coupon-schedule-remove:disabled {
         opacity: 0.55;
         cursor: not-allowed;
-      }
-
-      @media (max-width: 720px) {
-        .coupon-schedule-header {
-          display: none;
-        }
-
-        .coupon-schedule-period {
-          grid-template-columns: 1fr;
-          padding: 10px;
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          align-items: stretch;
-        }
-
-        .coupon-schedule-field-label {
-          display: inline;
-        }
-      }
-
-      @media (min-width: 721px) {
-        .coupon-schedule-field-label {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-          border: 0;
-        }
       }
 
       label {

@@ -2,6 +2,8 @@
  * @vitest-environment happy-dom
  */
 import { beforeEach, describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import {
   clampCouponRatePct,
   deriveCouponScheduleTos,
@@ -13,6 +15,27 @@ import {
   resolveFirstCouponDateFromSchedule,
   setActiveCouponScheduleEditor
 } from '../public/controller/commercial-investment-coupon-schedule-editor.js'
+
+function readRepoFile(relativePath: string): string {
+  return readFileSync(resolve(process.cwd(), relativePath), 'utf8')
+}
+
+function extractStyleBlock(indexHtml: string): string {
+  const match = indexHtml.match(/<style>([\s\S]*?)<\/style>/)
+  if (!match) {
+    throw new Error('style block not found in index.html')
+  }
+  return match[1]
+}
+
+function extractCssRuleBody(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = css.match(new RegExp(`${escaped}\\s*\\{([^}]+)\\}`))
+  if (!match) {
+    throw new Error(`CSS rule not found for selector: ${selector}`)
+  }
+  return match[1]
+}
 
 describe('commercial-investment-coupon-schedule-editor helpers', () => {
   it('treats empty, single, and uniform rates as fixed', () => {
@@ -307,6 +330,41 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
     expect(document.querySelector<HTMLButtonElement>('.coupon-schedule-add')?.disabled).toBe(true)
   })
 
+  it('renders compact icon-only remove and labeled add with visible chrome classes', () => {
+    const { root, editor } = buildHost('pmap')
+    editor.setSchedule(
+      [
+        { from: '2026-08-03', rate: 6.5 },
+        { from: '2027-08-03', rate: 6.5 }
+      ],
+      { reevaluateMode: true }
+    )
+
+    const removeBtns = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('.coupon-schedule-remove')
+    )
+    expect(removeBtns).toHaveLength(2)
+    for (const [index, btn] of removeBtns.entries()) {
+      expect(btn.classList.contains('icon-button')).toBe(true)
+      expect(btn.classList.contains('danger')).toBe(true)
+      expect(btn.getAttribute('aria-label')).toBe(`Remove period ${index + 1}`)
+      expect(btn.title).toBe(`Remove period ${index + 1}`)
+      expect(btn.textContent?.trim()).toBe('')
+      expect(btn.querySelector('svg')).not.toBeNull()
+    }
+
+    const addBtn = root.querySelector<HTMLButtonElement>('.coupon-schedule-add')
+    expect(addBtn).not.toBeNull()
+    expect(addBtn?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Add period')
+    expect(addBtn?.querySelector('svg')).not.toBeNull()
+
+    const captions = Array.from(root.querySelectorAll('.coupon-schedule-period-caption')).map(
+      (el) => el.textContent
+    )
+    expect(captions.slice(0, 2)).toEqual(['Issue / period start', 'First coupon'])
+    expect(root.querySelector('.coupon-schedule-header')).not.toBeNull()
+  })
+
   it('inactive host editors do not block form checkValidity', () => {
     document.body.innerHTML = `
       <form id="commercial-investment-form">
@@ -348,5 +406,34 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
     expect(bmapRate?.required).toBe(false)
     expect(bmapRate?.disabled).toBe(true)
     expect(form.checkValidity()).toBe(true)
+  })
+})
+
+describe('commercial-investment-coupon-schedule CSS contract', () => {
+  const css = extractStyleBlock(readRepoFile('public/index.html'))
+
+  it('keeps a 3-column single-row grid for header and period (no narrow stack media query)', () => {
+    const sharedBody = extractCssRuleBody(css, '.coupon-schedule-header,\n      .coupon-schedule-period')
+    expect(sharedBody).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\([^)]+\)\s+44px/)
+    expect(sharedBody).toMatch(/display:\s*grid/)
+
+    // Old ≤720px stack reintroduced stacking / hid the header — must stay gone.
+    expect(css).not.toMatch(
+      /@media\s*\(\s*max-width:\s*720px\s*\)\s*\{[^}]*\.coupon-schedule-header[^}]*display:\s*none/
+    )
+    expect(css).not.toMatch(
+      /@media\s*\(\s*max-width:\s*720px\s*\)\s*\{[\s\S]*?\.coupon-schedule-period\s*\{[^}]*grid-template-columns:\s*1fr/
+    )
+  })
+
+  it('sets explicit non-white colors on Add/Remove so global button white text cannot hide them', () => {
+    const addBody = extractCssRuleBody(css, '.coupon-schedule-add')
+    expect(addBody).toMatch(/color:\s*var\(--text\)/)
+    expect(addBody).not.toMatch(/color:\s*#fff\b/)
+
+    const removeBody = extractCssRuleBody(css, '.coupon-schedule-remove.icon-button')
+    expect(removeBody).toMatch(/color:\s*#a94442/)
+    expect(removeBody).toMatch(/min-width:\s*44px/)
+    expect(removeBody).toMatch(/min-height:\s*44px/)
   })
 })

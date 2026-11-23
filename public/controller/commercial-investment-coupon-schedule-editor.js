@@ -7,6 +7,13 @@
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const editorsByPrefix = new Map()
 
+/** Same trash path as render.js `renderActionIcon('delete')` — kept local to avoid coupling. */
+const REMOVE_PERIOD_ICON_SVG =
+  '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 4h11" stroke-width="1.4" stroke-linecap="round"/><path d="M6 1.8h4" stroke-width="1.4" stroke-linecap="round"/><path d="M4 4l.7 9.2a1 1 0 0 0 1 .8h4.6a1 1 0 0 0 1-.8L12 4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 6.4v5" stroke-width="1.4" stroke-linecap="round"/><path d="M9.5 6.4v5" stroke-width="1.4" stroke-linecap="round"/></svg>'
+
+const ADD_PERIOD_ICON_SVG =
+  '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10" stroke-width="1.4" stroke-linecap="round"/><path d="M3 8h10" stroke-width="1.4" stroke-linecap="round"/></svg>'
+
 function isValidIsoDate(value) {
   return ISO_DATE_RE.test(String(value || '').trim())
 }
@@ -350,7 +357,7 @@ function createEditor(prefix, rootEl, form) {
     syncHiddenFields()
   }
 
-  /** Single markup: header + period rows; CSS stacks on narrow viewports. */
+  /** Single markup: header + period rows; always one From | Rate % | remove row. */
   function render() {
     if (!bodyEl) return
     bodyEl.replaceChildren()
@@ -424,9 +431,11 @@ function createEditor(prefix, rootEl, form) {
 
       const removeBtn = document.createElement('button')
       removeBtn.type = 'button'
-      removeBtn.className = 'coupon-schedule-remove'
-      removeBtn.textContent = 'Remove'
-      removeBtn.setAttribute('aria-label', `Remove period ${index + 1}`)
+      removeBtn.className = 'coupon-schedule-remove icon-button danger'
+      removeBtn.innerHTML = REMOVE_PERIOD_ICON_SVG
+      const removeLabel = `Remove period ${index + 1}`
+      removeBtn.setAttribute('aria-label', removeLabel)
+      removeBtn.title = removeLabel
       removeBtn.disabled = !controlsInteractive()
       removeBtn.addEventListener('click', () => removeRow(index))
 
@@ -527,7 +536,7 @@ function createEditor(prefix, rootEl, form) {
   const addBtn = document.createElement('button')
   addBtn.type = 'button'
   addBtn.className = 'coupon-schedule-add'
-  addBtn.textContent = 'Add period'
+  addBtn.innerHTML = `${ADD_PERIOD_ICON_SVG}<span>Add period</span>`
   addBtn.addEventListener('click', addRow)
 
   rootEl.append(title, hintEl, bodyEl, addBtn)

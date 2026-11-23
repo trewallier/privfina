@@ -75,12 +75,12 @@ Inventory (by product)
   - Browser path: `public/controller/baba-calculation-adapter.js` + embedded `baba-product-spec.js` + registry `coupon-bearing` entry (`#investment-baba-wrap`); market family `baba`
   - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP / MÁP Plusz precedent)
 
-- Hungarian Government Bond / MÁK (`government-security.ktv.standard`) — **fully-spec-backed** (ROADMAP §6j)
-  - Spec: `docs/product-specs/products/government-securities/ktv/product.yaml`
-  - Engine primitives: `src/finance_engine/instruments/ktv.ts` (ACT/365F + Babakötvény-style first-period stub on published ga; accrue on ga — not a FixMÁP ACT/360 covering-band wrap; no `productCode` forks)
+- Hungarian Government Bond / MÁK (`government-security.ktv.standard`) — **fully-spec-backed** (ROADMAP §6j / §6q)
+  - Spec: `docs/product-specs/products/government-securities/ktv/product.yaml` (`indexReset` for FLOAT)
+  - Engine primitives: `src/finance_engine/instruments/ktv.ts` (FIX ACT/365F + Babakötvény-style stub on published ga; FLOAT ACT/360 quarterly turns) + `src/finance_engine/instruments/mak_float_rate.ts` (BUBOR + HU-VIBER T−3 resolve); no `productCode` forks
   - Family mapper: `src/finance_engine/product_specs/ktv.ts`
-  - Browser path: `public/controller/ktv-calculation-adapter.js` + embedded `ktv-product-spec.js` + registry `coupon-bearing` entry (`#investment-ktv-wrap`); market family `ktv`
-  - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP / baba precedent); FLOAT cash-flow deferred
+  - Browser path: `public/controller/ktv-calculation-adapter.js` + embedded `ktv-product-spec.js` (`KTV_INDEX_RESET`) + registry `coupon-bearing` entry (`#investment-ktv-wrap`); market family `ktv`; SPA `loadBubor` + FLOAT autofill (form only — never write `families/ktv/coupons/`)
+  - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP / baba precedent); FLOAT resolve + ACT/360 commercial cash path under ADR 0047 / §6q (form `periodMonths`; never coupon DB writes)
 
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
@@ -136,9 +136,12 @@ Files referenced
 - `public/controller/fixmap-calculation-adapter.js`
 - `docs/product-specs/products/government-securities/ktv/product.yaml`
 - `src/finance_engine/instruments/ktv.ts`
+- `src/finance_engine/instruments/mak_float_rate.ts`
 - `src/finance_engine/product_specs/ktv.ts`
 - `public/controller/ktv-product-spec.js`
 - `public/controller/ktv-calculation-adapter.js`
+- `public/controller/market-data-autofill.js` (FLOAT resolve path)
+- `public/controller/market-data-loader.js` (`loadBubor`)
 - `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`
 - `src/finance_engine/instruments/home_savings.ts`
 - `src/finance_engine/product_specs/home_savings.ts`

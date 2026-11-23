@@ -469,7 +469,7 @@ Goal: let users see and edit every coupon period rate on PMÁP / BMÁP / FixMÁP
 
 Plan slices
 - [x] Layout: Principal | Purchase; Issue | Maturity; Coupon periods table (From | Rate % | remove) — no visible Annual Coupon Rate or First Coupon Date.
-- [x] First table From → `firstCouponDate`; derive `to` as day before next From (last null); sync `annualCouponRatePct` from covering/common table rate for FormData/engine.
+- [x] `firstCouponDate` ← second sorted From (else day after sole `to`, else preserved autofill payment on a single open band); derive `to` as day before next From (last null); sync `annualCouponRatePct` from covering/common table rate for FormData/engine.
 - [x] Fix-rate series (all defined rates equal): Rate edit copies to all rows; stepped series: independent Rate cells.
 - [x] Shared editor module + narrow stacked periods (no sideways scroll); tests for layout, fix/stepped behavior, serialize.
 

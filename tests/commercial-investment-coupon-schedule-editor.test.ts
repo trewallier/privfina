@@ -7,8 +7,10 @@ import {
   deriveCouponScheduleTos,
   isFixedCouponSchedule,
   mountCouponScheduleEditor,
+  periodRowLabel,
   resetCouponScheduleEditorsForTests,
   resolveAnnualCouponRatePctFromRows,
+  resolveFirstCouponDateFromSchedule,
   setActiveCouponScheduleEditor
 } from '../public/controller/commercial-investment-coupon-schedule-editor.js'
 
@@ -63,6 +65,30 @@ describe('commercial-investment-coupon-schedule-editor helpers', () => {
     expect(resolveAnnualCouponRatePctFromRows(rows, '2027-02-03')).toBe(6.5)
     expect(resolveAnnualCouponRatePctFromRows(rows, '2027-09-01')).toBe(7)
     expect(resolveAnnualCouponRatePctFromRows(rows, '')).toBe(6.5)
+  })
+
+  it('maps firstCouponDate from second From, else day after to, else preserved payment', () => {
+    expect(
+      resolveFirstCouponDateFromSchedule(
+        [
+          { from: '2026-08-03', to: '2027-08-02', rate: 6.5 },
+          { from: '2027-08-03', to: null, rate: 7 }
+        ],
+        '2099-01-01'
+      )
+    ).toBe('2027-08-03')
+    expect(
+      resolveFirstCouponDateFromSchedule([{ from: '2026-08-03', to: '2027-08-02', rate: 6.5 }], '')
+    ).toBe('2027-08-03')
+    expect(
+      resolveFirstCouponDateFromSchedule(
+        [{ from: '2026-08-03', to: null, rate: 6.5 }],
+        '2027-08-03'
+      )
+    ).toBe('2027-08-03')
+    expect(periodRowLabel(0)).toBe('Issue / period start')
+    expect(periodRowLabel(1)).toBe('First coupon')
+    expect(periodRowLabel(2)).toBe('Period 3')
   })
 })
 
@@ -123,7 +149,7 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
       '7.25'
     )
     expect((form.querySelector('#pmap-first-coupon-date') as HTMLInputElement).value).toBe(
-      '2026-08-03'
+      '2027-08-03'
     )
   })
 
@@ -147,8 +173,8 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
     expect(editor.getRows().map((row) => row.rate)).toEqual([6.5, 8])
   })
 
-  it('syncs firstCouponDate from the earliest sorted From, not UI row order', () => {
-    const { form, editor } = buildHost('bmap')
+  it('syncs firstCouponDate from the second sorted From', () => {
+    const { form, editor, root } = buildHost('bmap')
     editor.setSchedule(
       [
         { from: '2027-08-03', rate: 7 },
@@ -158,12 +184,44 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
     )
     editor.syncHiddenFields()
     expect((form.querySelector('#bmap-first-coupon-date') as HTMLInputElement).value).toBe(
-      '2026-08-03'
+      '2027-08-03'
     )
     const schedule = JSON.parse(
       (form.querySelector('#bmap-coupon-schedule') as HTMLInputElement).value
     )
     expect(schedule[0].from).toBe('2026-08-03')
+    expect(schedule[1].from).toBe('2027-08-03')
+    const captions = Array.from(root.querySelectorAll('.coupon-schedule-period-caption')).map(
+      (el) => el.textContent
+    )
+    expect(captions.slice(0, 2)).toEqual(['Issue / period start', 'First coupon'])
+  })
+
+  it('seeds issue + first-coupon rows when only firstCouponDate is present', () => {
+    const { form, editor } = buildHost('baba')
+    const annual = form.querySelector('#baba-annual-coupon-rate-pct') as HTMLInputElement
+    const first = form.querySelector('#baba-first-coupon-date') as HTMLInputElement
+    annual.value = '7.4'
+    first.value = '2027-02-01'
+    editor.loadFromHidden()
+    expect(editor.getRows()).toEqual([
+      { from: '2026-08-03', rate: 7.4 },
+      { from: '2027-02-01', rate: 7.4 }
+    ])
+    expect(first.value).toBe('2027-02-01')
+  })
+
+  it('keeps autofill payment date on a single open schedule band', () => {
+    const { form, editor } = buildHost('ktv')
+    const annual = form.querySelector('#ktv-annual-coupon-rate-pct') as HTMLInputElement
+    const first = form.querySelector('#ktv-first-coupon-date') as HTMLInputElement
+    const schedule = form.querySelector('#ktv-coupon-schedule') as HTMLInputElement
+    annual.value = '6.25'
+    first.value = '2026-09-23'
+    schedule.value = JSON.stringify([{ from: '2026-02-18', to: null, rate: 6.25 }])
+    editor.loadFromHidden()
+    expect(editor.getRows()).toEqual([{ from: '2026-02-18', rate: 6.25 }])
+    expect(first.value).toBe('2026-09-23')
   })
 
   it('locks controls when market-sourced annual/schedule flags are set', () => {

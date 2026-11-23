@@ -84,6 +84,42 @@ function deriveCouponScheduleTos(rows) {
   })
 }
 
+/**
+ * Map schedule band starts to engine firstCouponDate (first payment).
+ * - ≥2 sorted Froms → second From (typically first payment / start of period 2)
+ * - 1 band with `to` → day after `to`
+ * - 1 open-ended band → keep existing autofill/payment date when it is after the band start
+ */
+function resolveFirstCouponDateFromSchedule(derived, existingFirstCoupon) {
+  const rows = Array.isArray(derived) ? derived : []
+  const froms = rows
+    .map((row) => String(row?.from || '').trim())
+    .filter((from) => isValidIsoDate(from))
+  const existing = String(existingFirstCoupon || '').trim()
+
+  if (froms.length >= 2) {
+    return froms[1]
+  }
+  if (froms.length === 1) {
+    const band = rows.find((row) => String(row?.from || '').trim() === froms[0])
+    const to = String(band?.to || '').trim()
+    if (isValidIsoDate(to)) {
+      return addCalendarDaysIso(to, 1) || ''
+    }
+    if (isValidIsoDate(existing) && existing > froms[0]) {
+      return existing
+    }
+    return isValidIsoDate(existing) ? existing : ''
+  }
+  return isValidIsoDate(existing) ? existing : ''
+}
+
+function periodRowLabel(index) {
+  if (index === 0) return 'Issue / period start'
+  if (index === 1) return 'First coupon'
+  return `Period ${index + 1}`
+}
+
 function resolveAnnualCouponRatePctFromRows(rows, purchaseIso) {
   const list = Array.isArray(rows) ? rows : []
   const day = String(purchaseIso || '').trim()
@@ -137,6 +173,16 @@ function readHiddenSchedule(form, prefix) {
   }
 }
 
+/** Ignore issue-only blank starters so firstCouponDate seeding can still run. */
+function isMeaningfulCouponSchedule(schedule) {
+  if (!Array.isArray(schedule) || schedule.length === 0) return false
+  if (schedule.some((row) => parseDefinedRate(row?.rate) != null)) return true
+  const froms = schedule
+    .map((row) => String(row?.from || '').trim())
+    .filter((from) => isValidIsoDate(from))
+  return froms.length >= 2
+}
+
 /** Keep engine sync inputs as non-validating hidden FormData carriers. */
 function normalizeCouponEngineSyncFields(form, prefix) {
   if (!form || !prefix) return
@@ -180,26 +226,26 @@ function createEditor(prefix, rootEl, form) {
       const derived = deriveCouponScheduleTos(rows)
       const scheduleInput = form.querySelector(`#${prefix}-coupon-schedule`)
       if (scheduleInput) {
-        const persistable = derived.filter((row) => isValidIsoDate(row.from) || row.rate != null)
-        scheduleInput.value =
-          persistable.length > 0
-            ? JSON.stringify(
-                persistable.map((row) => ({
-                  from: row.from,
-                  to: row.to ?? null,
-                  rate: row.rate
-                }))
-              )
-            : ''
+        const persistable = derived.filter(
+          (row) => isValidIsoDate(row.from) || row.rate != null
+        )
+        scheduleInput.value = isMeaningfulCouponSchedule(persistable)
+          ? JSON.stringify(
+              persistable.map((row) => ({
+                from: row.from,
+                to: row.to ?? null,
+                rate: row.rate
+              }))
+            )
+          : ''
       }
 
-      // firstCouponDate follows sorted schedule, not raw UI row order.
-      const firstFrom =
-        derived.map((row) => String(row.from || '').trim()).find((from) => isValidIsoDate(from)) ||
-        ''
       const firstCouponInput = form.querySelector(`#${prefix}-first-coupon-date`)
       if (firstCouponInput) {
-        firstCouponInput.value = firstFrom
+        firstCouponInput.value = resolveFirstCouponDateFromSchedule(
+          derived,
+          firstCouponInput.value
+        )
       }
 
       const annual = resolveAnnualCouponRatePctFromRows(derived, getPurchaseDate())
@@ -284,13 +330,15 @@ function createEditor(prefix, rootEl, form) {
     list.setAttribute('aria-label', 'Coupon periods')
 
     rows.forEach((row, index) => {
+      const rowLabel = periodRowLabel(index)
       const group = document.createElement('div')
       group.className = 'coupon-schedule-period'
       group.setAttribute('role', 'row')
-      group.setAttribute(
-        'aria-label',
-        index === 0 ? 'Period 1 (first coupon)' : `Period ${index + 1}`
-      )
+      group.setAttribute('aria-label', rowLabel)
+
+      const caption = document.createElement('div')
+      caption.className = 'coupon-schedule-period-caption'
+      caption.textContent = rowLabel
 
       const fromLabel = document.createElement('label')
       fromLabel.className = 'coupon-schedule-from-wrap'
@@ -301,10 +349,7 @@ function createEditor(prefix, rootEl, form) {
       fromInput.type = 'date'
       fromInput.value = row.from || ''
       fromInput.className = 'coupon-schedule-from'
-      fromInput.setAttribute(
-        'aria-label',
-        index === 0 ? 'First coupon date (period from)' : `Period ${index + 1} from`
-      )
+      fromInput.setAttribute('aria-label', `${rowLabel} from`)
       fromInput.disabled = !controlsInteractive()
       fromInput.addEventListener('change', () => onFromInput(index, fromInput.value))
       fromLabel.append(fromTitle, fromInput)
@@ -348,7 +393,7 @@ function createEditor(prefix, rootEl, form) {
       removeBtn.disabled = !controlsInteractive()
       removeBtn.addEventListener('click', () => removeRow(index))
 
-      group.append(fromLabel, rateLabel, removeBtn)
+      group.append(caption, fromLabel, rateLabel, removeBtn)
       list.appendChild(group)
     })
 
@@ -395,11 +440,28 @@ function createEditor(prefix, rootEl, form) {
     const firstCouponInput = form?.querySelector(`#${prefix}-first-coupon-date`)
     const annual = parseDefinedRate(annualInput?.value)
     const firstCoupon = String(firstCouponInput?.value || '').trim()
+    const issue = getIssueDate()
 
-    if (schedule.length > 0) {
+    if (isMeaningfulCouponSchedule(schedule)) {
+      // Prefer published/saved schedule as-is (row1 often issue, row2 often first payment).
       setSchedule(schedule, { reevaluateMode: true })
+    } else if (isValidIsoDate(firstCoupon) && isValidIsoDate(issue) && firstCoupon > issue) {
+      setSchedule(
+        [
+          { from: issue, rate: annual },
+          { from: firstCoupon, rate: annual }
+        ],
+        { reevaluateMode: true }
+      )
     } else if (isValidIsoDate(firstCoupon) || annual != null) {
-      setSchedule([{ from: firstCoupon, rate: annual }], { reevaluateMode: true })
+      setSchedule(
+        [{ from: isValidIsoDate(issue) ? issue : firstCoupon, rate: annual }],
+        { reevaluateMode: true }
+      )
+      // Preserve autofill payment date when we only seeded a single issue band.
+      if (firstCouponInput && isValidIsoDate(firstCoupon)) {
+        firstCouponInput.value = firstCoupon
+      }
     } else {
       setSchedule([], { reevaluateMode: true })
     }
@@ -514,6 +576,8 @@ export {
   isFixedCouponSchedule,
   clampCouponRatePct,
   deriveCouponScheduleTos,
+  resolveFirstCouponDateFromSchedule,
+  periodRowLabel,
   resolveAnnualCouponRatePctFromRows,
   normalizeCouponEngineSyncFields,
   mountCouponScheduleEditor,

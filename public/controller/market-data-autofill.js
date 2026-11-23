@@ -226,7 +226,11 @@ export function pickModalCouponRatePct(coupons) {
 
 /**
  * Union offering paymentDates (+ issue) with coupon rate bands for the coupon periods table.
- * Unknown periods keep rate null — do not invent anniversary dates when payments are missing.
+ * When paymentDates exist, calendar anchors are issue ∪ paymentDates only — retailInterest
+ * coupon `from` values are rate-validity windows (often saleWindow.from), not accrual starts.
+ * A single published rate band is open-ended for overlay (fixed FixMÁP ga for life).
+ * Stepped / multi-band products keep closed-window covering; unknown periods stay null.
+ * Do not invent anniversary dates when payments are missing.
  * @returns {{ schedule: Array<{ from: string, to: string|null, rate: number|null }>|null, missingPaymentCalendar: boolean }}
  */
 export function mergeCouponScheduleWithOfferingPayments({
@@ -235,16 +239,31 @@ export function mergeCouponScheduleWithOfferingPayments({
   issueDate = null
 } = {}) {
   const fromCoupons = couponsFileToCouponSchedule(coupons) || []
+  const definedRateRows = fromCoupons.filter((row) => row.rate != null)
+  // One published rate row (typical closed FixMÁP): retail `to` is sale-window
+  // validity, not rate lifetime — open-end for overlay onto the payment calendar.
+  const singleFixedRate =
+    definedRateRows.length === 1 ? definedRateRows[0].rate : null
+  const overlayBands =
+    singleFixedRate != null
+      ? [{ from: definedRateRows[0].from, to: null, rate: singleFixedRate }]
+      : fromCoupons
+
   const rateByFrom = new Map()
-  for (const row of fromCoupons) {
+  for (const row of overlayBands) {
     if (row.rate != null) rateByFrom.set(row.from, row.rate)
   }
 
   function rateForFrom(from) {
     if (rateByFrom.has(from)) return rateByFrom.get(from)
-    // Covering only inside an explicit closed [from,to] window — do not let an
-    // open-ended last band paint future offering payment dates with a known rate.
-    const covering = fromCoupons.find((row) => {
+    if (singleFixedRate != null) {
+      const band = overlayBands[0]
+      if (band?.from && band.from <= from) return singleFixedRate
+      return null
+    }
+    // Stepped / multi-band: covering only inside an explicit closed [from,to]
+    // window — do not let an open-ended last band paint future payment dates.
+    const covering = overlayBands.find((row) => {
       if (!row.from || row.from > from) return false
       if (row.to == null || row.to === '') return false
       if (String(row.to) < from) return false
@@ -260,8 +279,11 @@ export function mergeCouponScheduleWithOfferingPayments({
   const missingPaymentCalendar = paymentDates.length === 0
 
   const fromSet = new Set()
-  for (const row of fromCoupons) {
-    if (row.from) fromSet.add(row.from)
+  if (missingPaymentCalendar) {
+    // No offering calendar: coupon band starts remain the only anchors.
+    for (const row of fromCoupons) {
+      if (row.from) fromSet.add(row.from)
+    }
   }
   for (const iso of paymentDates) {
     fromSet.add(iso)
@@ -291,6 +313,9 @@ export function mergeCouponScheduleWithOfferingPayments({
       if (to == null || (capped && to >= next)) {
         to = capped
       }
+    } else if (singleFixedRate != null && paymentDates.length > 0) {
+      // Last open period on a fixed-rate overlay — do not keep sale-window `to`.
+      to = null
     }
     return {
       from,

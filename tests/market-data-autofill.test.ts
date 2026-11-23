@@ -368,6 +368,71 @@ describe('market-data-autofill', () => {
     expect(bmap.fields.firstCouponDate).toBe('2017-12-22')
   })
 
+  it('FixMÁP: offering calendar is issue∪paymentDates; sale-window coupon from is not a From; single rate overlays all periods', () => {
+    // A300725Q25 / 2030/Q3 shape: retailInterest band == sale window, not accrual start.
+    const coupons = {
+      cols: ['from', 'to', 'rate'],
+      rows: [['2025-07-01', '2025-09-30', 6.5]]
+    }
+    const offering = {
+      paymentDates: [
+        '2025-10-25',
+        '2026-01-25',
+        '2026-04-25',
+        '2026-07-25',
+        '2026-10-25',
+        '2027-01-25',
+        '2027-04-25',
+        '2027-07-25',
+        '2027-10-25',
+        '2028-01-25',
+        '2028-04-25',
+        '2028-07-25',
+        '2028-10-25',
+        '2029-01-25',
+        '2029-04-25',
+        '2029-07-25',
+        '2029-10-25',
+        '2030-01-25',
+        '2030-04-25',
+        '2030-07-25'
+      ],
+      saleWindow: { from: '2025-07-01', to: '2025-09-30' }
+    }
+    const merged = mergeCouponScheduleWithOfferingPayments({
+      coupons,
+      offering,
+      issueDate: '2025-07-02'
+    })
+    expect(merged.missingPaymentCalendar).toBe(false)
+    const froms = merged.schedule?.map((r) => r.from) || []
+    expect(froms[0]).toBe('2025-07-02')
+    expect(froms).not.toContain('2025-07-01')
+    expect(froms).toEqual(['2025-07-02', ...offering.paymentDates])
+    expect(merged.schedule?.every((r) => r.rate === 6.5)).toBe(true)
+
+    const fixmap = buildMarketAutofillPatch({
+      family: 'fixmap',
+      series: {
+        issue: '2025-07-02',
+        mat: '2030-07-25',
+        offered: false,
+        saleWindow: { from: '2025-07-01', to: '2025-09-30' }
+      },
+      quote: { d: '2026-11-02', ask: null, bid: 99 },
+      coupons,
+      offering,
+      current: { purchaseDate: '2026-11-02' }
+    })
+    expect(fixmap.fields.couponSchedule?.map((r) => r.from)).toEqual([
+      '2025-07-02',
+      ...offering.paymentDates
+    ])
+    expect(fixmap.fields.couponSchedule?.every((r) => r.rate === 6.5)).toBe(true)
+    expect(fixmap.fields.annualCouponRatePct).toBe(6.5)
+    expect(fixmap.fields.firstCouponDate).toBe('2025-10-25')
+  })
+
   it('merges offering paymentDates into couponSchedule with null rates for unknown periods', () => {
     const coupons = {
       cols: ['from', 'to', 'rate'],

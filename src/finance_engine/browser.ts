@@ -13,10 +13,13 @@ export {
   daysInMonthUtc,
   isWeekendUtc,
   toHolidaySet,
+  toBusinessCalendarSets,
+  businessCalendarFromYearBlocks,
   isBusinessDayUtc,
   rollBusinessDay,
   lastBusinessDayOnOrBefore
 } from './date_utils'
+export type { BusinessCalendar, BusinessDayHolidays, BusinessCalendarSets } from './date_utils'
 
 export {
   EvalResultCache,

@@ -575,6 +575,25 @@ Plan slices (implement in order; each slice should stay PR-sized)
 Out of scope for §6o
 - SPA loader or FLOAT coupon autofill; deriving rates from quote `ai` / WebKincstár payable %; FIX ktv coupons from ÁKK `coupon`.
 
+#### 6p) MNB settlement calendar refs — elszámolásforgalmi naptár (ADR 0046)
+Goal: publish the official Hungarian **bank / settlement** calendar from MNB yearly elszámolásforgalmi XLSX grids into `data/market/v2/refs/settlement-calendar.json` in the **same** scheduled Actions run as BUBOR / inflation, with **year-replace-on-revision** merges (mid-year corrections allowed), so later slices can roll FLOAT resets and coupon dates on VIBER business days without inventing a holiday list.
+
+Constraints
+- Actions-only; browser must not call `mnb.hu`.
+- Authority is MNB settlement days — not OpenHolidays / Nager.Date / NGM labor decrees / third-party munkanap APIs / WebKincstár `price-calendar`.
+- Publish Mon–Fri exception shape: `closed[]` (weekday `M`) + `open[]` (weekend `E`); engine calendar API must honor `open`.
+- Raw XLSX never committed to the `market-data` tip (Vitest fixtures under `tests/fixtures/` may pin samples, same posture as §6o BUBOR `.xls`); SheetJS CE via official CDN tarball (`xlsx@0.20.3`) remains the spreadsheet dep.
+
+Plan slices (implement in order; each slice should stay PR-sized)
+- [x] ADR 0046 + ROADMAP / ownership / market-data README / CI playbook / spec AC / ADR index.
+- [x] `tools/market-data/`: hub discover + fetch + normalize + year-replace merge + validate digests; Vitest fixtures (incl. 2026 base vs 2026-11-16 Dec 12 flip).
+- [x] Engine `BusinessCalendar` (`closed`/`open`) + salary string-list backward compatibility; SPA soft-load `loadSettlementCalendar` (no composer UX).
+- [x] Wire ingest/cli/`market-data.yml` comments.
+- [ ] **Close §6p only after live cutover:** `workflow_dispatch` market-data → tip has `data/market/v2/refs/settlement-calendar.json`. Until then: **code complete; cutover pending**.
+
+Out of scope for §6p
+- FLOAT “3rd business day” reset wiring; offering `paymentDates` adjustment; salary autofill from published days; separate labor-calendar ref.
+
 ### 7) Client Storage Hardening And Multi-Backend Architecture
 Goal: keep private data device-local and GitHub Pages–compatible, relieve `localStorage` pressure before analytics/CSV/scenario growth (§5–§6), and introduce one persistence port that can host `localStorage`, IndexedDB, and (later) encrypted cloud without controller rewrites. Builds on ADR 0004 (unsynced browser storage + export/import), ADR 0012 / 0018 (instrument bundle persistence); new ADR required for the storage port. Consistency debt today: `public/storage.js` swallows load errors and does not surface `QuotaExceededError` (address in the port slices below).
 

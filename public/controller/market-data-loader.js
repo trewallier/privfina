@@ -1,10 +1,11 @@
 /**
  * Runtime loader for published government-security market JSON
- * (ADR 0034 / 0035 / 0036 / 0038 / 0039 / ROADMAP §6b–§6l).
+ * (ADR 0034 / 0035 / 0036 / 0038 / 0039 / 0046 / ROADMAP §6b–§6l / §6p).
  * Fetches same-origin Pages files under data/market/v2/ — never official market hosts.
  */
 
 export const PRICE_CALENDAR_REF_PATH = 'refs/price-calendar.json'
+export const SETTLEMENT_CALENDAR_REF_PATH = 'refs/settlement-calendar.json'
 
 export const MARKET_SCHEMA_VERSION = 2
 export const MARKET_FAMILIES = Object.freeze(['dkj', 'pmap', 'bmap', 'fixmap', 'mapp', 'baba', 'ktv'])
@@ -91,6 +92,22 @@ function validatePriceCalendar(data) {
     return null
   }
   if (!isPlainObject(data.source) || !Array.isArray(data.reports) || !Array.isArray(data.days)) {
+    return null
+  }
+  return data
+}
+
+function validateSettlementCalendar(data) {
+  if (!isPlainObject(data) || data.schemaVersion !== MARKET_SCHEMA_VERSION) {
+    return null
+  }
+  if (data.calendarId !== 'HU-VIBER' || data.timezone !== 'Europe/Budapest') {
+    return null
+  }
+  if (!isPlainObject(data.source) || data.source.id !== 'mnb-elszamolasforgalmi-naptar') {
+    return null
+  }
+  if (!Array.isArray(data.years)) {
     return null
   }
   return data
@@ -215,6 +232,9 @@ export function createMarketDataLoader(options = {}) {
       async loadPriceCalendar() {
         return null
       },
+      async loadSettlementCalendar() {
+        return null
+      },
       async loadOffering() {
         return null
       },
@@ -278,6 +298,23 @@ export function createMarketDataLoader(options = {}) {
         const relative =
           (manifest && manifest.refs && manifest.refs.priceCalendar) || PRICE_CALENDAR_REF_PATH
         return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validatePriceCalendar)
+      } catch {
+        return null
+      }
+    },
+
+    /**
+     * MNB HU-VIBER settlement calendar exceptions (ADR 0046 / ROADMAP §6p).
+     * Soft-null when missing or invalid. No composer wiring yet.
+     * @returns {Promise<object|null>}
+     */
+    async loadSettlementCalendar() {
+      try {
+        const manifest = await this.loadManifest()
+        const relative =
+          (manifest && manifest.refs && manifest.refs.settlementCalendar) ||
+          SETTLEMENT_CALENDAR_REF_PATH
+        return await cachedFetch(joinUrl(baseUrl, relative), fetchImpl, validateSettlementCalendar)
       } catch {
         return null
       }

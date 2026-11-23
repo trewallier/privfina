@@ -76,7 +76,7 @@ Baseline instrument behavior for salary, subscription, loan, and investment (imp
 - Supported period modes:
 	- Custom predefined rule (default): monthly payout on the last working day on or before a configured target day of month (default target day: 10).
 	- Cron-like rule (existing): monthly/weekly/annual expression as currently supported.
-- Working-day rule for v1: Monday-Friday only (holiday calendars are out of scope in this iteration).
+- Working-day rule for v1: Monday-Friday plus optional caller-supplied holiday lists; published MNB HU-VIBER settlement calendar (`refs/settlement-calendar.json`, ADR 0046) is available for engine `BusinessCalendar` consumers, but salary autofill from that ref is not wired yet.
 - Tax handling: explicitly postponed to a future iteration (for example, rule-based tax changes over time).
 
 #### Subscription (stateless, recurring outflow)

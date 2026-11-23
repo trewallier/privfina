@@ -5,12 +5,14 @@ import {
   digestInflation,
   digestOfferingArchive,
   digestPriceCalendar,
-  digestRetailInterest
+  digestRetailInterest,
+  digestSettlementCalendar
 } from './digests.ts'
 import { mergeBuborFile } from './merge-bubor.ts'
 import { mergeInflationFile } from './merge-inflation.ts'
 import { applySeriesSaleWindows } from './merge-offerings.ts'
 import { mergePriceCalendarFile } from './merge-price-calendar.ts'
+import { mergeSettlementCalendarFile } from './merge-settlement-calendar.ts'
 import { joinRetailInterestToCoupons } from './normalize-retail-interest.ts'
 import {
   BUBOR_REF_PATH,
@@ -22,6 +24,7 @@ import {
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
+  SETTLEMENT_CALENDAR_REF_PATH,
   type BuborFile,
   type CouponsFile,
   type CouponRow,
@@ -40,7 +43,8 @@ import {
   type SaleWindow,
   type SeriesFile,
   type SeriesRecord,
-  type SeriesStatus
+  type SeriesStatus,
+  type SettlementCalendarFile
 } from './types.ts'
 
 export class MergeError extends Error {
@@ -72,6 +76,8 @@ export interface MarketTreeState {
   inflation: InflationFile | null
   /** MNB BUBOR fixings (ADR 0045); null when never ingested. */
   bubor: BuborFile | null
+  /** MNB HU-VIBER settlement calendar (ADR 0046); null when never ingested. */
+  settlementCalendar: SettlementCalendarFile | null
   /** WebKincstár priced / no_price / fetch_failed calendar (ADR 0039). */
   priceCalendar: PriceCalendarFile | null
   /** ÁKK public-offering document ledger (ADR 0041). */
@@ -90,6 +96,8 @@ export interface MergeResult {
   inflationAppendedRows: number
   /** BUBOR tenor×date rows appended this merge. */
   buborAppendedRows: number
+  /** Settlement-calendar years replaced or appended this merge. */
+  settlementCalendarTouchedYears: number
   /** Price-calendar days appended this merge. */
   priceCalendarAppendedDays: number
 }
@@ -129,6 +137,7 @@ export function emptyMarketTree(): MarketTreeState {
     retailInterest: null,
     inflation: null,
     bubor: null,
+    settlementCalendar: null,
     priceCalendar: null,
     offeringArchive: null
   }
@@ -256,6 +265,10 @@ function buildManifest(tree: MarketTreeState, asOf: string | null, generatedAt: 
     refs.bubor = BUBOR_REF_PATH
     digests[BUBOR_REF_PATH] = digestBubor(tree.bubor)
   }
+  if (tree.settlementCalendar) {
+    refs.settlementCalendar = SETTLEMENT_CALENDAR_REF_PATH
+    digests[SETTLEMENT_CALENDAR_REF_PATH] = digestSettlementCalendar(tree.settlementCalendar)
+  }
   if (tree.priceCalendar) {
     refs.priceCalendar = PRICE_CALENDAR_REF_PATH
     digests[PRICE_CALENDAR_REF_PATH] = digestPriceCalendar(tree.priceCalendar)
@@ -361,6 +374,11 @@ export function mergeSnapshot(
      */
     bubor?: BuborFile | null
     /**
+     * When provided, year-replace merge into settlement-calendar refs (ADR 0046).
+     * When omitted, keep previous settlement calendar.
+     */
+    settlementCalendar?: SettlementCalendarFile | null
+    /**
      * When provided, append-first merge into price-calendar refs (ADR 0039).
      * When omitted, keep previous price calendar.
      */
@@ -397,6 +415,9 @@ export function mergeSnapshot(
       : null,
     inflation: previous.inflation ? structuredClone(previous.inflation) : null,
     bubor: previous.bubor ? structuredClone(previous.bubor) : null,
+    settlementCalendar: previous.settlementCalendar
+      ? structuredClone(previous.settlementCalendar)
+      : null,
     priceCalendar: previous.priceCalendar
       ? structuredClone(previous.priceCalendar)
       : null,
@@ -413,6 +434,7 @@ export function mergeSnapshot(
   let rewrittenRows = 0
   let inflationAppendedRows = 0
   let buborAppendedRows = 0
+  let settlementCalendarTouchedYears = 0
   let priceCalendarAppendedDays = 0
   const allowSameDayRewrite = options?.allowSameDayRewrite === true
   const asOf = snapshot.asOf
@@ -522,6 +544,18 @@ export function mergeSnapshot(
     }
   }
 
+  if (options && 'settlementCalendar' in options) {
+    const incoming = options.settlementCalendar
+    if (incoming) {
+      const mergedCal = mergeSettlementCalendarFile(previous.settlementCalendar, incoming)
+      tree.settlementCalendar = mergedCal.file
+      settlementCalendarTouchedYears =
+        mergedCal.replacedYears.length + mergedCal.appendedYears.length
+    } else {
+      tree.settlementCalendar = null
+    }
+  }
+
   if (options && 'priceCalendar' in options) {
     const incoming = options.priceCalendar
     if (incoming) {
@@ -586,6 +620,7 @@ export function mergeSnapshot(
     rewrittenRows,
     inflationAppendedRows,
     buborAppendedRows,
+    settlementCalendarTouchedYears,
     priceCalendarAppendedDays
   }
 }

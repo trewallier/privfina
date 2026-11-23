@@ -131,6 +131,25 @@ describe('market-data-loader', () => {
     ).toBeNull()
   })
 
+  it('loads settlement calendar soft-null when missing and HU-VIBER when present (ADR 0046)', async () => {
+    const loader = createMarketDataLoader({
+      baseUrl: '/privfina/',
+      fetchImpl: createFixtureFetch()
+    })
+    const calendar = await loader.loadSettlementCalendar()
+    expect(calendar?.schemaVersion).toBe(2)
+    expect(calendar?.calendarId).toBe('HU-VIBER')
+    expect(calendar?.source?.id).toBe('mnb-elszamolasforgalmi-naptar')
+    expect(calendar?.years?.[0]?.open).toContain('2026-01-10')
+
+    clearMarketDataSessionCache()
+    const missing = createMarketDataLoader({
+      baseUrl: '/privfina/',
+      fetchImpl: async () => new Response('gone', { status: 404 })
+    })
+    expect(await missing.loadSettlementCalendar()).toBeNull()
+  })
+
   it('loads price calendar and annotates clamp reasons from no_price / fetch_failed', async () => {
     const loader = createMarketDataLoader({
       baseUrl: '/privfina/',
@@ -222,6 +241,7 @@ describe('market-data-loader', () => {
     })
     expect(await loader.loadCoupons('dkj', 'D261223')).toBeNull()
     expect(await loader.loadPriceCalendar()).toBeNull()
+    expect(await loader.loadSettlementCalendar()).toBeNull()
     expect(await loader.loadOffering('pmap', 'A270324I22')).toBeNull()
     expect(await loader.loadRetailInterest()).toBeNull()
   })

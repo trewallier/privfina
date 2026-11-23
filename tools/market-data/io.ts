@@ -13,6 +13,7 @@ import {
   INFLATION_REF_PATH,
   OFFERING_ARCHIVE_REF_PATH,
   PRICE_CALENDAR_REF_PATH,
+  SETTLEMENT_CALENDAR_REF_PATH,
   type BuborFile,
   type PriceCalendarFile,
   MARKET_PATH_SEGMENT,
@@ -29,7 +30,8 @@ import {
   type QuotesFile,
   type RetailInterestFile,
   type SeriesFile,
-  type SeriesRecord
+  type SeriesRecord,
+  type SettlementCalendarFile
 } from './types.ts'
 
 /** Basename under `data/market/` for the legacy schemaVersion 1 tree. */
@@ -84,6 +86,7 @@ function v2TreeHasContent(tree: MarketTreeState): boolean {
   return (
     tree.inflation != null ||
     tree.bubor != null ||
+    tree.settlementCalendar != null ||
     tree.priceCalendar != null ||
     tree.offeringArchive != null
   )
@@ -220,6 +223,17 @@ async function loadTreeAtPath(
     ? options?.forceSchemaVersion
       ? bumpSchemaVersion(bubor)
       : bubor
+    : null
+
+  const settlementCalendarPath =
+    tree.manifest?.refs?.settlementCalendar ?? SETTLEMENT_CALENDAR_REF_PATH
+  const settlementCalendar = await readJsonIfExists<SettlementCalendarFile>(
+    path.join(rootDir, settlementCalendarPath)
+  )
+  tree.settlementCalendar = settlementCalendar
+    ? options?.forceSchemaVersion
+      ? bumpSchemaVersion(settlementCalendar)
+      : settlementCalendar
     : null
 
   const priceCalendarPath =
@@ -366,6 +380,13 @@ export async function writeMarketTree(root: string, tree: MarketTreeState): Prom
     const abs = path.join(v2, rel)
     await mkdir(path.dirname(abs), { recursive: true })
     await writeFile(abs, canonicalJson(tree.bubor), 'utf8')
+  }
+
+  if (tree.settlementCalendar) {
+    const rel = tree.manifest.refs?.settlementCalendar ?? SETTLEMENT_CALENDAR_REF_PATH
+    const abs = path.join(v2, rel)
+    await mkdir(path.dirname(abs), { recursive: true })
+    await writeFile(abs, canonicalJson(tree.settlementCalendar), 'utf8')
   }
 
   if (tree.priceCalendar) {

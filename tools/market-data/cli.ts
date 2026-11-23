@@ -30,6 +30,7 @@ function printHelp(): void {
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
       [--bubor-xls <xls>] [--skip-bubor]
+      [--settlement-calendar-dir <dir>] [--skip-settlement-calendar]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>]
@@ -37,6 +38,7 @@ function printHelp(): void {
       [--retail-interest <json>] [--skip-retail-interest]
       [--inflation-csv <csv>] [--skip-inflation]
       [--bubor-xls <xls>] [--skip-bubor]
+      [--settlement-calendar-dir <dir>] [--skip-settlement-calendar]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
   market-data validate-tree --root <repo-or-v2>
@@ -166,6 +168,13 @@ async function loadOptionalSources(args: string[]): Promise<{
   if (skipBubor && buborXlsPath) {
     throw new Error('Use either --bubor-xls or --skip-bubor, not both.')
   }
+  const settlementCalendarDir = getFlag(args, '--settlement-calendar-dir')
+  const skipSettlementCalendar = hasFlag(args, '--skip-settlement-calendar')
+  if (skipSettlementCalendar && settlementCalendarDir) {
+    throw new Error(
+      'Use either --settlement-calendar-dir or --skip-settlement-calendar, not both.'
+    )
+  }
   const webkincstarDir = getFlag(args, '--webkincstar-dir')
   const skipWebkincstar = hasFlag(args, '--skip-webkincstar')
   if (skipWebkincstar && webkincstarDir) {
@@ -191,6 +200,8 @@ async function loadOptionalSources(args: string[]): Promise<{
     skipInflation,
     buborXlsPath,
     skipBubor,
+    settlementCalendarDir,
+    skipSettlementCalendar,
     webkincstarTextByReport: webkincstarDir
       ? await loadWebkincstarDir(webkincstarDir)
       : undefined,
@@ -228,6 +239,8 @@ async function main(argv: string[]): Promise<number> {
       skipInflation: sources.skipInflation,
       buborXlsPath: sources.buborXlsPath,
       skipBubor: sources.skipBubor,
+      settlementCalendarDir: sources.settlementCalendarDir,
+      skipSettlementCalendar: sources.skipSettlementCalendar,
       webkincstarTextByReport: sources.webkincstarTextByReport,
       webkincstarDatum: sources.webkincstarDatum,
       skipWebkincstar: sources.skipWebkincstar,
@@ -247,6 +260,8 @@ async function main(argv: string[]): Promise<number> {
         inflationAppendedRows: report.inflationAppendedRows,
         buborUpdated: report.buborUpdated,
         buborAppendedRows: report.buborAppendedRows,
+        settlementCalendarUpdated: report.settlementCalendarUpdated,
+        settlementCalendarTouchedYears: report.settlementCalendarTouchedYears,
         webkincstarUpdated: report.webkincstarUpdated,
         webkincstarSoftFailed: report.webkincstarSoftFailed,
         webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
@@ -286,6 +301,8 @@ async function main(argv: string[]): Promise<number> {
       skipInflation: sources.skipInflation,
       buborXlsPath: sources.buborXlsPath,
       skipBubor: sources.skipBubor,
+      settlementCalendarDir: sources.settlementCalendarDir,
+      skipSettlementCalendar: sources.skipSettlementCalendar,
       webkincstarTextByReport: sources.webkincstarTextByReport,
       webkincstarDatum: sources.webkincstarDatum,
       skipWebkincstar: sources.skipWebkincstar,

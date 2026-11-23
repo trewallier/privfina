@@ -517,9 +517,11 @@ describe('retail interest join → coupons + merge', () => {
       rawDir: path.join(tmp, 'raw-live'),
       fetchImpl,
       // This case exercises retailInterest soft-fail only; skip WebKincstár / offerings
-      // so the mock 404 path does not burn retry/backoff budget (ADR 0039 / 0041).
+      // / settlement calendar so the mock 404 path does not burn retry/backoff budget
+      // and wall-clock required years do not hard-fail when fixtures lag (ADR 0039 / 0041 / 0046).
       skipWebkincstar: true,
       skipOfferings: true,
+      skipSettlementCalendar: true,
       generatedAt: '2026-11-03T12:00:00.000Z'
     })
     expect(report.retailInterestSoftFailed).toBe(true)

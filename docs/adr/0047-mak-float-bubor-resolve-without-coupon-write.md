@@ -29,6 +29,7 @@ Related: 0017 (single calculation surface), 0038 (effective-rate market schema),
 ## Consequences
 
 - FLOAT 2027/B-class series can autofill / compute when BUBOR + VIBER + series metadata are present.
+- Commercial preview may project the **current** resolved period `ga` onto later period-end turns (future BUBOR fixings are unknown) — multi-period FLOAT cash flows are not period-true.
 - Market-data tip stays free of invented FLOAT coupon files; digests do not grow from runtime resolves.
 - Operators still run market-data ingest for BUBOR / settlement calendar / ÁKK KTV metadata; browser never calls mnb.hu / akk.hu.
 

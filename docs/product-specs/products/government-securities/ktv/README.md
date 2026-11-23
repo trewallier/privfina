@@ -25,6 +25,8 @@ Period annual rate resolves at calculation / SPA autofill time from YAML `indexR
 
 Locked example **2027/B**: period start turn `2026-10-22` → observation `2026-10-19` → tip BUBOR 3M **5.5%**.
 
+Commercial preview may project that current `ga` onto later quarterly turns (future fixings unknown) — do not treat multi-period FLOAT cash as period-true.
+
 ## Intentional catalog fields
 
 - **`issuanceModel: phased-public-offering`** — same sibling enum as FixMÁP / Babakötvény. ÁKK auction vs continuous offering is an ingest/listing mode (`OFFERING_LABEL_BY_FAMILY.ktv.mode: auction`, ADR 0044), not a separate product-YAML issuanceModel value.

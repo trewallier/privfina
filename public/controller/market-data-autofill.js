@@ -481,7 +481,8 @@ export function isSeriesAvailableOn(series, todayIso, offering = null) {
 }
 
 /**
- * Short hint when purchase/settlement falls outside a known sale window.
+ * Short hint when purchase/settlement falls outside a known primary sale window.
+ * Secondary-market bid quoting may continue after the window ends (ask often null).
  * @param {string} isoDate
  * @param {{ from?: string, to?: string|null }|null|undefined} saleWindow
  */
@@ -491,7 +492,73 @@ export function formatPurchaseOutsideSaleWindowHint(isoDate, saleWindow) {
     return ''
   }
   const to = saleWindow.to != null && saleWindow.to !== '' ? String(saleWindow.to) : 'open'
-  return `Purchase date ${isoDate} is outside the published sale window ${saleWindow.from}–${to}`
+  return (
+    `Purchase date ${isoDate} is outside the published primary sale window ${saleWindow.from}–${to}` +
+    ' (secondary-market bid quotes may still apply)'
+  )
+}
+
+/**
+ * Quote day applied to the current purchase/settlement (not "history length").
+ * @param {string|null|undefined} quoteDay
+ */
+export function formatQuoteForPurchaseHint(quoteDay) {
+  const day = String(quoteDay || '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return ''
+  return `Quote for purchase ${day}`
+}
+
+/**
+ * Published quote history depth for the selected series.
+ * @param {{ from?: string, to?: string, count?: number }|null|undefined} summary
+ */
+export function formatQuoteHistoryRangeHint(summary) {
+  const from = String(summary?.from || '').trim()
+  const to = String(summary?.to || '').trim()
+  const count = Number(summary?.count)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !Number.isFinite(count) || count < 1) {
+    return ''
+  }
+  if (count === 1 || from === to) {
+    return `Quotes published ${from} (1 day)`
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(to)) return ''
+  return `Quotes ${from}–${to} (${count} days)`
+}
+
+/**
+ * Past / closed series: prefer latest published quote day over browser today
+ * when the purchase field is empty or still on today (avoids a no-op clamp).
+ * @param {{
+ *   series?: object|null,
+ *   offering?: object|null,
+ *   todayIso?: string|null,
+ *   latestQuoteDate?: string|null,
+ *   currentPurchaseDate?: string|null
+ * }} args
+ * @returns {string}
+ */
+export function preferredPurchaseDateForSeries({
+  series = null,
+  offering = null,
+  todayIso = null,
+  latestQuoteDate = null,
+  currentPurchaseDate = null
+} = {}) {
+  const today = String(todayIso || '').trim()
+  const latest = String(latestQuoteDate || '').trim()
+  const current = String(currentPurchaseDate || '').trim()
+  const available = series ? isSeriesAvailableOn(series, today || latest || current, offering) : true
+  if (
+    !available &&
+    /^\d{4}-\d{2}-\d{2}$/.test(latest) &&
+    (!current || (today && current === today))
+  ) {
+    return latest
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(current)) return current
+  if (/^\d{4}-\d{2}-\d{2}$/.test(today)) return today
+  return latest || ''
 }
 
 /**

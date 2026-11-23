@@ -489,6 +489,30 @@ export function findQuoteRowBySettleDate(quotesFile, settleDate) {
 }
 
 /**
+ * Summarize published quote history depth for UI hints.
+ * @param {{ cols?: string[], rows?: unknown[][] }|null|undefined} quotesFile
+ * @param {{ d?: string }|null|undefined} [latestQuote]
+ * @returns {{ from: string, to: string, count: number }|null}
+ */
+export function summarizeQuoteHistory(quotesFile, latestQuote = null) {
+  const dates = new Set()
+  const cols = quotesFile?.cols || []
+  const dIndex = cols.indexOf('d')
+  if (quotesFile && Array.isArray(quotesFile.rows) && dIndex >= 0) {
+    for (const row of quotesFile.rows) {
+      if (!Array.isArray(row)) continue
+      const day = String(row[dIndex] || '').trim()
+      if (/^\d{4}-\d{2}-\d{2}$/.test(day)) dates.add(day)
+    }
+  }
+  const latestDay = String(latestQuote?.d || '').trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(latestDay)) dates.add(latestDay)
+  if (dates.size === 0) return null
+  const sorted = [...dates].sort()
+  return { from: sorted[0], to: sorted[sorted.length - 1], count: sorted.length }
+}
+
+/**
  * Nearest quote row by absolute day distance to settleDate (exact match preferred).
  * @param {{ cols: string[], rows: unknown[][] }|null|undefined} quotesFile
  * @param {string} settleDate

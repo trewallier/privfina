@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "source": {
+    "id": "mnb-bubor2-xls",
+    "pageUrl": "https://www.mnb.hu/en/statistical-data/statistical-time-series/xi-money-and-capital-markets/xi1-bubor",
+    "xlsUrl": "https://www.mnb.hu/letoltes/bubor2.xls"
+  },
+  "asOf": "2026-11-20",
+  "generatedAt": "2026-11-22T21:19:16.210Z",
+  "metric": "bubor",
+  "unit": "pct",
+  "tenors": ["ON", "1W", "2W", "1M", "2M", "3M", "4M", "5M", "6M", "7M", "8M", "9M", "10M", "11M", "12M"],
+  "series": {
+    "ON": { "cols": ["date", "pct"], "rows": [] },
+    "1W": { "cols": ["date", "pct"], "rows": [] },
+    "2W": { "cols": ["date", "pct"], "rows": [] },
+    "1M": { "cols": ["date", "pct"], "rows": [] },
+    "2M": { "cols": ["date", "pct"], "rows": [] },
+    "3M": {
+      "cols": ["date", "pct"],
+      "rows": [
+        ["2026-08-19", 5.54],
+        ["2026-10-19", 5.5],
+        ["2026-11-20", 5.5]
+      ]
+    },
+    "4M": { "cols": ["date", "pct"], "rows": [] },
+    "5M": { "cols": ["date", "pct"], "rows": [] },
+    "6M": { "cols": ["date", "pct"], "rows": [] },
+    "7M": { "cols": ["date", "pct"], "rows": [] },
+    "8M": { "cols": ["date", "pct"], "rows": [] },
+    "9M": { "cols": ["date", "pct"], "rows": [] },
+    "10M": { "cols": ["date", "pct"], "rows": [] },
+    "11M": { "cols": ["date", "pct"], "rows": [] },
+    "12M": { "cols": ["date", "pct"], "rows": [] }
+  }
+}

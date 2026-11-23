@@ -2,7 +2,11 @@
   "schemaVersion": 2,
   "asOf": "2026-11-02",
   "generatedAt": "2026-10-31T21:17:07.922Z",
-  "families": ["dkj", "pmap", "bmap"],
+  "families": [
+    "dkj",
+    "pmap",
+    "bmap"
+  ],
   "paths": {
     "dkj": {
       "series": "families/dkj/series.json",
@@ -19,7 +23,8 @@
   },
   "refs": {
     "priceCalendar": "refs/price-calendar.json",
-    "settlementCalendar": "refs/settlement-calendar.json"
+    "settlementCalendar": "refs/settlement-calendar.json",
+    "bubor": "refs/bubor.json"
   },
   "digests": {
     "families/dkj/series.json": "fixture",

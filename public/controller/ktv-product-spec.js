@@ -1,3 +1,14 @@
+/** Machine-readable FLOAT reset rules (mirrors product.yaml indexReset / ADR 0047). */
+const KTV_INDEX_RESET = Object.freeze({
+  tenor: '3M',
+  observationBusinessDaysBefore: 3,
+  calendarId: 'HU-VIBER',
+  roundToPct: 0.01,
+  floorPct: 0.01,
+  dayCountConvention: 'ACT/360',
+  periodMonths: 3
+})
+
 const KTV_PRODUCT_SPEC = {
   specVersion: 'v2alpha3',
   id: 'government-security.ktv.standard',
@@ -6,6 +17,8 @@ const KTV_PRODUCT_SPEC = {
   productCode: 'ktv',
   displayName: 'Hungarian Government Bond (MÁK)',
   denominationUnit: 10000,
+  referenceIndex: 'bubor',
+  indexReset: KTV_INDEX_RESET,
   inputs: [
     {
       name: 'principal',
@@ -122,4 +135,4 @@ const KTV_PRODUCT_SPEC = {
   }
 }
 
-export { KTV_PRODUCT_SPEC }
+export { KTV_PRODUCT_SPEC, KTV_INDEX_RESET }

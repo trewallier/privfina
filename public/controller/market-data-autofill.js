@@ -5,9 +5,14 @@
 
 import { deriveDkjRemainingDays } from '@finance_engine/instruments/day_count'
 import {
+  listKtvFloatPeriodTurnsIso
+} from '@finance_engine/instruments/ktv'
+import { resolveMakFloatAnnualRatePct } from '@finance_engine/instruments/mak_float_rate'
+import {
   getCommercialInvestmentFamily,
   buildMarketMarketableRequiredFields
 } from './commercial-investment-family-registry.js'
+import { KTV_INDEX_RESET } from './ktv-product-spec.js'
 
 const TERM_BUCKETS = [3, 6, 12]
 
@@ -423,12 +428,30 @@ export function marketableFieldsMissingFromPatch(family, sourcedNames = []) {
 }
 
 /**
+ * Latest period-turn ISO on or before purchase (FLOAT current-period start).
+ * @param {string[]} turns
+ * @param {string} purchaseIso
+ */
+export function pickCurrentFloatPeriodTurnIso(turns, purchaseIso) {
+  const on = String(purchaseIso || '').trim()
+  if (!on || !Array.isArray(turns) || turns.length === 0) return null
+  let best = null
+  for (const turn of turns) {
+    const iso = String(turn || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) continue
+    if (iso <= on && (best == null || iso > best)) best = iso
+  }
+  return best
+}
+
+/**
  * Build a patch of form field values from market data.
  * Always overwrites sourced (auto) fields when values are available.
  * Never returns amount or purchase/settlement date fields.
  * For PMÁP/BMÁP, includes `couponSchedule` (array) from coupons/<id>.json when present.
+ * FLOAT ktv may set annualCouponRatePct from BUBOR resolve (ADR 0047); softHints when missing.
  *
- * @returns {{ fields: Record<string, string|number|Array>, sourced: string[] }}
+ * @returns {{ fields: Record<string, string|number|Array>, sourced: string[], softHints: string[] }}
  */
 export function buildMarketAutofillPatch({
   family,
@@ -436,10 +459,14 @@ export function buildMarketAutofillPatch({
   quote,
   coupons = null,
   offering = null,
-  current = {}
+  current = {},
+  bubor = null,
+  settlementCalendar = null,
+  indexReset = null
 } = {}) {
   const fields = {}
   const sourced = []
+  const softHints = []
   const protectedNames = new Set(MARKET_AUTOFILL_PROTECTED_FIELDS)
 
   function setField(name, value) {
@@ -480,11 +507,18 @@ export function buildMarketAutofillPatch({
     family === 'ktv'
   ) {
     // ADR 0038: effective rate + full schedule from coupons/<id>.json — not quote ay/by.
+    // ADR 0047: FLOAT ktv resolves from BUBOR + VIBER + indexReset (form only; never coupons).
     const onIso = String(current.purchaseDate || series?.issue || '').trim()
-    const couponRate = pickCouponRatePct(coupons, onIso)
-    if (couponRate != null) {
-      setField('annualCouponRatePct', couponRate)
+    const isKtvFloat =
+      family === 'ktv' && String(series?.iType || '').toUpperCase() === 'FLOAT'
+
+    if (!isKtvFloat) {
+      const couponRate = pickCouponRatePct(coupons, onIso)
+      if (couponRate != null) {
+        setField('annualCouponRatePct', couponRate)
+      }
     }
+
     const schedule = couponsFileToCouponSchedule(coupons)
     if (schedule) {
       setField('couponSchedule', schedule)
@@ -498,9 +532,12 @@ export function buildMarketAutofillPatch({
     // ROADMAP §6l: prefer offering payment calendar over anniversary heuristic.
     // BMÁP quarterly (3); PMÁP/FixMÁP/Babakötvény annual (12); MÁP Plusz series-authored
     // (12 newer annual default; 6 older semi-annual inferred from paymentDates).
+    // FLOAT ktv uses indexReset.periodMonths (3).
     let frequencyMonths = 12
-    if (family === 'bmap') {
-      frequencyMonths = 3
+    if (family === 'bmap' || isKtvFloat) {
+      frequencyMonths = isKtvFloat
+        ? Number((indexReset || KTV_INDEX_RESET).periodMonths) || 3
+        : 3
     } else if (family === 'mapp') {
       frequencyMonths = inferMappCouponFrequencyMonths(offering)
       setField('couponFrequencyMonths', frequencyMonths)
@@ -511,11 +548,44 @@ export function buildMarketAutofillPatch({
     if (firstCoupon) {
       setField('firstCouponDate', firstCoupon)
     }
-    const dayCount = offering?.dayCount || series?.dayCount
-    if (dayCount) {
-      setField('dayCountConvention', dayCount)
+
+    if (isKtvFloat) {
+      const reset = indexReset || KTV_INDEX_RESET
+      setField('dayCountConvention', reset.dayCountConvention || 'ACT/360')
+      const paymentDates = Array.isArray(offering?.paymentDates)
+        ? offering.paymentDates
+        : undefined
+      const turns = listKtvFloatPeriodTurnsIso({
+        issueDate: series?.issue || fields.issueDate,
+        maturityDate: series?.mat || fields.maturityDate,
+        paymentDates,
+        periodMonths: reset.periodMonths,
+        firstCouponDate: firstCoupon
+      })
+      const periodTurnIso = pickCurrentFloatPeriodTurnIso(turns, onIso)
+      const resolved =
+        periodTurnIso != null
+          ? resolveMakFloatAnnualRatePct({
+              periodTurnIso,
+              indexReset: reset,
+              bubor,
+              calendar: settlementCalendar
+            })
+          : null
+      if (resolved != null) {
+        setField('annualCouponRatePct', resolved)
+      } else {
+        softHints.push(
+          'FLOAT period rate unavailable — enter annual coupon rate manually (BUBOR or settlement calendar missing).'
+        )
+      }
+    } else {
+      const dayCount = offering?.dayCount || series?.dayCount
+      if (dayCount) {
+        setField('dayCountConvention', dayCount)
+      }
     }
   }
 
-  return { fields, sourced }
+  return { fields, sourced, softHints }
 }

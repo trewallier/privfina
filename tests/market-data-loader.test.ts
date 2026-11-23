@@ -150,6 +150,27 @@ describe('market-data-loader', () => {
     expect(await missing.loadSettlementCalendar()).toBeNull()
   })
 
+  it('loads BUBOR soft-null when missing and 3M series when present (ADR 0045 / 0047)', async () => {
+    const loader = createMarketDataLoader({
+      baseUrl: '/privfina/',
+      fetchImpl: createFixtureFetch()
+    })
+    const bubor = await loader.loadBubor()
+    expect(bubor?.schemaVersion).toBe(2)
+    expect(bubor?.metric).toBe('bubor')
+    expect(bubor?.source?.id).toBe('mnb-bubor2-xls')
+    expect(bubor?.series?.['3M']?.rows?.some((r: [string, number]) => r[0] === '2026-10-19' && r[1] === 5.5)).toBe(
+      true
+    )
+
+    clearMarketDataSessionCache()
+    const missing = createMarketDataLoader({
+      baseUrl: '/privfina/',
+      fetchImpl: async () => new Response('gone', { status: 404 })
+    })
+    expect(await missing.loadBubor()).toBeNull()
+  })
+
   it('loads price calendar and annotates clamp reasons from no_price / fetch_failed', async () => {
     const loader = createMarketDataLoader({
       baseUrl: '/privfina/',

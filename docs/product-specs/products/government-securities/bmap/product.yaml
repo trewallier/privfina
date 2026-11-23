@@ -73,7 +73,7 @@ inputs:
     label: Day Count Convention
     required: false
     unit: text
-    description: How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).
+    description: How days are counted for accrued interest. BMÁP Ismertető felhalmozott kamat is ACT/360 (actual days / 360). Offering Tényleges/tényleges is payable-coupon language only — autofill ignores offering ACT/ACT and does not expose it as a BMÁP input.
     constraints:
       enum: [ACT/360, ACT/365F, 30E/360]
 
@@ -129,7 +129,7 @@ assumptions:
   - Coupon payment frequency is quarterly (product-type constant; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - BMAP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
-  - Default day-count for accrued-interest and period coupon calculations is ACT/360 unless overridden per series or input.
+  - Accrued interest is ACT/360 per Ismertető (actual days / 360). Offering transcriptions that label Kamatszámítás as Tényleges/tényleges do not change the accrued convention.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent (optional startDate removed in v2alpha3).
   - When a couponSchedule is supplied (including from published market coupons autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.

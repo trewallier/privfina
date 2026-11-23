@@ -13,6 +13,7 @@ import {
   type CouponSchedulePeriod,
   type DayCountConvention
 } from './day_count'
+import { isActActDayCountConvention } from './ismerteto_accrued'
 import { CashFlowDirection } from '../models'
 import type { CashFlow } from '../models'
 
@@ -78,6 +79,8 @@ export function deriveBmapRateOutputs(
 
 /**
  * Accrued interest from last coupon on/before purchase (or issueDate) to purchaseDate.
+ * BMÁP Ismertető felhalmozott kamat is ACT/360 (days/360). Offering labels that
+ * say Tényleges/tényleges describe payable-coupon language — do not switch accrued.
  */
 export function deriveBmapAccruedInterestAmount(
   specInputs: Pick<
@@ -106,12 +109,15 @@ export function deriveBmapAccruedInterestAmount(
       ? ensureNonNegativeNumber(annualCouponRatePct, 'annualCouponRatePct')
       : deriveBmapRateOutputs(specInputs).annualCouponRatePct
   const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
+  const dayCount = isActActDayCountConvention(specInputs.dayCountConvention)
+    ? 'ACT/360'
+    : normalizeDayCountConvention(specInputs.dayCountConvention)
   return accrueInterestAmount({
     principal,
     annualRatePct: rate,
     fromIso: accrualStartIso,
     toIso: purchaseDateIso,
-    dayCount: normalizeDayCountConvention(specInputs.dayCountConvention)
+    dayCount
   })
 }
 

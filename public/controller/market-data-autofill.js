@@ -3,7 +3,10 @@
  * Never returns amount fields (principal / faceValue) or purchase/settlement dates.
  */
 
-import { deriveDkjRemainingDays } from '@finance_engine/instruments/day_count'
+import {
+  deriveDkjRemainingDays,
+  isActActDayCountConvention
+} from '@finance_engine/instruments/day_count'
 import {
   listKtvFloatPeriodTurnsIso
 } from '@finance_engine/instruments/ktv'
@@ -60,6 +63,28 @@ export function deriveRemainingDays(settlementDate, maturityDate) {
  * @param {{ paymentDates?: unknown }|null|undefined} offering
  * @returns {6|12}
  */
+/**
+ * Prefer offering dayCount when it is a valid accrued convention for the family.
+ * BMÁP/DKJ Ismertető accrued is ACT/360 — offering Tényleges/tényleges (ACT/ACT)
+ * is payable-coupon language only and must not drive the accrued field.
+ * @param {string} family
+ * @param {{ dayCount?: unknown }|null|undefined} offering
+ * @param {{ dayCount?: unknown }|null|undefined} series
+ * @returns {string|null}
+ */
+export function resolveCommercialDayCountAutofill(family, offering, series) {
+  const offeringDc = offering?.dayCount != null ? String(offering.dayCount).trim() : ''
+  const seriesDc = series?.dayCount != null ? String(series.dayCount).trim() : ''
+  if (family === 'bmap' || family === 'dkj') {
+    if (offeringDc && !isActActDayCountConvention(offeringDc)) return offeringDc
+    if (seriesDc && !isActActDayCountConvention(seriesDc)) return seriesDc
+    // Offering ACT/ACT (or missing): keep ACT/360 accrued convention.
+    if (offeringDc || seriesDc) return 'ACT/360'
+    return null
+  }
+  return offeringDc || seriesDc || null
+}
+
 export function inferMappCouponFrequencyMonths(offering) {
   const raw = Array.isArray(offering?.paymentDates) ? offering.paymentDates : []
   const dates = raw
@@ -498,6 +523,10 @@ export function buildMarketAutofillPatch({
     if (remaining != null) {
       setField('remainingDays', remaining)
     }
+    const dayCount = resolveCommercialDayCountAutofill(family, offering, series)
+    if (dayCount) {
+      setField('dayCountConvention', dayCount)
+    }
   } else if (
     family === 'pmap' ||
     family === 'bmap' ||
@@ -600,7 +629,7 @@ export function buildMarketAutofillPatch({
         }
       }
     } else {
-      const dayCount = offering?.dayCount || series?.dayCount
+      const dayCount = resolveCommercialDayCountAutofill(family, offering, series)
       if (dayCount) {
         setField('dayCountConvention', dayCount)
       }

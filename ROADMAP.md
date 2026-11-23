@@ -511,7 +511,7 @@ Goal: commercial investment composer (DKJ / PMÁP / BMÁP) consumes the publishe
 | --- | --- |
 | `saleWindow` `{ from, to }` (`to` nullable while open) | Prefer over `series.offered` / name-year heuristic for available/past and purchase-in-window hints |
 | Coupon **payment dates** through maturity | Prefer over SPA `deriveFirstCouponDate(issue, mat, 12\|3)` for PMÁP/BMÁP |
-| `dayCount` from the offering when present | Prefer over family default / kamatok-joined series dayCount for accrued |
+| `dayCount` from the offering when present | Prefer for accrued when it is a valid accrued convention for the family; **BMÁP/DKJ:** ignore offering `ACT/ACT` (Tényleges/tényleges payable-coupon label) and keep ACT/360 |
 | Attribution (`source` host + document provenance + accuracy / non-advice note) | Show beside WebKincstár price-calendar disclaimer |
 
 Preferred hot-path layout (soft-fail if absent): per-series `families/{dkj,pmap,bmap}/offerings/<id>.json` (schemaVersion 2) and/or series-adjacent `saleWindow` for picker labels without N+1 fetches. Do not invent sale history from quote rows.
@@ -526,6 +526,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ROADMAP renumber (§6l inserted; historical backfill → §6m) + spec / ownership ACs for offering loader, sale-window labels, coupon-date / dayCount autofill, offering attribution.
 - [x] SPA loader: `loadOffering` (or equivalent) + fixtures/tests; soft-fail → null when missing.
 - [x] Commercial composer UX: sale-window picker labels/hints, prefer offering payment dates + dayCount in autofill, offering attribution disclaimer.
+- [x] Shared day-count helpers accept offering-transcribed `ACT/ACT` (Tényleges/tényleges) so add/save does not throw; PMÁP/FixMÁP accrued uses Ismertető period fractions (FixMÁP `ga/n`); BMÁP accrued stays ACT/360; autofill does not blindly apply offering ACT/ACT to BMÁP/DKJ.
 - [x] Close §6l: check off ROADMAP/spec; soft-fail regression; temporary tip→`master` CI head PR (close, do not merge).
 
 Out of scope for §6l

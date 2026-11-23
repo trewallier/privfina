@@ -67,7 +67,7 @@ const BMAP_PRODUCT_SPEC = {
       required: false,
       unit: 'text',
       description:
-        'How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).',
+        'How days are counted for accrued interest. BMÁP Ismertető felhalmozott kamat is ACT/360 (actual days / 360). Offering Tényleges/tényleges is payable-coupon language only — autofill ignores offering ACT/ACT and does not expose it as a BMÁP input.',
       constraints: { enum: ['ACT/360', 'ACT/365F', '30E/360'] }
     }
   ],

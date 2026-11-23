@@ -4,7 +4,7 @@
 
 import { parseIsoDate } from '../date_utils'
 
-export type DayCountConvention = 'ACT/360' | 'ACT/365F' | '30E/360'
+export type DayCountConvention = 'ACT/360' | 'ACT/365F' | 'ACT/ACT' | '30E/360'
 
 const MILLIS_PER_DAY = 24 * 60 * 60 * 1000
 
@@ -18,8 +18,20 @@ export function normalizeDayCountConvention(
   if (raw === 'ACT/365F' || raw === 'ACT/365' || raw === 'ACT365F' || raw === 'ACT365') {
     return 'ACT/365F'
   }
+  if (isActActDayCountConvention(value)) return 'ACT/ACT'
   if (raw === '30E/360' || raw === '30/360' || raw === '30E360') return '30E/360'
   throw new Error(`Unsupported day-count convention: ${value}`)
+}
+
+/** True for ACT/ACT / Actual/Actual aliases (ÁKK Tényleges/tényleges token). */
+export function isActActDayCountConvention(value: string | null | undefined): boolean {
+  const raw = String(value || '').trim().toUpperCase().replace(/\s+/g, '')
+  return (
+    raw === 'ACT/ACT' ||
+    raw === 'ACTACT' ||
+    raw === 'ACTUAL/ACTUAL' ||
+    raw === 'ACTUALACTUAL'
+  )
 }
 
 export function dayCountDenominator(convention: DayCountConvention): number {
@@ -29,9 +41,47 @@ export function dayCountDenominator(convention: DayCountConvention): number {
       return 360
     case 'ACT/365F':
       return 365
+    case 'ACT/ACT':
+      throw new Error('ACT/ACT has no fixed year denominator; use accrueInterestAmount.')
     default:
       return 360
   }
+}
+
+function isUtcLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
+}
+
+/**
+ * ISDA Actual/Actual year fraction between ISO dates (UTC).
+ * Splits on calendar-year boundaries; each portion uses days / (365 or 366
+ * when that calendar year is a leap year).
+ *
+ * Used only by the generic `accrueInterestAmount` ACT/ACT branch. PMÁP/FixMÁP
+ * offering ACT/ACT accrued uses ÁKK Ismertető period fractions
+ * (`accrueIsmertetoActActAmount`); BMÁP remaps ACT/ACT → ACT/360.
+ */
+export function actActIsdaYearFraction(fromIso: string, toIso: string): number {
+  const start = parseIsoDate(fromIso)
+  const end = parseIsoDate(toIso)
+  if (end.getTime() < start.getTime()) {
+    throw new Error('accrual end date must be on or after start date.')
+  }
+  if (end.getTime() === start.getTime()) return 0
+
+  let fraction = 0
+  let cursor = new Date(start.getTime())
+  while (cursor.getUTCFullYear() < end.getUTCFullYear()) {
+    const nextYearStart = new Date(Date.UTC(cursor.getUTCFullYear() + 1, 0, 1))
+    const days = Math.floor((nextYearStart.getTime() - cursor.getTime()) / MILLIS_PER_DAY)
+    const denom = isUtcLeapYear(cursor.getUTCFullYear()) ? 366 : 365
+    fraction += days / denom
+    cursor = nextYearStart
+  }
+  const days = Math.floor((end.getTime() - cursor.getTime()) / MILLIS_PER_DAY)
+  const denom = isUtcLeapYear(cursor.getUTCFullYear()) ? 366 : 365
+  fraction += days / denom
+  return fraction
 }
 
 /** Calendar days between ISO dates (UTC), floored; negative if end < start. */
@@ -42,8 +92,11 @@ export function calendarDaysBetweenIso(startIso: string, endIso: string): number
 }
 
 /**
- * Accrued interest amount: principal × annualRatePct/100 × days / denominator.
- * Uses ACT calendar days for ACT/*; 30E/360 uses 30/360-style day count between dates.
+ * Accrued interest amount: principal × annualRatePct/100 × day-count fraction.
+ * ACT/360 and ACT/365F use calendar days over a fixed year length; ACT/ACT uses
+ * ISDA Actual/Actual year fraction (generic fallback only — govsec ACT/ACT
+ * product paths prefer `accrueIsmertetoActActAmount`); 30E/360 uses 30/360-style
+ * day count.
  */
 export function accrueInterestAmount(args: {
   principal: number
@@ -61,6 +114,11 @@ export function accrueInterestAmount(args: {
     throw new Error('annualRatePct must be a finite number.')
   }
   const convention = normalizeDayCountConvention(args.dayCount)
+  if (convention === 'ACT/ACT') {
+    const yearFraction = actActIsdaYearFraction(args.fromIso, args.toIso)
+    if (yearFraction === 0) return 0
+    return (principal * annualRatePct * yearFraction) / 100
+  }
   const days =
     convention === '30E/360'
       ? thirtyE360Days(args.fromIso, args.toIso)
@@ -195,7 +253,8 @@ export function deriveDkjRemainingDays(
 
 /**
  * Annualize a simple holding-period return with the discount-bill day-count denominator.
- * Default convention is ACT/360 (360-day year); other conventions change only the year length.
+ * Default convention is ACT/360 (360-day year); other fixed-denominator conventions
+ * change only the year length. ACT/ACT is not valid for DKJ annualization.
  */
 export function annualizeDkjSimpleReturnPct(
   simpleReturnPct: number,
@@ -208,6 +267,10 @@ export function annualizeDkjSimpleReturnPct(
   if (!Number.isFinite(remainingDays) || remainingDays <= 0) {
     throw new Error('remainingDays must be a positive finite number.')
   }
-  const denominator = dayCountDenominator(normalizeDayCountConvention(dayCount))
+  const convention = normalizeDayCountConvention(dayCount)
+  if (convention === 'ACT/ACT') {
+    throw new Error('ACT/ACT is not valid for DKJ annualization.')
+  }
+  const denominator = dayCountDenominator(convention)
   return simpleReturnPct * (denominator / remainingDays)
 }

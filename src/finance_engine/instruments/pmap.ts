@@ -13,8 +13,15 @@ import {
   type CouponSchedulePeriod,
   type DayCountConvention
 } from './day_count'
+import {
+  accrueIsmertetoActActAmount,
+  isActActDayCountConvention
+} from './ismerteto_accrued'
 import { CashFlowDirection } from '../models'
 import type { CashFlow } from '../models'
+
+/** PMÁP pays annually — Ismertető ACT/ACT uses ga over the annual grid. */
+export const PMAP_COUPON_FREQUENCY_MONTHS = 12
 
 export type PmapRateOutputs = {
   annualCouponRatePct: number
@@ -80,6 +87,7 @@ export function derivePmapAccruedInterestAmount(
     | 'principal'
     | 'purchaseDate'
     | 'issueDate'
+    | 'firstCouponDate'
     | 'dayCountConvention'
     | 'annualCouponRatePct'
     | 'couponSchedule'
@@ -88,6 +96,24 @@ export function derivePmapAccruedInterestAmount(
 ): number {
   const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
   const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const rate =
+    annualCouponRatePct != null
+      ? ensureNonNegativeNumber(annualCouponRatePct, 'annualCouponRatePct')
+      : derivePmapRateOutputs(specInputs).annualCouponRatePct
+  const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
+
+  // Offering Tényleges/tényleges → Ismertető ACT/ACT period fractions (not ISDA).
+  if (isActActDayCountConvention(specInputs.dayCountConvention)) {
+    return accrueIsmertetoActActAmount({
+      principal,
+      annualRatePct: rate,
+      purchaseDate: purchaseDateIso,
+      issueDate: issueDateIso,
+      firstCouponDate: specInputs.firstCouponDate,
+      frequencyMonths: PMAP_COUPON_FREQUENCY_MONTHS
+    })
+  }
+
   const accrualStartIso = resolveAccrualStartIso({
     purchaseDate: purchaseDateIso,
     issueDate: issueDateIso,
@@ -96,11 +122,6 @@ export function derivePmapAccruedInterestAmount(
   if (purchaseDateIso < accrualStartIso) {
     throw new Error('purchaseDate must be on or after accrual start (prior coupon or issueDate).')
   }
-  const rate =
-    annualCouponRatePct != null
-      ? ensureNonNegativeNumber(annualCouponRatePct, 'annualCouponRatePct')
-      : derivePmapRateOutputs(specInputs).annualCouponRatePct
-  const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
   return accrueInterestAmount({
     principal,
     annualRatePct: rate,

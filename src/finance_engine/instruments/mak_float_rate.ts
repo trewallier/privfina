@@ -35,6 +35,12 @@ export type SettlementCalendarLookupSource = {
 }
 
 export type ResolveMakFloatAnnualRateArgs = {
+  /**
+   * Period **start** ISO (the turn that begins the interest period whose
+   * annual ga is being resolved). Not the period-end payment date.
+   * Example: for 2027/B current period after 2026-10-22, pass `2026-10-22`
+   * (observation T−3 = 2026-10-19). Cash-flow maps key rates by period **end**.
+   */
   periodTurnIso: string
   indexReset: MakFloatIndexReset
   bubor: BuborLookupSource | null | undefined
@@ -86,6 +92,7 @@ function calendarFromSource(
 
 /**
  * Resolve FLOAT MÁK period annual rate percent from indexReset + refs.
+ * `periodTurnIso` is the period **start** (see ResolveMakFloatAnnualRateArgs).
  * Returns null when observation date, calendar, or BUBOR fixing is missing.
  */
 export function resolveMakFloatAnnualRatePct(

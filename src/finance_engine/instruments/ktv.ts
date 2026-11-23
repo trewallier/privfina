@@ -151,10 +151,24 @@ export function deriveKtvRateOutputs(
   return { annualCouponRatePct }
 }
 
-/** Last coupon payment ISO on/before purchase, else issueDate. */
+/** True when inputs carry FLOAT period length (SPA / adapter set periodMonths). */
+export function isKtvFloatSpecInputs(
+  specInputs: Pick<KtvSpecInputs, 'periodMonths'>
+): boolean {
+  const months = Number(specInputs.periodMonths)
+  return Number.isFinite(months) && months > 0
+}
+
+/** Last coupon payment ISO on/before purchase, else issueDate (FIX annual path). */
 export function resolveKtvAccrualStartIso(
-  specInputs: Pick<KtvSpecInputs, 'purchaseDate' | 'issueDate' | 'firstCouponDate'>
+  specInputs: Pick<
+    KtvSpecInputs,
+    'purchaseDate' | 'issueDate' | 'firstCouponDate' | 'periodMonths' | 'paymentDates' | 'maturityDate'
+  >
 ): string {
+  if (isKtvFloatSpecInputs(specInputs) && specInputs.maturityDate) {
+    return resolveKtvFloatAccrualStartIso(specInputs as KtvSpecInputs)
+  }
   const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
   const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
   const firstCouponDateIso = resolveFirstCouponDateIso(specInputs as KtvSpecInputs)
@@ -168,6 +182,26 @@ export function resolveKtvAccrualStartIso(
     couponDate = addYearsUtc(couponDate, 1)
   }
   return accrualStartIso
+}
+
+/**
+ * FLOAT accrual start = latest period turn on or before purchase (period start).
+ * Falls back to issueDate when no turn is on/before purchase.
+ */
+export function resolveKtvFloatAccrualStartIso(
+  specInputs: Pick<
+    KtvSpecInputs,
+    'purchaseDate' | 'issueDate' | 'maturityDate' | 'paymentDates' | 'periodMonths' | 'firstCouponDate'
+  >
+): string {
+  const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
+  const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
+  const turns = listKtvFloatPeriodTurnsIso(specInputs)
+  let best = issueDateIso
+  for (const turn of turns) {
+    if (turn <= purchaseDateIso && turn >= best) best = turn
+  }
+  return best
 }
 
 export function listKtvPaymentDatesIso(
@@ -187,8 +221,9 @@ export function listKtvPaymentDatesIso(
 }
 
 /**
- * Accrued interest on published ga under ACT/365F (default).
- * Does not accrue at the payable first-period stub rate.
+ * Accrued interest on published / resolved ga.
+ * FIX default: ACT/365F from annual anniversary. FLOAT (periodMonths set): ACT/360
+ * from latest period turn on/before purchase (ADR 0047).
  */
 export function deriveKtvAccruedInterestAmount(
   specInputs: Pick<
@@ -196,10 +231,13 @@ export function deriveKtvAccruedInterestAmount(
     | 'principal'
     | 'purchaseDate'
     | 'issueDate'
+    | 'maturityDate'
     | 'firstCouponDate'
     | 'dayCountConvention'
     | 'annualCouponRatePct'
     | 'couponSchedule'
+    | 'periodMonths'
+    | 'paymentDates'
   >,
   annualCouponRatePct?: number
 ): number {
@@ -213,12 +251,15 @@ export function deriveKtvAccruedInterestAmount(
       ? ensureNonNegativeNumber(annualCouponRatePct, 'annualCouponRatePct')
       : deriveKtvRateOutputs(specInputs).annualCouponRatePct
   const principal = ensureNonNegativeNumber(specInputs.principal, 'principal')
+  const dayCount = isKtvFloatSpecInputs(specInputs)
+    ? normalizeDayCountConvention(specInputs.dayCountConvention || KTV_FLOAT_DAY_COUNT)
+    : resolveKtvDayCount(specInputs.dayCountConvention)
   return accrueInterestAmount({
     principal,
     annualRatePct: rate,
     fromIso: accrualStartIso,
     toIso: purchaseDateIso,
-    dayCount: resolveKtvDayCount(specInputs.dayCountConvention)
+    dayCount
   })
 }
 
@@ -364,7 +405,10 @@ export function listKtvFloatPeriodTurnsIso(
 /**
  * FLOAT MÁK cash flows: purchase outflow; ACT/360 period payables when rate known;
  * skip null-rate periods; principal at maturity (ADR 0047).
- * `periodRatesByTurnIso` maps each period-end (payment) turn → annual ga, or null to skip.
+ *
+ * `periodRatesByTurnIso` keys are period-**end** payment dates (the turn that
+ * closes the accrued interval). Rate resolve uses period-**start** turns
+ * (`resolveMakFloatAnnualRatePct.periodTurnIso`) — do not mix the two.
  */
 export function generateKtvFloatCouponFlows(
   specInputs: KtvSpecInputs,

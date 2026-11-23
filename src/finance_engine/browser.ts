@@ -107,6 +107,8 @@ export {
   generateKtvAnnualCouponFlows,
   listKtvFloatPeriodTurnsIso,
   generateKtvFloatCouponFlows,
+  resolveKtvFloatAccrualStartIso,
+  isKtvFloatSpecInputs,
   KTV_FLOAT_DAY_COUNT,
   KTV_FLOAT_DEFAULT_PERIOD_MONTHS
 } from './instruments/ktv'

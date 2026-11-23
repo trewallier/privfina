@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import YAML from 'yaml'
 import { nthBusinessDayBefore, businessCalendarFromYearBlocks } from '../src/finance_engine/date_utils'
 import {
   lookupBuborFixingPct,
@@ -7,8 +10,10 @@ import {
   type MakFloatIndexReset
 } from '../src/finance_engine/instruments/mak_float_rate'
 import {
+  deriveKtvAccruedInterestAmount,
   generateKtvFloatCouponFlows,
-  listKtvFloatPeriodTurnsIso
+  listKtvFloatPeriodTurnsIso,
+  resolveKtvFloatAccrualStartIso
 } from '../src/finance_engine/instruments/ktv'
 
 /** Closed/open exceptions matching tip HU-VIBER 2026 (probe-relevant months). */
@@ -141,6 +146,48 @@ describe('resolveMakFloatAnnualRatePct', () => {
   })
 })
 
+describe('float-2027b-case.yaml golden', () => {
+  it('locks example expecteds via resolve + cash path', () => {
+    const example = YAML.parse(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          'docs/product-specs/products/government-securities/ktv/examples/float-2027b-case.yaml'
+        ),
+        'utf8'
+      )
+    ) as {
+      inputs: Record<string, unknown>
+      expected: Record<string, unknown>
+    }
+    const calendar = { years: [CAL_2026] }
+    expect(example.expected.periodTurnDate).toBe('2026-10-22')
+    expect(example.expected.observationDate).toBe('2026-10-19')
+    expect(
+      resolveMakFloatObservationDateIso({
+        periodTurnIso: String(example.expected.periodTurnDate),
+        indexReset: INDEX_RESET,
+        calendar
+      })
+    ).toBe(example.expected.observationDate)
+    expect(
+      resolveMakFloatAnnualRatePct({
+        periodTurnIso: String(example.expected.periodTurnDate),
+        indexReset: INDEX_RESET,
+        bubor: BUBOR,
+        calendar
+      })
+    ).toBe(example.expected.annualCouponRatePct)
+
+    const inputs = {
+      ...example.inputs,
+      periodMonths: 3
+    } as Parameters<typeof deriveKtvAccruedInterestAmount>[0]
+    expect(resolveKtvFloatAccrualStartIso(inputs as never)).toBe('2026-10-22')
+    expect(deriveKtvAccruedInterestAmount(inputs)).toBe(0)
+  })
+})
+
 describe('ktv FLOAT cash path', () => {
   it('lists maturity-anniversary quarterly turns for 2027/B', () => {
     const turns = listKtvFloatPeriodTurnsIso({
@@ -189,5 +236,25 @@ describe('ktv FLOAT cash path', () => {
     expect(flows.some((f) => f.date === '2027-04-22' && f.amount !== 1_000_000)).toBe(false)
     expect(flows.filter((f) => f.date === '2027-04-22')).toHaveLength(1)
     expect(flows.filter((f) => f.date === '2027-04-22')[0].amount).toBe(1_000_000)
+  })
+
+  it('accrues FLOAT mid-period from period start turn under ACT/360', () => {
+    // Purchase 2026-11-23; period start 2026-10-22; 32 days × 5.5% / 360
+    const accrued = deriveKtvAccruedInterestAmount({
+      principal: 1_000_000,
+      annualCouponRatePct: 5.5,
+      purchaseDate: '2026-11-23',
+      issueDate: '2020-01-15',
+      maturityDate: '2027-04-22',
+      dayCountConvention: 'ACT/360',
+      periodMonths: 3
+    })
+    expect(resolveKtvFloatAccrualStartIso({
+      purchaseDate: '2026-11-23',
+      issueDate: '2020-01-15',
+      maturityDate: '2027-04-22',
+      periodMonths: 3
+    })).toBe('2026-10-22')
+    expect(accrued).toBeCloseTo((1_000_000 * 5.5 * 32) / (100 * 360), 10)
   })
 })

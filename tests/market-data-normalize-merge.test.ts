@@ -87,8 +87,8 @@ describe('mergeSnapshot', () => {
       generatedAt: '2026-11-02T18:00:00+01:00'
     })
     expect(first.changed).toBe(true)
-    // 3 required + 2 FLOAT ktv quotes
-    expect(first.appendedRows).toBe(5)
+    // 3 required + 2 FLOAT ktv + 1 FIX ktv (2037/A) quotes
+    expect(first.appendedRows).toBe(6)
     expect(first.tree.families.dkj.latest.quotes.D261125.bid).toBe(99.615)
     expect(first.tree.manifest?.digests['families/dkj/latest.json']).toBeTruthy()
     expect(first.tree.families.ktv.series.series.find((s) => s.id === 'A270422B20')?.iType).toBe(
@@ -101,7 +101,7 @@ describe('mergeSnapshot', () => {
     })
     expect(second.changed).toBe(false)
     expect(second.appendedRows).toBe(0)
-    expect(second.skippedDuplicates).toBe(5)
+    expect(second.skippedDuplicates).toBe(6)
 
     const nextDayRates: AkkEnvelope = structuredClone(rates)
     for (const row of nextDayRates.data ?? []) {
@@ -113,7 +113,7 @@ describe('mergeSnapshot', () => {
       generatedAt: '2026-11-03T18:00:00+01:00'
     })
     expect(third.changed).toBe(true)
-    expect(third.appendedRows).toBe(5)
+    expect(third.appendedRows).toBe(6)
     expect(third.tree.families.dkj.quotes.D261125.rows).toHaveLength(2)
     expect(third.tree.families.dkj.latest.quotes.D261125.d).toBe('2026-11-03')
     expect(third.tree.families.dkj.latest.quotes.D261125.bid).toBe(99.7)

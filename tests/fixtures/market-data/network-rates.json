@@ -59,7 +59,7 @@
       "currency": "HUF"
     },
     {
-      "longName": "A361126B21",
+      "longName": "A361126B26",
       "name": "2036/B",
       "securityType": "KTV",
       "settleDate": "2026-11-02",
@@ -68,7 +68,7 @@
       "bidYield": 5.7,
       "askYield": 5.5,
       "accruedInterest": 0.2,
-      "issueDate": "2021-11-26",
+      "issueDate": "2026-01-14",
       "maturityDate": "2036-11-26",
       "currency": "HUF"
     }

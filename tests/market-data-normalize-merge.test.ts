@@ -50,7 +50,7 @@ describe('normalizeAkkSnapshots', () => {
     expect(snap.byFamily.dkj.series.some((s) => s.id === 'D200101')).toBe(false)
 
     const float2027 = snap.byFamily.ktv.series.find((s) => s.id === 'A270422B20')
-    const float2036 = snap.byFamily.ktv.series.find((s) => s.id === 'A361126B21')
+    const float2036 = snap.byFamily.ktv.series.find((s) => s.id === 'A361126B26')
     expect(float2027).toMatchObject({
       iType: 'FLOAT',
       ref: 'BUBOR 3M',
@@ -59,9 +59,11 @@ describe('normalizeAkkSnapshots', () => {
       face: 10000
     })
     expect(float2036).toMatchObject({
+      id: 'A361126B26',
       iType: 'FLOAT',
       ref: 'BUBOR 3M',
-      periodMonths: 3
+      periodMonths: 3,
+      isin: 'HU0000407531'
     })
     // FIX catalog row without a quote stays out of hot series.
     expect(snap.byFamily.ktv.series.some((s) => s.id === 'A280623A18')).toBe(false)

@@ -76,7 +76,11 @@ export function periodMonthsFromInterestPeriod(raw: unknown): number | null {
 export function dayCountFromInterestConvention(raw: unknown): DayCountConvention | null {
   const s = asString(raw)
   if (!s) return null
-  const norm = s.toUpperCase().replace(/^_/, '').replace(/-/g, '/')
+  // ÁKK tokens look like `_ACT_360` / `_ACT_365`; normalize separators to `/`.
+  const norm = s
+    .toUpperCase()
+    .replace(/^_+/, '')
+    .replace(/[_-]+/g, '/')
   if (norm === 'ACT/360' || norm === 'ACT360') return 'ACT/360'
   if (norm === 'ACT/365F' || norm === 'ACT/365' || norm === 'ACT365F') return 'ACT/365F'
   if (norm === '30E/360' || norm === '30/360') return '30E/360'

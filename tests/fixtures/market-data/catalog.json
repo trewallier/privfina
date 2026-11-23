@@ -70,11 +70,11 @@
       "interestConvention": "_ACT_360"
     },
     {
-      "longName": "A361126B21",
+      "longName": "A361126B26",
       "name": "2036/B",
-      "isin": "HU0000405550",
+      "isin": "HU0000407531",
       "securityType": "KTV",
-      "issueDate": "2021-11-26",
+      "issueDate": "2026-01-14",
       "maturityDate": "2036-11-26",
       "faceValue": 10000,
       "interestType": "FLOAT",

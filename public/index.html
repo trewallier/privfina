@@ -233,7 +233,8 @@
       .coupon-schedule-header,
       .coupon-schedule-period {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(4.5rem, 5.5rem) 2rem;
+        /* Date flexes; rate stays narrow; actions keep a 44px tap column. */
+        grid-template-columns: minmax(0, 1fr) minmax(3.75rem, 5rem) 44px;
         gap: 4px 6px;
         align-items: center;
         min-width: 0;
@@ -248,17 +249,22 @@
 
       .coupon-schedule-rows {
         display: grid;
-        gap: 4px;
+        gap: 2px;
         min-width: 0;
       }
 
       .coupon-schedule-period {
         position: relative;
         margin: 0;
-        padding: 4px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: color-mix(in srgb, var(--card-soft, #f5f8fc) 55%, #fff);
+        padding: 2px 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .coupon-schedule-period + .coupon-schedule-period {
+        border-top: 1px solid var(--border);
+        padding-top: 4px;
       }
 
       /* Keep captions in the DOM for semantics/tests; hide the full-width second row. */
@@ -327,11 +333,12 @@
         flex-shrink: 0;
       }
 
+      /* Keep shared 44×44 hit area; icon stays visually compact at 14px. */
       .coupon-schedule-remove.icon-button {
-        width: 2rem;
-        height: 2rem;
-        min-width: 2rem;
-        min-height: 2rem;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
         padding: 0;
         border-radius: 8px;
         border: 1px solid var(--border);

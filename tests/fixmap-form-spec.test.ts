@@ -28,14 +28,11 @@ describe('fixmap frontend form metadata seam', () => {
 
   it('uses ui section field order from FIXMAP product spec', () => {
     const orderedNames = orderedSpecFields(FIXMAP_PRODUCT_SPEC).map((field) => field.name)
-    expect(orderedNames).toEqual([
+        expect(orderedNames).toEqual([
       'principal',
       'purchaseDate',
-      'annualCouponRatePct',
       'issueDate',
-      'maturityDate',
-      'firstCouponDate',
-      'dayCountConvention'
+      'maturityDate'
     ])
   })
 

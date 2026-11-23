@@ -148,11 +148,8 @@ ui:
       fieldNames:
         - principal
         - purchaseDate
-        - annualCouponRatePct
         - issueDate
         - maturityDate
-        - firstCouponDate
-        - dayCountConvention
 
 exampleRefs:
   - ./examples/nominal-case.yaml

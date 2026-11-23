@@ -43,6 +43,11 @@ import {
   ensureDefaultPurchaseDateValue,
   resolveSeriesSelectValue
 } from './market-data-composer.js'
+import {
+  ensureAllCouponScheduleEditors,
+  resyncCouponScheduleEngineFields,
+  syncCouponScheduleEditorAfterMarket
+} from './commercial-investment-coupon-schedule-editor.js'
 
 const COMMERCIAL_INVESTMENT_FAMILY_TITLE = 'Commercial Investment'
 const COMMERCIAL_INVESTMENT_PRODUCT_OPTIONS = buildCommercialInvestmentProductOptions()
@@ -383,6 +388,10 @@ function createCommercialInvestmentComposerHost({
       input.removeAttribute('title')
     })
     reapplyCommercialProductFieldChrome(family)
+    const familyEntry = getCommercialInvestmentFamily(family)
+    if (familyEntry?.composerProfile === 'coupon-bearing') {
+      syncCouponScheduleEditorAfterMarket(family, commercialInvestmentForm)
+    }
   }
 
   function syncCommercialMarketFieldChrome(family, sourcedNames = []) {
@@ -448,6 +457,10 @@ function createCommercialInvestmentComposerHost({
         input.title = 'Filled from published market data'
       }
     })
+    const familyEntry = getCommercialInvestmentFamily(family)
+    if (familyEntry?.composerProfile === 'coupon-bearing') {
+      syncCouponScheduleEditorAfterMarket(family, commercialInvestmentForm)
+    }
   }
 
   /** Empty marketable inputs not present in the new patch so series switches cannot leave stale rates. */
@@ -469,6 +482,10 @@ function createCommercialInvestmentComposerHost({
       delete input.dataset.marketSourced
       input.removeAttribute('title')
     })
+    const familyEntry = getCommercialInvestmentFamily(family)
+    if (familyEntry?.composerProfile === 'coupon-bearing') {
+      syncCouponScheduleEditorAfterMarket(family, commercialInvestmentForm)
+    }
   }
 
   /**
@@ -934,6 +951,11 @@ function createCommercialInvestmentComposerHost({
       return
     }
     input.addEventListener('change', () => {
+      const productCode = commercialInvestmentProductInput?.value || ''
+      const familyEntry = getCommercialInvestmentFamily(productCode)
+      if (familyEntry?.composerProfile === 'coupon-bearing') {
+        resyncCouponScheduleEngineFields(productCode, commercialInvestmentForm)
+      }
       if (!commercialInvestmentSeriesInput?.value) {
         return
       }
@@ -946,6 +968,7 @@ function createCommercialInvestmentComposerHost({
     clearCommercialInvestmentFormErrors()
 
     try {
+      ensureAllCouponScheduleEditors(commercialInvestmentForm)
       const formData = new FormData(commercialInvestmentForm)
       const productCode = String(formData.get('productCode') || '').trim()
       const product = findCommercialInvestmentProduct(productCode)
@@ -1025,6 +1048,7 @@ function createCommercialInvestmentComposerHost({
         box: commercialInvestmentBox
       })
     })
+    ensureAllCouponScheduleEditors(commercialInvestmentForm)
     setCommercialInvestmentFamilyTitle()
     rebuildCommercialInvestmentProductOptions()
     bindEvents()

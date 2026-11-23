@@ -28,14 +28,11 @@ describe('bmap frontend form metadata seam', () => {
 
   it('uses ui section field order from BMAP product spec', () => {
     const orderedNames = orderedSpecFields(BMAP_PRODUCT_SPEC).map((field) => field.name)
-    expect(orderedNames).toEqual([
+        expect(orderedNames).toEqual([
       'principal',
       'purchaseDate',
-      'annualCouponRatePct',
       'issueDate',
-      'maturityDate',
-      'firstCouponDate',
-      'dayCountConvention'
+      'maturityDate'
     ])
   })
 

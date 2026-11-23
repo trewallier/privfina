@@ -29,14 +29,11 @@ describe('ktv frontend form metadata seam', () => {
 
   it('uses ui section field order from KTV product spec', () => {
     const orderedNames = orderedSpecFields(KTV_PRODUCT_SPEC).map((field) => field.name)
-    expect(orderedNames).toEqual([
+        expect(orderedNames).toEqual([
       'principal',
       'purchaseDate',
-      'annualCouponRatePct',
       'issueDate',
-      'maturityDate',
-      'firstCouponDate',
-      'dayCountConvention'
+      'maturityDate'
     ])
   })
 

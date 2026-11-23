@@ -117,12 +117,8 @@ const MAPP_PRODUCT_SPEC = {
         fieldNames: [
           'principal',
           'purchaseDate',
-          'annualCouponRatePct',
           'issueDate',
-          'maturityDate',
-          'firstCouponDate',
-          'couponFrequencyMonths',
-          'dayCountConvention'
+          'maturityDate'
         ]
       }
     ]

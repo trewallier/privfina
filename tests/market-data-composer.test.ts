@@ -81,20 +81,25 @@ describe('commercial investment UI markup contracts', () => {
       /id="dkj-face-value-wrap"[\s\S]*?id="dkj-settlement-date-wrap"[\s\S]*?id="dkj-purchase-price-pct-wrap"[\s\S]*?id="dkj-term-months-wrap"[\s\S]*?id="dkj-maturity-date-wrap"[\s\S]*?id="dkj-remaining-days-wrap"/
     )
     expect(indexHtml).toMatch(
-      /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="pmap-maturity-date-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-first-coupon-date-wrap"/
+      /id="pmap-principal-wrap"[\s\S]*?id="pmap-purchase-date-wrap"[\s\S]*?id="pmap-issue-date-wrap"[\s\S]*?id="pmap-maturity-date-wrap"[\s\S]*?id="pmap-coupon-schedule-editor"/
     )
     expect(indexHtml).toMatch(
-      /id="fixmap-principal-wrap"[\s\S]*?id="fixmap-purchase-date-wrap"[\s\S]*?id="fixmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="fixmap-maturity-date-wrap"[\s\S]*?id="fixmap-issue-date-wrap"[\s\S]*?id="fixmap-first-coupon-date-wrap"/
+      /id="fixmap-principal-wrap"[\s\S]*?id="fixmap-purchase-date-wrap"[\s\S]*?id="fixmap-issue-date-wrap"[\s\S]*?id="fixmap-maturity-date-wrap"[\s\S]*?id="fixmap-coupon-schedule-editor"/
     )
     expect(indexHtml).toMatch(
-      /id="ktv-principal-wrap"[\s\S]*?id="ktv-purchase-date-wrap"[\s\S]*?id="ktv-annual-coupon-rate-pct-wrap"[\s\S]*?id="ktv-maturity-date-wrap"[\s\S]*?id="ktv-issue-date-wrap"[\s\S]*?id="ktv-first-coupon-date-wrap"/
+      /id="ktv-principal-wrap"[\s\S]*?id="ktv-purchase-date-wrap"[\s\S]*?id="ktv-issue-date-wrap"[\s\S]*?id="ktv-maturity-date-wrap"[\s\S]*?id="ktv-coupon-schedule-editor"/
     )
     expect(indexHtml).toMatch(
-      /id="mapp-principal-wrap"[\s\S]*?id="mapp-purchase-date-wrap"[\s\S]*?id="mapp-annual-coupon-rate-pct-wrap"[\s\S]*?id="mapp-maturity-date-wrap"[\s\S]*?id="mapp-issue-date-wrap"[\s\S]*?id="mapp-first-coupon-date-wrap"/
+      /id="mapp-principal-wrap"[\s\S]*?id="mapp-purchase-date-wrap"[\s\S]*?id="mapp-issue-date-wrap"[\s\S]*?id="mapp-maturity-date-wrap"[\s\S]*?id="mapp-coupon-schedule-editor"/
     )
     expect(indexHtml).toMatch(
-      /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-annual-coupon-rate-pct-wrap"[\s\S]*?id="bmap-maturity-date-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-first-coupon-date-wrap"/
+      /id="bmap-principal-wrap"[\s\S]*?id="bmap-purchase-date-wrap"[\s\S]*?id="bmap-issue-date-wrap"[\s\S]*?id="bmap-maturity-date-wrap"[\s\S]*?id="bmap-coupon-schedule-editor"/
     )
+    expect(indexHtml).not.toContain('id="pmap-annual-coupon-rate-pct-wrap"')
+    expect(indexHtml).not.toContain('id="pmap-first-coupon-date-wrap"')
+    expect(indexHtml).toContain('id="pmap-annual-coupon-rate-pct"')
+    expect(indexHtml).toContain('id="pmap-first-coupon-date"')
+    expect(indexHtml).toContain('coupon-schedule-editor')
   })
 
   it('clears market series selection at the start of commercial investment edit', () => {
@@ -172,6 +177,9 @@ describe('commercial investment UI markup contracts', () => {
       'dayCountConvention: `#${prefix}-day-count-convention`'
     )
     expect(commercialCouponProfile).toContain('firstCouponDate: `#${prefix}-first-coupon-date`')
+    expect(commercialCouponProfile).toContain('commercial-investment-coupon-schedule-editor.js')
+    expect(commercialHost).toContain('ensureAllCouponScheduleEditors')
+    expect(commercialHost).toContain('syncCouponScheduleEditorAfterMarket')
     expect(commercialHost).not.toContain('bmap-dkj-base-yield-pct')
     expect(commercialHost).not.toContain('pmap-previous-year-inflation-pct')
     expect(indexHtml).toContain('id="commercial-investment-market-attribution"')
@@ -182,5 +190,6 @@ describe('commercial investment UI markup contracts', () => {
     expect(indexHtml).toContain('id="mapp-coupon-frequency-months"')
     expect(indexHtml).toContain('name="couponFrequencyMonths"')
     expect(indexHtml).toContain('id="bmap-day-count-convention"')
+    expect(indexHtml).toContain('id="baba-coupon-schedule-editor"')
   })
 })

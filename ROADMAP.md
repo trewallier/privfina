@@ -464,6 +464,15 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] SPA: `MARKET_FAMILIES` + registry `coupon-bearing` entry + thin adapter / host wrap / autofill → **`schedule-usable`**.
 - [x] Composer chrome + embedded parity → **`commercially-usable`** / **`fully-spec-backed`**; check off MÁK; temporary tip→`master` CI head PR (close, do not merge). Note: commercially-usable bar was met on the SPA layer; catalog stamped **`fully-spec-backed`** without an intermediate `commercially-usable` row (DKJ–FixMÁP / baba precedent).
 
+#### Coupon periods table UX (coupon-bearing hosts)
+Goal: let users see and edit every coupon period rate on PMÁP / BMÁP / FixMÁP / MÁP Plusz / Babakötvény / MÁK (`ktv`). UI-only on the shared `coupon-bearing` profile (ADR 0040); no engine schema change.
+
+Plan slices
+- [x] Layout: Principal | Purchase; Issue | Maturity; Coupon periods table (From | Rate % | remove) — no visible Annual Coupon Rate or First Coupon Date.
+- [x] First table From → `firstCouponDate`; derive `to` as day before next From (last null); sync `annualCouponRatePct` from covering/common table rate for FormData/engine.
+- [x] Fix-rate series (all defined rates equal): Rate edit copies to all rows; stepped series: independent Rate cells.
+- [x] Shared editor module + narrow stacked periods (no sideways scroll); tests for layout, fix/stepped behavior, serialize.
+
 #### Later remaining families
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).

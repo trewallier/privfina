@@ -6,6 +6,8 @@
  * forests.
  */
 
+import { syncCouponScheduleEditorAfterMarket } from './commercial-investment-coupon-schedule-editor.js'
+
 function couponBearingDomPrefix(productCode) {
   return String(productCode || '').trim()
 }
@@ -131,6 +133,8 @@ function populateCouponBearingEditFields(
         ? String(migrated.periodMonths)
         : ''
   }
+
+  syncCouponScheduleEditorAfterMarket(prefix, form)
 }
 
 /** Identical across PMÁP / BMÁP / FixMÁP form modules — shared pure helper. */

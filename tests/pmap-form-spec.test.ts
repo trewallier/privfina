@@ -28,14 +28,11 @@ describe('pmap frontend form metadata seam', () => {
 
   it('uses ui section field order from PMAP product spec', () => {
     const orderedNames = orderedSpecFields(PMAP_PRODUCT_SPEC).map((field) => field.name)
-    expect(orderedNames).toEqual([
+        expect(orderedNames).toEqual([
       'principal',
       'purchaseDate',
-      'annualCouponRatePct',
       'issueDate',
-      'maturityDate',
-      'firstCouponDate',
-      'dayCountConvention'
+      'maturityDate'
     ])
   })
 

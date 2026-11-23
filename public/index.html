@@ -213,6 +213,127 @@
         align-items: stretch;
       }
 
+      .coupon-schedule-editor {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
+        margin-top: 4px;
+      }
+
+      .coupon-schedule-title {
+        font-weight: 600;
+      }
+
+      .coupon-schedule-hint {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--muted, #5c6570);
+      }
+
+      .coupon-schedule-header,
+      .coupon-schedule-period {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) auto;
+        gap: 8px;
+        align-items: end;
+        min-width: 0;
+      }
+
+      .coupon-schedule-header {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0 2px;
+      }
+
+      .coupon-schedule-rows {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .coupon-schedule-period {
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+
+      .coupon-schedule-period-caption {
+        grid-column: 1 / -1;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted, #5c6570);
+      }
+
+      .coupon-schedule-from-wrap,
+      .coupon-schedule-rate-wrap {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .coupon-schedule-field-label {
+        font-size: 0.8rem;
+      }
+
+      .coupon-schedule-period input[type='date'],
+      .coupon-schedule-period input[type='number'] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .coupon-schedule-actions-col {
+        white-space: nowrap;
+      }
+
+      .coupon-schedule-add,
+      .coupon-schedule-remove {
+        font: inherit;
+        font-size: 0.85rem;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .coupon-schedule-add:disabled,
+      .coupon-schedule-remove:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      @media (max-width: 720px) {
+        .coupon-schedule-header {
+          display: none;
+        }
+
+        .coupon-schedule-period {
+          grid-template-columns: 1fr;
+          padding: 10px;
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          align-items: stretch;
+        }
+
+        .coupon-schedule-field-label {
+          display: inline;
+        }
+      }
+
+      @media (min-width: 721px) {
+        .coupon-schedule-field-label {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+      }
+
       label {
         font-size: 0.9rem;
         display: grid;
@@ -2275,38 +2396,21 @@
                       </label>
                     </div>
                     <div class="row">
-                      <label id="pmap-annual-coupon-rate-pct-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Annual Coupon Rate</span></span>
-                        <input id="pmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="pmap-issue-date-wrap">
+                        <span class="label-title"><span class="pmap-field-label">Issue Date</span></span>
+                        <input id="pmap-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="pmap-maturity-date-wrap">
                         <span class="label-title"><span class="pmap-field-label">Maturity Date</span></span>
                         <input id="pmap-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
-                    <div class="row">
-                      <label id="pmap-issue-date-wrap">
-                        <span class="label-title"><span class="pmap-field-label">Issue Date</span></span>
-                        <input id="pmap-issue-date" name="issueDate" type="date" required />
-                      </label>
-                      <label id="pmap-first-coupon-date-wrap">
-                        <span class="label-title"><span class="pmap-field-label">First Coupon Date</span></span>
-                        <input id="pmap-first-coupon-date" name="firstCouponDate" type="date" />
-                      </label>
-                      <input
-                        id="pmap-coupon-schedule"
-                        name="couponSchedule"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="pmap-day-count-convention"
-                        name="dayCountConvention"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
+                    <div id="pmap-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="pmap"></div>
+                    <div class="coupon-engine-sync" hidden>
+                      <input id="pmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="pmap-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
+                      <input id="pmap-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
+                      <input id="pmap-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
                   </div>
 
@@ -2322,38 +2426,21 @@
                       </label>
                     </div>
                     <div class="row">
-                      <label id="fixmap-annual-coupon-rate-pct-wrap">
-                        <span class="label-title"><span class="fixmap-field-label">Annual Coupon Rate</span></span>
-                        <input id="fixmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="fixmap-issue-date-wrap">
+                        <span class="label-title"><span class="fixmap-field-label">Issue Date</span></span>
+                        <input id="fixmap-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="fixmap-maturity-date-wrap">
                         <span class="label-title"><span class="fixmap-field-label">Maturity Date</span></span>
                         <input id="fixmap-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
-                    <div class="row">
-                      <label id="fixmap-issue-date-wrap">
-                        <span class="label-title"><span class="fixmap-field-label">Issue Date</span></span>
-                        <input id="fixmap-issue-date" name="issueDate" type="date" required />
-                      </label>
-                      <label id="fixmap-first-coupon-date-wrap">
-                        <span class="label-title"><span class="fixmap-field-label">First Coupon Date</span></span>
-                        <input id="fixmap-first-coupon-date" name="firstCouponDate" type="date" />
-                      </label>
-                      <input
-                        id="fixmap-coupon-schedule"
-                        name="couponSchedule"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="fixmap-day-count-convention"
-                        name="dayCountConvention"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
+                    <div id="fixmap-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="fixmap"></div>
+                    <div class="coupon-engine-sync" hidden>
+                      <input id="fixmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="fixmap-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
+                      <input id="fixmap-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
+                      <input id="fixmap-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
                   </div>
 
@@ -2370,45 +2457,22 @@
                       </label>
                     </div>
                     <div class="row">
-                      <label id="ktv-annual-coupon-rate-pct-wrap">
-                        <span class="label-title"><span class="ktv-field-label">Annual Coupon Rate</span></span>
-                        <input id="ktv-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="ktv-issue-date-wrap">
+                        <span class="label-title"><span class="ktv-field-label">Issue Date</span></span>
+                        <input id="ktv-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="ktv-maturity-date-wrap">
                         <span class="label-title"><span class="ktv-field-label">Maturity Date</span></span>
                         <input id="ktv-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
-                    <div class="row">
-                      <label id="ktv-issue-date-wrap">
-                        <span class="label-title"><span class="ktv-field-label">Issue Date</span></span>
-                        <input id="ktv-issue-date" name="issueDate" type="date" required />
-                      </label>
-                      <label id="ktv-first-coupon-date-wrap">
-                        <span class="label-title"><span class="ktv-field-label">First Coupon Date</span></span>
-                        <input id="ktv-first-coupon-date" name="firstCouponDate" type="date" />
-                      </label>
-                      <input
-                        id="ktv-coupon-schedule"
-                        name="couponSchedule"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="ktv-day-count-convention"
-                        name="dayCountConvention"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="ktv-period-months"
-                        name="periodMonths"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
+                    <div id="ktv-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="ktv"></div>
+                    <div class="coupon-engine-sync" hidden>
+                      <input id="ktv-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="ktv-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
+                      <input id="ktv-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
+                      <input id="ktv-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
+                      <input id="ktv-period-months" name="periodMonths" type="hidden" value="" autocomplete="off" />
                     </div>
                   </div>
 
@@ -2424,45 +2488,22 @@
                       </label>
                     </div>
                     <div class="row">
-                      <label id="mapp-annual-coupon-rate-pct-wrap">
-                        <span class="label-title"><span class="mapp-field-label">Annual Coupon Rate</span></span>
-                        <input id="mapp-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="mapp-issue-date-wrap">
+                        <span class="label-title"><span class="mapp-field-label">Issue Date</span></span>
+                        <input id="mapp-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="mapp-maturity-date-wrap">
                         <span class="label-title"><span class="mapp-field-label">Maturity Date</span></span>
                         <input id="mapp-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
-                    <div class="row">
-                      <label id="mapp-issue-date-wrap">
-                        <span class="label-title"><span class="mapp-field-label">Issue Date</span></span>
-                        <input id="mapp-issue-date" name="issueDate" type="date" required />
-                      </label>
-                      <label id="mapp-first-coupon-date-wrap">
-                        <span class="label-title"><span class="mapp-field-label">First Coupon Date</span></span>
-                        <input id="mapp-first-coupon-date" name="firstCouponDate" type="date" />
-                      </label>
-                      <input
-                        id="mapp-coupon-schedule"
-                        name="couponSchedule"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="mapp-coupon-frequency-months"
-                        name="couponFrequencyMonths"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="mapp-day-count-convention"
-                        name="dayCountConvention"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
+                    <div id="mapp-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="mapp"></div>
+                    <div class="coupon-engine-sync" hidden>
+                      <input id="mapp-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="mapp-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
+                      <input id="mapp-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
+                      <input id="mapp-coupon-frequency-months" name="couponFrequencyMonths" type="hidden" value="" autocomplete="off" />
+                      <input id="mapp-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
                   </div>
 
@@ -2478,38 +2519,21 @@
                       </label>
                     </div>
                     <div class="row">
-                      <label id="baba-annual-coupon-rate-pct-wrap">
-                        <span class="label-title"><span class="baba-field-label">Annual Coupon Rate</span></span>
-                        <input id="baba-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="baba-issue-date-wrap">
+                        <span class="label-title"><span class="baba-field-label">Issue Date</span></span>
+                        <input id="baba-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="baba-maturity-date-wrap">
                         <span class="label-title"><span class="baba-field-label">Maturity Date</span></span>
                         <input id="baba-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
-                    <div class="row">
-                      <label id="baba-issue-date-wrap">
-                        <span class="label-title"><span class="baba-field-label">Issue Date</span></span>
-                        <input id="baba-issue-date" name="issueDate" type="date" required />
-                      </label>
-                      <label id="baba-first-coupon-date-wrap">
-                        <span class="label-title"><span class="baba-field-label">First Coupon Date</span></span>
-                        <input id="baba-first-coupon-date" name="firstCouponDate" type="date" />
-                      </label>
-                      <input
-                        id="baba-coupon-schedule"
-                        name="couponSchedule"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="baba-day-count-convention"
-                        name="dayCountConvention"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
+                    <div id="baba-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="baba"></div>
+                    <div class="coupon-engine-sync" hidden>
+                      <input id="baba-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="baba-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
+                      <input id="baba-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
+                      <input id="baba-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
                   </div>
 
@@ -2525,38 +2549,21 @@
                       </label>
                     </div>
                     <div class="row">
-                      <label id="bmap-annual-coupon-rate-pct-wrap">
-                        <span class="label-title"><span id="bmap-annual-coupon-rate-pct-label" class="bmap-field-label">Annual Coupon Rate</span></span>
-                        <input id="bmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
+                      <label id="bmap-issue-date-wrap">
+                        <span class="label-title"><span id="bmap-issue-date-label" class="bmap-field-label">Issue Date</span></span>
+                        <input id="bmap-issue-date" name="issueDate" type="date" required />
                       </label>
                       <label id="bmap-maturity-date-wrap">
                         <span class="label-title"><span id="bmap-maturity-date-label" class="bmap-field-label">Maturity Date</span></span>
                         <input id="bmap-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
-                    <div class="row">
-                      <label id="bmap-issue-date-wrap">
-                        <span class="label-title"><span id="bmap-issue-date-label" class="bmap-field-label">Issue Date</span></span>
-                        <input id="bmap-issue-date" name="issueDate" type="date" required />
-                      </label>
-                      <label id="bmap-first-coupon-date-wrap">
-                        <span class="label-title"><span id="bmap-first-coupon-date-label" class="bmap-field-label">First Coupon Date</span></span>
-                        <input id="bmap-first-coupon-date" name="firstCouponDate" type="date" />
-                      </label>
-                      <input
-                        id="bmap-coupon-schedule"
-                        name="couponSchedule"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
-                      <input
-                        id="bmap-day-count-convention"
-                        name="dayCountConvention"
-                        type="hidden"
-                        value=""
-                        autocomplete="off"
-                      />
+                    <div id="bmap-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="bmap"></div>
+                    <div class="coupon-engine-sync" hidden>
+                      <input id="bmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="bmap-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
+                      <input id="bmap-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
+                      <input id="bmap-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
                   </div>
 

@@ -107,11 +107,8 @@ const BABA_PRODUCT_SPEC = {
         fieldNames: [
           'principal',
           'purchaseDate',
-          'annualCouponRatePct',
           'issueDate',
-          'maturityDate',
-          'firstCouponDate',
-          'dayCountConvention'
+          'maturityDate'
         ]
       }
     ]

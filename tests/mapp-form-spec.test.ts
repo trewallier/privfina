@@ -28,15 +28,11 @@ describe('mapp frontend form metadata seam', () => {
 
   it('uses ui section field order from MAPP product spec', () => {
     const orderedNames = orderedSpecFields(MAPP_PRODUCT_SPEC).map((field) => field.name)
-    expect(orderedNames).toEqual([
+        expect(orderedNames).toEqual([
       'principal',
       'purchaseDate',
-      'annualCouponRatePct',
       'issueDate',
-      'maturityDate',
-      'firstCouponDate',
-      'couponFrequencyMonths',
-      'dayCountConvention'
+      'maturityDate'
     ])
   })
 

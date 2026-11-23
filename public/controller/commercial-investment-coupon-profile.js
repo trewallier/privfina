@@ -6,6 +6,8 @@
  * forests.
  */
 
+import { syncCouponScheduleEditorAfterMarket } from './commercial-investment-coupon-schedule-editor.js'
+
 function couponBearingDomPrefix(productCode) {
   return String(productCode || '').trim()
 }
@@ -31,7 +33,12 @@ function buildCouponBearingInputIds(prefix) {
     `${prefix}-maturity-date`,
     `${prefix}-purchase-date`,
     `${prefix}-issue-date`,
-    `${prefix}-first-coupon-date`
+    `${prefix}-first-coupon-date`,
+    // Engine-sync hiddens share FormData names across hosts — must disable with the wrap.
+    `${prefix}-coupon-schedule`,
+    `${prefix}-day-count-convention`,
+    `${prefix}-coupon-frequency-months`,
+    `${prefix}-period-months`
   ]
 }
 
@@ -131,6 +138,8 @@ function populateCouponBearingEditFields(
         ? String(migrated.periodMonths)
         : ''
   }
+
+  syncCouponScheduleEditorAfterMarket(prefix, form)
 }
 
 /** Identical across PMÁP / BMÁP / FixMÁP form modules — shared pure helper. */

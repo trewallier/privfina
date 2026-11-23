@@ -605,12 +605,12 @@ Constraints
 - Missing fixing/calendar/metadata → null rate / soft hint.
 
 Plan slices (implement in order; each slice should stay PR-sized)
-- [ ] ADR 0047 + ROADMAP / ownership / spec / gov-sec README: FLOAT resolve-without-coupon-write boundary.
-- [ ] ÁKK KTV catalog join → series `iType` / `ref` / period metadata; Vitest locks no BUBOR→coupons writes.
-- [ ] `ktv/product.yaml` + schema `indexReset` + FLOAT example (2027/B ga from published BUBOR fixing).
-- [ ] Engine: `nthBusinessDayBefore` + BUBOR lookup + FLOAT cash path (ACT/360); goldens vs probe witnesses.
-- [ ] SPA: `loadBubor` + FLOAT form autofill from rules; soft-null when missing.
-- [ ] Embed parity + catalog / formula-audit; temporary tip→`master` CI head PR (close, do not merge).
+- [x] ADR 0047 + ROADMAP / ownership / spec / gov-sec README: FLOAT resolve-without-coupon-write boundary.
+- [x] ÁKK KTV catalog join → series `iType` / `ref` / period metadata; Vitest locks no BUBOR→coupons writes.
+- [x] `ktv/product.yaml` + schema `indexReset` + FLOAT example (2027/B ga from published BUBOR fixing).
+- [x] Engine: `nthBusinessDayBefore` + BUBOR lookup + FLOAT cash path (ACT/360); goldens vs probe witnesses.
+- [x] SPA: `loadBubor` + FLOAT form autofill from rules; soft-null when missing.
+- [x] Embed parity + catalog / formula-audit; temporary tip→`master` CI head PR (close, do not merge).
 
 Out of scope for §6q
 - Writing FLOAT or FIX rates into `families/ktv/coupons/`; FIX coupon ingest from ÁKK `coupon`; labor-law calendars; browser CORS to official hosts.

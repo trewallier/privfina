@@ -154,7 +154,11 @@ describe('commercial investment family registry (ADR 0040)', () => {
         `${code}-maturity-date`,
         `${code}-purchase-date`,
         `${code}-issue-date`,
-        `${code}-first-coupon-date`
+        `${code}-first-coupon-date`,
+        `${code}-coupon-schedule`,
+        `${code}-day-count-convention`,
+        `${code}-coupon-frequency-months`,
+        `${code}-period-months`
       ])
     }
   })

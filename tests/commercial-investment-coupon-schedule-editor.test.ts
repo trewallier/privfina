@@ -42,7 +42,7 @@ describe('commercial-investment-coupon-schedule-editor helpers', () => {
     expect(clampCouponRatePct('')).toBe('')
   })
 
-  it('derives to as the day before the next from; last to is null', () => {
+  it('derives to as the day before the next from when missing; last to is null', () => {
     expect(
       deriveCouponScheduleTos([
         { from: '2027-08-03', rate: 7 },
@@ -52,6 +52,20 @@ describe('commercial-investment-coupon-schedule-editor helpers', () => {
     ).toEqual([
       { from: '2026-08-03', to: '2027-08-02', rate: 6.5 },
       { from: '2027-08-03', to: '2028-08-02', rate: 7 },
+      { from: '2028-08-03', to: null, rate: 7.5 }
+    ])
+  })
+
+  it('preserves explicit published to values (including equal to next from)', () => {
+    expect(
+      deriveCouponScheduleTos([
+        { from: '2026-08-03', to: '2027-08-03', rate: 6.5 },
+        { from: '2027-08-03', to: '2028-08-03', rate: 7 },
+        { from: '2028-08-03', to: null, rate: 7.5 }
+      ])
+    ).toEqual([
+      { from: '2026-08-03', to: '2027-08-03', rate: 6.5 },
+      { from: '2027-08-03', to: '2028-08-03', rate: 7 },
       { from: '2028-08-03', to: null, rate: 7.5 }
     ])
   })
@@ -205,8 +219,8 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
     first.value = '2027-02-01'
     editor.loadFromHidden()
     expect(editor.getRows()).toEqual([
-      { from: '2026-08-03', rate: 7.4 },
-      { from: '2027-02-01', rate: 7.4 }
+      { from: '2026-08-03', rate: 7.4, to: null },
+      { from: '2027-02-01', rate: 7.4, to: null }
     ])
     expect(first.value).toBe('2027-02-01')
   })
@@ -220,8 +234,62 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
     first.value = '2026-09-23'
     schedule.value = JSON.stringify([{ from: '2026-02-18', to: null, rate: 6.25 }])
     editor.loadFromHidden()
-    expect(editor.getRows()).toEqual([{ from: '2026-02-18', rate: 6.25 }])
+    expect(editor.getRows()).toEqual([{ from: '2026-02-18', rate: 6.25, to: null }])
     expect(first.value).toBe('2026-09-23')
+  })
+
+  it('preserves published to on load/serialize and excludes inactive host FormData names', () => {
+    document.body.innerHTML = `
+      <form id="commercial-investment-form">
+        <div id="investment-pmap-wrap" hidden>
+          <input id="pmap-purchase-date" type="date" value="2027-02-03" />
+          <input id="pmap-issue-date" type="date" value="2026-08-03" />
+          <div id="pmap-coupon-schedule-editor"></div>
+          <input id="pmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" disabled />
+          <input id="pmap-first-coupon-date" name="firstCouponDate" type="hidden" disabled />
+          <input id="pmap-coupon-schedule" name="couponSchedule" type="hidden" disabled />
+          <input id="pmap-day-count-convention" name="dayCountConvention" type="hidden" disabled />
+        </div>
+        <div id="investment-bmap-wrap">
+          <input id="bmap-purchase-date" type="date" value="2027-02-03" />
+          <input id="bmap-issue-date" type="date" value="2026-08-03" />
+          <div id="bmap-coupon-schedule-editor"></div>
+          <input id="bmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" />
+          <input id="bmap-first-coupon-date" name="firstCouponDate" type="hidden" />
+          <input id="bmap-coupon-schedule" name="couponSchedule" type="hidden" />
+          <input id="bmap-day-count-convention" name="dayCountConvention" type="hidden" value="ACT/360" />
+        </div>
+      </form>
+    `
+    const form = document.getElementById('commercial-investment-form') as HTMLFormElement
+    const pmapRoot = document.getElementById('pmap-coupon-schedule-editor') as HTMLElement
+    const bmapRoot = document.getElementById('bmap-coupon-schedule-editor') as HTMLElement
+    const pmapEditor = mountCouponScheduleEditor('pmap', pmapRoot, form)!
+    const bmapEditor = mountCouponScheduleEditor('bmap', bmapRoot, form)!
+    pmapEditor.setSchedule([
+      { from: '2020-01-01', to: '2021-01-01', rate: 1 },
+      { from: '2021-01-01', to: null, rate: 1 }
+    ])
+    bmapEditor.setSchedule([
+      { from: '2026-08-03', to: '2027-08-03', rate: 6.5 },
+      { from: '2027-08-03', to: '2028-08-03', rate: 7 }
+    ])
+    setActiveCouponScheduleEditor(form, 'bmap')
+    // Mirror host: inactive engine-sync inputs stay disabled.
+    ;(form.querySelector('#pmap-coupon-schedule') as HTMLInputElement).disabled = true
+    ;(form.querySelector('#bmap-coupon-schedule') as HTMLInputElement).disabled = false
+
+    const schedule = JSON.parse(
+      (form.querySelector('#bmap-coupon-schedule') as HTMLInputElement).value
+    )
+    expect(schedule[0].to).toBe('2027-08-03')
+    expect(schedule[1].to).toBe('2028-08-03')
+
+    const formData = new FormData(form)
+    expect(formData.get('couponSchedule')).toBe(
+      (form.querySelector('#bmap-coupon-schedule') as HTMLInputElement).value
+    )
+    expect(formData.get('dayCountConvention')).toBe('ACT/360')
   })
 
   it('locks controls when market-sourced annual/schedule flags are set', () => {

@@ -33,7 +33,12 @@ function buildCouponBearingInputIds(prefix) {
     `${prefix}-maturity-date`,
     `${prefix}-purchase-date`,
     `${prefix}-issue-date`,
-    `${prefix}-first-coupon-date`
+    `${prefix}-first-coupon-date`,
+    // Engine-sync hiddens share FormData names across hosts — must disable with the wrap.
+    `${prefix}-coupon-schedule`,
+    `${prefix}-day-count-convention`,
+    `${prefix}-coupon-frequency-months`,
+    `${prefix}-period-months`
   ]
 }
 

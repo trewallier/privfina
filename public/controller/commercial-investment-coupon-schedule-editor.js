@@ -49,20 +49,28 @@ function addCalendarDaysIso(iso, deltaDays) {
 }
 
 /**
- * Sort by from; set each `to` to the day before the next `from`; last `to` = null.
+ * Sort by from. Preserve an explicit `to` when present; otherwise derive
+ * day-before-next-From (last band stays null).
  * @param {Array<{ from?: string, to?: string|null, rate?: number|null }>} rows
  */
 function deriveCouponScheduleTos(rows) {
   const cleaned = (Array.isArray(rows) ? rows : [])
-    .map((row) => ({
-      from: String(row?.from || '').trim(),
-      rate: parseDefinedRate(row?.rate)
-    }))
-    .filter((row) => isValidIsoDate(row.from) || row.rate != null)
-    .map((row) => ({
-      from: isValidIsoDate(row.from) ? row.from : '',
-      rate: row.rate
-    }))
+    .map((row) => {
+      const from = String(row?.from || '').trim()
+      const rawTo = row?.to
+      const to =
+        rawTo == null || rawTo === ''
+          ? null
+          : isValidIsoDate(String(rawTo).trim())
+            ? String(rawTo).trim()
+            : null
+      return {
+        from: isValidIsoDate(from) ? from : '',
+        to,
+        rate: parseDefinedRate(row?.rate),
+        preserveTo: to != null
+      }
+    })
     .filter((row) => row.from || row.rate != null)
 
   const withFrom = cleaned.filter((row) => isValidIsoDate(row.from))
@@ -72,8 +80,13 @@ function deriveCouponScheduleTos(rows) {
 
   return ordered.map((row, index) => {
     const next = ordered[index + 1]
-    let to = null
-    if (isValidIsoDate(row.from) && next && isValidIsoDate(next.from)) {
+    let to = row.preserveTo ? row.to : null
+    if (
+      to == null &&
+      isValidIsoDate(row.from) &&
+      next &&
+      isValidIsoDate(next.from)
+    ) {
       to = addCalendarDaysIso(next.from, -1)
     }
     return {
@@ -151,14 +164,35 @@ function resolveAnnualCouponRatePctFromRows(rows, purchaseIso) {
 
 function normalizeUiRows(rows) {
   const list = Array.isArray(rows) ? rows : []
-  const mapped = list.map((row) => ({
-    from: String(row?.from || '').trim(),
-    rate: parseDefinedRate(row?.rate)
-  }))
+  const mapped = list.map((row) => {
+    const rawTo = row?.to
+    const to =
+      rawTo == null || rawTo === ''
+        ? null
+        : isValidIsoDate(String(rawTo).trim())
+          ? String(rawTo).trim()
+          : null
+    return {
+      from: String(row?.from || '').trim(),
+      to,
+      rate: parseDefinedRate(row?.rate)
+    }
+  })
   if (mapped.length === 0) {
-    return [{ from: '', rate: null }]
+    return [{ from: '', to: null, rate: null }]
   }
   return mapped
+}
+
+function sortUiRowsByFrom(rows) {
+  return [...rows].sort((a, b) => {
+    const aOk = isValidIsoDate(a.from)
+    const bOk = isValidIsoDate(b.from)
+    if (aOk && bOk) return a.from.localeCompare(b.from)
+    if (aOk) return -1
+    if (bOk) return 1
+    return 0
+  })
 }
 
 function readHiddenSchedule(form, prefix) {
@@ -286,7 +320,10 @@ function createEditor(prefix, rootEl, form) {
   function onFromInput(index, value) {
     if (!controlsInteractive()) return
     if (!rows[index]) return
-    rows[index] = { ...rows[index], from: String(value || '').trim() }
+    // Clear preserved `to` when From changes; re-sort so captions match sync order.
+    rows[index] = { ...rows[index], from: String(value || '').trim(), to: null }
+    rows = sortUiRowsByFrom(rows)
+    render()
     syncHiddenFields()
     form?.dispatchEvent(new Event('input', { bubbles: true }))
   }
@@ -405,7 +442,7 @@ function createEditor(prefix, rootEl, form) {
   }
 
   function setSchedule(scheduleRows, { reevaluateMode = true } = {}) {
-    rows = normalizeUiRows(scheduleRows)
+    rows = sortUiRowsByFrom(normalizeUiRows(scheduleRows))
     if (reevaluateMode) {
       fixedMode = isFixedCouponSchedule(rows)
     }
@@ -502,7 +539,7 @@ function createEditor(prefix, rootEl, form) {
     setMarketLocked,
     setHostActive,
     syncHiddenFields,
-    getRows: () => rows.map((row) => ({ ...row })),
+    getRows: () => rows.map((row) => ({ from: row.from, rate: row.rate, to: row.to ?? null })),
     isFixedMode: () => fixedMode,
     isHostActive: () => hostActive
   }
@@ -541,6 +578,7 @@ function ensureAllCouponScheduleEditors(form) {
 /**
  * Enable interactive validation only on the selected coupon-bearing family.
  * Inactive editors disable controls and clear `required` so they cannot block submit.
+ * Also disable inactive hosts' engine-sync hiddens (shared FormData names).
  */
 function setActiveCouponScheduleEditor(form, activePrefix) {
   if (!form) return
@@ -549,7 +587,12 @@ function setActiveCouponScheduleEditor(form, activePrefix) {
     const prefix = String(root.id || '').replace(/-coupon-schedule-editor$/, '')
     const editor = editorsByPrefix.get(prefix)
     if (!editor) return
-    editor.setHostActive(Boolean(activePrefix) && prefix === activePrefix)
+    const active = Boolean(activePrefix) && prefix === activePrefix
+    editor.setHostActive(active)
+    const wrap = root.closest(`[id="investment-${prefix}-wrap"]`) || root.parentElement
+    wrap?.querySelectorAll?.('.coupon-engine-sync input[name]').forEach((input) => {
+      input.disabled = !active
+    })
   })
 }
 

@@ -12,7 +12,7 @@ denominationCurrency: HUF
 denominationUnit: 10000
 issuanceModel: phased-public-offering
 yieldModel: coupon-plus-redemption
-couponModel: fixed-coupon
+couponModel: floating-coupon
 referenceIndex: bubor
 offeringPriceModel: par-plus-accrued-interest
 earlyRedemptionByIssuer: false
@@ -133,7 +133,7 @@ outputs:
     description: Total paid at purchase — principal plus accrued interest when applicable.
 
 assumptions:
-  - MÁK is modeled as an annual-pay fixed-coupon government bond for FIX / Green series (Babakötvény-style first-period stub on ga; not a FixMÁP ACT/360 covering-band wrap).
+  - couponModel is floating-coupon because the host also serves FLOAT (BUBOR indexReset). FIX / Green series still use published effective ga with Babakötvény-style first-period stub under ACT/365F (not a FixMÁP ACT/360 covering-band wrap).
   - Machine id stays ktv (ÁKK/allampapir label KTV); display name is Hungarian Government Bond (MÁK).
   - FIX commercial inputs use the published effective annual coupon rate (ga). FLOAT period ga resolves via indexReset + refs/bubor.json + refs/settlement-calendar.json; null when fixing or calendar year is missing — never invent from quote ai or WebKincstár payable percent.
   - Do not persist resolved FLOAT (or inferred) rates into families/ktv/coupons; SPA may set in-session form annualCouponRatePct only (ADR 0047).

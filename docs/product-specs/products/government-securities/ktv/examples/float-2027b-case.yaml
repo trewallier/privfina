@@ -2,7 +2,7 @@ specVersion: v2alpha3
 productId: government-security.ktv.standard
 exampleId: float-2027b-case
 title: FLOAT MÁK 2027/B period rate from BUBOR T−3
-description: Locked FLOAT witness for 2027/B — period turn 2027-01-22; observation is the 3rd HU-VIBER business day before (2026-10-19); published refs/bubor.json 3M fixing 5.5% becomes period ga after round/floor. Specs hold rules only; rate is not stored in families/ktv/coupons.
+description: Locked FLOAT witness for 2027/B — current period starts on turn 2026-10-22; observation is the 3rd HU-VIBER business day before that turn (2026-10-19); published refs/bubor.json 3M fixing 5.5% becomes period ga after round/floor. Specs hold rules only; rate is not stored in families/ktv/coupons.
 
 inputs:
   principal: 1000000

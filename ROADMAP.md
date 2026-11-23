@@ -474,6 +474,15 @@ Plan slices
 - [x] Shared editor module + narrow stacked periods (no sideways scroll); tests for layout, fix/stepped behavior, serialize.
 - [x] Density polish: always single-row From | Rate % | icon-remove (incl. mobile); column headers only; compact gaps; Add/Remove always visibly colored (fix white-on-white on iOS).
 
+#### Full coupon calendar visibility (+ MÁK parser gap)
+Goal: Coupon periods table shows **every** offering payment date (null Rate % when unknown), not only retailInterest known-rate bands. Close MÁK ingest gaps so FIX rates and FLOAT calendars land in published data for that merge.
+
+Plan slices
+- [x] SPA: merge offering `paymentDates` (+ issue) with coupons into `couponSchedule`; soft-hint when coupons exist but payment calendar missing; no invented anniversary dates.
+- [x] MÁK FIX: persist offering `paymentRates` → `families/ktv/coupons/<id>.json` when series exists; modal ga for autofill when stub ≠ flat rate.
+- [x] MÁK FLOAT: expand rábocsátás quarterly `fordulónap` / `Kamatfizetési napok` month-day lists into `paymentDates` (all-null rates; never invent coupon files).
+- [ ] Residual (non-MÁK / tip): audit other families for missing `paymentDates`; drain ADR 0041 PDF backlog / reparse; §6m historical backfill.
+
 #### Later remaining families
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.
 - [x] Decide PEMÁP vs EMÁP family split: **keep unified under `emap`** until product rules diverge (no `pemap` folder in the FixMÁP stack).

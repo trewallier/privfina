@@ -101,6 +101,78 @@ function extractMaturity(text: string): string | null {
   return firstDateInWindow(after)
 }
 
+/** Issue / original issue / interest-start date when printed near labels. */
+export function extractIssueDate(text: string): string | null {
+  const labels = [
+    /Kamatozás\s+kezdő\s+napja\s*:/i,
+    /Az\s+eredeti\s+kibocsátás\s+napja\s*:/i,
+    /Kibocsátás\s+napja\s*:/i
+  ]
+  for (const re of labels) {
+    const label = re.exec(text)
+    if (!label || label.index == null) continue
+    const after = text.slice(label.index + label[0].length, label.index + label[0].length + 160)
+    const iso = firstDateInWindow(after)
+    if (iso) return iso
+  }
+  return null
+}
+
+const HU_MONTH_NAME =
+  '(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december|januar|februar|marcius|aprilis|majus|junius|julius|oktober)'
+
+/**
+ * FLOAT MÁK rábocsátás layout: period turns named as
+ * "minden év február 26., május 26., augusztus 26. és november 26. napja"
+ * (under kamatperiódus fordulónapja / Kamatfizetési napok) — expand through maturity.
+ * Rates stay unpublished (Aktuális kamatláb is current-auction only; ADR 0044 / 0047).
+ */
+export function extractMakRecurringPeriodTurns(text: string): {
+  paymentDates: string[]
+  paymentRates: Array<number | null>
+} | null {
+  const monthDayRe = new RegExp(`${HU_MONTH_NAME}\\s+(\\d{1,2})\\.?`, 'gi')
+  const turnBlock =
+    /kamatperiódus\s+fordulónapja[\s\S]{0,220}?minden\s+év\s+([\s\S]{0,220}?napja)/i.exec(text) ||
+    /Kamatfizetési\s+napok\s*:[\s\S]{0,220}?minden\s+év\s+([\s\S]{0,220}?napja)/i.exec(text)
+  if (!turnBlock) return null
+  const listBlock = turnBlock[1] ?? ''
+  const mds: Array<{ month: number; day: number }> = []
+  const seen = new Set<string>()
+  for (const m of listBlock.matchAll(monthDayRe)) {
+    const month = HU_MONTHS[m[1].toLowerCase()]
+    const day = Number(m[2])
+    if (!month || !day) continue
+    const key = `${month}-${day}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    mds.push({ month, day })
+  }
+  if (mds.length < 2) return null
+
+  const issue = extractIssueDate(text)
+  const maturity = extractMaturity(text)
+  if (!issue || !maturity) return null
+
+  const dates: string[] = []
+  const startY = Number(issue.slice(0, 4))
+  const endY = Number(maturity.slice(0, 4))
+  for (let y = startY; y <= endY + 1; y += 1) {
+    for (const { month, day } of mds) {
+      const iso = `${y}-${pad2(month)}-${pad2(day)}`
+      if (iso > issue && iso <= maturity) {
+        dates.push(iso)
+      }
+    }
+  }
+  const uniq = [...new Set(dates)].sort()
+  if (uniq.length === 0) return null
+  return {
+    paymentDates: uniq,
+    paymentRates: uniq.map(() => null)
+  }
+}
+
 function isDiscountTreasuryBill(text: string): boolean {
   return /Diszkont\s+Kincstárjegy/i.test(text)
 }
@@ -115,6 +187,8 @@ function hasCouponScheduleMarkers(text: string): boolean {
     /A\s+kamatfizetés[\s\S]{0,200}?az\s+alábbi\s+napokon\s+történik/i.test(text) ||
     MAK_ANNUAL_SCHEDULE_MARKER.test(text) ||
     /Kamatteljesítési\s+napok/i.test(text) ||
+    /Kamatfizetési\s+napok\s*:/i.test(text) ||
+    /kamatperiódus\s+fordulónapja/i.test(text) ||
     /A\s+kamat\s+fizetése\s+a\s+futamidő\s+alatt\s+minden\s+év/i.test(text) ||
     /Kamatszámítás\s+algoritmusa/i.test(text)
   )
@@ -365,6 +439,13 @@ export function parseOfferingPdfText(text: string): ParsedOfferingPdf {
     if (mak) {
       paymentDates = mak.paymentDates
       paymentRates = mak.paymentRates
+    }
+  }
+  if (paymentDates.length === 0) {
+    const makTurns = extractMakRecurringPeriodTurns(normalized)
+    if (makTurns) {
+      paymentDates = makTurns.paymentDates
+      paymentRates = makTurns.paymentRates
     }
   }
   if (paymentDates.length === 0) {

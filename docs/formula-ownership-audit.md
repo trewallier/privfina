@@ -80,7 +80,7 @@ Inventory (by product)
   - Engine primitives: `src/finance_engine/instruments/ktv.ts` (FIX ACT/365F + Babakötvény-style stub on published ga; FLOAT ACT/360 quarterly turns) + `src/finance_engine/instruments/mak_float_rate.ts` (BUBOR + HU-VIBER T−3 resolve); no `productCode` forks
   - Family mapper: `src/finance_engine/product_specs/ktv.ts`
   - Browser path: `public/controller/ktv-calculation-adapter.js` + embedded `ktv-product-spec.js` (`KTV_INDEX_RESET`) + registry `coupon-bearing` entry (`#investment-ktv-wrap`); market family `ktv`; SPA `loadBubor` + FLOAT autofill (form only — never write `families/ktv/coupons/`)
-  - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP / baba precedent); FLOAT resolve under ADR 0047 / §6q
+  - Status: commercially-usable composer bar cleared on SPA; catalog stamped fully-spec-backed without an intermediate commercially-usable row (DKJ–FixMÁP / baba precedent); FLOAT resolve + ACT/360 commercial cash path under ADR 0047 / §6q (form `periodMonths`; never coupon DB writes)
 
 - OTP Home Savings Premium Plus 10x30 (`home-savings.premium-plusz-10x30.standard`) — **fully-spec-backed** / ADR 0031 ÁSZF EBKM 8/8
   - Spec: `docs/product-specs/products/home-savings/premium-plusz-10x30/product.yaml`

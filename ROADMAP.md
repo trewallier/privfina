@@ -455,7 +455,7 @@ Plan slices (ingest-only; completed)
 - [x] Fixture E2E for `families/ktv/offerings/<id>.json` + archive (**code complete**; live tip / Pages cutover pending `workflow_dispatch` — same posture as §6k / §6f).
 
 #### MÁK next (`ktv`) — this stack
-Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on the commercial investment picker. Market ingest already publishes optional `families/ktv/` (quotes/series + offerings via ADR 0044). Locked example series **2037/A** (ISIN HU0000407564; ÁKK nyilvános ajánlattétel): FIX annual cash coupons; published effective `ga` **6.25%**; irregular first-period **payable stub** **3.72%** = `6.25% × 217nap / 365nap` (2026-02-18 → 2026-09-23); maturity **2037-09-23**; product day-count **ACT/365F** (Actual/365) for this witness — accrue on `ga`, not the stub. ADR 0044 ingest `ACT/360` when offering `dayCount` is null is a **quote/ingest fallback only**, not MÁK product math. Green (Zöld) series stay under `ktv`. **FLOAT** cash-flow model deferred (null rates / soft hints only). Auction listings leave `saleWindow` null — do not invent from `auctionDate` (DKJ precedent). Register on shared `coupon-bearing` profile (ADR 0040); **Babakötvény-style** first-period stub + ACT/365F path — do **not** thin-wrap FixMÁP/PMÁP ACT/360 covering bands. Temporary tip→`master` CI head PR (close, do not merge).
+Vertical slice: YAML → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on the commercial investment picker. Market ingest already publishes optional `families/ktv/` (quotes/series + offerings via ADR 0044). Locked example series **2037/A** (ISIN HU0000407564; ÁKK nyilvános ajánlattétel): FIX annual cash coupons; published effective `ga` **6.25%**; irregular first-period **payable stub** **3.72%** = `6.25% × 217nap / 365nap` (2026-02-18 → 2026-09-23); maturity **2037-09-23**; product day-count **ACT/365F** (Actual/365) for this witness — accrue on `ga`, not the stub. ADR 0044 ingest `ACT/360` when offering `dayCount` is null is a **quote/ingest fallback only**, not MÁK product math. Green (Zöld) series stay under `ktv`. **FLOAT** BUBOR resolve + ACT/360 cash path is tracked under **§6q / ADR 0047** (not deferred as null-only). Auction listings leave `saleWindow` null — do not invent from `auctionDate` (DKJ precedent). Register on shared `coupon-bearing` profile (ADR 0040); **Babakötvény-style** first-period stub + ACT/365F path for FIX — do **not** thin-wrap FixMÁP/PMÁP ACT/360 covering bands. Temporary tip→`master` CI head PR (close, do not merge).
 
 Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ROADMAP / spec / ownership / gov-sec README: MÁK-next delivery + temporary CI head; 2037/A FIX notes (ACT/365F / Actual/365; stub `6.25%×217/365=3.72%`; FLOAT deferred).
@@ -574,7 +574,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [ ] **Close §6o only after live cutover:** `workflow_dispatch` market-data → tip has `data/market/v2/refs/bubor.json` with full history. Until then: **code complete; cutover pending**.
 
 Out of scope for §6o
-- SPA loader or FLOAT coupon autofill; deriving rates from quote `ai` / WebKincstár payable %; FIX ktv coupons from ÁKK `coupon`.
+- Deriving rates from quote `ai` / WebKincstár payable %; FIX ktv coupons from ÁKK `coupon`. FLOAT MÁK resolve / SPA autofill is §6q (consumes these refs; never writes ktv coupons).
 
 #### 6p) MNB settlement calendar refs — elszámolásforgalmi naptár (ADR 0046)
 Goal: publish the official Hungarian **bank / settlement** calendar from MNB yearly elszámolásforgalmi XLSX grids into `data/market/v2/refs/settlement-calendar.json` in the **same** scheduled Actions run as BUBOR / inflation, with **year-replace-on-revision** merges (mid-year corrections allowed), so later slices can roll FLOAT resets and coupon dates on VIBER business days without inventing a holiday list.
@@ -593,7 +593,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [ ] **Close §6p only after live cutover:** `workflow_dispatch` market-data → tip has `data/market/v2/refs/settlement-calendar.json`. Until then: **code complete; cutover pending**.
 
 Out of scope for §6p
-- FLOAT “3rd business day” reset wiring (see §6q); offering `paymentDates` adjustment; salary autofill from published days; separate labor-calendar ref.
+- Offering `paymentDates` adjustment; salary autofill from published days; separate labor-calendar ref. FLOAT MÁK T−3 observation wiring is §6q.
 
 #### 6q) FLOAT MÁK — BUBOR resolve without ktv coupon writes (ADR 0047)
 Goal: make FLOAT MÁK (`ktv`) truthful to ÁKK ISSUE rules — period annual rate = **3M BUBOR** on the **3rd HU-VIBER business day before period turn**, round **0.01%**, floor **0.01%**, day-count **ACT/360** — by resolving at engine/SPA time from published `refs/bubor.json` + `refs/settlement-calendar.json` + product YAML `indexReset` rules. **Never** write derived rates into `families/ktv/coupons/` (ADR 0044 / 0045 / 0047). FIX 2037/A path unchanged. Temporary tip→`master` CI head PR (close, do not merge).

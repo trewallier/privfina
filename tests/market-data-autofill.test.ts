@@ -21,6 +21,7 @@ import {
   pickFirstOfferingPaymentDate,
   pickPurchasePricePct,
   inferMappCouponFrequencyMonths,
+  resolveCommercialDayCountAutofill,
   resolveSaleWindow
 } from '../public/controller/market-data-autofill.js'
 
@@ -301,6 +302,23 @@ describe('market-data-autofill', () => {
     })
     expect(withOffering.fields.firstCouponDate).toBe('2022-04-01')
     expect(withOffering.fields.dayCountConvention).toBe('ACT/365F')
+
+    const bmapActActOffering = buildMarketAutofillPatch({
+      family: 'bmap',
+      series: { issue: '2017-10-03', mat: '2028-03-22', dayCount: 'ACT/360' },
+      quote: { d: '2026-11-02', ask: 101.7 },
+      coupons,
+      offering: { paymentDates: ['2026-03-22', '2026-06-22'], dayCount: 'ACT/ACT' },
+      current: { purchaseDate: '2026-04-01' }
+    })
+    expect(bmapActActOffering.fields.dayCountConvention).toBe('ACT/360')
+    expect(
+      resolveCommercialDayCountAutofill(
+        'pmap',
+        { dayCount: 'ACT/ACT' },
+        { dayCount: 'ACT/360' }
+      )
+    ).toBe('ACT/ACT')
   })
 
   it('infers MÁP Plusz couponFrequencyMonths from offering payment spacing', () => {

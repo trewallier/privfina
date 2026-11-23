@@ -138,6 +138,13 @@ export {
   DEFAULT_GOVERNMENT_SECURITY_DAY_COUNT
 } from './instruments/day_count'
 export type { CouponSchedulePeriod, DayCountConvention } from './instruments/day_count'
+export {
+  accrueIsmertetoActActAmount,
+  isActActDayCountConvention,
+  ismertetoPeriodRatePct,
+  resolveIsmertetoAccrualStartIso,
+  resolveIsmertetoFirstCouponDateIso
+} from './instruments/ismerteto_accrued'
 export type {
   HomeSavingsBundleInput,
   HomeSavingsInstrumentInput,

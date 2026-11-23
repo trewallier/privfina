@@ -526,7 +526,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] ROADMAP renumber (§6l inserted; historical backfill → §6m) + spec / ownership ACs for offering loader, sale-window labels, coupon-date / dayCount autofill, offering attribution.
 - [x] SPA loader: `loadOffering` (or equivalent) + fixtures/tests; soft-fail → null when missing.
 - [x] Commercial composer UX: sale-window picker labels/hints, prefer offering payment dates + dayCount in autofill, offering attribution disclaimer.
-- [x] Shared day-count helpers accept offering-transcribed `ACT/ACT` (Tényleges/tényleges) so PMÁP/BMÁP/FixMÁP add/save does not throw; accrued uses ISDA Actual/Actual year fraction.
+- [x] Shared day-count helpers accept offering-transcribed `ACT/ACT` (Tényleges/tényleges) so add/save does not throw; PMÁP/FixMÁP accrued uses Ismertető period fractions (FixMÁP `ga/n`); BMÁP accrued stays ACT/360; autofill does not blindly apply offering ACT/ACT to BMÁP/DKJ.
 - [x] Close §6l: check off ROADMAP/spec; soft-fail regression; temporary tip→`master` CI head PR (close, do not merge).
 
 Out of scope for §6l

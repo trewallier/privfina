@@ -67,7 +67,7 @@ const PMAP_PRODUCT_SPEC = {
       required: false,
       unit: 'text',
       description:
-        'How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360). Offering transcriptions often publish ACT/ACT (Tényleges/tényleges); the shared accrued helper uses ISDA Actual/Actual year fraction for that value.',
+        'How days are counted for accrued interest. Defaults to ACT/360 (fixed year). When ACT/ACT (ÁKK Tényleges/tényleges from offering transcription), accrued follows the Ismertető period-fraction formulas (annual ga over the coupon grid; irregular first period via technical dt0/dt1) — not ISDA calendar-year fraction.',
       constraints: { enum: ['ACT/360', 'ACT/365F', 'ACT/ACT', '30E/360'] }
     }
   ],

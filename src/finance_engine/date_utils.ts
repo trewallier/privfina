@@ -203,3 +203,28 @@ export function lastBusinessDayOnOrBefore(
   const targetIso = formatIsoDate(new Date(Date.UTC(year, monthZeroBased, clampedTarget)))
   return rollBusinessDay(targetIso, 'preceding', holidays)
 }
+
+/**
+ * Exact T−n observation date: the nth HU-VIBER (or other) business day
+ * strictly before `iso` (ADR 0047 FLOAT MÁK / ÁKK ISSUE).
+ * Returns null when `n < 1` or the calendar cannot walk far enough
+ * (defensive cap: 366 calendar days).
+ */
+export function nthBusinessDayBefore(
+  iso: string,
+  n: number,
+  holidays: BusinessDayHolidays = []
+): string | null {
+  if (!Number.isInteger(n) || n < 1) return null
+  const calendar = toBusinessCalendarSets(holidays)
+  let cursor = parseIsoDate(iso)
+  let found = 0
+  for (let step = 0; step < 366; step += 1) {
+    cursor = shiftByDays(cursor, -1)
+    if (isBusinessDayUtc(cursor, calendar)) {
+      found += 1
+      if (found === n) return formatIsoDate(cursor)
+    }
+  }
+  return null
+}

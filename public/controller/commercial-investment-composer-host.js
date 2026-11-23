@@ -45,7 +45,9 @@ import {
 } from './market-data-composer.js'
 import {
   ensureAllCouponScheduleEditors,
+  normalizeCouponEngineSyncFields,
   resyncCouponScheduleEngineFields,
+  setActiveCouponScheduleEditor,
   syncCouponScheduleEditorAfterMarket
 } from './commercial-investment-coupon-schedule-editor.js'
 
@@ -826,6 +828,10 @@ function createCommercialInvestmentComposerHost({
     })
     if (entry.composerProfile === 'coupon-bearing') {
       ensureDefaultPurchaseDate(commercialPurchaseOrSettlementInput(code))
+      normalizeCouponEngineSyncFields(commercialInvestmentForm, code)
+      setActiveCouponScheduleEditor(commercialInvestmentForm, code)
+    } else {
+      setActiveCouponScheduleEditor(commercialInvestmentForm, null)
     }
     setElementVisible(
       commercialInvestmentDiscountYieldWrap,

@@ -137,9 +137,24 @@ function readHiddenSchedule(form, prefix) {
   }
 }
 
+/** Keep engine sync inputs as non-validating hidden FormData carriers. */
+function normalizeCouponEngineSyncFields(form, prefix) {
+  if (!form || !prefix) return
+  for (const id of [`${prefix}-annual-coupon-rate-pct`, `${prefix}-first-coupon-date`]) {
+    const input = form.querySelector(`#${id}`)
+    if (!input) continue
+    input.type = 'hidden'
+    input.required = false
+    input.removeAttribute('min')
+    input.removeAttribute('max')
+    input.removeAttribute('step')
+  }
+}
+
 function createEditor(prefix, rootEl, form) {
   let fixedMode = true
   let marketLocked = false
+  let hostActive = true
   let rows = [{ from: '', rate: null }]
   let hintEl = null
   let bodyEl = null
@@ -153,10 +168,15 @@ function createEditor(prefix, rootEl, form) {
     return String(form?.querySelector(`#${prefix}-issue-date`)?.value || '').trim()
   }
 
+  function controlsInteractive() {
+    return hostActive && !marketLocked
+  }
+
   function syncHiddenFields() {
     if (!form || syncing) return
     syncing = true
     try {
+      normalizeCouponEngineSyncFields(form, prefix)
       const derived = deriveCouponScheduleTos(rows)
       const scheduleInput = form.querySelector(`#${prefix}-coupon-schedule`)
       if (scheduleInput) {
@@ -173,18 +193,16 @@ function createEditor(prefix, rootEl, form) {
             : ''
       }
 
+      // firstCouponDate follows sorted schedule, not raw UI row order.
       const firstFrom =
-        rows.map((row) => String(row.from || '').trim()).find((from) => isValidIsoDate(from)) ||
+        derived.map((row) => String(row.from || '').trim()).find((from) => isValidIsoDate(from)) ||
         ''
       const firstCouponInput = form.querySelector(`#${prefix}-first-coupon-date`)
       if (firstCouponInput) {
         firstCouponInput.value = firstFrom
       }
 
-      const annual = resolveAnnualCouponRatePctFromRows(
-        deriveCouponScheduleTos(rows),
-        getPurchaseDate()
-      )
+      const annual = resolveAnnualCouponRatePctFromRows(derived, getPurchaseDate())
       const annualInput = form.querySelector(`#${prefix}-annual-coupon-rate-pct`)
       if (annualInput) {
         annualInput.value = annual == null ? '' : String(annual)
@@ -212,7 +230,7 @@ function createEditor(prefix, rootEl, form) {
   }
 
   function onRateInput(index, value) {
-    if (marketLocked) return
+    if (!controlsInteractive()) return
     setRowRate(index, value, { propagate: fixedMode })
     render()
     syncHiddenFields()
@@ -220,7 +238,7 @@ function createEditor(prefix, rootEl, form) {
   }
 
   function onFromInput(index, value) {
-    if (marketLocked) return
+    if (!controlsInteractive()) return
     if (!rows[index]) return
     rows[index] = { ...rows[index], from: String(value || '').trim() }
     syncHiddenFields()
@@ -228,7 +246,7 @@ function createEditor(prefix, rootEl, form) {
   }
 
   function addRow() {
-    if (marketLocked) return
+    if (!controlsInteractive()) return
     const sharedRate = fixedMode
       ? rows.map((row) => row.rate).find((rate) => rate != null) ?? null
       : null
@@ -238,7 +256,7 @@ function createEditor(prefix, rootEl, form) {
   }
 
   function removeRow(index) {
-    if (marketLocked) return
+    if (!controlsInteractive()) return
     if (rows.length <= 1) {
       rows = [{ from: '', rate: null }]
     } else {
@@ -249,22 +267,36 @@ function createEditor(prefix, rootEl, form) {
     syncHiddenFields()
   }
 
-  function renderDesktopTable() {
-    const table = document.createElement('table')
-    table.className = 'coupon-schedule-table'
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th scope="col">From</th>
-          <th scope="col">Rate %</th>
-          <th scope="col" class="coupon-schedule-actions-col"><span class="visually-hidden">Actions</span></th>
-        </tr>
-      </thead>
-    `
-    const tbody = document.createElement('tbody')
+  /** Single markup: header + period rows; CSS stacks on narrow viewports. */
+  function render() {
+    if (!bodyEl) return
+    bodyEl.replaceChildren()
+
+    const header = document.createElement('div')
+    header.className = 'coupon-schedule-header'
+    header.setAttribute('aria-hidden', 'true')
+    header.innerHTML =
+      '<span>From</span><span>Rate %</span><span class="coupon-schedule-actions-col"></span>'
+
+    const list = document.createElement('div')
+    list.className = 'coupon-schedule-rows'
+    list.setAttribute('role', 'table')
+    list.setAttribute('aria-label', 'Coupon periods')
+
     rows.forEach((row, index) => {
-      const tr = document.createElement('tr')
-      const fromTd = document.createElement('td')
+      const group = document.createElement('div')
+      group.className = 'coupon-schedule-period'
+      group.setAttribute('role', 'row')
+      group.setAttribute(
+        'aria-label',
+        index === 0 ? 'Period 1 (first coupon)' : `Period ${index + 1}`
+      )
+
+      const fromLabel = document.createElement('label')
+      fromLabel.className = 'coupon-schedule-from-wrap'
+      const fromTitle = document.createElement('span')
+      fromTitle.className = 'coupon-schedule-field-label'
+      fromTitle.textContent = 'From'
       const fromInput = document.createElement('input')
       fromInput.type = 'date'
       fromInput.value = row.from || ''
@@ -273,21 +305,27 @@ function createEditor(prefix, rootEl, form) {
         'aria-label',
         index === 0 ? 'First coupon date (period from)' : `Period ${index + 1} from`
       )
-      fromInput.disabled = marketLocked
+      fromInput.disabled = !controlsInteractive()
       fromInput.addEventListener('change', () => onFromInput(index, fromInput.value))
-      fromTd.appendChild(fromInput)
+      fromLabel.append(fromTitle, fromInput)
 
-      const rateTd = document.createElement('td')
+      const rateLabel = document.createElement('label')
+      rateLabel.className = 'coupon-schedule-rate-wrap'
+      const rateTitle = document.createElement('span')
+      rateTitle.className = 'coupon-schedule-field-label'
+      rateTitle.textContent = 'Rate %'
       const rateInput = document.createElement('input')
       rateInput.type = 'number'
       rateInput.min = '0'
       rateInput.max = '100'
-      rateInput.step = '0.01'
+      // step=any avoids flaky native (value-min)%step checks; clamp still enforces 0.01.
+      rateInput.step = 'any'
       rateInput.value = row.rate == null ? '' : String(row.rate)
       rateInput.className = 'coupon-schedule-rate'
       rateInput.setAttribute('aria-label', `Period ${index + 1} annual coupon rate percent`)
-      rateInput.disabled = marketLocked
-      rateInput.required = index === 0
+      rateInput.disabled = !controlsInteractive()
+      // Only the active host's first rate participates in native constraint validation.
+      rateInput.required = hostActive && index === 0
       rateInput.addEventListener('change', () => {
         const clamped = clampCouponRatePct(rateInput.value)
         rateInput.value = clamped
@@ -300,86 +338,25 @@ function createEditor(prefix, rootEl, form) {
           onRateInput(index, clamped)
         }
       })
-      rateTd.appendChild(rateInput)
+      rateLabel.append(rateTitle, rateInput)
 
-      const actionTd = document.createElement('td')
-      actionTd.className = 'coupon-schedule-actions-col'
       const removeBtn = document.createElement('button')
       removeBtn.type = 'button'
       removeBtn.className = 'coupon-schedule-remove'
       removeBtn.textContent = 'Remove'
       removeBtn.setAttribute('aria-label', `Remove period ${index + 1}`)
-      removeBtn.disabled = marketLocked
-      removeBtn.addEventListener('click', () => removeRow(index))
-      actionTd.appendChild(removeBtn)
-
-      tr.append(fromTd, rateTd, actionTd)
-      tbody.appendChild(tr)
-    })
-    table.appendChild(tbody)
-    return table
-  }
-
-  function renderMobileBlocks() {
-    const wrap = document.createElement('div')
-    wrap.className = 'coupon-schedule-mobile'
-    rows.forEach((row, index) => {
-      const fieldset = document.createElement('fieldset')
-      fieldset.className = 'coupon-schedule-period'
-      const legend = document.createElement('legend')
-      legend.textContent = index === 0 ? 'Period 1 (first coupon)' : `Period ${index + 1}`
-      fieldset.appendChild(legend)
-
-      const fromLabel = document.createElement('label')
-      fromLabel.innerHTML = '<span class="label-title">From</span>'
-      const fromInput = document.createElement('input')
-      fromInput.type = 'date'
-      fromInput.value = row.from || ''
-      fromInput.disabled = marketLocked
-      fromInput.addEventListener('change', () => onFromInput(index, fromInput.value))
-      fromLabel.appendChild(fromInput)
-
-      const rateLabel = document.createElement('label')
-      rateLabel.innerHTML = '<span class="label-title">Rate %</span>'
-      const rateInput = document.createElement('input')
-      rateInput.type = 'number'
-      rateInput.min = '0'
-      rateInput.max = '100'
-      rateInput.step = '0.01'
-      rateInput.value = row.rate == null ? '' : String(row.rate)
-      rateInput.disabled = marketLocked
-      rateInput.required = index === 0
-      rateInput.addEventListener('change', () => {
-        const clamped = clampCouponRatePct(rateInput.value)
-        rateInput.value = clamped
-        onRateInput(index, clamped)
-      })
-      rateLabel.appendChild(rateInput)
-
-      const removeBtn = document.createElement('button')
-      removeBtn.type = 'button'
-      removeBtn.className = 'coupon-schedule-remove'
-      removeBtn.textContent = 'Remove period'
-      removeBtn.disabled = marketLocked
+      removeBtn.disabled = !controlsInteractive()
       removeBtn.addEventListener('click', () => removeRow(index))
 
-      fieldset.append(fromLabel, rateLabel, removeBtn)
-      wrap.appendChild(fieldset)
+      group.append(fromLabel, rateLabel, removeBtn)
+      list.appendChild(group)
     })
-    return wrap
-  }
 
-  function render() {
-    if (!bodyEl) return
-    bodyEl.replaceChildren()
-    const desktop = renderDesktopTable()
-    desktop.classList.add('coupon-schedule-desktop')
-    const mobile = renderMobileBlocks()
-    bodyEl.append(desktop, mobile)
+    bodyEl.append(header, list)
     updateHint()
 
     const addBtn = rootEl.querySelector('.coupon-schedule-add')
-    if (addBtn) addBtn.disabled = marketLocked
+    if (addBtn) addBtn.disabled = !controlsInteractive()
   }
 
   function setSchedule(scheduleRows, { reevaluateMode = true } = {}) {
@@ -387,7 +364,6 @@ function createEditor(prefix, rootEl, form) {
     if (reevaluateMode) {
       fixedMode = isFixedCouponSchedule(rows)
     }
-    // Seed first From from issue when blank (manual starter).
     if (rows.length === 1 && !rows[0].from && isValidIsoDate(getIssueDate())) {
       rows[0] = { ...rows[0], from: getIssueDate() }
     }
@@ -400,7 +376,20 @@ function createEditor(prefix, rootEl, form) {
     render()
   }
 
+  function setHostActive(active) {
+    hostActive = Boolean(active)
+    render()
+    if (!hostActive) {
+      // Ensure inactive editors never block form checkValidity().
+      rootEl.querySelectorAll('input').forEach((input) => {
+        input.required = false
+        input.disabled = true
+      })
+    }
+  }
+
   function loadFromHidden() {
+    normalizeCouponEngineSyncFields(form, prefix)
     const schedule = readHiddenSchedule(form, prefix)
     const annualInput = form?.querySelector(`#${prefix}-annual-coupon-rate-pct`)
     const firstCouponInput = form?.querySelector(`#${prefix}-first-coupon-date`)
@@ -449,9 +438,11 @@ function createEditor(prefix, rootEl, form) {
     setSchedule,
     loadFromHidden,
     setMarketLocked,
+    setHostActive,
     syncHiddenFields,
     getRows: () => rows.map((row) => ({ ...row })),
-    isFixedMode: () => fixedMode
+    isFixedMode: () => fixedMode,
+    isHostActive: () => hostActive
   }
   editorsByPrefix.set(prefix, api)
   loadFromHidden()
@@ -479,12 +470,29 @@ function ensureAllCouponScheduleEditors(form) {
   form.querySelectorAll('[id$="-coupon-schedule-editor"]').forEach((root) => {
     const prefix = String(root.id || '').replace(/-coupon-schedule-editor$/, '')
     if (!prefix) return
+    normalizeCouponEngineSyncFields(form, prefix)
     const editor = mountCouponScheduleEditor(prefix, root, form)
     editor?.syncHiddenFields?.()
   })
 }
 
+/**
+ * Enable interactive validation only on the selected coupon-bearing family.
+ * Inactive editors disable controls and clear `required` so they cannot block submit.
+ */
+function setActiveCouponScheduleEditor(form, activePrefix) {
+  if (!form) return
+  ensureAllCouponScheduleEditors(form)
+  form.querySelectorAll('[id$="-coupon-schedule-editor"]').forEach((root) => {
+    const prefix = String(root.id || '').replace(/-coupon-schedule-editor$/, '')
+    const editor = editorsByPrefix.get(prefix)
+    if (!editor) return
+    editor.setHostActive(Boolean(activePrefix) && prefix === activePrefix)
+  })
+}
+
 function syncCouponScheduleEditorAfterMarket(prefix, form) {
+  normalizeCouponEngineSyncFields(form, prefix)
   const editor = refreshCouponScheduleEditor(prefix, form)
   if (!editor) return
   editor.loadFromHidden()
@@ -492,8 +500,14 @@ function syncCouponScheduleEditorAfterMarket(prefix, form) {
 
 /** Recompute hidden annualCouponRatePct / firstCouponDate / schedule without reloading rows. */
 function resyncCouponScheduleEngineFields(prefix, form) {
+  normalizeCouponEngineSyncFields(form, prefix)
   const editor = editorsByPrefix.get(prefix) || refreshCouponScheduleEditor(prefix, form)
   editor?.syncHiddenFields?.()
+}
+
+/** Test-only: drop mounted editor instances between cases. */
+function resetCouponScheduleEditorsForTests() {
+  editorsByPrefix.clear()
 }
 
 export {
@@ -501,9 +515,12 @@ export {
   clampCouponRatePct,
   deriveCouponScheduleTos,
   resolveAnnualCouponRatePctFromRows,
+  normalizeCouponEngineSyncFields,
   mountCouponScheduleEditor,
   refreshCouponScheduleEditor,
   ensureAllCouponScheduleEditors,
+  setActiveCouponScheduleEditor,
   syncCouponScheduleEditorAfterMarket,
-  resyncCouponScheduleEngineFields
+  resyncCouponScheduleEngineFields,
+  resetCouponScheduleEditorsForTests
 }

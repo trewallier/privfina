@@ -180,6 +180,8 @@ describe('commercial investment UI markup contracts', () => {
     expect(commercialCouponProfile).toContain('commercial-investment-coupon-schedule-editor.js')
     expect(commercialHost).toContain('ensureAllCouponScheduleEditors')
     expect(commercialHost).toContain('syncCouponScheduleEditorAfterMarket')
+    expect(commercialHost).toContain('setActiveCouponScheduleEditor')
+    expect(commercialHost).toContain('normalizeCouponEngineSyncFields')
     expect(commercialHost).not.toContain('bmap-dkj-base-yield-pct')
     expect(commercialHost).not.toContain('pmap-previous-year-inflation-pct')
     expect(indexHtml).toContain('id="commercial-investment-market-attribution"')

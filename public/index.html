@@ -242,29 +242,51 @@
         color: var(--muted, #5c6570);
       }
 
-      .coupon-schedule-table {
-        width: 100%;
+      .coupon-schedule-header,
+      .coupon-schedule-period {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) auto;
+        gap: 8px;
+        align-items: end;
         min-width: 0;
-        border-collapse: collapse;
-        background: transparent;
       }
 
-      .coupon-schedule-table th,
-      .coupon-schedule-table td {
-        padding: 6px 4px;
-        border-bottom: 1px solid var(--border);
-        white-space: normal;
-        vertical-align: middle;
+      .coupon-schedule-header {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0 2px;
       }
 
-      .coupon-schedule-table input[type='date'],
-      .coupon-schedule-table input[type='number'] {
+      .coupon-schedule-rows {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .coupon-schedule-period {
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+
+      .coupon-schedule-from-wrap,
+      .coupon-schedule-rate-wrap {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .coupon-schedule-field-label {
+        font-size: 0.8rem;
+      }
+
+      .coupon-schedule-period input[type='date'],
+      .coupon-schedule-period input[type='number'] {
         width: 100%;
         min-width: 0;
       }
 
       .coupon-schedule-actions-col {
-        width: 1%;
         white-space: nowrap;
       }
 
@@ -285,34 +307,35 @@
         cursor: not-allowed;
       }
 
-      .coupon-schedule-mobile {
-        display: none;
-        gap: 10px;
-      }
-
-      .coupon-schedule-period {
-        margin: 0;
-        padding: 10px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        display: grid;
-        gap: 8px;
-        min-width: 0;
-      }
-
-      .coupon-schedule-period legend {
-        padding: 0 4px;
-        font-size: 0.85rem;
-        font-weight: 600;
-      }
-
       @media (max-width: 720px) {
-        .coupon-schedule-desktop {
+        .coupon-schedule-header {
           display: none;
         }
 
-        .coupon-schedule-mobile {
-          display: grid;
+        .coupon-schedule-period {
+          grid-template-columns: 1fr;
+          padding: 10px;
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          align-items: stretch;
+        }
+
+        .coupon-schedule-field-label {
+          display: inline;
+        }
+      }
+
+      @media (min-width: 721px) {
+        .coupon-schedule-field-label {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
         }
       }
 
@@ -2389,8 +2412,8 @@
                     </div>
                     <div id="pmap-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="pmap"></div>
                     <div class="coupon-engine-sync" hidden>
-                      <input id="pmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
-                      <input id="pmap-first-coupon-date" name="firstCouponDate" type="date" />
+                      <input id="pmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="pmap-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
                       <input id="pmap-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
                       <input id="pmap-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
@@ -2419,8 +2442,8 @@
                     </div>
                     <div id="fixmap-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="fixmap"></div>
                     <div class="coupon-engine-sync" hidden>
-                      <input id="fixmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
-                      <input id="fixmap-first-coupon-date" name="firstCouponDate" type="date" />
+                      <input id="fixmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="fixmap-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
                       <input id="fixmap-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
                       <input id="fixmap-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
@@ -2450,8 +2473,8 @@
                     </div>
                     <div id="ktv-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="ktv"></div>
                     <div class="coupon-engine-sync" hidden>
-                      <input id="ktv-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
-                      <input id="ktv-first-coupon-date" name="firstCouponDate" type="date" />
+                      <input id="ktv-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="ktv-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
                       <input id="ktv-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
                       <input id="ktv-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                       <input id="ktv-period-months" name="periodMonths" type="hidden" value="" autocomplete="off" />
@@ -2481,8 +2504,8 @@
                     </div>
                     <div id="mapp-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="mapp"></div>
                     <div class="coupon-engine-sync" hidden>
-                      <input id="mapp-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
-                      <input id="mapp-first-coupon-date" name="firstCouponDate" type="date" />
+                      <input id="mapp-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="mapp-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
                       <input id="mapp-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
                       <input id="mapp-coupon-frequency-months" name="couponFrequencyMonths" type="hidden" value="" autocomplete="off" />
                       <input id="mapp-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
@@ -2512,8 +2535,8 @@
                     </div>
                     <div id="baba-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="baba"></div>
                     <div class="coupon-engine-sync" hidden>
-                      <input id="baba-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
-                      <input id="baba-first-coupon-date" name="firstCouponDate" type="date" />
+                      <input id="baba-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="baba-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
                       <input id="baba-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
                       <input id="baba-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>
@@ -2542,8 +2565,8 @@
                     </div>
                     <div id="bmap-coupon-schedule-editor" class="coupon-schedule-editor" data-prefix="bmap"></div>
                     <div class="coupon-engine-sync" hidden>
-                      <input id="bmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="number" min="0" max="100" step="0.01" required />
-                      <input id="bmap-first-coupon-date" name="firstCouponDate" type="date" />
+                      <input id="bmap-annual-coupon-rate-pct" name="annualCouponRatePct" type="hidden" value="" autocomplete="off" />
+                      <input id="bmap-first-coupon-date" name="firstCouponDate" type="hidden" value="" autocomplete="off" />
                       <input id="bmap-coupon-schedule" name="couponSchedule" type="hidden" value="" autocomplete="off" />
                       <input id="bmap-day-count-convention" name="dayCountConvention" type="hidden" value="" autocomplete="off" />
                     </div>

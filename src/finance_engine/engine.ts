@@ -230,6 +230,7 @@ export {
   generateBabaAnnualCouponFlows
 } from './instruments/baba'
 export {
+  actActIsdaYearFraction,
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,
   calendarDaysBetweenIso,

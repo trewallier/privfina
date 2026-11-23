@@ -152,6 +152,7 @@ export {
 export type { BabaRateOutputs, BabaSpecInputs } from './instruments/baba'
 
 export {
+  actActIsdaYearFraction,
   accrueInterestAmount,
   annualizeDkjSimpleReturnPct,
   calendarDaysBetweenIso,

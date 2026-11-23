@@ -72,9 +72,9 @@ inputs:
     label: Day Count Convention
     required: false
     unit: text
-    description: How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360).
+    description: How days are counted for accrued interest. Defaults to actual days over a 360-day year (ACT/360). Offering transcriptions often publish ACT/ACT (Tényleges/tényleges); the shared accrued helper uses ISDA Actual/Actual year fraction for that value.
     constraints:
-      enum: [ACT/360, ACT/365F, 30E/360]
+      enum: [ACT/360, ACT/365F, ACT/ACT, 30E/360]
 
   - name: couponSchedule
     type: array
@@ -128,7 +128,7 @@ assumptions:
   - Coupon payment frequency is annual (product-type constant; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - FixMÁP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
-  - Default day-count for accrued interest is ACT/360 unless overridden per series or input.
+  - Default day-count for accrued interest is ACT/360 unless overridden per series, offering transcription, or input. Published ÁKK offerings that state Tényleges/tényleges autofill ACT/ACT.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent.
   - The first coupon period may differ from a regular annual period.

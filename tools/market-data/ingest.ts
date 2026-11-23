@@ -355,11 +355,13 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   if (!options.skipSettlementCalendar) {
     const tipYears = previous.settlementCalendar?.years.map((y) => y.year) ?? []
     const currentYear = Number(budapestTodayIso().slice(0, 4))
-    const years =
-      options.settlementCalendarYears ??
-      [...new Set([currentYear - 1, currentYear, currentYear + 1, ...tipYears])].sort(
-        (a, b) => a - b
-      )
+    // Required: current + prior year (must be on hub). Optional: next year + tip years
+    // not already required — missing optional years soft-skip so tip blocks stay (ADR 0046).
+    const requiredYears =
+      options.settlementCalendarYears ?? [currentYear - 1, currentYear]
+    const optionalYears = options.settlementCalendarYears
+      ? []
+      : [...new Set([currentYear + 1, ...tipYears])].filter((y) => !requiredYears.includes(y))
 
     if (options.settlementCalendarDir) {
       const hubHtml = await readFile(
@@ -368,7 +370,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
       )
       const xlsxByFileName: Record<string, Uint8Array> = {}
       const discovered = discoverSettlementCalendarFiles(hubHtml)
-      for (const year of years) {
+      const wantYears = [...new Set([...requiredYears, ...optionalYears])]
+      for (const year of wantYears) {
         const pick = pickLatestSettlementCalendarFile(discovered, year)
         if (!pick) continue
         const bytes = new Uint8Array(
@@ -378,7 +381,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
       }
       const fetched = await fetchMnbSettlementCalendars({
         rawDir: path.join(options.rawDir, 'mnb-settlement'),
-        years,
+        requiredYears,
+        optionalYears,
         hubHtml,
         xlsxByFileName,
         fetchImpl: options.fetchImpl
@@ -388,10 +392,11 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         hubUrl: fetched.hubUrl
       })
     } else if (!offlineAkk) {
-      // Live / non-fixture runs: hard-fail on MNB hub/XLSX fetch or normalize.
+      // Live / non-fixture runs: hard-fail hub/required years / normalize; optional soft-skip.
       const fetched = await fetchMnbSettlementCalendars({
         rawDir: path.join(options.rawDir, 'mnb-settlement'),
-        years,
+        requiredYears,
+        optionalYears,
         fetchImpl: options.fetchImpl
       })
       settlementCalendarUpdate = normalizeSettlementCalendars(fetched.fetched, {

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   discoverSettlementCalendarFiles,
+  fetchMnbSettlementCalendars,
   pickLatestSettlementCalendarFile
 } from '../tools/market-data/fetch-mnb-settlement-calendar.ts'
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
@@ -16,7 +17,7 @@ import {
   normalizeSettlementCalendarXlsx,
   normalizeSettlementCalendars
 } from '../tools/market-data/normalize-mnb-settlement-calendar.ts'
-import { assertPublishedTree } from '../tools/market-data/validate.ts'
+import { assertPublishedTree, ValidateError, validateMarketTree } from '../tools/market-data/validate.ts'
 import type { AkkEnvelope, SettlementCalendarFile } from '../tools/market-data/types.ts'
 import { SETTLEMENT_CALENDAR_REF_PATH } from '../tools/market-data/types.ts'
 
@@ -36,6 +37,77 @@ function sha256(bytes: Uint8Array): string {
 }
 
 describe('MNB settlement calendar (ADR 0046)', () => {
+  it('soft-skips optional hub-missing years and hard-fails required gaps', async () => {
+    const hub = await readFile(path.join(CAL_DIR, 'hub.html'), 'utf8')
+    const revBytes = await loadXlsx('2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx')
+    const fetched = await fetchMnbSettlementCalendars({
+      rawDir: path.join(await mkdtemp(path.join(tmpdir(), 'sc-opt-')), 'raw'),
+      requiredYears: [2026],
+      optionalYears: [2028, 2029],
+      hubHtml: hub,
+      xlsxByFileName: {
+        '2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx': revBytes
+      }
+    })
+    expect(fetched.fetched.map((f) => f.year)).toEqual([2026])
+    expect(fetched.skippedOptionalYears).toEqual([2028, 2029])
+
+    await expect(
+      fetchMnbSettlementCalendars({
+        rawDir: path.join(await mkdtemp(path.join(tmpdir(), 'sc-req-')), 'raw'),
+        requiredYears: [2030],
+        optionalYears: [2026],
+        hubHtml: hub,
+        xlsxByFileName: {
+          '2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx': revBytes
+        }
+      })
+    ).rejects.toThrow(/required year 2030/)
+  })
+
+  it('validate rejects closed/open overlaps and wrong weekday kinds', async () => {
+    const catalog = JSON.parse(
+      await readFile(path.join(FIXTURES, 'catalog.json'), 'utf8')
+    ) as AkkEnvelope
+    const rates = JSON.parse(
+      await readFile(path.join(FIXTURES, 'network-rates.json'), 'utf8')
+    ) as AkkEnvelope
+    const snapshot = normalizeAkkSnapshots(catalog, rates, { requireFamilies: false })
+    const revBytes = await loadXlsx('2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx')
+    const good = normalizeSettlementCalendars(
+      [
+        {
+          year: 2026,
+          fileName: '2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx',
+          url: 'https://www.mnb.hu/letoltes/2026-evi-elszamolasforgalmi-naptar-2026-11-16.xlsx',
+          contentDigest: sha256(revBytes),
+          xlsxBytes: revBytes,
+          rawPath: 'x'
+        }
+      ],
+      { generatedAt: '2026-11-22T00:00:00.000Z' }
+    )
+    const base = mergeSnapshot(emptyMarketTree(), snapshot, {
+      settlementCalendar: good,
+      generatedAt: good.generatedAt
+    }).tree
+
+    const weekendClosed = structuredClone(base)
+    weekendClosed.settlementCalendar!.years[0].closed = ['2026-01-03']
+    weekendClosed.settlementCalendar!.years[0].open = []
+    expect(() => validateMarketTree(weekendClosed)).toThrow(/must be a weekday/)
+
+    const overlap = structuredClone(base)
+    overlap.settlementCalendar!.years[0].closed = ['2026-01-02']
+    overlap.settlementCalendar!.years[0].open = ['2026-01-02']
+    expect(() => validateMarketTree(overlap)).toThrow(/both closed and open/)
+
+    const weekdayOpen = structuredClone(base)
+    weekdayOpen.settlementCalendar!.years[0].closed = []
+    weekdayOpen.settlementCalendar!.years[0].open = ['2026-01-02']
+    expect(() => validateMarketTree(weekdayOpen)).toThrow(/must be a weekend/)
+  })
+
   it('discovers hub links and prefers dated revision for a year', async () => {
     const hub = await readFile(path.join(CAL_DIR, 'hub.html'), 'utf8')
     const discovered = discoverSettlementCalendarFiles(hub)

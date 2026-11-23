@@ -17,12 +17,14 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0034 (ÁKK publ
 ## Decision
 
 - In the **same** `market-data.yml` ingest job as ADR 0034–0045, also publish an MNB settlement calendar:
-  - Discover yearly XLSX links from the MNB hub page; for each year of interest (Europe/Budapest current ± 1, plus years already on tip) pick the **latest revision** (prefer dated filenames over the undated base).
-  - Parse with SheetJS CE (`xlsx@0.20.3` CDN tarball — Actions/tooling-only). Raw XLSX is ephemeral — **never committed**.
-  - Hard-fail on hub/fetch/normalize errors (same posture as BUBOR/inflation; not soft-fail).
+  - Discover yearly XLSX links from the MNB hub page; pick the **latest revision** per year (prefer dated filenames over the undated base).
+  - **Required years** (hard-fail if missing): Europe/Budapest **current** and **current−1**.
+  - **Optional years** (soft-skip with warning if missing): **current+1** and years already on tip — merge keeps tip blocks for skipped years.
+  - Parse with SheetJS CE (`xlsx@0.20.3` CDN tarball — Actions/tooling-only). Raw XLSX is ephemeral in ingest — **never committed** to the `market-data` tip (Vitest fixtures under `tests/fixtures/` may pin sample XLSX, same posture as BUBOR sample `.xls`).
+  - Hard-fail on empty hub / required-year gaps / corrupt XLSX / normalize errors (same posture as BUBOR/inflation; not soft-fail for those).
 - Publish compact JSON at `data/market/v2/refs/settlement-calendar.json` (schemaVersion 2):
   - `calendarId: HU-VIBER`, `timezone: Europe/Budapest`.
-  - Per-year exception blocks relative to Mon–Fri default: `closed[]` (weekday `M`), `open[]` (weekend `E`).
+  - Per-year exception blocks relative to Mon–Fri default: `closed[]` (weekday `M`), `open[]` (weekend `E`); validate `closed ∩ open = ∅`, closed ⊆ weekdays, open ⊆ weekends.
   - Source id `mnb-elszamolasforgalmi-naptar`; record discovered filenames + content digests.
 - **Merge policy (unlike BUBOR):** year blocks are **replace-on-newer-source** when the chosen file digest changes (mid-year MNB corrections must apply). Years not re-fetched stay on tip. Digest excludes `generatedAt`.
 - Include `refs/settlement-calendar.json` in `manifest.digests` and `manifest.refs.settlementCalendar`.
@@ -33,7 +35,7 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0034 (ÁKK publ
 ## Consequences
 
 - Official HU settlement exceptions are available under the published market tree for later gov-security and salary consumers.
-- First ingest against a tip without the file adds current±1 years and triggers one digest-gated commit.
+- First ingest against a tip without the file adds required years (and optional years when present on the hub) and triggers one digest-gated commit.
 - Mid-year MNB revisions rewrite the affected year block instead of failing ingest.
 - Relocated Saturdays become expressible via `open[]` in engine rolling.
 

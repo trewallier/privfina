@@ -109,13 +109,18 @@ export function normalizeSettlementCalendarXlsx(
 
   const closed: string[] = []
   const open: string[] = []
-  let monthsSeen = 0
+  const monthsSeen = new Set<number>()
 
   for (let r = headerRowIndex + 1; r < rows.length; r++) {
     const row = rows[r] ?? []
     const month0 = normalizeMonthLabel(row[0])
     if (month0 == null) continue
-    monthsSeen += 1
+    if (monthsSeen.has(month0)) {
+      throw new NormalizeSettlementCalendarError(
+        `Settlement calendar ${options.fileName}: duplicate month row for month ${month0 + 1}`
+      )
+    }
+    monthsSeen.add(month0)
     const dim = daysInMonth(options.year, month0)
     for (const c of dayCols) {
       const day = Number(header[c])
@@ -139,9 +144,9 @@ export function normalizeSettlementCalendarXlsx(
     }
   }
 
-  if (monthsSeen < 12) {
+  if (monthsSeen.size !== 12) {
     throw new NormalizeSettlementCalendarError(
-      `Settlement calendar ${options.fileName}: expected 12 months, found ${monthsSeen}`
+      `Settlement calendar ${options.fileName}: expected 12 months, found ${monthsSeen.size}`
     )
   }
 

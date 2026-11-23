@@ -17,8 +17,16 @@ export interface DiscoveredSettlementCalendarFile {
 
 export interface FetchMnbSettlementCalendarOptions {
   rawDir: string
-  /** Years to fetch (typically Budapest current ± 1 plus tip years). */
-  years: number[]
+  /**
+   * Years that must exist on the hub (hard-fail if missing).
+   * Typically Europe/Budapest current and current−1.
+   */
+  requiredYears: number[]
+  /**
+   * Years to fetch when present (tip years / current+1). Missing years are
+   * skipped with a warning so merge can keep tip blocks (ADR 0046).
+   */
+  optionalYears?: number[]
   fetchImpl?: typeof fetch
   hubUrl?: string
   /** Optional offline hub HTML (tests). */
@@ -42,6 +50,8 @@ export interface FetchMnbSettlementCalendarResult {
   hubUrl: string
   discovered: DiscoveredSettlementCalendarFile[]
   fetched: FetchedSettlementCalendarYear[]
+  /** Optional years skipped because the hub had no XLSX. */
+  skippedOptionalYears: number[]
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -141,8 +151,9 @@ async function fetchBytes(
 }
 
 /**
- * Discover + fetch MNB elszámolásforgalmi XLSX calendars for requested years (ADR 0046).
- * Hard-fail after retries.
+ * Discover + fetch MNB elszámolásforgalmi XLSX calendars (ADR 0046).
+ * Required years hard-fail when missing; optional years soft-skip with a warning.
+ * Hub with zero links / XLSX fetch/normalize failures still hard-fail.
  */
 export async function fetchMnbSettlementCalendars(
   options: FetchMnbSettlementCalendarOptions
@@ -151,7 +162,10 @@ export async function fetchMnbSettlementCalendars(
   const retries = options.retries ?? 3
   const backoffMs = options.backoffMs ?? 500
   const hubUrl = options.hubUrl ?? MNB_SETTLEMENT_CALENDAR_HUB_URL
-  const years = [...new Set(options.years)].sort((a, b) => a - b)
+  const requiredYears = [...new Set(options.requiredYears)].sort((a, b) => a - b)
+  const optionalYears = [...new Set(options.optionalYears ?? [])]
+    .filter((y) => !requiredYears.includes(y))
+    .sort((a, b) => a - b)
 
   await mkdir(options.rawDir, { recursive: true })
 
@@ -168,15 +182,11 @@ export async function fetchMnbSettlementCalendars(
   }
 
   const fetched: FetchedSettlementCalendarYear[] = []
-  for (const year of years) {
+  const skippedOptionalYears: number[] = []
+
+  async function fetchOne(year: number): Promise<FetchedSettlementCalendarYear | null> {
     const pick = pickLatestSettlementCalendarFile(discovered, year)
-    if (!pick) {
-      throw new Error(
-        `No MNB elszámolásforgalmi XLSX for year ${year} on hub ${hubUrl} (discovered ${discovered
-          .map((d) => d.fileName)
-          .join(', ')})`
-      )
-    }
+    if (!pick) return null
 
     let xlsxBytes = options.xlsxByFileName?.[pick.fileName]
     if (!xlsxBytes) {
@@ -192,15 +202,40 @@ export async function fetchMnbSettlementCalendars(
     const contentDigest = createHash('sha256').update(xlsxBytes).digest('hex')
     const rawPath = path.join(options.rawDir, pick.fileName)
     await writeFile(rawPath, xlsxBytes)
-    fetched.push({
+    return {
       year,
       fileName: pick.fileName,
       url: pick.url,
       contentDigest,
       xlsxBytes,
       rawPath
-    })
+    }
   }
 
-  return { hubUrl, discovered, fetched }
+  for (const year of requiredYears) {
+    const row = await fetchOne(year)
+    if (!row) {
+      throw new Error(
+        `No MNB elszámolásforgalmi XLSX for required year ${year} on hub ${hubUrl} (discovered ${discovered
+          .map((d) => d.fileName)
+          .join(', ')})`
+      )
+    }
+    fetched.push(row)
+  }
+
+  for (const year of optionalYears) {
+    const row = await fetchOne(year)
+    if (!row) {
+      skippedOptionalYears.push(year)
+      console.warn(
+        `[market-data] MNB settlement calendar: optional year ${year} not on hub; keeping tip block if present`
+      )
+      continue
+    }
+    fetched.push(row)
+  }
+
+  fetched.sort((a, b) => a.year - b.year)
+  return { hubUrl, discovered, fetched, skippedOptionalYears }
 }

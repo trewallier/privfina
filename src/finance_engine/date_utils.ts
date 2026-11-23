@@ -102,7 +102,11 @@ export function toHolidaySet(holidays: ReadonlyArray<string> = []): Set<string> 
 
 export function isBusinessDayUtc(
   date: Date,
-  holidays: ReadonlySet<string> | BusinessCalendar | BusinessCalendarSets = new Set()
+  holidays:
+    | ReadonlyArray<string>
+    | ReadonlySet<string>
+    | BusinessCalendar
+    | BusinessCalendarSets = new Set()
 ): boolean {
   const { closed, open } = toBusinessCalendarSets(holidays)
   const iso = formatIsoDate(date)
@@ -113,6 +117,24 @@ export function isBusinessDayUtc(
     return false
   }
   return !closed.has(iso)
+}
+
+/**
+ * Flatten multi-year settlement exception blocks into one BusinessCalendar
+ * (ADR 0046 consumers of refs/settlement-calendar.json).
+ */
+export function businessCalendarFromYearBlocks(
+  years: ReadonlyArray<{ closed?: ReadonlyArray<string>; open?: ReadonlyArray<string> }>
+): BusinessCalendar {
+  const closed: string[] = []
+  const open: string[] = []
+  for (const y of years) {
+    if (y.closed) closed.push(...y.closed)
+    if (y.open) open.push(...y.open)
+  }
+  closed.sort()
+  open.sort()
+  return { closed, open }
 }
 
 function shiftByDays(date: Date, deltaDays: number): Date {

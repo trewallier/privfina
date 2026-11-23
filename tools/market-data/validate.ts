@@ -372,14 +372,30 @@ function validateSettlementCalendar(tree: MarketTreeState): void {
     }
     validateIsoDateList(block.closed, `settlementCalendar ${block.year} closed`)
     validateIsoDateList(block.open, `settlementCalendar ${block.year} open`)
+    const openSet = new Set(block.open)
     for (const d of block.closed) {
       if (!d.startsWith(`${block.year}-`)) {
         throw new ValidateError(`closed date ${d} not in year ${block.year}`)
+      }
+      if (openSet.has(d)) {
+        throw new ValidateError(
+          `settlementCalendar ${block.year}: date ${d} is in both closed and open`
+        )
+      }
+      if (isWeekendIso(d)) {
+        throw new ValidateError(
+          `settlementCalendar ${block.year}: closed date ${d} must be a weekday`
+        )
       }
     }
     for (const d of block.open) {
       if (!d.startsWith(`${block.year}-`)) {
         throw new ValidateError(`open date ${d} not in year ${block.year}`)
+      }
+      if (!isWeekendIso(d)) {
+        throw new ValidateError(
+          `settlementCalendar ${block.year}: open date ${d} must be a weekend`
+        )
       }
     }
   }
@@ -410,6 +426,13 @@ function validateIsoDateList(list: unknown, label: string): void {
     }
     prev = d
   }
+}
+
+/** UTC weekday for YYYY-MM-DD (Sat/Sun = weekend). */
+function isWeekendIso(iso: string): boolean {
+  const [y, m, d] = iso.split('-').map((x) => Number(x))
+  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay()
+  return weekday === 0 || weekday === 6
 }
 
 function validatePriceCalendar(tree: MarketTreeState): void {

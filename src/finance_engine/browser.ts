@@ -14,6 +14,7 @@ export {
   isWeekendUtc,
   toHolidaySet,
   toBusinessCalendarSets,
+  businessCalendarFromYearBlocks,
   isBusinessDayUtc,
   rollBusinessDay,
   lastBusinessDayOnOrBefore

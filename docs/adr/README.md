@@ -43,6 +43,7 @@ Recent decisions
 - `0044-mak-ktv-public-offering-ingest.md` — extend ADR 0041 offering capture to Magyar Államkötvény (MÁK); machine id `ktv` / ÁKK label `KTV`; auction PDF schedule parser; product/SPA deferred (ROADMAP §6j / §6k).
 - `0045-mnb-bubor-published-refs.md` — same workflow also fetches MNB `bubor2.xls`; publishes append-only `refs/bubor.json` (full history on first tip; ROADMAP §6o).
 - `0046-mnb-settlement-calendar-published-refs.md` — same workflow also fetches MNB elszámolásforgalmi XLSX calendars; publishes `refs/settlement-calendar.json` (`HU-VIBER` closed/open exceptions; year-replace on revision; ROADMAP §6p).
+- `0047-mak-float-bubor-resolve-without-coupon-write.md` — FLOAT MÁK resolves 3M BUBOR via YAML `indexReset` + VIBER T−3 at runtime; never writes derived rates to `families/ktv/coupons/` (ROADMAP §6q).
 - Bundle lineage persistence (ADR 0012 / 0013 consequences) is implemented in code; see `InstrumentBundle` in `src/finance_engine/models.ts`.
 - Evaluation-result caching lives in `src/finance_engine/eval_cache.ts` (browser dual-surface `public/eval-cache.js` retired under ROADMAP §6a / ADR 0032).
 

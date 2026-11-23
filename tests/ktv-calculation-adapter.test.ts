@@ -41,4 +41,14 @@ describe('ktv calculation adapter', () => {
     expect(outputs.accruedInterestAmount).toBeCloseTo(expected.accruedInterestAmount, 10)
     expect(outputs.purchaseAmount).toBeCloseTo(expected.purchaseAmount, 10)
   })
+
+  it('FLOAT 2027/B with periodMonths uses ACT/360 accrual (zero on period turn)', () => {
+    const { inputs, expected } = readExample(
+      'docs/product-specs/products/government-securities/ktv/examples/float-2027b-case.yaml'
+    )
+    const outputs = calculateKtvFromSpecInputs({ ...inputs, periodMonths: 3 })
+    expect(outputs.annualCouponRatePct).toBe(expected.annualCouponRatePct)
+    expect(outputs.accruedInterestAmount).toBe(0)
+    expect(outputs.purchaseAmount).toBe(expected.purchaseAmount)
+  })
 })

@@ -552,32 +552,52 @@ export function buildMarketAutofillPatch({
     if (isKtvFloat) {
       const reset = indexReset || KTV_INDEX_RESET
       setField('dayCountConvention', reset.dayCountConvention || 'ACT/360')
-      const paymentDates = Array.isArray(offering?.paymentDates)
-        ? offering.paymentDates
-        : undefined
-      const turns = listKtvFloatPeriodTurnsIso({
-        issueDate: series?.issue || fields.issueDate,
-        maturityDate: series?.mat || fields.maturityDate,
-        paymentDates,
-        periodMonths: reset.periodMonths,
-        firstCouponDate: firstCoupon
-      })
-      const periodTurnIso = pickCurrentFloatPeriodTurnIso(turns, onIso)
-      const resolved =
-        periodTurnIso != null
-          ? resolveMakFloatAnnualRatePct({
-              periodTurnIso,
-              indexReset: reset,
-              bubor,
-              calendar: settlementCalendar
-            })
-          : null
-      if (resolved != null) {
-        setField('annualCouponRatePct', resolved)
-      } else {
+      setField('periodMonths', reset.periodMonths || 3)
+      const issueIso = series?.issue || fields.issueDate
+      const matIso = series?.mat || fields.maturityDate
+      if (!issueIso || !matIso) {
         softHints.push(
-          'FLOAT period rate unavailable — enter annual coupon rate manually (BUBOR or settlement calendar missing).'
+          'FLOAT period rate unavailable — enter annual coupon rate manually (series issue/maturity missing).'
         )
+      } else {
+        const paymentDates = Array.isArray(offering?.paymentDates)
+          ? offering.paymentDates
+          : undefined
+        const turns = listKtvFloatPeriodTurnsIso({
+          issueDate: issueIso,
+          maturityDate: matIso,
+          paymentDates,
+          periodMonths: reset.periodMonths,
+          firstCouponDate: firstCoupon
+        })
+        const periodTurnIso = pickCurrentFloatPeriodTurnIso(turns, onIso)
+        if (periodTurnIso == null) {
+          softHints.push(
+            'FLOAT period rate unavailable — enter annual coupon rate manually (no period turn on/before purchase date).'
+          )
+        } else if (!bubor) {
+          softHints.push(
+            'FLOAT period rate unavailable — enter annual coupon rate manually (BUBOR refs missing).'
+          )
+        } else if (!settlementCalendar) {
+          softHints.push(
+            'FLOAT period rate unavailable — enter annual coupon rate manually (settlement calendar missing).'
+          )
+        } else {
+          const resolved = resolveMakFloatAnnualRatePct({
+            periodTurnIso,
+            indexReset: reset,
+            bubor,
+            calendar: settlementCalendar
+          })
+          if (resolved != null) {
+            setField('annualCouponRatePct', resolved)
+          } else {
+            softHints.push(
+              'FLOAT period rate unavailable — enter annual coupon rate manually (no BUBOR fixing on observation date).'
+            )
+          }
+        }
       }
     } else {
       const dayCount = offering?.dayCount || series?.dayCount

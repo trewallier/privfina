@@ -5,6 +5,7 @@ import {
   KTV_FRONTEND_FIELD_ADAPTER,
   orderedSpecFields
 } from '../public/controller/ktv-form.js'
+// KTV_INDEX_RESET is re-exported via product-spec through KTV_PRODUCT_SPEC.indexReset
 
 describe('ktv frontend form metadata seam', () => {
   it('keeps frontend field metadata aligned with KTV product spec inputs', () => {
@@ -43,6 +44,13 @@ describe('ktv frontend form metadata seam', () => {
     const loadedSpec = loadKtvProductSpecYamlFromFiles() as any
     expect(KTV_PRODUCT_SPEC.denominationUnit).toBe(10000)
     expect(loadedSpec.denominationUnit).toBe(10000)
+  })
+
+  it('locks embedded KTV_INDEX_RESET to product.yaml indexReset', () => {
+    const loadedSpec = loadKtvProductSpecYamlFromFiles() as any
+    expect(loadedSpec.indexReset).toEqual(KTV_PRODUCT_SPEC.indexReset)
+    expect(KTV_PRODUCT_SPEC.referenceIndex).toBe(loadedSpec.referenceIndex)
+    expect(KTV_PRODUCT_SPEC.referenceIndex).toBe('bubor')
   })
 
   it('maps KTV fields onto dedicated host controls named like YAML', () => {

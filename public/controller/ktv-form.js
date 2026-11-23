@@ -125,6 +125,8 @@ function setKtvFieldVisibility(investmentForm, visible) {
 }
 
 function mapFormDataToKtvSpecInputs(formData) {
+  const periodMonthsRaw = String(formData.get('periodMonths') || '').trim()
+  const periodMonths = periodMonthsRaw ? Number(periodMonthsRaw) : undefined
   return {
     principal: parseMoneyAmount(formData.get('principal')),
     annualCouponRatePct: Number(formData.get('annualCouponRatePct')),
@@ -133,7 +135,11 @@ function mapFormDataToKtvSpecInputs(formData) {
     maturityDate: String(formData.get('maturityDate') || '').trim(),
     firstCouponDate: String(formData.get('firstCouponDate') || '').trim() || undefined,
     dayCountConvention: String(formData.get('dayCountConvention') || '').trim() || undefined,
-    couponSchedule: parseCouponScheduleField(formData.get('couponSchedule'))
+    couponSchedule: parseCouponScheduleField(formData.get('couponSchedule')),
+    periodMonths:
+      periodMonths != null && Number.isFinite(periodMonths) && periodMonths > 0
+        ? periodMonths
+        : undefined
   }
 }
 
@@ -165,7 +171,8 @@ function mapKtvSpecInputsToInvestmentBundleInput(specInputs, meta = {}) {
     annualCouponRatePct: specInputs.annualCouponRatePct,
     firstCouponDate: specInputs.firstCouponDate,
     dayCountConvention: specInputs.dayCountConvention,
-    couponSchedule: specInputs.couponSchedule
+    couponSchedule: specInputs.couponSchedule,
+    periodMonths: specInputs.periodMonths
   }
 }
 

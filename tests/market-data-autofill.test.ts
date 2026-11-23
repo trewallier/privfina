@@ -371,9 +371,10 @@ describe('market-data-autofill', () => {
     })
     expect(float2027.fields.annualCouponRatePct).toBe(5.5)
     expect(float2027.fields.dayCountConvention).toBe('ACT/360')
+    expect(float2027.fields.periodMonths).toBe(3)
     expect(float2027.softHints).toEqual([])
 
-    const missing = buildMarketAutofillPatch({
+    const missingBubor = buildMarketAutofillPatch({
       family: 'ktv',
       series: {
         id: 'A270422B20',
@@ -386,8 +387,23 @@ describe('market-data-autofill', () => {
       settlementCalendar,
       current: { purchaseDate: '2026-11-02' }
     })
-    expect(missing.fields.annualCouponRatePct).toBeUndefined()
-    expect(missing.softHints?.[0]).toMatch(/FLOAT period rate unavailable/i)
+    expect(missingBubor.fields.annualCouponRatePct).toBeUndefined()
+    expect(missingBubor.softHints?.[0]).toMatch(/BUBOR refs missing/i)
+
+    const missingCalendar = buildMarketAutofillPatch({
+      family: 'ktv',
+      series: {
+        id: 'A270422B20',
+        issue: '2020-01-15',
+        mat: '2027-04-22',
+        iType: 'FLOAT'
+      },
+      quote: { d: '2026-11-02' },
+      bubor,
+      settlementCalendar: null,
+      current: { purchaseDate: '2026-11-02' }
+    })
+    expect(missingCalendar.softHints?.[0]).toMatch(/settlement calendar missing/i)
   })
 
   it('does not invent FLOAT rates from coupons for FIX ktv without coupons', () => {

@@ -38,8 +38,8 @@ export type PmapSpecInputs = {
   couponSchedule?: CouponSchedulePeriod[]
 }
 
-function addYearsUtc(date: Date, years: number): Date {
-  return new Date(Date.UTC(date.getUTCFullYear() + years, date.getUTCMonth(), date.getUTCDate()))
+function addMonthsUtc(date: Date, months: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, date.getUTCDate()))
 }
 
 function ensureFiniteNumber(value: number, label: string): number {
@@ -131,12 +131,26 @@ export function derivePmapAccruedInterestAmount(
   })
 }
 
-export function generatePmapAnnualCouponFlows(
+/**
+ * Coupon cash-flow calendar for fixed/stepped coupon bonds.
+ * `frequencyMonths` 12 = annual (PMÁP); 3 = quarterly (FixMÁP). Period cash =
+ * ga × frequencyMonths/12. When `paymentDates` is non-empty, those ISO dates are
+ * the payment calendar (offering / schedule); otherwise walk firstCoupon→maturity
+ * by frequencyMonths.
+ */
+export function generateCouponFlowsWithFrequency(
   specInputs: PmapSpecInputs,
   purchaseAmount: number,
   annualCouponRatePct: number,
-  description = 'PMAP'
+  description: string,
+  frequencyMonths: number,
+  paymentDates?: readonly string[] | null
 ): CashFlow[] {
+  const step = Number(frequencyMonths)
+  if (!Number.isFinite(step) || step <= 0 || 12 % step !== 0) {
+    throw new Error('frequencyMonths must be a positive divisor of 12.')
+  }
+  const periodsPerYear = 12 / step
   const issueDateIso = requireIso(specInputs.issueDate, 'issueDate')
   const maturityDateIso = requireIso(specInputs.maturityDate, 'maturityDate')
   const purchaseDateIso = requireIso(specInputs.purchaseDate, 'purchaseDate')
@@ -156,35 +170,47 @@ export function generatePmapAnnualCouponFlows(
     )
   ]
 
-  let couponDate = firstCouponDateIso
-    ? parseIsoDate(firstCouponDateIso)
-    : addYearsUtc(parseIsoDate(issueDateIso), 1)
-  const maturityDate = parseIsoDate(maturityDateIso)
+  const explicitPayments = (Array.isArray(paymentDates) ? paymentDates : [])
+    .map((entry) => String(entry || '').trim())
+    .filter((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry))
+    .filter((entry) => entry > issueDateIso)
+    .sort()
 
-  while (couponDate.getTime() <= maturityDate.getTime()) {
-    const couponIso = formatIsoDate(couponDate)
-    if (couponIso >= purchaseDateIso) {
-      const period = resolveCoveringCouponPeriod(schedule, couponIso)
-      if (scheduleActive) {
-        // With an explicit schedule: null rate OR missing covering period → skip (no invent).
-        if (!period || period.rate == null || !Number.isFinite(Number(period.rate))) {
-          couponDate = addYearsUtc(couponDate, 1)
-          continue
-        }
-      } else if (period && (period.rate == null || !Number.isFinite(Number(period.rate)))) {
-        couponDate = addYearsUtc(couponDate, 1)
-        continue
+  function pushCouponIfDue(couponIso: string): void {
+    if (couponIso < purchaseDateIso) return
+    if (couponIso > maturityDateIso) return
+    const period = resolveCoveringCouponPeriod(schedule, couponIso)
+    if (scheduleActive) {
+      // With an explicit schedule: null rate OR missing covering period → skip (no invent).
+      if (!period || period.rate == null || !Number.isFinite(Number(period.rate))) {
+        return
       }
-      const ratePct =
-        period && period.rate != null && Number.isFinite(Number(period.rate))
-          ? Number(period.rate)
-          : annualCouponRatePct
-      const couponAmount = (principal * ratePct) / 100
-      flows.push(
-        createCashFlow(couponIso, couponAmount, CashFlowDirection.Inflow, 'investment', description)
-      )
+    } else if (period && (period.rate == null || !Number.isFinite(Number(period.rate)))) {
+      return
     }
-    couponDate = addYearsUtc(couponDate, 1)
+    const ratePct =
+      period && period.rate != null && Number.isFinite(Number(period.rate))
+        ? Number(period.rate)
+        : annualCouponRatePct
+    const couponAmount = (principal * ratePct) / 100 / periodsPerYear
+    flows.push(
+      createCashFlow(couponIso, couponAmount, CashFlowDirection.Inflow, 'investment', description)
+    )
+  }
+
+  if (explicitPayments.length > 0) {
+    for (const couponIso of explicitPayments) {
+      pushCouponIfDue(couponIso)
+    }
+  } else {
+    let couponDate = firstCouponDateIso
+      ? parseIsoDate(firstCouponDateIso)
+      : addMonthsUtc(parseIsoDate(issueDateIso), step)
+    const maturityDate = parseIsoDate(maturityDateIso)
+    while (couponDate.getTime() <= maturityDate.getTime()) {
+      pushCouponIfDue(formatIsoDate(couponDate))
+      couponDate = addMonthsUtc(couponDate, step)
+    }
   }
 
   flows.push(
@@ -192,4 +218,19 @@ export function generatePmapAnnualCouponFlows(
   )
 
   return sortCashFlowsByDate(flows)
+}
+
+export function generatePmapAnnualCouponFlows(
+  specInputs: PmapSpecInputs,
+  purchaseAmount: number,
+  annualCouponRatePct: number,
+  description = 'PMAP'
+): CashFlow[] {
+  return generateCouponFlowsWithFrequency(
+    specInputs,
+    purchaseAmount,
+    annualCouponRatePct,
+    description,
+    PMAP_COUPON_FREQUENCY_MONTHS
+  )
 }

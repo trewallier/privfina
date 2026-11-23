@@ -1,6 +1,6 @@
 # Fixed Hungarian Government Security / Fix Magyar Állampapír (FixMÁP)
 
-Hungarian retail government bond with a fixed (optionally stepped) coupon and annual interest payments.
+Hungarian retail government bond with a fixed (optionally stepped) coupon and quarterly interest payments (ÁKK negyedéves).
 
 ## Scope
 

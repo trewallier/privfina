@@ -5,7 +5,7 @@ family: government-security
 variant: fixmap
 productCode: fixmap
 displayName: Fixed Hungarian Government Security (FixMÁP)
-description: Hungarian retail government bond with a fixed (optionally stepped) coupon schedule, paid once a year.
+description: Hungarian retail government bond with a fixed (optionally stepped) coupon schedule, paid quarterly (ÁKK negyedéves).
 
 category: retail-government-bond
 denominationCurrency: HUF
@@ -123,16 +123,16 @@ outputs:
     description: Total paid at purchase — principal plus accrued interest when applicable.
 
 assumptions:
-  - FixMÁP is modeled as an annual-pay fixed-coupon retail bond; published rates may step across couponSchedule bands.
+  - FixMÁP is modeled as a quarterly-pay fixed-coupon retail bond (ÁKK negyedéves); published rates may step across couponSchedule bands.
   - Commercial inputs use the published effective period coupon rate; do not revive series.prem or base+premium composition.
-  - Coupon payment frequency is annual (product-type constant; not a calculated output).
+  - Coupon payment frequency is quarterly (product-type constant; period cash = ga/4; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - FixMÁP denomination unit is 1 HUF; commercial composer principal defaults to that unit and accepts only multiples of it.
   - Default day-count for accrued interest is ACT/360 unless overridden per series, offering transcription, or input. Published ÁKK offerings that state Tényleges/tényleges autofill ACT/ACT and use Ismertető ACT/ACT period-fraction accrued (quarterly ga/n).
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent.
-  - The first coupon period may differ from a regular annual period.
-  - When a couponSchedule is supplied (including from published market coupons autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity.
+  - The first coupon period may differ from a regular quarterly period (issue→first paymentDates entry).
+  - When a couponSchedule is supplied (including from published market coupons autofill), payment From dates after issue drive the cash calendar when present; periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path walks firstCouponDate by three months at the flat yearly rate through maturity.
   - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem FixMÁP before maturity.
   - Primary-market acquisition is limited to natural persons.

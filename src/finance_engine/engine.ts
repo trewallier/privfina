@@ -192,13 +192,16 @@ export type { PmapRateOutputs, PmapSpecInputs } from './instruments/pmap'
 export {
   derivePmapRateOutputs,
   derivePmapAccruedInterestAmount,
-  generatePmapAnnualCouponFlows
+  generatePmapAnnualCouponFlows,
+  generateCouponFlowsWithFrequency,
+  PMAP_COUPON_FREQUENCY_MONTHS
 } from './instruments/pmap'
 export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
 export {
   deriveFixmapRateOutputs,
   deriveFixmapAccruedInterestAmount,
-  generateFixmapAnnualCouponFlows
+  generateFixmapAnnualCouponFlows,
+  FIXMAP_COUPON_FREQUENCY_MONTHS
 } from './instruments/fixmap'
 export type { KtvRateOutputs, KtvSpecInputs } from './instruments/ktv'
 export {

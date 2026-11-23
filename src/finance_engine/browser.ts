@@ -91,13 +91,16 @@ export {
 export {
   derivePmapRateOutputs,
   derivePmapAccruedInterestAmount,
-  generatePmapAnnualCouponFlows
+  generatePmapAnnualCouponFlows,
+  generateCouponFlowsWithFrequency,
+  PMAP_COUPON_FREQUENCY_MONTHS
 } from './instruments/pmap'
 
 export {
   deriveFixmapRateOutputs,
   deriveFixmapAccruedInterestAmount,
-  generateFixmapAnnualCouponFlows
+  generateFixmapAnnualCouponFlows,
+  FIXMAP_COUPON_FREQUENCY_MONTHS
 } from './instruments/fixmap'
 export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
 

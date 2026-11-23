@@ -1,15 +1,14 @@
 /**
  * FixMÁP calculation primitives (ADR 0017 / 0038 / ROADMAP §6j).
- * Cash-flow schedule path reuses shared PMÁP annual generators (existing
- * schedule-usable contract). Accrued interest for ACT/ACT follows the ÁKK
- * Ismertető quarterly path (ga/n, n=4) — not the ISDA year-fraction helper.
+ * Cash flows are quarterly (ÁKK negyedéves); accrued interest for ACT/ACT
+ * follows the ÁKK Ismertető path (ga/n, n=4) — not the ISDA year-fraction helper.
  */
 
 import type { CashFlow } from '../models'
 import {
   derivePmapAccruedInterestAmount,
   derivePmapRateOutputs,
-  generatePmapAnnualCouponFlows,
+  generateCouponFlowsWithFrequency,
   type PmapRateOutputs,
   type PmapSpecInputs
 } from './pmap'
@@ -63,16 +62,51 @@ export function deriveFixmapAccruedInterestAmount(
   return derivePmapAccruedInterestAmount(specInputs, annualCouponRatePct)
 }
 
+/**
+ * Prefer couponSchedule From dates after issue as the payment calendar when
+ * their spacing matches quarterly frequency (commercial autofill merges
+ * issue ∪ offering paymentDates). Annual rate-band Froms alone are not a
+ * payment calendar — fall back to firstCouponDate + frequency walk.
+ */
+function paymentDatesFromCouponSchedule(specInputs: FixmapSpecInputs): string[] | null {
+  const issue = String(specInputs.issueDate || '').trim()
+  const schedule = Array.isArray(specInputs.couponSchedule) ? specInputs.couponSchedule : []
+  const payments = schedule
+    .map((row) => String(row?.from || '').trim())
+    .filter((iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso))
+    .filter((iso) => !issue || iso > issue)
+    .sort()
+  if (payments.length === 0) return null
+  if (payments.length === 1) return payments
+  const gapsMonths: number[] = []
+  for (let i = 1; i < payments.length; i += 1) {
+    const prev = new Date(`${payments[i - 1]}T00:00:00Z`)
+    const next = new Date(`${payments[i]}T00:00:00Z`)
+    const days = (next.getTime() - prev.getTime()) / 86400000
+    if (days > 0) gapsMonths.push(days / 30.4375)
+  }
+  if (!gapsMonths.length) return null
+  gapsMonths.sort((a, b) => a - b)
+  const median = gapsMonths[Math.floor(gapsMonths.length / 2)]!
+  // Closer to quarterly than annual → treat as offering payment calendar.
+  if (Math.abs(median - FIXMAP_COUPON_FREQUENCY_MONTHS) < Math.abs(median - 12)) {
+    return payments
+  }
+  return null
+}
+
 export function generateFixmapAnnualCouponFlows(
   specInputs: FixmapSpecInputs,
   purchaseAmount: number,
   annualCouponRatePct: number,
   description = 'FixMAP'
 ): CashFlow[] {
-  return generatePmapAnnualCouponFlows(
+  return generateCouponFlowsWithFrequency(
     specInputs,
     purchaseAmount,
     annualCouponRatePct,
-    description
+    description,
+    FIXMAP_COUPON_FREQUENCY_MONTHS,
+    paymentDatesFromCouponSchedule(specInputs)
   )
 }

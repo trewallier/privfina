@@ -33,7 +33,8 @@ describe('fixmap ui/controller integration seam', () => {
       annualCouponRatePct: String(parsed.inputs.annualCouponRatePct),
       purchaseDate: String(parsed.inputs.purchaseDate),
       issueDate: String(parsed.inputs.issueDate),
-      maturityDate: String(parsed.inputs.maturityDate)
+      maturityDate: String(parsed.inputs.maturityDate),
+      firstCouponDate: String(parsed.inputs.firstCouponDate)
     })
 
     const specInputs = mapFormDataToFixmapSpecInputs(formData as any)
@@ -49,7 +50,7 @@ describe('fixmap ui/controller integration seam', () => {
       purchaseDate: '2026-08-03',
       issueDate: '2026-08-03',
       maturityDate: '2031-08-03',
-      firstCouponDate: undefined,
+      firstCouponDate: '2026-11-03',
       dayCountConvention: undefined,
       couponSchedule: undefined
     })

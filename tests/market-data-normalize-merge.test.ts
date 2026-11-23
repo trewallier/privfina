@@ -26,14 +26,16 @@ describe('market-data URL builders', () => {
     expect(buildCatalogUrl()).toContain('securityType=DKJ')
     expect(buildCatalogUrl()).toContain('securityType=PM%C3%81P')
     expect(buildCatalogUrl()).toContain('securityType=BM%C3%81P')
+    expect(buildCatalogUrl()).toContain('securityType=KTV')
     expect(buildNetworkRatesUrl()).toContain('type=DKJ')
     expect(buildNetworkRatesUrl()).toContain('type=PM%C3%81P')
+    expect(buildNetworkRatesUrl()).toContain('type=KTV')
     expect(buildNetworkRatesUrl()).toContain('query=getNetworkRates')
   })
 })
 
 describe('normalizeAkkSnapshots', () => {
-  it('maps catalog + quotes into three families and uses settleDate as asOf', async () => {
+  it('maps catalog + quotes into required families and optional ktv, uses settleDate as asOf', async () => {
     const catalog = await loadFixture('catalog.json')
     const rates = await loadFixture('network-rates.json')
     const snap = normalizeAkkSnapshots(catalog, rates)
@@ -46,6 +48,25 @@ describe('normalizeAkkSnapshots', () => {
     expect(snap.byFamily.bmap.quotes[0].row[1]).toBe(101.5)
     // Matured DKJ from catalog is not in hot series (not quoted).
     expect(snap.byFamily.dkj.series.some((s) => s.id === 'D200101')).toBe(false)
+
+    const float2027 = snap.byFamily.ktv.series.find((s) => s.id === 'A270422B20')
+    const float2036 = snap.byFamily.ktv.series.find((s) => s.id === 'A361126B26')
+    expect(float2027).toMatchObject({
+      iType: 'FLOAT',
+      ref: 'BUBOR 3M',
+      periodMonths: 3,
+      dayCount: 'ACT/360',
+      face: 10000
+    })
+    expect(float2036).toMatchObject({
+      id: 'A361126B26',
+      iType: 'FLOAT',
+      ref: 'BUBOR 3M',
+      periodMonths: 3,
+      isin: 'HU0000407531'
+    })
+    // FIX catalog row without a quote stays out of hot series.
+    expect(snap.byFamily.ktv.series.some((s) => s.id === 'A280623A18')).toBe(false)
   })
 
   it('fails when a required family has zero network-rate rows', async () => {
@@ -66,16 +87,21 @@ describe('mergeSnapshot', () => {
       generatedAt: '2026-11-02T18:00:00+01:00'
     })
     expect(first.changed).toBe(true)
-    expect(first.appendedRows).toBe(3)
+    // 3 required + 2 FLOAT ktv quotes
+    expect(first.appendedRows).toBe(5)
     expect(first.tree.families.dkj.latest.quotes.D261125.bid).toBe(99.615)
     expect(first.tree.manifest?.digests['families/dkj/latest.json']).toBeTruthy()
+    expect(first.tree.families.ktv.series.series.find((s) => s.id === 'A270422B20')?.iType).toBe(
+      'FLOAT'
+    )
+    expect(Object.keys(first.tree.families.ktv.coupons)).toEqual([])
 
     const second = mergeSnapshot(first.tree, snap, {
       generatedAt: '2026-11-02T19:00:00+01:00'
     })
     expect(second.changed).toBe(false)
     expect(second.appendedRows).toBe(0)
-    expect(second.skippedDuplicates).toBe(3)
+    expect(second.skippedDuplicates).toBe(5)
 
     const nextDayRates: AkkEnvelope = structuredClone(rates)
     for (const row of nextDayRates.data ?? []) {
@@ -87,10 +113,12 @@ describe('mergeSnapshot', () => {
       generatedAt: '2026-11-03T18:00:00+01:00'
     })
     expect(third.changed).toBe(true)
-    expect(third.appendedRows).toBe(3)
+    expect(third.appendedRows).toBe(5)
     expect(third.tree.families.dkj.quotes.D261125.rows).toHaveLength(2)
     expect(third.tree.families.dkj.latest.quotes.D261125.d).toBe('2026-11-03')
     expect(third.tree.families.dkj.latest.quotes.D261125.bid).toBe(99.7)
+    // Still no BUBOR-derived coupon files after re-merge.
+    expect(Object.keys(third.tree.families.ktv.coupons)).toEqual([])
   })
 })
 

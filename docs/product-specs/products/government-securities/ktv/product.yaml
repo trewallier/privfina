@@ -5,7 +5,7 @@ family: government-security
 variant: ktv
 productCode: ktv
 displayName: Hungarian Government Bond (MÁK)
-description: Hungarian government bond (Magyar Államkötvény / MÁK; machine id ktv). FIX annual cash coupons from published effective rates; Green series share this host. FLOAT cash-flow model is out of scope for this iteration.
+description: Hungarian government bond (Magyar Államkötvény / MÁK; machine id ktv). FIX annual cash coupons from published effective rates; Green series share this host. FLOAT period rates resolve at calculation / SPA time from BUBOR + HU-VIBER via indexReset (ADR 0047) — never written into families/ktv/coupons.
 
 category: retail-government-bond
 denominationCurrency: HUF
@@ -13,11 +13,21 @@ denominationUnit: 10000
 issuanceModel: phased-public-offering
 yieldModel: coupon-plus-redemption
 couponModel: fixed-coupon
-referenceIndex: absent
+referenceIndex: bubor
 offeringPriceModel: par-plus-accrued-interest
 earlyRedemptionByIssuer: false
+rateSettingRule: FLOAT period annual rate equals 3M BUBOR on the 3rd HU-VIBER business day before the period turn, rounded to 0.01 percent, floored at 0.01 percent when BUBOR is at or below zero (ÁKK ISSUE). FIX series use published effective ga instead.
 investorEligibility: Primary-market acquisition is open to domestic and foreign natural and legal persons per the nyilvános ajánlattétel (soft composer hint only).
 transferRestrictions: Collateral-purpose transfer modeling is out of scope.
+
+indexReset:
+  tenor: 3M
+  observationBusinessDaysBefore: 3
+  calendarId: HU-VIBER
+  roundToPct: 0.01
+  floorPct: 0.01
+  dayCountConvention: ACT/360
+  periodMonths: 3
 
 inputs:
   - name: principal
@@ -34,7 +44,7 @@ inputs:
     label: Annual Coupon Rate
     required: true
     unit: percent
-    description: Published effective annual coupon rate (ga). Irregular first-period payable stub is derived as ga × days/365 (ACT/365F), not a FixMÁP covering-band rate. Do not invent FLOAT rates.
+    description: Published effective annual coupon rate (ga) for FIX, or the FLOAT period rate resolved from indexReset + refs/bubor.json + refs/settlement-calendar.json at calculation / SPA autofill time. Never invent rates; never persist resolved FLOAT rates into families/ktv/coupons.
     constraints:
       minimum: 0
       maximum: 100
@@ -65,14 +75,14 @@ inputs:
     label: First Coupon Date
     required: false
     unit: date
-    description: First interest payment date. Prefer offering paymentDates when autofilled (2037/A — 2026-09-23).
+    description: First interest payment date. Prefer offering paymentDates when autofilled (2037/A — 2026-09-23). FLOAT turns prefer offering paymentDates; else maturity-anniversary every periodMonths.
 
   - name: dayCountConvention
     type: string
     label: Day Count Convention
     required: false
     unit: text
-    description: How days are counted for accrued interest and the first-period stub. Locked 2037/A witness uses ACT/365F (Actual/365). ADR 0044 ingest ACT/360 when offering dayCount is null is a quote fallback only — not product math for this series.
+    description: How days are counted for accrued interest and stubs. Locked FIX 2037/A uses ACT/365F. FLOAT indexReset uses ACT/360. ADR 0044 ingest ACT/360 when offering dayCount is null is a quote fallback only — not product math for FIX 2037/A.
     constraints:
       enum: [ACT/360, ACT/365F, 30E/360]
 
@@ -81,7 +91,7 @@ inputs:
     label: Coupon Schedule
     required: false
     unit: text
-    description: Optional interest periods. Each row needs a start date; end date and rate may be empty for future unknown / FLOAT periods. Commercial autofill maps published coupons and offering paymentDates into this schedule. Never invent FLOAT coupon rates.
+    description: Optional interest periods. Each row needs a start date; end date and rate may be empty for future unknown / FLOAT periods. Commercial autofill maps published coupons and offering paymentDates into this schedule. FLOAT rates resolve via indexReset + published refs — never invent or write into families/ktv/coupons.
     constraints:
       items:
         type: object
@@ -98,7 +108,7 @@ inputs:
             description: Period end date, or null when open-ended.
           rate:
             type: ["number", "null"]
-            description: Annual coupon percent for the period, or null when not yet published / FLOAT.
+            description: Annual coupon percent for the period, or null when not yet published / FLOAT fixing missing.
 
 outputs:
   - name: annualCouponRatePct
@@ -113,7 +123,7 @@ outputs:
     label: Accrued Interest
     required: false
     unit: currency
-    description: Interest already earned from the previous coupon (or issue) through the purchase date. Accrues on published ga under the day-count convention (2037/A — ACT/365F), not on the payable first-period stub.
+    description: Interest already earned from the previous coupon (or issue) through the purchase date. FIX accrues on published ga under ACT/365F; FLOAT accrues under indexReset ACT/360 when the period rate is known.
 
   - name: purchaseAmount
     type: number
@@ -125,22 +135,23 @@ outputs:
 assumptions:
   - MÁK is modeled as an annual-pay fixed-coupon government bond for FIX / Green series (Babakötvény-style first-period stub on ga; not a FixMÁP ACT/360 covering-band wrap).
   - Machine id stays ktv (ÁKK/allampapir label KTV); display name is Hungarian Government Bond (MÁK).
-  - Commercial inputs use the published effective annual coupon rate (ga); do not invent FLOAT rates when listing or PDF omits them.
-  - Coupon payment frequency is annual (product-type constant; not a calculated output).
+  - FIX commercial inputs use the published effective annual coupon rate (ga). FLOAT period ga resolves via indexReset + refs/bubor.json + refs/settlement-calendar.json; null when fixing or calendar year is missing — never invent from quote ai or WebKincstár payable percent.
+  - Do not persist resolved FLOAT (or inferred) rates into families/ktv/coupons; SPA may set in-session form annualCouponRatePct only (ADR 0047).
+  - FLOAT coupon frequency follows indexReset.periodMonths (3); period turns prefer offering paymentDates when present, else maturity-anniversary every periodMonths.
+  - FIX coupon payment frequency is annual (product-type constant for FIX path; not a calculated output).
   - Offering price is par on the first day of offering and par plus accrued interest afterwards.
   - MÁK denominationUnit is 10 000 HUF (official ÁKK alapcímlet); composer principal must be a multiple of 10 000 (DKJ-style).
   - issuanceModel stays phased-public-offering (sibling enum); ÁKK auction listing mode lives in offering ingest (ADR 0044), not a separate YAML issuanceModel.
-  - Locked 2037/A product day-count is ACT/365F (Actual/365). ADR 0044 ingest ACT/360 when offering dayCount is null is quote/ingest fallback only.
-  - Accrued interest uses ga under ACT/365F; the payable first-period stub is not the accrual rate.
+  - Locked 2037/A product day-count is ACT/365F (Actual/365). FLOAT indexReset day-count is ACT/360. ADR 0044 ingest ACT/360 when offering dayCount is null is quote/ingest fallback only for FIX.
+  - Accrued interest for FIX uses ga under ACT/365F; the payable first-period stub is not the accrual rate.
   - Maturity comes from the series / input; calculators must not invent a fixed term length.
   - issueDate is the sole series/holding anchor when coupon schedule / firstCouponDate are absent.
   - "2037/A first cash stub: 6,25% * 217nap / 365nap = 3,72% (round to 0.01%); keep ga 6.25%."
-  - When a couponSchedule is supplied (including from published market coupons / offering autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the path holds the flat yearly rate through maturity. First-period payable stub is still derived from ga × days/365 even when a schedule is absent.
+  - When a couponSchedule is supplied (including from published market coupons / offering autofill), periods without a published rate (and schedule gaps) do not invent cash flows; without a schedule the FIX path holds the flat yearly rate through maturity. First-period payable stub is still derived from ga × days/365 even when a schedule is absent.
   - Auction listings may leave saleWindow null — do not invent from auctionDate (DKJ precedent).
   - Principal is repaid at maturity in one amount (redemption equals principal).
   - The issuer does not redeem MÁK before maturity.
   - Green (Zöld) MÁK shares this product host under ktv.
-  - FLOAT cash-flow model is out of scope for this iteration.
   - Breaking input contract aligns with ADR 0038 / v2alpha3 shapes used by sibling govsec hosts.
 
 ui:
@@ -161,3 +172,4 @@ exampleRefs:
   - ./examples/nominal-case.yaml
   - ./examples/first-period-coupon-case.yaml
   - ./examples/mid-period-accrued-case.yaml
+  - ./examples/float-2027b-case.yaml

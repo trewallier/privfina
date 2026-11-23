@@ -332,6 +332,58 @@
     "rateSettingRule": {
       "type": "string",
       "minLength": 1
+    },
+    "indexReset": {
+      "type": "object",
+      "description": "Machine-readable floating-index reset rules (ADR 0047 FLOAT MÁK). Specs hold rules only; rates resolve at calculation / SPA time from published refs — never write derived rates into market coupons.",
+      "additionalProperties": false,
+      "required": [
+        "tenor",
+        "observationBusinessDaysBefore",
+        "calendarId",
+        "roundToPct",
+        "floorPct",
+        "dayCountConvention",
+        "periodMonths"
+      ],
+      "properties": {
+        "tenor": {
+          "type": "string",
+          "enum": ["ON", "1W", "2W", "1M", "2M", "3M", "4M", "5M", "6M", "7M", "8M", "9M", "10M", "11M", "12M"],
+          "description": "BUBOR (or sibling) tenor key matching refs/bubor.json."
+        },
+        "observationBusinessDaysBefore": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Nth business day before the period turn (ÁKK ISSUE T−3 → 3)."
+        },
+        "calendarId": {
+          "type": "string",
+          "enum": ["HU-VIBER"],
+          "description": "Business calendar id; HU-VIBER uses refs/settlement-calendar.json (ADR 0046)."
+        },
+        "roundToPct": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Round resolved annual rate to this percent step (e.g. 0.01)."
+        },
+        "floorPct": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Floor resolved annual rate percent when index ≤ 0 (ÁKK ISSUE 0.01%)."
+        },
+        "dayCountConvention": {
+          "type": "string",
+          "enum": ["ACT/360", "ACT/365F", "30E/360"],
+          "description": "Day-count for FLOAT accrual / payable under this reset rule."
+        },
+        "periodMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Interest period length in months when generating turns from maturity anniversary."
+        }
+      }
     }
   },
   "allOf": [

@@ -1,0 +1,29 @@
+specVersion: v2alpha3
+productId: government-security.ktv.standard
+exampleId: float-2027b-case
+title: FLOAT MÁK 2027/B period rate from BUBOR T−3
+description: Locked FLOAT witness for 2027/B — period turn 2027-01-22; observation is the 3rd HU-VIBER business day before (2026-10-19); published refs/bubor.json 3M fixing 5.5% becomes period ga after round/floor. Specs hold rules only; rate is not stored in families/ktv/coupons.
+
+inputs:
+  principal: 1000000
+  annualCouponRatePct: 5.5
+  purchaseDate: 2026-10-22
+  issueDate: 2020-01-15
+  maturityDate: 2027-04-22
+  firstCouponDate: 2027-01-22
+  dayCountConvention: ACT/360
+
+expected:
+  annualCouponRatePct: 5.5
+  observationDate: 2026-10-19
+  buborTenor: 3M
+  buborFixingPct: 5.5
+  periodTurnDate: 2027-01-22
+  purchaseAmount: 1000000
+
+notes:
+  - Series 2027/B (A270422B20 / HU0000404157); ÁKK interestType FLOAT, referenceCurve BUBOR 3M, interestPeriod 3M.
+  - Current period after 2026-10-22 turn; next turn 2027-01-22 (maturity-anniversary quarterly Jan/Apr/Jul/Oct 22).
+  - Observation 2026-10-19 = nthBusinessDayBefore(2027-01-22, 3, HU-VIBER); tip bubor 3M that day is 5.5%.
+  - Expected ga is from official ISSUE rules + published refs — not invented and not written to ktv/coupons.
+  - Purchase on period-turn day → no accrued interest for this example; purchaseAmount equals principal.

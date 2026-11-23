@@ -307,6 +307,41 @@ describe('commercial-investment-coupon-schedule-editor DOM', () => {
     expect(document.querySelector<HTMLButtonElement>('.coupon-schedule-add')?.disabled).toBe(true)
   })
 
+  it('renders compact icon-only remove and labeled add with visible chrome classes', () => {
+    const { root, editor } = buildHost('pmap')
+    editor.setSchedule(
+      [
+        { from: '2026-08-03', rate: 6.5 },
+        { from: '2027-08-03', rate: 6.5 }
+      ],
+      { reevaluateMode: true }
+    )
+
+    const removeBtns = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('.coupon-schedule-remove')
+    )
+    expect(removeBtns).toHaveLength(2)
+    for (const [index, btn] of removeBtns.entries()) {
+      expect(btn.classList.contains('icon-button')).toBe(true)
+      expect(btn.classList.contains('danger')).toBe(true)
+      expect(btn.getAttribute('aria-label')).toBe(`Remove period ${index + 1}`)
+      expect(btn.title).toBe(`Remove period ${index + 1}`)
+      expect(btn.textContent?.trim()).toBe('')
+      expect(btn.querySelector('svg')).not.toBeNull()
+    }
+
+    const addBtn = root.querySelector<HTMLButtonElement>('.coupon-schedule-add')
+    expect(addBtn).not.toBeNull()
+    expect(addBtn?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Add period')
+    expect(addBtn?.querySelector('svg')).not.toBeNull()
+
+    const captions = Array.from(root.querySelectorAll('.coupon-schedule-period-caption')).map(
+      (el) => el.textContent
+    )
+    expect(captions.slice(0, 2)).toEqual(['Issue / period start', 'First coupon'])
+    expect(root.querySelector('.coupon-schedule-header')).not.toBeNull()
+  })
+
   it('inactive host editors do not block form checkValidity', () => {
     document.body.innerHTML = `
       <form id="commercial-investment-form">

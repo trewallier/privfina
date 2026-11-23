@@ -472,6 +472,7 @@ Plan slices
 - [x] `firstCouponDate` ← second sorted From (else day after sole `to`, else preserved autofill payment on a single open band); derive `to` as day before next From (last null); sync `annualCouponRatePct` from covering/common table rate for FormData/engine.
 - [x] Fix-rate series (all defined rates equal): Rate edit copies to all rows; stepped series: independent Rate cells.
 - [x] Shared editor module + narrow stacked periods (no sideways scroll); tests for layout, fix/stepped behavior, serialize.
+- [x] Density polish: always single-row From | Rate % | icon-remove (incl. mobile); column headers only; compact gaps; Add/Remove always visibly colored (fix white-on-white on iOS).
 
 #### Later remaining families
 - [ ] Per-family: YAML + catalog `spec-only` → calc-aligned → schedule-usable → commercially-usable (+ fully-spec-backed embed) on commercial investment picker (`emap`, `omap`, `ktj`, `map2`). Prefer recording `commercially-usable` explicitly when SPA already clears that bar, unless following the DKJ–FixMÁP omit-middle-rung precedent with a catalog note.

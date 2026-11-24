@@ -48,9 +48,10 @@ function printHelp(): void {
       [--settlement-calendar-dir <dir>] [--skip-settlement-calendar]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
-  market-data backfill-webkincstar --root <repo-or-v2> --from YYYY-MM-DD --to YYYY-MM-DD
+  market-data backfill-webkincstar --root <repo-or-v2> --from YYYY-MM-DD [--to YYYY-MM-DD]
       [--reports name,name] [--weekdays-only] [--skip-durable] [--raw-dir <dir>]
       [--previous-root <path>] [--catalog <json>] [--rates <json>] …
+      (--from required; default --reports = all WEBKINCSTAR_REPORTS; --to = Budapest yesterday)
   market-data validate-tree --root <repo-or-v2>
   market-data resolve-branch --repository <owner/repo> --branch <name>
 
@@ -61,8 +62,10 @@ Exit codes: ingest/backfill-webkincstar 0/2/1; ci-ingest 0/1 (changed on GITHUB_
 }
 
 function parseWebkincstarReportsFlag(raw: string | undefined): WebkincstarReportName[] {
+  // Default: full daily report set so one-shot CLI cannot deepen MAK alone and
+  // stall shallower reports' rolling frontiers (ROADMAP §6m).
   if (!raw || !raw.trim()) {
-    return ['_20633_arfolyam_mak']
+    return [...WEBKINCSTAR_REPORTS]
   }
   const parts = raw.split(/[,\s]+/).map((p) => p.trim()).filter(Boolean)
   const out: WebkincstarReportName[] = []
@@ -353,11 +356,18 @@ async function main(argv: string[]): Promise<number> {
 
   if (cmd === 'backfill-webkincstar') {
     // ROADMAP §6m: historical WebKincstár date-loop into an existing market tree tip.
+    // Require explicit --from so a bare invocation cannot request decades of daily PDFs
+    // (scrape floor WEBKINCSTAR_BACKFILL_DEFAULT_FROM is for scheduled rolling history).
     const root = getFlag(rest, '--root') ?? process.cwd()
     const previousRoot = getFlag(rest, '--previous-root') ?? root
     const rawDir = getFlag(rest, '--raw-dir') ?? path.join(process.cwd(), '.tmp-market-data')
-    const from =
-      getFlag(rest, '--from') ?? WEBKINCSTAR_BACKFILL_DEFAULT_FROM
+    const from = getFlag(rest, '--from')
+    if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from)) {
+      throw new Error(
+        `backfill-webkincstar requires --from YYYY-MM-DD ` +
+          `(scrape floor ${WEBKINCSTAR_BACKFILL_DEFAULT_FROM}; prefer scheduled rolling history)`
+      )
+    }
     const to = getFlag(rest, '--to') ?? budapestYesterdayIso()
     const reports = parseWebkincstarReportsFlag(getFlag(rest, '--reports'))
     const weekdaysOnly = hasFlag(rest, '--weekdays-only')

@@ -45,8 +45,8 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 ## Consequences (follow-on — ROADMAP §6m)
 
 - Daily ingest keeps this ADR’s primary datum (Budapest yesterday) and ≤3 prior-weekday tip lookback.
-- Scheduled runs also union a rolling historical window: the 6 calendar days immediately before the oldest durable `refs/price-calendar.json` datum (all configured reports), clamped to scrape floor `1990-01-01` (refine later). When oldest ≤ floor, the historical window is empty.
-- Operator one-shot CLI (`market-data backfill-webkincstar`) remains available; scheduled rolling history is the preferred deepening path.
+- Scheduled runs also union a rolling historical window: for each configured report, the 6 calendar days immediately before that report’s contiguous durable frontier (from its tip cluster), clamped to scrape floor `1990-01-01` (refine later). Per-report frontiers keep a deep single-report backfill from stalling shallower reports.
+- Operator one-shot CLI (`market-data backfill-webkincstar`) requires explicit `--from` and defaults to all daily reports; scheduled rolling history is the preferred deepening path.
 
 ## Out of scope
 

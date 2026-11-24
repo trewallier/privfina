@@ -347,8 +347,9 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
     expect(resume).toEqual([])
   })
 
-  it('resolveWebkincstarHistoricalBackfillDatums walks 6 calendar days before oldest', async () => {
+  it('resolveWebkincstarHistoricalBackfillDatums walks 6 days before per-report frontiers', async () => {
     const {
+      contiguousDurableFrontierDatum,
       oldestDurablePriceCalendarDatum,
       resolveWebkincstarHistoricalBackfillDatums,
       resolveWebkincstarLookbackDatums,
@@ -361,17 +362,23 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
     expect(WEBKINCSTAR_BACKFILL_DEFAULT_FROM).toBe('1990-01-01')
     expect(WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH).toBe(6)
 
-    const oldestOnly = WEBKINCSTAR_REPORTS.map((report) => ({
-      datum: '2026-11-05',
-      report,
-      status: 'priced' as const
-    }))
-    expect(oldestDurablePriceCalendarDatum(oldestOnly)).toBe('2026-11-05')
+    // Contiguous tip cluster Nov 5…11 for every report (omit Nov 6–10 to keep fixture small —
+    // frontier walks only while prior calendar days exist, so seed every day).
+    const tipCluster: { datum: string; report: (typeof WEBKINCSTAR_REPORTS)[number]; status: 'priced' }[] =
+      []
+    for (const report of WEBKINCSTAR_REPORTS) {
+      for (let d = 5; d <= 11; d += 1) {
+        tipCluster.push({
+          datum: `2026-11-${String(d).padStart(2, '0')}`,
+          report,
+          status: 'priced'
+        })
+      }
+    }
+    expect(contiguousDurableFrontierDatum(tipCluster, WEBKINCSTAR_REPORTS[0])).toBe('2026-11-05')
+    expect(oldestDurablePriceCalendarDatum(tipCluster)).toBe('2026-11-05')
 
-    const hist = resolveWebkincstarHistoricalBackfillDatums({
-      oldestDatum: '2026-11-05',
-      previousDays: oldestOnly
-    })
+    const hist = resolveWebkincstarHistoricalBackfillDatums({ previousDays: tipCluster })
     expect(hist).toEqual([
       '2026-10-30',
       '2026-10-31',
@@ -381,66 +388,74 @@ describe('WebKincstár normalize + offline fetch (ADR 0039 / §6h PR2)', () => {
       '2026-11-04'
     ])
 
-    // Durable days inside the window are omitted.
+    // Durable day inside the window is omitted when every report already has it.
     const withDurableGap = [
-      ...oldestOnly,
+      ...tipCluster,
       ...WEBKINCSTAR_REPORTS.map((report) => ({
         datum: '2026-11-02',
         report,
         status: 'no_price' as const
       }))
     ]
-    expect(
-      resolveWebkincstarHistoricalBackfillDatums({
-        oldestDatum: '2026-11-05',
-        previousDays: withDurableGap
-      })
-    ).toEqual(['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-03', '2026-11-04'])
+    expect(resolveWebkincstarHistoricalBackfillDatums({ previousDays: withDurableGap })).toEqual([
+      '2026-10-30',
+      '2026-10-31',
+      '2026-11-01',
+      '2026-11-03',
+      '2026-11-04'
+    ])
 
-    expect(
-      resolveWebkincstarHistoricalBackfillDatums({
-        oldestDatum: '1990-01-01',
-        previousDays: []
-      })
-    ).toEqual([])
-    expect(
-      resolveWebkincstarHistoricalBackfillDatums({
-        oldestDatum: null,
-        previousDays: []
-      })
-    ).toEqual([])
+    expect(resolveWebkincstarHistoricalBackfillDatums({ previousDays: [] })).toEqual([])
     expect(oldestDurablePriceCalendarDatum([])).toBeNull()
 
-    // Clamp: oldest 1990-01-03 → only days ≥ floor in the 6-day window.
-    expect(
-      resolveWebkincstarHistoricalBackfillDatums({
-        oldestDatum: '1990-01-03',
-        previousDays: []
-      })
-    ).toEqual(['1990-01-01', '1990-01-02'])
+    // Clamp: frontier 1990-01-03 → only days ≥ floor.
+    const nearFloor = WEBKINCSTAR_REPORTS.flatMap((report) => [
+      { datum: '1990-01-03', report, status: 'priced' as const },
+      { datum: '1990-01-04', report, status: 'priced' as const }
+    ])
+    expect(contiguousDurableFrontierDatum(nearFloor, WEBKINCSTAR_REPORTS[0])).toBe('1990-01-03')
+    expect(resolveWebkincstarHistoricalBackfillDatums({ previousDays: nearFloor })).toEqual([
+      '1990-01-01',
+      '1990-01-02'
+    ])
+
+    // Deep MAK island must not stall shallow DKJ: global min would be 2020-01-01,
+    // but contiguous frontier for DKJ stays at 2026-11-05.
+    const mak = '_20633_arfolyam_mak' as const
+    const dkj = '_20631_arfolyam_dkj' as const
+    const uneven = [
+      { datum: '2020-01-01', report: mak, status: 'priced' as const },
+      { datum: '2020-01-02', report: mak, status: 'priced' as const },
+      ...['2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08', '2026-11-09', '2026-11-10', '2026-11-11'].flatMap(
+        (datum) => [
+          { datum, report: mak, status: 'priced' as const },
+          { datum, report: dkj, status: 'priced' as const }
+        ]
+      )
+    ]
+    expect(oldestDurablePriceCalendarDatum(uneven, [mak, dkj])).toBe('2020-01-01')
+    expect(contiguousDurableFrontierDatum(uneven, mak)).toBe('2026-11-05')
+    expect(contiguousDurableFrontierDatum(uneven, dkj)).toBe('2026-11-05')
+    const unevenHist = resolveWebkincstarHistoricalBackfillDatums({
+      previousDays: uneven,
+      reports: [mak, dkj]
+    })
+    expect(unevenHist).toContain('2026-10-30')
+    expect(unevenHist).toContain('2026-11-04')
+    expect(unevenHist).not.toContain('2019-12-26')
 
     // Ingest composition smoke: tip lookback ∪ historical both present.
-    const tipPrevious = [
-      ...WEBKINCSTAR_REPORTS.flatMap((report) => [
-        { datum: '2026-11-05', report, status: 'priced' },
-        { datum: '2026-11-11', report, status: 'priced' }
-      ])
-    ]
     const tip = resolveWebkincstarLookbackDatums({
       primaryDatum: '2026-11-11',
-      previousDays: tipPrevious,
+      previousDays: tipCluster,
       maxExtraWeekdays: 3
     })
-    const historical = resolveWebkincstarHistoricalBackfillDatums({
-      oldestDatum: oldestDurablePriceCalendarDatum(tipPrevious),
-      previousDays: tipPrevious
-    })
+    const historical = resolveWebkincstarHistoricalBackfillDatums({ previousDays: tipCluster })
     const merged = mergeWebkincstarFetchDatums(tip, historical)
     expect(merged).toContain('2026-11-11')
-    expect(merged).toContain('2026-11-10') // tip lookback hole
-    expect(merged).toContain('2026-10-30') // historical window start
-    expect(merged).toContain('2026-11-04') // historical window end
-    expect(merged).not.toContain('2026-11-05') // already durable oldest
+    expect(merged).toContain('2026-10-30')
+    expect(merged).toContain('2026-11-04')
+    expect(merged).not.toContain('2026-11-05')
   })
 })
 

@@ -320,8 +320,9 @@ export function resolveWebkincstarBackfillDatums(
 }
 
 /**
- * Oldest durable (`priced` | `no_price`) price-calendar datum across the given
- * reports. Ignores `fetch_failed` / absent rows. Null when none exist.
+ * True min durable (`priced` | `no_price`) datum across reports. Prefer
+ * {@link contiguousDurableFrontierDatum} for rolling backfill — a global min
+ * can sit behind an island and stall shallower reports.
  */
 export function oldestDurablePriceCalendarDatum(
   previousDays: ReadonlyArray<{ datum: string; report: string; status: string }> | null | undefined,
@@ -339,44 +340,76 @@ export function oldestDurablePriceCalendarDatum(
   return oldest
 }
 
+/**
+ * Oldest date in the contiguous durable run for one report, walking back from
+ * that report's newest durable day. Gaps / `fetch_failed` / islands behind the
+ * tip do not pull the frontier into deep history. Null when the report has no
+ * durable rows yet (tip path seeds the first days).
+ */
+export function contiguousDurableFrontierDatum(
+  previousDays: ReadonlyArray<{ datum: string; report: string; status: string }> | null | undefined,
+  report: WebkincstarReportName
+): string | null {
+  const durable = new Set<string>()
+  for (const day of previousDays ?? []) {
+    if (day.report !== report) continue
+    if (day.status !== 'priced' && day.status !== 'no_price') continue
+    const datum = String(day.datum || '').trim()
+    if (/^\d{4}-\d{2}-\d{2}$/.test(datum)) durable.add(datum)
+  }
+  if (durable.size === 0) return null
+  let frontier = [...durable].sort().at(-1)!
+  for (;;) {
+    const prev = shiftIsoDate(frontier, -1)
+    if (!durable.has(prev)) return frontier
+    frontier = prev
+  }
+}
+
 export interface WebkincstarHistoricalBackfillOptions {
-  /** Min durable tip calendar datum; null/missing → no historical window. */
-  oldestDatum?: string | null
   previousDays?: ReadonlyArray<{ datum: string; report: string; status: string }> | null
   reports?: readonly WebkincstarReportName[]
   /** Inclusive floor; no candidate before this date (default 1990-01-01). */
   floor?: string
-  /** Calendar days immediately before oldest (default 6). */
+  /** Calendar days immediately before each report frontier (default 6). */
   depth?: number
 }
 
 /**
- * Rolling historical scrape window (ROADMAP §6m): the `depth` calendar days
- * immediately before the oldest durable tip datum, clamped to `floor`, omitting
- * days already durable for every configured report. Empty when oldest is missing
- * or already at/below the floor. Tip primary + lookback stay separate.
+ * Rolling historical scrape window (ROADMAP §6m): for each configured report,
+ * take the `depth` calendar days immediately before that report's contiguous
+ * durable frontier (from its tip cluster), clamp to `floor`, then union and
+ * drop days already durable for every configured report. Empty when every
+ * report lacks durable rows or is already at/below the floor. Tip primary +
+ * lookback stay separate. Per-report frontiers keep a deep MAK-only backfill
+ * from stalling shallower reports (DKJ / MAPP / …).
  */
 export function resolveWebkincstarHistoricalBackfillDatums(
   options: WebkincstarHistoricalBackfillOptions
 ): string[] {
-  const oldest = String(options.oldestDatum || '').trim()
   const floor = String(options.floor || WEBKINCSTAR_BACKFILL_DEFAULT_FROM).trim()
   const depth = Number(options.depth ?? WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH)
   const reports = options.reports ?? WEBKINCSTAR_REPORTS
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(oldest)) return []
   if (!/^\d{4}-\d{2}-\d{2}$/.test(floor)) return []
   if (!Number.isFinite(depth) || depth <= 0) return []
-  if (oldest <= floor) return []
 
-  const windowEnd = shiftIsoDate(oldest, -1)
-  if (windowEnd < floor) return []
-  const rawStart = shiftIsoDate(oldest, -depth)
-  const windowStart = rawStart < floor ? floor : rawStart
-  if (windowStart > windowEnd) return []
+  const candidates = new Set<string>()
+  for (const report of reports) {
+    const frontier = contiguousDurableFrontierDatum(options.previousDays, report)
+    if (!frontier || frontier <= floor) continue
+    const windowEnd = shiftIsoDate(frontier, -1)
+    if (windowEnd < floor) continue
+    const rawStart = shiftIsoDate(frontier, -depth)
+    const windowStart = rawStart < floor ? floor : rawStart
+    if (windowStart > windowEnd) continue
+    for (const datum of listIsoDatesInclusive(windowStart, windowEnd)) {
+      candidates.add(datum)
+    }
+  }
 
-  return listIsoDatesInclusive(windowStart, windowEnd).filter((datum) =>
-    webkincstarDatumNeedsFetch(datum, options.previousDays, reports)
-  )
+  return [...candidates]
+    .filter((datum) => webkincstarDatumNeedsFetch(datum, options.previousDays, reports))
+    .sort()
 }
 
 /**

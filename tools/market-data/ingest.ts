@@ -16,7 +16,6 @@ import {
   budapestYesterdayIso,
   fetchWebkincstarSnapshots,
   mergeWebkincstarFetchDatums,
-  oldestDurablePriceCalendarDatum,
   resolveWebkincstarHistoricalBackfillDatums,
   resolveWebkincstarLookbackDatums
 } from './fetch-webkincstar.ts'
@@ -452,7 +451,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   const webkincstarPrimaryDatum = options.webkincstarDatum ?? budapestYesterdayIso()
   // Explicit multi-day list (§6m CLI) wins; else single --datum; else tip path
   // (yesterday + ≤3 weekday lookback) ∪ rolling historical window (6 days before
-  // oldest durable price-calendar datum, floor 1990-01-01).
+  // each report's contiguous durable frontier, floor 1990-01-01).
   const webkincstarDatums =
     Array.isArray(options.webkincstarDatums) && options.webkincstarDatums.length > 0
       ? options.webkincstarDatums
@@ -465,10 +464,6 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
               reports: webkincstarReports
             }),
             resolveWebkincstarHistoricalBackfillDatums({
-              oldestDatum: oldestDurablePriceCalendarDatum(
-                previous.priceCalendar?.days,
-                webkincstarReports
-              ),
               previousDays: previous.priceCalendar?.days,
               reports: webkincstarReports
             })

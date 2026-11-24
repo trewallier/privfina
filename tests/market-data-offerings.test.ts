@@ -669,9 +669,9 @@ describe('offering listing historical backfill (ADR 0041 §6m)', () => {
   it('builds tip URLs without end bound and backfill URLs with ptsEnd/auctionEnd', async () => {
     const {
       buildPublicOfferingsUrl,
-      offeringListingEndBoundBeforeFrontier
+      offeringListingEndBoundBeforeDate
     } = await import('../tools/market-data/fetch-akk-offerings.ts')
-    expect(offeringListingEndBoundBeforeFrontier('2026-08-01')).toBe('2026-07-31')
+    expect(offeringListingEndBoundBeforeDate('2026-08-01')).toBe('2026-07-31')
     const tipTap = buildPublicOfferingsUrl('pmap')
     expect(tipTap).toContain('ptsStart=1900-01-01')
     expect(tipTap).not.toContain('ptsEnd=')
@@ -847,6 +847,8 @@ describe('offering listing historical backfill (ADR 0041 §6m)', () => {
       bootstrapListingEndBoundFromTip
     } = await import('../tools/market-data/offering-listing-discovery.ts')
     const tip = await loadJson('offerings/getPublicOfferings_ktv.json')
+    // Tip auctionDates 2026-11-19 / 2026-11-18 stay clustered near published —
+    // bootstrap uses min filter date − 1 (not tip success frontier).
     expect(bootstrapListingEndBoundFromTip('ktv', tip)).toBe('2026-11-17')
 
     const advanced = advanceListingDiscovery({
@@ -870,6 +872,50 @@ describe('offering listing historical backfill (ADR 0041 §6m)', () => {
     })
     expect(empty.reason).toBe('exhausted_empty')
     expect(empty.next.exhausted).toBe(true)
+  })
+
+  it('rejects corrupt listingDiscovery maps', async () => {
+    const { assertValidListingDiscoveryMap } = await import(
+      '../tools/market-data/offering-listing-discovery.ts'
+    )
+    expect(() =>
+      assertValidListingDiscoveryMap({
+        notafamily: { endBound: '2026-01-01', exhausted: false }
+      })
+    ).toThrow(/unknown family key/)
+    expect(() =>
+      assertValidListingDiscoveryMap({
+        pmap: { endBound: 'not-a-date', exhausted: false }
+      })
+    ).toThrow(/endBound must be YYYY-MM-DD/)
+    expect(() =>
+      assertValidListingDiscoveryMap({
+        pmap: { endBound: '2026-01-01', exhausted: 'yes' }
+      })
+    ).toThrow(/exhausted must be boolean/)
+    expect(() =>
+      assertValidListingDiscoveryMap({
+        pmap: { endBound: '2026-01-01', exhausted: true }
+      })
+    ).not.toThrow()
+  })
+
+  it('counts mid-run exhaustion via listingDiscoveryNext for Actions notice', async () => {
+    const { fetchAkkOfferingListings } = await import(
+      '../tools/market-data/fetch-akk-offerings.ts'
+    )
+    const tip = await loadJson('offerings/getPublicOfferings_ktv.json')
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'offerings-exhaust-count-'))
+    // Empty backfill page → advance marks exhausted while status stays merged.
+    const result = await fetchAkkOfferingListings({
+      rawDir: tmp,
+      families: ['ktv'],
+      envelopesByFamily: { ktv: tip },
+      backfillEnvelopesByFamily: { ktv: { meta: { status: 'OK' }, data: [] } },
+      offeringArchive: null
+    })
+    expect(result.byFamily[0]?.backfillStatus).toBe('merged')
+    expect(result.byFamily[0]?.listingDiscoveryNext?.exhausted).toBe(true)
   })
 
   it('persists listingDiscovery cursor updates through mergeOfferingsState', async () => {

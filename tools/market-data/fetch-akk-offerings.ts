@@ -94,16 +94,19 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Inclusive end-bound date one day before a published/filter date.
- * Kept for unit tests and call sites that still shift a day.
+ * Inclusive end-bound date one calendar day before `isoDate` (YYYY-MM-DD).
+ * Used when shifting listing discovery bounds.
  */
-export function offeringListingEndBoundBeforeFrontier(frontierPublished: string): string {
-  const day = frontierPublished.slice(0, 10)
+export function offeringListingEndBoundBeforeDate(isoDate: string): string {
+  const day = isoDate.slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
-    throw new Error(`Invalid frontier published date: ${frontierPublished}`)
+    throw new Error(`Invalid listing end-bound date: ${isoDate}`)
   }
   return shiftIsoDate(day, -1)
 }
+
+/** @deprecated Use {@link offeringListingEndBoundBeforeDate}. */
+export const offeringListingEndBoundBeforeFrontier = offeringListingEndBoundBeforeDate
 
 export function buildPublicOfferingsUrl(
   family: OfferingFamilyCode,

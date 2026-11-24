@@ -9,6 +9,7 @@ import {
 import { assertSeriesId } from './ids.ts'
 import { loadMarketTree } from './io.ts'
 import { publishedFamilies, type MarketTreeState } from './merge.ts'
+import { assertValidListingDiscoveryMap } from './offering-listing-discovery.ts'
 import {
   BUBOR_REF_PATH,
   BUBOR_TENORS,
@@ -527,6 +528,11 @@ function validateOfferingArchive(tree: MarketTreeState): void {
     if (doc.sha256 != null && (typeof doc.sha256 !== 'string' || !/^[0-9a-f]{64}$/i.test(doc.sha256))) {
       throw new ValidateError(`Bad offeringArchive sha256 for ${doc.pathUuid}`)
     }
+  }
+  try {
+    assertValidListingDiscoveryMap(file.listingDiscovery)
+  } catch (err) {
+    throw new ValidateError(err instanceof Error ? err.message : String(err))
   }
   const refPath = tree.manifest?.refs?.offeringArchive
   if (refPath && refPath !== OFFERING_ARCHIVE_REF_PATH) {

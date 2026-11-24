@@ -7,12 +7,14 @@ import {
   WEBKINCSTAR_BACKFILL_DEFAULT_FROM
 } from './fetch-webkincstar.ts'
 import {
+  isOfferingFamily,
   OFFERING_LABEL_BY_FAMILY,
   type OfferingFamilyCode
 } from './offering-families.ts'
 import type {
   AkkEnvelope,
   AkkRow,
+  FamilyCode,
   OfferingArchiveFile,
   OfferingListingDiscoveryState
 } from './types.ts'
@@ -82,6 +84,14 @@ export function readListingDiscoveryState(
 /**
  * Bootstrap the first endBound from the tip listing page:
  * min(filterDate on tip) − 1 day. Never seeds from tip success frontier.
+ *
+ * Tip is ordered `published DESC` top=50 while the cursor walks the
+ * sale/auction filter-date axis (`endPeriod` / `auctionDate`). A wide filter-date
+ * spread on the tip page can therefore jump bootstrap deep and skip offerings
+ * whose filter dates sit between tip min and max but whose `published` fell out
+ * of top=50. Live tip pages for in-scope families tend to keep filter dates
+ * clustered near the published window; if that changes, prefer seeding from a
+ * denser listing strategy rather than “fixing” bootstrap to tip success frontier.
  */
 export function bootstrapListingEndBoundFromTip(
   family: OfferingFamilyCode,
@@ -182,4 +192,39 @@ export function formatListingDiscoverySummary(
     parts.push(s.exhausted ? `${family}=exhausted@${s.endBound}` : `${family}=${s.endBound}`)
   }
   return parts.length > 0 ? parts.join(', ') : '(none)'
+}
+
+/**
+ * Schema checks for `offeringArchive.listingDiscovery` (tip push validate-tree).
+ * Throws Error with a stable message prefix for ValidateError wrapping.
+ */
+export function assertValidListingDiscoveryMap(
+  listingDiscovery: unknown
+): asserts listingDiscovery is NonNullable<OfferingArchiveFile['listingDiscovery']> | null | undefined {
+  if (listingDiscovery == null) return
+  if (typeof listingDiscovery !== 'object' || Array.isArray(listingDiscovery)) {
+    throw new Error('offeringArchive.listingDiscovery must be an object when present')
+  }
+  for (const [family, state] of Object.entries(
+    listingDiscovery as Record<string, unknown>
+  )) {
+    if (!isOfferingFamily(family as FamilyCode)) {
+      throw new Error(`offeringArchive.listingDiscovery unknown family key ${family}`)
+    }
+    if (!state || typeof state !== 'object' || Array.isArray(state)) {
+      throw new Error(`offeringArchive.listingDiscovery.${family} must be an object`)
+    }
+    const rec = state as Record<string, unknown>
+    const endBound = typeof rec.endBound === 'string' ? rec.endBound.slice(0, 10) : ''
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(endBound)) {
+      throw new Error(
+        `offeringArchive.listingDiscovery.${family}.endBound must be YYYY-MM-DD`
+      )
+    }
+    if (typeof rec.exhausted !== 'boolean') {
+      throw new Error(
+        `offeringArchive.listingDiscovery.${family}.exhausted must be boolean`
+      )
+    }
+  }
 }

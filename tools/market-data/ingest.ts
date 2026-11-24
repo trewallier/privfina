@@ -745,11 +745,16 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           if (fam.listingDiscoveryNext) {
             listingDiscoveryUpdates[fam.family] = fam.listingDiscoveryNext
           }
+          // Count exhausted from the post-run cursor (includes mid-run advances
+          // that mark exhausted while backfillStatus stays 'merged').
+          if (fam.listingDiscoveryNext?.exhausted) {
+            offeringBackfill.familiesExhausted += 1
+          }
           if (fam.backfillStatus === 'merged') offeringBackfill.familiesOk += 1
           else if (fam.backfillStatus === 'soft_failed') {
             offeringBackfill.familiesSoftFailed += 1
           } else if (fam.backfillStatus === 'exhausted') {
-            offeringBackfill.familiesExhausted += 1
+            // Already counted via listingDiscoveryNext.exhausted above.
           } else if (fam.backfillStatus === 'no_cursor') {
             offeringBackfill.familiesNoCursor += 1
           } else {

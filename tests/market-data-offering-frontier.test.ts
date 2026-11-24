@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { shiftIsoDate } from '../tools/market-data/fetch-webkincstar.ts'
 import {
   contiguousOfferingSuccessFrontierPublished,
+  maxOfferingSuccessFrontierPublished,
   minOfferingSuccessFrontierPublished,
   OFFERING_WK_HISTORICAL_GATE_DAYS,
   shouldEnableWebkincstarHistoricalBackfill
@@ -121,6 +122,7 @@ describe('offering archive frontier / WK historical gate', () => {
       documents
     }
     expect(minOfferingSuccessFrontierPublished(archive)).toBe(deep)
+    expect(maxOfferingSuccessFrontierPublished(archive)).toBe(deep)
     expect(shouldEnableWebkincstarHistoricalBackfill({ archive, asOf })).toBe(true)
     expect(
       shouldEnableWebkincstarHistoricalBackfill({
@@ -129,5 +131,52 @@ describe('offering archive frontier / WK historical gate', () => {
         gateDays: OFFERING_WK_HISTORICAL_GATE_DAYS + 10
       })
     ).toBe(false)
+  })
+
+  it('gate stays closed when one family is shallow even if others are deep', () => {
+    const asOf = '2026-11-24'
+    const deep = shiftIsoDate(asOf, -(OFFERING_WK_HISTORICAL_GATE_DAYS + 10))
+    const shallow = shiftIsoDate(asOf, -10)
+    const families = [
+      'dkj',
+      'pmap',
+      'bmap',
+      'fixmap',
+      'mapp',
+      'baba',
+      'ktv'
+    ] as const
+    const documents = families.flatMap((family, i) => {
+      const frontier = family === 'baba' ? shallow : deep
+      return [
+        doc({
+          pathUuid: `${family}-new`,
+          family,
+          published: shiftIsoDate(asOf, -1),
+          status: 'transcribed'
+        }),
+        doc({
+          pathUuid: `${family}-old`,
+          family,
+          published: frontier,
+          status: i % 2 === 0 ? 'transcribed' : 'skipped_already_transcribed'
+        })
+      ]
+    })
+    const archive = {
+      schemaVersion: SCHEMA_VERSION,
+      generatedAt: '2026-11-24T00:00:00.000Z',
+      source: {
+        id: 'akk-public-offerings' as const,
+        host: 'www.akk.hu' as const,
+        disclaimer: 'test'
+      },
+      documents
+    }
+    // Deepest progress metric still reports the oldest frontier…
+    expect(minOfferingSuccessFrontierPublished(archive)).toBe(deep)
+    // …but gate readiness uses the shallowest family.
+    expect(maxOfferingSuccessFrontierPublished(archive)).toBe(shallow)
+    expect(shouldEnableWebkincstarHistoricalBackfill({ archive, asOf })).toBe(false)
   })
 })

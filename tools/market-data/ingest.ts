@@ -169,12 +169,6 @@ export interface IngestOptions {
   /** Skip WebKincstár fetch/overlay (keep previous price calendar). */
   skipWebkincstar?: boolean
   /**
-   * Force scheduled §6m historical WK datums on (bypass offering-archive gate).
-   * Operator CLI that passes `webkincstarDatums` already bypasses the gate.
-   * Default: gate on tip offering-archive depth (OFFERING_WK_HISTORICAL_GATE_DAYS).
-   */
-  forceWebkincstarHistorical?: boolean
-  /**
    * Offline getPublicOfferings envelopes keyed by offering family (tests).
    * When set with fixture ÁKK, skips live offering listing fetch.
    */
@@ -223,14 +217,19 @@ export interface IngestReport extends MergeResult {
   /** WebKincstár (report, datum) rows appended as fetch_failed this run. */
   webkincstarFetchFailedDays: number
   /**
-   * True when this run's default datum selection included §6m historical
-   * backfill (offering-archive gate open or forceWebkincstarHistorical).
-   * False when tip lookback only / explicit --datum / skip.
+   * True when this run included §6m historical WK datums — either because the
+   * offering-archive gate opened scheduled historical, or because the operator
+   * passed explicit `webkincstarDatums` (CLI bypass). Not the same as “gate open.”
    */
   webkincstarHistoricalEnabled: boolean
+  /** True when the offering-archive depth gate alone would enable scheduled historical. */
+  webkincstarHistoricalGateOpen: boolean
   /** Datums selected for WebKincstár fetch this run (tip ∪ historical when gated). */
   webkincstarDatumsFetched: string[]
-  /** Oldest contiguous offering-archive success frontier across families (or null). */
+  /**
+   * Oldest (deepest) contiguous offering-archive success frontier across families
+   * (or null). Progress metric — gate readiness uses the shallowest frontier.
+   */
   offeringBackfillFrontier: string | null
 }
 
@@ -474,19 +473,17 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   )
   // Explicit multi-day list (§6m CLI) wins; else single --datum; else tip path
   // (yesterday + ≤3 weekday lookback). Scheduled §6m historical window merges
-  // only when offering-archive contiguous success frontier is deep enough
-  // (or forceWebkincstarHistorical); otherwise historical stays off.
+  // only when every family’s shallowest contiguous success frontier is deep
+  // enough; otherwise historical stays off. Operator bypass = explicit datums.
   const explicitWebkincstarDatums =
     Array.isArray(options.webkincstarDatums) && options.webkincstarDatums.length > 0
   const offeringGateOpen = shouldEnableWebkincstarHistoricalBackfill({
     archive: previous.offeringArchive,
     asOf: combined.snapshot.asOf ?? webkincstarPrimaryDatum
   })
-  /** Scheduled §6m historical window selected (not single --datum; gate or force). */
+  /** Scheduled §6m historical window selected (not single --datum; gate only). */
   const includeScheduledHistorical =
-    !explicitWebkincstarDatums &&
-    !options.webkincstarDatum &&
-    (options.forceWebkincstarHistorical === true || offeringGateOpen)
+    !explicitWebkincstarDatums && !options.webkincstarDatum && offeringGateOpen
   const tipLookbackDatums = resolveWebkincstarLookbackDatums({
     primaryDatum: webkincstarPrimaryDatum,
     previousDays: previous.priceCalendar?.days,
@@ -881,6 +878,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     offeringPdfsSkippedNoSchedule,
     webkincstarFetchFailedDays,
     webkincstarHistoricalEnabled: shouldFetchWebkincstar ? webkincstarHistoricalEnabled : false,
+    webkincstarHistoricalGateOpen: offeringGateOpen,
     webkincstarDatumsFetched: shouldFetchWebkincstar ? [...webkincstarDatums] : [],
     offeringBackfillFrontier
   }

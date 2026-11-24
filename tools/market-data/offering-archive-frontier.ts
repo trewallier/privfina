@@ -55,8 +55,9 @@ export function offeringArchiveDocsByPublishedDesc(
 
 /**
  * Oldest `published` in the contiguous tip success cluster for one family.
- * Walk newest→older while status is terminal success; first gap / non-success
- * stops the walk (WK `contiguousDurableFrontierDatum` analog).
+ * Walk newest→older while status is terminal success; first non-success status
+ * stops the walk. Calendar-day gaps between published dates are OK (unlike WK
+ * `contiguousDurableFrontierDatum`, which requires day−1 calendar contiguity).
  * Returns null when the newest ISSUE is missing or not yet successful.
  */
 export function contiguousOfferingSuccessFrontierPublished(
@@ -80,20 +81,56 @@ export function contiguousOfferingSuccessFrontierPublished(
 }
 
 /**
- * Earliest (oldest) frontier across offering families; null if any family lacks one.
+ * Per-family frontiers for every in-scope family; null if any family lacks one.
+ */
+export function offeringSuccessFrontiersByFamily(
+  archive: OfferingArchiveFile | null | undefined,
+  families: readonly OfferingFamilyCode[] = OFFERING_FAMILIES
+): Record<OfferingFamilyCode, string> | null {
+  if (!archive?.documents?.length) return null
+  const out = {} as Record<OfferingFamilyCode, string>
+  for (const family of families) {
+    const frontier = contiguousOfferingSuccessFrontierPublished(archive.documents, family)
+    if (!frontier) return null
+    out[family] = frontier
+  }
+  return out
+}
+
+/**
+ * Earliest (oldest / deepest) frontier across offering families; null if any
+ * family lacks one. Useful as a “how deep have we gotten” metric — **not** the
+ * WK historical gate signal (that uses the shallowest / max frontier).
  */
 export function minOfferingSuccessFrontierPublished(
   archive: OfferingArchiveFile | null | undefined,
   families: readonly OfferingFamilyCode[] = OFFERING_FAMILIES
 ): string | null {
-  if (!archive?.documents?.length) return null
+  const byFamily = offeringSuccessFrontiersByFamily(archive, families)
+  if (!byFamily) return null
   let min: string | null = null
-  for (const family of families) {
-    const frontier = contiguousOfferingSuccessFrontierPublished(archive.documents, family)
-    if (!frontier) return null
+  for (const frontier of Object.values(byFamily)) {
     if (min === null || frontier < min) min = frontier
   }
   return min
+}
+
+/**
+ * Latest (newest / shallowest) frontier across offering families; null if any
+ * family lacks one. Gate readiness requires this shallowest frontier to be deep
+ * enough so **every** family clears the depth bar.
+ */
+export function maxOfferingSuccessFrontierPublished(
+  archive: OfferingArchiveFile | null | undefined,
+  families: readonly OfferingFamilyCode[] = OFFERING_FAMILIES
+): string | null {
+  const byFamily = offeringSuccessFrontiersByFamily(archive, families)
+  if (!byFamily) return null
+  let max: string | null = null
+  for (const frontier of Object.values(byFamily)) {
+    if (max === null || frontier > max) max = frontier
+  }
+  return max
 }
 
 export interface WebkincstarHistoricalGateOptions {
@@ -106,8 +143,10 @@ export interface WebkincstarHistoricalGateOptions {
 }
 
 /**
- * Scheduled §6m WK historical is enabled only when every offering family has a
- * contiguous tip success frontier at least `gateDays` before `asOf`.
+ * Scheduled §6m WK historical is enabled only when **every** offering family has
+ * a contiguous tip success frontier at least `gateDays` before `asOf` — i.e. the
+ * shallowest frontier (`max` published date) is still ≤ `asOf − gateDays`.
+ * One deep family must not open the gate while another remains shallow.
  */
 export function shouldEnableWebkincstarHistoricalBackfill(
   options: WebkincstarHistoricalGateOptions
@@ -116,8 +155,8 @@ export function shouldEnableWebkincstarHistoricalBackfill(
   if (!asOf || !/^\d{4}-\d{2}-\d{2}$/.test(asOf)) return false
   const gateDays = options.gateDays ?? OFFERING_WK_HISTORICAL_GATE_DAYS
   if (!Number.isFinite(gateDays) || gateDays < 0) return false
-  const frontier = minOfferingSuccessFrontierPublished(options.archive, options.families)
-  if (!frontier) return false
+  const shallowest = maxOfferingSuccessFrontierPublished(options.archive, options.families)
+  if (!shallowest) return false
   const threshold = shiftIsoDate(asOf, -gateDays)
-  return frontier <= threshold
+  return shallowest <= threshold
 }

@@ -554,7 +554,7 @@ Constraints
 - Carry forward the same **source attribution** and **accuracy / non-advice** notes as the daily paths (§6h / §6k / §6n); do not imply backfilled history is more authoritative than the original publications.
 - Tip path unchanged: Budapest yesterday + ≤3 prior weekday hole-fill (ADR 0039).
 - Rolling history: each scheduled run also fetches the **6 calendar days** immediately before **each report’s contiguous durable frontier** (per-report tip cluster; deep islands do not stall shallower reports); scrape floor **`1990-01-01`** (refine later).
-- **Gate:** scheduled historical stays **off** until every offering family’s archive contiguous tip success frontier (`transcribed` / `skipped_*`) is at least **90** calendar days before snapshot `asOf` (`OFFERING_WK_HISTORICAL_GATE_DAYS`); tip lookback always runs. Prevents WK soft-skips for pre-tip matured names while offering PDF history is still shallow.
+- **Gate:** scheduled historical stays **off** until **every** offering family’s archive contiguous tip success frontier (`transcribed` / `skipped_*`) is at least **90** calendar days before snapshot `asOf` (`OFFERING_WK_HISTORICAL_GATE_DAYS`) — readiness uses the **shallowest** frontier (`max` published), not the deepest. Tip lookback always runs. Prevents WK soft-skips for pre-tip matured names while offering PDF history is still shallow.
 - One-shot CLI remains an operator escape hatch (`--from` **required**; default `--reports` = all daily reports; `--to` defaults to Budapest yesterday; bypasses the offering gate).
 
 Plan slices

@@ -43,6 +43,20 @@ jobs:
       changed: ${{ steps.ingest.outputs.changed }}
       as_of: ${{ steps.ingest.outputs.as_of }}
       baseline_exists: ${{ steps.resolve_baseline.outputs.exists }}
+      offering_pdfs_downloaded: ${{ steps.ingest.outputs.offering_pdfs_downloaded }}
+      offering_pdfs_pending: ${{ steps.ingest.outputs.offering_pdfs_pending }}
+      offering_pdfs_parse_failed: ${{ steps.ingest.outputs.offering_pdfs_parse_failed }}
+      offering_pdfs_skipped_no_schedule: ${{ steps.ingest.outputs.offering_pdfs_skipped_no_schedule }}
+      offering_backfill_frontier: ${{ steps.ingest.outputs.offering_backfill_frontier }}
+      offering_gate_frontier: ${{ steps.ingest.outputs.offering_gate_frontier }}
+      offerings_soft_failed: ${{ steps.ingest.outputs.offerings_soft_failed }}
+      webkincstar_fetch_failed_days: ${{ steps.ingest.outputs.webkincstar_fetch_failed_days }}
+      webkincstar_historical_enabled: ${{ steps.ingest.outputs.webkincstar_historical_enabled }}
+      webkincstar_historical_gate_open: ${{ steps.ingest.outputs.webkincstar_historical_gate_open }}
+      webkincstar_datums_fetched: ${{ steps.ingest.outputs.webkincstar_datums_fetched }}
+      webkincstar_overlay_skipped: ${{ steps.ingest.outputs.webkincstar_overlay_skipped }}
+      webkincstar_soft_failed: ${{ steps.ingest.outputs.webkincstar_soft_failed }}
+      retail_interest_soft_failed: ${{ steps.ingest.outputs.retail_interest_soft_failed }}
     steps:
       - name: Checkout default branch (tools)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

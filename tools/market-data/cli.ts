@@ -351,7 +351,16 @@ async function main(argv: string[]): Promise<number> {
         offeringPdfsPending: result.offeringPdfsPending,
         offeringPdfsParseFailed: result.offeringPdfsParseFailed,
         offeringPdfsSkippedNoSchedule: result.offeringPdfsSkippedNoSchedule,
-        webkincstarFetchFailedDays: result.webkincstarFetchFailedDays
+        offeringBackfillFrontier: result.offeringBackfillFrontier,
+        offeringGateFrontier: result.offeringGateFrontier,
+        offeringsSoftFailed: result.offeringsSoftFailed,
+        webkincstarFetchFailedDays: result.webkincstarFetchFailedDays,
+        webkincstarHistoricalEnabled: result.webkincstarHistoricalEnabled,
+        webkincstarHistoricalGateOpen: result.webkincstarHistoricalGateOpen,
+        webkincstarDatumsFetched: result.webkincstarDatumsFetched,
+        webkincstarOverlaySkipped: result.webkincstarOverlaySkipped,
+        webkincstarSoftFailed: result.webkincstarSoftFailed,
+        retailInterestSoftFailed: result.retailInterestSoftFailed
       })}\n`
     )
     return EXIT_UPDATED

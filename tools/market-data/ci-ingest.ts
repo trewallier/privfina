@@ -1,5 +1,9 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
-import { writeGithubOutput, writeGithubStepSummary } from './github-output.ts'
+import {
+  writeGithubAnnotation,
+  writeGithubOutput,
+  writeGithubStepSummary
+} from './github-output.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
 import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 import type { WebkincstarReportName } from './webkincstar-reports.ts'
@@ -40,8 +44,54 @@ export interface CiIngestResult {
   offeringPdfsPending: number
   offeringPdfsParseFailed: number
   offeringPdfsSkippedNoSchedule: number
+  /** Deepest (min) offering frontier — archive progress. */
+  offeringBackfillFrontier: string | null
+  /** Shallowest (max) offering frontier — WK historical gate readiness. */
+  offeringGateFrontier: string | null
+  offeringsSoftFailed: boolean
   webkincstarFetchFailedDays: number
+  /** True when historical WK datums ran (gate open **or** explicit CLI datums). */
+  webkincstarHistoricalEnabled: boolean
+  /** True when the offering-archive depth gate alone would enable scheduled historical. */
+  webkincstarHistoricalGateOpen: boolean
+  webkincstarDatumsFetched: string[]
+  webkincstarOverlaySkipped: number
+  webkincstarSoftFailed: boolean
+  retailInterestSoftFailed: boolean
   exitCode: typeof EXIT_UPDATED | typeof EXIT_UNCHANGED | typeof EXIT_ERROR
+}
+
+/**
+ * Build the quiet Actions `::notice::` one-liner for the overview list.
+ * `wk_hist_gate` is gate readiness; not the same as historical datums enabled
+ * (operator explicit `webkincstarDatums` can fetch history with the gate closed).
+ * `frontier=` is deepest progress; `gate_frontier=` is shallowest readiness.
+ * Exported for unit tests.
+ */
+export function formatCiIngestNoticeLine(result: {
+  changed: boolean
+  asOf: string | null
+  webkincstarHistoricalGateOpen: boolean
+  webkincstarOverlaySkipped: number
+  webkincstarFetchFailedDays: number
+  offeringPdfsDownloaded: number
+  offeringPdfsPending: number
+  offeringPdfsParseFailed: number
+  offeringBackfillFrontier: string | null
+  offeringGateFrontier: string | null
+}): string {
+  return [
+    `changed=${result.changed}`,
+    `as_of=${result.asOf ?? ''}`,
+    `wk_hist_gate=${result.webkincstarHistoricalGateOpen ? 'on' : 'off'}`,
+    `wk_overlay_skip=${result.webkincstarOverlaySkipped}`,
+    `wk_fetch_failed=${result.webkincstarFetchFailedDays}`,
+    `pdfs=${result.offeringPdfsDownloaded}`,
+    `pending=${result.offeringPdfsPending}`,
+    `parse_failed=${result.offeringPdfsParseFailed}`,
+    `frontier=${result.offeringBackfillFrontier ?? ''}`,
+    `gate_frontier=${result.offeringGateFrontier ?? ''}`
+  ].join(' ')
 }
 
 /**
@@ -79,16 +129,54 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     generatedAt: options.generatedAt
   })
 
-  writeGithubOutput('changed', report.changed ? 'true' : 'false')
-  writeGithubOutput('as_of', report.asOf ?? '')
-  writeGithubOutput('offering_pdfs_downloaded', String(report.offeringPdfsDownloaded))
-  writeGithubOutput('offering_pdfs_pending', String(report.offeringPdfsPending))
-  writeGithubOutput('offering_pdfs_parse_failed', String(report.offeringPdfsParseFailed))
+  const result: CiIngestResult = {
+    changed: report.changed,
+    asOf: report.asOf,
+    offeringPdfsDownloaded: report.offeringPdfsDownloaded,
+    offeringPdfsPending: report.offeringPdfsPending,
+    offeringPdfsParseFailed: report.offeringPdfsParseFailed,
+    offeringPdfsSkippedNoSchedule: report.offeringPdfsSkippedNoSchedule,
+    offeringBackfillFrontier: report.offeringBackfillFrontier,
+    offeringGateFrontier: report.offeringGateFrontier,
+    offeringsSoftFailed: report.offeringsSoftFailed,
+    webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
+    webkincstarHistoricalEnabled: report.webkincstarHistoricalEnabled,
+    webkincstarHistoricalGateOpen: report.webkincstarHistoricalGateOpen,
+    webkincstarDatumsFetched: report.webkincstarDatumsFetched,
+    webkincstarOverlaySkipped: report.webkincstarOverlaySkipped,
+    webkincstarSoftFailed: report.webkincstarSoftFailed,
+    retailInterestSoftFailed: report.retailInterestSoftFailed,
+    exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
+  }
+
+  writeGithubOutput('changed', result.changed ? 'true' : 'false')
+  writeGithubOutput('as_of', result.asOf ?? '')
+  writeGithubOutput('offering_pdfs_downloaded', String(result.offeringPdfsDownloaded))
+  writeGithubOutput('offering_pdfs_pending', String(result.offeringPdfsPending))
+  writeGithubOutput('offering_pdfs_parse_failed', String(result.offeringPdfsParseFailed))
   writeGithubOutput(
     'offering_pdfs_skipped_no_schedule',
-    String(report.offeringPdfsSkippedNoSchedule)
+    String(result.offeringPdfsSkippedNoSchedule)
   )
-  writeGithubOutput('webkincstar_fetch_failed_days', String(report.webkincstarFetchFailedDays))
+  writeGithubOutput('offering_backfill_frontier', result.offeringBackfillFrontier ?? '')
+  writeGithubOutput('offering_gate_frontier', result.offeringGateFrontier ?? '')
+  writeGithubOutput('offerings_soft_failed', result.offeringsSoftFailed ? 'true' : 'false')
+  writeGithubOutput('webkincstar_fetch_failed_days', String(result.webkincstarFetchFailedDays))
+  writeGithubOutput(
+    'webkincstar_historical_enabled',
+    result.webkincstarHistoricalEnabled ? 'true' : 'false'
+  )
+  writeGithubOutput(
+    'webkincstar_historical_gate_open',
+    result.webkincstarHistoricalGateOpen ? 'true' : 'false'
+  )
+  writeGithubOutput('webkincstar_datums_fetched', result.webkincstarDatumsFetched.join(','))
+  writeGithubOutput('webkincstar_overlay_skipped', String(result.webkincstarOverlaySkipped))
+  writeGithubOutput('webkincstar_soft_failed', result.webkincstarSoftFailed ? 'true' : 'false')
+  writeGithubOutput(
+    'retail_interest_soft_failed',
+    result.retailInterestSoftFailed ? 'true' : 'false'
+  )
 
   writeGithubStepSummary(
     [
@@ -96,27 +184,69 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
       '',
       '| Metric | Value |',
       '| --- | --- |',
-      `| changed | ${report.changed} |`,
-      `| as_of | ${report.asOf ?? ''} |`,
-      `| offering PDFs downloaded | ${report.offeringPdfsDownloaded} |`,
-      `| offering PDFs pending | ${report.offeringPdfsPending} |`,
-      `| offering PDF parse_failed | ${report.offeringPdfsParseFailed} |`,
-      `| offering PDF skipped_no_schedule | ${report.offeringPdfsSkippedNoSchedule} |`,
-      `| WebKincstár fetch_failed days | ${report.webkincstarFetchFailedDays} |`,
-      `| offerings soft-failed | ${report.offeringsSoftFailed} |`,
-      `| WebKincstár soft-failed | ${report.webkincstarSoftFailed} |`,
+      `| changed | ${result.changed} |`,
+      `| as_of | ${result.asOf ?? ''} |`,
+      '',
+      '#### WebKincstár',
+      '',
+      '| Metric | Value |',
+      '| --- | --- |',
+      `| historical gate (shallowest frontier) | ${result.webkincstarHistoricalGateOpen ? 'open' : 'closed'} |`,
+      `| historical datums included | ${result.webkincstarHistoricalEnabled ? 'yes' : 'no'} |`,
+      `| datums fetched | ${result.webkincstarDatumsFetched.join(', ') || '(none)'} |`,
+      `| overlay skipped | ${result.webkincstarOverlaySkipped} |`,
+      `| fetch_failed days | ${result.webkincstarFetchFailedDays} |`,
+      `| soft-failed | ${result.webkincstarSoftFailed} |`,
+      '',
+      '#### Offerings',
+      '',
+      '| Metric | Value |',
+      '| --- | --- |',
+      `| deepest frontier (progress, min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
+      `| shallowest frontier (gate readiness, max) | ${result.offeringGateFrontier ?? '(none)'} |`,
+      `| PDFs downloaded | ${result.offeringPdfsDownloaded} |`,
+      `| PDFs pending | ${result.offeringPdfsPending} |`,
+      `| PDF parse_failed | ${result.offeringPdfsParseFailed} |`,
+      `| PDF skipped_no_schedule | ${result.offeringPdfsSkippedNoSchedule} |`,
+      `| soft-failed | ${result.offeringsSoftFailed} |`,
+      '',
+      '#### Other soft-fails',
+      '',
+      `| retailInterest soft-failed | ${result.retailInterestSoftFailed} |`,
       ''
     ].join('\n')
   )
 
-  return {
-    changed: report.changed,
-    asOf: report.asOf,
-    offeringPdfsDownloaded: report.offeringPdfsDownloaded,
-    offeringPdfsPending: report.offeringPdfsPending,
-    offeringPdfsParseFailed: report.offeringPdfsParseFailed,
-    offeringPdfsSkippedNoSchedule: report.offeringPdfsSkippedNoSchedule,
-    webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
-    exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
+  writeGithubAnnotation('notice', formatCiIngestNoticeLine(result))
+  if (result.webkincstarOverlaySkipped > 0) {
+    const overlayMsg = `WebKincstár overlay soft-skipped ${result.webkincstarOverlaySkipped} unmatched quote(s); calendar seals withheld for those reports`
+    // Expected during offering-archive drain (gate closed); warn only when gate is open.
+    writeGithubAnnotation(
+      result.webkincstarHistoricalGateOpen ? 'warning' : 'notice',
+      overlayMsg
+    )
   }
+  if (result.webkincstarFetchFailedDays > 0) {
+    writeGithubAnnotation(
+      'warning',
+      `WebKincstár appended ${result.webkincstarFetchFailedDays} fetch_failed calendar day(s)`
+    )
+  }
+  if (result.offeringPdfsParseFailed > 0) {
+    writeGithubAnnotation(
+      'warning',
+      `Offering PDF parse_failed=${result.offeringPdfsParseFailed} (sticky until reparse)`
+    )
+  }
+  if (result.webkincstarSoftFailed) {
+    writeGithubAnnotation('warning', 'WebKincstár soft-failed this run')
+  }
+  if (result.offeringsSoftFailed) {
+    writeGithubAnnotation('warning', 'Offerings soft-failed this run')
+  }
+  if (result.retailInterestSoftFailed) {
+    writeGithubAnnotation('warning', 'retailInterest soft-failed this run')
+  }
+
+  return result
 }

@@ -19,14 +19,14 @@ Related: 0034 (ÁKK published market data), 0035 (dual-source prices), 0039 (Web
 ## Decision
 
 - On **WebKincstár historical backfill only** (scheduled historical when the offering-depth gate is open, or operator explicit `webkincstarDatums` / CLI `backfill-webkincstar --from`), unmatched WK instruments may create a new `SeriesRecord` stub with:
-  - `identitySource: 'webkincstar-backfill'`
-  - thin fields from the WK row (`id` / `name`, `mat` when the PDF line parses it, family from report routing, family-default `dayCount` when applicable)
+  - `identitySource: 'webkincstar.allamkincstar.gov.hu'` (published WebKincstár host, same string as price-calendar `source.host`)
+  - thin fields from the WK row (`id` / `name`, `mat` when the PDF line parses it, family from report routing; omit invent `dayCount` so ISSUE / ÁKK can fill)
   - status from existing maturity rules (`matured` / `delisted`; must not become live `active` without satisfying tip live-quote rules — a historical settle alone must not resurrect a matured/delisted series)
 - Tip-lookback-only days (gate closed and no explicit hist datums) keep ADR 0039 soft-skip — **no invent** on the tip path.
-- ÁKK catalog upsert for the same `id` **promotes** `identitySource` to `'akk-catalog'` and ÁKK non-null identity fields win.
-- ISSUE offering listing / PDF may **null-fill** missing fields (`isin`, `issue`, `mat`, `dayCount`, display `name`) **only** when `identitySource === 'webkincstar-backfill'`. Never overwrite ÁKK-owned fields.
+- ÁKK catalog upsert for the same `id` **promotes** `identitySource` to `'www.akk.hu'` (published ÁKK host) and ÁKK non-null identity fields win.
+- ISSUE offering listing / PDF may **null-fill** missing fields (`isin`, `issue`, `mat`, `dayCount`, display `name`) **only** when `identitySource === 'webkincstar.allamkincstar.gov.hu'`. Never overwrite ÁKK-owned fields.
 - This is **not** a full matured outstanding dump: only instruments **seen on WK pages the ingest actually fetches**.
-- Optional `identitySource` on `SeriesRecord`: `'akk-catalog' | 'webkincstar-backfill'`. Omit / undefined on legacy tip rows → treat as ÁKK-owned. Validate when present.
+- Optional `identitySource` on `SeriesRecord` is a **source host** literal: `'www.akk.hu' | 'webkincstar.allamkincstar.gov.hu'`. Omit / undefined on legacy tip rows → treat as ÁKK-owned. Validate when present. Do not invent internal tags (`akk-catalog`, `webkincstar-backfill`).
 
 ## Consequences
 

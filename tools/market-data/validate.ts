@@ -203,7 +203,10 @@ export function validateMarketTree(tree: MarketTreeState): void {
   verifyManifestDigests(tree)
 }
 
-const SERIES_IDENTITY_SOURCES = new Set(['akk-catalog', 'webkincstar-backfill'])
+const SERIES_IDENTITY_SOURCES = new Set([
+  'www.akk.hu',
+  'webkincstar.allamkincstar.gov.hu'
+])
 
 function validateSeriesRecord(
   family: FamilyCode,
@@ -220,7 +223,7 @@ function validateSeriesRecord(
     !SERIES_IDENTITY_SOURCES.has(s.identitySource)
   ) {
     throw new ValidateError(
-      `Series ${family}/${s.id} identitySource must be akk-catalog|webkincstar-backfill (got ${String(s.identitySource)})`
+      `Series ${family}/${s.id} identitySource must be www.akk.hu|webkincstar.allamkincstar.gov.hu (got ${String(s.identitySource)})`
     )
   }
   if (

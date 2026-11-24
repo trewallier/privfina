@@ -55,10 +55,16 @@ export type DayCountConvention = 'ACT/360' | 'ACT/365F' | '30E/360'
 export type SeriesStatus = 'active' | 'matured' | 'delisted'
 
 /**
- * Who seeded the series identity row (ADR 0048).
- * Omit / undefined on legacy tip rows → treat as ÁKK-owned.
+ * Who seeded the series identity row (ADR 0048) — published source **host**
+ * strings (same as other tip `source.host` fields), not internal tags.
+ * Omit / undefined on legacy tip rows → treat as ÁKK-owned (`www.akk.hu`).
  */
-export type SeriesIdentitySource = 'akk-catalog' | 'webkincstar-backfill'
+export const SERIES_IDENTITY_SOURCE_AKK = 'www.akk.hu' as const
+export const SERIES_IDENTITY_SOURCE_WEBKINCSTAR =
+  'webkincstar.allamkincstar.gov.hu' as const
+export type SeriesIdentitySource =
+  | typeof SERIES_IDENTITY_SOURCE_AKK
+  | typeof SERIES_IDENTITY_SOURCE_WEBKINCSTAR
 
 export interface SeriesRecord {
   /** Canonical slug: map key, quotes/<id>.json basename, QuotesFile.id. */
@@ -89,8 +95,9 @@ export interface SeriesRecord {
    */
   periodMonths?: number | null
   /**
-   * Identity provenance (ADR 0048). `'webkincstar-backfill'` = thin stub from
-   * historical WK overlay; ÁKK catalog upsert promotes to `'akk-catalog'`.
+   * Identity provenance host (ADR 0048).
+   * `webkincstar.allamkincstar.gov.hu` = thin stub from historical WK overlay;
+   * ÁKK catalog upsert promotes to `www.akk.hu`.
    */
   identitySource?: SeriesIdentitySource
 }

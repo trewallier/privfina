@@ -163,7 +163,7 @@ describe('ingestMarketData (fixture / disk)', () => {
 })
 
 describe('SeriesRecord.identitySource (ADR 0048)', () => {
-  it('accepts akk-catalog and webkincstar-backfill; rejects other literals', async () => {
+  it('accepts www.akk.hu and webkincstar host; rejects other literals', async () => {
     const catalog = await loadFixture('catalog.json')
     const rates = await loadFixture('network-rates.json')
     const snap = normalizeAkkSnapshots(catalog, rates)
@@ -179,11 +179,11 @@ describe('SeriesRecord.identitySource (ADR 0048)', () => {
       )
     }
 
-    series.identitySource = 'webkincstar-backfill'
+    series.identitySource = 'webkincstar.allamkincstar.gov.hu'
     refreshDigest()
     expect(() => validateMarketTree(tree)).not.toThrow()
 
-    series.identitySource = 'akk-catalog'
+    series.identitySource = 'www.akk.hu'
     refreshDigest()
     expect(() => validateMarketTree(tree)).not.toThrow()
 

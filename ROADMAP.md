@@ -555,7 +555,7 @@ Constraints
 - Tip path unchanged: Budapest yesterday + ≤3 prior weekday hole-fill (ADR 0039).
 - Rolling history: each scheduled run also fetches the **6 calendar days** immediately before **each report’s contiguous durable frontier** (per-report tip cluster; deep islands do not stall shallower reports); scrape floor **`1990-01-01`** (refine later).
 - **Gate:** scheduled historical stays **off** until **every** offering family’s archive contiguous tip success frontier (`transcribed` / `skipped_*`) is at least **90** calendar days before snapshot `asOf` (`OFFERING_WK_HISTORICAL_GATE_DAYS`) — readiness uses the **shallowest** frontier (`max` published), not the deepest. Tip lookback always runs. With ADR 0048 invent on, the gate mainly paces offering PDF identity / enrich rather than forever blocking unmatched hist names.
-- **Identity (ADR 0048):** historical WK (gate open or explicit CLI `--from` / `webkincstarDatums`) may create marked `identitySource: 'webkincstar-backfill'` series stubs for unmatched instruments so already-matured names can join quotes; tip-lookback-only keeps soft-skip. ÁKK catalog promotes to `'akk-catalog'`; ISSUE offerings null-fill WK-origin fields only.
+- **Identity (ADR 0048):** historical WK (gate open or explicit CLI `--from` / `webkincstarDatums`) may create marked `identitySource: 'webkincstar.allamkincstar.gov.hu'` series stubs for unmatched instruments so already-matured names can join quotes; tip-lookback-only keeps soft-skip. ÁKK catalog promotes to `'www.akk.hu'`; ISSUE offerings null-fill WK-origin fields only.
 - One-shot CLI remains an operator escape hatch (`--from` **required**; default `--reports` = all daily reports; `--to` defaults to Budapest yesterday; bypasses the offering gate).
 
 Plan slices

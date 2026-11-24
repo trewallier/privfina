@@ -226,6 +226,8 @@ export interface IngestReport extends MergeResult {
   webkincstarHistoricalGateOpen: boolean
   /** Datums selected for WebKincstár fetch this run (tip ∪ historical when gated). */
   webkincstarDatumsFetched: string[]
+  /** Sum of overlay soft-skipped unmatched quotes across fetched datums. */
+  webkincstarOverlaySkipped: number
   /**
    * Oldest (deepest) contiguous offering-archive success frontier across families
    * (or null). Progress metric — gate readiness uses the shallowest frontier.
@@ -464,6 +466,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let webkincstarSoftFailed = false
   let webkincstarHasQuotes = false
   let webkincstarFetchFailedDays = 0
+  let webkincstarOverlaySkipped = 0
   let mergeSnapshotInput = combined.snapshot
 
   const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
@@ -562,6 +565,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             extraSeries: previousSeriesForJoin(previous)
           })
           if (overlay.skippedUnmatched > 0) {
+            webkincstarOverlaySkipped += overlay.skippedUnmatched
             const sample = overlay.skippedUnmatchedQuotes
               .map((q) => `${q.family}/${q.id} (${q.name} @ ${q.settleDate})`)
               .join('; ')
@@ -583,7 +587,14 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             previous.priceCalendar
           )
           webkincstarFetchFailedDays += failedDays.length
-          calendarDaysAccum.push(...normalized.calendarDays, ...failedDays)
+          // Unmatched overlay soft-skips leave the day non-durable: omit priced /
+          // no_price calendar rows so tip lookback re-POSTs until every quote joins
+          // (matched quotes still overlay this run). Already-sealed tip rows stay.
+          if (overlay.skippedUnmatched > 0) {
+            calendarDaysAccum.push(...failedDays)
+          } else {
+            calendarDaysAccum.push(...normalized.calendarDays, ...failedDays)
+          }
         }
       } catch (err) {
         logWebkincstarSoftFail(err)
@@ -880,6 +891,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     webkincstarHistoricalEnabled: shouldFetchWebkincstar ? webkincstarHistoricalEnabled : false,
     webkincstarHistoricalGateOpen: offeringGateOpen,
     webkincstarDatumsFetched: shouldFetchWebkincstar ? [...webkincstarDatums] : [],
+    webkincstarOverlaySkipped,
     offeringBackfillFrontier
   }
 }

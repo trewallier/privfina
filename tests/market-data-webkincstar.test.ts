@@ -563,6 +563,90 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
     expect(overlay.hasQuotes).toBe(false)
   })
 
+  it('omits priced calendar seal when overlay soft-skips unmatched quotes (retry)', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'privfina-wk-skip-nodurable-'))
+    // Minimal DKJ text: one catalog series + one unmatched name → soft-skip.
+    const dkjWithUnmatched = `
+Diszkont Kincstárjegyek                                                                 Értéknap: 2026.11.05
+D261125             99.6650 %      6.13 %   6.05 %            -             -           -            20        2026.11.25
+D999999             99.0000 %      6.00 %   5.90 %            -             -           -            30        2026.12.05
+`
+    const dkjMatchedOnly = `
+Diszkont Kincstárjegyek                                                                 Értéknap: 2026.11.05
+D261125             99.6650 %      6.13 %   6.05 %            -             -           -            20        2026.11.25
+`
+    try {
+      const report = await ingestMarketData({
+        root: dir,
+        rawDir: path.join(dir, 'raw'),
+        catalog: loadJson<AkkEnvelope>('catalog.json'),
+        networkRates: loadJson<AkkEnvelope>('network-rates.json'),
+        skipAllampapir: true,
+        skipInflation: true,
+        skipRetailInterest: true,
+        skipBubor: true,
+        skipSettlementCalendar: true,
+        skipOfferings: true,
+        webkincstarDatum: '2026-11-05',
+        webkincstarReports: ['_20631_arfolyam_dkj'],
+        webkincstarTextByReport: {
+          _20631_arfolyam_dkj: dkjWithUnmatched
+        },
+        generatedAt: '2026-11-05T18:00:00.000Z'
+      })
+      expect(report.webkincstarOverlaySkipped).toBeGreaterThan(0)
+      const days = report.tree.priceCalendar?.days ?? []
+      // Soft-skipped overlay → no durable priced/no_price seal.
+      expect(
+        days.some(
+          (d) =>
+            d.report === '_20631_arfolyam_dkj' &&
+            (d.status === 'priced' || d.status === 'no_price')
+        )
+      ).toBe(false)
+      // Matched DKJ quote still overlays.
+      const quotes = JSON.parse(
+        await readFile(
+          path.join(dir, 'data/market/v2/families/dkj/quotes/D261125.json'),
+          'utf8'
+        )
+      )
+      expect(quotes.rows.some((r: QuoteRow) => r[0] === '2026-11-05')).toBe(true)
+
+      // Second run: every parsed row joins → seal priced.
+      const sealed = await ingestMarketData({
+        root: dir,
+        previousRoot: dir,
+        rawDir: path.join(dir, 'raw2'),
+        catalog: loadJson<AkkEnvelope>('catalog.json'),
+        networkRates: loadJson<AkkEnvelope>('network-rates.json'),
+        skipAllampapir: true,
+        skipInflation: true,
+        skipRetailInterest: true,
+        skipBubor: true,
+        skipSettlementCalendar: true,
+        skipOfferings: true,
+        webkincstarDatum: '2026-11-05',
+        webkincstarReports: ['_20631_arfolyam_dkj'],
+        webkincstarTextByReport: {
+          _20631_arfolyam_dkj: dkjMatchedOnly
+        },
+        generatedAt: '2026-11-05T19:00:00.000Z'
+      })
+      expect(sealed.webkincstarOverlaySkipped).toBe(0)
+      expect(
+        sealed.tree.priceCalendar?.days.some(
+          (d) =>
+            d.report === '_20631_arfolyam_dkj' &&
+            d.datum === '2026-11-05' &&
+            d.status === 'priced'
+        )
+      ).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
   it('append-first price calendar digests change on no-price-only day', () => {
     const emptyDkj = parseWebkincstarPdfText({
       reportName: '_20631_arfolyam_dkj',

@@ -11,6 +11,7 @@ import { mergeListingDiscoveryStates } from './offering-listing-discovery.ts'
 import {
   OFFERING_TRANSCRIPTION_DISCLAIMER,
   SCHEMA_VERSION,
+  SERIES_IDENTITY_SOURCE_WEBKINCSTAR,
   type DayCountConvention,
   type FamilyCode,
   type OfferingArchiveDocument,
@@ -56,8 +57,8 @@ export interface MergeOfferingsResult {
   /** Series id → saleWindow patches applied (for series.json). */
   seriesSaleWindows: Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
   /**
-   * ISSUE listing/PDF fields for null-filling `webkincstar-backfill` series
-   * (ADR 0048). Applied only when the tip series has that identitySource.
+   * ISSUE listing/PDF fields for null-filling WK-host series (ADR 0048).
+   * Applied only when the tip series has that identitySource.
    */
   seriesIdentityEnrichments: SeriesIdentityEnrichment[]
   offeringsChanged: boolean
@@ -361,7 +362,7 @@ function asSeriesDayCount(value: string | null | undefined): DayCountConvention 
 
 /**
  * Build ISSUE listing/PDF enrichment patches (ADR 0048). Applied later only onto
- * `identitySource === 'webkincstar-backfill'` series rows.
+ * `identitySource === webkincstar host` series rows.
  */
 export function buildSeriesIdentityEnrichments(
   tipBySeries: Map<string, NormalizedOfferingListingRow>,
@@ -439,7 +440,7 @@ export function applyWkOriginSeriesEnrichment(
   const byId = new Map(patches.map((p) => [p.seriesId, p]))
   let changed = false
   const next = series.map((s) => {
-    if (s.identitySource !== 'webkincstar-backfill') return { ...s }
+    if (s.identitySource !== SERIES_IDENTITY_SOURCE_WEBKINCSTAR) return { ...s }
     const patch = byId.get(s.id)
     if (!patch) return { ...s }
     let nextRec = { ...s }

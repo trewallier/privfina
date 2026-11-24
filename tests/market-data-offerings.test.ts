@@ -273,7 +273,7 @@ describe('mergeOfferingsState', () => {
       status: 'delisted',
       // Legacy invent default — ISSUE dayCount must still overwrite on WK-origin.
       dayCount: 'ACT/360',
-      identitySource: 'webkincstar-backfill'
+      identitySource: 'webkincstar.allamkincstar.gov.hu'
     }
     const akkOwned: SeriesRecord = {
       id: 'A360221I26',
@@ -284,7 +284,7 @@ describe('mergeOfferingsState', () => {
       ccy: 'HUF',
       status: 'active',
       dayCount: 'ACT/365F',
-      identitySource: 'akk-catalog'
+      identitySource: 'www.akk.hu'
     }
     const patch = {
       family: 'pmap' as const,
@@ -298,7 +298,7 @@ describe('mergeOfferingsState', () => {
     const filled = applyWkOriginSeriesEnrichment([wkStub], [patch])
     expect(filled.changed).toBe(true)
     expect(filled.series[0]).toMatchObject({
-      identitySource: 'webkincstar-backfill',
+      identitySource: 'webkincstar.allamkincstar.gov.hu',
       isin: 'HU0000403118',
       name: '2036/I',
       issue: '2026-07-17',

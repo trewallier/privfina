@@ -174,6 +174,11 @@ export interface IngestOptions {
    * When set with fixture ÁKK, skips live offering listing fetch.
    */
   offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
+  /**
+   * Offline backfill listing envelopes (tests). Live runs fetch a second page
+   * when the tip archive has a contiguous success frontier for the family.
+   */
+  offeringBackfillEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
   /** Skip offering listing/merge (keep previous offerings/archive). */
   skipOfferings?: boolean
   /**
@@ -655,6 +660,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         rawDir: path.join(options.rawDir, 'offerings'),
         fetchImpl: options.fetchImpl,
         envelopesByFamily: options.offeringEnvelopesByFamily,
+        backfillEnvelopesByFamily: options.offeringBackfillEnvelopesByFamily,
+        offeringArchive: previous.offeringArchive,
         // Offline fixtures are partial — do not soft-fail-retry missing labels via fetchImpl.
         families: offeringFamilies
       })

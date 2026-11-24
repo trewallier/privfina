@@ -355,6 +355,7 @@ async function main(argv: string[]): Promise<number> {
         offeringsSoftFailed: result.offeringsSoftFailed,
         webkincstarFetchFailedDays: result.webkincstarFetchFailedDays,
         webkincstarHistoricalEnabled: result.webkincstarHistoricalEnabled,
+        webkincstarHistoricalGateOpen: result.webkincstarHistoricalGateOpen,
         webkincstarDatumsFetched: result.webkincstarDatumsFetched,
         webkincstarOverlaySkipped: result.webkincstarOverlaySkipped,
         webkincstarSoftFailed: result.webkincstarSoftFailed,

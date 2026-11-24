@@ -47,7 +47,10 @@ export interface CiIngestResult {
   offeringBackfillFrontier: string | null
   offeringsSoftFailed: boolean
   webkincstarFetchFailedDays: number
+  /** True when historical WK datums ran (gate open **or** explicit CLI datums). */
   webkincstarHistoricalEnabled: boolean
+  /** True when the offering-archive depth gate alone would enable scheduled historical. */
+  webkincstarHistoricalGateOpen: boolean
   webkincstarDatumsFetched: string[]
   webkincstarOverlaySkipped: number
   webkincstarSoftFailed: boolean
@@ -57,12 +60,14 @@ export interface CiIngestResult {
 
 /**
  * Build the quiet Actions `::notice::` one-liner for the overview list.
+ * `wk_hist_gate` is gate readiness; not the same as historical datums enabled
+ * (operator explicit `webkincstarDatums` can fetch history with the gate closed).
  * Exported for unit tests.
  */
 export function formatCiIngestNoticeLine(result: {
   changed: boolean
   asOf: string | null
-  webkincstarHistoricalEnabled: boolean
+  webkincstarHistoricalGateOpen: boolean
   webkincstarOverlaySkipped: number
   webkincstarFetchFailedDays: number
   offeringPdfsDownloaded: number
@@ -73,7 +78,7 @@ export function formatCiIngestNoticeLine(result: {
   return [
     `changed=${result.changed}`,
     `as_of=${result.asOf ?? ''}`,
-    `wk_hist=${result.webkincstarHistoricalEnabled ? 'on' : 'off'}`,
+    `wk_hist_gate=${result.webkincstarHistoricalGateOpen ? 'on' : 'off'}`,
     `wk_overlay_skip=${result.webkincstarOverlaySkipped}`,
     `wk_fetch_failed=${result.webkincstarFetchFailedDays}`,
     `pdfs=${result.offeringPdfsDownloaded}`,
@@ -129,6 +134,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringsSoftFailed: report.offeringsSoftFailed,
     webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
     webkincstarHistoricalEnabled: report.webkincstarHistoricalEnabled,
+    webkincstarHistoricalGateOpen: report.webkincstarHistoricalGateOpen,
     webkincstarDatumsFetched: report.webkincstarDatumsFetched,
     webkincstarOverlaySkipped: report.webkincstarOverlaySkipped,
     webkincstarSoftFailed: report.webkincstarSoftFailed,
@@ -152,6 +158,10 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     'webkincstar_historical_enabled',
     result.webkincstarHistoricalEnabled ? 'true' : 'false'
   )
+  writeGithubOutput(
+    'webkincstar_historical_gate_open',
+    result.webkincstarHistoricalGateOpen ? 'true' : 'false'
+  )
   writeGithubOutput('webkincstar_datums_fetched', result.webkincstarDatumsFetched.join(','))
   writeGithubOutput('webkincstar_overlay_skipped', String(result.webkincstarOverlaySkipped))
   writeGithubOutput('webkincstar_soft_failed', result.webkincstarSoftFailed ? 'true' : 'false')
@@ -173,7 +183,8 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
       '',
       '| Metric | Value |',
       '| --- | --- |',
-      `| historical (§6m) | ${result.webkincstarHistoricalEnabled ? 'on' : 'off'} |`,
+      `| historical gate (shallowest frontier) | ${result.webkincstarHistoricalGateOpen ? 'open' : 'closed'} |`,
+      `| historical datums included | ${result.webkincstarHistoricalEnabled ? 'yes' : 'no'} |`,
       `| datums fetched | ${result.webkincstarDatumsFetched.join(', ') || '(none)'} |`,
       `| overlay skipped | ${result.webkincstarOverlaySkipped} |`,
       `| fetch_failed days | ${result.webkincstarFetchFailedDays} |`,
@@ -183,7 +194,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
       '',
       '| Metric | Value |',
       '| --- | --- |',
-      `| backfill frontier (min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
+      `| deepest frontier (min published) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
       `| PDFs downloaded | ${result.offeringPdfsDownloaded} |`,
       `| PDFs pending | ${result.offeringPdfsPending} |`,
       `| PDF parse_failed | ${result.offeringPdfsParseFailed} |`,

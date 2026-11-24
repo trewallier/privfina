@@ -46,10 +46,12 @@ jobs:
       offering_pdfs_downloaded: ${{ steps.ingest.outputs.offering_pdfs_downloaded }}
       offering_pdfs_pending: ${{ steps.ingest.outputs.offering_pdfs_pending }}
       offering_pdfs_parse_failed: ${{ steps.ingest.outputs.offering_pdfs_parse_failed }}
+      offering_pdfs_skipped_no_schedule: ${{ steps.ingest.outputs.offering_pdfs_skipped_no_schedule }}
       offering_backfill_frontier: ${{ steps.ingest.outputs.offering_backfill_frontier }}
       offerings_soft_failed: ${{ steps.ingest.outputs.offerings_soft_failed }}
       webkincstar_fetch_failed_days: ${{ steps.ingest.outputs.webkincstar_fetch_failed_days }}
       webkincstar_historical_enabled: ${{ steps.ingest.outputs.webkincstar_historical_enabled }}
+      webkincstar_historical_gate_open: ${{ steps.ingest.outputs.webkincstar_historical_gate_open }}
       webkincstar_datums_fetched: ${{ steps.ingest.outputs.webkincstar_datums_fetched }}
       webkincstar_overlay_skipped: ${{ steps.ingest.outputs.webkincstar_overlay_skipped }}
       webkincstar_soft_failed: ${{ steps.ingest.outputs.webkincstar_soft_failed }}

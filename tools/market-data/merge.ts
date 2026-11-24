@@ -156,6 +156,8 @@ function toLatestQuote(row: QuoteRow): LatestQuote {
  * Historical WebKincstár backfill rewrites past settle dates into the merge payload;
  * those must not resurrect a series whose mat is already before asOf (ADR 0034).
  * "Quoted" means a live settle on asOf (see mergeSnapshot), not any historical row.
+ * Strict `mat < asOf` (not `<=`): maturity-day settles may still mark active —
+ * same predicate as normalize.ts / normalize-allampapir.ts / normalize-webkincstar.ts.
  */
 function resolveStatus(
   rec: SeriesRecord,

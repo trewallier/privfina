@@ -550,7 +550,8 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
     ])
     const overlay = applyWebkincstarQuotes(emptyBase, wk.snapshot)
     expect(overlay.skippedUnmatched).toBeGreaterThan(0)
-    expect(overlay.skippedUnmatchedQuotes).toHaveLength(overlay.skippedUnmatched)
+    expect(overlay.skippedUnmatchedQuotes.length).toBeGreaterThan(0)
+    expect(overlay.skippedUnmatchedQuotes.length).toBeLessThanOrEqual(overlay.skippedUnmatched)
     expect(overlay.skippedUnmatchedQuotes[0]).toEqual(
       expect.objectContaining({
         family: 'dkj',

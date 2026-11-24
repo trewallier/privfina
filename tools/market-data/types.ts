@@ -47,7 +47,11 @@ export type CouponRow = [string, string | null, number | null]
 
 export type DayCountConvention = 'ACT/360' | 'ACT/365F' | '30E/360'
 
-/** active = currently quoted; matured = past maturity; delisted = not quoted, not matured. */
+/**
+ * active = live-quoted on snapshot asOf (settle date === asOf);
+ * matured = mat < asOf (strict; maturity-day quotes may still be active);
+ * delisted = not live-quoted and not matured.
+ */
 export type SeriesStatus = 'active' | 'matured' | 'delisted'
 
 export interface SeriesRecord {

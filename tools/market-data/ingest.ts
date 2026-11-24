@@ -553,32 +553,39 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           webkincstarFetchFailedDays += appendable.length
           calendarDaysAccum.push(...appendable)
         } else {
-          const normalized = normalizeWebkincstarReports(
-            fetched.reports.map((r) => r.parsed)
-          )
-          if (normalized.unmatchedNames.length > 0) {
-            console.error(
-              `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalized.unmatchedNames.join(', ')}`
-            )
+          // Overlay + seal decision are per successful report: matched quotes still
+          // apply; durable priced/no_price seals are omitted only for reports that
+          // contributed unmatched soft-skips (siblings for the same datum may seal).
+          const sealableCalendarDays: PriceCalendarDay[] = []
+          for (const fetchedReport of fetched.reports) {
+            const normalizedOne = normalizeWebkincstarReports([fetchedReport.parsed])
+            if (normalizedOne.unmatchedNames.length > 0) {
+              console.error(
+                `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalizedOne.unmatchedNames.join(', ')}`
+              )
+            }
+            const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalizedOne.snapshot, {
+              extraSeries: previousSeriesForJoin(previous)
+            })
+            if (overlay.skippedUnmatched > 0) {
+              webkincstarOverlaySkipped += overlay.skippedUnmatched
+              const sample = overlay.skippedUnmatchedQuotes
+                .map((q) => `${q.family}/${q.id} (${q.name} @ ${q.settleDate})`)
+                .join('; ')
+              const more =
+                overlay.skippedUnmatched > overlay.skippedUnmatchedQuotes.length
+                  ? `; …+${overlay.skippedUnmatched - overlay.skippedUnmatchedQuotes.length} more`
+                  : ''
+              console.error(
+                `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match (${fetchedReport.reportName}): ${sample}${more}`
+              )
+            }
+            mergeSnapshotInput = overlay.snapshot
+            if (overlay.hasQuotes) webkincstarHasQuotes = true
+            if (overlay.skippedUnmatched === 0) {
+              sealableCalendarDays.push(...normalizedOne.calendarDays)
+            }
           }
-          const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalized.snapshot, {
-            extraSeries: previousSeriesForJoin(previous)
-          })
-          if (overlay.skippedUnmatched > 0) {
-            webkincstarOverlaySkipped += overlay.skippedUnmatched
-            const sample = overlay.skippedUnmatchedQuotes
-              .map((q) => `${q.family}/${q.id} (${q.name} @ ${q.settleDate})`)
-              .join('; ')
-            const more =
-              overlay.skippedUnmatched > overlay.skippedUnmatchedQuotes.length
-                ? `; …+${overlay.skippedUnmatched - overlay.skippedUnmatchedQuotes.length} more`
-                : ''
-            console.error(
-              `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match: ${sample}${more}`
-            )
-          }
-          mergeSnapshotInput = overlay.snapshot
-          if (overlay.hasQuotes) webkincstarHasQuotes = true
 
           const failedReportNames = fetched.failures.map((f) => f.reportName)
           const failedDays = fetchFailedCalendarDaysAppendable(
@@ -587,14 +594,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             previous.priceCalendar
           )
           webkincstarFetchFailedDays += failedDays.length
-          // Unmatched overlay soft-skips leave the day non-durable: omit priced /
-          // no_price calendar rows so tip lookback re-POSTs until every quote joins
-          // (matched quotes still overlay this run). Already-sealed tip rows stay.
-          if (overlay.skippedUnmatched > 0) {
-            calendarDaysAccum.push(...failedDays)
-          } else {
-            calendarDaysAccum.push(...normalized.calendarDays, ...failedDays)
-          }
+          calendarDaysAccum.push(...sealableCalendarDays, ...failedDays)
         }
       } catch (err) {
         logWebkincstarSoftFail(err)

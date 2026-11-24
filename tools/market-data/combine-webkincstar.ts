@@ -3,6 +3,7 @@ import { combineQuoteRows } from './combine.ts'
 import {
   emptyNormalizedByFamily,
   FAMILIES,
+  SERIES_IDENTITY_SOURCE_WEBKINCSTAR,
   type FamilyCode,
   type NormalizedSnapshot,
   type QuoteRow,
@@ -49,7 +50,7 @@ export interface ApplyWebkincstarResult {
   skippedUnmatchedSeries: SkippedWebkincstarSeries[]
   /**
    * Unique series stubs invented under ADR 0048 historical invent
-   * (`identitySource: 'webkincstar-backfill'`).
+   * (`identitySource: webkincstar host`).
    */
   inventedSeries: InventedWebkincstarSeries[]
   /** True when at least one remapped quote was applied. */
@@ -158,7 +159,7 @@ function inventBackfillStub(
     status,
     // Omit dayCount: normalize-webkincstar defaults ACT/360, which would block
     // ADR 0048 ISSUE null-fill of ACT/365F (etc.). Family default / enrich later.
-    identitySource: 'webkincstar-backfill'
+    identitySource: SERIES_IDENTITY_SOURCE_WEBKINCSTAR
   }
   // Copy optional fields only when defined so JSON serialization stays valid.
   // Do not copy dayCount from WK meta (see above).
@@ -184,8 +185,8 @@ export function applyWebkincstarQuotes(
     /** Prior tip series for name→id join when not in today's combined set. */
     extraSeries?: Array<{ family: FamilyCode; series: SeriesRecord }>
     /**
-     * When true (historical WK backfill), invent `webkincstar-backfill` series
-     * stubs for unmatched instruments instead of soft-skipping (ADR 0048).
+     * When true (historical WK backfill), invent WK-host series stubs for
+     * unmatched instruments instead of soft-skipping (ADR 0048).
      */
     inventUnmatched?: boolean
   }

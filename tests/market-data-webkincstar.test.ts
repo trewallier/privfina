@@ -599,7 +599,7 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
     const stub = overlay.snapshot.byFamily.dkj.series.find(
       (s) => s.id === overlay.inventedSeries[0].id
     )
-    expect(stub?.identitySource).toBe('webkincstar-backfill')
+    expect(stub?.identitySource).toBe('webkincstar.allamkincstar.gov.hu')
     // Invent omits dayCount so ISSUE ACT/365F (etc.) can null-fill later (ADR 0048).
     expect(stub?.dayCount).toBeUndefined()
     expect(
@@ -722,7 +722,7 @@ D999999             99.0000 %      6.00 %   5.90 %            -             -   
       expect(report.webkincstarOverlaySkipped).toBe(0)
       expect(report.webkincstarSeriesInvented).toBeGreaterThan(0)
       const invented = report.tree.families.dkj.series.series.find((s) => s.id === 'D999999')
-      expect(invented?.identitySource).toBe('webkincstar-backfill')
+      expect(invented?.identitySource).toBe('webkincstar.allamkincstar.gov.hu')
       expect(invented?.dayCount).toBeUndefined()
       expect(report.tree.families.dkj.quotes.D999999?.rows.some((r) => r[0] === '2026-11-05')).toBe(
         true

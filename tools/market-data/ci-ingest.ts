@@ -240,7 +240,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
   if (result.webkincstarSeriesInvented > 0) {
     writeGithubAnnotation(
       'notice',
-      `WebKincstár invented ${result.webkincstarSeriesInvented} series stub(s) (identitySource=webkincstar-backfill)`
+      `WebKincstár invented ${result.webkincstarSeriesInvented} series stub(s) (identitySource=webkincstar.allamkincstar.gov.hu)`
     )
   }
   if (result.webkincstarOverlaySkipped > 0) {

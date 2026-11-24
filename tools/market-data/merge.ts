@@ -24,6 +24,8 @@ import {
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
+  SERIES_IDENTITY_SOURCE_AKK,
+  SERIES_IDENTITY_SOURCE_WEBKINCSTAR,
   SETTLEMENT_CALENDAR_REF_PATH,
   type BuborFile,
   type CouponsFile,
@@ -171,30 +173,30 @@ function resolveStatus(
 
 function effectiveIdentitySource(
   s: SeriesRecord
-): 'akk-catalog' | 'webkincstar-backfill' {
-  return s.identitySource ?? 'akk-catalog'
+): typeof SERIES_IDENTITY_SOURCE_AKK | typeof SERIES_IDENTITY_SOURCE_WEBKINCSTAR {
+  return s.identitySource ?? SERIES_IDENTITY_SOURCE_AKK
 }
 
 /**
  * Identity-aware series upsert (ADR 0048):
- * - ÁKK (omit / akk-catalog) never downgrades to webkincstar-backfill.
- * - ÁKK over WK-origin promotes to akk-catalog; ÁKK non-null fields win,
+ * - ÁKK host (omit / www.akk.hu) never downgrades to WebKincstár host.
+ * - ÁKK over WK-origin promotes to www.akk.hu; ÁKK non-null fields win,
  *   WK non-null fills only where ÁKK left null/undefined.
  */
 function mergeSeriesIdentity(prev: SeriesRecord, incoming: SeriesRecord): SeriesRecord {
   const prevSrc = effectiveIdentitySource(prev)
   const inSrc = effectiveIdentitySource(incoming)
-  if (prevSrc === 'akk-catalog' && inSrc === 'webkincstar-backfill') {
+  if (prevSrc === SERIES_IDENTITY_SOURCE_AKK && inSrc === SERIES_IDENTITY_SOURCE_WEBKINCSTAR) {
     return {
       ...prev,
-      identitySource: prev.identitySource ?? 'akk-catalog'
+      identitySource: prev.identitySource ?? SERIES_IDENTITY_SOURCE_AKK
     }
   }
-  if (prevSrc === 'webkincstar-backfill' && inSrc === 'akk-catalog') {
+  if (prevSrc === SERIES_IDENTITY_SOURCE_WEBKINCSTAR && inSrc === SERIES_IDENTITY_SOURCE_AKK) {
     const merged: SeriesRecord = {
       ...prev,
       ...incoming,
-      identitySource: 'akk-catalog'
+      identitySource: SERIES_IDENTITY_SOURCE_AKK
     }
     const keys = [
       'isin',

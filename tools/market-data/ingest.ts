@@ -226,6 +226,8 @@ export interface IngestReport extends MergeResult {
   webkincstarHistoricalGateOpen: boolean
   /** Datums selected for WebKincstár fetch this run (tip ∪ historical when gated). */
   webkincstarDatumsFetched: string[]
+  /** Sum of overlay soft-skipped unmatched quotes across fetched datums. */
+  webkincstarOverlaySkipped: number
   /**
    * Oldest (deepest) contiguous offering-archive success frontier across families
    * (or null). Progress metric — gate readiness uses the shallowest frontier.
@@ -464,6 +466,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let webkincstarSoftFailed = false
   let webkincstarHasQuotes = false
   let webkincstarFetchFailedDays = 0
+  let webkincstarOverlaySkipped = 0
   let mergeSnapshotInput = combined.snapshot
 
   const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
@@ -550,31 +553,39 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           webkincstarFetchFailedDays += appendable.length
           calendarDaysAccum.push(...appendable)
         } else {
-          const normalized = normalizeWebkincstarReports(
-            fetched.reports.map((r) => r.parsed)
-          )
-          if (normalized.unmatchedNames.length > 0) {
-            console.error(
-              `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalized.unmatchedNames.join(', ')}`
-            )
+          // Overlay + seal decision are per successful report: matched quotes still
+          // apply; durable priced/no_price seals are omitted only for reports that
+          // contributed unmatched soft-skips (siblings for the same datum may seal).
+          const sealableCalendarDays: PriceCalendarDay[] = []
+          for (const fetchedReport of fetched.reports) {
+            const normalizedOne = normalizeWebkincstarReports([fetchedReport.parsed])
+            if (normalizedOne.unmatchedNames.length > 0) {
+              console.error(
+                `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalizedOne.unmatchedNames.join(', ')}`
+              )
+            }
+            const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalizedOne.snapshot, {
+              extraSeries: previousSeriesForJoin(previous)
+            })
+            if (overlay.skippedUnmatched > 0) {
+              webkincstarOverlaySkipped += overlay.skippedUnmatched
+              const sample = overlay.skippedUnmatchedQuotes
+                .map((q) => `${q.family}/${q.id} (${q.name} @ ${q.settleDate})`)
+                .join('; ')
+              const more =
+                overlay.skippedUnmatched > overlay.skippedUnmatchedQuotes.length
+                  ? `; …+${overlay.skippedUnmatched - overlay.skippedUnmatchedQuotes.length} more`
+                  : ''
+              console.error(
+                `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match (${fetchedReport.reportName}): ${sample}${more}`
+              )
+            }
+            mergeSnapshotInput = overlay.snapshot
+            if (overlay.hasQuotes) webkincstarHasQuotes = true
+            if (overlay.skippedUnmatched === 0) {
+              sealableCalendarDays.push(...normalizedOne.calendarDays)
+            }
           }
-          const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalized.snapshot, {
-            extraSeries: previousSeriesForJoin(previous)
-          })
-          if (overlay.skippedUnmatched > 0) {
-            const sample = overlay.skippedUnmatchedQuotes
-              .map((q) => `${q.family}/${q.id} (${q.name} @ ${q.settleDate})`)
-              .join('; ')
-            const more =
-              overlay.skippedUnmatched > overlay.skippedUnmatchedQuotes.length
-                ? `; …+${overlay.skippedUnmatched - overlay.skippedUnmatchedQuotes.length} more`
-                : ''
-            console.error(
-              `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match: ${sample}${more}`
-            )
-          }
-          mergeSnapshotInput = overlay.snapshot
-          if (overlay.hasQuotes) webkincstarHasQuotes = true
 
           const failedReportNames = fetched.failures.map((f) => f.reportName)
           const failedDays = fetchFailedCalendarDaysAppendable(
@@ -583,7 +594,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             previous.priceCalendar
           )
           webkincstarFetchFailedDays += failedDays.length
-          calendarDaysAccum.push(...normalized.calendarDays, ...failedDays)
+          calendarDaysAccum.push(...sealableCalendarDays, ...failedDays)
         }
       } catch (err) {
         logWebkincstarSoftFail(err)
@@ -868,7 +879,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     inflationUpdated: inflationUpdate !== undefined,
     buborUpdated: buborUpdate !== undefined,
     settlementCalendarUpdated: settlementCalendarUpdate !== undefined,
-    webkincstarUpdated: priceCalendarUpdate !== undefined,
+    webkincstarUpdated: priceCalendarUpdate !== undefined || webkincstarHasQuotes,
     webkincstarSoftFailed,
     offeringsUpdated,
     offeringsSoftFailed,
@@ -880,6 +891,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     webkincstarHistoricalEnabled: shouldFetchWebkincstar ? webkincstarHistoricalEnabled : false,
     webkincstarHistoricalGateOpen: offeringGateOpen,
     webkincstarDatumsFetched: shouldFetchWebkincstar ? [...webkincstarDatums] : [],
+    webkincstarOverlaySkipped,
     offeringBackfillFrontier
   }
 }

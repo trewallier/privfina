@@ -105,6 +105,36 @@ describe('formatCiIngestStepSummary', () => {
     expect(md).toContain('PDF skipped_no_schedule by family (series / type):')
     expect(md).toContain('- **mapp:** N2026_01 (TAP_ISSUE)')
   })
+
+  it('escapes backslashes and pipes in series labels for markdown cells', () => {
+    const md = formatCiIngestStepSummary({
+      changed: false,
+      asOf: '2026-11-24',
+      webkincstarHistoricalGateOpen: false,
+      webkincstarHistoricalEnabled: false,
+      webkincstarDatumsFetched: [],
+      webkincstarOverlaySkipped: 1,
+      webkincstarOverlaySkippedSeries: [
+        { family: 'dkj', id: 'A|B\\C', name: 'A|B\\C' }
+      ],
+      webkincstarFetchFailedDays: 0,
+      webkincstarSoftFailed: false,
+      offeringBackfillFrontier: null,
+      offeringBackfillFrontierHolders: [],
+      offeringGateFrontier: null,
+      offeringGateFrontierHolders: [],
+      offeringPdfsDownloaded: 0,
+      offeringPdfsPending: 0,
+      offeringPdfsParseFailed: 0,
+      offeringPdfsSkippedNoSchedule: 0,
+      offeringPdfsTranscribedSeries: [],
+      offeringPdfsParseFailedSeries: [],
+      offeringPdfsSkippedSeries: [],
+      offeringsSoftFailed: false,
+      retailInterestSoftFailed: false
+    })
+    expect(md).toContain('- **dkj:** A\\|B\\\\C')
+  })
 })
 
 describe('runCiIngest', () => {

@@ -46,7 +46,8 @@ export interface CiIngestSummaryInput {
 }
 
 function escapeMdCell(value: string): string {
-  return value.replace(/\|/g, '\\|')
+  // Escape backslashes first so later `\|` insertions stay literal in markdown cells.
+  return value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')
 }
 
 function formatSeriesByFamily(

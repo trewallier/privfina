@@ -1,22 +1,81 @@
 import type { OfferingFrontierDetail, OfferingFrontierHolder } from './offering-archive-frontier.ts'
+import type { OfferingListingSource } from './normalize-offerings.ts'
 import type { FamilyCode } from './types.ts'
 
-/** PDF transcribed successfully this run (after download + parse). */
+export type { OfferingListingSource }
+
+/** PDF outcome identity for Actions summary (typed + tip/backfill sourced). */
 export interface OfferingPdfSeriesRef {
   family: FamilyCode
   seriesId: string
+  resourceType: string | null
+  listingSource: OfferingListingSource
 }
 
-/** PDF skipped as no-schedule / amendment — include ÁKK resource type. */
-export interface OfferingPdfSkippedRef extends OfferingPdfSeriesRef {
-  resourceType: string | null
-}
+/** @deprecated Prefer {@link OfferingPdfSeriesRef}; kept as alias for skipped shape. */
+export type OfferingPdfSkippedRef = OfferingPdfSeriesRef
 
 /** Unique WK overlay soft-skip series identity. */
 export interface WebkincstarSkippedSeriesRef {
   family: FamilyCode
   id: string
   name: string
+}
+
+/** Per-source listing row type buckets. */
+export interface OfferingListingTypeCounts {
+  issue: number
+  tap: number
+  other: number
+}
+
+/** Tip or backfill listing/queue/PDF progress for one Actions summary block. */
+export interface OfferingSourceProgress {
+  /** Tip listing families OK, or backfill pages merged. */
+  familiesOk: number
+  /** Tip listing soft-fails, or backfill soft-fails. */
+  familiesSoftFailed: number
+  /** Backfill only: families with no contiguous frontier (no page attempted). */
+  familiesNoFrontier: number
+  /** Backfill only: offline tip-only skip (no live backfill). */
+  familiesSkipped: number
+  rows: OfferingListingTypeCounts
+  /** ISSUE rows already hashed on tip archive (not queued). */
+  issueKnownHashed: number
+  /** ISSUE rows queued for PDF this run. */
+  pdfQueue: number
+  pdfsDownloaded: number
+  pdfsPending: number
+  pdfsParseFailed: number
+  pdfsSkippedNoSchedule: number
+  pdfsDownloadFailed: number
+  transcribed: OfferingPdfSeriesRef[]
+  parseFailed: OfferingPdfSeriesRef[]
+  skipped: OfferingPdfSeriesRef[]
+  pending: OfferingPdfSeriesRef[]
+  downloadFailed: OfferingPdfSeriesRef[]
+}
+
+export function emptyOfferingSourceProgress(): OfferingSourceProgress {
+  return {
+    familiesOk: 0,
+    familiesSoftFailed: 0,
+    familiesNoFrontier: 0,
+    familiesSkipped: 0,
+    rows: { issue: 0, tap: 0, other: 0 },
+    issueKnownHashed: 0,
+    pdfQueue: 0,
+    pdfsDownloaded: 0,
+    pdfsPending: 0,
+    pdfsParseFailed: 0,
+    pdfsSkippedNoSchedule: 0,
+    pdfsDownloadFailed: 0,
+    transcribed: [],
+    parseFailed: [],
+    skipped: [],
+    pending: [],
+    downloadFailed: []
+  }
 }
 
 /** Fields needed to build the Actions `$GITHUB_STEP_SUMMARY` markdown. */
@@ -34,13 +93,17 @@ export interface CiIngestSummaryInput {
   offeringGateFrontier: string | null
   offeringBackfillFrontierHolders: OfferingFrontierHolder[]
   offeringGateFrontierHolders: OfferingFrontierHolder[]
+  offeringTip: OfferingSourceProgress
+  offeringBackfill: OfferingSourceProgress
+  /** Rolled-up totals (tip+backfill) for notice / job outputs. */
   offeringPdfsDownloaded: number
   offeringPdfsPending: number
   offeringPdfsParseFailed: number
   offeringPdfsSkippedNoSchedule: number
-  offeringPdfsTranscribedSeries: OfferingPdfSeriesRef[]
-  offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[]
-  offeringPdfsSkippedSeries: OfferingPdfSkippedRef[]
+  /** @deprecated Prefer per-source lists; kept for older callers/tests. */
+  offeringPdfsTranscribedSeries?: OfferingPdfSeriesRef[]
+  offeringPdfsParseFailedSeries?: OfferingPdfSeriesRef[]
+  offeringPdfsSkippedSeries?: OfferingPdfSeriesRef[]
   offeringsSoftFailed: boolean
   retailInterestSoftFailed: boolean
 }
@@ -50,15 +113,13 @@ function escapeMdCell(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')
 }
 
-function formatSeriesByFamily(
-  rows: readonly OfferingPdfSeriesRef[],
-  label: (row: OfferingPdfSeriesRef) => string = (r) => r.seriesId
-): string[] {
+function formatTypedSeriesByFamily(rows: readonly OfferingPdfSeriesRef[]): string[] {
   if (rows.length === 0) return ['*(none)*']
   const byFamily = new Map<string, string[]>()
   for (const row of rows) {
     const list = byFamily.get(row.family) ?? []
-    const text = label(row)
+    const type = row.resourceType?.trim() || 'unknown'
+    const text = `${row.seriesId} (${type})`
     if (!list.includes(text)) list.push(text)
     byFamily.set(row.family, list)
   }
@@ -91,8 +152,62 @@ function formatFrontierHolders(holders: readonly OfferingFrontierHolder[]): stri
     const type = h.resourceType ? `/${h.resourceType}` : ''
     return `${h.family}/${h.seriesId}${type}`
   })
-  // Stable unique order for the summary table cell.
   return [...new Set(parts)].sort((a, b) => a.localeCompare(b)).join(', ')
+}
+
+function formatRowsCell(rows: OfferingListingTypeCounts): string {
+  return `ISSUE=${rows.issue}, TAP_*=${rows.tap}, other=${rows.other}`
+}
+
+function appendSourceBlock(
+  lines: string[],
+  source: OfferingSourceProgress,
+  kind: OfferingListingSource
+): void {
+  lines.push(`#### Offerings — ${kind}`, '', '| Metric | Value |', '| --- | --- |')
+  if (kind === 'tip') {
+    lines.push(`| listing families OK | ${source.familiesOk} |`)
+    lines.push(`| listing soft-failed | ${source.familiesSoftFailed} |`)
+  } else {
+    lines.push(`| backfill pages merged | ${source.familiesOk} |`)
+    lines.push(`| backfill soft-failed | ${source.familiesSoftFailed} |`)
+    lines.push(`| backfill no frontier | ${source.familiesNoFrontier} |`)
+    lines.push(`| backfill skipped (offline) | ${source.familiesSkipped} |`)
+  }
+  lines.push(`| listing rows | ${formatRowsCell(source.rows)} |`)
+  lines.push(`| ISSUE known (hashed) | ${source.issueKnownHashed} |`)
+  lines.push(`| PDF queue | ${source.pdfQueue} |`)
+  lines.push(`| PDFs downloaded | ${source.pdfsDownloaded} |`)
+  lines.push(`| PDFs pending | ${source.pdfsPending} |`)
+  lines.push(`| PDF parse_failed | ${source.pdfsParseFailed} |`)
+  lines.push(`| PDF skipped_no_schedule | ${source.pdfsSkippedNoSchedule} |`)
+  lines.push(`| PDF download_failed | ${source.pdfsDownloadFailed} |`)
+  lines.push('')
+
+  if (source.pdfQueue === 0) {
+    lines.push(
+      kind === 'tip'
+        ? '_No new tip ISSUE PDFs queued (tip archive already has sha256 for tip-listed ISSUEs, or tip listing had none)._'
+        : '_No new backfill ISSUE PDFs queued (tip archive already has sha256 for backfill-only ISSUEs, or no backfill page)._',
+      ''
+    )
+  }
+
+  lines.push(`PDF transcribed (${kind}) by family:`, '', ...formatTypedSeriesByFamily(source.transcribed), '')
+  lines.push(`PDF parse_failed (${kind}) by family:`, '', ...formatTypedSeriesByFamily(source.parseFailed), '')
+  lines.push(
+    `PDF skipped_no_schedule (${kind}) by family:`,
+    '',
+    ...formatTypedSeriesByFamily(source.skipped),
+    ''
+  )
+  lines.push(`PDF pending (${kind}) by family:`, '', ...formatTypedSeriesByFamily(source.pending), '')
+  lines.push(
+    `PDF download_failed (${kind}) by family:`,
+    '',
+    ...formatTypedSeriesByFamily(source.downloadFailed),
+    ''
+  )
 }
 
 /**
@@ -100,6 +215,8 @@ function formatFrontierHolders(holders: readonly OfferingFrontierHolder[]): stri
  * Exported for unit tests.
  */
 export function formatCiIngestStepSummary(result: CiIngestSummaryInput): string {
+  const tip = result.offeringTip
+  const bf = result.offeringBackfill
   const lines: string[] = [
     '### Market-data ingest',
     '',
@@ -127,36 +244,21 @@ export function formatCiIngestStepSummary(result: CiIngestSummaryInput): string 
     lines.push('')
   }
 
+  appendSourceBlock(lines, tip, 'tip')
+  appendSourceBlock(lines, bf, 'backfill')
+
   lines.push(
-    '#### Offerings',
+    '#### Offerings — frontiers / totals',
     '',
     '| Metric | Value |',
     '| --- | --- |',
-    `| deepest frontier (progress, min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
+    `| deepest frontier (backfill progress, min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
     `| deepest frontier holders | ${formatFrontierHolders(result.offeringBackfillFrontierHolders)} |`,
     `| shallowest frontier (gate readiness, max) | ${result.offeringGateFrontier ?? '(none)'} |`,
     `| shallowest frontier holders | ${formatFrontierHolders(result.offeringGateFrontierHolders)} |`,
-    `| PDFs downloaded | ${result.offeringPdfsDownloaded} |`,
-    `| PDFs pending | ${result.offeringPdfsPending} |`,
-    `| PDF parse_failed | ${result.offeringPdfsParseFailed} |`,
-    `| PDF skipped_no_schedule | ${result.offeringPdfsSkippedNoSchedule} |`,
     `| soft-failed | ${result.offeringsSoftFailed} |`,
     '',
-    'PDF transcribed (successful) by family:',
-    '',
-    ...formatSeriesByFamily(result.offeringPdfsTranscribedSeries),
-    '',
-    'PDF parse_failed by family:',
-    '',
-    ...formatSeriesByFamily(result.offeringPdfsParseFailedSeries),
-    '',
-    'PDF skipped_no_schedule by family (series / type):',
-    '',
-    ...formatSeriesByFamily(result.offeringPdfsSkippedSeries, (r) => {
-      const skipped = r as OfferingPdfSkippedRef
-      const type = skipped.resourceType?.trim() || 'unknown'
-      return `${skipped.seriesId} (${type})`
-    }),
+    `Totals: pdfs tip=${tip.pdfsDownloaded} bf=${bf.pdfsDownloaded} | queue tip=${tip.pdfQueue} bf=${bf.pdfQueue} | pending tip=${tip.pdfsPending} bf=${bf.pdfsPending}`,
     '',
     '#### Other soft-fails',
     '',
@@ -165,6 +267,16 @@ export function formatCiIngestStepSummary(result: CiIngestSummaryInput): string 
   )
 
   return lines.join('\n')
+}
+
+/** Bucket ÁKK resourceType for listing stats. */
+export function bucketOfferingResourceType(
+  resourceType: string | null | undefined
+): keyof OfferingListingTypeCounts {
+  const u = (resourceType ?? '').trim().toUpperCase()
+  if (u === 'ISSUE') return 'issue'
+  if (u.startsWith('TAP')) return 'tap'
+  return 'other'
 }
 
 /** Re-export for callers that already have extremes. */

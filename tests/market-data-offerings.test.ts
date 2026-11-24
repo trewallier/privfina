@@ -788,7 +788,10 @@ describe('offering listing historical backfill (ADR 0041 §6m)', () => {
     })
     expect(result.byFamily).toHaveLength(1)
     expect(result.byFamily[0]?.backfillMerged).toBe(true)
+    expect(result.byFamily[0]?.backfillStatus).toBe('merged')
     expect(result.byFamily[0]?.frontierPublished).toBe('2026-08-01')
+    expect(result.byFamily[0]?.tipEnvelope).toBeDefined()
+    expect(result.byFamily[0]?.backfillEnvelope).toBeDefined()
     const mergedRows = normalizeOfferingEnvelope(result.byFamily[0]!.envelope, 'pmap')
     const uuids = new Set(mergedRows.map((r) => r.pathUuid))
     expect(uuids.has(tipUuid!)).toBe(true)
@@ -796,6 +799,64 @@ describe('offering listing historical backfill (ADR 0041 §6m)', () => {
     const diff = diffOfferingsAgainstArchive(mergedRows, archive.documents)
     expect(diff.unknownDocuments.some((r) => r.pathUuid === tipUuid)).toBe(true)
     expect(diff.unknownDocuments.some((r) => r.pathUuid === backfillUuid)).toBe(true)
+
+    const { offeringListingSourceByUuid } = await import(
+      '../tools/market-data/normalize-offerings.ts'
+    )
+    const bySource = offeringListingSourceByUuid(
+      result.byFamily[0]!.tipEnvelope,
+      result.byFamily[0]!.backfillEnvelope
+    )
+    expect(bySource.get(tipUuid!)).toBe('tip')
+    expect(bySource.get(backfillUuid)).toBe('backfill')
+  })
+
+  it('classifies overlapping tip∪backfill UUIDs as tip (tip wins)', async () => {
+    const { offeringListingSourceByUuid } = await import(
+      '../tools/market-data/normalize-offerings.ts'
+    )
+    const shared = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    const tipOnly = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    const tip: AkkEnvelope = {
+      data: [
+        {
+          path: `public_offerings/${shared}.pdf`,
+          pathId: '1',
+          longName: 'Shared',
+          resourceType: 'ISSUE',
+          published: '2026-11-01'
+        },
+        {
+          path: `public_offerings/${tipOnly}.pdf`,
+          pathId: '2',
+          longName: 'Tip only',
+          resourceType: 'ISSUE',
+          published: '2026-11-02'
+        }
+      ]
+    }
+    const backfill: AkkEnvelope = {
+      data: [
+        {
+          path: `public_offerings/${shared}.pdf`,
+          pathId: '1',
+          longName: 'Shared older',
+          resourceType: 'ISSUE',
+          published: '2026-06-01'
+        },
+        {
+          path: 'public_offerings/cccccccc-cccc-4ccc-8ccc-cccccccccccc.pdf',
+          pathId: '3',
+          longName: 'Backfill only',
+          resourceType: 'ISSUE',
+          published: '2026-05-01'
+        }
+      ]
+    }
+    const bySource = offeringListingSourceByUuid(tip, backfill)
+    expect(bySource.get(shared)).toBe('tip')
+    expect(bySource.get(tipOnly)).toBe('tip')
+    expect(bySource.get('cccccccc-cccc-4ccc-8ccc-cccccccccccc')).toBe('backfill')
   })
 })
 

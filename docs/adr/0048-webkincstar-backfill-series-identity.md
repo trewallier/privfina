@@ -18,15 +18,15 @@ Related: 0034 (ÁKK published market data), 0035 (dual-source prices), 0039 (Web
 
 ## Decision
 
-- On **WebKincstár historical backfill only** (scheduled historical when the offering-depth gate is open, or operator explicit `webkincstarDatums` / CLI `backfill-webkincstar --from`), unmatched WK instruments may create a new `SeriesRecord` stub with:
+- On **WebKincstár historical datums only** (the scheduled §6m historical window when the offering-depth gate is open, or operator explicit `webkincstarDatums` / CLI `backfill-webkincstar --from`), unmatched WK instruments may create a new `SeriesRecord` stub with:
   - `identitySource: 'webkincstar.allamkincstar.gov.hu'` (published WebKincstár host, same string as price-calendar `source.host`)
   - thin fields from the WK row (`id` / `name`, `mat` when the PDF line parses it, family from report routing; omit invent `dayCount` so ISSUE / ÁKK can fill)
   - status from existing maturity rules (`matured` / `delisted`; must not become live `active` without satisfying tip live-quote rules — a historical settle alone must not resurrect a matured/delisted series)
-- Tip-lookback-only days (gate closed and no explicit hist datums) keep ADR 0039 soft-skip — **no invent** on the tip path.
+- **Tip lookback datums never invent**, even when the historical gate is open and the same ingest also fetches historical datums. Tip-lookback-only runs (gate closed, no explicit hist datums) keep ADR 0039 soft-skip. Explicit CLI / `webkincstarDatums` lists invent for every listed datum (operator escape hatch).
 - ÁKK catalog upsert for the same `id` **promotes** `identitySource` to `'www.akk.hu'` (published ÁKK host) and ÁKK non-null identity fields win.
-- ISSUE offering listing / PDF may **null-fill** missing fields (`isin`, `issue`, `mat`, `dayCount`, display `name`) **only** when `identitySource === 'webkincstar.allamkincstar.gov.hu'`. Never overwrite ÁKK-owned fields.
+- ISSUE offering listing / PDF may **null-fill** missing fields (`isin`, `issue`, `mat`, display `name`) **only** when `identitySource === 'webkincstar.allamkincstar.gov.hu'`. Never overwrite ÁKK-owned fields. **Exception:** ISSUE-mapped `dayCount` may **overwrite** a differing value on WK-origin stubs (stronger than pure null-fill) so legacy invent ACT/360 defaults / thin stubs converge on the offering PDF convention.
 - This is **not** a full matured outstanding dump: only instruments **seen on WK pages the ingest actually fetches**.
-- Optional `identitySource` on `SeriesRecord` is a **source host** literal: `'www.akk.hu' | 'webkincstar.allamkincstar.gov.hu'`. Omit / undefined on legacy tip rows → treat as ÁKK-owned. Validate when present. Do not invent internal tags (`akk-catalog`, `webkincstar-backfill`).
+- Optional `identitySource` on `SeriesRecord` is a **source host** literal: `'www.akk.hu' | 'webkincstar.allamkincstar.gov.hu'`. Omit / undefined on legacy tip rows → treat as ÁKK-owned. Validate rejects other literals **and** explicit `null` (omit the field; do not write null). Do not invent internal tags (`akk-catalog`, `webkincstar-backfill`).
 
 ## Consequences
 
@@ -38,7 +38,7 @@ Related: 0034 (ÁKK published market data), 0035 (dual-source prices), 0039 (Web
 
 ## Out of scope
 
-- Invent on tip-lookback-only days.
+- Invent on tip lookback datums (gate open or closed).
 - SPA hide / filter for WK-origin series.
 - Full ÁKK matured outstanding dump.
 - Changing quote conflict rules (WebKincstár still wins numerics on overlay).

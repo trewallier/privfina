@@ -58,6 +58,7 @@ export type SeriesStatus = 'active' | 'matured' | 'delisted'
  * Who seeded the series identity row (ADR 0048) — published source **host**
  * strings (same as other tip `source.host` fields), not internal tags.
  * Omit / undefined on legacy tip rows → treat as ÁKK-owned (`www.akk.hu`).
+ * Do not write `null` (validate rejects it).
  */
 export const SERIES_IDENTITY_SOURCE_AKK = 'www.akk.hu' as const
 export const SERIES_IDENTITY_SOURCE_WEBKINCSTAR =

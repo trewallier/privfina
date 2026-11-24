@@ -217,11 +217,13 @@ function validateSeriesRecord(
   if (Object.prototype.hasOwnProperty.call(s, 'prem')) {
     throw new ValidateError(`series.prem is not allowed in schemaVersion 2 (${family}/${s.id})`)
   }
-  if (
-    s.identitySource !== undefined &&
-    s.identitySource !== null &&
-    !SERIES_IDENTITY_SOURCES.has(s.identitySource)
-  ) {
+  // Omit / undefined = ÁKK-owned. Explicit null is rejected (not a valid host).
+  if (s.identitySource === null) {
+    throw new ValidateError(
+      `Series ${family}/${s.id} identitySource must be omitted or www.akk.hu|webkincstar.allamkincstar.gov.hu (got null)`
+    )
+  }
+  if (s.identitySource !== undefined && !SERIES_IDENTITY_SOURCES.has(s.identitySource)) {
     throw new ValidateError(
       `Series ${family}/${s.id} identitySource must be www.akk.hu|webkincstar.allamkincstar.gov.hu (got ${String(s.identitySource)})`
     )

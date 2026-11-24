@@ -163,7 +163,7 @@ describe('ingestMarketData (fixture / disk)', () => {
 })
 
 describe('SeriesRecord.identitySource (ADR 0048)', () => {
-  it('accepts www.akk.hu and webkincstar host; rejects other literals', async () => {
+  it('accepts www.akk.hu and webkincstar host; rejects null and other literals', async () => {
     const catalog = await loadFixture('catalog.json')
     const rates = await loadFixture('network-rates.json')
     const snap = normalizeAkkSnapshots(catalog, rates)
@@ -190,6 +190,11 @@ describe('SeriesRecord.identitySource (ADR 0048)', () => {
     delete series.identitySource
     refreshDigest()
     expect(() => validateMarketTree(tree)).not.toThrow()
+
+    ;(series as { identitySource?: string | null }).identitySource = null
+    refreshDigest()
+    expect(() => validateMarketTree(tree)).toThrow(ValidateError)
+    expect(() => validateMarketTree(tree)).toThrow(/identitySource/)
 
     ;(series as { identitySource?: string }).identitySource = 'phantom'
     refreshDigest()

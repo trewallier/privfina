@@ -267,14 +267,15 @@ describe('market-data-autofill', () => {
     expect(mappSemiFromOffering.fields.couponFrequencyMonths).toBe(6)
     expect(mappSemiFromOffering.fields.firstCouponDate).toBe('2026-12-15')
 
-    const fixmapAnnualSameDates = buildMarketAutofillPatch({
+    // FixMÁP is quarterly (ÁKK negyedéves) — first maturity-anniversary step on/after issue.
+    const fixmapQuarterlySameDates = buildMarketAutofillPatch({
       family: 'fixmap',
       series: { issue: '2026-12-01', mat: '2031-06-15', offered: true },
       quote: { d: '2026-12-10', ask: 100.0, bid: 99.0 },
       coupons,
       current: { principal: '1000000', purchaseDate: '2026-12-10' }
     })
-    expect(fixmapAnnualSameDates.fields.firstCouponDate).toBe('2027-06-15')
+    expect(fixmapQuarterlySameDates.fields.firstCouponDate).toBe('2026-12-15')
 
     // Babakötvény shares the annual (12-month) coupon-bearing path; no couponFrequencyMonths.
     const baba = buildMarketAutofillPatch({

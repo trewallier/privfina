@@ -153,7 +153,8 @@ export function generateBmapQuarterlyCouponFlows(
 
   while (couponDate.getTime() <= maturityDate.getTime()) {
     const couponIso = formatIsoDate(couponDate)
-    if (couponIso >= purchaseDateIso) {
+    // Strictly after purchase — same as PMÁP/FixMÁP shared path (no purchase-day coupon).
+    if (couponIso > purchaseDateIso) {
       const period = resolveCoveringCouponPeriod(schedule, couponIso)
       if (scheduleActive) {
         // With an explicit schedule: null rate OR missing covering period → skip (no invent).

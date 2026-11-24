@@ -118,7 +118,7 @@ export function inferMappCouponFrequencyMonths(offering) {
  * First coupon on the maturity month/day schedule at/after issue.
  * @param {string|null|undefined} issue
  * @param {string|null|undefined} mat
- * @param {number} frequencyMonths 12 = annual (PMÁP/FixMÁP/newer MÁP Plusz), 6 = older semi-annual MÁP Plusz, 3 = quarterly (BMÁP)
+ * @param {number} frequencyMonths 12 = annual (PMÁP/newer MÁP Plusz), 6 = older semi-annual MÁP Plusz, 3 = quarterly (BMÁP/FixMÁP)
  */
 export function deriveFirstCouponDate(issue, mat, frequencyMonths) {
   const issueDate = parseIsoDateUtc(issue)
@@ -713,11 +713,11 @@ export function buildMarketAutofillPatch({
       setField('issueDate', series.issue)
     }
     // ROADMAP §6l: prefer offering payment calendar over anniversary heuristic.
-    // BMÁP quarterly (3); PMÁP/FixMÁP/Babakötvény annual (12); MÁP Plusz series-authored
+    // BMÁP / FixMÁP quarterly (3); PMÁP/Babakötvény annual (12); MÁP Plusz series-authored
     // (12 newer annual default; 6 older semi-annual inferred from paymentDates).
     // FLOAT ktv uses indexReset.periodMonths (3).
     let frequencyMonths = 12
-    if (family === 'bmap' || isKtvFloat) {
+    if (family === 'bmap' || family === 'fixmap' || isKtvFloat) {
       frequencyMonths = isKtvFloat
         ? Number((indexReset || KTV_INDEX_RESET).periodMonths) || 3
         : 3

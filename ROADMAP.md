@@ -478,7 +478,7 @@ Plan slices
 Goal: Coupon periods table shows **every** offering payment date (null Rate % when unknown), not only retailInterest known-rate bands. Close MÁK ingest gaps so FIX rates and FLOAT calendars land in published data for that merge.
 
 Plan slices
-- [x] SPA: merge offering `paymentDates` (+ issue) with coupons into `couponSchedule`; soft-hint when coupons exist but payment calendar missing; no invented anniversary dates. When payments exist, From anchors are issue ∪ paymentDates only (retail coupon `from` is rate validity, not accrual start); single-band fixed rates open-end for overlay (FixMÁP).
+- [x] SPA: merge offering `paymentDates` (+ issue) with coupons into `couponSchedule`; soft-hint when coupons exist but payment calendar missing; no invented anniversary dates. When payments exist, From anchors are issue ∪ paymentDates only (retail coupon `from` is rate validity, not accrual start); single-band fixed rates open-end for overlay (FixMÁP; only when exactly one defined rate row — multi-row equal rates stay closed-window).
 - [x] MÁK FIX: persist offering `paymentRates` → `families/ktv/coupons/<id>.json` when series exists; modal ga for autofill when stub ≠ flat rate.
 - [x] MÁK FLOAT: expand rábocsátás quarterly `fordulónap` / `Kamatfizetési napok` month-day lists into `paymentDates` (all-null rates; never invent coupon files).
 - [ ] Residual (non-MÁK / tip): audit other families for missing `paymentDates`; drain ADR 0041 PDF backlog / reparse; §6m historical backfill.

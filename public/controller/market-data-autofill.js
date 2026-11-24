@@ -229,6 +229,9 @@ export function pickModalCouponRatePct(coupons) {
  * When paymentDates exist, calendar anchors are issue ∪ paymentDates only — retailInterest
  * coupon `from` values are rate-validity windows (often saleWindow.from), not accrual starts.
  * A single published rate band is open-ended for overlay (fixed FixMÁP ga for life).
+ * Open-ending applies only when `definedRateRows.length === 1`. Multi-row equal
+ * rates (duplicate bands) still use closed covering windows — typical FixMÁP is
+ * one row; document if retailInterest ever emits duplicate equal bands.
  * Stepped / multi-band products keep closed-window covering; unknown periods stay null.
  * Do not invent anniversary dates when payments are missing.
  * @returns {{ schedule: Array<{ from: string, to: string|null, rate: number|null }>|null, missingPaymentCalendar: boolean }}

@@ -528,8 +528,16 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             extraSeries: previousSeriesForJoin(previous)
           })
           if (overlay.skippedUnmatched > 0) {
+            const sample = overlay.skippedUnmatchedQuotes
+              .slice(0, 8)
+              .map((q) => `${q.family}/${q.id} (${q.name} @ ${q.settleDate})`)
+              .join('; ')
+            const more =
+              overlay.skippedUnmatchedQuotes.length > 8
+                ? `; …+${overlay.skippedUnmatchedQuotes.length - 8} more`
+                : ''
             console.error(
-              `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match`
+              `[market-data] WebKincstár overlay skipped ${overlay.skippedUnmatched} quote(s) with no catalog series match: ${sample}${more}`
             )
           }
           mergeSnapshotInput = overlay.snapshot

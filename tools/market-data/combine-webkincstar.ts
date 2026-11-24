@@ -9,12 +9,21 @@ import {
   type SeriesRecord
 } from './types.ts'
 
+export interface SkippedWebkincstarQuote {
+  family: FamilyCode
+  id: string
+  name: string
+  settleDate: string
+}
+
 export interface ApplyWebkincstarResult {
   snapshot: NormalizedSnapshot
   /** Quotes remapped onto an existing catalog series id. */
   remappedQuotes: number
   /** WebKincstár rows with no matching series (soft-skipped). */
   skippedUnmatched: number
+  /** Identities for soft-skipped overlay quotes (same length as skippedUnmatched). */
+  skippedUnmatchedQuotes: SkippedWebkincstarQuote[]
   /** True when at least one remapped quote was applied. */
   hasQuotes: boolean
 }
@@ -122,7 +131,7 @@ export function applyWebkincstarQuotes(
   }
 
   let remappedQuotes = 0
-  let skippedUnmatched = 0
+  const skippedUnmatchedQuotes: SkippedWebkincstarQuote[] = []
 
   for (const family of FAMILIES) {
     const wk = webkincstar.byFamily[family]
@@ -131,7 +140,12 @@ export function applyWebkincstarQuotes(
       const name = seriesMeta?.name ?? q.id
       const target = resolveTarget(q.id, name, index)
       if (!target) {
-        skippedUnmatched += 1
+        skippedUnmatchedQuotes.push({
+          family,
+          id: q.id,
+          name,
+          settleDate: q.row[0]
+        })
         continue
       }
       const famQuotes = baseQuoteIndex.get(target.family)!
@@ -168,7 +182,8 @@ export function applyWebkincstarQuotes(
   return {
     snapshot: out,
     remappedQuotes,
-    skippedUnmatched,
+    skippedUnmatched: skippedUnmatchedQuotes.length,
+    skippedUnmatchedQuotes,
     hasQuotes: remappedQuotes > 0
   }
 }

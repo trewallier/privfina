@@ -529,6 +529,39 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
     expect(row?.row[5]).toBe(3.6532) // ai
   })
 
+  it('records skippedUnmatched quote identities when no catalog series match', () => {
+    const emptyBase = normalizeAkkSnapshots(
+      loadJson<AkkEnvelope>('catalog.json'),
+      loadJson<AkkEnvelope>('network-rates.json'),
+      { requireFamilies: false }
+    )
+    // Drop all series so every WK quote is unmatched.
+    for (const family of Object.keys(emptyBase.byFamily) as Array<
+      keyof typeof emptyBase.byFamily
+    >) {
+      emptyBase.byFamily[family].series = []
+      emptyBase.byFamily[family].quotes = []
+    }
+    const wk = normalizeWebkincstarReports([
+      parseWebkincstarPdfText({
+        reportName: '_20631_arfolyam_dkj',
+        text: loadText('dkj-2026-11-05.txt')
+      })
+    ])
+    const overlay = applyWebkincstarQuotes(emptyBase, wk.snapshot)
+    expect(overlay.skippedUnmatched).toBeGreaterThan(0)
+    expect(overlay.skippedUnmatchedQuotes).toHaveLength(overlay.skippedUnmatched)
+    expect(overlay.skippedUnmatchedQuotes[0]).toEqual(
+      expect.objectContaining({
+        family: 'dkj',
+        settleDate: '2026-11-05',
+        id: expect.any(String),
+        name: expect.any(String)
+      })
+    )
+    expect(overlay.hasQuotes).toBe(false)
+  })
+
   it('append-first price calendar digests change on no-price-only day', () => {
     const emptyDkj = parseWebkincstarPdfText({
       reportName: '_20631_arfolyam_dkj',

@@ -252,6 +252,113 @@ describe('accumulate series + same-day conflicts', () => {
     )
   })
 
+  it('keeps matured status when historical quotes are rewritten after mat < asOf', () => {
+    const maturedId = 'N261108'
+    const first = mergeSnapshot(
+      emptyMarketTree(),
+      {
+        asOf: '2026-11-24',
+        byFamily: {
+          mapp: {
+            series: [
+              {
+                id: maturedId,
+                isin: null,
+                name: 'N2026/45',
+                issue: '2021-11-08',
+                mat: '2026-11-08',
+                ccy: 'HUF',
+                status: 'matured'
+              }
+            ],
+            quotes: [{ id: maturedId, row: ['2026-11-04', 100, 100, null, null, 5.9] }]
+          }
+        }
+      },
+      { generatedAt: '2026-11-24T12:00:00+01:00' }
+    )
+    expect(first.tree.families.mapp.series.series.find((s) => s.id === maturedId)?.status).toBe(
+      'matured'
+    )
+
+    // Simulate §6m WebKincstár historical rewrite: older settle dates in the same
+    // snapshot as asOf, without a live asOf quote for the matured series.
+    const second = mergeSnapshot(
+      first.tree,
+      {
+        asOf: '2026-11-24',
+        byFamily: {
+          mapp: {
+            series: [
+              {
+                id: maturedId,
+                isin: null,
+                name: 'N2026/45',
+                issue: '2021-11-08',
+                mat: '2026-11-08',
+                ccy: 'HUF',
+                status: 'active'
+              }
+            ],
+            quotes: [
+              { id: maturedId, row: ['2026-11-03', 100, 100, 0, null, 5.8] },
+              { id: maturedId, row: ['2026-11-04', 100, 100, 0, null, 5.9] }
+            ]
+          }
+        }
+      },
+      { generatedAt: '2026-11-24T18:00:00+01:00', allowSameDayRewrite: true }
+    )
+    expect(second.tree.families.mapp.series.series.find((s) => s.id === maturedId)?.status).toBe(
+      'matured'
+    )
+    expect(second.tree.families.mapp.quotes[maturedId].rows).toHaveLength(2)
+  })
+
+  it('does not mark delisted series active from pre-asOf historical quotes alone', () => {
+    const id = 'A280322N17'
+    const seeded = mergeSnapshot(
+      emptyMarketTree(),
+      {
+        asOf: '2026-11-02',
+        byFamily: {
+          bmap: {
+            series: [
+              {
+                id,
+                isin: 'HU0000403423',
+                name: '2028/N',
+                issue: '2017-10-03',
+                mat: '2028-03-22',
+                ccy: 'HUF',
+                status: 'active'
+              }
+            ],
+            quotes: [{ id, row: ['2026-11-02', 101.5, 101.7, 5.2, 5.1, 0.5] }]
+          }
+        }
+      },
+      { generatedAt: '2026-11-02T18:00:00+01:00' }
+    )
+    const afterGap = mergeSnapshot(
+      seeded.tree,
+      {
+        asOf: '2026-11-10',
+        byFamily: {
+          bmap: {
+            series: [],
+            // Historical backfill only — no settle on asOf.
+            quotes: [{ id, row: ['2026-11-02', 101.5, 101.7, 0, 5.1, 0.5] }]
+          }
+        }
+      },
+      { generatedAt: '2026-11-10T18:00:00+01:00', allowSameDayRewrite: true }
+    )
+    expect(afterGap.tree.families.bmap.series.series.find((s) => s.id === id)?.status).toBe(
+      'delisted'
+    )
+  })
+
   it('skips identical same-day rows and fails on conflicting values', () => {
     const base = mergeSnapshot(
       emptyMarketTree(),

@@ -151,19 +151,25 @@ function toLatestQuote(row: QuoteRow): LatestQuote {
   return { d: row[0], bid: row[1], ask: row[2], by: row[3], ay: row[4], ai: row[5] }
 }
 
+/**
+ * Status precedence: calendar maturity vs asOf wins over "quoted in this snapshot".
+ * Historical WebKincstár backfill rewrites past settle dates into the merge payload;
+ * those must not resurrect a series whose mat is already before asOf (ADR 0034).
+ * "Quoted" means a live settle on asOf (see mergeSnapshot), not any historical row.
+ */
 function resolveStatus(
   rec: SeriesRecord,
   quoted: boolean,
   asOf: string | null
 ): SeriesStatus {
-  if (quoted) return 'active'
   if (asOf && rec.mat && rec.mat < asOf) return 'matured'
+  if (quoted) return 'active'
   return 'delisted'
 }
 
 /**
  * Accumulate series: keep every known id (esp. those with quote history), upsert fields,
- * set status from whether the id is in today's quoted set.
+ * set status from maturity vs asOf, else whether the id has a live (asOf) quote.
  */
 export function accumulateSeries(
   previous: SeriesRecord[],
@@ -447,7 +453,14 @@ export function mergeSnapshot(
   for (const family of FAMILIES) {
     const fam = tree.families[family]
     const incoming = snapshot.byFamily[family] ?? { series: [], quotes: [] }
-    const quotedIds = new Set(incoming.quotes.map((q) => q.id))
+    // Live quote set for status: settle on asOf only. Multi-day WebKincstár
+    // overlays accumulate older rows in the same snapshot; those must not flip
+    // matured/delisted series back to active.
+    const quotedIds = new Set(
+      incoming.quotes
+        .filter((q) => asOf == null || q.row[0] === asOf)
+        .map((q) => q.id)
+    )
 
     for (const q of incoming.quotes) {
       assertSeriesId(q.id)

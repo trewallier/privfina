@@ -32,6 +32,7 @@ Related: 0034 (ÁKK published market data), 0035 (dual-source prices), 0039 (Web
 
 - Historical WK can seal calendars and append quotes for pre-tip matured names; quote history from ÁKK / allampapir / WK can share one durable id set over time.
 - `series.json` grows with marked stubs (SPA may show them as past/matured unless a later filter is added).
+- Invent stubs use short `toSeriesId(name)` ids (e.g. `2026_O`) that can collide across families; downstream joins (retailInterest slug fallback, etc.) must stay **family-scoped** — never treat a global id hit as proof the series exists in the retail row’s family.
 - Offerings enrich WK-origin stubs rather than inventing a parallel id space.
 - Gate rationale shifts from “avoid soft-skips forever” toward pacing offering PDF identity / enrich; historical soft-skips should largely disappear once invent is on.
 - Tip path and SPA browser fetch rules unchanged (Actions-only sources; browser still loads published JSON only).

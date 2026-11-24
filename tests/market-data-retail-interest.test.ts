@@ -286,6 +286,44 @@ describe('retail interest join → coupons + merge', () => {
     expect(joined.offeredById['2026_O']).toBeUndefined()
   })
 
+  it('slug fallback still writes coupons when the id exists in the same family', () => {
+    const retail = {
+      schemaVersion: 2 as const,
+      asOf: '2026-11-24',
+      generatedAt: '2026-11-24T21:00:00.000Z',
+      rows: [
+        {
+          id: '2026_O',
+          family: 'bmap' as const,
+          series: '2026/O',
+          type: 'BMÁP',
+          rates: [5.5],
+          ehm: null,
+          from: '2026-10-01',
+          to: null,
+          offered: true
+        }
+      ]
+    }
+    const joined = joinRetailInterestToCoupons(retail, {
+      bmap: [
+        {
+          id: '2026_O',
+          isin: null,
+          name: '2026/O',
+          issue: null,
+          mat: '2026-12-31',
+          ccy: 'HUF',
+          status: 'active'
+        }
+      ]
+    })
+    expect(joined.couponsByFamily.bmap?.['2026_O']?.rows).toEqual([
+      ['2026-10-01', null, 5.5]
+    ])
+    expect(joined.offeredById['2026_O']).toBe(true)
+  })
+
   it('offeredById prefers the latest period (max from), not input order alone', () => {
     const retail = {
       schemaVersion: 2 as const,

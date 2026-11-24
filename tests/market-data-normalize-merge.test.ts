@@ -8,6 +8,8 @@ import { loadMarketTree } from '../tools/market-data/io.ts'
 import { emptyMarketTree, mergeSnapshot } from '../tools/market-data/merge.ts'
 import { NormalizeError, normalizeAkkSnapshots } from '../tools/market-data/normalize.ts'
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
+import { digestCanonical } from '../tools/market-data/digests.ts'
+import { ValidateError, validateMarketTree } from '../tools/market-data/validate.ts'
 import type { AkkEnvelope } from '../tools/market-data/types.ts'
 
 const fixturesDir = path.join(
@@ -157,5 +159,41 @@ describe('ingestMarketData (fixture / disk)', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true })
     }
+  })
+})
+
+describe('SeriesRecord.identitySource (ADR 0048)', () => {
+  it('accepts akk-catalog and webkincstar-backfill; rejects other literals', async () => {
+    const catalog = await loadFixture('catalog.json')
+    const rates = await loadFixture('network-rates.json')
+    const snap = normalizeAkkSnapshots(catalog, rates)
+    const { tree } = mergeSnapshot(emptyMarketTree(), snap, {
+      generatedAt: '2026-11-02T18:00:00+01:00'
+    })
+    const series = tree.families.dkj.series.series[0]
+    expect(series).toBeTruthy()
+    const refreshDigest = () => {
+      if (!tree.manifest) throw new Error('missing manifest')
+      tree.manifest.digests['families/dkj/series.json'] = digestCanonical(
+        tree.families.dkj.series
+      )
+    }
+
+    series.identitySource = 'webkincstar-backfill'
+    refreshDigest()
+    expect(() => validateMarketTree(tree)).not.toThrow()
+
+    series.identitySource = 'akk-catalog'
+    refreshDigest()
+    expect(() => validateMarketTree(tree)).not.toThrow()
+
+    delete series.identitySource
+    refreshDigest()
+    expect(() => validateMarketTree(tree)).not.toThrow()
+
+    ;(series as { identitySource?: string }).identitySource = 'phantom'
+    refreshDigest()
+    expect(() => validateMarketTree(tree)).toThrow(ValidateError)
+    expect(() => validateMarketTree(tree)).toThrow(/identitySource/)
   })
 })

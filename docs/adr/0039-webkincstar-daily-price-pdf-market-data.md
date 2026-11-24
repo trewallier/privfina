@@ -6,7 +6,7 @@ Date: 2026-11-07
 
 Supersedes: none (extends ADR 0034 / 0035 / 0038; adds a third price overlay + calendar refs)
 
-Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercial investment composer), 0034 (ÁKK published market data), 0035 (dual-source prices), 0036 (retail interest soft-fail), 0037 (inflation refs), 0038 (schemaVersion 2), ROADMAP §6h
+Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercial investment composer), 0034 (ÁKK published market data), 0035 (dual-source prices), 0036 (retail interest soft-fail), 0037 (inflation refs), 0038 (schemaVersion 2), ROADMAP §6h. Identity “do not invent series” amended in part by ADR 0048 (historical WK backfill may create marked stubs).
 
 ## Context
 

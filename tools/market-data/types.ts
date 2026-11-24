@@ -54,6 +54,12 @@ export type DayCountConvention = 'ACT/360' | 'ACT/365F' | '30E/360'
  */
 export type SeriesStatus = 'active' | 'matured' | 'delisted'
 
+/**
+ * Who seeded the series identity row (ADR 0048).
+ * Omit / undefined on legacy tip rows → treat as ÁKK-owned.
+ */
+export type SeriesIdentitySource = 'akk-catalog' | 'webkincstar-backfill'
+
 export interface SeriesRecord {
   /** Canonical slug: map key, quotes/<id>.json basename, QuotesFile.id. */
   id: string
@@ -82,6 +88,11 @@ export interface SeriesRecord {
    * (e.g. `3M` → 3). Used by FLOAT MÁK resolve (ADR 0047); not a coupon rate.
    */
   periodMonths?: number | null
+  /**
+   * Identity provenance (ADR 0048). `'webkincstar-backfill'` = thin stub from
+   * historical WK overlay; ÁKK catalog upsert promotes to `'akk-catalog'`.
+   */
+  identitySource?: SeriesIdentitySource
 }
 
 /** Inclusive retail sale window; `to` null while open. */

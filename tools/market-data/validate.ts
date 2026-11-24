@@ -203,6 +203,8 @@ export function validateMarketTree(tree: MarketTreeState): void {
   verifyManifestDigests(tree)
 }
 
+const SERIES_IDENTITY_SOURCES = new Set(['akk-catalog', 'webkincstar-backfill'])
+
 function validateSeriesRecord(
   family: FamilyCode,
   s: SeriesRecord,
@@ -211,6 +213,15 @@ function validateSeriesRecord(
 ): void {
   if (Object.prototype.hasOwnProperty.call(s, 'prem')) {
     throw new ValidateError(`series.prem is not allowed in schemaVersion 2 (${family}/${s.id})`)
+  }
+  if (
+    s.identitySource !== undefined &&
+    s.identitySource !== null &&
+    !SERIES_IDENTITY_SOURCES.has(s.identitySource)
+  ) {
+    throw new ValidateError(
+      `Series ${family}/${s.id} identitySource must be akk-catalog|webkincstar-backfill (got ${String(s.identitySource)})`
+    )
   }
   if (
     requiredFamily &&

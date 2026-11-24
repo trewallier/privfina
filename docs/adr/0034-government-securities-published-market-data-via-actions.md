@@ -6,7 +6,7 @@ Date: 2026-10-31
 
 Supersedes: none
 
-Related: 0003 (static GitHub Pages), 0006 (browser fetch adapter), 0007 (workflow guardrails), 0027 (commercial investment composer), ROADMAP §6b
+Related: 0003 (static GitHub Pages), 0006 (browser fetch adapter), 0007 (workflow guardrails), 0027 (commercial investment composer), ROADMAP §6b. Hot-series “no full matured dump” amended in part by ADR 0048 (WK-seen historical stubs only).
 
 ## Context
 

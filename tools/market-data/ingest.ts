@@ -78,6 +78,7 @@ import {
   type CouponsFile,
   type OfferingArchiveFile,
   type OfferingFile,
+  type OfferingListingDiscoveryState,
   type PriceCalendarFile,
   type RetailInterestFile,
   type SaleWindow,
@@ -249,19 +250,26 @@ export interface IngestReport extends MergeResult {
   /** Unique soft-skipped WK series (family/id) across fetched datums. */
   webkincstarOverlaySkippedSeries: WebkincstarSkippedSeriesRef[]
   /**
-   * Oldest (deepest) contiguous offering-archive success frontier across families
-   * (or null). Progress metric — how deep the archive has gotten.
+   * Oldest (deepest) contiguous tip-success frontier across families (or null).
+   * Archive-depth metric for tip transcription progress — not listing discovery.
    */
   offeringBackfillFrontier: string | null
   /** Series/type holders for {@link offeringBackfillFrontier}. */
   offeringBackfillFrontierHolders: OfferingFrontierHolder[]
   /**
-   * Newest (shallowest) contiguous offering-archive success frontier across families
+   * Newest (shallowest) contiguous tip-success frontier across families
    * (or null). Gate-readiness metric — scheduled WK historical needs this ≤ asOf−90.
    */
   offeringGateFrontier: string | null
   /** Series/type holders for {@link offeringGateFrontier}. */
   offeringGateFrontierHolders: OfferingFrontierHolder[]
+  /**
+   * Per-family listing discovery cursors after this run (backfill progress).
+   * Null when offerings were skipped or soft-failed before merge.
+   */
+  offeringListingDiscovery: Partial<
+    Record<OfferingFamilyCode, OfferingListingDiscoveryState>
+  > | null
   /** Series transcribed from PDFs this run (successful). */
   offeringPdfsTranscribedSeries: OfferingPdfSeriesRef[]
   /** Series whose PDF parse failed this run. */
@@ -678,6 +686,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   const offeringUnattributed = emptyOfferingSourceProgress()
   let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
   let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
+  let offeringListingDiscovery: Partial<
+    Record<OfferingFamilyCode, OfferingListingDiscoveryState>
+  > | null = previous.offeringArchive?.listingDiscovery ?? null
   let seriesSaleWindows:
     | Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
     | undefined
@@ -727,12 +738,20 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         }
       } else {
         offeringTip.familiesOk = fetched.byFamily.length
+        const listingDiscoveryUpdates: Partial<
+          Record<OfferingFamilyCode, OfferingListingDiscoveryState>
+        > = {}
         for (const fam of fetched.byFamily) {
+          if (fam.listingDiscoveryNext) {
+            listingDiscoveryUpdates[fam.family] = fam.listingDiscoveryNext
+          }
           if (fam.backfillStatus === 'merged') offeringBackfill.familiesOk += 1
           else if (fam.backfillStatus === 'soft_failed') {
             offeringBackfill.familiesSoftFailed += 1
-          } else if (fam.backfillStatus === 'no_frontier') {
-            offeringBackfill.familiesNoFrontier += 1
+          } else if (fam.backfillStatus === 'exhausted') {
+            offeringBackfill.familiesExhausted += 1
+          } else if (fam.backfillStatus === 'no_cursor') {
+            offeringBackfill.familiesNoCursor += 1
           } else {
             offeringBackfill.familiesSkipped += 1
           }
@@ -964,12 +983,16 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             saleWindowsBySeries: diff.saleWindowsBySeries,
             archiveUpserts,
             offeringUpdates,
+            listingDiscoveryUpdates,
             generatedAt
           }
         )
         offeringsByFamily = mergedOfferings.offeringsByFamily
         offeringArchiveUpdate = mergedOfferings.offeringArchive
         seriesSaleWindows = mergedOfferings.seriesSaleWindows
+        offeringListingDiscovery =
+          mergedOfferings.offeringArchive.listingDiscovery ??
+          (Object.keys(listingDiscoveryUpdates).length > 0 ? listingDiscoveryUpdates : null)
         if (Object.keys(couponUpserts).length > 0) {
           couponUpsertsByFamily = couponUpserts
         }
@@ -1056,6 +1079,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     offeringBackfillFrontierHolders,
     offeringGateFrontier,
     offeringGateFrontierHolders,
+    offeringListingDiscovery,
     offeringPdfsTranscribedSeries,
     offeringPdfsParseFailedSeries,
     offeringPdfsSkippedSeries,

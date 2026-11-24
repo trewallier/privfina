@@ -6,6 +6,7 @@ import {
   type NormalizedOfferingListingRow
 } from './normalize-offerings.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
+import { mergeListingDiscoveryStates } from './offering-listing-discovery.ts'
 import {
   OFFERING_TRANSCRIPTION_DISCLAIMER,
   SCHEMA_VERSION,
@@ -13,6 +14,7 @@ import {
   type OfferingArchiveDocument,
   type OfferingArchiveFile,
   type OfferingFile,
+  type OfferingListingDiscoveryState,
   type SaleWindow,
   type SeriesRecord
 } from './types.ts'
@@ -30,6 +32,8 @@ export interface MergeOfferingsInput {
   archiveUpserts: OfferingArchiveDocument[]
   /** Optional full offering bodies (paymentDates filled after parse). */
   offeringUpdates?: OfferingFile[]
+  /** Per-family listing discovery cursor updates from this run's backfill pages. */
+  listingDiscoveryUpdates?: Partial<Record<OfferingFamilyCode, OfferingListingDiscoveryState>>
   generatedAt: string
 }
 
@@ -50,7 +54,10 @@ function cloneArchive(file: OfferingArchiveFile): OfferingArchiveFile {
     schemaVersion: file.schemaVersion,
     generatedAt: file.generatedAt,
     source: { ...file.source },
-    documents: file.documents.map((d) => ({ ...d }))
+    documents: file.documents.map((d) => ({ ...d })),
+    listingDiscovery: file.listingDiscovery
+      ? structuredClone(file.listingDiscovery)
+      : undefined
   }
 }
 
@@ -270,6 +277,10 @@ export function mergeOfferingsState(
     )
   }
 
+  const listingDiscovery = input.listingDiscoveryUpdates
+    ? mergeListingDiscoveryStates(baseArchive.listingDiscovery, input.listingDiscoveryUpdates)
+    : baseArchive.listingDiscovery
+
   const mergedArchive: OfferingArchiveFile = {
     schemaVersion: SCHEMA_VERSION,
     generatedAt: input.generatedAt,
@@ -278,7 +289,10 @@ export function mergeOfferingsState(
       host: 'www.akk.hu',
       disclaimer: OFFERING_TRANSCRIPTION_DISCLAIMER
     },
-    documents: migratedDocs.sort((a, b) => a.pathUuid.localeCompare(b.pathUuid))
+    documents: migratedDocs.sort((a, b) => a.pathUuid.localeCompare(b.pathUuid)),
+    ...(listingDiscovery && Object.keys(listingDiscovery).length > 0
+      ? { listingDiscovery }
+      : {})
   }
 
   let archiveChanged = true

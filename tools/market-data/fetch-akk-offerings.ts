@@ -3,19 +3,26 @@ import path from 'node:path'
 import { AKK_XPOSE3_BASE } from './fetch-akk.ts'
 import { formatFetchError, logFetchAttemptFailure } from './fetch-errors.ts'
 import { shiftIsoDate } from './fetch-webkincstar.ts'
-import { contiguousOfferingSuccessFrontierPublished } from './offering-archive-frontier.ts'
+import {
+  advanceListingDiscovery,
+  bootstrapListingEndBoundFromTip,
+  readListingDiscoveryState
+} from './offering-listing-discovery.ts'
 import {
   OFFERING_FAMILIES,
   OFFERING_LABEL_BY_FAMILY,
   type OfferingFamilyCode
 } from './offering-families.ts'
-import type { AkkEnvelope, OfferingArchiveFile } from './types.ts'
+import type {
+  AkkEnvelope,
+  OfferingArchiveFile,
+  OfferingListingDiscoveryState
+} from './types.ts'
 
 export interface PublicOfferingsUrlOptions {
   /**
    * Inclusive upper bound on TAP sale-window end (`ptsEnd`) or auction date
-   * (`auctionEnd`). Used for historical listing pages older than the archive
-   * contiguous tip success frontier (ADR 0041 §6m follow-on).
+   * (`auctionEnd`). Used for historical listing pages (ADR 0041 §6m).
    */
   endBoundIso?: string
 }
@@ -32,14 +39,14 @@ export interface FetchAkkOfferingsOptions {
   envelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
   /**
    * Optional offline backfill envelopes (tests). Live runs ignore this and
-   * fetch a second page when a frontier exists.
+   * fetch a second page when a discovery endBound is available.
    */
   backfillEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
   /** Restrict to a subset of families (default: all OFFERING_FAMILIES). */
   families?: readonly OfferingFamilyCode[]
   /**
-   * Tip offering-archive used to compute per-family contiguous success frontiers.
-   * When a family has a frontier, a second listing GET uses endBound = frontier−1 day.
+   * Tip offering-archive used for per-family listing discovery cursors.
+   * When a family is not exhausted, a second listing GET uses ptsEnd/auctionEnd.
    */
   offeringArchive?: OfferingArchiveFile | null
   /** Skip historical backfill listing GETs (tip only). */
@@ -49,7 +56,8 @@ export interface FetchAkkOfferingsOptions {
 /** Why a family did or did not include a historical listing page. */
 export type OfferingBackfillListingStatus =
   | 'merged'
-  | 'no_frontier'
+  | 'exhausted'
+  | 'no_cursor'
   | 'soft_failed'
   | 'skipped'
 
@@ -59,15 +67,21 @@ export interface FetchAkkOfferingsFamilyResult {
   envelope: AkkEnvelope
   /** Tip listing page alone (for tip-vs-backfill Actions stats). */
   tipEnvelope: AkkEnvelope
-  /** Backfill listing page alone when merged; otherwise null. */
+  /** Backfill listing page alone when fetched; otherwise null. */
   backfillEnvelope: AkkEnvelope | null
   url: string
   /** True when a backfill listing page was merged into `envelope`. */
   backfillMerged: boolean
-  /** Distinguishes merged / no frontier / soft-fail / offline skip. */
+  /** Distinguishes merged / exhausted / no cursor / soft-fail / offline skip. */
   backfillStatus: OfferingBackfillListingStatus
   backfillUrl: string | null
-  frontierPublished: string | null
+  /** Inclusive endBound used for this run's backfill GET (null when skipped). */
+  listingEndBoundUsed: string | null
+  /**
+   * Proposed listingDiscovery state to persist after this run.
+   * Null when discovery was skipped (offline) without a prior cursor.
+   */
+  listingDiscoveryNext: OfferingListingDiscoveryState | null
 }
 
 export interface FetchAkkOfferingsResult {
@@ -79,7 +93,10 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/** Inclusive end-bound date for the listing page older than the frontier. */
+/**
+ * Inclusive end-bound date one day before a published/filter date.
+ * Kept for unit tests and call sites that still shift a day.
+ */
 export function offeringListingEndBoundBeforeFrontier(frontierPublished: string): string {
   const day = frontierPublished.slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
@@ -212,10 +229,41 @@ async function getJson(
 }
 
 /**
+ * Resolve the inclusive endBound for this run's backfill GET, if any.
+ * Prefers the persisted cursor; otherwise bootstraps from the tip page.
+ */
+function resolveBackfillEndBound(
+  family: OfferingFamilyCode,
+  tipEnvelope: AkkEnvelope,
+  archive: OfferingArchiveFile | null | undefined,
+  skipBackfill: boolean
+): {
+  endBound: string | null
+  status: OfferingBackfillListingStatus | null
+  prior: OfferingListingDiscoveryState | null
+} {
+  if (skipBackfill) {
+    return { endBound: null, status: 'skipped', prior: null }
+  }
+  const prior = readListingDiscoveryState(archive, family)
+  if (prior?.exhausted) {
+    return { endBound: null, status: 'exhausted', prior }
+  }
+  if (prior) {
+    return { endBound: prior.endBound, status: null, prior }
+  }
+  const boot = bootstrapListingEndBoundFromTip(family, tipEnvelope)
+  if (!boot) {
+    return { endBound: null, status: 'no_cursor', prior: null }
+  }
+  return { endBound: boot, status: null, prior: null }
+}
+
+/**
  * Fetch getPublicOfferings per in-scope family (ADR 0041).
- * Tip listing (top=50 newest) always; when the tip archive has a contiguous
- * success frontier for the family, also fetch a backfill page with
- * ptsEnd/auctionEnd = frontier−1 day and union by path UUID.
+ * Tip listing (top=50 newest) always; when the listing discovery cursor is not
+ * exhausted, also fetch a backfill page with ptsEnd/auctionEnd and union by
+ * path UUID. Advances the per-family cursor past each queried page.
  * Isolates failures per family so one bad label does not discard siblings.
  */
 export async function fetchAkkOfferingListings(
@@ -238,20 +286,23 @@ export async function fetchAkkOfferingListings(
         tipEnvelope = await getJson(tipUrl, fetchImpl, retries, backoffMs, `akk-offerings:${family}`)
       }
 
-      const frontier = options.skipBackfillListings
-        ? null
-        : contiguousOfferingSuccessFrontierPublished(
-            options.offeringArchive?.documents,
-            family
-          )
+      const resolved = resolveBackfillEndBound(
+        family,
+        tipEnvelope,
+        options.offeringArchive,
+        Boolean(options.skipBackfillListings)
+      )
 
       let backfillUrl: string | null = null
       let backfillEnvelope: AkkEnvelope | null = null
-      let backfillStatus: OfferingBackfillListingStatus = 'no_frontier'
-      if (frontier) {
-        const endBound = offeringListingEndBoundBeforeFrontier(frontier)
+      let backfillStatus: OfferingBackfillListingStatus = resolved.status ?? 'no_cursor'
+      let listingEndBoundUsed: string | null = null
+      let listingDiscoveryNext: OfferingListingDiscoveryState | null = resolved.prior
+
+      if (resolved.endBound) {
+        listingEndBoundUsed = resolved.endBound
         backfillUrl = buildPublicOfferingsUrl(family, AKK_XPOSE3_BASE, {
-          endBoundIso: endBound
+          endBoundIso: resolved.endBound
         })
         if (options.backfillEnvelopesByFamily?.[family]) {
           backfillEnvelope = options.backfillEnvelopesByFamily[family]!
@@ -278,12 +329,34 @@ export async function fetchAkkOfferingListings(
             backfillEnvelope = null
             backfillUrl = null
             backfillStatus = 'soft_failed'
+            // Keep prior cursor so the next run retries the same endBound.
+            listingDiscoveryNext = resolved.prior ?? {
+              endBound: resolved.endBound,
+              exhausted: false
+            }
           }
         } else {
           // Offline tip-only: no backfill page.
           backfillUrl = null
+          listingEndBoundUsed = null
           backfillStatus = 'skipped'
         }
+
+        if (backfillEnvelope) {
+          const advanced = advanceListingDiscovery({
+            family,
+            endBoundUsed: resolved.endBound,
+            backfillEnvelope
+          })
+          listingDiscoveryNext = advanced.next
+          if (advanced.reason !== 'advanced' && advanced.next.exhausted) {
+            console.error(
+              `[market-data] offerings listing discovery exhausted: ${family} @ ${advanced.next.endBound} (${advanced.reason})`
+            )
+          }
+        }
+      } else if (resolved.status === 'exhausted' && resolved.prior) {
+        listingDiscoveryNext = resolved.prior
       }
 
       const envelope = unionOfferingEnvelopeData(tipEnvelope, backfillEnvelope)
@@ -305,7 +378,8 @@ export async function fetchAkkOfferingListings(
         backfillMerged: Boolean(backfillEnvelope),
         backfillStatus,
         backfillUrl,
-        frontierPublished: frontier
+        listingEndBoundUsed,
+        listingDiscoveryNext
       })
     } catch (error) {
       failures.push({ family, error })

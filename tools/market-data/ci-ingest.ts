@@ -1,6 +1,7 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import {
   formatCiIngestStepSummary,
+  type CiIngestSummaryInput,
   type OfferingPdfSeriesRef,
   type OfferingSourceProgress,
   type WebkincstarSkippedSeriesRef
@@ -59,12 +60,14 @@ export interface CiIngestResult {
   offeringTip: OfferingSourceProgress
   offeringBackfill: OfferingSourceProgress
   offeringUnattributed: OfferingSourceProgress
-  /** Deepest (min) offering frontier — archive progress. */
+  /** Deepest (min) tip-success frontier — archive transcription depth. */
   offeringBackfillFrontier: string | null
   offeringBackfillFrontierHolders: OfferingFrontierHolder[]
-  /** Shallowest (max) offering frontier — WK historical gate readiness. */
+  /** Shallowest (max) tip-success frontier — WK historical gate readiness. */
   offeringGateFrontier: string | null
   offeringGateFrontierHolders: OfferingFrontierHolder[]
+  /** Per-family listing discovery cursors (backfill progress). */
+  offeringListingDiscovery: CiIngestSummaryInput['offeringListingDiscovery']
   offeringsSoftFailed: boolean
   webkincstarFetchFailedDays: number
   /** True when historical WK datums ran (gate open **or** explicit CLI datums). */
@@ -84,7 +87,8 @@ export interface CiIngestResult {
  * `wk_hist_gate` is gate readiness; not the same as historical datums enabled
  * (operator explicit `webkincstarDatums` can fetch history with the gate closed).
  * Tip vs backfill PDF/queue/pending are split; `frontier=` / `gate_frontier=` remain
- * deepest / shallowest archive frontiers.
+ * deepest / shallowest tip-success frontiers; `discovery_exhausted=` counts families
+ * whose listing discovery cursor is done.
  * Exported for unit tests.
  */
 export function formatCiIngestNoticeLine(result: {
@@ -94,7 +98,10 @@ export function formatCiIngestNoticeLine(result: {
   webkincstarOverlaySkipped: number
   webkincstarFetchFailedDays: number
   offeringTip: Pick<OfferingSourceProgress, 'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending'>
-  offeringBackfill: Pick<OfferingSourceProgress, 'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending'>
+  offeringBackfill: Pick<
+    OfferingSourceProgress,
+    'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending' | 'familiesExhausted'
+  >
   offeringPdfsParseFailed: number
   offeringBackfillFrontier: string | null
   offeringGateFrontier: string | null
@@ -114,6 +121,7 @@ export function formatCiIngestNoticeLine(result: {
     `pending_tip=${tip.pdfsPending}`,
     `pending_bf=${bf.pdfsPending}`,
     `parse_failed=${result.offeringPdfsParseFailed}`,
+    `discovery_exhausted=${bf.familiesExhausted}`,
     `frontier=${result.offeringBackfillFrontier ?? ''}`,
     `gate_frontier=${result.offeringGateFrontier ?? ''}`
   ].join(' ')
@@ -171,6 +179,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringBackfillFrontierHolders: report.offeringBackfillFrontierHolders,
     offeringGateFrontier: report.offeringGateFrontier,
     offeringGateFrontierHolders: report.offeringGateFrontierHolders,
+    offeringListingDiscovery: report.offeringListingDiscovery,
     offeringsSoftFailed: report.offeringsSoftFailed,
     webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
     webkincstarHistoricalEnabled: report.webkincstarHistoricalEnabled,

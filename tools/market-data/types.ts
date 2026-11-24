@@ -448,6 +448,18 @@ export interface OfferingArchiveSourceMeta {
 }
 
 /**
+ * Per-family historical listing discovery cursor (ADR 0041 §6m).
+ * Drives the next `ptsEnd` / `auctionEnd` backfill page; independent of the
+ * tip success frontier used for the WebKincstár historical gate.
+ */
+export interface OfferingListingDiscoveryState {
+  /** Next inclusive ptsEnd / auctionEnd to query (YYYY-MM-DD). */
+  endBound: string
+  /** True when empty page, floor hit, or no further progress — skip further GETs. */
+  exhausted: boolean
+}
+
+/**
  * Tip ledger of known offering PDFs (ADR 0041). Compare every listing run against this.
  */
 export interface OfferingArchiveFile {
@@ -455,6 +467,11 @@ export interface OfferingArchiveFile {
   generatedAt: string
   source: OfferingArchiveSourceMeta
   documents: OfferingArchiveDocument[]
+  /**
+   * Per-family listing discovery cursors (optional for older tip archives).
+   * Advances past each queried backfill page so finished timeframes are not re-hit.
+   */
+  listingDiscovery?: Partial<Record<FamilyCode, OfferingListingDiscoveryState>>
 }
 
 export const OFFERING_TRANSCRIPTION_DISCLAIMER =

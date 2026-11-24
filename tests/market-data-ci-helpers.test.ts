@@ -45,13 +45,18 @@ describe('formatCiIngestNoticeLine', () => {
         webkincstarOverlaySkipped: 3,
         webkincstarFetchFailedDays: 0,
         offeringTip: { pdfsDownloaded: 2, pdfQueue: 3, pdfsPending: 1 },
-        offeringBackfill: { pdfsDownloaded: 5, pdfQueue: 8, pdfsPending: 4 },
+        offeringBackfill: {
+          pdfsDownloaded: 5,
+          pdfQueue: 8,
+          pdfsPending: 4,
+          familiesExhausted: 2
+        },
         offeringPdfsParseFailed: 0,
         offeringBackfillFrontier: '2026-08-01',
         offeringGateFrontier: '2026-10-01'
       })
     ).toBe(
-      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs_tip=2 pdfs_bf=5 queue_tip=3 queue_bf=8 pending_tip=1 pending_bf=4 parse_failed=0 frontier=2026-08-01 gate_frontier=2026-10-01'
+      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs_tip=2 pdfs_bf=5 queue_tip=3 queue_bf=8 pending_tip=1 pending_bf=4 parse_failed=0 discovery_exhausted=2 frontier=2026-08-01 gate_frontier=2026-10-01'
     )
   })
 })
@@ -109,7 +114,8 @@ describe('formatCiIngestStepSummary', () => {
       }),
       offeringBackfill: withProgress({
         familiesOk: 6,
-        familiesNoFrontier: 1,
+        familiesNoCursor: 1,
+        familiesExhausted: 0,
         rows: { issue: 20, tap: 0, other: 0 },
         issueKnownHashed: 12,
         pdfQueue: 2,
@@ -141,6 +147,10 @@ describe('formatCiIngestStepSummary', () => {
           }
         ]
       }),
+      offeringListingDiscovery: {
+        pmap: { endBound: '2026-06-30', exhausted: false },
+        ktv: { endBound: '2026-01-01', exhausted: true }
+      },
       offeringUnattributed: emptyOfferingSourceProgress(),
       offeringPdfsDownloaded: 2,
       offeringPdfsPending: 1,
@@ -156,6 +166,7 @@ describe('formatCiIngestStepSummary', () => {
     expect(md).toContain('- **ktv:** 2026_H (2026/H)')
     expect(md).toContain('listing rows | ISSUE=10, TAP_*=2, other=0')
     expect(md).toContain('PDF queue | 1')
+    expect(md).toContain('backfill no cursor | 1')
     expect(md).toContain('PDF transcribed (tip) by family:')
     expect(md).toContain('- **dkj:** D261125 (ISSUE)')
     expect(md).toContain('PDF parse_failed (backfill) by family:')
@@ -164,9 +175,12 @@ describe('formatCiIngestStepSummary', () => {
     expect(md).toContain('- **mapp:** N2026_01 (ISSUE)')
     expect(md).toContain('PDF pending (backfill) by family:')
     expect(md).toContain('- **pmap:** P250101 (ISSUE)')
-    expect(md).toContain('deepest frontier (backfill progress, min)')
-    expect(md).toContain('deepest frontier holders | pmap/P260421/ISSUE')
-    expect(md).toContain('shallowest frontier holders | baba/B260706/ISSUE')
+    expect(md).toContain('listing discovery cursors |')
+    expect(md).toContain('pmap=2026-06-30')
+    expect(md).toContain('ktv=exhausted@2026-01-01')
+    expect(md).toContain('deepest tip-success frontier (archive depth, min)')
+    expect(md).toContain('deepest tip-success frontier holders | pmap/P260421/ISSUE')
+    expect(md).toContain('shallowest tip-success frontier holders | baba/B260706/ISSUE')
     expect(md).toContain('Totals: pdfs tip=1 bf=0 unk=0 | queue tip=1 bf=2 unk=0 | pending tip=0 bf=1 unk=0')
   })
 
@@ -331,15 +345,21 @@ describe('runCiIngest', () => {
       expect(summary1).toContain('#### Offerings — backfill')
       expect(summary1).toContain('historical gate (shallowest frontier) | closed')
       expect(summary1).toContain('historical datums included | no')
-      expect(summary1).toContain('deepest frontier (backfill progress, min)')
-      expect(summary1).toContain('shallowest frontier (gate readiness, max)')
+      expect(summary1).toContain('listing discovery cursors')
+      expect(summary1).toContain('deepest tip-success frontier (archive depth, min)')
+      expect(summary1).toContain('shallowest tip-success frontier (gate readiness, max)')
       expect(summary1).toContain('PDF transcribed (tip) by family:')
       expect(summary1).toContain('PDF transcribed (backfill) by family:')
       expect(stdoutSpy.mock.calls.some((c) => String(c[0]).startsWith('::notice::'))).toBe(
         true
       )
       expect(
-        stdoutSpy.mock.calls.some((c) => String(c[0]).includes('pdfs_tip=') && String(c[0]).includes('queue_bf='))
+        stdoutSpy.mock.calls.some(
+          (c) =>
+            String(c[0]).includes('pdfs_tip=') &&
+            String(c[0]).includes('queue_bf=') &&
+            String(c[0]).includes('discovery_exhausted=')
+        )
       ).toBe(true)
 
       await writeFile(outFile, '', 'utf8')

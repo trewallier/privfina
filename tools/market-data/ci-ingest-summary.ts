@@ -1,6 +1,8 @@
-import type { OfferingFrontierDetail, OfferingFrontierHolder } from './offering-archive-frontier.ts'
+import type { OfferingFrontierHolder } from './offering-archive-frontier.ts'
 import type { OfferingListingSource } from './normalize-offerings.ts'
-import type { FamilyCode } from './types.ts'
+import { OFFERING_FAMILIES, type OfferingFamilyCode } from './offering-families.ts'
+import { formatListingDiscoverySummary } from './offering-listing-discovery.ts'
+import type { FamilyCode, OfferingListingDiscoveryState } from './types.ts'
 
 export type { OfferingListingSource }
 
@@ -32,8 +34,10 @@ export interface OfferingSourceProgress {
   familiesOk: number
   /** Tip listing soft-fails, or backfill soft-fails. */
   familiesSoftFailed: number
-  /** Backfill only: families with no contiguous frontier (no page attempted). */
-  familiesNoFrontier: number
+  /** Backfill only: families with no discovery endBound (could not bootstrap). */
+  familiesNoCursor: number
+  /** Backfill only: families whose listing discovery cursor is exhausted. */
+  familiesExhausted: number
   /** Backfill only: offline tip-only skip (no live backfill). */
   familiesSkipped: number
   rows: OfferingListingTypeCounts
@@ -57,7 +61,8 @@ export function emptyOfferingSourceProgress(): OfferingSourceProgress {
   return {
     familiesOk: 0,
     familiesSoftFailed: 0,
-    familiesNoFrontier: 0,
+    familiesNoCursor: 0,
+    familiesExhausted: 0,
     familiesSkipped: 0,
     rows: { issue: 0, tap: 0, other: 0 },
     issueKnownHashed: 0,
@@ -90,6 +95,10 @@ export interface CiIngestSummaryInput {
   offeringGateFrontier: string | null
   offeringBackfillFrontierHolders: OfferingFrontierHolder[]
   offeringGateFrontierHolders: OfferingFrontierHolder[]
+  /** Per-family listing discovery cursors after this run (backfill progress). */
+  offeringListingDiscovery?: Partial<
+    Record<OfferingFamilyCode, OfferingListingDiscoveryState>
+  > | null
   offeringTip: OfferingSourceProgress
   offeringBackfill: OfferingSourceProgress
   /**
@@ -190,7 +199,8 @@ function appendSourceBlock(
   } else if (kind === 'backfill') {
     lines.push(`| backfill pages merged | ${source.familiesOk} |`)
     lines.push(`| backfill soft-failed | ${source.familiesSoftFailed} |`)
-    lines.push(`| backfill no frontier | ${source.familiesNoFrontier} |`)
+    lines.push(`| backfill exhausted | ${source.familiesExhausted} |`)
+    lines.push(`| backfill no cursor | ${source.familiesNoCursor} |`)
     lines.push(`| backfill skipped (offline) | ${source.familiesSkipped} |`)
   } else {
     lines.push(
@@ -285,10 +295,11 @@ export function formatCiIngestStepSummary(result: CiIngestSummaryInput): string 
     '',
     '| Metric | Value |',
     '| --- | --- |',
-    `| deepest frontier (backfill progress, min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
-    `| deepest frontier holders | ${formatFrontierHolders(result.offeringBackfillFrontierHolders)} |`,
-    `| shallowest frontier (gate readiness, max) | ${result.offeringGateFrontier ?? '(none)'} |`,
-    `| shallowest frontier holders | ${formatFrontierHolders(result.offeringGateFrontierHolders)} |`,
+    `| listing discovery cursors | ${formatListingDiscoverySummary(result.offeringListingDiscovery ?? null, OFFERING_FAMILIES)} |`,
+    `| deepest tip-success frontier (archive depth, min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
+    `| deepest tip-success frontier holders | ${formatFrontierHolders(result.offeringBackfillFrontierHolders)} |`,
+    `| shallowest tip-success frontier (gate readiness, max) | ${result.offeringGateFrontier ?? '(none)'} |`,
+    `| shallowest tip-success frontier holders | ${formatFrontierHolders(result.offeringGateFrontierHolders)} |`,
     `| soft-failed | ${result.offeringsSoftFailed} |`,
     '',
     `Totals: pdfs tip=${tip.pdfsDownloaded} bf=${bf.pdfsDownloaded} unk=${unkPdfs} | queue tip=${tip.pdfQueue} bf=${bf.pdfQueue} unk=${unkQueue} | pending tip=${tip.pdfsPending} bf=${bf.pdfsPending} unk=${unkPending}`,

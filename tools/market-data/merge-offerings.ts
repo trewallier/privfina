@@ -2,6 +2,7 @@ import { digestOfferingArchive, digestCanonical } from './digests.ts'
 import { MergeError } from './merge.ts'
 import {
   archiveDocumentFromListing,
+  isOfferingPdfEligible,
   offeringStubFromListing,
   type NormalizedOfferingListingRow
 } from './normalize-offerings.ts'
@@ -10,6 +11,8 @@ import { mergeListingDiscoveryStates } from './offering-listing-discovery.ts'
 import {
   OFFERING_TRANSCRIPTION_DISCLAIMER,
   SCHEMA_VERSION,
+  SERIES_IDENTITY_SOURCE_WEBKINCSTAR,
+  type DayCountConvention,
   type FamilyCode,
   type OfferingArchiveDocument,
   type OfferingArchiveFile,
@@ -37,11 +40,27 @@ export interface MergeOfferingsInput {
   generatedAt: string
 }
 
+/** Null-fill patch for WK-origin series (ADR 0048). */
+export interface SeriesIdentityEnrichment {
+  family: FamilyCode
+  seriesId: string
+  isin?: string | null
+  name?: string | null
+  issue?: string | null
+  mat?: string | null
+  dayCount?: DayCountConvention | null
+}
+
 export interface MergeOfferingsResult {
   offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>>
   offeringArchive: OfferingArchiveFile
   /** Series id → saleWindow patches applied (for series.json). */
   seriesSaleWindows: Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
+  /**
+   * ISSUE listing/PDF fields for null-filling WK-host series (ADR 0048).
+   * Applied only when the tip series has that identitySource.
+   */
+  seriesIdentityEnrichments: SeriesIdentityEnrichment[]
   offeringsChanged: boolean
   archiveChanged: boolean
   saleWindowsChanged: boolean
@@ -199,11 +218,15 @@ export function mergeOfferingsState(
     const prev = offeringsByFamily[fam]![row.seriesId]
     const stub = offeringStubFromListing(row, {
       paymentDates: prev?.paymentDates,
-      dayCount: prev?.dayCount ?? null
+      dayCount: prev?.dayCount ?? null,
+      maturity: prev?.maturity ?? null,
+      issue: prev?.issue ?? null
     })
     // Preserve transcribed fields when listing refresh only updates saleWindow/source.
     if (prev?.paymentDates?.length) stub.paymentDates = [...prev.paymentDates]
     if (prev?.dayCount) stub.dayCount = prev.dayCount
+    if (prev?.maturity) stub.maturity = prev.maturity
+    if (prev?.issue) stub.issue = prev.issue
     if (!prev || !offeringEqual(prev, stub)) {
       offeringsByFamily[fam]![row.seriesId] = stub
       offeringsChanged = true
@@ -315,15 +338,74 @@ export function mergeOfferingsState(
     })
   }
 
+  const seriesIdentityEnrichments = buildSeriesIdentityEnrichments(
+    tipBySeries,
+    offeringsByFamily
+  )
+
   return {
     offeringsByFamily,
     offeringArchive: mergedArchive,
     seriesSaleWindows,
+    seriesIdentityEnrichments,
     offeringsChanged,
     archiveChanged,
     saleWindowsChanged: seriesSaleWindows.length > 0,
     archiveSkippedAlreadyTranscribed
   }
+}
+
+function asSeriesDayCount(value: string | null | undefined): DayCountConvention | null {
+  if (value === 'ACT/360' || value === 'ACT/365F' || value === '30E/360') return value
+  return null
+}
+
+/**
+ * Build ISSUE listing/PDF enrichment patches (ADR 0048). Applied later only onto
+ * `identitySource === webkincstar host` series rows.
+ */
+export function buildSeriesIdentityEnrichments(
+  tipBySeries: Map<string, NormalizedOfferingListingRow>,
+  offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>>
+): SeriesIdentityEnrichment[] {
+  const byKey = new Map<string, SeriesIdentityEnrichment>()
+
+  for (const row of tipBySeries.values()) {
+    if (!isOfferingPdfEligible(row)) continue
+    const key = `${row.family}\0${row.seriesId}`
+    const patch: SeriesIdentityEnrichment = {
+      family: row.family as FamilyCode,
+      seriesId: row.seriesId
+    }
+    if (row.isin) patch.isin = row.isin
+    if (row.name) patch.name = row.name
+    byKey.set(key, patch)
+  }
+
+  for (const [family, map] of Object.entries(offeringsByFamily) as Array<
+    [FamilyCode, Record<string, OfferingFile>]
+  >) {
+    for (const [seriesId, offering] of Object.entries(map)) {
+      const key = `${family}\0${seriesId}`
+      // Only enrich series already keyed by an ISSUE listing (ADR 0048).
+      const patch = byKey.get(key)
+      if (!patch) continue
+      if (offering.maturity) patch.mat = offering.maturity
+      if (offering.issue) patch.issue = offering.issue
+      const dayCount = asSeriesDayCount(offering.dayCount ?? null)
+      if (dayCount) patch.dayCount = dayCount
+      byKey.set(key, patch)
+    }
+  }
+
+  return [...byKey.values()].filter(
+    (p) =>
+      p.isin != null ||
+      p.name != null ||
+      p.issue != null ||
+      p.mat != null ||
+      p.dayCount != null
+  )
 }
 
 /** Apply series-adjacent saleWindow patches onto series records (in place copy). */
@@ -342,6 +424,54 @@ export function applySeriesSaleWindows(
     }
     changed = true
     return { ...s, saleWindow: { from: window.from, to: window.to ?? null } }
+  })
+  return { series: next, changed }
+}
+
+/**
+ * Null-fill WK-origin series from ISSUE listing/PDF enrichment (ADR 0048).
+ * Ignores ÁKK-owned / unmarked series. `dayCount` from ISSUE overwrites any
+ * prior invent default on WK-origin stubs (legacy ACT/360 tips included).
+ */
+export function applyWkOriginSeriesEnrichment(
+  series: SeriesRecord[],
+  patches: SeriesIdentityEnrichment[]
+): { series: SeriesRecord[]; changed: boolean } {
+  const byId = new Map(patches.map((p) => [p.seriesId, p]))
+  let changed = false
+  const next = series.map((s) => {
+    if (s.identitySource !== SERIES_IDENTITY_SOURCE_WEBKINCSTAR) return { ...s }
+    const patch = byId.get(s.id)
+    if (!patch) return { ...s }
+    let nextRec = { ...s }
+    let localChanged = false
+    if ((nextRec.isin == null || nextRec.isin === '') && patch.isin) {
+      nextRec = { ...nextRec, isin: patch.isin }
+      localChanged = true
+    }
+    if ((!nextRec.name || nextRec.name === nextRec.id) && patch.name) {
+      nextRec = { ...nextRec, name: patch.name }
+      localChanged = true
+    }
+    if ((nextRec.issue == null || nextRec.issue === '') && patch.issue) {
+      nextRec = { ...nextRec, issue: patch.issue }
+      localChanged = true
+    }
+    if ((nextRec.mat == null || nextRec.mat === '') && patch.mat) {
+      nextRec = { ...nextRec, mat: patch.mat }
+      localChanged = true
+    }
+    if (
+      patch.dayCount &&
+      (nextRec.dayCount == null ||
+        nextRec.dayCount === undefined ||
+        nextRec.dayCount !== patch.dayCount)
+    ) {
+      nextRec = { ...nextRec, dayCount: patch.dayCount }
+      localChanged = true
+    }
+    if (localChanged) changed = true
+    return nextRec
   })
   return { series: next, changed }
 }

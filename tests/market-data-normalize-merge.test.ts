@@ -201,8 +201,39 @@ describe('SeriesRecord.identitySource (ADR 0048)', () => {
     expect(noDowngrade[0].isin).toBe('HU0000599999')
   })
 
-  it('accepts www.akk.hu and webkincstar host; rejects null and other literals', async () => {
+  it('re-resolves status to matured after ISSUE mat enrich on WK-origin stub', async () => {
+    const catalog = await loadFixture('catalog.json')
+    const rates = await loadFixture('network-rates.json')
+    const snap = normalizeAkkSnapshots(catalog, rates)
+    // Seed a WK-origin stub without mat (delisted) into the merge payload.
+    snap.byFamily.dkj.series.push({
+      id: 'D999999',
+      isin: null,
+      name: 'D999999',
+      issue: null,
+      mat: null,
+      ccy: 'HUF',
+      status: 'delisted',
+      identitySource: 'webkincstar.allamkincstar.gov.hu'
+    })
+    const { tree } = mergeSnapshot(emptyMarketTree(), snap, {
+      generatedAt: '2026-11-05T18:00:00+01:00',
+      seriesIdentityEnrichments: [
+        {
+          family: 'dkj',
+          seriesId: 'D999999',
+          mat: '2020-01-01',
+          dayCount: 'ACT/365F'
+        }
+      ]
+    })
+    const enriched = tree.families.dkj.series.series.find((s) => s.id === 'D999999')
+    expect(enriched?.mat).toBe('2020-01-01')
+    expect(enriched?.dayCount).toBe('ACT/365F')
+    expect(enriched?.status).toBe('matured')
+  })
 
+  it('accepts www.akk.hu and webkincstar host; rejects null and other literals', async () => {
     const catalog = await loadFixture('catalog.json')
     const rates = await loadFixture('network-rates.json')
     const snap = normalizeAkkSnapshots(catalog, rates)

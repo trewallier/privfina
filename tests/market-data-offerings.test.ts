@@ -5,7 +5,11 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
 import { loadMarketTree } from '../tools/market-data/io.ts'
-import { mergeOfferingsState } from '../tools/market-data/merge-offerings.ts'
+import {
+  applyWkOriginSeriesEnrichment,
+  mergeOfferingsState
+} from '../tools/market-data/merge-offerings.ts'
+import type { SeriesRecord } from '../tools/market-data/types.ts'
 import {
   diffOfferingsAgainstArchive,
   normalizeOfferingEnvelope,
@@ -251,6 +255,61 @@ describe('mergeOfferingsState', () => {
     expect(merged.offeringsByFamily.pmap?.A360221I26?.source.host).toBe('www.akk.hu')
     expect(merged.offeringArchive.documents.length).toBeGreaterThanOrEqual(2)
     expect(merged.seriesSaleWindows.some((p) => p.seriesId === 'A360221I26')).toBe(true)
+    expect(
+      merged.seriesIdentityEnrichments.some(
+        (p) => p.seriesId === 'A360221I26' && p.isin != null
+      )
+    ).toBe(true)
+  })
+
+  it('null-fills WK-origin series from ISSUE enrichment; leaves ÁKK series untouched (ADR 0048)', () => {
+    const wkStub: SeriesRecord = {
+      id: 'A360221I26',
+      isin: null,
+      name: 'A360221I26',
+      issue: null,
+      mat: null,
+      ccy: 'HUF',
+      status: 'delisted',
+      // Legacy invent default — ISSUE dayCount must still overwrite on WK-origin.
+      dayCount: 'ACT/360',
+      identitySource: 'webkincstar.allamkincstar.gov.hu'
+    }
+    const akkOwned: SeriesRecord = {
+      id: 'A360221I26',
+      isin: 'HU0000000001',
+      name: '2036/I',
+      issue: '2026-01-01',
+      mat: '2036-02-21',
+      ccy: 'HUF',
+      status: 'active',
+      dayCount: 'ACT/365F',
+      identitySource: 'www.akk.hu'
+    }
+    const patch = {
+      family: 'pmap' as const,
+      seriesId: 'A360221I26',
+      isin: 'HU0000403118',
+      name: '2036/I',
+      issue: '2026-07-17',
+      mat: '2036-02-21',
+      dayCount: 'ACT/365F' as const
+    }
+    const filled = applyWkOriginSeriesEnrichment([wkStub], [patch])
+    expect(filled.changed).toBe(true)
+    expect(filled.series[0]).toMatchObject({
+      identitySource: 'webkincstar.allamkincstar.gov.hu',
+      isin: 'HU0000403118',
+      name: '2036/I',
+      issue: '2026-07-17',
+      mat: '2036-02-21',
+      dayCount: 'ACT/365F'
+    })
+
+    const untouched = applyWkOriginSeriesEnrichment([akkOwned], [patch])
+    expect(untouched.changed).toBe(false)
+    expect(untouched.series[0].isin).toBe('HU0000000001')
+    expect(untouched.series[0].dayCount).toBe('ACT/365F')
   })
 
   it('migrates TAP parse_failed archive rows to skipped_no_schedule', async () => {

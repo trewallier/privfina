@@ -304,7 +304,12 @@ export function diffOfferingsAgainstArchive(
 
 export function offeringStubFromListing(
   row: NormalizedOfferingListingRow,
-  options?: { paymentDates?: string[]; dayCount?: string | null }
+  options?: {
+    paymentDates?: string[]
+    dayCount?: string | null
+    maturity?: string | null
+    issue?: string | null
+  }
 ): OfferingFile {
   const document =
     row.path != null
@@ -328,6 +333,12 @@ export function offeringStubFromListing(
   }
   if (options?.dayCount) {
     file.dayCount = options.dayCount
+  }
+  if (options?.maturity) {
+    file.maturity = options.maturity
+  }
+  if (options?.issue) {
+    file.issue = options.issue
   }
   return file
 }

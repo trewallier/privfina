@@ -159,6 +159,20 @@ export function validateMarketTree(tree: MarketTreeState): void {
           }
         }
       }
+      if (
+        o.maturity != null &&
+        o.maturity !== '' &&
+        (typeof o.maturity !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.maturity))
+      ) {
+        throw new ValidateError(`Bad offering maturity for ${family}/${id}`)
+      }
+      if (
+        o.issue != null &&
+        o.issue !== '' &&
+        (typeof o.issue !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.issue))
+      ) {
+        throw new ValidateError(`Bad offering issue for ${family}/${id}`)
+      }
     }
   }
   if (tree.manifest.refs?.retailInterest) {

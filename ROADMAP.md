@@ -564,7 +564,7 @@ Plan slices
 - [x] Offering-archive depth gate for scheduled WK historical (`OFFERING_WK_HISTORICAL_GATE_DAYS` = 90; default-off on shallow tip).
 - [x] ADR 0048 + `SeriesRecord.identitySource` schema / validate (docs-first).
 - [x] Historical WK invents marked series stubs on hist datums only; tip lookback soft-skips (gate open or closed); ÁKK promote; calendar seals when invent clears unmatched.
-- [ ] ISSUE offering null-fill for WK-origin series only.
+- [x] ISSUE offering null-fill for WK-origin series only.
 - [ ] Live tip cutover / Pages redeploy so SPA quote history deepens as the calendar walks back.
 - [x] Offering PDF historical archive loop: tip `top=50` + backfill listing from persisted per-family discovery cursor (`ptsEnd` / `auctionEnd` = cursor `endBound`; bootstrap tip min filter date − 1; advance past each page; exhaust on empty/floor; independent of tip success frontier); PDF cap 20/family; `pending_download` / sha-null `download_failed` retry every run.
 - [ ] Optional follow-ons: refine scrape floor once archive bounds are confirmed.

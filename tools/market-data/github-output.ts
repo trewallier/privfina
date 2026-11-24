@@ -17,3 +17,16 @@ export function writeGithubStepSummary(markdown: string): void {
   if (!out) return
   appendFileSync(out, markdown.endsWith('\n') ? markdown : `${markdown}\n`, 'utf8')
 }
+
+/**
+ * Emit an Actions workflow command annotation (`::notice::` / `::warning::`).
+ * Safe no-op when stdout is unavailable; always single-line (newlines → spaces).
+ */
+export function writeGithubAnnotation(
+  level: 'notice' | 'warning',
+  message: string
+): void {
+  const safe = message.replace(/[\r\n]+/g, ' ').trim()
+  if (!safe) return
+  process.stdout.write(`::${level}::${safe}\n`)
+}

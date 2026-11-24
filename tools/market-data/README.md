@@ -42,7 +42,7 @@ bash tools/market-data/scripts/commit-push.sh
 ```
 
 Exit codes: `ingest` → `0` updated / `2` unchanged / `1` error.  
-`ci-ingest` → `0` on success; sets `changed` / `as_of` on `GITHUB_OUTPUT`.
+`ci-ingest` → `0` on success; sets `changed` / `as_of` plus WK/offering metrics on `GITHUB_OUTPUT` (promoted to `jobs.ingest.outputs`), writes `$GITHUB_STEP_SUMMARY`, and emits `::notice::` / `::warning::` annotations.
 
 Local live WebKincstár extract needs system **`pdftotext`** (`poppler-utils`). Actions installs a **pinned + SHA256-verified** Poppler stack from [`poppler.manifest`](poppler.manifest) via [`scripts/install-poppler.sh`](scripts/install-poppler.sh) (cached `.deb`s under `.poppler-debs/`, gitignored). Vitest uses pre-extracted text fixtures — raw PDFs are never committed.
 

@@ -270,7 +270,9 @@ describe('mergeOfferingsState', () => {
       issue: null,
       mat: null,
       ccy: 'HUF',
-      status: 'matured',
+      status: 'delisted',
+      // Legacy invent default — ISSUE dayCount must still overwrite on WK-origin.
+      dayCount: 'ACT/360',
       identitySource: 'webkincstar-backfill'
     }
     const akkOwned: SeriesRecord = {

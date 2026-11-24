@@ -386,12 +386,13 @@ export function buildSeriesIdentityEnrichments(
   >) {
     for (const [seriesId, offering] of Object.entries(map)) {
       const key = `${family}\0${seriesId}`
-      const patch = byKey.get(key) ?? { family, seriesId }
+      // Only enrich series already keyed by an ISSUE listing (ADR 0048).
+      const patch = byKey.get(key)
+      if (!patch) continue
       if (offering.maturity) patch.mat = offering.maturity
       if (offering.issue) patch.issue = offering.issue
       const dayCount = asSeriesDayCount(offering.dayCount ?? null)
       if (dayCount) patch.dayCount = dayCount
-      // Listing may lack isin; archive/offering path does not carry isin on OfferingFile.
       byKey.set(key, patch)
     }
   }
@@ -428,7 +429,8 @@ export function applySeriesSaleWindows(
 
 /**
  * Null-fill WK-origin series from ISSUE listing/PDF enrichment (ADR 0048).
- * Never overwrites non-null fields; ignores ÁKK-owned / unmarked series.
+ * Ignores ÁKK-owned / unmarked series. `dayCount` from ISSUE overwrites any
+ * prior invent default on WK-origin stubs (legacy ACT/360 tips included).
  */
 export function applyWkOriginSeriesEnrichment(
   series: SeriesRecord[],
@@ -458,7 +460,12 @@ export function applyWkOriginSeriesEnrichment(
       nextRec = { ...nextRec, mat: patch.mat }
       localChanged = true
     }
-    if ((nextRec.dayCount == null || nextRec.dayCount === undefined) && patch.dayCount) {
+    if (
+      patch.dayCount &&
+      (nextRec.dayCount == null ||
+        nextRec.dayCount === undefined ||
+        nextRec.dayCount !== patch.dayCount)
+    ) {
       nextRec = { ...nextRec, dayCount: patch.dayCount }
       localChanged = true
     }

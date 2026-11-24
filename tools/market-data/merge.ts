@@ -704,6 +704,15 @@ export function mergeSnapshot(
       const fam = tree.families[family]
       const applied = applyWkOriginSeriesEnrichment(fam.series.series, patches)
       if (!applied.changed) continue
+      // Re-resolve status after mat null-fill (e.g. past mat → matured this run).
+      const liveQuoted = new Set(
+        Object.entries(fam.latest.quotes)
+          .filter(([, q]) => asOf != null && q.d === asOf)
+          .map(([id]) => id)
+      )
+      for (const rec of applied.series) {
+        rec.status = resolveStatus(rec, liveQuoted.has(rec.id), asOf)
+      }
       fam.series = {
         schemaVersion: SCHEMA_VERSION,
         family,

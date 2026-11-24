@@ -245,6 +245,85 @@ describe('retail interest join → coupons + merge', () => {
     ])
   })
 
+  it('slug fallback does not re-home coupons onto another family (ADR 0048)', () => {
+    // Invent may seed ktv/2026_O; a bmap retail row that also slugs to 2026_O
+    // must not write orphan bmap coupons (failed ingest ValidateError).
+    const retail = {
+      schemaVersion: 2 as const,
+      asOf: '2026-11-24',
+      generatedAt: '2026-11-24T21:00:00.000Z',
+      rows: [
+        {
+          id: '2026_O',
+          family: 'bmap' as const,
+          series: '2026/O',
+          type: 'BMÁP',
+          rates: [5.5],
+          ehm: null,
+          from: '2026-10-01',
+          to: null,
+          offered: true
+        }
+      ]
+    }
+    const joined = joinRetailInterestToCoupons(retail, {
+      ktv: [
+        {
+          id: '2026_O',
+          isin: null,
+          name: '2026/O',
+          issue: null,
+          mat: '2026-12-31',
+          ccy: 'HUF',
+          status: 'matured',
+          identitySource: 'webkincstar.allamkincstar.gov.hu'
+        }
+      ],
+      bmap: []
+    })
+    expect(joined.couponsByFamily.bmap).toBeUndefined()
+    expect(joined.couponsByFamily.ktv).toBeUndefined()
+    expect(joined.offeredById['2026_O']).toBeUndefined()
+  })
+
+  it('slug fallback still writes coupons when the id exists in the same family', () => {
+    const retail = {
+      schemaVersion: 2 as const,
+      asOf: '2026-11-24',
+      generatedAt: '2026-11-24T21:00:00.000Z',
+      rows: [
+        {
+          id: '2026_O',
+          family: 'bmap' as const,
+          series: '2026/O',
+          type: 'BMÁP',
+          rates: [5.5],
+          ehm: null,
+          from: '2026-10-01',
+          to: null,
+          offered: true
+        }
+      ]
+    }
+    const joined = joinRetailInterestToCoupons(retail, {
+      bmap: [
+        {
+          id: '2026_O',
+          isin: null,
+          name: '2026/O',
+          issue: null,
+          mat: '2026-12-31',
+          ccy: 'HUF',
+          status: 'active'
+        }
+      ]
+    })
+    expect(joined.couponsByFamily.bmap?.['2026_O']?.rows).toEqual([
+      ['2026-10-01', null, 5.5]
+    ])
+    expect(joined.offeredById['2026_O']).toBe(true)
+  })
+
   it('offeredById prefers the latest period (max from), not input order alone', () => {
     const retail = {
       schemaVersion: 2 as const,

@@ -264,7 +264,9 @@ function couponRowsFromRetail(row: RetailInterestRow): CouponRow[] {
  * Join retailInterest rows onto published series records.
  * Prefer ÁKK / catalog series id as the coupons file key when a match is found.
  * Unmatched retail rows with a family may only write under `toSeriesId(label)` when that
- * id already exists in the series list (never invent orphan coupon files).
+ * id already exists in **that family's** series list (never invent orphan coupon files,
+ * never re-home onto another family's series — ADR 0048 invent stubs can share short
+ * slugs like `2026_O` across families).
  * Multi-band `rates` expand to distinct coupon rows with the same from/to.
  * Accepts legacy singular `rate` rows from the v1 tip (coerced to `rates`).
  */
@@ -278,16 +280,18 @@ export function joinRetailInterestToCoupons(
 
   const coerced = coerceRetailInterestFile(retail)
 
-  const knownIds = new Set<string>()
+  const knownIdsByFamily = new Map<FamilyCode, Set<string>>()
   const flatSeries: Array<{ family: FamilyCode; series: SeriesRecord }> = []
   for (const [family, list] of Object.entries(seriesByFamily) as Array<
     [FamilyCode, readonly SeriesRecord[] | undefined]
   >) {
     if (!list) continue
+    const ids = knownIdsByFamily.get(family) ?? new Set<string>()
     for (const s of list) {
-      knownIds.add(s.id)
+      ids.add(s.id)
       flatSeries.push({ family, series: s })
     }
+    knownIdsByFamily.set(family, ids)
   }
 
   const rowsByTarget = new Map<string, { family: FamilyCode; rows: CouponRow[] }>()
@@ -314,7 +318,8 @@ export function joinRetailInterestToCoupons(
     } else {
       try {
         const slug = toSeriesId(row.series)
-        if (knownIds.has(slug)) {
+        // Family-scoped only: a ktv invent stub must not unlock a bmap coupon write.
+        if (knownIdsByFamily.get(row.family)?.has(slug)) {
           targetId = slug
           targetFamily = row.family
         }

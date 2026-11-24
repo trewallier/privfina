@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { shiftIsoDate } from '../tools/market-data/fetch-webkincstar.ts'
 import {
+  contiguousOfferingSuccessFrontierDetail,
   contiguousOfferingSuccessFrontierPublished,
   maxOfferingSuccessFrontierPublished,
   minOfferingSuccessFrontierPublished,
+  offeringSuccessFrontierExtremes,
   OFFERING_WK_HISTORICAL_GATE_DAYS,
   shouldEnableWebkincstarHistoricalBackfill
 } from '../tools/market-data/offering-archive-frontier.ts'
@@ -30,11 +32,27 @@ describe('offering archive frontier / WK historical gate', () => {
   it('walks contiguous tip success and stops at first non-success gap', () => {
     const documents = [
       doc({ pathUuid: 'u1', family: 'dkj', published: '2026-11-20', status: 'transcribed' }),
-      doc({ pathUuid: 'u2', family: 'dkj', published: '2026-11-10', status: 'transcribed' }),
+      doc({
+        pathUuid: 'u2',
+        family: 'dkj',
+        published: '2026-11-10',
+        status: 'transcribed',
+        seriesId: 'D261110'
+      }),
       doc({ pathUuid: 'u3', family: 'dkj', published: '2026-10-01', status: 'pending_download' }),
       doc({ pathUuid: 'u4', family: 'dkj', published: '2026-09-01', status: 'transcribed' })
     ]
     expect(contiguousOfferingSuccessFrontierPublished(documents, 'dkj')).toBe('2026-11-10')
+    const detail = contiguousOfferingSuccessFrontierDetail(documents, 'dkj')
+    expect(detail?.published).toBe('2026-11-10')
+    expect(detail?.holders).toEqual([
+      expect.objectContaining({
+        family: 'dkj',
+        seriesId: 'D261110',
+        resourceType: 'ISSUE',
+        published: '2026-11-10'
+      })
+    ])
   })
 
   it('returns null when newest ISSUE is not terminal success', () => {
@@ -178,5 +196,11 @@ describe('offering archive frontier / WK historical gate', () => {
     // …but gate readiness uses the shallowest family.
     expect(maxOfferingSuccessFrontierPublished(archive)).toBe(shallow)
     expect(shouldEnableWebkincstarHistoricalBackfill({ archive, asOf })).toBe(false)
+
+    const extremes = offeringSuccessFrontierExtremes(archive)
+    expect(extremes.deepest?.published).toBe(deep)
+    expect(extremes.shallowest?.published).toBe(shallow)
+    expect(extremes.shallowest?.holders.some((h) => h.family === 'baba')).toBe(true)
+    expect(extremes.deepest?.holders.every((h) => h.family !== 'baba')).toBe(true)
   })
 })

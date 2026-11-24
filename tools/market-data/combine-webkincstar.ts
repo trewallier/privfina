@@ -19,6 +19,12 @@ export interface SkippedWebkincstarQuote {
 /** Bounded sample retained for Actions logs (full count is still `skippedUnmatched`). */
 export const SKIPPED_UNMATCHED_SAMPLE_LIMIT = 8
 
+export interface SkippedWebkincstarSeries {
+  family: FamilyCode
+  id: string
+  name: string
+}
+
 export interface ApplyWebkincstarResult {
   snapshot: NormalizedSnapshot
   /** Quotes remapped onto an existing catalog series id. */
@@ -30,6 +36,11 @@ export interface ApplyWebkincstarResult {
    * length may be less than `skippedUnmatched` when the skip volume is high.
    */
   skippedUnmatchedQuotes: SkippedWebkincstarQuote[]
+  /**
+   * Unique soft-skipped series (family/id) for Actions step summary — not bounded
+   * by {@link SKIPPED_UNMATCHED_SAMPLE_LIMIT}.
+   */
+  skippedUnmatchedSeries: SkippedWebkincstarSeries[]
   /** True when at least one remapped quote was applied. */
   hasQuotes: boolean
 }
@@ -139,6 +150,7 @@ export function applyWebkincstarQuotes(
   let remappedQuotes = 0
   let skippedUnmatched = 0
   const skippedUnmatchedQuotes: SkippedWebkincstarQuote[] = []
+  const skippedSeriesByKey = new Map<string, SkippedWebkincstarSeries>()
 
   for (const family of FAMILIES) {
     const wk = webkincstar.byFamily[family]
@@ -148,6 +160,10 @@ export function applyWebkincstarQuotes(
       const target = resolveTarget(q.id, name, index)
       if (!target) {
         skippedUnmatched += 1
+        const seriesKey = `${family}\0${q.id}`
+        if (!skippedSeriesByKey.has(seriesKey)) {
+          skippedSeriesByKey.set(seriesKey, { family, id: q.id, name })
+        }
         if (skippedUnmatchedQuotes.length < SKIPPED_UNMATCHED_SAMPLE_LIMIT) {
           skippedUnmatchedQuotes.push({
             family,
@@ -194,6 +210,7 @@ export function applyWebkincstarQuotes(
     remappedQuotes,
     skippedUnmatched,
     skippedUnmatchedQuotes,
+    skippedUnmatchedSeries: [...skippedSeriesByKey.values()],
     hasQuotes: remappedQuotes > 0
   }
 }

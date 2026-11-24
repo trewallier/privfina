@@ -47,6 +47,12 @@ jobs:
       offering_pdfs_pending: ${{ steps.ingest.outputs.offering_pdfs_pending }}
       offering_pdfs_parse_failed: ${{ steps.ingest.outputs.offering_pdfs_parse_failed }}
       offering_pdfs_skipped_no_schedule: ${{ steps.ingest.outputs.offering_pdfs_skipped_no_schedule }}
+      offering_pdfs_tip: ${{ steps.ingest.outputs.offering_pdfs_tip }}
+      offering_pdfs_bf: ${{ steps.ingest.outputs.offering_pdfs_bf }}
+      offering_queue_tip: ${{ steps.ingest.outputs.offering_queue_tip }}
+      offering_queue_bf: ${{ steps.ingest.outputs.offering_queue_bf }}
+      offering_pending_tip: ${{ steps.ingest.outputs.offering_pending_tip }}
+      offering_pending_bf: ${{ steps.ingest.outputs.offering_pending_bf }}
       offering_backfill_frontier: ${{ steps.ingest.outputs.offering_backfill_frontier }}
       offering_gate_frontier: ${{ steps.ingest.outputs.offering_gate_frontier }}
       offerings_soft_failed: ${{ steps.ingest.outputs.offerings_soft_failed }}

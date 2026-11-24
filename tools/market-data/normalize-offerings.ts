@@ -119,8 +119,11 @@ export function pathUuidFromOfferingPath(pathValue: unknown): string | null {
   return null
 }
 
-/** Tip listing vs backfill-only listing (tip wins on UUID overlap). */
-export type OfferingListingSource = 'tip' | 'backfill'
+/**
+ * Tip listing vs backfill-only listing (tip wins on UUID overlap).
+ * `'unknown'` = not on today’s tip∪backfill pages (e.g. archive-only reparse).
+ */
+export type OfferingListingSource = 'tip' | 'backfill' | 'unknown'
 
 /**
  * Collect lowercase path UUIDs from a raw getPublicOfferings envelope.
@@ -139,7 +142,7 @@ export function pathUuidsFromOfferingEnvelope(envelope: AkkEnvelope | null | und
 
 /**
  * Map pathUuid → listing source. Tip UUIDs win; backfill-only UUIDs are `'backfill'`.
- * UUIDs absent from both pages are not in the map (callers default to tip).
+ * UUIDs absent from both pages are not in the map — resolve as `'unknown'`.
  */
 export function offeringListingSourceByUuid(
   tipEnvelope: AkkEnvelope,
@@ -158,8 +161,8 @@ export function resolveOfferingListingSource(
   pathUuid: string | null | undefined,
   byUuid: ReadonlyMap<string, OfferingListingSource>
 ): OfferingListingSource {
-  if (!pathUuid) return 'tip'
-  return byUuid.get(pathUuid.toLowerCase()) ?? 'tip'
+  if (!pathUuid) return 'unknown'
+  return byUuid.get(pathUuid.toLowerCase()) ?? 'unknown'
 }
 
 function saleWindowFromRow(row: AkkRow): SaleWindow | null {

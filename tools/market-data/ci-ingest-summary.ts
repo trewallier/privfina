@@ -12,9 +12,6 @@ export interface OfferingPdfSeriesRef {
   listingSource: OfferingListingSource
 }
 
-/** @deprecated Prefer {@link OfferingPdfSeriesRef}; kept as alias for skipped shape. */
-export type OfferingPdfSkippedRef = OfferingPdfSeriesRef
-
 /** Unique WK overlay soft-skip series identity. */
 export interface WebkincstarSkippedSeriesRef {
   family: FamilyCode
@@ -95,15 +92,16 @@ export interface CiIngestSummaryInput {
   offeringGateFrontierHolders: OfferingFrontierHolder[]
   offeringTip: OfferingSourceProgress
   offeringBackfill: OfferingSourceProgress
-  /** Rolled-up totals (tip+backfill) for notice / job outputs. */
+  /**
+   * Archive-only / listing-absent PDF outcomes (e.g. operator reparse of sticky
+   * parse_failed not on today’s tip∪backfill pages). Omitted from tip/bf split.
+   */
+  offeringUnattributed: OfferingSourceProgress
+  /** Rolled-up totals (tip+backfill+unattributed) for notice / job outputs. */
   offeringPdfsDownloaded: number
   offeringPdfsPending: number
   offeringPdfsParseFailed: number
   offeringPdfsSkippedNoSchedule: number
-  /** @deprecated Prefer per-source lists; kept for older callers/tests. */
-  offeringPdfsTranscribedSeries?: OfferingPdfSeriesRef[]
-  offeringPdfsParseFailedSeries?: OfferingPdfSeriesRef[]
-  offeringPdfsSkippedSeries?: OfferingPdfSeriesRef[]
   offeringsSoftFailed: boolean
   retailInterestSoftFailed: boolean
 }
@@ -159,23 +157,50 @@ function formatRowsCell(rows: OfferingListingTypeCounts): string {
   return `ISSUE=${rows.issue}, TAP_*=${rows.tap}, other=${rows.other}`
 }
 
+function sourceBlockTitle(kind: OfferingListingSource): string {
+  if (kind === 'unknown') return 'Offerings — unattributed (archive reparse)'
+  return `Offerings — ${kind}`
+}
+
+function sourceHasActivity(source: OfferingSourceProgress): boolean {
+  return (
+    source.pdfQueue > 0 ||
+    source.pdfsDownloaded > 0 ||
+    source.pdfsPending > 0 ||
+    source.pdfsParseFailed > 0 ||
+    source.pdfsSkippedNoSchedule > 0 ||
+    source.pdfsDownloadFailed > 0 ||
+    source.transcribed.length > 0 ||
+    source.parseFailed.length > 0 ||
+    source.skipped.length > 0 ||
+    source.pending.length > 0 ||
+    source.downloadFailed.length > 0
+  )
+}
+
 function appendSourceBlock(
   lines: string[],
   source: OfferingSourceProgress,
   kind: OfferingListingSource
 ): void {
-  lines.push(`#### Offerings — ${kind}`, '', '| Metric | Value |', '| --- | --- |')
+  lines.push(`#### ${sourceBlockTitle(kind)}`, '', '| Metric | Value |', '| --- | --- |')
   if (kind === 'tip') {
     lines.push(`| listing families OK | ${source.familiesOk} |`)
     lines.push(`| listing soft-failed | ${source.familiesSoftFailed} |`)
-  } else {
+  } else if (kind === 'backfill') {
     lines.push(`| backfill pages merged | ${source.familiesOk} |`)
     lines.push(`| backfill soft-failed | ${source.familiesSoftFailed} |`)
     lines.push(`| backfill no frontier | ${source.familiesNoFrontier} |`)
     lines.push(`| backfill skipped (offline) | ${source.familiesSkipped} |`)
+  } else {
+    lines.push(
+      '| note | Not on today’s tip∪backfill listing pages (typically operator reparse of archive-only sticky parse_failed). |'
+    )
   }
-  lines.push(`| listing rows | ${formatRowsCell(source.rows)} |`)
-  lines.push(`| ISSUE known (hashed) | ${source.issueKnownHashed} |`)
+  if (kind !== 'unknown') {
+    lines.push(`| listing rows | ${formatRowsCell(source.rows)} |`)
+    lines.push(`| ISSUE known (hashed) | ${source.issueKnownHashed} |`)
+  }
   lines.push(`| PDF queue | ${source.pdfQueue} |`)
   lines.push(`| PDFs downloaded | ${source.pdfsDownloaded} |`)
   lines.push(`| PDFs pending | ${source.pdfsPending} |`)
@@ -184,7 +209,7 @@ function appendSourceBlock(
   lines.push(`| PDF download_failed | ${source.pdfsDownloadFailed} |`)
   lines.push('')
 
-  if (source.pdfQueue === 0) {
+  if (kind !== 'unknown' && source.pdfQueue === 0) {
     lines.push(
       kind === 'tip'
         ? '_No new tip ISSUE PDFs queued (tip archive already has sha256 for tip-listed ISSUEs, or tip listing had none)._'
@@ -193,17 +218,18 @@ function appendSourceBlock(
     )
   }
 
-  lines.push(`PDF transcribed (${kind}) by family:`, '', ...formatTypedSeriesByFamily(source.transcribed), '')
-  lines.push(`PDF parse_failed (${kind}) by family:`, '', ...formatTypedSeriesByFamily(source.parseFailed), '')
+  const label = kind === 'unknown' ? 'unattributed' : kind
+  lines.push(`PDF transcribed (${label}) by family:`, '', ...formatTypedSeriesByFamily(source.transcribed), '')
+  lines.push(`PDF parse_failed (${label}) by family:`, '', ...formatTypedSeriesByFamily(source.parseFailed), '')
   lines.push(
-    `PDF skipped_no_schedule (${kind}) by family:`,
+    `PDF skipped_no_schedule (${label}) by family:`,
     '',
     ...formatTypedSeriesByFamily(source.skipped),
     ''
   )
-  lines.push(`PDF pending (${kind}) by family:`, '', ...formatTypedSeriesByFamily(source.pending), '')
+  lines.push(`PDF pending (${label}) by family:`, '', ...formatTypedSeriesByFamily(source.pending), '')
   lines.push(
-    `PDF download_failed (${kind}) by family:`,
+    `PDF download_failed (${label}) by family:`,
     '',
     ...formatTypedSeriesByFamily(source.downloadFailed),
     ''
@@ -246,7 +272,14 @@ export function formatCiIngestStepSummary(result: CiIngestSummaryInput): string 
 
   appendSourceBlock(lines, tip, 'tip')
   appendSourceBlock(lines, bf, 'backfill')
+  const unattributed = result.offeringUnattributed
+  if (sourceHasActivity(unattributed)) {
+    appendSourceBlock(lines, unattributed, 'unknown')
+  }
 
+  const unkQueue = unattributed.pdfQueue
+  const unkPending = unattributed.pdfsPending
+  const unkPdfs = unattributed.pdfsDownloaded
   lines.push(
     '#### Offerings — frontiers / totals',
     '',
@@ -258,7 +291,7 @@ export function formatCiIngestStepSummary(result: CiIngestSummaryInput): string 
     `| shallowest frontier holders | ${formatFrontierHolders(result.offeringGateFrontierHolders)} |`,
     `| soft-failed | ${result.offeringsSoftFailed} |`,
     '',
-    `Totals: pdfs tip=${tip.pdfsDownloaded} bf=${bf.pdfsDownloaded} | queue tip=${tip.pdfQueue} bf=${bf.pdfQueue} | pending tip=${tip.pdfsPending} bf=${bf.pdfsPending}`,
+    `Totals: pdfs tip=${tip.pdfsDownloaded} bf=${bf.pdfsDownloaded} unk=${unkPdfs} | queue tip=${tip.pdfQueue} bf=${bf.pdfQueue} unk=${unkQueue} | pending tip=${tip.pdfsPending} bf=${bf.pdfsPending} unk=${unkPending}`,
     '',
     '#### Other soft-fails',
     '',

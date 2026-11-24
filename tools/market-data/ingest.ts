@@ -271,7 +271,9 @@ export interface IngestReport extends MergeResult {
   /** Tip listing / queue / PDF progress (Actions summary). */
   offeringTip: OfferingSourceProgress
   /** Backfill listing / queue / PDF progress (Actions summary). */
-  offeringBackfillProgress: OfferingSourceProgress
+  offeringBackfill: OfferingSourceProgress
+  /** Archive-only / listing-absent PDF outcomes (Actions summary). */
+  offeringUnattributed: OfferingSourceProgress
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -672,7 +674,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   const offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[] = []
   const offeringPdfsSkippedSeries: OfferingPdfSeriesRef[] = []
   const offeringTip = emptyOfferingSourceProgress()
-  const offeringBackfillProgress = emptyOfferingSourceProgress()
+  const offeringBackfill = emptyOfferingSourceProgress()
+  const offeringUnattributed = emptyOfferingSourceProgress()
   let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
   let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
   let seriesSaleWindows:
@@ -725,13 +728,13 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
       } else {
         offeringTip.familiesOk = fetched.byFamily.length
         for (const fam of fetched.byFamily) {
-          if (fam.backfillStatus === 'merged') offeringBackfillProgress.familiesOk += 1
+          if (fam.backfillStatus === 'merged') offeringBackfill.familiesOk += 1
           else if (fam.backfillStatus === 'soft_failed') {
-            offeringBackfillProgress.familiesSoftFailed += 1
+            offeringBackfill.familiesSoftFailed += 1
           } else if (fam.backfillStatus === 'no_frontier') {
-            offeringBackfillProgress.familiesNoFrontier += 1
+            offeringBackfill.familiesNoFrontier += 1
           } else {
-            offeringBackfillProgress.familiesSkipped += 1
+            offeringBackfill.familiesSkipped += 1
           }
         }
 
@@ -748,8 +751,11 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           }
         }
 
-        const sourceProgress = (source: OfferingListingSource): OfferingSourceProgress =>
-          source === 'tip' ? offeringTip : offeringBackfillProgress
+        const sourceProgress = (source: OfferingListingSource): OfferingSourceProgress => {
+          if (source === 'tip') return offeringTip
+          if (source === 'backfill') return offeringBackfill
+          return offeringUnattributed
+        }
 
         const bumpRow = (row: NormalizedOfferingListingRow): void => {
           const source = resolveOfferingListingSource(row.pathUuid, listingSourceByUuid)
@@ -1054,7 +1060,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     offeringPdfsParseFailedSeries,
     offeringPdfsSkippedSeries,
     offeringTip,
-    offeringBackfillProgress
+    offeringBackfill,
+    offeringUnattributed
   }
 }
 

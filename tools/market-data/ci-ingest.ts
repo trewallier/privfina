@@ -1,6 +1,5 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import {
-  emptyOfferingSourceProgress,
   formatCiIngestStepSummary,
   type OfferingPdfSeriesRef,
   type OfferingSourceProgress,
@@ -59,6 +58,7 @@ export interface CiIngestResult {
   offeringPdfsSkippedSeries: OfferingPdfSeriesRef[]
   offeringTip: OfferingSourceProgress
   offeringBackfill: OfferingSourceProgress
+  offeringUnattributed: OfferingSourceProgress
   /** Deepest (min) offering frontier — archive progress. */
   offeringBackfillFrontier: string | null
   offeringBackfillFrontierHolders: OfferingFrontierHolder[]
@@ -164,8 +164,9 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringPdfsTranscribedSeries: report.offeringPdfsTranscribedSeries,
     offeringPdfsParseFailedSeries: report.offeringPdfsParseFailedSeries,
     offeringPdfsSkippedSeries: report.offeringPdfsSkippedSeries,
-    offeringTip: report.offeringTip ?? emptyOfferingSourceProgress(),
-    offeringBackfill: report.offeringBackfillProgress ?? emptyOfferingSourceProgress(),
+    offeringTip: report.offeringTip,
+    offeringBackfill: report.offeringBackfill,
+    offeringUnattributed: report.offeringUnattributed,
     offeringBackfillFrontier: report.offeringBackfillFrontier,
     offeringBackfillFrontierHolders: report.offeringBackfillFrontierHolders,
     offeringGateFrontier: report.offeringGateFrontier,

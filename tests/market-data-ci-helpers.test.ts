@@ -141,6 +141,7 @@ describe('formatCiIngestStepSummary', () => {
           }
         ]
       }),
+      offeringUnattributed: emptyOfferingSourceProgress(),
       offeringPdfsDownloaded: 2,
       offeringPdfsPending: 1,
       offeringPdfsParseFailed: 1,
@@ -166,7 +167,48 @@ describe('formatCiIngestStepSummary', () => {
     expect(md).toContain('deepest frontier (backfill progress, min)')
     expect(md).toContain('deepest frontier holders | pmap/P260421/ISSUE')
     expect(md).toContain('shallowest frontier holders | baba/B260706/ISSUE')
-    expect(md).toContain('Totals: pdfs tip=1 bf=0 | queue tip=1 bf=2 | pending tip=0 bf=1')
+    expect(md).toContain('Totals: pdfs tip=1 bf=0 unk=0 | queue tip=1 bf=2 unk=0 | pending tip=0 bf=1 unk=0')
+  })
+
+  it('shows unattributed block for archive-only reparse outcomes', () => {
+    const md = formatCiIngestStepSummary({
+      changed: true,
+      asOf: '2026-11-24',
+      webkincstarHistoricalGateOpen: false,
+      webkincstarHistoricalEnabled: false,
+      webkincstarDatumsFetched: [],
+      webkincstarOverlaySkipped: 0,
+      webkincstarOverlaySkippedSeries: [],
+      webkincstarFetchFailedDays: 0,
+      webkincstarSoftFailed: false,
+      offeringBackfillFrontier: null,
+      offeringBackfillFrontierHolders: [],
+      offeringGateFrontier: null,
+      offeringGateFrontierHolders: [],
+      offeringTip: emptyOfferingSourceProgress(),
+      offeringBackfill: emptyOfferingSourceProgress(),
+      offeringUnattributed: withProgress({
+        pdfQueue: 1,
+        pdfsDownloaded: 1,
+        transcribed: [
+          {
+            family: 'dkj',
+            seriesId: 'D250101',
+            resourceType: 'ISSUE',
+            listingSource: 'unknown'
+          }
+        ]
+      }),
+      offeringPdfsDownloaded: 1,
+      offeringPdfsPending: 0,
+      offeringPdfsParseFailed: 0,
+      offeringPdfsSkippedNoSchedule: 0,
+      offeringsSoftFailed: false,
+      retailInterestSoftFailed: false
+    })
+    expect(md).toContain('#### Offerings — unattributed (archive reparse)')
+    expect(md).toContain('- **dkj:** D250101 (ISSUE)')
+    expect(md).toContain('unk=1')
   })
 
   it('emits quiet-queue lines when tip and backfill queues are empty', () => {
@@ -196,6 +238,7 @@ describe('formatCiIngestStepSummary', () => {
         issueKnownHashed: 30,
         pdfQueue: 0
       }),
+      offeringUnattributed: emptyOfferingSourceProgress(),
       offeringPdfsDownloaded: 0,
       offeringPdfsPending: 0,
       offeringPdfsParseFailed: 0,
@@ -205,7 +248,7 @@ describe('formatCiIngestStepSummary', () => {
     })
     expect(md).toContain('No new tip ISSUE PDFs queued')
     expect(md).toContain('No new backfill ISSUE PDFs queued')
-    expect(md).toContain('Totals: pdfs tip=0 bf=0 | queue tip=0 bf=0 | pending tip=0 bf=0')
+    expect(md).toContain('Totals: pdfs tip=0 bf=0 unk=0 | queue tip=0 bf=0 unk=0 | pending tip=0 bf=0 unk=0')
   })
 
   it('escapes backslashes and pipes in series labels for markdown cells', () => {
@@ -227,6 +270,7 @@ describe('formatCiIngestStepSummary', () => {
       offeringGateFrontierHolders: [],
       offeringTip: emptyOfferingSourceProgress(),
       offeringBackfill: emptyOfferingSourceProgress(),
+      offeringUnattributed: emptyOfferingSourceProgress(),
       offeringPdfsDownloaded: 0,
       offeringPdfsPending: 0,
       offeringPdfsParseFailed: 0,

@@ -260,6 +260,159 @@ export function webkincstarDatumNeedsFetch(
 }
 
 /**
+ * Inclusive YYYY-MM-DD calendar range (UTC noon arithmetic).
+ * @throws when from/to are not ISO dates or from > to
+ */
+export function listIsoDatesInclusive(fromIso: string, toIso: string): string[] {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromIso) || !/^\d{4}-\d{2}-\d{2}$/.test(toIso)) {
+    throw new WebkincstarFetchError(
+      `Backfill range requires YYYY-MM-DD from/to (got ${fromIso} … ${toIso})`
+    )
+  }
+  if (fromIso > toIso) {
+    throw new WebkincstarFetchError(
+      `Backfill from ${fromIso} is after to ${toIso}`
+    )
+  }
+  const out: string[] = []
+  let cursor = fromIso
+  // Guard: ~40 years of daily dates.
+  for (let i = 0; i < 366 * 40; i += 1) {
+    out.push(cursor)
+    if (cursor === toIso) return out
+    cursor = shiftIsoDate(cursor, 1)
+  }
+  throw new WebkincstarFetchError(`Backfill range too large: ${fromIso} … ${toIso}`)
+}
+
+/**
+ * Historical WebKincstár scrape floor (ROADMAP §6m). Refine later once archive
+ * bounds are confirmed; rolling daily history stops at/before this date.
+ */
+export const WEBKINCSTAR_BACKFILL_DEFAULT_FROM = '1990-01-01'
+
+/** Calendar days scraped behind the oldest durable tip datum each scheduled run. */
+export const WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH = 6
+
+export interface WebkincstarBackfillDatumOptions {
+  from: string
+  to: string
+  weekdaysOnly?: boolean
+  /**
+   * When set with previousDays, skip datums that already have durable
+   * priced/no_price rows for every requested report (resume-friendly).
+   */
+  previousDays?: ReadonlyArray<{ datum: string; report: string; status: string }> | null
+  reports?: readonly WebkincstarReportName[]
+  skipDurable?: boolean
+}
+
+export function resolveWebkincstarBackfillDatums(
+  options: WebkincstarBackfillDatumOptions
+): string[] {
+  const reports = options.reports ?? WEBKINCSTAR_REPORTS
+  const all = listIsoDatesInclusive(options.from, options.to)
+  const filtered = options.weekdaysOnly ? all.filter((d) => isIsoWeekday(d)) : all
+  if (!options.skipDurable) return filtered
+  return filtered.filter((datum) =>
+    webkincstarDatumNeedsFetch(datum, options.previousDays, reports)
+  )
+}
+
+/**
+ * True min durable (`priced` | `no_price`) datum across reports. Prefer
+ * {@link contiguousDurableFrontierDatum} for rolling backfill — a global min
+ * can sit behind an island and stall shallower reports.
+ */
+export function oldestDurablePriceCalendarDatum(
+  previousDays: ReadonlyArray<{ datum: string; report: string; status: string }> | null | undefined,
+  reports: readonly WebkincstarReportName[] = WEBKINCSTAR_REPORTS
+): string | null {
+  const reportSet = new Set<string>(reports)
+  let oldest: string | null = null
+  for (const day of previousDays ?? []) {
+    if (!reportSet.has(day.report)) continue
+    if (day.status !== 'priced' && day.status !== 'no_price') continue
+    const datum = String(day.datum || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datum)) continue
+    if (oldest == null || datum < oldest) oldest = datum
+  }
+  return oldest
+}
+
+/**
+ * Oldest date in the contiguous durable run for one report, walking back from
+ * that report's newest durable day. Gaps / `fetch_failed` / islands behind the
+ * tip do not pull the frontier into deep history. Null when the report has no
+ * durable rows yet (tip path seeds the first days).
+ */
+export function contiguousDurableFrontierDatum(
+  previousDays: ReadonlyArray<{ datum: string; report: string; status: string }> | null | undefined,
+  report: WebkincstarReportName
+): string | null {
+  const durable = new Set<string>()
+  for (const day of previousDays ?? []) {
+    if (day.report !== report) continue
+    if (day.status !== 'priced' && day.status !== 'no_price') continue
+    const datum = String(day.datum || '').trim()
+    if (/^\d{4}-\d{2}-\d{2}$/.test(datum)) durable.add(datum)
+  }
+  if (durable.size === 0) return null
+  let frontier = [...durable].sort().at(-1)!
+  for (;;) {
+    const prev = shiftIsoDate(frontier, -1)
+    if (!durable.has(prev)) return frontier
+    frontier = prev
+  }
+}
+
+export interface WebkincstarHistoricalBackfillOptions {
+  previousDays?: ReadonlyArray<{ datum: string; report: string; status: string }> | null
+  reports?: readonly WebkincstarReportName[]
+  /** Inclusive floor; no candidate before this date (default 1990-01-01). */
+  floor?: string
+  /** Calendar days immediately before each report frontier (default 6). */
+  depth?: number
+}
+
+/**
+ * Rolling historical scrape window (ROADMAP §6m): for each configured report,
+ * take the `depth` calendar days immediately before that report's contiguous
+ * durable frontier (from its tip cluster), clamp to `floor`, then union and
+ * drop days already durable for every configured report. Empty when every
+ * report lacks durable rows or is already at/below the floor. Tip primary +
+ * lookback stay separate. Per-report frontiers keep a deep MAK-only backfill
+ * from stalling shallower reports (DKJ / MAPP / …).
+ */
+export function resolveWebkincstarHistoricalBackfillDatums(
+  options: WebkincstarHistoricalBackfillOptions
+): string[] {
+  const floor = String(options.floor || WEBKINCSTAR_BACKFILL_DEFAULT_FROM).trim()
+  const depth = Number(options.depth ?? WEBKINCSTAR_HISTORICAL_BACKFILL_DEPTH)
+  const reports = options.reports ?? WEBKINCSTAR_REPORTS
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(floor)) return []
+  if (!Number.isFinite(depth) || depth <= 0) return []
+
+  const candidates = new Set<string>()
+  for (const report of reports) {
+    const frontier = contiguousDurableFrontierDatum(options.previousDays, report)
+    if (!frontier || frontier <= floor) continue
+    const windowEnd = shiftIsoDate(frontier, -1)
+    if (windowEnd < floor) continue
+    const rawStart = shiftIsoDate(frontier, -depth)
+    const windowStart = rawStart < floor ? floor : rawStart
+    if (windowStart > windowEnd) continue
+    for (const datum of listIsoDatesInclusive(windowStart, windowEnd)) {
+      candidates.add(datum)
+    }
+  }
+
+  return [...candidates]
+    .filter((datum) => webkincstarDatumNeedsFetch(datum, options.previousDays, reports))
+    .sort()
+}
+
+/**
  * Build WebKincstár fetch datums: primary (yesterday) plus up to N prior weekdays
  * that still need a durable calendar row for any configured report.
  * Closes holes when Actions schedule drift skips a Budapest "yesterday".
@@ -281,4 +434,14 @@ export function resolveWebkincstarLookbackDatums(
     cursor = shiftIsoDate(cursor, -1)
   }
   return datums
+}
+
+/**
+ * Union tip lookback with rolling historical backfill; sorted unique ISO dates.
+ */
+export function mergeWebkincstarFetchDatums(
+  tipDatums: readonly string[],
+  historicalDatums: readonly string[]
+): string[] {
+  return [...new Set([...tipDatums, ...historicalDatums].filter(Boolean))].sort()
 }

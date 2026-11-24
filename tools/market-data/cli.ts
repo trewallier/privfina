@@ -19,7 +19,14 @@ import { OFFERING_FAMILIES } from './offering-families.ts'
 import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 import { assertPublishedTree } from './validate.ts'
 import {
+  WEBKINCSTAR_BACKFILL_DEFAULT_FROM,
+  budapestYesterdayIso,
+  resolveWebkincstarBackfillDatums
+} from './fetch-webkincstar.ts'
+import { loadMarketTree } from './io.ts'
+import {
   WEBKINCSTAR_REPORTS,
+  isWebkincstarReportName,
   type WebkincstarReportName
 } from './webkincstar-reports.ts'
 
@@ -41,13 +48,36 @@ function printHelp(): void {
       [--settlement-calendar-dir <dir>] [--skip-settlement-calendar]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
+  market-data backfill-webkincstar --root <repo-or-v2> --from YYYY-MM-DD [--to YYYY-MM-DD]
+      [--reports name,name] [--weekdays-only] [--skip-durable] [--raw-dir <dir>]
+      [--previous-root <path>] [--catalog <json>] [--rates <json>] …
+      (--from required; default --reports = all WEBKINCSTAR_REPORTS; --to = Budapest yesterday)
   market-data validate-tree --root <repo-or-v2>
   market-data resolve-branch --repository <owner/repo> --branch <name>
 
 Git (workflow): bash tools/market-data/scripts/ensure-clone.sh | commit-push.sh
 
-Exit codes: ingest 0/2/1; ci-ingest 0/1 (changed on GITHUB_OUTPUT); other commands 0/1
+Exit codes: ingest/backfill-webkincstar 0/2/1; ci-ingest 0/1 (changed on GITHUB_OUTPUT); other commands 0/1
 `)
+}
+
+function parseWebkincstarReportsFlag(raw: string | undefined): WebkincstarReportName[] {
+  // Default: full daily report set so one-shot CLI cannot deepen MAK alone and
+  // stall shallower reports' rolling frontiers (ROADMAP §6m).
+  if (!raw || !raw.trim()) {
+    return [...WEBKINCSTAR_REPORTS]
+  }
+  const parts = raw.split(/[,\s]+/).map((p) => p.trim()).filter(Boolean)
+  const out: WebkincstarReportName[] = []
+  for (const part of parts) {
+    if (!isWebkincstarReportName(part)) {
+      throw new Error(
+        `Unknown WebKincstár report ${part}; expected one of ${WEBKINCSTAR_REPORTS.join(', ')}`
+      )
+    }
+    out.push(part)
+  }
+  return out
 }
 
 function getFlag(args: string[], name: string): string | undefined {
@@ -322,6 +352,89 @@ async function main(argv: string[]): Promise<number> {
       })}\n`
     )
     return EXIT_UPDATED
+  }
+
+  if (cmd === 'backfill-webkincstar') {
+    // ROADMAP §6m: historical WebKincstár date-loop into an existing market tree tip.
+    // Require explicit --from so a bare invocation cannot request decades of daily PDFs
+    // (scrape floor WEBKINCSTAR_BACKFILL_DEFAULT_FROM is for scheduled rolling history).
+    const root = getFlag(rest, '--root') ?? process.cwd()
+    const previousRoot = getFlag(rest, '--previous-root') ?? root
+    const rawDir = getFlag(rest, '--raw-dir') ?? path.join(process.cwd(), '.tmp-market-data')
+    const from = getFlag(rest, '--from')
+    if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from)) {
+      throw new Error(
+        `backfill-webkincstar requires --from YYYY-MM-DD ` +
+          `(scrape floor ${WEBKINCSTAR_BACKFILL_DEFAULT_FROM}; prefer scheduled rolling history)`
+      )
+    }
+    const to = getFlag(rest, '--to') ?? budapestYesterdayIso()
+    const reports = parseWebkincstarReportsFlag(getFlag(rest, '--reports'))
+    const weekdaysOnly = hasFlag(rest, '--weekdays-only')
+    const skipDurable = hasFlag(rest, '--skip-durable')
+    const previous = await loadMarketTree(previousRoot)
+    const webkincstarDatums = resolveWebkincstarBackfillDatums({
+      from,
+      to,
+      weekdaysOnly,
+      skipDurable,
+      previousDays: previous.priceCalendar?.days,
+      reports
+    })
+    process.stderr.write(
+      `[market-data] §6m WebKincstár backfill ${from}…${to} reports=${reports.join(',')} ` +
+        `datums=${webkincstarDatums.length} weekdaysOnly=${weekdaysOnly} skipDurable=${skipDurable}\n`
+    )
+    if (webkincstarDatums.length === 0) {
+      process.stdout.write(
+        `${JSON.stringify({
+          changed: false,
+          asOf: previous.manifest?.asOf ?? null,
+          webkincstarDatums: 0,
+          webkincstarUpdated: false
+        })}\n`
+      )
+      return EXIT_UNCHANGED
+    }
+    const sources = await loadOptionalSources(rest)
+    const report = await ingestMarketData({
+      root,
+      previousRoot,
+      rawDir,
+      catalog: sources.catalog,
+      networkRates: sources.networkRates,
+      allampapirPrices: sources.allampapirPrices,
+      skipAllampapir: sources.skipAllampapir ?? true,
+      retailInterestEnvelope: sources.retailInterestEnvelope,
+      skipRetailInterest: sources.skipRetailInterest ?? true,
+      inflationCsvPath: sources.inflationCsvPath,
+      skipInflation: sources.skipInflation ?? true,
+      buborXlsPath: sources.buborXlsPath,
+      skipBubor: sources.skipBubor ?? true,
+      settlementCalendarDir: sources.settlementCalendarDir,
+      skipSettlementCalendar: sources.skipSettlementCalendar ?? true,
+      webkincstarTextByReport: sources.webkincstarTextByReport,
+      webkincstarDatums,
+      webkincstarReports: reports,
+      skipWebkincstar: false,
+      offeringEnvelopesByFamily: sources.offeringEnvelopesByFamily,
+      skipOfferings: sources.skipOfferings ?? true,
+      reparseParseFailed: sources.reparseParseFailed
+    })
+    process.stdout.write(
+      `${JSON.stringify({
+        changed: report.changed,
+        asOf: report.asOf,
+        webkincstarDatums: webkincstarDatums.length,
+        webkincstarUpdated: report.webkincstarUpdated,
+        webkincstarSoftFailed: report.webkincstarSoftFailed,
+        webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
+        priceCalendarAppendedDays: report.priceCalendarAppendedDays,
+        appendedRows: report.appendedRows,
+        marketRoot: report.marketRoot
+      })}\n`
+    )
+    return report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
   }
 
   if (cmd === 'validate-tree') {

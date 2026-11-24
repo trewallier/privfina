@@ -19,6 +19,7 @@
     "verify:gh-stack-skill": "bash scripts/verify-gh-stack-skill.sh",
     "market-data:ingest": "tsx tools/market-data/cli.ts ingest",
     "market-data:ci-ingest": "tsx tools/market-data/cli.ts ci-ingest",
+    "market-data:backfill-webkincstar": "tsx tools/market-data/cli.ts backfill-webkincstar",
     "market-data:publish": "tsx tools/market-data/cli.ts ingest",
     "clean": "rm -rf dist dist-web"
   },

@@ -15,6 +15,8 @@ import {
   budapestTodayIso,
   budapestYesterdayIso,
   fetchWebkincstarSnapshots,
+  mergeWebkincstarFetchDatums,
+  resolveWebkincstarHistoricalBackfillDatums,
   resolveWebkincstarLookbackDatums
 } from './fetch-webkincstar.ts'
 import type { PriceCalendarDay } from './normalize-webkincstar.ts'
@@ -142,8 +144,19 @@ export interface IngestOptions {
   skipSettlementCalendar?: boolean
   /**
    * Europe/Budapest YYYY-MM-DD for WebKincstár PDFs. Defaults to yesterday.
+   * Ignored when `webkincstarDatums` is non-empty (ROADMAP §6m historical loop).
    */
   webkincstarDatum?: string
+  /**
+   * Explicit multi-day WebKincstár fetch list (ROADMAP §6m). When set, replaces
+   * the default yesterday + lookback (and single `--datum`) selection.
+   */
+  webkincstarDatums?: string[]
+  /**
+   * Subset of WebKincstár reports to fetch (defaults to full ADR 0039 / 0042 list).
+   * Operator one-shot §6m CLI may pass a subset (e.g. `_20633_arfolyam_mak` only).
+   */
+  webkincstarReports?: readonly WebkincstarReportName[]
   /**
    * Offline pre-extracted `pdftotext -layout` texts keyed by report name (tests).
    * When set with fixture ÁKK, skips live WebKincstár POST.
@@ -434,24 +447,39 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let webkincstarFetchFailedDays = 0
   let mergeSnapshotInput = combined.snapshot
 
+  const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
   const webkincstarPrimaryDatum = options.webkincstarDatum ?? budapestYesterdayIso()
-  // Explicit --datum is a single-day operator backfill; default runs add short lookback.
-  const webkincstarDatums = options.webkincstarDatum
-    ? [options.webkincstarDatum]
-    : resolveWebkincstarLookbackDatums({
-        primaryDatum: webkincstarPrimaryDatum,
-        previousDays: previous.priceCalendar?.days,
-        reports: WEBKINCSTAR_REPORTS
-      })
+  // Explicit multi-day list (§6m CLI) wins; else single --datum; else tip path
+  // (yesterday + ≤3 weekday lookback) ∪ rolling historical window (6 days before
+  // each report's contiguous durable frontier, floor 1990-01-01).
+  const webkincstarDatums =
+    Array.isArray(options.webkincstarDatums) && options.webkincstarDatums.length > 0
+      ? options.webkincstarDatums
+      : options.webkincstarDatum
+        ? [options.webkincstarDatum]
+        : mergeWebkincstarFetchDatums(
+            resolveWebkincstarLookbackDatums({
+              primaryDatum: webkincstarPrimaryDatum,
+              previousDays: previous.priceCalendar?.days,
+              reports: webkincstarReports
+            }),
+            resolveWebkincstarHistoricalBackfillDatums({
+              previousDays: previous.priceCalendar?.days,
+              reports: webkincstarReports
+            })
+          )
   const shouldFetchWebkincstar =
     !options.skipWebkincstar &&
     (Boolean(options.webkincstarTextByReport) || !offlineAkk)
 
   if (shouldFetchWebkincstar) {
     const calendarDaysAccum: PriceCalendarDay[] = []
-    // Offline textByReport fixtures only cover one datum — fetch that primary once.
+    // Offline textByReport fixtures only cover one datum — fetch that primary once
+    // unless an explicit multi-day / --datum list was provided.
     const datumsToFetch =
-      options.webkincstarTextByReport && !options.webkincstarDatum
+      options.webkincstarTextByReport &&
+      !options.webkincstarDatum &&
+      !(Array.isArray(options.webkincstarDatums) && options.webkincstarDatums.length > 0)
         ? [webkincstarPrimaryDatum]
         : webkincstarDatums
 
@@ -461,7 +489,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           datum: webkincstarDatum,
           rawDir: path.join(options.rawDir, 'webkincstar', webkincstarDatum),
           fetchImpl: options.fetchImpl,
-          textByReport: options.webkincstarTextByReport
+          textByReport: options.webkincstarTextByReport,
+          reports: webkincstarReports
         })
 
         if (fetched.failures.length > 0) {
@@ -481,7 +510,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         if (fetched.reports.length === 0) {
           const appendable = fetchFailedCalendarDaysAppendable(
             webkincstarDatum,
-            WEBKINCSTAR_REPORTS,
+            webkincstarReports,
             previous.priceCalendar
           )
           webkincstarFetchFailedDays += appendable.length
@@ -520,7 +549,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         webkincstarSoftFailed = true
         const appendable = fetchFailedCalendarDaysAppendable(
           webkincstarDatum,
-          WEBKINCSTAR_REPORTS,
+          webkincstarReports,
           previous.priceCalendar
         )
         webkincstarFetchFailedDays += appendable.length

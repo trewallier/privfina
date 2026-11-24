@@ -34,10 +34,11 @@ describe('formatCiIngestNoticeLine', () => {
         offeringPdfsDownloaded: 2,
         offeringPdfsPending: 1,
         offeringPdfsParseFailed: 0,
-        offeringBackfillFrontier: '2026-08-01'
+        offeringBackfillFrontier: '2026-08-01',
+        offeringGateFrontier: '2026-10-01'
       })
     ).toBe(
-      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs=2 pending=1 parse_failed=0 frontier=2026-08-01'
+      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs=2 pending=1 parse_failed=0 frontier=2026-08-01 gate_frontier=2026-10-01'
     )
   })
 })
@@ -81,12 +82,15 @@ describe('runCiIngest', () => {
       expect(output1).toContain('webkincstar_historical_gate_open=false')
       expect(output1).toContain('webkincstar_overlay_skipped=0')
       expect(output1).toContain('offering_backfill_frontier=')
+      expect(output1).toContain('offering_gate_frontier=')
       expect(output1).toContain('offering_pdfs_skipped_no_schedule=')
       const summary1 = await readFile(summaryFile, 'utf8')
       expect(summary1).toContain('#### WebKincstár')
       expect(summary1).toContain('#### Offerings')
       expect(summary1).toContain('historical gate (shallowest frontier) | closed')
       expect(summary1).toContain('historical datums included | no')
+      expect(summary1).toContain('deepest frontier (progress, min)')
+      expect(summary1).toContain('shallowest frontier (gate readiness, max)')
       expect(stdoutSpy.mock.calls.some((c) => String(c[0]).startsWith('::notice::'))).toBe(
         true
       )

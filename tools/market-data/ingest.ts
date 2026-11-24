@@ -20,6 +20,7 @@ import {
   resolveWebkincstarLookbackDatums
 } from './fetch-webkincstar.ts'
 import {
+  maxOfferingSuccessFrontierPublished,
   minOfferingSuccessFrontierPublished,
   shouldEnableWebkincstarHistoricalBackfill
 } from './offering-archive-frontier.ts'
@@ -230,9 +231,14 @@ export interface IngestReport extends MergeResult {
   webkincstarOverlaySkipped: number
   /**
    * Oldest (deepest) contiguous offering-archive success frontier across families
-   * (or null). Progress metric — gate readiness uses the shallowest frontier.
+   * (or null). Progress metric — how deep the archive has gotten.
    */
   offeringBackfillFrontier: string | null
+  /**
+   * Newest (shallowest) contiguous offering-archive success frontier across families
+   * (or null). Gate-readiness metric — scheduled WK historical needs this ≤ asOf−90.
+   */
+  offeringGateFrontier: string | null
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -472,6 +478,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
   const webkincstarPrimaryDatum = options.webkincstarDatum ?? budapestYesterdayIso()
   const offeringBackfillFrontier = minOfferingSuccessFrontierPublished(
+    previous.offeringArchive
+  )
+  const offeringGateFrontier = maxOfferingSuccessFrontierPublished(
     previous.offeringArchive
   )
   // Explicit multi-day list (§6m CLI) wins; else single --datum; else tip path
@@ -892,7 +901,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     webkincstarHistoricalGateOpen: offeringGateOpen,
     webkincstarDatumsFetched: shouldFetchWebkincstar ? [...webkincstarDatums] : [],
     webkincstarOverlaySkipped,
-    offeringBackfillFrontier
+    offeringBackfillFrontier,
+    offeringGateFrontier
   }
 }
 

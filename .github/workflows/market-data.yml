@@ -48,6 +48,7 @@ jobs:
       offering_pdfs_parse_failed: ${{ steps.ingest.outputs.offering_pdfs_parse_failed }}
       offering_pdfs_skipped_no_schedule: ${{ steps.ingest.outputs.offering_pdfs_skipped_no_schedule }}
       offering_backfill_frontier: ${{ steps.ingest.outputs.offering_backfill_frontier }}
+      offering_gate_frontier: ${{ steps.ingest.outputs.offering_gate_frontier }}
       offerings_soft_failed: ${{ steps.ingest.outputs.offerings_soft_failed }}
       webkincstar_fetch_failed_days: ${{ steps.ingest.outputs.webkincstar_fetch_failed_days }}
       webkincstar_historical_enabled: ${{ steps.ingest.outputs.webkincstar_historical_enabled }}

@@ -352,6 +352,7 @@ async function main(argv: string[]): Promise<number> {
         offeringPdfsParseFailed: result.offeringPdfsParseFailed,
         offeringPdfsSkippedNoSchedule: result.offeringPdfsSkippedNoSchedule,
         offeringBackfillFrontier: result.offeringBackfillFrontier,
+        offeringGateFrontier: result.offeringGateFrontier,
         offeringsSoftFailed: result.offeringsSoftFailed,
         webkincstarFetchFailedDays: result.webkincstarFetchFailedDays,
         webkincstarHistoricalEnabled: result.webkincstarHistoricalEnabled,

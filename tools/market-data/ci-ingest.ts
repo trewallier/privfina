@@ -44,7 +44,10 @@ export interface CiIngestResult {
   offeringPdfsPending: number
   offeringPdfsParseFailed: number
   offeringPdfsSkippedNoSchedule: number
+  /** Deepest (min) offering frontier — archive progress. */
   offeringBackfillFrontier: string | null
+  /** Shallowest (max) offering frontier — WK historical gate readiness. */
+  offeringGateFrontier: string | null
   offeringsSoftFailed: boolean
   webkincstarFetchFailedDays: number
   /** True when historical WK datums ran (gate open **or** explicit CLI datums). */
@@ -62,6 +65,7 @@ export interface CiIngestResult {
  * Build the quiet Actions `::notice::` one-liner for the overview list.
  * `wk_hist_gate` is gate readiness; not the same as historical datums enabled
  * (operator explicit `webkincstarDatums` can fetch history with the gate closed).
+ * `frontier=` is deepest progress; `gate_frontier=` is shallowest readiness.
  * Exported for unit tests.
  */
 export function formatCiIngestNoticeLine(result: {
@@ -74,6 +78,7 @@ export function formatCiIngestNoticeLine(result: {
   offeringPdfsPending: number
   offeringPdfsParseFailed: number
   offeringBackfillFrontier: string | null
+  offeringGateFrontier: string | null
 }): string {
   return [
     `changed=${result.changed}`,
@@ -84,7 +89,8 @@ export function formatCiIngestNoticeLine(result: {
     `pdfs=${result.offeringPdfsDownloaded}`,
     `pending=${result.offeringPdfsPending}`,
     `parse_failed=${result.offeringPdfsParseFailed}`,
-    `frontier=${result.offeringBackfillFrontier ?? ''}`
+    `frontier=${result.offeringBackfillFrontier ?? ''}`,
+    `gate_frontier=${result.offeringGateFrontier ?? ''}`
   ].join(' ')
 }
 
@@ -131,6 +137,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringPdfsParseFailed: report.offeringPdfsParseFailed,
     offeringPdfsSkippedNoSchedule: report.offeringPdfsSkippedNoSchedule,
     offeringBackfillFrontier: report.offeringBackfillFrontier,
+    offeringGateFrontier: report.offeringGateFrontier,
     offeringsSoftFailed: report.offeringsSoftFailed,
     webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
     webkincstarHistoricalEnabled: report.webkincstarHistoricalEnabled,
@@ -152,6 +159,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     String(result.offeringPdfsSkippedNoSchedule)
   )
   writeGithubOutput('offering_backfill_frontier', result.offeringBackfillFrontier ?? '')
+  writeGithubOutput('offering_gate_frontier', result.offeringGateFrontier ?? '')
   writeGithubOutput('offerings_soft_failed', result.offeringsSoftFailed ? 'true' : 'false')
   writeGithubOutput('webkincstar_fetch_failed_days', String(result.webkincstarFetchFailedDays))
   writeGithubOutput(
@@ -194,7 +202,8 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
       '',
       '| Metric | Value |',
       '| --- | --- |',
-      `| deepest frontier (min published) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
+      `| deepest frontier (progress, min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
+      `| shallowest frontier (gate readiness, max) | ${result.offeringGateFrontier ?? '(none)'} |`,
       `| PDFs downloaded | ${result.offeringPdfsDownloaded} |`,
       `| PDFs pending | ${result.offeringPdfsPending} |`,
       `| PDF parse_failed | ${result.offeringPdfsParseFailed} |`,
@@ -210,9 +219,11 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
 
   writeGithubAnnotation('notice', formatCiIngestNoticeLine(result))
   if (result.webkincstarOverlaySkipped > 0) {
+    const overlayMsg = `WebKincstár overlay soft-skipped ${result.webkincstarOverlaySkipped} unmatched quote(s); calendar seals withheld for those reports`
+    // Expected during offering-archive drain (gate closed); warn only when gate is open.
     writeGithubAnnotation(
-      'warning',
-      `WebKincstár overlay soft-skipped ${result.webkincstarOverlaySkipped} unmatched quote(s); tip calendar not sealed for those datums`
+      result.webkincstarHistoricalGateOpen ? 'warning' : 'notice',
+      overlayMsg
     )
   }
   if (result.webkincstarFetchFailedDays > 0) {

@@ -54,6 +54,19 @@ export type DayCountConvention = 'ACT/360' | 'ACT/365F' | '30E/360'
  */
 export type SeriesStatus = 'active' | 'matured' | 'delisted'
 
+/**
+ * Who seeded the series identity row (ADR 0048) — published source **host**
+ * strings (same as other tip `source.host` fields), not internal tags.
+ * Omit / undefined on legacy tip rows → treat as ÁKK-owned (`www.akk.hu`).
+ * Do not write `null` (validate rejects it).
+ */
+export const SERIES_IDENTITY_SOURCE_AKK = 'www.akk.hu' as const
+export const SERIES_IDENTITY_SOURCE_WEBKINCSTAR =
+  'webkincstar.allamkincstar.gov.hu' as const
+export type SeriesIdentitySource =
+  | typeof SERIES_IDENTITY_SOURCE_AKK
+  | typeof SERIES_IDENTITY_SOURCE_WEBKINCSTAR
+
 export interface SeriesRecord {
   /** Canonical slug: map key, quotes/<id>.json basename, QuotesFile.id. */
   id: string
@@ -82,6 +95,12 @@ export interface SeriesRecord {
    * (e.g. `3M` → 3). Used by FLOAT MÁK resolve (ADR 0047); not a coupon rate.
    */
   periodMonths?: number | null
+  /**
+   * Identity provenance host (ADR 0048).
+   * `webkincstar.allamkincstar.gov.hu` = thin stub from historical WK overlay;
+   * ÁKK catalog upsert promotes to `www.akk.hu`.
+   */
+  identitySource?: SeriesIdentitySource
 }
 
 /** Inclusive retail sale window; `to` null while open. */

@@ -203,6 +203,11 @@ export function validateMarketTree(tree: MarketTreeState): void {
   verifyManifestDigests(tree)
 }
 
+const SERIES_IDENTITY_SOURCES = new Set([
+  'www.akk.hu',
+  'webkincstar.allamkincstar.gov.hu'
+])
+
 function validateSeriesRecord(
   family: FamilyCode,
   s: SeriesRecord,
@@ -211,6 +216,17 @@ function validateSeriesRecord(
 ): void {
   if (Object.prototype.hasOwnProperty.call(s, 'prem')) {
     throw new ValidateError(`series.prem is not allowed in schemaVersion 2 (${family}/${s.id})`)
+  }
+  // Omit / undefined = ÁKK-owned. Explicit null is rejected (not a valid host).
+  if (s.identitySource === null) {
+    throw new ValidateError(
+      `Series ${family}/${s.id} identitySource must be omitted or www.akk.hu|webkincstar.allamkincstar.gov.hu (got null)`
+    )
+  }
+  if (s.identitySource !== undefined && !SERIES_IDENTITY_SOURCES.has(s.identitySource)) {
+    throw new ValidateError(
+      `Series ${family}/${s.id} identitySource must be www.akk.hu|webkincstar.allamkincstar.gov.hu (got ${String(s.identitySource)})`
+    )
   }
   if (
     requiredFamily &&

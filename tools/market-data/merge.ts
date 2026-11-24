@@ -10,7 +10,11 @@ import {
 } from './digests.ts'
 import { mergeBuborFile } from './merge-bubor.ts'
 import { mergeInflationFile } from './merge-inflation.ts'
-import { applySeriesSaleWindows } from './merge-offerings.ts'
+import {
+  applySeriesSaleWindows,
+  applyWkOriginSeriesEnrichment,
+  type SeriesIdentityEnrichment
+} from './merge-offerings.ts'
 import { mergePriceCalendarFile } from './merge-price-calendar.ts'
 import { mergeSettlementCalendarFile } from './merge-settlement-calendar.ts'
 import { joinRetailInterestToCoupons } from './normalize-retail-interest.ts'
@@ -465,6 +469,10 @@ export function mergeSnapshot(
      */
     seriesSaleWindows?: Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
     /**
+     * ISSUE listing/PDF null-fill for WK-origin series only (ADR 0048).
+     */
+    seriesIdentityEnrichments?: SeriesIdentityEnrichment[]
+    /**
      * Upsert per-series coupon files after retailInterest join (ADR 0044 MÁK FIX
      * transcription). Does not clear other ids. When omitted, keep coupons as-is.
      */
@@ -677,6 +685,25 @@ export function mergeSnapshot(
     for (const [family, patches] of byFamily) {
       const fam = tree.families[family]
       const applied = applySeriesSaleWindows(fam.series.series, patches)
+      fam.series = {
+        schemaVersion: SCHEMA_VERSION,
+        family,
+        series: applied.series
+      }
+    }
+  }
+
+  if (options?.seriesIdentityEnrichments && options.seriesIdentityEnrichments.length > 0) {
+    const byFamily = new Map<FamilyCode, SeriesIdentityEnrichment[]>()
+    for (const patch of options.seriesIdentityEnrichments) {
+      const list = byFamily.get(patch.family) ?? []
+      list.push(patch)
+      byFamily.set(patch.family, list)
+    }
+    for (const [family, patches] of byFamily) {
+      const fam = tree.families[family]
+      const applied = applyWkOriginSeriesEnrichment(fam.series.series, patches)
+      if (!applied.changed) continue
       fam.series = {
         schemaVersion: SCHEMA_VERSION,
         family,

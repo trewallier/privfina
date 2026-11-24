@@ -46,7 +46,10 @@ import {
   type OfferingListingSource,
   type NormalizedOfferingListingRow
 } from './normalize-offerings.ts'
-import { mergeOfferingsState } from './merge-offerings.ts'
+import {
+  mergeOfferingsState,
+  type SeriesIdentityEnrichment
+} from './merge-offerings.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
 import { couponsFileFromMakPaymentTable } from './mak-offering-coupons.ts'
 import {
@@ -715,6 +718,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let seriesSaleWindows:
     | Array<{ family: FamilyCode; seriesId: string; saleWindow: SaleWindow }>
     | undefined
+  let seriesIdentityEnrichments: SeriesIdentityEnrichment[] | undefined
   /** MÁK FIX paymentRates → coupons/<id>.json (never FLOAT inventions). */
   let couponUpsertsByFamily: Partial<Record<FamilyCode, Record<string, CouponsFile>>> | undefined
 
@@ -917,9 +921,17 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 continue
               }
               const parsed = parseOfferingPdfText(text)
+              const issueDate =
+                extractIssueDate(text) ||
+                previous.families[dl.row.family]?.series.series.find(
+                  (s) => s.id === dl.row.seriesId
+                )?.issue ||
+                null
               const stub = offeringStubFromListing(dl.row, {
                 paymentDates: parsed.paymentDates,
-                dayCount: parsed.dayCount
+                dayCount: parsed.dayCount,
+                maturity: parsed.maturity,
+                issue: issueDate
               })
               offeringUpdates.push(stub)
               // ADR 0044: FIX paymentRates → coupons/<id>.json; FLOAT all-null → skip.
@@ -928,11 +940,6 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 Array.isArray(parsed.paymentRates) &&
                 parsed.paymentDates.length > 0
               ) {
-                const issueDate =
-                  extractIssueDate(text) ||
-                  previous.families.ktv?.series.series.find((s) => s.id === dl.row.seriesId)
-                    ?.issue ||
-                  null
                 const coupons = couponsFileFromMakPaymentTable({
                   family: 'ktv',
                   seriesId: dl.row.seriesId,
@@ -1018,6 +1025,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         offeringsByFamily = mergedOfferings.offeringsByFamily
         offeringArchiveUpdate = mergedOfferings.offeringArchive
         seriesSaleWindows = mergedOfferings.seriesSaleWindows
+        seriesIdentityEnrichments = mergedOfferings.seriesIdentityEnrichments
         offeringListingDiscovery =
           mergedOfferings.offeringArchive.listingDiscovery ??
           (Object.keys(listingDiscoveryUpdates).length > 0 ? listingDiscoveryUpdates : null)
@@ -1028,6 +1036,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           mergedOfferings.offeringsChanged ||
           mergedOfferings.archiveChanged ||
           mergedOfferings.saleWindowsChanged ||
+          (seriesIdentityEnrichments?.length ?? 0) > 0 ||
           Boolean(couponUpsertsByFamily)
       }
     } catch (err) {
@@ -1064,6 +1073,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   }
   if (seriesSaleWindows !== undefined) {
     mergeOptions.seriesSaleWindows = seriesSaleWindows
+  }
+  if (seriesIdentityEnrichments !== undefined && seriesIdentityEnrichments.length > 0) {
+    mergeOptions.seriesIdentityEnrichments = seriesIdentityEnrichments
   }
   if (couponUpsertsByFamily !== undefined) {
     mergeOptions.couponUpsertsByFamily = couponUpsertsByFamily

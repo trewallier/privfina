@@ -432,6 +432,7 @@ export interface OfferingSourceMeta {
 /**
  * Per-series public-offering transcription (ADR 0041 → ROADMAP §6l SPA).
  * `paymentDates` / `dayCount` optional until PDF parse succeeds.
+ * `maturity` / `issue` optional (ADR 0048 null-fill for WK-origin series).
  */
 export interface OfferingFile {
   schemaVersion: typeof SCHEMA_VERSION
@@ -439,6 +440,10 @@ export interface OfferingFile {
   saleWindow?: SaleWindow | null
   paymentDates?: string[]
   dayCount?: OfferingDayCount | string | null
+  /** Maturity date from ISSUE PDF when parsed (YYYY-MM-DD). */
+  maturity?: string | null
+  /** Issue / first-settlement date from ISSUE PDF when parsed (YYYY-MM-DD). */
+  issue?: string | null
   source: OfferingSourceMeta
 }
 

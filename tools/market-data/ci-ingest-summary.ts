@@ -89,6 +89,8 @@ export interface CiIngestSummaryInput {
   webkincstarDatumsFetched: string[]
   webkincstarOverlaySkipped: number
   webkincstarOverlaySkippedSeries: WebkincstarSkippedSeriesRef[]
+  webkincstarSeriesInvented: number
+  webkincstarSeriesInventedSeries: WebkincstarSkippedSeriesRef[]
   webkincstarFetchFailedDays: number
   webkincstarSoftFailed: boolean
   offeringBackfillFrontier: string | null
@@ -269,10 +271,17 @@ export function formatCiIngestStepSummary(result: CiIngestSummaryInput): string 
     `| historical datums included | ${result.webkincstarHistoricalEnabled ? 'yes' : 'no'} |`,
     `| datums fetched | ${result.webkincstarDatumsFetched.join(', ') || '(none)'} |`,
     `| overlay skipped | ${result.webkincstarOverlaySkipped} |`,
+    `| series invented (WK-backfill) | ${result.webkincstarSeriesInvented} |`,
     `| fetch_failed days | ${result.webkincstarFetchFailedDays} |`,
     `| soft-failed | ${result.webkincstarSoftFailed} |`,
     ''
   ]
+
+  if (result.webkincstarSeriesInvented > 0) {
+    lines.push('Invented WK-origin series (by family):', '')
+    lines.push(...formatWkSkippedByFamily(result.webkincstarSeriesInventedSeries))
+    lines.push('')
+  }
 
   if (result.webkincstarOverlaySkipped > 0) {
     lines.push('Overlay soft-skipped series (by family):', '')

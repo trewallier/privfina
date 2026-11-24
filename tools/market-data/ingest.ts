@@ -249,6 +249,10 @@ export interface IngestReport extends MergeResult {
   webkincstarOverlaySkipped: number
   /** Unique soft-skipped WK series (family/id) across fetched datums. */
   webkincstarOverlaySkippedSeries: WebkincstarSkippedSeriesRef[]
+  /** Unique WK-origin series stubs invented this run (ADR 0048 historical invent). */
+  webkincstarSeriesInvented: number
+  /** Unique invented WK series (family/id) across fetched datums. */
+  webkincstarSeriesInventedSeries: WebkincstarSkippedSeriesRef[]
   /**
    * Oldest (deepest) contiguous tip-success frontier across families (or null).
    * Archive-depth metric for tip transcription progress — not listing discovery.
@@ -517,6 +521,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let webkincstarFetchFailedDays = 0
   let webkincstarOverlaySkipped = 0
   const webkincstarOverlaySkippedSeriesByKey = new Map<string, WebkincstarSkippedSeriesRef>()
+  const webkincstarSeriesInventedByKey = new Map<string, WebkincstarSkippedSeriesRef>()
   let mergeSnapshotInput = combined.snapshot
 
   const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
@@ -617,8 +622,22 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
               )
             }
             const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalizedOne.snapshot, {
-              extraSeries: previousSeriesForJoin(previous)
+              extraSeries: previousSeriesForJoin(previous),
+              inventUnmatched: webkincstarHistoricalEnabled
             })
+            if (overlay.inventedSeries.length > 0) {
+              for (const series of overlay.inventedSeries) {
+                const key = `${series.family}\0${series.id}`
+                if (!webkincstarSeriesInventedByKey.has(key)) {
+                  webkincstarSeriesInventedByKey.set(key, series)
+                }
+              }
+              console.error(
+                `[market-data] WebKincstár invented ${overlay.inventedSeries.length} series stub(s) (ADR 0048; ${fetchedReport.reportName}): ${overlay.inventedSeries
+                  .map((s) => `${s.family}/${s.id}`)
+                  .join('; ')}`
+              )
+            }
             if (overlay.skippedUnmatched > 0) {
               webkincstarOverlaySkipped += overlay.skippedUnmatched
               for (const series of overlay.skippedUnmatchedSeries) {
@@ -1078,6 +1097,10 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     webkincstarDatumsFetched: shouldFetchWebkincstar ? [...webkincstarDatums] : [],
     webkincstarOverlaySkipped,
     webkincstarOverlaySkippedSeries: [...webkincstarOverlaySkippedSeriesByKey.values()].sort(
+      (a, b) => a.family.localeCompare(b.family) || a.id.localeCompare(b.id)
+    ),
+    webkincstarSeriesInvented: webkincstarSeriesInventedByKey.size,
+    webkincstarSeriesInventedSeries: [...webkincstarSeriesInventedByKey.values()].sort(
       (a, b) => a.family.localeCompare(b.family) || a.id.localeCompare(b.id)
     ),
     offeringBackfillFrontier,

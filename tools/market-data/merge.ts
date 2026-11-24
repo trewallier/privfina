@@ -169,6 +169,63 @@ function resolveStatus(
   return 'delisted'
 }
 
+function effectiveIdentitySource(
+  s: SeriesRecord
+): 'akk-catalog' | 'webkincstar-backfill' {
+  return s.identitySource ?? 'akk-catalog'
+}
+
+/**
+ * Identity-aware series upsert (ADR 0048):
+ * - ÁKK (omit / akk-catalog) never downgrades to webkincstar-backfill.
+ * - ÁKK over WK-origin promotes to akk-catalog; ÁKK non-null fields win,
+ *   WK non-null fills only where ÁKK left null/undefined.
+ */
+function mergeSeriesIdentity(prev: SeriesRecord, incoming: SeriesRecord): SeriesRecord {
+  const prevSrc = effectiveIdentitySource(prev)
+  const inSrc = effectiveIdentitySource(incoming)
+  if (prevSrc === 'akk-catalog' && inSrc === 'webkincstar-backfill') {
+    return {
+      ...prev,
+      identitySource: prev.identitySource ?? 'akk-catalog'
+    }
+  }
+  if (prevSrc === 'webkincstar-backfill' && inSrc === 'akk-catalog') {
+    const merged: SeriesRecord = {
+      ...prev,
+      ...incoming,
+      identitySource: 'akk-catalog'
+    }
+    const keys = [
+      'isin',
+      'name',
+      'issue',
+      'mat',
+      'ccy',
+      'face',
+      'iType',
+      'dayCount',
+      'offered',
+      'saleWindow',
+      'ref',
+      'periodMonths'
+    ] as const
+    for (const key of keys) {
+      const incomingVal = incoming[key]
+      const prevVal = prev[key]
+      if (
+        (incomingVal === null || incomingVal === undefined) &&
+        prevVal !== null &&
+        prevVal !== undefined
+      ) {
+        ;(merged as Record<string, unknown>)[key] = prevVal
+      }
+    }
+    return merged
+  }
+  return { ...prev, ...incoming }
+}
+
 /**
  * Accumulate series: keep every known id (esp. those with quote history), upsert fields,
  * set status from maturity vs asOf, else whether the id has a live (asOf) quote.
@@ -188,7 +245,7 @@ export function accumulateSeries(
   for (const s of incoming) {
     assertSeriesId(s.id)
     const prev = byId.get(s.id)
-    byId.set(s.id, prev ? { ...prev, ...s } : { ...s })
+    byId.set(s.id, prev ? mergeSeriesIdentity(prev, s) : { ...s })
   }
   for (const id of quoteIdsWithHistory) {
     if (!byId.has(id)) {

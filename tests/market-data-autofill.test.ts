@@ -13,11 +13,14 @@ import {
   deriveTermMonths,
   formatOfferingAttributionDisclaimer,
   formatPurchaseOutsideSaleWindowHint,
+  formatQuoteForPurchaseHint,
+  formatQuoteHistoryRangeHint,
   formatSeriesAvailabilityLabel,
   formatSeriesOptionLabel,
   formatSeriesMaturityStatusHint,
   isDateInSaleWindow,
   isSeriesAvailableOn,
+  preferredPurchaseDateForSeries,
   parseSeriesNameYear,
   pickCouponRatePct,
   pickFirstOfferingPaymentDate,
@@ -113,8 +116,62 @@ describe('market-data-autofill', () => {
     ).toBe('2027/I (available)')
     expect(
       formatPurchaseOutsideSaleWindowHint('2026-11-01', window)
-    ).toMatch(/outside the published sale window/)
+    ).toMatch(/outside the published primary sale window/)
+    expect(formatPurchaseOutsideSaleWindowHint('2026-11-01', window)).toMatch(
+      /secondary-market bid/
+    )
     expect(formatPurchaseOutsideSaleWindowHint('2022-06-01', window)).toBe('')
+    expect(formatQuoteForPurchaseHint('2026-11-02')).toBe('Quote for purchase 2026-11-02')
+    expect(formatQuoteHistoryRangeHint({ from: '2026-11-02', to: '2026-11-24', count: 17 })).toBe(
+      'Quotes 2026-11-02–2026-11-24 (17 days)'
+    )
+    expect(formatQuoteHistoryRangeHint({ from: '2026-11-02', to: '2026-11-02', count: 1 })).toBe(
+      'Quotes published 2026-11-02 (1 day)'
+    )
+    expect(
+      preferredPurchaseDateForSeries({
+        series: { offered: false, saleWindow: window },
+        todayIso: '2026-11-23',
+        latestQuoteDate: '2026-11-02',
+        currentPurchaseDate: '2026-11-23'
+      })
+    ).toBe('2026-11-02')
+    // Empty purchase on a past series → latest quote day.
+    expect(
+      preferredPurchaseDateForSeries({
+        series: { offered: false, saleWindow: window },
+        todayIso: '2026-11-23',
+        latestQuoteDate: '2026-11-02',
+        currentPurchaseDate: ''
+      })
+    ).toBe('2026-11-02')
+    // Intentional non-today purchase on a past series is preserved.
+    expect(
+      preferredPurchaseDateForSeries({
+        series: { offered: false, saleWindow: window },
+        todayIso: '2026-11-23',
+        latestQuoteDate: '2026-11-02',
+        currentPurchaseDate: '2026-10-15'
+      })
+    ).toBe('2026-10-15')
+    // Offering saleWindow closes the series when series-adjacent window is absent.
+    expect(
+      preferredPurchaseDateForSeries({
+        series: { offered: true },
+        offering: { saleWindow: window },
+        todayIso: '2026-11-23',
+        latestQuoteDate: '2026-11-02',
+        currentPurchaseDate: '2026-11-23'
+      })
+    ).toBe('2026-11-02')
+    expect(
+      preferredPurchaseDateForSeries({
+        series: { offered: true, saleWindow: { from: '2026-01-01', to: null } },
+        todayIso: '2026-11-23',
+        latestQuoteDate: '2026-11-22',
+        currentPurchaseDate: '2026-11-23'
+      })
+    ).toBe('2026-11-23')
     expect(pickFirstOfferingPaymentDate({ paymentDates: ['2023-03-24', '2022-03-24'] })).toBe(
       '2022-03-24'
     )

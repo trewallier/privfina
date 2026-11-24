@@ -26,16 +26,20 @@ import {
 import {
   createMarketDataLoader,
   latestQuoteForId,
-  resolveQuoteForPurchaseDate
+  resolveQuoteForPurchaseDate,
+  summarizeQuoteHistory
 } from './market-data-loader.js'
 import {
   budapestTodayIso,
   buildMarketAutofillPatch,
   formatOfferingAttributionDisclaimer,
   formatPurchaseOutsideSaleWindowHint,
+  formatQuoteForPurchaseHint,
+  formatQuoteHistoryRangeHint,
   formatSeriesMaturityStatusHint,
   formatSeriesOptionLabel,
   marketableFieldsMissingFromPatch,
+  preferredPurchaseDateForSeries,
   resolveSaleWindow
 } from './market-data-autofill.js'
 import {
@@ -138,20 +142,26 @@ function createCommercialInvestmentComposerHost({
     series = null,
     quote = null,
     clampDate = null,
-    clampReason = null
+    clampReason = null,
+    quoteHistory = null
   } = {}) {
     const parts = []
     if (series) {
       parts.push(formatSeriesMaturityStatusHint(series))
     }
-    const lastPriceDay = quote?.d || null
-    if (lastPriceDay) {
-      parts.push(`Last market price ${lastPriceDay}`)
+    const quoteDay = quote?.d || null
+    const quoteHint = formatQuoteForPurchaseHint(quoteDay)
+    if (quoteHint) {
+      parts.push(quoteHint)
+    }
+    const historyHint = formatQuoteHistoryRangeHint(quoteHistory)
+    if (historyHint) {
+      parts.push(historyHint)
     }
     const updated = formatCommercialMarketUpdatedHint(commercialMarketFamilyState.generatedAt)
     if (updated) {
       parts.push(updated)
-    } else if (commercialMarketFamilyState.asOf && !lastPriceDay) {
+    } else if (commercialMarketFamilyState.asOf && !quoteDay) {
       parts.push(`Market data as of ${commercialMarketFamilyState.asOf}`)
     }
     if (clampDate) {
@@ -622,17 +632,18 @@ function createCommercialInvestmentComposerHost({
   async function resolveCommercialMarketQuoteLookup(seriesId, requestedDate) {
     const family = commercialMarketFamilyState.family
     if (!family || !seriesId) {
-      return null
+      return { lookup: null, quotesFile: null, latest: null }
     }
 
     const latest = latestQuoteForId(commercialMarketFamilyState.latest?.quotes, seriesId)
     const quotesFile = await marketDataLoader.loadQuotes(family, seriesId)
-    return resolveQuoteForPurchaseDate({
+    const lookup = resolveQuoteForPurchaseDate({
       requestedDate,
       latestQuote: latest,
       quotesFile,
       priceCalendar: commercialMarketFamilyState.priceCalendar
     })
+    return { lookup, quotesFile, latest }
   }
 
   async function applyCommercialMarketSelection() {
@@ -663,7 +674,44 @@ function createCommercialInvestmentComposerHost({
       commercialMarketFamilyState.series.find((entry) => entry.id === seriesId) || null
     const dateInput = commercialPurchaseOrSettlementInput(family)
     const requestedDate = String(dateInput?.value || '').trim()
-    const lookup = await resolveCommercialMarketQuoteLookup(seriesId, requestedDate)
+    const latestPreview = latestQuoteForId(
+      commercialMarketFamilyState.latest?.quotes,
+      seriesId
+    )
+    // Load offering before purchase-date preference so saleWindow comes from the
+    // offering when series-adjacent window is missing (ROADMAP §6l).
+    const offeringsById = commercialMarketFamilyState.offeringsById || {}
+    let offering
+    if (Object.prototype.hasOwnProperty.call(offeringsById, seriesId)) {
+      offering = offeringsById[seriesId]
+    } else {
+      offering = await marketDataLoader.loadOffering(family, seriesId)
+      if (token !== commercialMarketApplyToken) {
+        return
+      }
+      if (commercialInvestmentSeriesInput?.value !== seriesId) {
+        return
+      }
+      commercialMarketFamilyState.offeringsById = {
+        ...offeringsById,
+        [seriesId]: offering
+      }
+    }
+    const todayIso = budapestTodayIso() || browserTodayIso()
+    const preferredDate = preferredPurchaseDateForSeries({
+      series,
+      offering,
+      todayIso,
+      latestQuoteDate: latestPreview?.d || null,
+      currentPurchaseDate: requestedDate
+    })
+    if (dateInput && preferredDate && preferredDate !== requestedDate) {
+      dateInput.value = preferredDate
+    }
+    const { lookup, quotesFile, latest } = await resolveCommercialMarketQuoteLookup(
+      seriesId,
+      preferredDate || requestedDate
+    )
     if (token !== commercialMarketApplyToken) {
       return
     }
@@ -690,6 +738,7 @@ function createCommercialInvestmentComposerHost({
     if (dateInput && lookup.clamped && lookup.date && dateInput.value !== lookup.date) {
       dateInput.value = lookup.date
     }
+    const quoteHistory = summarizeQuoteHistory(quotesFile, latest || lookup.quote)
 
     const current = readCommercialMarketCurrentFields(family)
     if (familyEntry?.composerProfile === 'discount' && dateInput) {
@@ -709,22 +758,6 @@ function createCommercialInvestmentComposerHost({
           ...(commercialMarketFamilyState.couponsById || {}),
           [seriesId]: coupons
         }
-      }
-    }
-
-    const offeringsById = commercialMarketFamilyState.offeringsById || {}
-    let offering
-    if (Object.prototype.hasOwnProperty.call(offeringsById, seriesId)) {
-      offering = offeringsById[seriesId]
-    } else {
-      offering = await marketDataLoader.loadOffering(family, seriesId)
-      if (token !== commercialMarketApplyToken) {
-        return
-      }
-      // Memoize hits and misses (null) so missing offerings do not re-fetch on every apply.
-      commercialMarketFamilyState.offeringsById = {
-        ...offeringsById,
-        [seriesId]: offering
       }
     }
 
@@ -764,7 +797,8 @@ function createCommercialInvestmentComposerHost({
       series,
       quote: lookup.quote,
       clampDate: lookup.clamped && lookup.date ? lookup.date : null,
-      clampReason: lookup.clamped ? lookup.clampReason || null : null
+      clampReason: lookup.clamped ? lookup.clampReason || null : null,
+      quoteHistory
     })
     const hint = [baseHint, rateHint, softHint, windowHint].filter(Boolean).join(' · ')
     setCommercialMarketHint(hint, Boolean(hint))

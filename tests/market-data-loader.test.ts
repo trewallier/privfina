@@ -9,7 +9,8 @@ import {
   findQuoteRowBySettleDate,
   latestQuoteForId,
   lookupPriceCalendarStatus,
-  resolveQuoteForPurchaseDate
+  resolveQuoteForPurchaseDate,
+  summarizeQuoteHistory
 } from '../public/controller/market-data-loader.js'
 
 const FIXTURE_ROOT = resolve(process.cwd(), 'tests/fixtures/market-data/published')
@@ -90,6 +91,10 @@ describe('market-data-loader', () => {
       fetchImpl: createFixtureFetch()
     })
     const quotes = await loader.loadQuotes('dkj', 'D261223')
+    const history = summarizeQuoteHistory(quotes, { d: '2026-11-02' })
+    expect(history?.from).toBeTruthy()
+    expect(history?.to).toBeTruthy()
+    expect(history?.count).toBeGreaterThanOrEqual(1)
     // 2026-11-01 is equidistant from 10-31 and 11-02; tie-break prefers the later date.
     const nearest = findNearestQuoteRow(quotes, '2026-11-01')
     expect(nearest?.date).toBe('2026-11-02')

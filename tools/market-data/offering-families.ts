@@ -68,13 +68,16 @@ export function offeringFamilyFromLabel(label: unknown): OfferingFamilyCode | nu
   return LABEL_TO_FAMILY[key] ?? LABEL_TO_FAMILY[key.toUpperCase()] ?? null
 }
 
-/** Max PDF downloads per security family in a single ingest run (ADR 0041). */
-export const MAX_OFFERING_PDF_DOWNLOADS_PER_FAMILY = 10 as const
+/**
+ * Max PDF downloads per security family in a single ingest run
+ * (ADR 0041 as amended for §6m historical listing backfill: 10 → 20).
+ */
+export const MAX_OFFERING_PDF_DOWNLOADS_PER_FAMILY = 20 as const
 
 /**
  * Hard cap on a single offering PDF body (8 MiB).
  * Rejects oversized Content-Length before buffering and streams with a running total
- * so a busy day (≤70 PDF GETs across seven in-scope families) cannot balloon runner
- * memory (ADR 0041 as amended by ADR 0044).
+ * so a busy day (≤140 PDF GETs across seven in-scope families) cannot balloon runner
+ * memory (ADR 0041 / 0044 as amended for §6m).
  */
 export const MAX_OFFERING_PDF_BYTES = 8 * 1024 * 1024

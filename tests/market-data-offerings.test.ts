@@ -665,6 +665,140 @@ describe('fetchAkkOfferingListings soft-fail isolation', () => {
   })
 })
 
+describe('offering listing historical backfill (ADR 0041 §6m)', () => {
+  it('builds tip URLs without end bound and backfill URLs with ptsEnd/auctionEnd', async () => {
+    const {
+      buildPublicOfferingsUrl,
+      offeringListingEndBoundBeforeFrontier
+    } = await import('../tools/market-data/fetch-akk-offerings.ts')
+    expect(offeringListingEndBoundBeforeFrontier('2026-08-01')).toBe('2026-07-31')
+    const tipTap = buildPublicOfferingsUrl('pmap')
+    expect(tipTap).toContain('ptsStart=1900-01-01')
+    expect(tipTap).not.toContain('ptsEnd=')
+    const backfillTap = buildPublicOfferingsUrl('pmap', undefined, {
+      endBoundIso: '2026-07-31'
+    })
+    expect(backfillTap).toContain('ptsEnd=2026-07-31')
+    const tipAuction = buildPublicOfferingsUrl('dkj')
+    expect(tipAuction).not.toContain('auctionEnd=')
+    const backfillAuction = buildPublicOfferingsUrl('dkj', undefined, {
+      endBoundIso: '2026-07-31'
+    })
+    expect(backfillAuction).toContain('auctionEnd=2026-07-31')
+  })
+
+  it('unions tip + backfill envelopes by path UUID (tip wins)', async () => {
+    const { unionOfferingEnvelopeData } = await import(
+      '../tools/market-data/fetch-akk-offerings.ts'
+    )
+    const tip = {
+      meta: { status: 'OK' },
+      data: [
+        {
+          name: 'TIP',
+          path: 'public_offerings/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf',
+          pathId: 'tip-id'
+        },
+        {
+          name: 'SHARED-TIP',
+          path: 'public_offerings/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.pdf',
+          pathId: 'shared'
+        }
+      ]
+    }
+    const backfill = {
+      meta: { status: 'OK' },
+      data: [
+        {
+          name: 'SHARED-OLD',
+          path: 'public_offerings/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.pdf',
+          pathId: 'shared'
+        },
+        {
+          name: 'OLD',
+          path: 'public_offerings/cccccccc-cccc-4ccc-8ccc-cccccccccccc.pdf',
+          pathId: 'old-id'
+        }
+      ]
+    }
+    const merged = unionOfferingEnvelopeData(tip, backfill)
+    expect(merged.data).toHaveLength(3)
+    expect((merged.data as Array<{ name: string }>).map((r) => r.name)).toEqual([
+      'TIP',
+      'SHARED-TIP',
+      'OLD'
+    ])
+  })
+
+  it('merges backfill fixture unknowns without dropping tip unknowns', async () => {
+    const { fetchAkkOfferingListings } = await import(
+      '../tools/market-data/fetch-akk-offerings.ts'
+    )
+    const { SCHEMA_VERSION } = await import('../tools/market-data/types.ts')
+    const tip = await loadJson('offerings/getPublicOfferings_pmap.json')
+    const tipRows = normalizeOfferingEnvelope(tip, 'pmap')
+    const tipUuid = tipRows[0]?.pathUuid
+    expect(tipUuid).toBeTruthy()
+    const backfillUuid = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
+    const backfill = {
+      meta: { status: 'OK' },
+      data: [
+        {
+          ...((tip.data as unknown[])[0] as Record<string, unknown>),
+          name: '2030/I-BACKFILL',
+          path: `public_offerings/${backfillUuid}.pdf`,
+          pathId: backfillUuid,
+          published: '2024-01-15 12:00:00',
+          resourceType: 'ISSUE'
+        }
+      ]
+    }
+    const archive = {
+      schemaVersion: SCHEMA_VERSION,
+      generatedAt: '2026-11-24T00:00:00.000Z',
+      source: {
+        id: 'akk-public-offerings' as const,
+        host: 'www.akk.hu' as const,
+        disclaimer: 'test'
+      },
+      documents: [
+        {
+          pathId: null,
+          pathUuid: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+          family: 'pmap' as const,
+          seriesId: 'S-FRONTIER',
+          isin: null,
+          published: '2026-08-01',
+          modifiedOn: null,
+          resourceType: 'ISSUE',
+          sha256: 'abc',
+          bytes: 1,
+          status: 'transcribed' as const,
+          sourceHost: 'documents.akk.hu' as const
+        }
+      ]
+    }
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'offerings-backfill-'))
+    const result = await fetchAkkOfferingListings({
+      rawDir: tmp,
+      families: ['pmap'],
+      envelopesByFamily: { pmap: tip },
+      backfillEnvelopesByFamily: { pmap: backfill },
+      offeringArchive: archive
+    })
+    expect(result.byFamily).toHaveLength(1)
+    expect(result.byFamily[0]?.backfillMerged).toBe(true)
+    expect(result.byFamily[0]?.frontierPublished).toBe('2026-08-01')
+    const mergedRows = normalizeOfferingEnvelope(result.byFamily[0]!.envelope, 'pmap')
+    const uuids = new Set(mergedRows.map((r) => r.pathUuid))
+    expect(uuids.has(tipUuid!)).toBe(true)
+    expect(uuids.has(backfillUuid)).toBe(true)
+    const diff = diffOfferingsAgainstArchive(mergedRows, archive.documents)
+    expect(diff.unknownDocuments.some((r) => r.pathUuid === tipUuid)).toBe(true)
+    expect(diff.unknownDocuments.some((r) => r.pathUuid === backfillUuid)).toBe(true)
+  })
+})
+
 describe('ktv / MÁK offering family registration (ADR 0044)', () => {
   it('maps ÁKK label KTV (and MAK gloss) to family ktv with auction URL', async () => {
     const {
@@ -927,11 +1061,15 @@ describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
     expect(fetches).toBe(0)
   })
 
-  it('downloads at most 10 unknowns per family and leaves the rest pending', async () => {
+  it('downloads at most 20 unknowns per family (default cap) and leaves the rest pending', async () => {
     const { fetchOfferingPdfsForListings } = await import(
       '../tools/market-data/fetch-offering-pdf.ts'
     )
-    const rows = Array.from({ length: 11 }, (_, i) => ({
+    const { MAX_OFFERING_PDF_DOWNLOADS_PER_FAMILY } = await import(
+      '../tools/market-data/offering-families.ts'
+    )
+    expect(MAX_OFFERING_PDF_DOWNLOADS_PER_FAMILY).toBe(20)
+    const rows = Array.from({ length: 21 }, (_, i) => ({
       family: 'pmap' as const,
       seriesId: `S${i}`,
       name: `S${i}`,
@@ -950,7 +1088,6 @@ describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
     const tmp = await mkdtemp(path.join(os.tmpdir(), 'offerings-pdf-cap-'))
     const result = await fetchOfferingPdfsForListings(rows, new Map(), {
       rawDir: tmp,
-      maxPerFamily: 10,
       retries: 1,
       backoffMs: 1,
       fetchImpl: async () => {
@@ -958,9 +1095,9 @@ describe('fetchOfferingPdfsForListings (dedupe + max 10)', () => {
         return pdfResponse()
       }
     })
-    expect(result.downloadedCount).toBe(10)
+    expect(result.downloadedCount).toBe(20)
     expect(result.pendingCount).toBe(1)
-    expect(fetches).toBe(10)
+    expect(fetches).toBe(20)
     expect(result.archiveUpserts.filter((d) => d.status === 'pending_download')).toHaveLength(1)
   })
 

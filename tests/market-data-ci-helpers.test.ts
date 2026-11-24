@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 import {
   formatCiIngestNoticeLine,
+  formatCiIngestStepSummary,
   runCiIngest
 } from '../tools/market-data/ci-ingest.ts'
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
@@ -40,6 +41,69 @@ describe('formatCiIngestNoticeLine', () => {
     ).toBe(
       'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs=2 pending=1 parse_failed=0 frontier=2026-08-01 gate_frontier=2026-10-01'
     )
+  })
+})
+
+describe('formatCiIngestStepSummary', () => {
+  it('lists PDF series by family, frontier holders, and WK skips by family', () => {
+    const md = formatCiIngestStepSummary({
+      changed: true,
+      asOf: '2026-11-24',
+      webkincstarHistoricalGateOpen: true,
+      webkincstarHistoricalEnabled: true,
+      webkincstarDatumsFetched: ['2026-11-23'],
+      webkincstarOverlaySkipped: 3,
+      webkincstarOverlaySkippedSeries: [
+        { family: 'dkj', id: 'D261028', name: 'D261028' },
+        { family: 'ktv', id: '2026_H', name: '2026/H' },
+        { family: 'mapp', id: 'N2026_41', name: 'N2026/41' }
+      ],
+      webkincstarFetchFailedDays: 0,
+      webkincstarSoftFailed: false,
+      offeringBackfillFrontier: '2022-04-21',
+      offeringBackfillFrontierHolders: [
+        {
+          family: 'pmap',
+          seriesId: 'P260421',
+          resourceType: 'ISSUE',
+          published: '2022-04-21',
+          status: 'transcribed'
+        }
+      ],
+      offeringGateFrontier: '2026-07-06',
+      offeringGateFrontierHolders: [
+        {
+          family: 'baba',
+          seriesId: 'B260706',
+          resourceType: 'ISSUE',
+          published: '2026-07-06',
+          status: 'transcribed'
+        }
+      ],
+      offeringPdfsDownloaded: 2,
+      offeringPdfsPending: 1,
+      offeringPdfsParseFailed: 1,
+      offeringPdfsSkippedNoSchedule: 1,
+      offeringPdfsTranscribedSeries: [{ family: 'dkj', seriesId: 'D261125' }],
+      offeringPdfsParseFailedSeries: [{ family: 'ktv', seriesId: '2026_A' }],
+      offeringPdfsSkippedSeries: [
+        { family: 'mapp', seriesId: 'N2026_01', resourceType: 'TAP_ISSUE' }
+      ],
+      offeringsSoftFailed: false,
+      retailInterestSoftFailed: false
+    })
+    expect(md).toContain('Overlay soft-skipped series (by family):')
+    expect(md).toContain('- **dkj:** D261028')
+    expect(md).toContain('- **ktv:** 2026_H (2026/H)')
+    expect(md).toContain('- **mapp:** N2026_41 (N2026/41)')
+    expect(md).toContain('deepest frontier holders | pmap/P260421/ISSUE')
+    expect(md).toContain('shallowest frontier holders | baba/B260706/ISSUE')
+    expect(md).toContain('PDF transcribed (successful) by family:')
+    expect(md).toContain('- **dkj:** D261125')
+    expect(md).toContain('PDF parse_failed by family:')
+    expect(md).toContain('- **ktv:** 2026_A')
+    expect(md).toContain('PDF skipped_no_schedule by family (series / type):')
+    expect(md).toContain('- **mapp:** N2026_01 (TAP_ISSUE)')
   })
 })
 
@@ -91,6 +155,11 @@ describe('runCiIngest', () => {
       expect(summary1).toContain('historical datums included | no')
       expect(summary1).toContain('deepest frontier (progress, min)')
       expect(summary1).toContain('shallowest frontier (gate readiness, max)')
+      expect(summary1).toContain('deepest frontier holders')
+      expect(summary1).toContain('shallowest frontier holders')
+      expect(summary1).toContain('PDF transcribed (successful) by family:')
+      expect(summary1).toContain('PDF parse_failed by family:')
+      expect(summary1).toContain('PDF skipped_no_schedule by family (series / type):')
       expect(stdoutSpy.mock.calls.some((c) => String(c[0]).startsWith('::notice::'))).toBe(
         true
       )

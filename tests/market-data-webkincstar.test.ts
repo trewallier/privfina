@@ -560,6 +560,14 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
         name: expect.any(String)
       })
     )
+    expect(overlay.skippedUnmatchedSeries.length).toBeGreaterThan(0)
+    expect(overlay.skippedUnmatchedSeries[0]).toEqual(
+      expect.objectContaining({
+        family: 'dkj',
+        id: expect.any(String),
+        name: expect.any(String)
+      })
+    )
     expect(overlay.hasQuotes).toBe(false)
   })
 

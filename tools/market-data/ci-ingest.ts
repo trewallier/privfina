@@ -1,12 +1,21 @@
 import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './ingest.ts'
 import {
+  formatCiIngestStepSummary,
+  type OfferingPdfSeriesRef,
+  type OfferingPdfSkippedRef,
+  type WebkincstarSkippedSeriesRef
+} from './ci-ingest-summary.ts'
+import {
   writeGithubAnnotation,
   writeGithubOutput,
   writeGithubStepSummary
 } from './github-output.ts'
+import type { OfferingFrontierHolder } from './offering-archive-frontier.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
 import type { AkkEnvelope, AllampapirEnvelope } from './types.ts'
 import type { WebkincstarReportName } from './webkincstar-reports.ts'
+
+export { formatCiIngestStepSummary } from './ci-ingest-summary.ts'
 
 export interface CiIngestOptions {
   outRoot: string
@@ -44,10 +53,15 @@ export interface CiIngestResult {
   offeringPdfsPending: number
   offeringPdfsParseFailed: number
   offeringPdfsSkippedNoSchedule: number
+  offeringPdfsTranscribedSeries: OfferingPdfSeriesRef[]
+  offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[]
+  offeringPdfsSkippedSeries: OfferingPdfSkippedRef[]
   /** Deepest (min) offering frontier — archive progress. */
   offeringBackfillFrontier: string | null
+  offeringBackfillFrontierHolders: OfferingFrontierHolder[]
   /** Shallowest (max) offering frontier — WK historical gate readiness. */
   offeringGateFrontier: string | null
+  offeringGateFrontierHolders: OfferingFrontierHolder[]
   offeringsSoftFailed: boolean
   webkincstarFetchFailedDays: number
   /** True when historical WK datums ran (gate open **or** explicit CLI datums). */
@@ -56,6 +70,7 @@ export interface CiIngestResult {
   webkincstarHistoricalGateOpen: boolean
   webkincstarDatumsFetched: string[]
   webkincstarOverlaySkipped: number
+  webkincstarOverlaySkippedSeries: WebkincstarSkippedSeriesRef[]
   webkincstarSoftFailed: boolean
   retailInterestSoftFailed: boolean
   exitCode: typeof EXIT_UPDATED | typeof EXIT_UNCHANGED | typeof EXIT_ERROR
@@ -136,14 +151,20 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringPdfsPending: report.offeringPdfsPending,
     offeringPdfsParseFailed: report.offeringPdfsParseFailed,
     offeringPdfsSkippedNoSchedule: report.offeringPdfsSkippedNoSchedule,
+    offeringPdfsTranscribedSeries: report.offeringPdfsTranscribedSeries,
+    offeringPdfsParseFailedSeries: report.offeringPdfsParseFailedSeries,
+    offeringPdfsSkippedSeries: report.offeringPdfsSkippedSeries,
     offeringBackfillFrontier: report.offeringBackfillFrontier,
+    offeringBackfillFrontierHolders: report.offeringBackfillFrontierHolders,
     offeringGateFrontier: report.offeringGateFrontier,
+    offeringGateFrontierHolders: report.offeringGateFrontierHolders,
     offeringsSoftFailed: report.offeringsSoftFailed,
     webkincstarFetchFailedDays: report.webkincstarFetchFailedDays,
     webkincstarHistoricalEnabled: report.webkincstarHistoricalEnabled,
     webkincstarHistoricalGateOpen: report.webkincstarHistoricalGateOpen,
     webkincstarDatumsFetched: report.webkincstarDatumsFetched,
     webkincstarOverlaySkipped: report.webkincstarOverlaySkipped,
+    webkincstarOverlaySkippedSeries: report.webkincstarOverlaySkippedSeries,
     webkincstarSoftFailed: report.webkincstarSoftFailed,
     retailInterestSoftFailed: report.retailInterestSoftFailed,
     exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -178,44 +199,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     result.retailInterestSoftFailed ? 'true' : 'false'
   )
 
-  writeGithubStepSummary(
-    [
-      '### Market-data ingest',
-      '',
-      '| Metric | Value |',
-      '| --- | --- |',
-      `| changed | ${result.changed} |`,
-      `| as_of | ${result.asOf ?? ''} |`,
-      '',
-      '#### WebKincstár',
-      '',
-      '| Metric | Value |',
-      '| --- | --- |',
-      `| historical gate (shallowest frontier) | ${result.webkincstarHistoricalGateOpen ? 'open' : 'closed'} |`,
-      `| historical datums included | ${result.webkincstarHistoricalEnabled ? 'yes' : 'no'} |`,
-      `| datums fetched | ${result.webkincstarDatumsFetched.join(', ') || '(none)'} |`,
-      `| overlay skipped | ${result.webkincstarOverlaySkipped} |`,
-      `| fetch_failed days | ${result.webkincstarFetchFailedDays} |`,
-      `| soft-failed | ${result.webkincstarSoftFailed} |`,
-      '',
-      '#### Offerings',
-      '',
-      '| Metric | Value |',
-      '| --- | --- |',
-      `| deepest frontier (progress, min) | ${result.offeringBackfillFrontier ?? '(none)'} |`,
-      `| shallowest frontier (gate readiness, max) | ${result.offeringGateFrontier ?? '(none)'} |`,
-      `| PDFs downloaded | ${result.offeringPdfsDownloaded} |`,
-      `| PDFs pending | ${result.offeringPdfsPending} |`,
-      `| PDF parse_failed | ${result.offeringPdfsParseFailed} |`,
-      `| PDF skipped_no_schedule | ${result.offeringPdfsSkippedNoSchedule} |`,
-      `| soft-failed | ${result.offeringsSoftFailed} |`,
-      '',
-      '#### Other soft-fails',
-      '',
-      `| retailInterest soft-failed | ${result.retailInterestSoftFailed} |`,
-      ''
-    ].join('\n')
-  )
+  writeGithubStepSummary(formatCiIngestStepSummary(result))
 
   writeGithubAnnotation('notice', formatCiIngestNoticeLine(result))
   if (result.webkincstarOverlaySkipped > 0) {

@@ -20,10 +20,15 @@ import {
   resolveWebkincstarLookbackDatums
 } from './fetch-webkincstar.ts'
 import {
-  maxOfferingSuccessFrontierPublished,
-  minOfferingSuccessFrontierPublished,
-  shouldEnableWebkincstarHistoricalBackfill
+  offeringSuccessFrontierExtremes,
+  shouldEnableWebkincstarHistoricalBackfill,
+  type OfferingFrontierHolder
 } from './offering-archive-frontier.ts'
+import type {
+  OfferingPdfSeriesRef,
+  OfferingPdfSkippedRef,
+  WebkincstarSkippedSeriesRef
+} from './ci-ingest-summary.ts'
 import type { PriceCalendarDay } from './normalize-webkincstar.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
@@ -234,16 +239,28 @@ export interface IngestReport extends MergeResult {
   webkincstarDatumsFetched: string[]
   /** Sum of overlay soft-skipped unmatched quotes across fetched datums. */
   webkincstarOverlaySkipped: number
+  /** Unique soft-skipped WK series (family/id) across fetched datums. */
+  webkincstarOverlaySkippedSeries: WebkincstarSkippedSeriesRef[]
   /**
    * Oldest (deepest) contiguous offering-archive success frontier across families
    * (or null). Progress metric — how deep the archive has gotten.
    */
   offeringBackfillFrontier: string | null
+  /** Series/type holders for {@link offeringBackfillFrontier}. */
+  offeringBackfillFrontierHolders: OfferingFrontierHolder[]
   /**
    * Newest (shallowest) contiguous offering-archive success frontier across families
    * (or null). Gate-readiness metric — scheduled WK historical needs this ≤ asOf−90.
    */
   offeringGateFrontier: string | null
+  /** Series/type holders for {@link offeringGateFrontier}. */
+  offeringGateFrontierHolders: OfferingFrontierHolder[]
+  /** Series transcribed from PDFs this run (successful). */
+  offeringPdfsTranscribedSeries: OfferingPdfSeriesRef[]
+  /** Series whose PDF parse failed this run. */
+  offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[]
+  /** Series skipped as no-schedule this run (includes resource type). */
+  offeringPdfsSkippedSeries: OfferingPdfSkippedRef[]
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -478,16 +495,16 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let webkincstarHasQuotes = false
   let webkincstarFetchFailedDays = 0
   let webkincstarOverlaySkipped = 0
+  const webkincstarOverlaySkippedSeriesByKey = new Map<string, WebkincstarSkippedSeriesRef>()
   let mergeSnapshotInput = combined.snapshot
 
   const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
   const webkincstarPrimaryDatum = options.webkincstarDatum ?? budapestYesterdayIso()
-  const offeringBackfillFrontier = minOfferingSuccessFrontierPublished(
-    previous.offeringArchive
-  )
-  const offeringGateFrontier = maxOfferingSuccessFrontierPublished(
-    previous.offeringArchive
-  )
+  const frontierExtremes = offeringSuccessFrontierExtremes(previous.offeringArchive)
+  const offeringBackfillFrontier = frontierExtremes.deepest?.published ?? null
+  const offeringBackfillFrontierHolders = frontierExtremes.deepest?.holders ?? []
+  const offeringGateFrontier = frontierExtremes.shallowest?.published ?? null
+  const offeringGateFrontierHolders = frontierExtremes.shallowest?.holders ?? []
   // Explicit multi-day list (§6m CLI) wins; else single --datum; else tip path
   // (yesterday + ≤3 weekday lookback). Scheduled §6m historical window merges
   // only when every family’s shallowest contiguous success frontier is deep
@@ -583,6 +600,12 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             })
             if (overlay.skippedUnmatched > 0) {
               webkincstarOverlaySkipped += overlay.skippedUnmatched
+              for (const series of overlay.skippedUnmatchedSeries) {
+                const key = `${series.family}\0${series.id}`
+                if (!webkincstarOverlaySkippedSeriesByKey.has(key)) {
+                  webkincstarOverlaySkippedSeriesByKey.set(key, series)
+                }
+              }
               const sample = overlay.skippedUnmatchedQuotes
                 .map((q) => `${q.family}/${q.id} (${q.name} @ ${q.settleDate})`)
                 .join('; ')
@@ -634,6 +657,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let offeringPdfsPending = 0
   let offeringPdfsParseFailed = 0
   let offeringPdfsSkippedNoSchedule = 0
+  const offeringPdfsTranscribedSeries: OfferingPdfSeriesRef[] = []
+  const offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[] = []
+  const offeringPdfsSkippedSeries: OfferingPdfSkippedRef[] = []
   let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
   let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
   let seriesSaleWindows:
@@ -739,6 +765,11 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                   : await pdfBytesToTextLayout(dl.bytes)
               if (classifyOfferingPdfText(text) === 'skip_no_schedule') {
                 offeringPdfsSkippedNoSchedule += 1
+                offeringPdfsSkippedSeries.push({
+                  family: dl.row.family,
+                  seriesId: dl.row.seriesId,
+                  resourceType: dl.row.resourceType
+                })
                 console.error(
                   `[market-data] offering PDF skipped (no schedule) for ${dl.row.pathUuid}`
                 )
@@ -785,8 +816,16 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 sourceHost: dl.sourceHost
               })
               if (transcribed) archiveUpserts.push(transcribed)
+              offeringPdfsTranscribedSeries.push({
+                family: dl.row.family,
+                seriesId: dl.row.seriesId
+              })
             } catch (err) {
               offeringPdfsParseFailed += 1
+              offeringPdfsParseFailedSeries.push({
+                family: dl.row.family,
+                seriesId: dl.row.seriesId
+              })
               console.error(
                 `[market-data] offering PDF parse failed for ${dl.row.pathUuid}: ${
                   err instanceof Error ? err.message : String(err)
@@ -908,8 +947,16 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     webkincstarHistoricalGateOpen: offeringGateOpen,
     webkincstarDatumsFetched: shouldFetchWebkincstar ? [...webkincstarDatums] : [],
     webkincstarOverlaySkipped,
+    webkincstarOverlaySkippedSeries: [...webkincstarOverlaySkippedSeriesByKey.values()].sort(
+      (a, b) => a.family.localeCompare(b.family) || a.id.localeCompare(b.id)
+    ),
     offeringBackfillFrontier,
-    offeringGateFrontier
+    offeringBackfillFrontierHolders,
+    offeringGateFrontier,
+    offeringGateFrontierHolders,
+    offeringPdfsTranscribedSeries,
+    offeringPdfsParseFailedSeries,
+    offeringPdfsSkippedSeries
   }
 }
 

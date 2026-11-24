@@ -15,9 +15,11 @@ function calculateFixmapFromSpecInputs(specInputs, options) {
   void options
   const principal = toNonNegativeNumber(specInputs.principal, 'principal')
   const rateOutputs = deriveFixmapRateOutputs(specInputs)
+  const paymentDates = Array.isArray(specInputs.paymentDates) ? specInputs.paymentDates : null
   const accruedInterestAmount = deriveFixmapAccruedInterestAmount(
     specInputs,
-    rateOutputs.annualCouponRatePct
+    rateOutputs.annualCouponRatePct,
+    paymentDates
   )
   const purchaseAmount = principal + accruedInterestAmount
   return {

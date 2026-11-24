@@ -91,6 +91,26 @@ describe('govsec accrual start + schedule gaps + DKJ day math', () => {
     expect(couponDates).toEqual(['2026-03-01', '2026-12-01'])
   })
 
+  it('BMÁP excludes purchase-day coupon cash (aligned with PMÁP/FixMÁP)', () => {
+    const flows = generateBmapQuarterlyCouponFlows(
+      {
+        principal: 100_000,
+        annualCouponRatePct: 6.88,
+        purchaseDate: '2026-06-01',
+        issueDate: '2026-03-01',
+        maturityDate: '2027-03-01',
+        firstCouponDate: '2026-06-01'
+      },
+      100_000,
+      6.88
+    )
+    const couponDates = flows
+      .filter((f) => f.direction === 'inflow' && f.amount !== 100_000)
+      .map((f) => f.date)
+    expect(couponDates).not.toContain('2026-06-01')
+    expect(couponDates[0]).toBe('2026-09-01')
+  })
+
   it('without schedule, holds flat annualCouponRatePct through maturity', () => {
     const flows = generatePmapAnnualCouponFlows(
       {

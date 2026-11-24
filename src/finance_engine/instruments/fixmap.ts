@@ -6,7 +6,11 @@
 
 import type { CashFlow } from '../models'
 import {
-  derivePmapAccruedInterestAmount,
+  accrueInterestAmount,
+  normalizeDayCountConvention,
+  resolvePaymentCalendarAccrualStartIso
+} from './day_count'
+import {
   derivePmapRateOutputs,
   generateCouponFlowsWithFrequency,
   type PmapRateOutputs,
@@ -43,23 +47,53 @@ export function deriveFixmapAccruedInterestAmount(
     | 'annualCouponRatePct'
     | 'couponSchedule'
   >,
-  annualCouponRatePct?: number
+  annualCouponRatePct?: number,
+  /** Optional offering payment calendar; preferred over schedule-gap heuristic. */
+  paymentDates?: readonly string[] | null
 ): number {
+  const rate =
+    annualCouponRatePct != null
+      ? Number(annualCouponRatePct)
+      : deriveFixmapRateOutputs(specInputs).annualCouponRatePct
+  const principal = Number(specInputs.principal)
+  const purchaseDateIso = String(specInputs.purchaseDate || '').trim()
+  const issueDateIso = String(specInputs.issueDate || '').trim()
+
   if (isActActDayCountConvention(specInputs.dayCountConvention)) {
-    const rate =
-      annualCouponRatePct != null
-        ? Number(annualCouponRatePct)
-        : deriveFixmapRateOutputs(specInputs).annualCouponRatePct
     return accrueIsmertetoActActAmount({
-      principal: Number(specInputs.principal),
+      principal,
       annualRatePct: rate,
-      purchaseDate: String(specInputs.purchaseDate || ''),
-      issueDate: String(specInputs.issueDate || ''),
+      purchaseDate: purchaseDateIso,
+      issueDate: issueDateIso,
       firstCouponDate: specInputs.firstCouponDate,
       frequencyMonths: FIXMAP_COUPON_FREQUENCY_MONTHS
     })
   }
-  return derivePmapAccruedInterestAmount(specInputs, annualCouponRatePct)
+
+  // ACT/360 (etc.): accrue from last quarterly payment, not annual rate-band Froms
+  // in couponSchedule (those are ga validity windows, not payment dates).
+  const explicit =
+    Array.isArray(paymentDates) && paymentDates.length > 0
+      ? paymentDates
+      : paymentDatesFromCouponSchedule(specInputs as FixmapSpecInputs)
+  const accrualStartIso = resolvePaymentCalendarAccrualStartIso({
+    purchaseDate: purchaseDateIso,
+    issueDate: issueDateIso,
+    paymentDates: explicit,
+    firstCouponDate: specInputs.firstCouponDate,
+    frequencyMonths: FIXMAP_COUPON_FREQUENCY_MONTHS
+  })
+  if (purchaseDateIso < accrualStartIso) {
+    throw new Error('purchaseDate must be on or after accrual start (prior coupon or issueDate).')
+  }
+  if (purchaseDateIso === accrualStartIso) return 0
+  return accrueInterestAmount({
+    principal,
+    annualRatePct: rate,
+    fromIso: accrualStartIso,
+    toIso: purchaseDateIso,
+    dayCount: normalizeDayCountConvention(specInputs.dayCountConvention)
+  })
 }
 
 /**

@@ -2,7 +2,7 @@
  * Shared day-count and accrued-interest helpers for government securities (ADR 0038).
  */
 
-import { parseIsoDate } from '../date_utils'
+import { formatIsoDate, parseIsoDate } from '../date_utils'
 
 export type DayCountConvention = 'ACT/360' | 'ACT/365F' | 'ACT/ACT' | '30E/360'
 
@@ -192,6 +192,62 @@ export function resolveAccrualStartIso(args: {
     return startDate
   }
   return issueDate
+}
+
+function addMonthsUtc(date: Date, months: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, date.getUTCDate()))
+}
+
+/**
+ * Accrual start from a **payment** calendar (last payment on/before purchase,
+ * else issueDate). Use for products whose couponSchedule Froms are rate bands
+ * (e.g. FixMÁP annual ga bands) rather than payment dates — do not use
+ * {@link resolveAccrualStartIso} with those bands for mid-hold accrued.
+ */
+export function resolvePaymentCalendarAccrualStartIso(args: {
+  purchaseDate: string
+  issueDate: string
+  /** Explicit payment dates (offering / quarterly schedule). */
+  paymentDates?: readonly string[] | null
+  firstCouponDate?: string | null
+  /** When paymentDates empty, walk firstCouponDate (or issue+freq) by this step. */
+  frequencyMonths?: number
+}): string {
+  const purchaseDate = String(args.purchaseDate || '').trim()
+  const issueDate = String(args.issueDate || '').trim()
+  if (!isValidIsoDate(issueDate)) {
+    throw new Error('issueDate must be an ISO date.')
+  }
+  if (!isValidIsoDate(purchaseDate)) {
+    throw new Error('purchaseDate must be an ISO date.')
+  }
+
+  const explicit = (Array.isArray(args.paymentDates) ? args.paymentDates : [])
+    .map((entry) => String(entry || '').trim())
+    .filter((entry) => isValidIsoDate(entry) && entry <= purchaseDate)
+    .sort()
+
+  let payments = explicit
+  if (payments.length === 0) {
+    const freq = Number(args.frequencyMonths)
+    if (Number.isFinite(freq) && freq > 0) {
+      const firstRaw = String(args.firstCouponDate || '').trim()
+      let cursor = isValidIsoDate(firstRaw)
+        ? firstRaw
+        : formatIsoDate(addMonthsUtc(parseIsoDate(issueDate), freq))
+      payments = []
+      for (let step = 0; step < 240 && cursor <= purchaseDate; step += 1) {
+        payments.push(cursor)
+        cursor = formatIsoDate(addMonthsUtc(parseIsoDate(cursor), freq))
+      }
+    }
+  }
+
+  let start = issueDate
+  for (const payment of payments) {
+    if (payment <= purchaseDate) start = payment
+  }
+  return start
 }
 
 /**

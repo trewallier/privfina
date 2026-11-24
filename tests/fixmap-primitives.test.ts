@@ -121,6 +121,27 @@ describe('FixMÁP TypeScript primitives (ADR 0017 / 0038 / ROADMAP §6j)', () =>
     expect(coupons[0]?.date).toBe('2027-05-03')
   })
 
+  it('mid-hold ACT/360 accrued restarts at last quarterly payment, not annual band From', () => {
+    const inputs: FixmapSpecInputs = {
+      principal: 1_000_000,
+      annualCouponRatePct: 6.5,
+      purchaseDate: '2026-12-15',
+      issueDate: '2026-08-03',
+      maturityDate: '2031-08-03',
+      firstCouponDate: '2026-11-03',
+      dayCountConvention: 'ACT/360',
+      couponSchedule: [
+        { from: '2026-08-03', to: '2027-08-03', rate: 6.5 },
+        { from: '2027-08-03', to: '2028-08-03', rate: 7.0 }
+      ]
+    }
+    // 42 ACT/360 days from 2026-11-03 → 2026-12-15 (not 134 from band From).
+    expect(deriveFixmapAccruedInterestAmount(inputs, 6.5)).toBeCloseTo(
+      (1_000_000 * 6.5 * 42) / (100 * 360),
+      8
+    )
+  })
+
   it('uses offering-shaped quarterly schedule Froms as the payment calendar', () => {
     const inputs: FixmapSpecInputs = {
       principal: 1_000_000,

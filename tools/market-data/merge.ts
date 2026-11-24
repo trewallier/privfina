@@ -24,6 +24,8 @@ import {
   QUOTE_COLS,
   REQUIRED_FAMILIES,
   SCHEMA_VERSION,
+  SERIES_IDENTITY_SOURCE_AKK,
+  SERIES_IDENTITY_SOURCE_WEBKINCSTAR,
   SETTLEMENT_CALENDAR_REF_PATH,
   type BuborFile,
   type CouponsFile,
@@ -169,6 +171,63 @@ function resolveStatus(
   return 'delisted'
 }
 
+function effectiveIdentitySource(
+  s: SeriesRecord
+): typeof SERIES_IDENTITY_SOURCE_AKK | typeof SERIES_IDENTITY_SOURCE_WEBKINCSTAR {
+  return s.identitySource ?? SERIES_IDENTITY_SOURCE_AKK
+}
+
+/**
+ * Identity-aware series upsert (ADR 0048):
+ * - ÁKK host (omit / www.akk.hu) never downgrades to WebKincstár host.
+ * - ÁKK over WK-origin promotes to www.akk.hu; ÁKK non-null fields win,
+ *   WK non-null fills only where ÁKK left null/undefined.
+ */
+function mergeSeriesIdentity(prev: SeriesRecord, incoming: SeriesRecord): SeriesRecord {
+  const prevSrc = effectiveIdentitySource(prev)
+  const inSrc = effectiveIdentitySource(incoming)
+  if (prevSrc === SERIES_IDENTITY_SOURCE_AKK && inSrc === SERIES_IDENTITY_SOURCE_WEBKINCSTAR) {
+    return {
+      ...prev,
+      identitySource: prev.identitySource ?? SERIES_IDENTITY_SOURCE_AKK
+    }
+  }
+  if (prevSrc === SERIES_IDENTITY_SOURCE_WEBKINCSTAR && inSrc === SERIES_IDENTITY_SOURCE_AKK) {
+    const merged: SeriesRecord = {
+      ...prev,
+      ...incoming,
+      identitySource: SERIES_IDENTITY_SOURCE_AKK
+    }
+    const keys = [
+      'isin',
+      'name',
+      'issue',
+      'mat',
+      'ccy',
+      'face',
+      'iType',
+      'dayCount',
+      'offered',
+      'saleWindow',
+      'ref',
+      'periodMonths'
+    ] as const
+    for (const key of keys) {
+      const incomingVal = incoming[key]
+      const prevVal = prev[key]
+      if (
+        (incomingVal === null || incomingVal === undefined) &&
+        prevVal !== null &&
+        prevVal !== undefined
+      ) {
+        ;(merged as Record<string, unknown>)[key] = prevVal
+      }
+    }
+    return merged
+  }
+  return { ...prev, ...incoming }
+}
+
 /**
  * Accumulate series: keep every known id (esp. those with quote history), upsert fields,
  * set status from maturity vs asOf, else whether the id has a live (asOf) quote.
@@ -188,7 +247,7 @@ export function accumulateSeries(
   for (const s of incoming) {
     assertSeriesId(s.id)
     const prev = byId.get(s.id)
-    byId.set(s.id, prev ? { ...prev, ...s } : { ...s })
+    byId.set(s.id, prev ? mergeSeriesIdentity(prev, s) : { ...s })
   }
   for (const id of quoteIdsWithHistory) {
     if (!byId.has(id)) {

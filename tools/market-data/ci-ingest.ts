@@ -77,6 +77,8 @@ export interface CiIngestResult {
   webkincstarDatumsFetched: string[]
   webkincstarOverlaySkipped: number
   webkincstarOverlaySkippedSeries: WebkincstarSkippedSeriesRef[]
+  webkincstarSeriesInvented: number
+  webkincstarSeriesInventedSeries: WebkincstarSkippedSeriesRef[]
   webkincstarSoftFailed: boolean
   retailInterestSoftFailed: boolean
   exitCode: typeof EXIT_UPDATED | typeof EXIT_UNCHANGED | typeof EXIT_ERROR
@@ -96,6 +98,7 @@ export function formatCiIngestNoticeLine(result: {
   asOf: string | null
   webkincstarHistoricalGateOpen: boolean
   webkincstarOverlaySkipped: number
+  webkincstarSeriesInvented: number
   webkincstarFetchFailedDays: number
   offeringTip: Pick<OfferingSourceProgress, 'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending'>
   offeringBackfill: Pick<
@@ -113,6 +116,7 @@ export function formatCiIngestNoticeLine(result: {
     `as_of=${result.asOf ?? ''}`,
     `wk_hist_gate=${result.webkincstarHistoricalGateOpen ? 'on' : 'off'}`,
     `wk_overlay_skip=${result.webkincstarOverlaySkipped}`,
+    `wk_series_invented=${result.webkincstarSeriesInvented}`,
     `wk_fetch_failed=${result.webkincstarFetchFailedDays}`,
     `pdfs_tip=${tip.pdfsDownloaded}`,
     `pdfs_bf=${bf.pdfsDownloaded}`,
@@ -187,6 +191,8 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     webkincstarDatumsFetched: report.webkincstarDatumsFetched,
     webkincstarOverlaySkipped: report.webkincstarOverlaySkipped,
     webkincstarOverlaySkippedSeries: report.webkincstarOverlaySkippedSeries,
+    webkincstarSeriesInvented: report.webkincstarSeriesInvented,
+    webkincstarSeriesInventedSeries: report.webkincstarSeriesInventedSeries,
     webkincstarSoftFailed: report.webkincstarSoftFailed,
     retailInterestSoftFailed: report.retailInterestSoftFailed,
     exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -221,6 +227,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
   )
   writeGithubOutput('webkincstar_datums_fetched', result.webkincstarDatumsFetched.join(','))
   writeGithubOutput('webkincstar_overlay_skipped', String(result.webkincstarOverlaySkipped))
+  writeGithubOutput('webkincstar_series_invented', String(result.webkincstarSeriesInvented))
   writeGithubOutput('webkincstar_soft_failed', result.webkincstarSoftFailed ? 'true' : 'false')
   writeGithubOutput(
     'retail_interest_soft_failed',
@@ -230,6 +237,12 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
   writeGithubStepSummary(formatCiIngestStepSummary(result))
 
   writeGithubAnnotation('notice', formatCiIngestNoticeLine(result))
+  if (result.webkincstarSeriesInvented > 0) {
+    writeGithubAnnotation(
+      'notice',
+      `WebKincstár invented ${result.webkincstarSeriesInvented} series stub(s) (identitySource=webkincstar.allamkincstar.gov.hu)`
+    )
+  }
   if (result.webkincstarOverlaySkipped > 0) {
     const overlayMsg = `WebKincstár overlay soft-skipped ${result.webkincstarOverlaySkipped} unmatched quote(s); calendar seals withheld for those reports`
     // Expected during offering-archive drain (gate closed); warn only when gate is open.

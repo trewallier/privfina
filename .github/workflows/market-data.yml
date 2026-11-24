@@ -61,6 +61,7 @@ jobs:
       webkincstar_historical_gate_open: ${{ steps.ingest.outputs.webkincstar_historical_gate_open }}
       webkincstar_datums_fetched: ${{ steps.ingest.outputs.webkincstar_datums_fetched }}
       webkincstar_overlay_skipped: ${{ steps.ingest.outputs.webkincstar_overlay_skipped }}
+      webkincstar_series_invented: ${{ steps.ingest.outputs.webkincstar_series_invented }}
       webkincstar_soft_failed: ${{ steps.ingest.outputs.webkincstar_soft_failed }}
       retail_interest_soft_failed: ${{ steps.ingest.outputs.retail_interest_soft_failed }}
     steps:

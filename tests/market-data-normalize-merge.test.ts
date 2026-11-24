@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { buildCatalogUrl, buildNetworkRatesUrl } from '../tools/market-data/fetch-akk.ts'
 import { loadMarketTree } from '../tools/market-data/io.ts'
-import { emptyMarketTree, mergeSnapshot } from '../tools/market-data/merge.ts'
+import { accumulateSeries, emptyMarketTree, mergeSnapshot } from '../tools/market-data/merge.ts'
 import { NormalizeError, normalizeAkkSnapshots } from '../tools/market-data/normalize.ts'
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
 import { digestCanonical } from '../tools/market-data/digests.ts'
@@ -163,7 +163,46 @@ describe('ingestMarketData (fixture / disk)', () => {
 })
 
 describe('SeriesRecord.identitySource (ADR 0048)', () => {
+  it('accumulateSeries promotes WK-origin to www.akk.hu and never downgrades', () => {
+    const wkStub = {
+      id: 'D999999',
+      isin: null,
+      name: 'D999999',
+      issue: null,
+      mat: '2026-12-05',
+      ccy: 'HUF',
+      status: 'delisted' as const,
+      dayCount: 'ACT/360' as const,
+      identitySource: 'webkincstar.allamkincstar.gov.hu' as const
+    }
+    const akk = {
+      id: 'D999999',
+      isin: 'HU0000599999',
+      name: 'D999999 long',
+      issue: '2025-01-01',
+      mat: '2026-12-05',
+      ccy: 'HUF',
+      status: 'active' as const,
+      dayCount: 'ACT/360' as const
+    }
+    const promoted = accumulateSeries([wkStub], [akk], new Set(), new Set(['D999999']), '2026-11-05')
+    expect(promoted[0].identitySource).toBe('www.akk.hu')
+    expect(promoted[0].isin).toBe('HU0000599999')
+    expect(promoted[0].name).toBe('D999999 long')
+
+    const noDowngrade = accumulateSeries(
+      [{ ...akk, identitySource: 'www.akk.hu' }],
+      [wkStub],
+      new Set(),
+      new Set(['D999999']),
+      '2026-11-05'
+    )
+    expect(noDowngrade[0].identitySource).toBe('www.akk.hu')
+    expect(noDowngrade[0].isin).toBe('HU0000599999')
+  })
+
   it('accepts www.akk.hu and webkincstar host; rejects null and other literals', async () => {
+
     const catalog = await loadFixture('catalog.json')
     const rates = await loadFixture('network-rates.json')
     const snap = normalizeAkkSnapshots(catalog, rates)

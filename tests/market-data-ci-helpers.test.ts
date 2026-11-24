@@ -43,6 +43,7 @@ describe('formatCiIngestNoticeLine', () => {
         asOf: '2026-11-05',
         webkincstarHistoricalGateOpen: false,
         webkincstarOverlaySkipped: 3,
+        webkincstarSeriesInvented: 0,
         webkincstarFetchFailedDays: 0,
         offeringTip: { pdfsDownloaded: 2, pdfQueue: 3, pdfsPending: 1 },
         offeringBackfill: {
@@ -56,7 +57,7 @@ describe('formatCiIngestNoticeLine', () => {
         offeringGateFrontier: '2026-10-01'
       })
     ).toBe(
-      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs_tip=2 pdfs_bf=5 queue_tip=3 queue_bf=8 pending_tip=1 pending_bf=4 parse_failed=0 discovery_exhausted=2 frontier=2026-08-01 gate_frontier=2026-10-01'
+      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_series_invented=0 wk_fetch_failed=0 pdfs_tip=2 pdfs_bf=5 queue_tip=3 queue_bf=8 pending_tip=1 pending_bf=4 parse_failed=0 discovery_exhausted=2 frontier=2026-08-01 gate_frontier=2026-10-01'
     )
   })
 })
@@ -75,6 +76,8 @@ describe('formatCiIngestStepSummary', () => {
         { family: 'ktv', id: '2026_H', name: '2026/H' },
         { family: 'mapp', id: 'N2026_41', name: 'N2026/41' }
       ],
+      webkincstarSeriesInvented: 0,
+      webkincstarSeriesInventedSeries: [],
       webkincstarFetchFailedDays: 0,
       webkincstarSoftFailed: false,
       offeringBackfillFrontier: '2022-04-21',
@@ -193,6 +196,8 @@ describe('formatCiIngestStepSummary', () => {
       webkincstarDatumsFetched: [],
       webkincstarOverlaySkipped: 0,
       webkincstarOverlaySkippedSeries: [],
+      webkincstarSeriesInvented: 0,
+      webkincstarSeriesInventedSeries: [],
       webkincstarFetchFailedDays: 0,
       webkincstarSoftFailed: false,
       offeringBackfillFrontier: null,
@@ -234,6 +239,8 @@ describe('formatCiIngestStepSummary', () => {
       webkincstarDatumsFetched: ['2026-11-23'],
       webkincstarOverlaySkipped: 0,
       webkincstarOverlaySkippedSeries: [],
+      webkincstarSeriesInvented: 0,
+      webkincstarSeriesInventedSeries: [],
       webkincstarFetchFailedDays: 0,
       webkincstarSoftFailed: false,
       offeringBackfillFrontier: '2022-01-14',
@@ -276,6 +283,8 @@ describe('formatCiIngestStepSummary', () => {
       webkincstarOverlaySkippedSeries: [
         { family: 'dkj', id: 'A|B\\C', name: 'A|B\\C' }
       ],
+      webkincstarSeriesInvented: 0,
+      webkincstarSeriesInventedSeries: [],
       webkincstarFetchFailedDays: 0,
       webkincstarSoftFailed: false,
       offeringBackfillFrontier: null,

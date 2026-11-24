@@ -3,6 +3,7 @@ import { combineQuoteRows } from './combine.ts'
 import {
   emptyNormalizedByFamily,
   FAMILIES,
+  SERIES_IDENTITY_SOURCE_WEBKINCSTAR,
   type FamilyCode,
   type NormalizedSnapshot,
   type QuoteRow,
@@ -25,6 +26,12 @@ export interface SkippedWebkincstarSeries {
   name: string
 }
 
+export interface InventedWebkincstarSeries {
+  family: FamilyCode
+  id: string
+  name: string
+}
+
 export interface ApplyWebkincstarResult {
   snapshot: NormalizedSnapshot
   /** Quotes remapped onto an existing catalog series id. */
@@ -41,6 +48,11 @@ export interface ApplyWebkincstarResult {
    * by {@link SKIPPED_UNMATCHED_SAMPLE_LIMIT}.
    */
   skippedUnmatchedSeries: SkippedWebkincstarSeries[]
+  /**
+   * Unique series stubs invented under ADR 0048 historical invent
+   * (`identitySource: webkincstar host`).
+   */
+  inventedSeries: InventedWebkincstarSeries[]
   /** True when at least one remapped quote was applied. */
   hasQuotes: boolean
 }
@@ -127,10 +139,44 @@ function indexQuotes(
   return byId
 }
 
+function inventBackfillStub(
+  _family: FamilyCode,
+  qId: string,
+  name: string,
+  seriesMeta: SeriesRecord | undefined,
+  asOf: string | null
+): SeriesRecord {
+  const mat = seriesMeta?.mat ?? null
+  const status: SeriesRecord['status'] =
+    asOf && mat && mat < asOf ? 'matured' : seriesMeta?.status === 'matured' ? 'matured' : 'delisted'
+  const stub: SeriesRecord = {
+    id: seriesMeta?.id ?? qId,
+    isin: seriesMeta?.isin ?? null,
+    name: seriesMeta?.name ?? name,
+    issue: seriesMeta?.issue ?? null,
+    mat,
+    ccy: seriesMeta?.ccy ?? 'HUF',
+    status,
+    // Omit dayCount: normalize-webkincstar defaults ACT/360, which would block
+    // ADR 0048 ISSUE null-fill of ACT/365F (etc.). Family default / enrich later.
+    identitySource: SERIES_IDENTITY_SOURCE_WEBKINCSTAR
+  }
+  // Copy optional fields only when defined so JSON serialization stays valid.
+  // Do not copy dayCount from WK meta (see above).
+  if (seriesMeta?.face !== undefined) stub.face = seriesMeta.face
+  if (seriesMeta?.iType !== undefined) stub.iType = seriesMeta.iType
+  if (seriesMeta?.offered !== undefined) stub.offered = seriesMeta.offered
+  if (seriesMeta?.saleWindow !== undefined) stub.saleWindow = seriesMeta.saleWindow
+  if (seriesMeta?.ref !== undefined) stub.ref = seriesMeta.ref
+  if (seriesMeta?.periodMonths !== undefined) stub.periodMonths = seriesMeta.periodMonths
+  return stub
+}
+
 /**
  * Overlay WebKincstár quotes onto an ÁKK∥allampapir combined snapshot.
  * Prefer non-null; conflicting numerics → WebKincstár wins (ADR 0039).
- * Unmatched instrument names are soft-skipped (ÁKK remains identity owner).
+ * Unmatched instrument names soft-skip by default; with `inventUnmatched`
+ * (ADR 0048 historical backfill) invent marked series stubs instead.
  */
 export function applyWebkincstarQuotes(
   base: NormalizedSnapshot,
@@ -138,9 +184,15 @@ export function applyWebkincstarQuotes(
   options?: {
     /** Prior tip series for name→id join when not in today's combined set. */
     extraSeries?: Array<{ family: FamilyCode; series: SeriesRecord }>
+    /**
+     * When true (historical WK backfill), invent WK-host series stubs for
+     * unmatched instruments instead of soft-skipping (ADR 0048).
+     */
+    inventUnmatched?: boolean
   }
 ): ApplyWebkincstarResult {
   const out = cloneSnapshot(base)
+  const inventUnmatched = options?.inventUnmatched === true
   const index = buildSeriesIndex(base, options?.extraSeries ?? [])
   const baseQuoteIndex = new Map<FamilyCode, Map<string, Map<string, QuoteRow>>>()
   for (const family of FAMILIES) {
@@ -151,28 +203,53 @@ export function applyWebkincstarQuotes(
   let skippedUnmatched = 0
   const skippedUnmatchedQuotes: SkippedWebkincstarQuote[] = []
   const skippedSeriesByKey = new Map<string, SkippedWebkincstarSeries>()
+  const inventedSeriesByKey = new Map<string, InventedWebkincstarSeries>()
+
+  const addToIndex = (family: FamilyCode, series: SeriesRecord): void => {
+    const ref = { family, series }
+    if (!index.byId.has(series.id)) index.byId.set(series.id, ref)
+    if (series.name && !index.byExactName.has(series.name)) {
+      index.byExactName.set(series.name, ref)
+    }
+    try {
+      const slug = toSeriesId(series.name)
+      if (!index.byNameSlug.has(slug)) index.byNameSlug.set(slug, ref)
+    } catch {
+      /* ignore empty names */
+    }
+  }
 
   for (const family of FAMILIES) {
     const wk = webkincstar.byFamily[family]
     for (const q of wk.quotes) {
       const seriesMeta = wk.series.find((s) => s.id === q.id)
       const name = seriesMeta?.name ?? q.id
-      const target = resolveTarget(q.id, name, index)
+      let target = resolveTarget(q.id, name, index)
       if (!target) {
-        skippedUnmatched += 1
-        const seriesKey = `${family}\0${q.id}`
-        if (!skippedSeriesByKey.has(seriesKey)) {
-          skippedSeriesByKey.set(seriesKey, { family, id: q.id, name })
+        if (!inventUnmatched) {
+          skippedUnmatched += 1
+          const seriesKey = `${family}\0${q.id}`
+          if (!skippedSeriesByKey.has(seriesKey)) {
+            skippedSeriesByKey.set(seriesKey, { family, id: q.id, name })
+          }
+          if (skippedUnmatchedQuotes.length < SKIPPED_UNMATCHED_SAMPLE_LIMIT) {
+            skippedUnmatchedQuotes.push({
+              family,
+              id: q.id,
+              name,
+              settleDate: q.row[0]
+            })
+          }
+          continue
         }
-        if (skippedUnmatchedQuotes.length < SKIPPED_UNMATCHED_SAMPLE_LIMIT) {
-          skippedUnmatchedQuotes.push({
-            family,
-            id: q.id,
-            name,
-            settleDate: q.row[0]
-          })
+        const stub = inventBackfillStub(family, q.id, name, seriesMeta, out.asOf ?? webkincstar.asOf)
+        out.byFamily[family].series.push(stub)
+        addToIndex(family, stub)
+        const inventKey = `${family}\0${stub.id}`
+        if (!inventedSeriesByKey.has(inventKey)) {
+          inventedSeriesByKey.set(inventKey, { family, id: stub.id, name: stub.name })
         }
-        continue
+        target = { family, series: stub }
       }
       const famQuotes = baseQuoteIndex.get(target.family)!
       let byDate = famQuotes.get(target.series.id)
@@ -211,6 +288,7 @@ export function applyWebkincstarQuotes(
     skippedUnmatched,
     skippedUnmatchedQuotes,
     skippedUnmatchedSeries: [...skippedSeriesByKey.values()],
+    inventedSeries: [...inventedSeriesByKey.values()],
     hasQuotes: remappedQuotes > 0
   }
 }

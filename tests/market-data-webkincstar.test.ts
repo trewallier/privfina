@@ -600,6 +600,8 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
       (s) => s.id === overlay.inventedSeries[0].id
     )
     expect(stub?.identitySource).toBe('webkincstar-backfill')
+    // Invent omits dayCount so ISSUE ACT/365F (etc.) can null-fill later (ADR 0048).
+    expect(stub?.dayCount).toBeUndefined()
     expect(
       overlay.snapshot.byFamily.dkj.quotes.some((q) => q.id === stub?.id)
     ).toBe(true)
@@ -721,6 +723,7 @@ D999999             99.0000 %      6.00 %   5.90 %            -             -   
       expect(report.webkincstarSeriesInvented).toBeGreaterThan(0)
       const invented = report.tree.families.dkj.series.series.find((s) => s.id === 'D999999')
       expect(invented?.identitySource).toBe('webkincstar-backfill')
+      expect(invented?.dayCount).toBeUndefined()
       expect(report.tree.families.dkj.quotes.D999999?.rows.some((r) => r[0] === '2026-11-05')).toBe(
         true
       )
@@ -732,6 +735,42 @@ D999999             99.0000 %      6.00 %   5.90 %            -             -   
             d.status === 'priced'
         )
       ).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('tip-lookback-only (gate closed) soft-skips unmatched — does not invent (ADR 0048)', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'privfina-wk-no-invent-tip-'))
+    const dkjWithUnmatched = `
+Diszkont Kincstárjegyek                                                                 Értéknap: 2026.11.05
+D261125             99.6650 %      6.13 %   6.05 %            -             -           -            20        2026.11.25
+D999999             99.0000 %      6.00 %   5.90 %            -             -           -            30        2026.12.05
+`
+    try {
+      const report = await ingestMarketData({
+        root: dir,
+        rawDir: path.join(dir, 'raw'),
+        catalog: loadJson<AkkEnvelope>('catalog.json'),
+        networkRates: loadJson<AkkEnvelope>('network-rates.json'),
+        skipAllampapir: true,
+        skipInflation: true,
+        skipRetailInterest: true,
+        skipBubor: true,
+        skipSettlementCalendar: true,
+        skipOfferings: true,
+        // Single tip datum — not explicit hist datums; inventUnmatched stays off.
+        webkincstarDatum: '2026-11-05',
+        webkincstarReports: ['_20631_arfolyam_dkj'],
+        webkincstarTextByReport: {
+          _20631_arfolyam_dkj: dkjWithUnmatched
+        },
+        generatedAt: '2026-11-05T18:00:00.000Z'
+      })
+      expect(report.webkincstarHistoricalEnabled).toBe(false)
+      expect(report.webkincstarSeriesInvented).toBe(0)
+      expect(report.webkincstarOverlaySkipped).toBeGreaterThan(0)
+      expect(report.tree.families.dkj.series.series.some((s) => s.id === 'D999999')).toBe(false)
     } finally {
       await rm(dir, { recursive: true, force: true })
     }

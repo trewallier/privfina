@@ -156,10 +156,12 @@ function inventBackfillStub(
     mat,
     ccy: seriesMeta?.ccy ?? 'HUF',
     status,
-    dayCount: seriesMeta?.dayCount ?? 'ACT/360',
+    // Omit dayCount: normalize-webkincstar defaults ACT/360, which would block
+    // ADR 0048 ISSUE null-fill of ACT/365F (etc.). Family default / enrich later.
     identitySource: 'webkincstar-backfill'
   }
   // Copy optional fields only when defined so JSON serialization stays valid.
+  // Do not copy dayCount from WK meta (see above).
   if (seriesMeta?.face !== undefined) stub.face = seriesMeta.face
   if (seriesMeta?.iType !== undefined) stub.iType = seriesMeta.iType
   if (seriesMeta?.offered !== undefined) stub.offered = seriesMeta.offered

@@ -879,7 +879,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     inflationUpdated: inflationUpdate !== undefined,
     buborUpdated: buborUpdate !== undefined,
     settlementCalendarUpdated: settlementCalendarUpdate !== undefined,
-    webkincstarUpdated: priceCalendarUpdate !== undefined,
+    webkincstarUpdated: priceCalendarUpdate !== undefined || webkincstarHasQuotes,
     webkincstarSoftFailed,
     offeringsUpdated,
     offeringsSoftFailed,

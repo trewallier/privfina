@@ -707,6 +707,24 @@ D261125             99.6650 %      6.13 %   6.05 %            -             -   
     }
   }
 
+  /** Catalog-joinable DKJ row only + empty siblings → durable priced/no_price seals. */
+  function joinablePricedTextByReport(): Record<string, string> {
+    const dkjMatched = `
+Diszkont Kincstárjegyek                                                                 Értéknap: 2026.11.05
+D261125             99.6650 %      6.13 %   6.05 %            -             -           -            20        2026.11.25
+`
+    const retarget = (rel: string) =>
+      loadText(rel).replaceAll('2026.11.08', '2026.11.05')
+    return {
+      _20631_arfolyam_dkj: dkjMatched,
+      _20633_arfolyam_mak: retarget('mak-2026-11-08-empty.txt'),
+      _207461_arfolyam_mapp: retarget('mapp-2026-11-08-empty.txt'),
+      _20638_arfolyam_pemak: retarget('pemak-2026-11-08-empty.txt'),
+      _20642_arfolyam_start: retarget('start-2026-11-08-empty.txt'),
+      _20632_arfolyam_kkj: loadText('kkj-2026-11-05-empty.txt')
+    }
+  }
+
   it('ingest soft-fail records fetch_failed without blocking dual-source', async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'privfina-wk-soft-'))
     try {
@@ -751,10 +769,11 @@ D261125             99.6650 %      6.13 %   6.05 %            -             -   
         skipInflation: true,
         skipRetailInterest: true,
         webkincstarDatum: '2026-11-05',
-        webkincstarTextByReport: allReportsPricedTextByReport(),
+        webkincstarTextByReport: joinablePricedTextByReport(),
         generatedAt: '2026-11-05T18:00:00.000Z'
       })
       expect(priced.webkincstarSoftFailed).toBe(false)
+      expect(priced.webkincstarOverlaySkipped).toBe(0)
       expect(
         priced.tree.priceCalendar?.days.some((d) => d.status === 'priced')
       ).toBe(true)
@@ -798,7 +817,10 @@ D261125             99.6650 %      6.13 %   6.05 %            -             -   
         skipRetailInterest: true,
         webkincstarDatum: '2026-11-05',
         webkincstarTextByReport: {
-          _20631_arfolyam_dkj: loadText('dkj-2026-11-05.txt'),
+          _20631_arfolyam_dkj: `
+Diszkont Kincstárjegyek                                                                 Értéknap: 2026.11.05
+D261125             99.6650 %      6.13 %   6.05 %            -             -           -            20        2026.11.25
+`,
           _20633_arfolyam_mak: loadText('mak-2026-11-08-empty.txt')
           // remaining §6n reports omitted → offline soft-fail (no POST)
         },
@@ -806,6 +828,7 @@ D261125             99.6650 %      6.13 %   6.05 %            -             -   
       })
       expect(report.webkincstarSoftFailed).toBe(true)
       expect(report.webkincstarUpdated).toBe(true)
+      expect(report.webkincstarOverlaySkipped).toBe(0)
       const days = report.tree.priceCalendar?.days ?? []
       expect(
         days.find(
@@ -878,6 +901,8 @@ D261125             99.6650 %      6.13 %   6.05 %            -             -   
       })
       expect(report.webkincstarSoftFailed).toBe(false)
       expect(report.webkincstarUpdated).toBe(true)
+      // Full fixture PDFs soft-skip unmatched names → calendar may stay non-durable;
+      // matched eladási asks still overlay.
 
       const mappSeries = report.tree.families.mapp.series.series.find(
         (s) => s.name === '2031/M6'
@@ -907,12 +932,6 @@ D261125             99.6650 %      6.13 %   6.05 %            -             -   
         (r) => r[0] === '2026-11-05'
       )
       expect(emapRow?.[2]).toBe(100)
-
-      const cal = report.tree.priceCalendar
-      expect(cal?.reports).toContain('_207461_arfolyam_mapp')
-      expect(
-        cal?.days.find((d) => d.report === '_20632_arfolyam_kkj')?.status
-      ).toBe('no_price')
     } finally {
       await rm(dir, { recursive: true, force: true })
     }
@@ -930,10 +949,11 @@ D261125             99.6650 %      6.13 %   6.05 %            -             -   
         skipInflation: true,
         skipRetailInterest: true,
         webkincstarDatum: '2026-11-05',
-        webkincstarTextByReport: allReportsPricedTextByReport(),
+        webkincstarTextByReport: joinablePricedTextByReport(),
         generatedAt: '2026-11-05T18:00:00.000Z'
       })
       expect(report.webkincstarSoftFailed).toBe(false)
+      expect(report.webkincstarOverlaySkipped).toBe(0)
       expect(report.webkincstarUpdated).toBe(true)
       expect(report.changed).toBe(true)
       const quotes = JSON.parse(

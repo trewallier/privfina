@@ -8,6 +8,10 @@ import {
   formatCiIngestStepSummary,
   runCiIngest
 } from '../tools/market-data/ci-ingest.ts'
+import {
+  emptyOfferingSourceProgress,
+  type OfferingSourceProgress
+} from '../tools/market-data/ci-ingest-summary.ts'
 import { ingestMarketData } from '../tools/market-data/ingest.ts'
 import type { AkkEnvelope } from '../tools/market-data/types.ts'
 import { ValidateError, assertPublishedTree } from '../tools/market-data/validate.ts'
@@ -23,8 +27,16 @@ async function loadFixture(name: string): Promise<AkkEnvelope> {
   return JSON.parse(text) as AkkEnvelope
 }
 
+function withProgress(
+  partial: Partial<OfferingSourceProgress> & {
+    transcribed?: OfferingSourceProgress['transcribed']
+  }
+): OfferingSourceProgress {
+  return { ...emptyOfferingSourceProgress(), ...partial }
+}
+
 describe('formatCiIngestNoticeLine', () => {
-  it('builds a quiet overview notice line', () => {
+  it('builds a quiet overview notice line with tip/backfill counters', () => {
     expect(
       formatCiIngestNoticeLine({
         changed: true,
@@ -32,20 +44,20 @@ describe('formatCiIngestNoticeLine', () => {
         webkincstarHistoricalGateOpen: false,
         webkincstarOverlaySkipped: 3,
         webkincstarFetchFailedDays: 0,
-        offeringPdfsDownloaded: 2,
-        offeringPdfsPending: 1,
+        offeringTip: { pdfsDownloaded: 2, pdfQueue: 3, pdfsPending: 1 },
+        offeringBackfill: { pdfsDownloaded: 5, pdfQueue: 8, pdfsPending: 4 },
         offeringPdfsParseFailed: 0,
         offeringBackfillFrontier: '2026-08-01',
         offeringGateFrontier: '2026-10-01'
       })
     ).toBe(
-      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs=2 pending=1 parse_failed=0 frontier=2026-08-01 gate_frontier=2026-10-01'
+      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_fetch_failed=0 pdfs_tip=2 pdfs_bf=5 queue_tip=3 queue_bf=8 pending_tip=1 pending_bf=4 parse_failed=0 frontier=2026-08-01 gate_frontier=2026-10-01'
     )
   })
 })
 
 describe('formatCiIngestStepSummary', () => {
-  it('lists PDF series by family, frontier holders, and WK skips by family', () => {
+  it('splits tip vs backfill listing/queue/outcomes and shows frontier holders', () => {
     const md = formatCiIngestStepSummary({
       changed: true,
       asOf: '2026-11-24',
@@ -80,30 +92,163 @@ describe('formatCiIngestStepSummary', () => {
           status: 'transcribed'
         }
       ],
+      offeringTip: withProgress({
+        familiesOk: 7,
+        rows: { issue: 10, tap: 2, other: 0 },
+        issueKnownHashed: 9,
+        pdfQueue: 1,
+        pdfsDownloaded: 1,
+        transcribed: [
+          {
+            family: 'dkj',
+            seriesId: 'D261125',
+            resourceType: 'ISSUE',
+            listingSource: 'tip'
+          }
+        ]
+      }),
+      offeringBackfill: withProgress({
+        familiesOk: 6,
+        familiesNoFrontier: 1,
+        rows: { issue: 20, tap: 0, other: 0 },
+        issueKnownHashed: 12,
+        pdfQueue: 2,
+        pdfsPending: 1,
+        pdfsParseFailed: 1,
+        pdfsSkippedNoSchedule: 1,
+        parseFailed: [
+          {
+            family: 'ktv',
+            seriesId: '2026_A',
+            resourceType: 'ISSUE',
+            listingSource: 'backfill'
+          }
+        ],
+        skipped: [
+          {
+            family: 'mapp',
+            seriesId: 'N2026_01',
+            resourceType: 'ISSUE',
+            listingSource: 'backfill'
+          }
+        ],
+        pending: [
+          {
+            family: 'pmap',
+            seriesId: 'P250101',
+            resourceType: 'ISSUE',
+            listingSource: 'backfill'
+          }
+        ]
+      }),
+      offeringUnattributed: emptyOfferingSourceProgress(),
       offeringPdfsDownloaded: 2,
       offeringPdfsPending: 1,
       offeringPdfsParseFailed: 1,
       offeringPdfsSkippedNoSchedule: 1,
-      offeringPdfsTranscribedSeries: [{ family: 'dkj', seriesId: 'D261125' }],
-      offeringPdfsParseFailedSeries: [{ family: 'ktv', seriesId: '2026_A' }],
-      offeringPdfsSkippedSeries: [
-        { family: 'mapp', seriesId: 'N2026_01', resourceType: 'TAP_ISSUE' }
-      ],
       offeringsSoftFailed: false,
       retailInterestSoftFailed: false
     })
+    expect(md).toContain('#### Offerings — tip')
+    expect(md).toContain('#### Offerings — backfill')
     expect(md).toContain('Overlay soft-skipped series (by family):')
     expect(md).toContain('- **dkj:** D261028')
     expect(md).toContain('- **ktv:** 2026_H (2026/H)')
-    expect(md).toContain('- **mapp:** N2026_41 (N2026/41)')
+    expect(md).toContain('listing rows | ISSUE=10, TAP_*=2, other=0')
+    expect(md).toContain('PDF queue | 1')
+    expect(md).toContain('PDF transcribed (tip) by family:')
+    expect(md).toContain('- **dkj:** D261125 (ISSUE)')
+    expect(md).toContain('PDF parse_failed (backfill) by family:')
+    expect(md).toContain('- **ktv:** 2026_A (ISSUE)')
+    expect(md).toContain('PDF skipped_no_schedule (backfill) by family:')
+    expect(md).toContain('- **mapp:** N2026_01 (ISSUE)')
+    expect(md).toContain('PDF pending (backfill) by family:')
+    expect(md).toContain('- **pmap:** P250101 (ISSUE)')
+    expect(md).toContain('deepest frontier (backfill progress, min)')
     expect(md).toContain('deepest frontier holders | pmap/P260421/ISSUE')
     expect(md).toContain('shallowest frontier holders | baba/B260706/ISSUE')
-    expect(md).toContain('PDF transcribed (successful) by family:')
-    expect(md).toContain('- **dkj:** D261125')
-    expect(md).toContain('PDF parse_failed by family:')
-    expect(md).toContain('- **ktv:** 2026_A')
-    expect(md).toContain('PDF skipped_no_schedule by family (series / type):')
-    expect(md).toContain('- **mapp:** N2026_01 (TAP_ISSUE)')
+    expect(md).toContain('Totals: pdfs tip=1 bf=0 unk=0 | queue tip=1 bf=2 unk=0 | pending tip=0 bf=1 unk=0')
+  })
+
+  it('shows unattributed block for archive-only reparse outcomes', () => {
+    const md = formatCiIngestStepSummary({
+      changed: true,
+      asOf: '2026-11-24',
+      webkincstarHistoricalGateOpen: false,
+      webkincstarHistoricalEnabled: false,
+      webkincstarDatumsFetched: [],
+      webkincstarOverlaySkipped: 0,
+      webkincstarOverlaySkippedSeries: [],
+      webkincstarFetchFailedDays: 0,
+      webkincstarSoftFailed: false,
+      offeringBackfillFrontier: null,
+      offeringBackfillFrontierHolders: [],
+      offeringGateFrontier: null,
+      offeringGateFrontierHolders: [],
+      offeringTip: emptyOfferingSourceProgress(),
+      offeringBackfill: emptyOfferingSourceProgress(),
+      offeringUnattributed: withProgress({
+        pdfQueue: 1,
+        pdfsDownloaded: 1,
+        transcribed: [
+          {
+            family: 'dkj',
+            seriesId: 'D250101',
+            resourceType: 'ISSUE',
+            listingSource: 'unknown'
+          }
+        ]
+      }),
+      offeringPdfsDownloaded: 1,
+      offeringPdfsPending: 0,
+      offeringPdfsParseFailed: 0,
+      offeringPdfsSkippedNoSchedule: 0,
+      offeringsSoftFailed: false,
+      retailInterestSoftFailed: false
+    })
+    expect(md).toContain('#### Offerings — unattributed (archive reparse)')
+    expect(md).toContain('- **dkj:** D250101 (ISSUE)')
+    expect(md).toContain('unk=1')
+  })
+
+  it('emits quiet-queue lines when tip and backfill queues are empty', () => {
+    const md = formatCiIngestStepSummary({
+      changed: true,
+      asOf: '2026-11-24',
+      webkincstarHistoricalGateOpen: true,
+      webkincstarHistoricalEnabled: true,
+      webkincstarDatumsFetched: ['2026-11-23'],
+      webkincstarOverlaySkipped: 0,
+      webkincstarOverlaySkippedSeries: [],
+      webkincstarFetchFailedDays: 0,
+      webkincstarSoftFailed: false,
+      offeringBackfillFrontier: '2022-01-14',
+      offeringBackfillFrontierHolders: [],
+      offeringGateFrontier: '2026-07-06',
+      offeringGateFrontierHolders: [],
+      offeringTip: withProgress({
+        familiesOk: 7,
+        rows: { issue: 40, tap: 5, other: 0 },
+        issueKnownHashed: 40,
+        pdfQueue: 0
+      }),
+      offeringBackfill: withProgress({
+        familiesOk: 7,
+        rows: { issue: 30, tap: 0, other: 0 },
+        issueKnownHashed: 30,
+        pdfQueue: 0
+      }),
+      offeringUnattributed: emptyOfferingSourceProgress(),
+      offeringPdfsDownloaded: 0,
+      offeringPdfsPending: 0,
+      offeringPdfsParseFailed: 0,
+      offeringPdfsSkippedNoSchedule: 0,
+      offeringsSoftFailed: false,
+      retailInterestSoftFailed: false
+    })
+    expect(md).toContain('No new tip ISSUE PDFs queued')
+    expect(md).toContain('No new backfill ISSUE PDFs queued')
+    expect(md).toContain('Totals: pdfs tip=0 bf=0 unk=0 | queue tip=0 bf=0 unk=0 | pending tip=0 bf=0 unk=0')
   })
 
   it('escapes backslashes and pipes in series labels for markdown cells', () => {
@@ -123,13 +268,13 @@ describe('formatCiIngestStepSummary', () => {
       offeringBackfillFrontierHolders: [],
       offeringGateFrontier: null,
       offeringGateFrontierHolders: [],
+      offeringTip: emptyOfferingSourceProgress(),
+      offeringBackfill: emptyOfferingSourceProgress(),
+      offeringUnattributed: emptyOfferingSourceProgress(),
       offeringPdfsDownloaded: 0,
       offeringPdfsPending: 0,
       offeringPdfsParseFailed: 0,
       offeringPdfsSkippedNoSchedule: 0,
-      offeringPdfsTranscribedSeries: [],
-      offeringPdfsParseFailedSeries: [],
-      offeringPdfsSkippedSeries: [],
       offeringsSoftFailed: false,
       retailInterestSoftFailed: false
     })
@@ -178,21 +323,24 @@ describe('runCiIngest', () => {
       expect(output1).toContain('offering_backfill_frontier=')
       expect(output1).toContain('offering_gate_frontier=')
       expect(output1).toContain('offering_pdfs_skipped_no_schedule=')
+      expect(output1).toContain('offering_pdfs_tip=')
+      expect(output1).toContain('offering_queue_bf=')
       const summary1 = await readFile(summaryFile, 'utf8')
       expect(summary1).toContain('#### WebKincstár')
-      expect(summary1).toContain('#### Offerings')
+      expect(summary1).toContain('#### Offerings — tip')
+      expect(summary1).toContain('#### Offerings — backfill')
       expect(summary1).toContain('historical gate (shallowest frontier) | closed')
       expect(summary1).toContain('historical datums included | no')
-      expect(summary1).toContain('deepest frontier (progress, min)')
+      expect(summary1).toContain('deepest frontier (backfill progress, min)')
       expect(summary1).toContain('shallowest frontier (gate readiness, max)')
-      expect(summary1).toContain('deepest frontier holders')
-      expect(summary1).toContain('shallowest frontier holders')
-      expect(summary1).toContain('PDF transcribed (successful) by family:')
-      expect(summary1).toContain('PDF parse_failed by family:')
-      expect(summary1).toContain('PDF skipped_no_schedule by family (series / type):')
+      expect(summary1).toContain('PDF transcribed (tip) by family:')
+      expect(summary1).toContain('PDF transcribed (backfill) by family:')
       expect(stdoutSpy.mock.calls.some((c) => String(c[0]).startsWith('::notice::'))).toBe(
         true
       )
+      expect(
+        stdoutSpy.mock.calls.some((c) => String(c[0]).includes('pdfs_tip=') && String(c[0]).includes('queue_bf='))
+      ).toBe(true)
 
       await writeFile(outFile, '', 'utf8')
       await writeFile(summaryFile, '', 'utf8')

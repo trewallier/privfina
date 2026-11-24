@@ -119,6 +119,52 @@ export function pathUuidFromOfferingPath(pathValue: unknown): string | null {
   return null
 }
 
+/**
+ * Tip listing vs backfill-only listing (tip wins on UUID overlap).
+ * `'unknown'` = not on today’s tip∪backfill pages (e.g. archive-only reparse).
+ */
+export type OfferingListingSource = 'tip' | 'backfill' | 'unknown'
+
+/**
+ * Collect lowercase path UUIDs from a raw getPublicOfferings envelope.
+ */
+export function pathUuidsFromOfferingEnvelope(envelope: AkkEnvelope | null | undefined): Set<string> {
+  const out = new Set<string>()
+  if (!envelope?.data?.length) return out
+  for (const row of envelope.data) {
+    if (!row || typeof row !== 'object') continue
+    const path = (row as AkkRow).path
+    const uuid = pathUuidFromOfferingPath(path)
+    if (uuid) out.add(uuid)
+  }
+  return out
+}
+
+/**
+ * Map pathUuid → listing source. Tip UUIDs win; backfill-only UUIDs are `'backfill'`.
+ * UUIDs absent from both pages are not in the map — resolve as `'unknown'`.
+ */
+export function offeringListingSourceByUuid(
+  tipEnvelope: AkkEnvelope,
+  backfillEnvelope: AkkEnvelope | null | undefined
+): Map<string, OfferingListingSource> {
+  const tipUuids = pathUuidsFromOfferingEnvelope(tipEnvelope)
+  const map = new Map<string, OfferingListingSource>()
+  for (const uuid of tipUuids) map.set(uuid, 'tip')
+  for (const uuid of pathUuidsFromOfferingEnvelope(backfillEnvelope)) {
+    if (!map.has(uuid)) map.set(uuid, 'backfill')
+  }
+  return map
+}
+
+export function resolveOfferingListingSource(
+  pathUuid: string | null | undefined,
+  byUuid: ReadonlyMap<string, OfferingListingSource>
+): OfferingListingSource {
+  if (!pathUuid) return 'unknown'
+  return byUuid.get(pathUuid.toLowerCase()) ?? 'unknown'
+}
+
 function saleWindowFromRow(row: AkkRow): SaleWindow | null {
   const from = asIsoDate(row.startPeriod)
   if (!from) return null

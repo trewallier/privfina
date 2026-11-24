@@ -46,12 +46,26 @@ export interface FetchAkkOfferingsOptions {
   skipBackfillListings?: boolean
 }
 
+/** Why a family did or did not include a historical listing page. */
+export type OfferingBackfillListingStatus =
+  | 'merged'
+  | 'no_frontier'
+  | 'soft_failed'
+  | 'skipped'
+
 export interface FetchAkkOfferingsFamilyResult {
   family: OfferingFamilyCode
+  /** Tip∪backfill union (tip wins on path UUID). Used for normalize/merge. */
   envelope: AkkEnvelope
+  /** Tip listing page alone (for tip-vs-backfill Actions stats). */
+  tipEnvelope: AkkEnvelope
+  /** Backfill listing page alone when merged; otherwise null. */
+  backfillEnvelope: AkkEnvelope | null
   url: string
   /** True when a backfill listing page was merged into `envelope`. */
   backfillMerged: boolean
+  /** Distinguishes merged / no frontier / soft-fail / offline skip. */
+  backfillStatus: OfferingBackfillListingStatus
   backfillUrl: string | null
   frontierPublished: string | null
 }
@@ -233,6 +247,7 @@ export async function fetchAkkOfferingListings(
 
       let backfillUrl: string | null = null
       let backfillEnvelope: AkkEnvelope | null = null
+      let backfillStatus: OfferingBackfillListingStatus = 'no_frontier'
       if (frontier) {
         const endBound = offeringListingEndBoundBeforeFrontier(frontier)
         backfillUrl = buildPublicOfferingsUrl(family, AKK_XPOSE3_BASE, {
@@ -240,6 +255,7 @@ export async function fetchAkkOfferingListings(
         })
         if (options.backfillEnvelopesByFamily?.[family]) {
           backfillEnvelope = options.backfillEnvelopesByFamily[family]!
+          backfillStatus = 'merged'
         } else if (!options.envelopesByFamily?.[family]) {
           // Live tip → also attempt live backfill. Offline tip fixtures alone
           // skip network backfill unless an explicit backfill fixture is supplied.
@@ -251,6 +267,7 @@ export async function fetchAkkOfferingListings(
               backoffMs,
               `akk-offerings-backfill:${family}`
             )
+            backfillStatus = 'merged'
           } catch (backfillErr) {
             // Soft: tip listing still usable; log and continue without backfill page.
             console.error(
@@ -260,10 +277,12 @@ export async function fetchAkkOfferingListings(
             )
             backfillEnvelope = null
             backfillUrl = null
+            backfillStatus = 'soft_failed'
           }
         } else {
           // Offline tip-only: no backfill page.
           backfillUrl = null
+          backfillStatus = 'skipped'
         }
       }
 
@@ -280,8 +299,11 @@ export async function fetchAkkOfferingListings(
       byFamily.push({
         family,
         envelope,
+        tipEnvelope,
+        backfillEnvelope,
         url: tipUrl,
         backfillMerged: Boolean(backfillEnvelope),
+        backfillStatus,
         backfillUrl,
         frontierPublished: frontier
       })

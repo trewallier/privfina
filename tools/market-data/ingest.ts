@@ -24,10 +24,12 @@ import {
   shouldEnableWebkincstarHistoricalBackfill,
   type OfferingFrontierHolder
 } from './offering-archive-frontier.ts'
-import type {
-  OfferingPdfSeriesRef,
-  OfferingPdfSkippedRef,
-  WebkincstarSkippedSeriesRef
+import {
+  bucketOfferingResourceType,
+  emptyOfferingSourceProgress,
+  type OfferingPdfSeriesRef,
+  type OfferingSourceProgress,
+  type WebkincstarSkippedSeriesRef
 } from './ci-ingest-summary.ts'
 import type { PriceCalendarDay } from './normalize-webkincstar.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
@@ -36,8 +38,13 @@ import { fetchOfferingPdfsForListings } from './fetch-offering-pdf.ts'
 import {
   archiveDocumentFromListing,
   diffOfferingsAgainstArchive,
+  isOfferingPdfEligible,
   normalizeOfferingEnvelope,
-  offeringStubFromListing
+  offeringListingSourceByUuid,
+  offeringStubFromListing,
+  resolveOfferingListingSource,
+  type OfferingListingSource,
+  type NormalizedOfferingListingRow
 } from './normalize-offerings.ts'
 import { mergeOfferingsState } from './merge-offerings.ts'
 import type { OfferingFamilyCode } from './offering-families.ts'
@@ -260,7 +267,13 @@ export interface IngestReport extends MergeResult {
   /** Series whose PDF parse failed this run. */
   offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[]
   /** Series skipped as no-schedule this run (includes resource type). */
-  offeringPdfsSkippedSeries: OfferingPdfSkippedRef[]
+  offeringPdfsSkippedSeries: OfferingPdfSeriesRef[]
+  /** Tip listing / queue / PDF progress (Actions summary). */
+  offeringTip: OfferingSourceProgress
+  /** Backfill listing / queue / PDF progress (Actions summary). */
+  offeringBackfill: OfferingSourceProgress
+  /** Archive-only / listing-absent PDF outcomes (Actions summary). */
+  offeringUnattributed: OfferingSourceProgress
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -659,7 +672,10 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let offeringPdfsSkippedNoSchedule = 0
   const offeringPdfsTranscribedSeries: OfferingPdfSeriesRef[] = []
   const offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[] = []
-  const offeringPdfsSkippedSeries: OfferingPdfSkippedRef[] = []
+  const offeringPdfsSkippedSeries: OfferingPdfSeriesRef[] = []
+  const offeringTip = emptyOfferingSourceProgress()
+  const offeringBackfill = emptyOfferingSourceProgress()
+  const offeringUnattributed = emptyOfferingSourceProgress()
   let offeringsByFamily: Partial<Record<FamilyCode, Record<string, OfferingFile>>> | undefined
   let offeringArchiveUpdate: OfferingArchiveFile | null | undefined
   let seriesSaleWindows:
@@ -692,6 +708,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
         families: offeringFamilies
       })
 
+      offeringTip.familiesSoftFailed = fetched.failures.length
       if (fetched.failures.length > 0) {
         offeringsSoftFailed = true
         for (const failure of fetched.failures) {
@@ -709,9 +726,48 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           offeringsSoftFailed = true
         }
       } else {
+        offeringTip.familiesOk = fetched.byFamily.length
+        for (const fam of fetched.byFamily) {
+          if (fam.backfillStatus === 'merged') offeringBackfill.familiesOk += 1
+          else if (fam.backfillStatus === 'soft_failed') {
+            offeringBackfill.familiesSoftFailed += 1
+          } else if (fam.backfillStatus === 'no_frontier') {
+            offeringBackfill.familiesNoFrontier += 1
+          } else {
+            offeringBackfill.familiesSkipped += 1
+          }
+        }
+
+        const listingSourceByUuid = new Map<string, OfferingListingSource>()
+        for (const fam of fetched.byFamily) {
+          for (const [uuid, source] of offeringListingSourceByUuid(
+            fam.tipEnvelope,
+            fam.backfillEnvelope
+          )) {
+            // Tip wins if already present from another family's page (should not overlap).
+            if (!listingSourceByUuid.has(uuid) || source === 'tip') {
+              listingSourceByUuid.set(uuid, source)
+            }
+          }
+        }
+
+        const sourceProgress = (source: OfferingListingSource): OfferingSourceProgress => {
+          if (source === 'tip') return offeringTip
+          if (source === 'backfill') return offeringBackfill
+          return offeringUnattributed
+        }
+
+        const bumpRow = (row: NormalizedOfferingListingRow): void => {
+          const source = resolveOfferingListingSource(row.pathUuid, listingSourceByUuid)
+          const bucket = bucketOfferingResourceType(row.resourceType)
+          sourceProgress(source).rows[bucket] += 1
+        }
+
         const listingRows = fetched.byFamily.flatMap((f) =>
           normalizeOfferingEnvelope(f.envelope, f.family)
         )
+        for (const row of listingRows) bumpRow(row)
+
         const diff = diffOfferingsAgainstArchive(
           listingRows,
           previous.offeringArchive?.documents,
@@ -729,6 +785,31 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             .filter((d) => d.status === 'transcribed')
             .map((d) => `${d.family}\0${d.seriesId}`)
         )
+
+        // ISSUE known (hashed) vs queued, split by tip/backfill listing source.
+        const queuedUuids = new Set(
+          diff.unknownDocuments
+            .map((r) => r.pathUuid?.toLowerCase())
+            .filter((u): u is string => Boolean(u))
+        )
+        for (const row of listingRows) {
+          if (!row.pathUuid || !isOfferingPdfEligible(row)) continue
+          const uuid = row.pathUuid.toLowerCase()
+          const source = resolveOfferingListingSource(uuid, listingSourceByUuid)
+          if (queuedUuids.has(uuid)) {
+            sourceProgress(source).pdfQueue += 1
+          } else {
+            const known = knownByUuid.get(uuid)
+            if (known?.sha256) sourceProgress(source).issueKnownHashed += 1
+          }
+        }
+
+        const outcomeRef = (row: NormalizedOfferingListingRow): OfferingPdfSeriesRef => ({
+          family: row.family,
+          seriesId: row.seriesId,
+          resourceType: row.resourceType,
+          listingSource: resolveOfferingListingSource(row.pathUuid, listingSourceByUuid)
+        })
 
         // Always index listing rows as listed first; PDF gate upgrades unknowns.
         const archiveUpserts = listingRows
@@ -755,7 +836,16 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           offeringPdfsDownloaded = pdfResult.downloadedCount
           offeringPdfsPending = pdfResult.pendingCount
 
+          const unknownByUuid = new Map(
+            diff.unknownDocuments
+              .filter((r) => r.pathUuid)
+              .map((r) => [r.pathUuid!.toLowerCase(), r])
+          )
+
           for (const dl of pdfResult.downloaded) {
+            const ref = outcomeRef(dl.row)
+            const prog = sourceProgress(ref.listingSource)
+            prog.pdfsDownloaded += 1
             try {
               const uuidKey = (dl.row.pathUuid ?? '').toLowerCase()
               const injected = options.offeringPdfTextByUuid?.[uuidKey]
@@ -765,11 +855,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                   : await pdfBytesToTextLayout(dl.bytes)
               if (classifyOfferingPdfText(text) === 'skip_no_schedule') {
                 offeringPdfsSkippedNoSchedule += 1
-                offeringPdfsSkippedSeries.push({
-                  family: dl.row.family,
-                  seriesId: dl.row.seriesId,
-                  resourceType: dl.row.resourceType
-                })
+                prog.pdfsSkippedNoSchedule += 1
+                offeringPdfsSkippedSeries.push(ref)
+                prog.skipped.push(ref)
                 console.error(
                   `[market-data] offering PDF skipped (no schedule) for ${dl.row.pathUuid}`
                 )
@@ -816,16 +904,13 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 sourceHost: dl.sourceHost
               })
               if (transcribed) archiveUpserts.push(transcribed)
-              offeringPdfsTranscribedSeries.push({
-                family: dl.row.family,
-                seriesId: dl.row.seriesId
-              })
+              offeringPdfsTranscribedSeries.push(ref)
+              prog.transcribed.push(ref)
             } catch (err) {
               offeringPdfsParseFailed += 1
-              offeringPdfsParseFailedSeries.push({
-                family: dl.row.family,
-                seriesId: dl.row.seriesId
-              })
+              prog.pdfsParseFailed += 1
+              offeringPdfsParseFailedSeries.push(ref)
+              prog.parseFailed.push(ref)
               console.error(
                 `[market-data] offering PDF parse failed for ${dl.row.pathUuid}: ${
                   err instanceof Error ? err.message : String(err)
@@ -844,6 +929,23 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
           for (const doc of pdfResult.archiveUpserts) {
             if (doc.status === 'downloaded') continue
             archiveUpserts.push(doc)
+            const row =
+              unknownByUuid.get(doc.pathUuid.toLowerCase()) ??
+              ({
+                family: doc.family,
+                seriesId: doc.seriesId,
+                resourceType: doc.resourceType,
+                pathUuid: doc.pathUuid
+              } as NormalizedOfferingListingRow)
+            const ref = outcomeRef(row)
+            const prog = sourceProgress(ref.listingSource)
+            if (doc.status === 'pending_download') {
+              prog.pdfsPending += 1
+              prog.pending.push(ref)
+            } else if (doc.status === 'download_failed') {
+              prog.pdfsDownloadFailed += 1
+              prog.downloadFailed.push(ref)
+            }
           }
         } else if (diff.unknownDocuments.length > 0) {
           // Offline listing fixtures: leave unknowns as listed (no network PDFs).
@@ -956,7 +1058,10 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     offeringGateFrontierHolders,
     offeringPdfsTranscribedSeries,
     offeringPdfsParseFailedSeries,
-    offeringPdfsSkippedSeries
+    offeringPdfsSkippedSeries,
+    offeringTip,
+    offeringBackfill,
+    offeringUnattributed
   }
 }
 

@@ -2,7 +2,7 @@ import { EXIT_ERROR, EXIT_UNCHANGED, EXIT_UPDATED, ingestMarketData } from './in
 import {
   formatCiIngestStepSummary,
   type OfferingPdfSeriesRef,
-  type OfferingPdfSkippedRef,
+  type OfferingSourceProgress,
   type WebkincstarSkippedSeriesRef
 } from './ci-ingest-summary.ts'
 import {
@@ -55,7 +55,10 @@ export interface CiIngestResult {
   offeringPdfsSkippedNoSchedule: number
   offeringPdfsTranscribedSeries: OfferingPdfSeriesRef[]
   offeringPdfsParseFailedSeries: OfferingPdfSeriesRef[]
-  offeringPdfsSkippedSeries: OfferingPdfSkippedRef[]
+  offeringPdfsSkippedSeries: OfferingPdfSeriesRef[]
+  offeringTip: OfferingSourceProgress
+  offeringBackfill: OfferingSourceProgress
+  offeringUnattributed: OfferingSourceProgress
   /** Deepest (min) offering frontier — archive progress. */
   offeringBackfillFrontier: string | null
   offeringBackfillFrontierHolders: OfferingFrontierHolder[]
@@ -80,7 +83,8 @@ export interface CiIngestResult {
  * Build the quiet Actions `::notice::` one-liner for the overview list.
  * `wk_hist_gate` is gate readiness; not the same as historical datums enabled
  * (operator explicit `webkincstarDatums` can fetch history with the gate closed).
- * `frontier=` is deepest progress; `gate_frontier=` is shallowest readiness.
+ * Tip vs backfill PDF/queue/pending are split; `frontier=` / `gate_frontier=` remain
+ * deepest / shallowest archive frontiers.
  * Exported for unit tests.
  */
 export function formatCiIngestNoticeLine(result: {
@@ -89,20 +93,26 @@ export function formatCiIngestNoticeLine(result: {
   webkincstarHistoricalGateOpen: boolean
   webkincstarOverlaySkipped: number
   webkincstarFetchFailedDays: number
-  offeringPdfsDownloaded: number
-  offeringPdfsPending: number
+  offeringTip: Pick<OfferingSourceProgress, 'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending'>
+  offeringBackfill: Pick<OfferingSourceProgress, 'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending'>
   offeringPdfsParseFailed: number
   offeringBackfillFrontier: string | null
   offeringGateFrontier: string | null
 }): string {
+  const tip = result.offeringTip
+  const bf = result.offeringBackfill
   return [
     `changed=${result.changed}`,
     `as_of=${result.asOf ?? ''}`,
     `wk_hist_gate=${result.webkincstarHistoricalGateOpen ? 'on' : 'off'}`,
     `wk_overlay_skip=${result.webkincstarOverlaySkipped}`,
     `wk_fetch_failed=${result.webkincstarFetchFailedDays}`,
-    `pdfs=${result.offeringPdfsDownloaded}`,
-    `pending=${result.offeringPdfsPending}`,
+    `pdfs_tip=${tip.pdfsDownloaded}`,
+    `pdfs_bf=${bf.pdfsDownloaded}`,
+    `queue_tip=${tip.pdfQueue}`,
+    `queue_bf=${bf.pdfQueue}`,
+    `pending_tip=${tip.pdfsPending}`,
+    `pending_bf=${bf.pdfsPending}`,
     `parse_failed=${result.offeringPdfsParseFailed}`,
     `frontier=${result.offeringBackfillFrontier ?? ''}`,
     `gate_frontier=${result.offeringGateFrontier ?? ''}`
@@ -154,6 +164,9 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringPdfsTranscribedSeries: report.offeringPdfsTranscribedSeries,
     offeringPdfsParseFailedSeries: report.offeringPdfsParseFailedSeries,
     offeringPdfsSkippedSeries: report.offeringPdfsSkippedSeries,
+    offeringTip: report.offeringTip,
+    offeringBackfill: report.offeringBackfill,
+    offeringUnattributed: report.offeringUnattributed,
     offeringBackfillFrontier: report.offeringBackfillFrontier,
     offeringBackfillFrontierHolders: report.offeringBackfillFrontierHolders,
     offeringGateFrontier: report.offeringGateFrontier,
@@ -179,6 +192,12 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     'offering_pdfs_skipped_no_schedule',
     String(result.offeringPdfsSkippedNoSchedule)
   )
+  writeGithubOutput('offering_pdfs_tip', String(result.offeringTip.pdfsDownloaded))
+  writeGithubOutput('offering_pdfs_bf', String(result.offeringBackfill.pdfsDownloaded))
+  writeGithubOutput('offering_queue_tip', String(result.offeringTip.pdfQueue))
+  writeGithubOutput('offering_queue_bf', String(result.offeringBackfill.pdfQueue))
+  writeGithubOutput('offering_pending_tip', String(result.offeringTip.pdfsPending))
+  writeGithubOutput('offering_pending_bf', String(result.offeringBackfill.pdfsPending))
   writeGithubOutput('offering_backfill_frontier', result.offeringBackfillFrontier ?? '')
   writeGithubOutput('offering_gate_frontier', result.offeringGateFrontier ?? '')
   writeGithubOutput('offerings_soft_failed', result.offeringsSoftFailed ? 'true' : 'false')

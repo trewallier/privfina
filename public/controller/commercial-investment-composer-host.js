@@ -678,9 +678,29 @@ function createCommercialInvestmentComposerHost({
       commercialMarketFamilyState.latest?.quotes,
       seriesId
     )
+    // Load offering before purchase-date preference so saleWindow comes from the
+    // offering when series-adjacent window is missing (ROADMAP §6l).
+    const offeringsById = commercialMarketFamilyState.offeringsById || {}
+    let offering
+    if (Object.prototype.hasOwnProperty.call(offeringsById, seriesId)) {
+      offering = offeringsById[seriesId]
+    } else {
+      offering = await marketDataLoader.loadOffering(family, seriesId)
+      if (token !== commercialMarketApplyToken) {
+        return
+      }
+      if (commercialInvestmentSeriesInput?.value !== seriesId) {
+        return
+      }
+      commercialMarketFamilyState.offeringsById = {
+        ...offeringsById,
+        [seriesId]: offering
+      }
+    }
     const todayIso = budapestTodayIso() || browserTodayIso()
     const preferredDate = preferredPurchaseDateForSeries({
       series,
+      offering,
       todayIso,
       latestQuoteDate: latestPreview?.d || null,
       currentPurchaseDate: requestedDate
@@ -738,22 +758,6 @@ function createCommercialInvestmentComposerHost({
           ...(commercialMarketFamilyState.couponsById || {}),
           [seriesId]: coupons
         }
-      }
-    }
-
-    const offeringsById = commercialMarketFamilyState.offeringsById || {}
-    let offering
-    if (Object.prototype.hasOwnProperty.call(offeringsById, seriesId)) {
-      offering = offeringsById[seriesId]
-    } else {
-      offering = await marketDataLoader.loadOffering(family, seriesId)
-      if (token !== commercialMarketApplyToken) {
-        return
-      }
-      // Memoize hits and misses (null) so missing offerings do not re-fetch on every apply.
-      commercialMarketFamilyState.offeringsById = {
-        ...offeringsById,
-        [seriesId]: offering
       }
     }
 

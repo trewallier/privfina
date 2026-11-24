@@ -56,6 +56,7 @@ export function validateMarketTree(tree: MarketTreeState): void {
       throw new ValidateError(`Required family ${family} has empty latest.json`)
     }
     const seriesIds = new Set<string>()
+    const asOf = tree.manifest.asOf
     for (const s of fam.series.series) {
       try {
         assertSeriesId(s.id)
@@ -64,7 +65,7 @@ export function validateMarketTree(tree: MarketTreeState): void {
           `Non-canonical series id in ${family}: ${err instanceof Error ? err.message : String(err)}`
         )
       }
-      validateSeriesRecord(family, s, required)
+      validateSeriesRecord(family, s, required, asOf)
       seriesIds.add(s.id)
     }
     for (const [id, q] of Object.entries(fam.quotes)) {
@@ -201,7 +202,12 @@ export function validateMarketTree(tree: MarketTreeState): void {
   verifyManifestDigests(tree)
 }
 
-function validateSeriesRecord(family: FamilyCode, s: SeriesRecord, requiredFamily: boolean): void {
+function validateSeriesRecord(
+  family: FamilyCode,
+  s: SeriesRecord,
+  requiredFamily: boolean,
+  asOf: string | null
+): void {
   if (Object.prototype.hasOwnProperty.call(s, 'prem')) {
     throw new ValidateError(`series.prem is not allowed in schemaVersion 2 (${family}/${s.id})`)
   }
@@ -212,6 +218,11 @@ function validateSeriesRecord(family: FamilyCode, s: SeriesRecord, requiredFamil
   ) {
     throw new ValidateError(
       `Active series in required family ${family}/${s.id} must have non-null mat`
+    )
+  }
+  if (s.status === 'active' && asOf && s.mat && s.mat < asOf) {
+    throw new ValidateError(
+      `Series ${family}/${s.id} is active but mat ${s.mat} is before asOf ${asOf} (must be matured)`
     )
   }
 }

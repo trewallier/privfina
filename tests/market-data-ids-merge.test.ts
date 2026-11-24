@@ -12,6 +12,7 @@ import {
 import { NormalizeError, normalizeAkkSnapshots } from '../tools/market-data/normalize.ts'
 import type { AkkEnvelope, NormalizedSnapshot, SeriesRecord } from '../tools/market-data/types.ts'
 import { SCHEMA_VERSION, emptyNormalizedByFamily } from '../tools/market-data/types.ts'
+import { validateMarketTree } from '../tools/market-data/validate.ts'
 
 function snapshotWith(
   asOf: string,
@@ -249,6 +250,167 @@ describe('accumulate series + same-day conflicts', () => {
     expect(second.tree.families.bmap.quotes.OLD_SERIES.rows).toHaveLength(1)
     expect(second.tree.families.bmap.series.series.find((s) => s.id === 'A280322N17')?.status).toBe(
       'active'
+    )
+  })
+
+  it('keeps matured status when historical quotes are rewritten after mat < asOf', () => {
+    const maturedId = 'N261108'
+    const first = mergeSnapshot(
+      emptyMarketTree(),
+      {
+        asOf: '2026-11-24',
+        byFamily: {
+          mapp: {
+            series: [
+              {
+                id: maturedId,
+                isin: null,
+                name: 'N2026/45',
+                issue: '2021-11-08',
+                mat: '2026-11-08',
+                ccy: 'HUF',
+                status: 'matured'
+              }
+            ],
+            quotes: [{ id: maturedId, row: ['2026-11-04', 100, 100, null, null, 5.9] }]
+          }
+        }
+      },
+      { generatedAt: '2026-11-24T12:00:00+01:00' }
+    )
+    expect(first.tree.families.mapp.series.series.find((s) => s.id === maturedId)?.status).toBe(
+      'matured'
+    )
+
+    // Simulate §6m WebKincstár historical rewrite: older settle dates in the same
+    // snapshot as asOf, without a live asOf quote for the matured series.
+    const second = mergeSnapshot(
+      first.tree,
+      {
+        asOf: '2026-11-24',
+        byFamily: {
+          mapp: {
+            series: [
+              {
+                id: maturedId,
+                isin: null,
+                name: 'N2026/45',
+                issue: '2021-11-08',
+                mat: '2026-11-08',
+                ccy: 'HUF',
+                status: 'active'
+              }
+            ],
+            quotes: [
+              { id: maturedId, row: ['2026-11-03', 100, 100, 0, null, 5.8] },
+              { id: maturedId, row: ['2026-11-04', 100, 100, 0, null, 5.9] }
+            ]
+          }
+        }
+      },
+      { generatedAt: '2026-11-24T18:00:00+01:00', allowSameDayRewrite: true }
+    )
+    expect(second.tree.families.mapp.series.series.find((s) => s.id === maturedId)?.status).toBe(
+      'matured'
+    )
+    expect(second.tree.families.mapp.quotes[maturedId].rows).toHaveLength(2)
+  })
+
+  it('validateMarketTree rejects active series whose mat is before asOf', () => {
+    const maturedId = 'N261108'
+    const requiredQuote = (
+      id: string,
+      mat: string
+    ): { series: SeriesRecord[]; quotes: Array<{ id: string; row: [string, number, null, number, null, number] }> } => ({
+      series: [
+        {
+          id,
+          isin: null,
+          name: id,
+          issue: null,
+          mat,
+          ccy: 'HUF',
+          status: 'active'
+        }
+      ],
+      quotes: [{ id, row: ['2026-11-24', 100, null, 5, null, 0] }]
+    })
+    const ok = mergeSnapshot(
+      emptyMarketTree(),
+      {
+        asOf: '2026-11-24',
+        byFamily: {
+          dkj: requiredQuote('D270101', '2027-01-01'),
+          pmap: requiredQuote('A270324I22', '2027-03-24'),
+          bmap: requiredQuote('A280322N17', '2028-03-22'),
+          mapp: {
+            series: [
+              {
+                id: maturedId,
+                isin: null,
+                name: 'N2026/45',
+                issue: '2021-11-08',
+                mat: '2026-11-08',
+                ccy: 'HUF',
+                status: 'matured'
+              }
+            ],
+            quotes: [{ id: maturedId, row: ['2026-11-04', 100, 100, null, null, 5.9] }]
+          }
+        }
+      },
+      { generatedAt: '2026-11-24T12:00:00+01:00' }
+    )
+    validateMarketTree(ok.tree)
+
+    const bad = structuredClone(ok.tree)
+    const rec = bad.families.mapp.series.series.find((s) => s.id === maturedId)
+    expect(rec).toBeTruthy()
+    rec!.status = 'active'
+    expect(() => validateMarketTree(bad)).toThrow(/active but mat .* before asOf/)
+  })
+
+  it('does not mark delisted series active from pre-asOf historical quotes alone', () => {
+    const id = 'A280322N17'
+    const seeded = mergeSnapshot(
+      emptyMarketTree(),
+      {
+        asOf: '2026-11-02',
+        byFamily: {
+          bmap: {
+            series: [
+              {
+                id,
+                isin: 'HU0000403423',
+                name: '2028/N',
+                issue: '2017-10-03',
+                mat: '2028-03-22',
+                ccy: 'HUF',
+                status: 'active'
+              }
+            ],
+            quotes: [{ id, row: ['2026-11-02', 101.5, 101.7, 5.2, 5.1, 0.5] }]
+          }
+        }
+      },
+      { generatedAt: '2026-11-02T18:00:00+01:00' }
+    )
+    const afterGap = mergeSnapshot(
+      seeded.tree,
+      {
+        asOf: '2026-11-10',
+        byFamily: {
+          bmap: {
+            series: [],
+            // Historical backfill only — no settle on asOf.
+            quotes: [{ id, row: ['2026-11-02', 101.5, 101.7, 0, 5.1, 0.5] }]
+          }
+        }
+      },
+      { generatedAt: '2026-11-10T18:00:00+01:00', allowSameDayRewrite: true }
+    )
+    expect(afterGap.tree.families.bmap.series.series.find((s) => s.id === id)?.status).toBe(
+      'delisted'
     )
   })
 

@@ -562,6 +562,10 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
       : mergeWebkincstarFetchDatums(tipLookbackDatums, historicalDatums)
   const webkincstarHistoricalEnabled =
     explicitWebkincstarDatums || includeScheduledHistorical
+  /** Tip lookback never invents (ADR 0048); only hist window / explicit CLI datums. */
+  const inventDatums = new Set(
+    explicitWebkincstarDatums ? webkincstarDatums : historicalDatums
+  )
   const shouldFetchWebkincstar =
     !options.skipWebkincstar &&
     (Boolean(options.webkincstarTextByReport) || !offlineAkk)
@@ -623,7 +627,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
             }
             const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalizedOne.snapshot, {
               extraSeries: previousSeriesForJoin(previous),
-              inventUnmatched: webkincstarHistoricalEnabled
+              inventUnmatched: inventDatums.has(webkincstarDatum)
             })
             if (overlay.inventedSeries.length > 0) {
               for (const series of overlay.inventedSeries) {

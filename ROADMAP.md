@@ -555,7 +555,7 @@ Constraints
 - Tip path unchanged: Budapest yesterday + ≤3 prior weekday hole-fill (ADR 0039).
 - Rolling history: each scheduled run also fetches the **6 calendar days** immediately before **each report’s contiguous durable frontier** (per-report tip cluster; deep islands do not stall shallower reports); scrape floor **`1990-01-01`** (refine later).
 - **Gate:** scheduled historical stays **off** until **every** offering family’s archive contiguous tip success frontier (`transcribed` / `skipped_*`) is at least **90** calendar days before snapshot `asOf` (`OFFERING_WK_HISTORICAL_GATE_DAYS`) — readiness uses the **shallowest** frontier (`max` published), not the deepest. Tip lookback always runs. With ADR 0048 invent on, the gate mainly paces offering PDF identity / enrich rather than forever blocking unmatched hist names.
-- **Identity (ADR 0048):** historical WK (gate open or explicit CLI `--from` / `webkincstarDatums`) may create marked `identitySource: 'webkincstar.allamkincstar.gov.hu'` series stubs for unmatched instruments so already-matured names can join quotes; tip-lookback-only keeps soft-skip. ÁKK catalog promotes to `'www.akk.hu'`; ISSUE offerings null-fill WK-origin fields only.
+- **Identity (ADR 0048):** historical WK datums (scheduled §6m window when gate open, or explicit CLI `--from` / `webkincstarDatums`) may create marked `identitySource: 'webkincstar.allamkincstar.gov.hu'` series stubs for unmatched instruments so already-matured names can join quotes; **tip lookback never invents** (even when the gate is open). ÁKK catalog promotes to `'www.akk.hu'`; ISSUE offerings null-fill WK-origin fields (ISSUE `dayCount` may overwrite a differing WK-origin value).
 - One-shot CLI remains an operator escape hatch (`--from` **required**; default `--reports` = all daily reports; `--to` defaults to Budapest yesterday; bypasses the offering gate).
 
 Plan slices
@@ -563,7 +563,7 @@ Plan slices
 - [x] Scheduled rolling historical window in daily ingest (tip lookback ∪ per-report 6-day frontiers; floor `1990-01-01`).
 - [x] Offering-archive depth gate for scheduled WK historical (`OFFERING_WK_HISTORICAL_GATE_DAYS` = 90; default-off on shallow tip).
 - [x] ADR 0048 + `SeriesRecord.identitySource` schema / validate (docs-first).
-- [x] Historical WK invents marked series stubs; tip-lookback soft-skips; ÁKK promote; calendar seals when invent clears unmatched.
+- [x] Historical WK invents marked series stubs on hist datums only; tip lookback soft-skips (gate open or closed); ÁKK promote; calendar seals when invent clears unmatched.
 - [ ] ISSUE offering null-fill for WK-origin series only.
 - [ ] Live tip cutover / Pages redeploy so SPA quote history deepens as the calendar walks back.
 - [x] Offering PDF historical archive loop: tip `top=50` + backfill listing from persisted per-family discovery cursor (`ptsEnd` / `auctionEnd` = cursor `endBound`; bootstrap tip min filter date − 1; advance past each page; exhaust on empty/floor; independent of tip success frontier); PDF cap 20/family; `pending_download` / sha-null `download_failed` retry every run.

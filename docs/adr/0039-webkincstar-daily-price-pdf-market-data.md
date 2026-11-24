@@ -46,7 +46,8 @@ Related: 0003 (static GitHub Pages), 0007 (workflow guardrails), 0027 (commercia
 
 - Daily ingest keeps this ADR’s primary datum (Budapest yesterday) and ≤3 prior-weekday tip lookback.
 - Scheduled runs also union a rolling historical window: for each configured report, the 6 calendar days immediately before that report’s contiguous durable frontier (from its tip cluster), clamped to scrape floor `1990-01-01` (refine later). Per-report frontiers keep a deep single-report backfill from stalling shallower reports.
-- Operator one-shot CLI (`market-data backfill-webkincstar`) requires explicit `--from` and defaults to all daily reports; scheduled rolling history is the preferred deepening path.
+- **Offering-archive gate:** scheduled historical is enabled only when **every** ÁKK offering family’s contiguous tip success frontier (`transcribed` / `skipped_no_schedule` / `skipped_already_transcribed`) is at least 90 calendar days before snapshot `asOf` — i.e. the **shallowest** frontier (`max` published date across families) must be ≤ `asOf − 90`. One deep family must not open the gate while another remains shallow. Offering “contiguous” here is a **status walk** (calendar-day gaps between `published` dates are OK); WK price-calendar contiguous frontiers require day−1 calendar contiguity — related idea, different predicate. Shallow tips keep tip lookback only so WK does not walk into instruments never seen by ÁKK∥tip identity. Operator CLI with explicit `webkincstarDatums` / `--from` bypasses the gate.
+- Operator one-shot CLI (`market-data backfill-webkincstar`) requires explicit `--from` and defaults to all daily reports.
 
 ## Out of scope
 

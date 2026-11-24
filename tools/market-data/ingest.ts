@@ -19,6 +19,10 @@ import {
   resolveWebkincstarHistoricalBackfillDatums,
   resolveWebkincstarLookbackDatums
 } from './fetch-webkincstar.ts'
+import {
+  minOfferingSuccessFrontierPublished,
+  shouldEnableWebkincstarHistoricalBackfill
+} from './offering-archive-frontier.ts'
 import type { PriceCalendarDay } from './normalize-webkincstar.ts'
 import { loadMarketTree, marketRoot, writeMarketTree } from './io.ts'
 import { mergeSnapshot, type MergeResult } from './merge.ts'
@@ -212,6 +216,21 @@ export interface IngestReport extends MergeResult {
   offeringPdfsSkippedNoSchedule: number
   /** WebKincstár (report, datum) rows appended as fetch_failed this run. */
   webkincstarFetchFailedDays: number
+  /**
+   * True when this run included §6m historical WK datums — either because the
+   * offering-archive gate opened scheduled historical, or because the operator
+   * passed explicit `webkincstarDatums` (CLI bypass). Not the same as “gate open.”
+   */
+  webkincstarHistoricalEnabled: boolean
+  /** True when the offering-archive depth gate alone would enable scheduled historical. */
+  webkincstarHistoricalGateOpen: boolean
+  /** Datums selected for WebKincstár fetch this run (tip ∪ historical when gated). */
+  webkincstarDatumsFetched: string[]
+  /**
+   * Oldest (deepest) contiguous offering-archive success frontier across families
+   * (or null). Progress metric — gate readiness uses the shallowest frontier.
+   */
+  offeringBackfillFrontier: string | null
 }
 
 function emptyAllampapirSnapshot(): NormalizedSnapshot {
@@ -449,25 +468,40 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
 
   const webkincstarReports = options.webkincstarReports ?? WEBKINCSTAR_REPORTS
   const webkincstarPrimaryDatum = options.webkincstarDatum ?? budapestYesterdayIso()
+  const offeringBackfillFrontier = minOfferingSuccessFrontierPublished(
+    previous.offeringArchive
+  )
   // Explicit multi-day list (§6m CLI) wins; else single --datum; else tip path
-  // (yesterday + ≤3 weekday lookback) ∪ rolling historical window (6 days before
-  // each report's contiguous durable frontier, floor 1990-01-01).
-  const webkincstarDatums =
+  // (yesterday + ≤3 weekday lookback). Scheduled §6m historical window merges
+  // only when every family’s shallowest contiguous success frontier is deep
+  // enough; otherwise historical stays off. Operator bypass = explicit datums.
+  const explicitWebkincstarDatums =
     Array.isArray(options.webkincstarDatums) && options.webkincstarDatums.length > 0
-      ? options.webkincstarDatums
-      : options.webkincstarDatum
-        ? [options.webkincstarDatum]
-        : mergeWebkincstarFetchDatums(
-            resolveWebkincstarLookbackDatums({
-              primaryDatum: webkincstarPrimaryDatum,
-              previousDays: previous.priceCalendar?.days,
-              reports: webkincstarReports
-            }),
-            resolveWebkincstarHistoricalBackfillDatums({
-              previousDays: previous.priceCalendar?.days,
-              reports: webkincstarReports
-            })
-          )
+  const offeringGateOpen = shouldEnableWebkincstarHistoricalBackfill({
+    archive: previous.offeringArchive,
+    asOf: combined.snapshot.asOf ?? webkincstarPrimaryDatum
+  })
+  /** Scheduled §6m historical window selected (not single --datum; gate only). */
+  const includeScheduledHistorical =
+    !explicitWebkincstarDatums && !options.webkincstarDatum && offeringGateOpen
+  const tipLookbackDatums = resolveWebkincstarLookbackDatums({
+    primaryDatum: webkincstarPrimaryDatum,
+    previousDays: previous.priceCalendar?.days,
+    reports: webkincstarReports
+  })
+  const historicalDatums = includeScheduledHistorical
+    ? resolveWebkincstarHistoricalBackfillDatums({
+        previousDays: previous.priceCalendar?.days,
+        reports: webkincstarReports
+      })
+    : []
+  const webkincstarDatums = explicitWebkincstarDatums
+    ? options.webkincstarDatums!
+    : options.webkincstarDatum
+      ? [options.webkincstarDatum]
+      : mergeWebkincstarFetchDatums(tipLookbackDatums, historicalDatums)
+  const webkincstarHistoricalEnabled =
+    explicitWebkincstarDatums || includeScheduledHistorical
   const shouldFetchWebkincstar =
     !options.skipWebkincstar &&
     (Boolean(options.webkincstarTextByReport) || !offlineAkk)
@@ -842,7 +876,11 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     offeringPdfsPending,
     offeringPdfsParseFailed,
     offeringPdfsSkippedNoSchedule,
-    webkincstarFetchFailedDays
+    webkincstarFetchFailedDays,
+    webkincstarHistoricalEnabled: shouldFetchWebkincstar ? webkincstarHistoricalEnabled : false,
+    webkincstarHistoricalGateOpen: offeringGateOpen,
+    webkincstarDatumsFetched: shouldFetchWebkincstar ? [...webkincstarDatums] : [],
+    offeringBackfillFrontier
   }
 }
 

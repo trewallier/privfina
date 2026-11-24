@@ -200,6 +200,7 @@ export type { FixmapRateOutputs, FixmapSpecInputs } from './instruments/fixmap'
 export {
   deriveFixmapRateOutputs,
   deriveFixmapAccruedInterestAmount,
+  generateFixmapQuarterlyCouponFlows,
   generateFixmapAnnualCouponFlows,
   FIXMAP_COUPON_FREQUENCY_MONTHS
 } from './instruments/fixmap'

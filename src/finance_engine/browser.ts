@@ -99,6 +99,7 @@ export {
 export {
   deriveFixmapRateOutputs,
   deriveFixmapAccruedInterestAmount,
+  generateFixmapQuarterlyCouponFlows,
   generateFixmapAnnualCouponFlows,
   FIXMAP_COUPON_FREQUENCY_MONTHS
 } from './instruments/fixmap'

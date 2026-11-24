@@ -5,7 +5,7 @@
 import {
   deriveFixmapRateOutputs,
   deriveFixmapAccruedInterestAmount,
-  generateFixmapAnnualCouponFlows
+  generateFixmapQuarterlyCouponFlows
 } from '@finance_engine/instruments/fixmap'
 import { createInvestmentMaturityPreview, normalizeInstrumentBundle } from '../instruments.js'
 import { toFiniteNumber, toNonNegativeNumber } from './spec-input-validators.js'
@@ -53,10 +53,12 @@ function mapLegacyFixmapPreviewToSpecOutputs(_legacyPreview, specInputs) {
 
 function generateFixmapInstrumentBundleFromSpecInputs(specInputs, extras = {}) {
   const calculated = calculateFixmapFromSpecInputs(specInputs)
-  const flows = generateFixmapAnnualCouponFlows(
+  const flows = generateFixmapQuarterlyCouponFlows(
     specInputs,
     calculated.purchaseAmount,
-    calculated.annualCouponRatePct
+    calculated.annualCouponRatePct,
+    'FixMAP',
+    Array.isArray(specInputs.paymentDates) ? specInputs.paymentDates : null
   ).map((flow) => ({
     date: flow.date,
     amount: flow.amount,

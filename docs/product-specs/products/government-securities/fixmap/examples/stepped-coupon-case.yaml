@@ -2,12 +2,12 @@ specVersion: v2alpha3
 productId: government-security.fixmap.standard
 exampleId: stepped-coupon-case
 title: Stepped FixMÁP coupon schedule example
-description: Mid-holding FixMÁP purchase where published couponSchedule bands set period rates; accrued interest uses the covering band; cash coupons are quarterly (ga/4).
+description: Mid-holding FixMÁP purchase where published couponSchedule bands set period rates; accrued interest uses the covering band; cash coupons are quarterly (ga/4). Purchase is strictly after a coupon date so the buyer does not also receive that day’s coupon cash.
 
 inputs:
   principal: 1000000
   annualCouponRatePct: 7.0
-  purchaseDate: 2027-02-03
+  purchaseDate: 2026-12-15
   issueDate: 2026-08-03
   maturityDate: 2031-08-03
   firstCouponDate: 2026-11-03
@@ -31,11 +31,12 @@ inputs:
 
 expected:
   annualCouponRatePct: 6.5
-  accruedInterestAmount: 33222.22222222222
-  purchaseAmount: 1033222.2222222222
+  accruedInterestAmount: 24194.444444444445
+  purchaseAmount: 1024194.4444444445
 
 notes:
-  - "Accrued from schedule band start 2026-08-03 through purchaseDate 2027-02-03 under the first band (6.5% ACT/360): 1000000 * 0.065 * 184/360."
+  - "First coupon period starts on issueDate 2026-08-03; firstCouponDate 2026-11-03 is the first payment (not a purchase day)."
+  - "Accrued from schedule band start 2026-08-03 through purchaseDate 2026-12-15 under the first band (6.5% ACT/360): 1000000 * 0.065 * 134/360."
   - "Derived annualCouponRatePct is the covering-band rate at purchase (6.5), not the input fallback (7.0)."
-  - "Cash coupons are quarterly (ga/4). Schedule From dates after issue are the payment calendar when present; otherwise firstCouponDate walks by 3 months."
+  - "Cash coupons are quarterly (ga/4) and only on dates strictly after purchaseDate (no purchase-day coupon). Schedule annual Froms are rate bands, not the payment calendar — walk firstCouponDate by 3 months."
   - "Later bands demonstrate stepped fixed coupons without inventing rates for unpublished periods."

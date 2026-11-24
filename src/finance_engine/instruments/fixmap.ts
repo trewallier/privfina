@@ -67,6 +67,9 @@ export function deriveFixmapAccruedInterestAmount(
  * their spacing matches quarterly frequency (commercial autofill merges
  * issue ∪ offering paymentDates). Annual rate-band Froms alone are not a
  * payment calendar — fall back to firstCouponDate + frequency walk.
+ *
+ * Prefer an explicit `paymentDates` argument when the commercial schedule is
+ * offering-shaped; this median-gap heuristic can misclassify irregular stubs.
  */
 function paymentDatesFromCouponSchedule(specInputs: FixmapSpecInputs): string[] | null {
   const issue = String(specInputs.issueDate || '').trim()
@@ -95,18 +98,31 @@ function paymentDatesFromCouponSchedule(specInputs: FixmapSpecInputs): string[] 
   return null
 }
 
-export function generateFixmapAnnualCouponFlows(
+export function generateFixmapQuarterlyCouponFlows(
   specInputs: FixmapSpecInputs,
   purchaseAmount: number,
   annualCouponRatePct: number,
-  description = 'FixMAP'
+  description = 'FixMAP',
+  /**
+   * Optional offering payment calendar (ISO). When set, skips the schedule-gap
+   * heuristic. Period 1 still starts on issueDate for accrual; payments are
+   * dates strictly after issue (and strictly after purchase).
+   */
+  paymentDates?: readonly string[] | null
 ): CashFlow[] {
+  const explicit =
+    Array.isArray(paymentDates) && paymentDates.length > 0
+      ? paymentDates
+      : paymentDatesFromCouponSchedule(specInputs)
   return generateCouponFlowsWithFrequency(
     specInputs,
     purchaseAmount,
     annualCouponRatePct,
     description,
     FIXMAP_COUPON_FREQUENCY_MONTHS,
-    paymentDatesFromCouponSchedule(specInputs)
+    explicit
   )
 }
+
+/** @deprecated Use {@link generateFixmapQuarterlyCouponFlows} — FixMÁP is quarterly. */
+export const generateFixmapAnnualCouponFlows = generateFixmapQuarterlyCouponFlows

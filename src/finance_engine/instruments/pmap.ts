@@ -177,7 +177,9 @@ export function generateCouponFlowsWithFrequency(
     .sort()
 
   function pushCouponIfDue(couponIso: string): void {
-    if (couponIso < purchaseDateIso) return
+    // Buyer does not receive a coupon on the purchase/settlement day — that cash
+    // belongs to the seller / is already in the dirty price. Require strictly after.
+    if (couponIso <= purchaseDateIso) return
     if (couponIso > maturityDateIso) return
     const period = resolveCoveringCouponPeriod(schedule, couponIso)
     if (scheduleActive) {

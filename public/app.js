@@ -44,6 +44,7 @@ import {
   sharedEvalResultCache
 } from './eval-cache.js'
 import { initController } from './app-controller.js'
+import { initTheme } from './theme.js'
 
 export {
   CURRENT_EXPORT_SCHEMA_VERSION,
@@ -86,6 +87,7 @@ export {
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'
 if (isBrowser) {
   const runInit = () => {
+    initTheme()
     if (document.getElementById('cash-flow-form') && document.getElementById('recurring-form')) {
       initController()
     }

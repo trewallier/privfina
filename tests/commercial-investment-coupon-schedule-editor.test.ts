@@ -432,7 +432,7 @@ describe('commercial-investment-coupon-schedule CSS contract', () => {
     expect(addBody).not.toMatch(/color:\s*#fff\b/)
 
     const removeBody = extractCssRuleBody(css, '.coupon-schedule-remove.icon-button')
-    expect(removeBody).toMatch(/color:\s*#a94442/)
+    expect(removeBody).toMatch(/color:\s*var\(--danger\)/)
     expect(removeBody).toMatch(/min-width:\s*44px/)
     expect(removeBody).toMatch(/min-height:\s*44px/)
   })

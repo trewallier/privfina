@@ -56,6 +56,10 @@ Delivered as one intentional UI PR (readable chrome + pan/zoom viewport + preset
 - [x] Pan and zoom viewport: wheel/pinch/drag, clamp, Fit Y, toolbar zoom/reset; viewport explores the already-loaded series; date pickers still choose which series is computed.
 - [x] Flexibility and polish: crosshair tooltip, 1M/3M/YTD/Max presets, area fill, keyboard a11y; unit + e2e smoke.
 
+Follow-on appearance theme (post §4; UI-only; no domain/persistence changes)
+Goal: Light / Dark / System color theme with the same visual language (tokens + chart chrome), persisted as a device UI preference (not export/import).
+- [x] Theme preference control near the page title (Light / Dark / System; System default); persist under a dedicated localStorage key; resolve System via `prefers-color-scheme`; restyle shell/forms/chart via CSS tokens.
+
 Out of scope for this epic
 - Native apps, redesign of investment subtype math/forms beyond layout/navigation, new analytics features from §5, bundler/WASM work.
 

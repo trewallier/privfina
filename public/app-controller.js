@@ -56,6 +56,7 @@ import {
 } from './flows.js'
 import { sharedEvalResultCache } from './eval-cache.js'
 import { renderConfiguredLists, renderChart, updateChartCrosshair } from './render.js'
+import { THEME_CHANGE_EVENT } from './theme.js'
 import { createChartInteraction, resolveRangePreset } from './controller/chart-viewport.js'
 import { createComposerManager } from './controller/composer.js'
 import {
@@ -2213,6 +2214,13 @@ function initController() {
       }
     })
   }
+
+  document.addEventListener(THEME_CHANGE_EVENT, () => {
+    // CSS tokens restyle the shell; only the SVG chart needs a paint refresh.
+    if (chartInteraction) {
+      chartInteraction.redraw()
+    }
+  })
 
   rerender()
 }

@@ -804,6 +804,8 @@ function createChartInteraction({
 
   return {
     setSeries,
+    /** Re-paint the current series/viewport (e.g. after a theme token change). */
+    redraw: redrawFull,
     resetViewport: resetViewportFn,
     getViewport: () => (viewport ? { ...viewport } : null),
     getFitY: () => fitY,

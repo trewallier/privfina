@@ -17,6 +17,7 @@ Scenarios / Use-cases
 - Split workspace UX: users can work in a dedicated cash-flow management panel and a separate visualization panel.
 - Collapsible flow composer UX: users can open one flow-creation panel at a time (Swagger-like), then hide composer boxes to focus on the configured flow list and chart.
 - Adaptive responsive workspace UX (ROADMAP §4 / ADR 0019): on wide screens the existing two-workspace desktop composition and visual language remain; on narrow screens browse (configured list + chart access) is separated from compose (add/edit), and the configured overview uses a card-style list instead of a wide table.
+- Appearance theme UX (ROADMAP post-§4): users can choose Light, Dark, or System color theme near the page title; System follows OS `prefers-color-scheme` and is the default; the choice persists in browser localStorage as a device UI preference (not part of export/import).
 - Progressive add entry: users pick a cash-flow or instrument type first, then complete only that form.
 - Narrow compose step: add/edit opens as a dedicated form step with Save / Cancel and returns to browse after success.
 - Flow inclusion toggles: users can include or exclude specific configured flows from cumulative calculations without deleting them.
@@ -59,6 +60,7 @@ Assumptions
 - The primary v1 interaction model is a single page with basic form controls, a list/table of cash flows, and a cumulative chart.
 - Responsive overhaul keeps one SPA and one visual language; desktop remains a first-class layout, not a stretched mobile layout (ADR 0019).
 - Responsive overhaul does not change cash-flow/instrument domain models, persistence, import/export, or calculation contracts.
+- Appearance theme keeps one visual language (shared tokens and chart chrome flipped by resolved light/dark); theme preference is device-local and independent of the export envelope / storage schema version.
 - The smallest time step handled by the model is one calendar day.
 - The cumulative chart's maximum resolution is daily (no sub-day granularity).
 - Browser storage is treated as a cache; export/import is the durability mechanism.
@@ -83,6 +85,8 @@ Acceptance criteria
 - [x] The main UI separates cash-flow management and visualization into distinct workspace sections.
 - [x] Flow creation boxes are collapsible and can be hidden when not in use to focus on configured flows and chart output.
 - [x] Wide-viewport layout keeps the intentional two-workspace desktop composition and current visual language (not a stretched phone layout).
+- [x] Users can choose Light, Dark, or System appearance near the page title; System is the default and follows OS `prefers-color-scheme`; Light/Dark override the OS; the preference persists across reloads in localStorage and is not included in export/import JSON.
+- [x] Resolved light/dark theme restyles shell chrome, forms, and the cumulative chart via shared CSS tokens (same visual language; no second design).
 - [x] Narrow-viewport browse mode shows configured flows as a card-style list (no horizontal scrolling table as the primary overview).
 - [x] Narrow-viewport compose mode presents add/edit in a dedicated form step with explicit Save / Cancel and returns to browse after success.
 - [x] Add entry uses progressive type selection before showing instrument/cash-flow fields.

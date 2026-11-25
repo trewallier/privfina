@@ -676,9 +676,48 @@ function updateChartCrosshair(container, crosshair, layout) {
   tooltip.textContent = `${formatDateLabel(crosshair.date)} · ${formatAxisAmount(crosshair.cumulativeTotal)}${delta}`
 }
 
+function readChartThemeColors(root = globalThis.document?.documentElement) {
+  // Fallbacks mirror light `:root` `--chart-*` in public/index.html (unit/non-DOM).
+  const fallbacks = {
+    grid: '#dce4ee',
+    axis: '#b0bdce',
+    muted: '#5a6a7d',
+    series: '#2563eb',
+    seriesFill: 'rgba(37, 99, 235, 0.12)',
+    crosshair: '#94a3b8',
+    zero: '#a8b4c4',
+    zeroWarn: '#c0392b',
+    pointStroke: '#ffffff'
+  }
+  if (!root || typeof globalThis.getComputedStyle !== 'function') {
+    return fallbacks
+  }
+  try {
+    const styles = globalThis.getComputedStyle(root)
+    const read = (name, fallback) => {
+      const value = styles.getPropertyValue(name).trim()
+      return value || fallback
+    }
+    return {
+      grid: read('--chart-grid', fallbacks.grid),
+      axis: read('--chart-axis', fallbacks.axis),
+      muted: read('--chart-muted', fallbacks.muted),
+      series: read('--chart-series', fallbacks.series),
+      seriesFill: read('--chart-series-fill', fallbacks.seriesFill),
+      crosshair: read('--chart-crosshair', fallbacks.crosshair),
+      zero: read('--chart-zero', fallbacks.zero),
+      zeroWarn: read('--chart-zero-warn', fallbacks.zeroWarn),
+      pointStroke: read('--chart-point-stroke', fallbacks.pointStroke)
+    }
+  } catch {
+    return fallbacks
+  }
+}
+
 function renderChart(series, container, options = {}) {
   const startDate = options.startDate
   const endDate = options.endDate
+  const theme = options.themeColors || readChartThemeColors()
 
   if (!series.length) {
     const rangeMessage = startDate && endDate ? `${startDate} to ${endDate}` : 'the selected date range'
@@ -761,8 +800,8 @@ function renderChart(series, container, options = {}) {
     .map((value) => {
       const y = yScale(value)
       return `
-      <line class="grid-line" x1="${leftPad}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="#dce4ee" stroke-width="1" />
-      <text class="y-tick-label" x="${leftPad - 10}" y="${y + 4}" text-anchor="end" fill="#5a6a7d" font-size="11">${formatAxisAmount(value)}</text>
+      <line class="grid-line" x1="${leftPad}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="${theme.grid}" stroke-width="1" />
+      <text class="y-tick-label" x="${leftPad - 10}" y="${y + 4}" text-anchor="end" fill="${theme.muted}" font-size="11">${formatAxisAmount(value)}</text>
     `
     })
     .join('')
@@ -775,18 +814,18 @@ function renderChart(series, container, options = {}) {
       const isEnd = index === 0 || index === xTickTimes.length - 1
       const anchor = index === 0 ? 'start' : index === xTickTimes.length - 1 ? 'end' : 'middle'
       const label = formatTimestampLabel(time, { compact: compactX && !isEnd })
-      return `<text class="x-tick-label" x="${x}" y="${height - 12}" text-anchor="${anchor}" fill="#5a6a7d" font-size="12">${label}</text>`
+      return `<text class="x-tick-label" x="${x}" y="${height - 12}" text-anchor="${anchor}" fill="${theme.muted}" font-size="12">${label}</text>`
     })
     .join('')
 
   const hasZeroCrossing = minTotal < 0 && maxTotal > 0
-  const zeroAxisColor = hasZeroCrossing ? '#c0392b' : '#a8b4c4'
+  const zeroAxisColor = hasZeroCrossing ? theme.zeroWarn : theme.zero
   const showSamplingInSvg =
     options.showSamplingNote !== false &&
     sampledVisible.length < visibleRaw.length &&
     isViewportFull(viewport, domain)
   const samplingNote = showSamplingInSvg
-    ? `<text class="chart-sampling-note" x="${plotRight}" y="18" text-anchor="end" fill="#5a6a7d" font-size="11">Showing ${sampledVisible.length.toLocaleString()} of ${visibleRaw.length.toLocaleString()} points</text>`
+    ? `<text class="chart-sampling-note" x="${plotRight}" y="18" text-anchor="end" fill="${theme.muted}" font-size="11">Showing ${sampledVisible.length.toLocaleString()} of ${visibleRaw.length.toLocaleString()} points</text>`
     : ''
 
   const ariaRange = `${formatTimestampLabel(minTime)} to ${formatTimestampLabel(maxTime)}`
@@ -798,19 +837,19 @@ function renderChart(series, container, options = {}) {
           <rect x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" />
         </clipPath>
       </defs>
-      <text class="chart-title" x="${leftPad}" y="18" fill="#5a6a7d" font-size="12">Cumulative total amount</text>
+      <text class="chart-title" x="${leftPad}" y="18" fill="${theme.muted}" font-size="12">Cumulative total amount</text>
       ${samplingNote}
       ${yTickMarkup}
-      <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="#b0bdce" stroke-width="1" />
-      <line x1="${leftPad}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}" stroke="#b0bdce" stroke-width="1" />
+      <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="${theme.axis}" stroke-width="1" />
+      <line x1="${leftPad}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}" stroke="${theme.axis}" stroke-width="1" />
       <g data-chart-plot="true" clip-path="url(#${clipId})">
         <rect class="chart-plot-hit" x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" fill="transparent" />
-        <path class="series-area" d="${areaPath}" fill="#2563eb" fill-opacity="0.12" stroke="none" />
+        <path class="series-area" d="${areaPath}" fill="${theme.seriesFill}" stroke="none" />
         <line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${plotRight}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />
-        <path class="series-line" d="${holdPath}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" />
-        <line class="chart-crosshair-x" x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
-        <line class="chart-crosshair-y" x1="${leftPad}" y1="${topPad}" x2="${plotRight}" y2="${topPad}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
-        <circle class="chart-crosshair-point" cx="${leftPad}" cy="${topPad}" r="4.5" fill="#2563eb" stroke="#fff" stroke-width="2" visibility="hidden" />
+        <path class="series-line" d="${holdPath}" fill="none" stroke="${theme.series}" stroke-width="2.5" stroke-linejoin="round" />
+        <line class="chart-crosshair-x" x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="${theme.crosshair}" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
+        <line class="chart-crosshair-y" x1="${leftPad}" y1="${topPad}" x2="${plotRight}" y2="${topPad}" stroke="${theme.crosshair}" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
+        <circle class="chart-crosshair-point" cx="${leftPad}" cy="${topPad}" r="4.5" fill="${theme.series}" stroke="${theme.pointStroke}" stroke-width="2" visibility="hidden" />
       </g>
       ${xTickMarkup}
     </svg>
@@ -851,6 +890,7 @@ export {
   renderConfiguredCards,
   renderConfiguredLists,
   renderChart,
+  readChartThemeColors,
   updateChartCrosshair,
   downsampleSeriesForChart,
   formatAxisAmount,

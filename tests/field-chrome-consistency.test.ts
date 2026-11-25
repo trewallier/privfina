@@ -79,10 +79,10 @@ describe('info-chip size consistency', () => {
 
   it('defines auto and unavailable role-marker styles', () => {
     expect(extractCssRuleBody(css, ".field-role-marker[data-role='auto']")).toMatch(
-      /background:\s*#eef8f1/
+      /background:\s*var\(--success-bg\)/
     )
     expect(extractCssRuleBody(css, ".field-role-marker[data-role='unavailable']")).toMatch(
-      /background:\s*#fff3ea/
+      /background:\s*var\(--caution-bg\)/
     )
   })
 

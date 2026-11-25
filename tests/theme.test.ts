@@ -6,9 +6,10 @@ import {
   loadThemePreference,
   resolveTheme,
   saveThemePreference,
-  setThemePreference,
-  syncThemeControl
+  setThemePreference
 } from '../public/theme.js'
+import { buildExportDocument } from '../public/import-export.js'
+import { emptyListStatus } from '../public/list-status.js'
 
 function createMemoryStorage(initial: Record<string, string> = {}) {
   const store = { ...initial }
@@ -92,39 +93,19 @@ describe('theme preference', () => {
     expect(control.value).toBe('dark')
   })
 
-  it('syncThemeControl updates segmented buttons', () => {
-    const states: Array<{ option: string; pressed: string; active: boolean }> = []
-    const control = {
-      querySelectorAll: () => [
-        {
-          getAttribute: () => 'light',
-          setAttribute: (_name: string, value: string) => {
-            states.push({ option: 'light', pressed: value, active: false })
-          },
-          classList: {
-            toggle: (_name: string, on: boolean) => {
-              states[states.length - 1].active = on
-            }
-          }
-        },
-        {
-          getAttribute: () => 'system',
-          setAttribute: (_name: string, value: string) => {
-            states.push({ option: 'system', pressed: value, active: false })
-          },
-          classList: {
-            toggle: (_name: string, on: boolean) => {
-              states[states.length - 1].active = on
-            }
-          }
-        }
-      ]
-    }
-
-    syncThemeControl(control as unknown as HTMLElement, 'system')
-    expect(states).toEqual([
-      { option: 'light', pressed: 'false', active: false },
-      { option: 'system', pressed: 'true', active: true }
-    ])
+  it('keeps theme preference out of the export envelope', () => {
+    const doc = buildExportDocument(
+      [{ id: 'one-1', date: '2026-01-15', amount: 50, direction: 'outflow', category: 'misc' }],
+      [],
+      [],
+      emptyListStatus(),
+      '2026-10-16T12:00:00.000Z'
+    )
+    const json = JSON.stringify(doc)
+    expect(json).not.toContain('theme')
+    expect(json).not.toContain('theme_preference')
+    expect(json).not.toContain(THEME_PREFERENCE_KEY)
+    expect(doc).not.toHaveProperty('theme')
+    expect(doc.data).not.toHaveProperty('theme')
   })
 })

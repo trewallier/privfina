@@ -1,6 +1,9 @@
 /**
  * Appearance theme preference (Light / Dark / System).
  * Device UI setting only — not part of export/import or storage schema version.
+ *
+ * FOUC head script in public/index.html duplicates THEME_PREFERENCE_KEY +
+ * resolve rules — keep those in sync when changing this contract.
  */
 
 const THEME_PREFERENCE_KEY = 'privfina.theme_preference.v1'
@@ -78,18 +81,7 @@ function syncThemeControl(control, preference) {
     (typeof HTMLSelectElement !== 'undefined' && control instanceof HTMLSelectElement)
   if (isSelect) {
     control.value = preference
-    return
   }
-  const buttons = control.querySelectorAll?.('[data-theme-option]')
-  if (!buttons) {
-    return
-  }
-  buttons.forEach((button) => {
-    const option = button.getAttribute('data-theme-option')
-    const pressed = option === preference
-    button.setAttribute('aria-pressed', pressed ? 'true' : 'false')
-    button.classList.toggle('is-active', pressed)
-  })
 }
 
 /**
@@ -153,23 +145,16 @@ function initTheme(options = {}) {
     }
     if (target.id === 'theme-preference' || target.name === 'theme-preference') {
       setThemePreference(target.value, { root, control, storage, matchMedia })
-      return
-    }
-    const option = target.closest?.('[data-theme-option]')?.getAttribute('data-theme-option')
-    if (option) {
-      setThemePreference(option, { root, control, storage, matchMedia })
     }
   }
 
   control?.addEventListener?.('change', onControlChange)
-  control?.addEventListener?.('click', onControlChange)
 
   return {
     preference: applied.preference,
     resolved: applied.resolved,
     destroy() {
       control?.removeEventListener?.('change', onControlChange)
-      control?.removeEventListener?.('click', onControlChange)
       mediaQuery?.removeEventListener?.('change', onSystemChange)
     }
   }

@@ -5,24 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Privfina</title>
     <script>
+      /* Keep in sync with THEME_PREFERENCE_KEY / resolveTheme() in public/theme.js */
       (function () {
+        function systemDark() {
+          try {
+            return !!(
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches
+            )
+          } catch (_) {
+            return false
+          }
+        }
+        function apply(resolved) {
+          document.documentElement.dataset.theme = resolved
+          document.documentElement.style.colorScheme = resolved
+        }
         try {
           var key = 'privfina.theme_preference.v1'
           var pref = localStorage.getItem(key)
           if (pref !== 'light' && pref !== 'dark' && pref !== 'system') {
             pref = 'system'
           }
-          var dark =
-            pref === 'dark' ||
-            (pref === 'system' &&
-              window.matchMedia &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches)
-          var resolved = dark ? 'dark' : 'light'
-          document.documentElement.dataset.theme = resolved
-          document.documentElement.style.colorScheme = resolved
+          var dark = pref === 'dark' || (pref === 'system' && systemDark())
+          apply(dark ? 'dark' : 'light')
         } catch (e) {
-          document.documentElement.dataset.theme = 'light'
-          document.documentElement.style.colorScheme = 'light'
+          // Storage failed: still honor System via matchMedia when available.
+          apply(systemDark() ? 'dark' : 'light')
         }
       })()
     </script>
@@ -497,8 +506,8 @@
       }
 
       /*
-        Explicit color + hover so global `button { color: #fff }` / accent hover
-        cannot leave Add/Remove blank white-on-white (esp. iOS Safari).
+        Explicit color + hover so global `button { color: var(--on-accent) }` /
+        accent hover cannot leave Add/Remove blank on surface (esp. iOS Safari).
       */
       .coupon-schedule-add {
         display: inline-flex;
@@ -1703,7 +1712,7 @@
         </div>
         <div class="theme-control">
           <label class="theme-control-label" for="theme-preference">Theme</label>
-          <select id="theme-preference" name="theme-preference" aria-label="Color theme" data-theme-control>
+          <select id="theme-preference" name="theme-preference" data-theme-control>
             <option value="system">System</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>

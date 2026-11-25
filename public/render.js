@@ -677,6 +677,7 @@ function updateChartCrosshair(container, crosshair, layout) {
 }
 
 function readChartThemeColors(root = globalThis.document?.documentElement) {
+  // Fallbacks mirror light `:root` `--chart-*` in public/index.html (unit/non-DOM).
   const fallbacks = {
     grid: '#dce4ee',
     axis: '#b0bdce',

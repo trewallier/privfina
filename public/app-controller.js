@@ -2216,7 +2216,10 @@ function initController() {
   }
 
   document.addEventListener(THEME_CHANGE_EVENT, () => {
-    rerender()
+    // CSS tokens restyle the shell; only the SVG chart needs a paint refresh.
+    if (chartInteraction) {
+      chartInteraction.redraw()
+    }
   })
 
   rerender()

@@ -22,6 +22,7 @@ Start at the root [`AGENTS.md`](../AGENTS.md) (agents) or [`README.md`](../READM
 | Home-savings interest / EBKM probe (accepted model + tolerances) | [`dev-notes/ebkm-4x10-interest-invariance-probe.md`](dev-notes/ebkm-4x10-interest-invariance-probe.md) |
 | Commercial investment vs retail availability / pricing (market-data gaps) | [`dev-notes/commercial-investment-market-data-availability-assessment.md`](dev-notes/commercial-investment-market-data-availability-assessment.md) |
 | MÁK/ktv FLOAT coupon sources (BUBOR / ÁKK / WebKincstár probe) | [`dev-notes/ktv-float-coupon-sources-probe.md`](dev-notes/ktv-float-coupon-sources-probe.md) |
+| Offering PDF source coverage (ÁKK xpose vs Államkincstár zips) | [`dev-notes/offering-pdf-source-coverage-probe.md`](dev-notes/offering-pdf-source-coverage-probe.md) |
 | MNB BUBOR published refs (ADR 0045) | [`adr/0045-mnb-bubor-published-refs.md`](adr/0045-mnb-bubor-published-refs.md) |
 | Work sequencing | [`../ROADMAP.md`](../ROADMAP.md) |
 

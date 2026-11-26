@@ -44,6 +44,10 @@ describe('formatCiIngestNoticeLine', () => {
         webkincstarHistoricalGateOpen: false,
         webkincstarOverlaySkipped: 3,
         webkincstarSeriesInvented: 0,
+        akkResolvedSeries: 1,
+        akkResolveExtraGets: 2,
+        wkOriginPromotedSameId: 0,
+        wkOriginRenamedMerged: 1,
         webkincstarFetchFailedDays: 0,
         offeringTip: { pdfsDownloaded: 2, pdfQueue: 3, pdfsPending: 1 },
         offeringBackfill: {
@@ -57,7 +61,7 @@ describe('formatCiIngestNoticeLine', () => {
         offeringGateFrontier: '2026-10-01'
       })
     ).toBe(
-      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_series_invented=0 wk_fetch_failed=0 pdfs_tip=2 pdfs_bf=5 queue_tip=3 queue_bf=8 pending_tip=1 pending_bf=4 parse_failed=0 discovery_exhausted=2 frontier=2026-08-01 gate_frontier=2026-10-01'
+      'changed=true as_of=2026-11-05 wk_hist_gate=off wk_overlay_skip=3 wk_series_invented=0 akk_resolved=1 akk_resolve_gets=2 wk_promote_same=0 wk_rename_merge=1 wk_fetch_failed=0 pdfs_tip=2 pdfs_bf=5 queue_tip=3 queue_bf=8 pending_tip=1 pending_bf=4 parse_failed=0 discovery_exhausted=2 frontier=2026-08-01 gate_frontier=2026-10-01'
     )
   })
 })

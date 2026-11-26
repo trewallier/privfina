@@ -32,6 +32,14 @@ export interface InventedWebkincstarSeries {
   name: string
 }
 
+export interface AkkResolvedWebkincstarSeries {
+  family: FamilyCode
+  /** Canonical ÁKK series id quotes were remapped onto. */
+  id: string
+  /** WK display name / quote id that resolved. */
+  wkLabel: string
+}
+
 export interface ApplyWebkincstarResult {
   snapshot: NormalizedSnapshot
   /** Quotes remapped onto an existing catalog series id. */
@@ -50,11 +58,22 @@ export interface ApplyWebkincstarResult {
   skippedUnmatchedSeries: SkippedWebkincstarSeries[]
   /**
    * Unique series stubs invented under ADR 0048 historical invent
-   * (`identitySource: webkincstar host`).
+   * (`identitySource: webkincstar host`) — only after ÁKK resolve miss.
    */
   inventedSeries: InventedWebkincstarSeries[]
+  /**
+   * Unique ÁKK-resolved series attached this overlay (resolve-before-invent hit).
+   */
+  akkResolvedSeries: AkkResolvedWebkincstarSeries[]
   /** True when at least one remapped quote was applied. */
   hasQuotes: boolean
+}
+
+/** Unmatched WK instrument that would invent when `inventUnmatched` is on. */
+export interface UnmatchedWebkincstarInstrument {
+  family: FamilyCode
+  id: string
+  name: string
 }
 
 interface SeriesRef {
@@ -173,10 +192,38 @@ function inventBackfillStub(
 }
 
 /**
+ * List WK instruments that do not join the base/extra series index.
+ * Used by ingest to ÁKK-resolve before invent (ADR 0048).
+ */
+export function listUnmatchedWebkincstarInstruments(
+  base: NormalizedSnapshot,
+  webkincstar: NormalizedSnapshot,
+  extraSeries: Array<{ family: FamilyCode; series: SeriesRecord }> = []
+): UnmatchedWebkincstarInstrument[] {
+  const index = buildSeriesIndex(base, extraSeries)
+  const out: UnmatchedWebkincstarInstrument[] = []
+  const seen = new Set<string>()
+  for (const family of FAMILIES) {
+    const wk = webkincstar.byFamily[family]
+    for (const q of wk.quotes) {
+      const seriesMeta = wk.series.find((s) => s.id === q.id)
+      const name = seriesMeta?.name ?? q.id
+      if (resolveTarget(q.id, name, index)) continue
+      const key = `${family}\0${q.id}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push({ family, id: q.id, name })
+    }
+  }
+  return out
+}
+
+/**
  * Overlay WebKincstár quotes onto an ÁKK∥allampapir combined snapshot.
  * Prefer non-null; conflicting numerics → WebKincstár wins (ADR 0039).
  * Unmatched instrument names soft-skip by default; with `inventUnmatched`
- * (ADR 0048 historical backfill) invent marked series stubs instead.
+ * (ADR 0048 historical backfill) invent marked series stubs only after ÁKK
+ * resolve miss (`akkResolvedByLabel` covers hits).
  */
 export function applyWebkincstarQuotes(
   base: NormalizedSnapshot,
@@ -186,13 +233,20 @@ export function applyWebkincstarQuotes(
     extraSeries?: Array<{ family: FamilyCode; series: SeriesRecord }>
     /**
      * When true (historical WK backfill), invent WK-host series stubs for
-     * unmatched instruments instead of soft-skipping (ADR 0048).
+     * unmatched instruments instead of soft-skipping (ADR 0048) — only when
+     * {@link akkResolvedByLabel} has no hit for the WK id/name.
      */
     inventUnmatched?: boolean
+    /**
+     * Pre-resolved ÁKK series for WK unmatched labels (keyed by WK quote id
+     * and/or exact display name). On hit, attach under the ÁKK-canonical id.
+     */
+    akkResolvedByLabel?: Map<string, { family: FamilyCode; series: SeriesRecord }>
   }
 ): ApplyWebkincstarResult {
   const out = cloneSnapshot(base)
   const inventUnmatched = options?.inventUnmatched === true
+  const akkResolvedByLabel = options?.akkResolvedByLabel
   const index = buildSeriesIndex(base, options?.extraSeries ?? [])
   const baseQuoteIndex = new Map<FamilyCode, Map<string, Map<string, QuoteRow>>>()
   for (const family of FAMILIES) {
@@ -204,8 +258,9 @@ export function applyWebkincstarQuotes(
   const skippedUnmatchedQuotes: SkippedWebkincstarQuote[] = []
   const skippedSeriesByKey = new Map<string, SkippedWebkincstarSeries>()
   const inventedSeriesByKey = new Map<string, InventedWebkincstarSeries>()
+  const akkResolvedByKey = new Map<string, AkkResolvedWebkincstarSeries>()
 
-  const addToIndex = (family: FamilyCode, series: SeriesRecord): void => {
+  const addToIndex = (family: FamilyCode, series: SeriesRecord, wkAliases?: string[]): void => {
     const ref = { family, series }
     if (!index.byId.has(series.id)) index.byId.set(series.id, ref)
     if (series.name && !index.byExactName.has(series.name)) {
@@ -217,6 +272,31 @@ export function applyWebkincstarQuotes(
     } catch {
       /* ignore empty names */
     }
+    for (const alias of wkAliases ?? []) {
+      if (alias && !index.byExactName.has(alias)) index.byExactName.set(alias, ref)
+      try {
+        const slug = toSeriesId(alias)
+        if (!index.byNameSlug.has(slug)) index.byNameSlug.set(slug, ref)
+        if (!index.byId.has(slug)) index.byId.set(slug, ref)
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  const lookupResolved = (
+    family: FamilyCode,
+    qId: string,
+    name: string
+  ): { family: FamilyCode; series: SeriesRecord } | null => {
+    if (!akkResolvedByLabel) return null
+    return (
+      akkResolvedByLabel.get(`${family}\0${qId}`) ??
+      akkResolvedByLabel.get(`${family}\0${name}`) ??
+      akkResolvedByLabel.get(qId) ??
+      akkResolvedByLabel.get(name) ??
+      null
+    )
   }
 
   for (const family of FAMILIES) {
@@ -226,7 +306,28 @@ export function applyWebkincstarQuotes(
       const name = seriesMeta?.name ?? q.id
       let target = resolveTarget(q.id, name, index)
       if (!target) {
-        if (!inventUnmatched) {
+        const resolved = lookupResolved(family, q.id, name)
+        if (resolved) {
+          const already = index.byId.get(resolved.series.id)
+          if (!already || already.series.id !== resolved.series.id) {
+            const existingSameId = out.byFamily[resolved.family].series.find(
+              (s) => s.id === resolved.series.id
+            )
+            if (!existingSameId) {
+              out.byFamily[resolved.family].series.push({ ...resolved.series })
+            }
+          }
+          addToIndex(resolved.family, resolved.series, [q.id, name])
+          const resolveKey = `${resolved.family}\0${resolved.series.id}`
+          if (!akkResolvedByKey.has(resolveKey)) {
+            akkResolvedByKey.set(resolveKey, {
+              family: resolved.family,
+              id: resolved.series.id,
+              wkLabel: name
+            })
+          }
+          target = { family: resolved.family, series: resolved.series }
+        } else if (!inventUnmatched) {
           skippedUnmatched += 1
           const seriesKey = `${family}\0${q.id}`
           if (!skippedSeriesByKey.has(seriesKey)) {
@@ -241,15 +342,22 @@ export function applyWebkincstarQuotes(
             })
           }
           continue
+        } else {
+          const stub = inventBackfillStub(
+            family,
+            q.id,
+            name,
+            seriesMeta,
+            out.asOf ?? webkincstar.asOf
+          )
+          out.byFamily[family].series.push(stub)
+          addToIndex(family, stub)
+          const inventKey = `${family}\0${stub.id}`
+          if (!inventedSeriesByKey.has(inventKey)) {
+            inventedSeriesByKey.set(inventKey, { family, id: stub.id, name: stub.name })
+          }
+          target = { family, series: stub }
         }
-        const stub = inventBackfillStub(family, q.id, name, seriesMeta, out.asOf ?? webkincstar.asOf)
-        out.byFamily[family].series.push(stub)
-        addToIndex(family, stub)
-        const inventKey = `${family}\0${stub.id}`
-        if (!inventedSeriesByKey.has(inventKey)) {
-          inventedSeriesByKey.set(inventKey, { family, id: stub.id, name: stub.name })
-        }
-        target = { family, series: stub }
       }
       const famQuotes = baseQuoteIndex.get(target.family)!
       let byDate = famQuotes.get(target.series.id)
@@ -289,6 +397,7 @@ export function applyWebkincstarQuotes(
     skippedUnmatchedQuotes,
     skippedUnmatchedSeries: [...skippedSeriesByKey.values()],
     inventedSeries: [...inventedSeriesByKey.values()],
+    akkResolvedSeries: [...akkResolvedByKey.values()],
     hasQuotes: remappedQuotes > 0
   }
 }

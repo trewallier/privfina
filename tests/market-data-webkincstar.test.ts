@@ -599,6 +599,7 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
     })
     expect(overlay.skippedUnmatched).toBe(0)
     expect(overlay.inventedSeries.length).toBeGreaterThan(0)
+    expect(overlay.akkResolvedSeries).toEqual([])
     expect(overlay.hasQuotes).toBe(true)
     const stub = overlay.snapshot.byFamily.dkj.series.find(
       (s) => s.id === overlay.inventedSeries[0].id
@@ -609,6 +610,56 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
     expect(
       overlay.snapshot.byFamily.dkj.quotes.some((q) => q.id === stub?.id)
     ).toBe(true)
+  })
+
+  it('attaches ÁKK-resolved series under canonical id instead of inventing (ADR 0048)', () => {
+    const emptyBase = normalizeAkkSnapshots(
+      loadJson<AkkEnvelope>('catalog.json'),
+      loadJson<AkkEnvelope>('network-rates.json'),
+      { requireFamilies: false }
+    )
+    for (const family of Object.keys(emptyBase.byFamily) as Array<
+      keyof typeof emptyBase.byFamily
+    >) {
+      emptyBase.byFamily[family].series = []
+      emptyBase.byFamily[family].quotes = []
+    }
+    const wk = normalizeWebkincstarReports([
+      parseWebkincstarPdfText({
+        reportName: '_20633_arfolyam_mak',
+        text: `
+Államkötvények                                                                          Értéknap: 2026.11.05
+2027/I              99.0000 %      -        -                 100.0000 %   -            0.5000 %    100       2027.03.24
+`
+      })
+    ])
+    const canonical = {
+      id: 'A270324I22',
+      isin: 'HU0000403114',
+      name: '2027/I',
+      issue: '2022-03-24',
+      mat: '2027-03-24',
+      ccy: 'HUF',
+      status: 'matured' as const,
+      dayCount: 'ACT/365F' as const,
+      identitySource: 'www.akk.hu' as const
+    }
+    // WK routes 2027/I → pmap (I-series); ÁKK longName id is A270324I22.
+    const akkResolvedByLabel = new Map([
+      [`pmap\0${'2027_I'}`, { family: 'pmap' as const, series: canonical }],
+      ['2027/I', { family: 'pmap' as const, series: canonical }]
+    ])
+    const overlay = applyWebkincstarQuotes(emptyBase, wk.snapshot, {
+      inventUnmatched: true,
+      akkResolvedByLabel
+    })
+    expect(overlay.inventedSeries).toEqual([])
+    expect(overlay.akkResolvedSeries).toEqual([
+      expect.objectContaining({ family: 'pmap', id: 'A270324I22' })
+    ])
+    expect(overlay.snapshot.byFamily.pmap.series.some((s) => s.id === 'A270324I22')).toBe(true)
+    expect(overlay.snapshot.byFamily.pmap.series.some((s) => s.id === '2027_I')).toBe(false)
+    expect(overlay.snapshot.byFamily.pmap.quotes.some((q) => q.id === 'A270324I22')).toBe(true)
   })
 
   it('omits priced calendar seal when overlay soft-skips unmatched quotes (retry)', async () => {

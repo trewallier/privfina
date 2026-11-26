@@ -62,6 +62,11 @@ jobs:
       webkincstar_datums_fetched: ${{ steps.ingest.outputs.webkincstar_datums_fetched }}
       webkincstar_overlay_skipped: ${{ steps.ingest.outputs.webkincstar_overlay_skipped }}
       webkincstar_series_invented: ${{ steps.ingest.outputs.webkincstar_series_invented }}
+      akk_resolved_series: ${{ steps.ingest.outputs.akk_resolved_series }}
+      akk_resolve_extra_gets: ${{ steps.ingest.outputs.akk_resolve_extra_gets }}
+      wk_origin_promoted_same_id: ${{ steps.ingest.outputs.wk_origin_promoted_same_id }}
+      wk_origin_renamed_merged: ${{ steps.ingest.outputs.wk_origin_renamed_merged }}
+      wk_origin_resolve_miss: ${{ steps.ingest.outputs.wk_origin_resolve_miss }}
       webkincstar_soft_failed: ${{ steps.ingest.outputs.webkincstar_soft_failed }}
       retail_interest_soft_failed: ${{ steps.ingest.outputs.retail_interest_soft_failed }}
     steps:

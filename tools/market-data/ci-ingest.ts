@@ -43,6 +43,7 @@ export interface CiIngestOptions {
   offeringEnvelopesByFamily?: Partial<Record<OfferingFamilyCode, AkkEnvelope>>
   skipOfferings?: boolean
   reparseParseFailed?: boolean
+  promoteWkOrigin?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -79,6 +80,11 @@ export interface CiIngestResult {
   webkincstarOverlaySkippedSeries: WebkincstarSkippedSeriesRef[]
   webkincstarSeriesInvented: number
   webkincstarSeriesInventedSeries: WebkincstarSkippedSeriesRef[]
+  akkResolvedSeries: number
+  akkResolveExtraGets: number
+  wkOriginPromotedSameId: number
+  wkOriginRenamedMerged: number
+  wkOriginResolveMiss: number
   webkincstarSoftFailed: boolean
   retailInterestSoftFailed: boolean
   exitCode: typeof EXIT_UPDATED | typeof EXIT_UNCHANGED | typeof EXIT_ERROR
@@ -99,6 +105,10 @@ export function formatCiIngestNoticeLine(result: {
   webkincstarHistoricalGateOpen: boolean
   webkincstarOverlaySkipped: number
   webkincstarSeriesInvented: number
+  akkResolvedSeries: number
+  akkResolveExtraGets: number
+  wkOriginPromotedSameId: number
+  wkOriginRenamedMerged: number
   webkincstarFetchFailedDays: number
   offeringTip: Pick<OfferingSourceProgress, 'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending'>
   offeringBackfill: Pick<
@@ -117,6 +127,10 @@ export function formatCiIngestNoticeLine(result: {
     `wk_hist_gate=${result.webkincstarHistoricalGateOpen ? 'on' : 'off'}`,
     `wk_overlay_skip=${result.webkincstarOverlaySkipped}`,
     `wk_series_invented=${result.webkincstarSeriesInvented}`,
+    `akk_resolved=${result.akkResolvedSeries}`,
+    `akk_resolve_gets=${result.akkResolveExtraGets}`,
+    `wk_promote_same=${result.wkOriginPromotedSameId}`,
+    `wk_rename_merge=${result.wkOriginRenamedMerged}`,
     `wk_fetch_failed=${result.webkincstarFetchFailedDays}`,
     `pdfs_tip=${tip.pdfsDownloaded}`,
     `pdfs_bf=${bf.pdfsDownloaded}`,
@@ -162,6 +176,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     offeringEnvelopesByFamily: options.offeringEnvelopesByFamily,
     skipOfferings: options.skipOfferings,
     reparseParseFailed: options.reparseParseFailed,
+    promoteWkOrigin: options.promoteWkOrigin,
     fetchImpl: options.fetchImpl,
     generatedAt: options.generatedAt
   })
@@ -193,6 +208,11 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     webkincstarOverlaySkippedSeries: report.webkincstarOverlaySkippedSeries,
     webkincstarSeriesInvented: report.webkincstarSeriesInvented,
     webkincstarSeriesInventedSeries: report.webkincstarSeriesInventedSeries,
+    akkResolvedSeries: report.akkResolvedSeries,
+    akkResolveExtraGets: report.akkResolveExtraGets,
+    wkOriginPromotedSameId: report.wkOriginPromotedSameId,
+    wkOriginRenamedMerged: report.wkOriginRenamedMerged,
+    wkOriginResolveMiss: report.wkOriginResolveMiss,
     webkincstarSoftFailed: report.webkincstarSoftFailed,
     retailInterestSoftFailed: report.retailInterestSoftFailed,
     exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -228,6 +248,11 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
   writeGithubOutput('webkincstar_datums_fetched', result.webkincstarDatumsFetched.join(','))
   writeGithubOutput('webkincstar_overlay_skipped', String(result.webkincstarOverlaySkipped))
   writeGithubOutput('webkincstar_series_invented', String(result.webkincstarSeriesInvented))
+  writeGithubOutput('akk_resolved_series', String(result.akkResolvedSeries))
+  writeGithubOutput('akk_resolve_extra_gets', String(result.akkResolveExtraGets))
+  writeGithubOutput('wk_origin_promoted_same_id', String(result.wkOriginPromotedSameId))
+  writeGithubOutput('wk_origin_renamed_merged', String(result.wkOriginRenamedMerged))
+  writeGithubOutput('wk_origin_resolve_miss', String(result.wkOriginResolveMiss))
   writeGithubOutput('webkincstar_soft_failed', result.webkincstarSoftFailed ? 'true' : 'false')
   writeGithubOutput(
     'retail_interest_soft_failed',

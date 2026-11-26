@@ -40,6 +40,7 @@ function printHelp(): void {
       [--settlement-calendar-dir <dir>] [--skip-settlement-calendar]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
+      [--promote-wk-origin]
   market-data ci-ingest --out-root <path> [--baseline-root <path>] [--raw-dir <dir>]
       [--catalog <json>] [--rates <json>] [--allampapir-dir <dir>] [--skip-allampapir]
       [--retail-interest <json>] [--skip-retail-interest]
@@ -48,6 +49,7 @@ function printHelp(): void {
       [--settlement-calendar-dir <dir>] [--skip-settlement-calendar]
       [--webkincstar-dir <dir>] [--datum YYYY-MM-DD] [--skip-webkincstar]
       [--offerings-dir <dir>] [--skip-offerings] [--reparse-parse-failed]
+      [--promote-wk-origin]
   market-data backfill-webkincstar --root <repo-or-v2> --from YYYY-MM-DD [--to YYYY-MM-DD]
       [--reports name,name] [--weekdays-only] [--skip-durable] [--raw-dir <dir>]
       [--previous-root <path>] [--catalog <json>] [--rates <json>] …
@@ -216,6 +218,7 @@ async function loadOptionalSources(args: string[]): Promise<{
     throw new Error('Use either --offerings-dir or --skip-offerings, not both.')
   }
   const reparseParseFailed = hasFlag(args, '--reparse-parse-failed')
+  const promoteWkOrigin = hasFlag(args, '--promote-wk-origin')
   const webkincstarDatum = getFlag(args, '--datum')
   return {
     catalog: catalogPath ? await loadEnvelope(catalogPath) : undefined,
@@ -239,7 +242,8 @@ async function loadOptionalSources(args: string[]): Promise<{
     skipWebkincstar,
     offeringEnvelopesByFamily: offeringsDir ? await loadOfferingsDir(offeringsDir) : undefined,
     skipOfferings,
-    reparseParseFailed
+    reparseParseFailed,
+    promoteWkOrigin
   }
 }
 
@@ -276,7 +280,8 @@ async function main(argv: string[]): Promise<number> {
       skipWebkincstar: sources.skipWebkincstar,
       offeringEnvelopesByFamily: sources.offeringEnvelopesByFamily,
       skipOfferings: sources.skipOfferings,
-      reparseParseFailed: sources.reparseParseFailed
+      reparseParseFailed: sources.reparseParseFailed,
+      promoteWkOrigin: sources.promoteWkOrigin
     })
     process.stdout.write(
       `${JSON.stringify({
@@ -341,7 +346,8 @@ async function main(argv: string[]): Promise<number> {
       skipWebkincstar: sources.skipWebkincstar,
       offeringEnvelopesByFamily: sources.offeringEnvelopesByFamily,
       skipOfferings: sources.skipOfferings,
-      reparseParseFailed: sources.reparseParseFailed
+      reparseParseFailed: sources.reparseParseFailed,
+      promoteWkOrigin: sources.promoteWkOrigin
     })
     process.stdout.write(
       `${JSON.stringify({

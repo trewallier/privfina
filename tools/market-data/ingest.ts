@@ -1,6 +1,18 @@
+import {
+  buildAkkCatalogResolveIndex,
+  createAkkResolveBudget,
+  isAkkResolveDeferred,
+  resolveAkkSecurityByLabel,
+  type AkkCatalogResolveIndex,
+  type AkkResolveBudget
+} from './akk-security-resolve.ts'
 import { combineSnapshots } from './combine.ts'
-import { applyWebkincstarQuotes } from './combine-webkincstar.ts'
+import {
+  applyWebkincstarQuotes,
+  listUnmatchedWebkincstarInstruments
+} from './combine-webkincstar.ts'
 import { fetchAkkSnapshots } from './fetch-akk.ts'
+import { promoteWkOriginSeries } from './promote-wk-origin.ts'
 import { fetchAkkOfferingListings } from './fetch-akk-offerings.ts'
 import { CsrfSession, fetchAllampapirSnapshots } from './fetch-allampapir.ts'
 import { fetchKshInflationCsv } from './fetch-ksh-inflation.ts'
@@ -208,6 +220,11 @@ export interface IngestOptions {
    * `MARKET_REPARSE_PARSE_FAILED=1`.
    */
   reparseParseFailed?: boolean
+  /**
+   * Force tip WK-origin promote/rename-merge this run (ADR 0048 cutover).
+   * Default ingest already promotes; also honored via `MARKET_PROMOTE_WK_ORIGIN=1`.
+   */
+  promoteWkOrigin?: boolean
   fetchImpl?: typeof fetch
   generatedAt?: string
 }
@@ -256,6 +273,18 @@ export interface IngestReport extends MergeResult {
   webkincstarSeriesInvented: number
   /** Unique invented WK series (family/id) across fetched datums. */
   webkincstarSeriesInventedSeries: WebkincstarSkippedSeriesRef[]
+  /** Unique ÁKK-resolved series attached during WK hist overlay (resolve-before-invent). */
+  akkResolvedSeries: number
+  /** Extra getSecurityWithOutstanding GETs used for resolve this run. */
+  akkResolveExtraGets: number
+  /** Tip WK-origin same-id promotes this run. */
+  wkOriginPromotedSameId: number
+  /** Tip WK-origin rename-merges this run. */
+  wkOriginRenamedMerged: number
+  /** Tip WK-origin resolve misses this run. */
+  wkOriginResolveMiss: number
+  /** Tip WK-origin soft-fail / budget-exhausted resolves this run. */
+  wkOriginSoftFail: number
   /**
    * Oldest (deepest) contiguous tip-success frontier across families (or null).
    * Archive-depth metric for tip transcription progress — not listing discovery.
@@ -365,6 +394,9 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   const akkSnapshot = normalizeAkkSnapshots(catalog, networkRates, {
     requireFamilies: false
   })
+  const akkResolveIndex: AkkCatalogResolveIndex = buildAkkCatalogResolveIndex(catalog)
+  const akkResolveBudget: AkkResolveBudget = createAkkResolveBudget()
+  const akkResolvedSeriesByKey = new Map<string, WebkincstarSkippedSeriesRef>()
 
   let allampapirSnapshot: NormalizedSnapshot
   let allampapirSession: CsrfSession | undefined
@@ -443,7 +475,53 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   }
 
   const combined = combineSnapshots(akkSnapshot, allampapirSnapshot)
-  const previous = await loadMarketTree(options.previousRoot ?? options.root)
+  const previousLoaded = await loadMarketTree(options.previousRoot ?? options.root)
+
+  // Tip cutover before WK overlay / merge so joins see ÁKK-canonical ids (ADR 0048).
+  const forcePromote =
+    options.promoteWkOrigin === true || process.env.MARKET_PROMOTE_WK_ORIGIN === '1'
+  let wkOriginPromotedSameId = 0
+  let wkOriginRenamedMerged = 0
+  let wkOriginResolveMiss = 0
+  let wkOriginSoftFail = 0
+  let previous = previousLoaded
+  {
+    const hasWkOrigin = FAMILIES.some((family) =>
+      previousLoaded.families[family].series.series.some(
+        (s) => s.identitySource === 'webkincstar.allamkincstar.gov.hu'
+      )
+    )
+    if (hasWkOrigin || forcePromote) {
+      const tipClone = structuredClone(previousLoaded)
+      const promote = await promoteWkOriginSeries(tipClone, {
+        resolve: (label, preferredFamily) =>
+          resolveAkkSecurityByLabel(label, {
+            index: akkResolveIndex,
+            budget: akkResolveBudget,
+            preferredFamily,
+            asOf: combined.snapshot.asOf ?? tipClone.manifest?.asOf ?? null,
+            fetchImpl: options.fetchImpl
+          })
+      })
+      previous = promote.tree
+      wkOriginPromotedSameId = promote.counters.promotedSameId
+      wkOriginRenamedMerged = promote.counters.renamedMerged
+      wkOriginResolveMiss = promote.counters.resolveMiss
+      wkOriginSoftFail = promote.counters.softFail
+      if (
+        promote.remaps.length > 0 ||
+        promote.counters.promotedSameId > 0 ||
+        promote.counters.softFail > 0
+      ) {
+        console.error(
+          `[market-data] WK-origin tip cutover: sameId=${promote.counters.promotedSameId} renameMerge=${promote.counters.renamedMerged} miss=${promote.counters.resolveMiss} softFail=${promote.counters.softFail}` +
+            (promote.remaps.length
+              ? `; remaps=${promote.remaps.map((r) => `${r.family}:${r.fromId}→${r.toId}`).join(',')}`
+              : '')
+        )
+      }
+    }
+  }
 
   /** undefined = keep previous; file = year-replace merge (ADR 0046). */
   let settlementCalendarUpdate: SettlementCalendarFile | undefined
@@ -628,10 +706,83 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 `[market-data] WebKincstár unmatched instrument names (soft-skip): ${normalizedOne.unmatchedNames.join(', ')}`
               )
             }
+            const inventUnmatched = inventDatums.has(webkincstarDatum)
+            const extraSeries = previousSeriesForJoin(previous)
+            const akkResolvedByLabel = new Map<
+              string,
+              { family: FamilyCode; series: SeriesRecord }
+            >()
+            /** Soft-fail / budget-exhausted — soft-skip; do not invent this run. */
+            const refuseInventKeys = new Set<string>()
+            if (inventUnmatched) {
+              const unmatched = listUnmatchedWebkincstarInstruments(
+                mergeSnapshotInput,
+                normalizedOne.snapshot,
+                extraSeries
+              )
+              for (const u of unmatched) {
+                let deferred = false
+                let hit = await resolveAkkSecurityByLabel(u.name, {
+                  index: akkResolveIndex,
+                  budget: akkResolveBudget,
+                  preferredFamily: u.family,
+                  asOf: mergeSnapshotInput.asOf ?? normalizedOne.snapshot.asOf,
+                  fetchImpl: options.fetchImpl
+                })
+                if (!hit.series && isAkkResolveDeferred(hit.via)) deferred = true
+                if (!hit.series && u.id !== u.name) {
+                  const byId = await resolveAkkSecurityByLabel(u.id, {
+                    index: akkResolveIndex,
+                    budget: akkResolveBudget,
+                    preferredFamily: u.family,
+                    asOf: mergeSnapshotInput.asOf ?? normalizedOne.snapshot.asOf,
+                    fetchImpl: options.fetchImpl
+                  })
+                  if (byId.series) {
+                    hit = byId
+                    deferred = false
+                  } else if (isAkkResolveDeferred(byId.via)) {
+                    deferred = true
+                  }
+                }
+                if (hit.series) {
+                  const resolvedFamily = u.family
+                  const entry = { family: resolvedFamily, series: hit.series }
+                  // Family-scoped keys only (ADR 0048).
+                  akkResolvedByLabel.set(`${u.family}\0${u.id}`, entry)
+                  akkResolvedByLabel.set(`${u.family}\0${u.name}`, entry)
+                  const key = `${resolvedFamily}\0${hit.series.id}`
+                  if (!akkResolvedSeriesByKey.has(key)) {
+                    akkResolvedSeriesByKey.set(key, {
+                      family: resolvedFamily,
+                      id: hit.series.id
+                    })
+                  }
+                } else if (deferred) {
+                  refuseInventKeys.add(`${u.family}\0${u.id}`)
+                }
+              }
+            }
             const overlay = applyWebkincstarQuotes(mergeSnapshotInput, normalizedOne.snapshot, {
-              extraSeries: previousSeriesForJoin(previous),
-              inventUnmatched: inventDatums.has(webkincstarDatum)
+              extraSeries,
+              inventUnmatched,
+              akkResolvedByLabel:
+                akkResolvedByLabel.size > 0 ? akkResolvedByLabel : undefined,
+              refuseInventKeys: refuseInventKeys.size > 0 ? refuseInventKeys : undefined
             })
+            if (overlay.akkResolvedSeries.length > 0) {
+              for (const series of overlay.akkResolvedSeries) {
+                const key = `${series.family}\0${series.id}`
+                if (!akkResolvedSeriesByKey.has(key)) {
+                  akkResolvedSeriesByKey.set(key, { family: series.family, id: series.id })
+                }
+              }
+              console.error(
+                `[market-data] WebKincstár ÁKK-resolved ${overlay.akkResolvedSeries.length} series (ADR 0048; ${fetchedReport.reportName}): ${overlay.akkResolvedSeries
+                  .map((s) => `${s.family}/${s.id}←${s.wkLabel}`)
+                  .join('; ')}`
+              )
+            }
             if (overlay.inventedSeries.length > 0) {
               for (const series of overlay.inventedSeries) {
                 const key = `${series.family}\0${series.id}`
@@ -1119,6 +1270,12 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     webkincstarSeriesInventedSeries: [...webkincstarSeriesInventedByKey.values()].sort(
       (a, b) => a.family.localeCompare(b.family) || a.id.localeCompare(b.id)
     ),
+    akkResolvedSeries: akkResolvedSeriesByKey.size,
+    akkResolveExtraGets: akkResolveBudget.usedGets,
+    wkOriginPromotedSameId,
+    wkOriginRenamedMerged,
+    wkOriginResolveMiss,
+    wkOriginSoftFail,
     offeringBackfillFrontier,
     offeringBackfillFrontierHolders,
     offeringGateFrontier,

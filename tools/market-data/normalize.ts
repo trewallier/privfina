@@ -87,7 +87,12 @@ export function dayCountFromInterestConvention(raw: unknown): DayCountConvention
   return null
 }
 
-function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
+/**
+ * Map one ÁKK catalog row to a SeriesRecord (canonical id = longName ?? name).
+ * Exported for ADR 0048 resolve-before-invent / tip cutover.
+ * Returns null when securityType is outside published families.
+ */
+export function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
   const family = familyFromSecurityType(row.securityType)
   if (!family) return null
   const label = rawLabelFromRow(row)
@@ -119,6 +124,11 @@ function mapCatalogRow(row: AkkRow, asOf: string | null): SeriesRecord | null {
   const periodMonths = periodMonthsFromInterestPeriod(row.interestPeriod)
   if (periodMonths != null) rec.periodMonths = periodMonths
   return rec
+}
+
+/** Family for an ÁKK catalog row, or null when outside published families. */
+export function familyFromAkkCatalogRow(row: AkkRow): FamilyCode | null {
+  return familyFromSecurityType(row.securityType)
 }
 
 function mapQuoteRow(row: AkkRow): { family: FamilyCode; id: string; row: QuoteRow } | null {

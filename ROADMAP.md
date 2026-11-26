@@ -384,6 +384,7 @@ Plan slices (implement in order; each slice should stay PR-sized)
 - [x] SPA loader: `loadPriceCalendar` + calendar-aware `resolveQuoteForPurchaseDate` + fixtures/tests.
 - [x] Commercial composer UX: available/past picker labels via `series.offered`, attribution disclaimer, clamp / no_price / fetch_failed hints.
 - [x] Close §6i: check off ROADMAP/spec; soft-fail regression; temporary tip→`master` CI head PR (close, do not merge).
+- [x] DKJ buy/sell % history chart under the commercial DKJ host: two linear lines (Buy % = `ask` / eladási, Sell % = `bid` / vételi) from the selected series’ published quote file; reuses viz-pane `renderChart` primitives (multi-line / `%` / linear path); Manual entry / no history / non-discount product hides the chart; no pan/zoom toolbar on the embedded host.
 
 Out of scope for §6i
 - Optional-family commercial hosts (§6j).

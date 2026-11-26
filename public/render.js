@@ -544,6 +544,17 @@ function formatAxisAmount(value) {
   return formatMoneyAmount(value, { fractionDigits: 2 })
 }
 
+function formatAxisPercent(value) {
+  if (value == null || value === '') {
+    return '—'
+  }
+  const number = Number(value)
+  if (!Number.isFinite(number)) {
+    return '—'
+  }
+  return `${number.toFixed(2)}%`
+}
+
 function formatDateLabel(isoDate, { compact = false } = {}) {
   const [year, month, day] = isoDate.split('-').map((value) => Number(value))
   const parsed = new Date(Date.UTC(year, month - 1, day))
@@ -585,30 +596,84 @@ function downsampleSeriesForChart(series, maxPoints = 900) {
   return sampled
 }
 
-function buildHoldPath(series, xScale, yScale) {
+function readPointValue(point, valueKey = 'cumulativeTotal') {
+  if (!point) {
+    return null
+  }
+  const raw = point[valueKey]
+  if (raw == null || !Number.isFinite(Number(raw))) {
+    return null
+  }
+  return Number(raw)
+}
+
+function buildHoldPath(series, xScale, yScale, valueKey = 'cumulativeTotal') {
   if (!series.length) {
     return ''
   }
 
-  const first = series[0]
-  let path = `M ${xScale(new Date(first.date).getTime())} ${yScale(first.cumulativeTotal)}`
-
-  for (let index = 1; index < series.length; index += 1) {
-    const current = series[index]
-    const currentX = xScale(new Date(current.date).getTime())
-    const currentY = yScale(current.cumulativeTotal)
-
-    path += ` H ${currentX} V ${currentY}`
+  let path = ''
+  let drawing = false
+  for (const point of series) {
+    const value = readPointValue(point, valueKey)
+    if (value == null) {
+      drawing = false
+      continue
+    }
+    const currentX = xScale(new Date(point.date).getTime())
+    const currentY = yScale(value)
+    if (!drawing) {
+      path += `${path ? ' ' : ''}M ${currentX} ${currentY}`
+      drawing = true
+    } else {
+      path += ` H ${currentX} V ${currentY}`
+    }
   }
 
   return path
 }
 
-function buildHoldAreaPath(series, xScale, yScale, baselineY, xMin, xMax) {
+function buildLinearPath(series, xScale, yScale, valueKey = 'cumulativeTotal') {
   if (!series.length) {
     return ''
   }
-  const line = buildHoldPath(series, xScale, yScale)
+
+  let path = ''
+  let drawing = false
+  for (const point of series) {
+    const value = readPointValue(point, valueKey)
+    if (value == null) {
+      drawing = false
+      continue
+    }
+    const currentX = xScale(new Date(point.date).getTime())
+    const currentY = yScale(value)
+    if (!drawing) {
+      path += `${path ? ' ' : ''}M ${currentX} ${currentY}`
+      drawing = true
+    } else {
+      path += ` L ${currentX} ${currentY}`
+    }
+  }
+
+  return path
+}
+
+function buildSeriesPath(series, xScale, yScale, valueKey, pathStyle = 'hold') {
+  if (pathStyle === 'linear') {
+    return buildLinearPath(series, xScale, yScale, valueKey)
+  }
+  return buildHoldPath(series, xScale, yScale, valueKey)
+}
+
+function buildHoldAreaPath(series, xScale, yScale, baselineY, xMin, xMax, valueKey = 'cumulativeTotal') {
+  if (!series.length) {
+    return ''
+  }
+  const line = buildHoldPath(series, xScale, yScale, valueKey)
+  if (!line) {
+    return ''
+  }
   const last = series[series.length - 1]
   const lastX = xScale(Math.min(xMax, new Date(last.date).getTime()))
   const firstX = xScale(Math.max(xMin, new Date(series[0].date).getTime()))
@@ -636,6 +701,13 @@ function updateChartCrosshair(container, crosshair, layout) {
     return
   }
 
+  const valueKey = layout.valueKey || 'cumulativeTotal'
+  const formatY = typeof layout.formatY === 'function' ? layout.formatY : formatAxisAmount
+  const yValue =
+    crosshair[valueKey] != null && Number.isFinite(Number(crosshair[valueKey]))
+      ? Number(crosshair[valueKey])
+      : Number(crosshair.cumulativeTotal)
+
   const cx =
     layout.maxTime === layout.minTime
       ? layout.leftPad + layout.plotWidth / 2
@@ -644,11 +716,9 @@ function updateChartCrosshair(container, crosshair, layout) {
           (layout.maxTime - layout.minTime)) *
           layout.plotWidth
   const cy =
-    layout.yMax === layout.yMin
+    layout.yMax === layout.yMin || !Number.isFinite(yValue)
       ? layout.topPad + layout.plotHeight / 2
-      : layout.topPad +
-        ((layout.yMax - crosshair.cumulativeTotal) / (layout.yMax - layout.yMin)) *
-          layout.plotHeight
+      : layout.topPad + ((layout.yMax - yValue) / (layout.yMax - layout.yMin)) * layout.plotHeight
 
   lineX.setAttribute('x1', String(cx))
   lineX.setAttribute('x2', String(cx))
@@ -668,12 +738,16 @@ function updateChartCrosshair(container, crosshair, layout) {
 
   const delta =
     crosshair.dayDelta !== null && crosshair.dayDelta !== undefined
-      ? ` · day ${formatAxisAmount(crosshair.dayDelta)}`
+      ? ` · day ${formatY(crosshair.dayDelta)}`
       : ''
+  const tooltipText =
+    typeof crosshair.tooltipText === 'string' && crosshair.tooltipText
+      ? crosshair.tooltipText
+      : `${formatDateLabel(crosshair.date)} · ${formatY(yValue)}${delta}`
   tooltip.hidden = false
   tooltip.style.left = `${Math.min(layout.width - 12, Math.max(12, cx))}px`
   tooltip.style.top = `${Math.max(8, cy - 36)}px`
-  tooltip.textContent = `${formatDateLabel(crosshair.date)} · ${formatAxisAmount(crosshair.cumulativeTotal)}${delta}`
+  tooltip.textContent = tooltipText
 }
 
 function readChartThemeColors(root = globalThis.document?.documentElement) {
@@ -683,6 +757,7 @@ function readChartThemeColors(root = globalThis.document?.documentElement) {
     axis: '#b0bdce',
     muted: '#5a6a7d',
     series: '#2563eb',
+    seriesAlt: '#c2410c',
     seriesFill: 'rgba(37, 99, 235, 0.12)',
     crosshair: '#94a3b8',
     zero: '#a8b4c4',
@@ -703,6 +778,7 @@ function readChartThemeColors(root = globalThis.document?.documentElement) {
       axis: read('--chart-axis', fallbacks.axis),
       muted: read('--chart-muted', fallbacks.muted),
       series: read('--chart-series', fallbacks.series),
+      seriesAlt: read('--chart-series-alt', fallbacks.seriesAlt),
       seriesFill: read('--chart-series-fill', fallbacks.seriesFill),
       crosshair: read('--chart-crosshair', fallbacks.crosshair),
       zero: read('--chart-zero', fallbacks.zero),
@@ -714,14 +790,45 @@ function readChartThemeColors(root = globalThis.document?.documentElement) {
   }
 }
 
+function resolveChartLines(options, theme) {
+  if (Array.isArray(options.lines) && options.lines.length > 0) {
+    return options.lines.map((line, index) => ({
+      key: line.key,
+      label: line.label || line.key,
+      color:
+        line.color ||
+        (index === 0 ? theme.series : index === 1 ? theme.seriesAlt : theme.series)
+    }))
+  }
+  return [
+    {
+      key: options.valueKey || 'cumulativeTotal',
+      label: options.title || 'Series',
+      color: theme.series
+    }
+  ]
+}
+
 function renderChart(series, container, options = {}) {
   const startDate = options.startDate
   const endDate = options.endDate
   const theme = options.themeColors || readChartThemeColors()
+  const lines = resolveChartLines(options, theme)
+  const valueKeys = lines.map((line) => line.key)
+  const primaryKey = valueKeys[0] || 'cumulativeTotal'
+  const pathStyle = options.pathStyle === 'linear' ? 'linear' : 'hold'
+  const showArea = options.showArea !== undefined ? Boolean(options.showArea) : pathStyle === 'hold'
+  const showZeroAxis = options.showZeroAxis !== false
+  const includeZero = options.includeZero !== false
+  const formatY = typeof options.formatY === 'function' ? options.formatY : formatAxisAmount
+  const title = options.title || 'Cumulative total amount'
+  const ariaLabelPrefix = options.ariaLabel || 'Cumulative cash-flow chart'
 
   if (!series.length) {
     const rangeMessage = startDate && endDate ? `${startDate} to ${endDate}` : 'the selected date range'
-    const message = `No cash flows in ${rangeMessage}. Cumulative total remains ${formatAxisAmount(0)}.`
+    const message =
+      options.emptyMessage ||
+      `No cash flows in ${rangeMessage}. Cumulative total remains ${formatAxisAmount(0)}.`
     // Constant HTML shell only; put dynamic text via textContent (CodeQL js/xss-through-dom).
     container.innerHTML = '<div class="empty"></div>'
     container.querySelector('.empty').textContent = message
@@ -745,9 +852,12 @@ function renderChart(series, container, options = {}) {
   const bottomPad = 40
   const plotRight = width - rightPad
 
-  const { minTotal, maxTotal } = yExtentForSeries(series, fitY, viewport)
-  const yTickValues = computeNiceYTicks(minTotal, maxTotal, 5)
-  const yLabelWidths = yTickValues.map((value) => estimateTextWidth(formatAxisAmount(value), 11))
+  const { minTotal, maxTotal } = yExtentForSeries(series, fitY, viewport, {
+    valueKeys,
+    includeZero
+  })
+  const yTickValues = computeNiceYTicks(minTotal, maxTotal, 5, { includeZero })
+  const yLabelWidths = yTickValues.map((value) => estimateTextWidth(formatY(value), 11))
   const leftPad = Math.max(72, Math.min(128, Math.max(...yLabelWidths, 0) + 16))
   const plotWidth = Math.max(40, plotRight - leftPad)
   const plotBottom = height - bottomPad
@@ -775,10 +885,11 @@ function renderChart(series, container, options = {}) {
   const plotSeries = []
   if (sampledVisible.length) {
     const first = sampledVisible[0]
-    plotSeries.push({
-      date: new Date(Math.max(minTime, new Date(first.date).getTime())).toISOString().slice(0, 10),
-      cumulativeTotal: first.cumulativeTotal
-    })
+    const firstEdge = { ...first }
+    firstEdge.date = new Date(Math.max(minTime, new Date(first.date).getTime()))
+      .toISOString()
+      .slice(0, 10)
+    plotSeries.push(firstEdge)
     for (let index = 1; index < sampledVisible.length; index += 1) {
       plotSeries.push(sampledVisible[index])
     }
@@ -786,22 +897,30 @@ function renderChart(series, container, options = {}) {
     const lastTime = new Date(last.date).getTime()
     if (lastTime < maxTime) {
       plotSeries.push({
-        date: new Date(maxTime).toISOString().slice(0, 10),
-        cumulativeTotal: last.cumulativeTotal
+        ...last,
+        date: new Date(maxTime).toISOString().slice(0, 10)
       })
     }
   }
 
-  const holdPath = buildHoldPath(plotSeries, xScale, yScale)
   const zeroY = yScale(0)
-  const areaPath = buildHoldAreaPath(plotSeries, xScale, yScale, zeroY, minTime, maxTime)
+  const areaPath =
+    showArea && lines.length === 1
+      ? buildHoldAreaPath(plotSeries, xScale, yScale, zeroY, minTime, maxTime, primaryKey)
+      : ''
+  const lineMarkup = lines
+    .map((line) => {
+      const path = buildSeriesPath(plotSeries, xScale, yScale, line.key, pathStyle)
+      return `<path class="series-line" data-series-key="${escapeHtml(line.key)}" d="${path}" fill="none" stroke="${line.color}" stroke-width="2.5" stroke-linejoin="round" />`
+    })
+    .join('')
 
   const yTickMarkup = yTickValues
     .map((value) => {
       const y = yScale(value)
       return `
       <line class="grid-line" x1="${leftPad}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="${theme.grid}" stroke-width="1" />
-      <text class="y-tick-label" x="${leftPad - 10}" y="${y + 4}" text-anchor="end" fill="${theme.muted}" font-size="11">${formatAxisAmount(value)}</text>
+      <text class="y-tick-label" x="${leftPad - 10}" y="${y + 4}" text-anchor="end" fill="${theme.muted}" font-size="11">${formatY(value)}</text>
     `
     })
     .join('')
@@ -820,6 +939,13 @@ function renderChart(series, container, options = {}) {
 
   const hasZeroCrossing = minTotal < 0 && maxTotal > 0
   const zeroAxisColor = hasZeroCrossing ? theme.zeroWarn : theme.zero
+  const zeroAxisMarkup = showZeroAxis
+    ? `<line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${plotRight}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />`
+    : ''
+  const areaMarkup =
+    showArea && areaPath
+      ? `<path class="series-area" d="${areaPath}" fill="${theme.seriesFill}" stroke="none" />`
+      : ''
   const showSamplingInSvg =
     options.showSamplingNote !== false &&
     sampledVisible.length < visibleRaw.length &&
@@ -829,7 +955,7 @@ function renderChart(series, container, options = {}) {
     : ''
 
   const ariaRange = `${formatTimestampLabel(minTime)} to ${formatTimestampLabel(maxTime)}`
-  const clipId = `chart-plot-clip-${width}x${height}`
+  const clipId = `chart-plot-clip-${width}x${height}-${primaryKey}`
   container.innerHTML = `
     <svg class="chart-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="presentation" aria-hidden="true">
       <defs>
@@ -837,16 +963,16 @@ function renderChart(series, container, options = {}) {
           <rect x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" />
         </clipPath>
       </defs>
-      <text class="chart-title" x="${leftPad}" y="18" fill="${theme.muted}" font-size="12">Cumulative total amount</text>
+      <text class="chart-title" x="${leftPad}" y="18" fill="${theme.muted}" font-size="12">${escapeHtml(title)}</text>
       ${samplingNote}
       ${yTickMarkup}
       <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="${theme.axis}" stroke-width="1" />
       <line x1="${leftPad}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}" stroke="${theme.axis}" stroke-width="1" />
       <g data-chart-plot="true" clip-path="url(#${clipId})">
         <rect class="chart-plot-hit" x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" fill="transparent" />
-        <path class="series-area" d="${areaPath}" fill="${theme.seriesFill}" stroke="none" />
-        <line class="zero-axis" x1="${leftPad}" y1="${zeroY}" x2="${plotRight}" y2="${zeroY}" stroke="${zeroAxisColor}" stroke-width="1.5" />
-        <path class="series-line" d="${holdPath}" fill="none" stroke="${theme.series}" stroke-width="2.5" stroke-linejoin="round" />
+        ${areaMarkup}
+        ${zeroAxisMarkup}
+        ${lineMarkup}
         <line class="chart-crosshair-x" x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="${theme.crosshair}" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
         <line class="chart-crosshair-y" x1="${leftPad}" y1="${topPad}" x2="${plotRight}" y2="${topPad}" stroke="${theme.crosshair}" stroke-width="1" stroke-dasharray="4 3" visibility="hidden" />
         <circle class="chart-crosshair-point" cx="${leftPad}" cy="${topPad}" r="4.5" fill="${theme.series}" stroke="${theme.pointStroke}" stroke-width="2" visibility="hidden" />
@@ -856,10 +982,7 @@ function renderChart(series, container, options = {}) {
     <div class="chart-tooltip" hidden></div>
   `
   if (container.setAttribute) {
-    container.setAttribute(
-      'aria-label',
-      `Cumulative cash-flow chart, visible range ${ariaRange}`
-    )
+    container.setAttribute('aria-label', `${ariaLabelPrefix}, visible range ${ariaRange}`)
   }
 
   const layout = {
@@ -874,7 +997,9 @@ function renderChart(series, container, options = {}) {
     minTime,
     maxTime,
     yMin,
-    yMax
+    yMax,
+    valueKey: primaryKey,
+    formatY
   }
 
   if (options.crosshair) {
@@ -894,8 +1019,10 @@ export {
   updateChartCrosshair,
   downsampleSeriesForChart,
   formatAxisAmount,
+  formatAxisPercent,
   formatDateLabel,
   formatSignedAmount,
   buildHoldPath,
+  buildLinearPath,
   buildHoldAreaPath
 }

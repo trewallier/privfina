@@ -100,6 +100,7 @@
         --chart-axis: #b0bdce;
         --chart-muted: #5a6a7d;
         --chart-series: #2563eb;
+        --chart-series-alt: #c2410c;
         --chart-series-fill: rgba(37, 99, 235, 0.12);
         --chart-crosshair: #94a3b8;
         --chart-zero: #a8b4c4;
@@ -175,6 +176,7 @@
         --chart-axis: #4b5b70;
         --chart-muted: #9aa8ba;
         --chart-series: #60a5fa;
+        --chart-series-alt: #fb923c;
         --chart-series-fill: rgba(96, 165, 250, 0.16);
         --chart-crosshair: #64748b;
         --chart-zero: #64748b;
@@ -1114,6 +1116,88 @@
       }
 
       #chart .chart-tooltip[hidden] {
+        display: none;
+      }
+
+      #dkj-quote-chart-wrap {
+        margin-top: 12px;
+      }
+
+      #dkj-quote-chart-wrap .dkj-quote-chart-heading {
+        margin: 0 0 6px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      #dkj-quote-chart-wrap .dkj-quote-chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        margin: 0 0 8px;
+        padding: 0;
+        list-style: none;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      #dkj-quote-chart-wrap .dkj-quote-chart-legend li {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      #dkj-quote-chart-wrap .dkj-quote-chart-swatch {
+        width: 14px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--chart-series);
+      }
+
+      #dkj-quote-chart-wrap .dkj-quote-chart-swatch[data-series='sell'] {
+        background: var(--chart-series-alt);
+      }
+
+      #dkj-quote-chart {
+        position: relative;
+        width: 100%;
+        min-height: 200px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface);
+        overflow: hidden;
+      }
+
+      #dkj-quote-chart .chart-svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+      }
+
+      #dkj-quote-chart .y-tick-label,
+      #dkj-quote-chart .x-tick-label,
+      #dkj-quote-chart .chart-title,
+      #dkj-quote-chart .chart-sampling-note {
+        font-family: inherit;
+      }
+
+      #dkj-quote-chart .chart-tooltip {
+        position: absolute;
+        transform: translate(-50%, -100%);
+        pointer-events: none;
+        z-index: 2;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--tooltip-bg);
+        color: var(--text);
+        font-size: 0.8rem;
+        white-space: nowrap;
+        box-shadow: var(--tooltip-shadow);
+      }
+
+      #dkj-quote-chart .chart-tooltip[hidden] {
         display: none;
       }
 
@@ -2626,6 +2710,14 @@
                         <span class="label-title"><span class="dkj-field-label">Maturity Date</span></span>
                         <input id="dkj-maturity-date" name="maturityDate" type="date" required />
                       </label>
+                    </div>
+                    <div id="dkj-quote-chart-wrap" hidden>
+                      <p class="dkj-quote-chart-heading">Market price history</p>
+                      <ul class="dkj-quote-chart-legend" aria-label="Price series legend">
+                        <li><span class="dkj-quote-chart-swatch" data-series="buy" aria-hidden="true"></span>Buy % (ask / eladási)</li>
+                        <li><span class="dkj-quote-chart-swatch" data-series="sell" aria-hidden="true"></span>Sell % (bid / vételi)</li>
+                      </ul>
+                      <div id="dkj-quote-chart" role="img" aria-label="DKJ buy and sell price percent history"></div>
                     </div>
                   </div>
 

@@ -732,7 +732,7 @@ describe('browser recurrence validation helpers', () => {
       viewport: zoomed,
       domain: { xMin: domainStart, xMax: domainEnd }
     })
-    const pathMatch = container.innerHTML.match(/class="series-line" d="([^"]+)"/)
+    const pathMatch = container.innerHTML.match(/class="series-line"[^>]*\sd="([^"]+)"/)
     const path = pathMatch ? pathMatch[1] : ''
     const segments = (path.match(/ H /g) || []).length
     expect(segments).toBeGreaterThan(20)

@@ -515,6 +515,7 @@ Out of scope for §6k
 - Backfilling older offerings (§6m).
 - SPA composer / loader wiring for offerings (see §6l).
 - Replacing retailInterest or WebKincstár price ingest (§6d / §6h).
+- Scraping Államkincstár hub zips for PDFs (still hub-only per ADR 0041 / 0044). Probe evidence that matured DKJ ISSUE rows drop from xpose while zips retain ÁKK-authored PDFs: [`docs/dev-notes/offering-pdf-source-coverage-probe.md`](docs/dev-notes/offering-pdf-source-coverage-probe.md) — candidate §6m / later ADR only.
 
 #### 6l) SPA uses offering-enriched market data
 Goal: commercial investment composer (DKJ / PMÁP / BMÁP) consumes the published offering records §6k adds — **sale windows**, **coupon payment calendars**, **offering day-count**, and **source attribution** — so series availability / autofill stop relying on `offered`-only snapshots and `deriveFirstCouponDate` heuristics. Soft-fail when offering files are missing (Manual path unchanged) so this epic can land before or beside live §6k ingest.

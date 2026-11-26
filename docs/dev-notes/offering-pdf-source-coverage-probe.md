@@ -86,3 +86,32 @@ In-scope ingest families (`OFFERING_FAMILIES`) tip unique ISSUE names on probe d
 - §6k design remains sound for **live** capture.
 - §6m listing discovery walking older `auctionEnd` / `ptsEnd` pages only helps while xpose still retains those rows. For DKJ matured purge, zip (or another archive) is required to recover PDFs after the fact.
 - Product pages that look “limited” are often the intersection of (a) outstanding-only ÁKK listings and (b) stale Államkincstár aktualis packs — not a missing xpose PDF download API.
+
+## Security detail page (`/hu/security?id=D260930`)
+
+Browser Network capture (Europe/Budapest **2026-11-26**, Chrome DevTools) on [ÁKK security?id=D260930](https://www.akk.hu/hu/security?id=D260930). Same-origin GETs to `/api/data/xpose3-dwh/data` (initiator: SPA bundle). No PDF/document GETs; Aukciók “Excel export” is client-side (`exceljs`), not an API.
+
+| # | `query=` | Params | Rows (D260930) | Useful for |
+| --- | --- | --- | --- | --- |
+| 1 | `getSecurityWithOutstanding` | `longName=D260930` | 1 | Full identity: ISIN, `issueDate`, `maturityDate`, face, day-count, interestType, outstanding (null when matured) |
+| 2 | `getMarketMakers` | `longName=D260930&date=<today>` | 0 | Primary dealers for that day (empty here) |
+| 3 | `getCashflow` | `longName=D260930` | 2 | Issue (−face) + maturity (+face) legs for DKJ |
+| 4 | `getAuctionSecurity` | `longName=D260930` | 14 total / **6 ISSUE** own | Auction history still present after `getPublicOfferings` purge — dates, accepted, avgPrice/avgYield, settle. **No `path` / PDF UUID** |
+| 5 | `getOutstanding` | `dateStart=<issueDate>` only (no name filter) | 3773 all securities / **8** for D260930 | Outstanding time series for chart |
+
+Confirmed via curl: `longName=` and `name=` both work on `getSecurityWithOutstanding` / `getSecurity` for this paper. `getAuctionSecurity` keeps ISSUE auction **economics** for matured D260930 even though `getPublicOfferings&label=DKJ&auctionType=ISSUE` returns 0 rows — but it does **not** restore offering PDF discovery.
+
+### Using this for ADR 0048 invented (WK-origin) series
+
+WK historical invent stubs (`identitySource: webkincstar…`) are thin: often `issue: null`, maybe `mat` from the PDF line. Today enrich is opportunistic (ÁKK full-catalog upsert promote, or ISSUE offering null-fill).
+
+**Suggested targeted fill (no ADR yet — candidate):**
+
+1. For each WK-origin stub still missing `issue` / `isin` / `mat` (or dayCount), call  
+   `getSecurityWithOutstanding&longName=<displayName>` (fallback `name=`).  
+   One cheap GET per thin stub (or batch only unresolved ids), not a loop over every ÁKK series.
+2. On `meta.status=OK` + 1 row: null-fill `issue` ← `issueDate`, `isin`, `mat` ← `maturityDate`, and optionally map `interestConvention` → `dayCount` when still null; then **promote** `identitySource` to `www.akk.hu` (same as catalog upsert).
+3. Optional follow-on: `getAuctionSecurity&longName=…` for auction stats / settle history — **not** for PDF UUIDs (use Államkincstár zip or tip `getPublicOfferings` for those).
+4. Budget: only unresolved WK-origin stubs; soft-fail per id; never overwrite non-null ÁKK-owned fields.
+
+This closes the “invented series lack issue date” gap **without** scraping the hub and **without** waiting for a tip offering PDF, as long as ÁKK still has the security in the catalog (true for D260930).

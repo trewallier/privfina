@@ -67,6 +67,7 @@ jobs:
       wk_origin_promoted_same_id: ${{ steps.ingest.outputs.wk_origin_promoted_same_id }}
       wk_origin_renamed_merged: ${{ steps.ingest.outputs.wk_origin_renamed_merged }}
       wk_origin_resolve_miss: ${{ steps.ingest.outputs.wk_origin_resolve_miss }}
+      wk_origin_soft_fail: ${{ steps.ingest.outputs.wk_origin_soft_fail }}
       webkincstar_soft_failed: ${{ steps.ingest.outputs.webkincstar_soft_failed }}
       retail_interest_soft_failed: ${{ steps.ingest.outputs.retail_interest_soft_failed }}
     steps:

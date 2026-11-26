@@ -118,6 +118,20 @@ describe('akk-security-resolve (ADR 0048)', () => {
     expect(hit.via).toBe('soft_fail')
   })
 
+  it('budget exhaustion is not a confirmed miss', async () => {
+    const index = buildAkkCatalogResolveIndex(catalogEnvelope([]))
+    const budget = createAkkResolveBudget(0)
+    const fetchImpl = vi.fn()
+    const hit = await resolveAkkSecurityByLabel('D260930', {
+      index,
+      budget,
+      fetchImpl: fetchImpl as unknown as typeof fetch
+    })
+    expect(hit.series).toBeNull()
+    expect(hit.via).toBe('budget_exhausted')
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
   it('GET longName hit caches into index for later labels', async () => {
     const index = buildAkkCatalogResolveIndex(catalogEnvelope([]))
     const budget = createAkkResolveBudget(5)

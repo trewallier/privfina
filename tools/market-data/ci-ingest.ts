@@ -85,6 +85,7 @@ export interface CiIngestResult {
   wkOriginPromotedSameId: number
   wkOriginRenamedMerged: number
   wkOriginResolveMiss: number
+  wkOriginSoftFail: number
   webkincstarSoftFailed: boolean
   retailInterestSoftFailed: boolean
   exitCode: typeof EXIT_UPDATED | typeof EXIT_UNCHANGED | typeof EXIT_ERROR
@@ -109,6 +110,7 @@ export function formatCiIngestNoticeLine(result: {
   akkResolveExtraGets: number
   wkOriginPromotedSameId: number
   wkOriginRenamedMerged: number
+  wkOriginSoftFail: number
   webkincstarFetchFailedDays: number
   offeringTip: Pick<OfferingSourceProgress, 'pdfsDownloaded' | 'pdfQueue' | 'pdfsPending'>
   offeringBackfill: Pick<
@@ -131,6 +133,7 @@ export function formatCiIngestNoticeLine(result: {
     `akk_resolve_gets=${result.akkResolveExtraGets}`,
     `wk_promote_same=${result.wkOriginPromotedSameId}`,
     `wk_rename_merge=${result.wkOriginRenamedMerged}`,
+    `wk_origin_soft_fail=${result.wkOriginSoftFail}`,
     `wk_fetch_failed=${result.webkincstarFetchFailedDays}`,
     `pdfs_tip=${tip.pdfsDownloaded}`,
     `pdfs_bf=${bf.pdfsDownloaded}`,
@@ -213,6 +216,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
     wkOriginPromotedSameId: report.wkOriginPromotedSameId,
     wkOriginRenamedMerged: report.wkOriginRenamedMerged,
     wkOriginResolveMiss: report.wkOriginResolveMiss,
+    wkOriginSoftFail: report.wkOriginSoftFail,
     webkincstarSoftFailed: report.webkincstarSoftFailed,
     retailInterestSoftFailed: report.retailInterestSoftFailed,
     exitCode: report.changed ? EXIT_UPDATED : EXIT_UNCHANGED
@@ -253,6 +257,7 @@ export async function runCiIngest(options: CiIngestOptions): Promise<CiIngestRes
   writeGithubOutput('wk_origin_promoted_same_id', String(result.wkOriginPromotedSameId))
   writeGithubOutput('wk_origin_renamed_merged', String(result.wkOriginRenamedMerged))
   writeGithubOutput('wk_origin_resolve_miss', String(result.wkOriginResolveMiss))
+  writeGithubOutput('wk_origin_soft_fail', String(result.wkOriginSoftFail))
   writeGithubOutput('webkincstar_soft_failed', result.webkincstarSoftFailed ? 'true' : 'false')
   writeGithubOutput(
     'retail_interest_soft_failed',

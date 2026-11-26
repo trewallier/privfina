@@ -238,15 +238,22 @@ export function applyWebkincstarQuotes(
      */
     inventUnmatched?: boolean
     /**
-     * Pre-resolved ÁKK series for WK unmatched labels (keyed by WK quote id
-     * and/or exact display name). On hit, attach under the ÁKK-canonical id.
+     * Pre-resolved ÁKK series for WK unmatched labels.
+     * Keys must be family-scoped: `${family}\0${wkId}` and/or `${family}\0${name}`.
+     * On hit, attach under the ÁKK-canonical id.
      */
     akkResolvedByLabel?: Map<string, { family: FamilyCode; series: SeriesRecord }>
+    /**
+     * Family-scoped `${family}\0${wkId}` keys that must not invent this run
+     * (ÁKK soft-fail / budget exhausted — soft-skip and retry next ingest).
+     */
+    refuseInventKeys?: ReadonlySet<string>
   }
 ): ApplyWebkincstarResult {
   const out = cloneSnapshot(base)
   const inventUnmatched = options?.inventUnmatched === true
   const akkResolvedByLabel = options?.akkResolvedByLabel
+  const refuseInventKeys = options?.refuseInventKeys
   const index = buildSeriesIndex(base, options?.extraSeries ?? [])
   const baseQuoteIndex = new Map<FamilyCode, Map<string, Map<string, QuoteRow>>>()
   for (const family of FAMILIES) {
@@ -290,13 +297,33 @@ export function applyWebkincstarQuotes(
     name: string
   ): { family: FamilyCode; series: SeriesRecord } | null => {
     if (!akkResolvedByLabel) return null
+    // Family-scoped keys only (ADR 0048) — never bare id/name across families.
     return (
       akkResolvedByLabel.get(`${family}\0${qId}`) ??
       akkResolvedByLabel.get(`${family}\0${name}`) ??
-      akkResolvedByLabel.get(qId) ??
-      akkResolvedByLabel.get(name) ??
       null
     )
+  }
+
+  const softSkipUnmatched = (
+    family: FamilyCode,
+    qId: string,
+    name: string,
+    settleDate: string
+  ): void => {
+    skippedUnmatched += 1
+    const seriesKey = `${family}\0${qId}`
+    if (!skippedSeriesByKey.has(seriesKey)) {
+      skippedSeriesByKey.set(seriesKey, { family, id: qId, name })
+    }
+    if (skippedUnmatchedQuotes.length < SKIPPED_UNMATCHED_SAMPLE_LIMIT) {
+      skippedUnmatchedQuotes.push({
+        family,
+        id: qId,
+        name,
+        settleDate
+      })
+    }
   }
 
   for (const family of FAMILIES) {
@@ -327,20 +354,11 @@ export function applyWebkincstarQuotes(
             })
           }
           target = { family: resolved.family, series: resolved.series }
-        } else if (!inventUnmatched) {
-          skippedUnmatched += 1
-          const seriesKey = `${family}\0${q.id}`
-          if (!skippedSeriesByKey.has(seriesKey)) {
-            skippedSeriesByKey.set(seriesKey, { family, id: q.id, name })
-          }
-          if (skippedUnmatchedQuotes.length < SKIPPED_UNMATCHED_SAMPLE_LIMIT) {
-            skippedUnmatchedQuotes.push({
-              family,
-              id: q.id,
-              name,
-              settleDate: q.row[0]
-            })
-          }
+        } else if (
+          !inventUnmatched ||
+          refuseInventKeys?.has(`${family}\0${q.id}`) === true
+        ) {
+          softSkipUnmatched(family, q.id, name, q.row[0])
           continue
         } else {
           const stub = inventBackfillStub(

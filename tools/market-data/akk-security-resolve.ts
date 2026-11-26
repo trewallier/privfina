@@ -42,12 +42,26 @@ export interface ResolveAkkSecurityOptions {
   backoffMs?: number
 }
 
+export type AkkResolveVia =
+  | 'index'
+  | 'longName'
+  | 'name'
+  | 'miss'
+  | 'soft_fail'
+  /** Shared GET budget exhausted — not a confirmed ÁKK miss; do not invent. */
+  | 'budget_exhausted'
+
 export interface ResolveAkkSecurityResult {
   series: SeriesRecord | null
   /** How the row was found. */
-  via: 'index' | 'longName' | 'name' | 'miss' | 'soft_fail'
+  via: AkkResolveVia
   /** Raw catalog row when resolved. */
   row: AkkRow | null
+}
+
+/** True when resolve failed without confirming ÁKK has no row (retry next run; do not invent). */
+export function isAkkResolveDeferred(via: AkkResolveVia): boolean {
+  return via === 'soft_fail' || via === 'budget_exhausted'
 }
 
 function sleep(ms: number): Promise<void> {
@@ -227,8 +241,10 @@ export async function resolveAkkSecurityByLabel(
   const tryGet = async (
     param: 'longName' | 'name',
     via: 'longName' | 'name'
-  ): Promise<ResolveAkkSecurityResult | null> => {
-    if (options.budget.remainingGets <= 0) return null
+  ): Promise<ResolveAkkSecurityResult> => {
+    if (options.budget.remainingGets <= 0) {
+      return { series: null, via: 'budget_exhausted', row: null }
+    }
     options.budget.remainingGets -= 1
     options.budget.usedGets += 1
     const url =
@@ -262,11 +278,16 @@ export async function resolveAkkSecurityByLabel(
   }
 
   const longHit = await tryGet('longName', 'longName')
-  if (longHit?.series) return longHit
-  if (longHit?.via === 'soft_fail') return longHit
+  if (longHit.series) return longHit
 
   const nameHit = await tryGet('name', 'name')
-  if (nameHit) return nameHit
+  if (nameHit.series) return nameHit
 
+  // Prefer deferred outcomes over a confirmed empty response so callers refuse invent.
+  if (isAkkResolveDeferred(longHit.via)) return longHit
+  if (isAkkResolveDeferred(nameHit.via)) return nameHit
+  if (longHit.via === 'miss' || nameHit.via === 'miss') {
+    return { series: null, via: 'miss', row: null }
+  }
   return { series: null, via: 'miss', row: null }
 }

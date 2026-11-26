@@ -612,6 +612,36 @@ describe('WebKincstár overlay + calendar + ingest (ADR 0039 / §6h PR3)', () =>
     ).toBe(true)
   })
 
+  it('soft-fail refuseInventKeys does not invent (ADR 0048)', () => {
+    const emptyBase = normalizeAkkSnapshots(
+      loadJson<AkkEnvelope>('catalog.json'),
+      loadJson<AkkEnvelope>('network-rates.json'),
+      { requireFamilies: false }
+    )
+    for (const family of Object.keys(emptyBase.byFamily) as Array<
+      keyof typeof emptyBase.byFamily
+    >) {
+      emptyBase.byFamily[family].series = []
+      emptyBase.byFamily[family].quotes = []
+    }
+    const wk = normalizeWebkincstarReports([
+      parseWebkincstarPdfText({
+        reportName: '_20631_arfolyam_dkj',
+        text: `
+Diszkont Kincstárjegyek                                                                 Értéknap: 2026.11.05
+D999999             99.0000 %      6.00 %   5.90 %            -             -           -            30        2026.12.05
+`
+      })
+    ])
+    const overlay = applyWebkincstarQuotes(emptyBase, wk.snapshot, {
+      inventUnmatched: true,
+      refuseInventKeys: new Set([`dkj\0${'D999999'}`])
+    })
+    expect(overlay.inventedSeries).toEqual([])
+    expect(overlay.skippedUnmatched).toBeGreaterThan(0)
+    expect(overlay.snapshot.byFamily.dkj.series).toEqual([])
+  })
+
   it('attaches ÁKK-resolved series under canonical id instead of inventing (ADR 0048)', () => {
     const emptyBase = normalizeAkkSnapshots(
       loadJson<AkkEnvelope>('catalog.json'),

@@ -1,6 +1,7 @@
 import {
   buildAkkCatalogResolveIndex,
   createAkkResolveBudget,
+  isAkkResolveDeferred,
   resolveAkkSecurityByLabel,
   type AkkCatalogResolveIndex,
   type AkkResolveBudget
@@ -282,6 +283,8 @@ export interface IngestReport extends MergeResult {
   wkOriginRenamedMerged: number
   /** Tip WK-origin resolve misses this run. */
   wkOriginResolveMiss: number
+  /** Tip WK-origin soft-fail / budget-exhausted resolves this run. */
+  wkOriginSoftFail: number
   /**
    * Oldest (deepest) contiguous tip-success frontier across families (or null).
    * Archive-depth metric for tip transcription progress — not listing discovery.
@@ -480,6 +483,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
   let wkOriginPromotedSameId = 0
   let wkOriginRenamedMerged = 0
   let wkOriginResolveMiss = 0
+  let wkOriginSoftFail = 0
   let previous = previousLoaded
   {
     const hasWkOrigin = FAMILIES.some((family) =>
@@ -503,7 +507,12 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
       wkOriginPromotedSameId = promote.counters.promotedSameId
       wkOriginRenamedMerged = promote.counters.renamedMerged
       wkOriginResolveMiss = promote.counters.resolveMiss
-      if (promote.remaps.length > 0 || promote.counters.promotedSameId > 0) {
+      wkOriginSoftFail = promote.counters.softFail
+      if (
+        promote.remaps.length > 0 ||
+        promote.counters.promotedSameId > 0 ||
+        promote.counters.softFail > 0
+      ) {
         console.error(
           `[market-data] WK-origin tip cutover: sameId=${promote.counters.promotedSameId} renameMerge=${promote.counters.renamedMerged} miss=${promote.counters.resolveMiss} softFail=${promote.counters.softFail}` +
             (promote.remaps.length
@@ -703,6 +712,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
               string,
               { family: FamilyCode; series: SeriesRecord }
             >()
+            /** Soft-fail / budget-exhausted — soft-skip; do not invent this run. */
+            const refuseInventKeys = new Set<string>()
             if (inventUnmatched) {
               const unmatched = listUnmatchedWebkincstarInstruments(
                 mergeSnapshotInput,
@@ -710,13 +721,15 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                 extraSeries
               )
               for (const u of unmatched) {
-                const hit = await resolveAkkSecurityByLabel(u.name, {
+                let deferred = false
+                let hit = await resolveAkkSecurityByLabel(u.name, {
                   index: akkResolveIndex,
                   budget: akkResolveBudget,
                   preferredFamily: u.family,
                   asOf: mergeSnapshotInput.asOf ?? normalizedOne.snapshot.asOf,
                   fetchImpl: options.fetchImpl
                 })
+                if (!hit.series && isAkkResolveDeferred(hit.via)) deferred = true
                 if (!hit.series && u.id !== u.name) {
                   const byId = await resolveAkkSecurityByLabel(u.id, {
                     index: akkResolveIndex,
@@ -726,16 +739,18 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                     fetchImpl: options.fetchImpl
                   })
                   if (byId.series) {
-                    Object.assign(hit, byId)
+                    hit = byId
+                    deferred = false
+                  } else if (isAkkResolveDeferred(byId.via)) {
+                    deferred = true
                   }
                 }
                 if (hit.series) {
                   const resolvedFamily = u.family
                   const entry = { family: resolvedFamily, series: hit.series }
+                  // Family-scoped keys only (ADR 0048).
                   akkResolvedByLabel.set(`${u.family}\0${u.id}`, entry)
                   akkResolvedByLabel.set(`${u.family}\0${u.name}`, entry)
-                  akkResolvedByLabel.set(u.id, entry)
-                  akkResolvedByLabel.set(u.name, entry)
                   const key = `${resolvedFamily}\0${hit.series.id}`
                   if (!akkResolvedSeriesByKey.has(key)) {
                     akkResolvedSeriesByKey.set(key, {
@@ -743,6 +758,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
                       id: hit.series.id
                     })
                   }
+                } else if (deferred) {
+                  refuseInventKeys.add(`${u.family}\0${u.id}`)
                 }
               }
             }
@@ -750,7 +767,8 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
               extraSeries,
               inventUnmatched,
               akkResolvedByLabel:
-                akkResolvedByLabel.size > 0 ? akkResolvedByLabel : undefined
+                akkResolvedByLabel.size > 0 ? akkResolvedByLabel : undefined,
+              refuseInventKeys: refuseInventKeys.size > 0 ? refuseInventKeys : undefined
             })
             if (overlay.akkResolvedSeries.length > 0) {
               for (const series of overlay.akkResolvedSeries) {
@@ -1257,6 +1275,7 @@ export async function ingestMarketData(options: IngestOptions): Promise<IngestRe
     wkOriginPromotedSameId,
     wkOriginRenamedMerged,
     wkOriginResolveMiss,
+    wkOriginSoftFail,
     offeringBackfillFrontier,
     offeringBackfillFrontierHolders,
     offeringGateFrontier,

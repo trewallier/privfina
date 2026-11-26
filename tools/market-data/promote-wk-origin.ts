@@ -3,7 +3,10 @@
  * (ADR 0048 amend). Never drops quote history that exists only under the old id.
  */
 import { combineQuoteRows } from './combine.ts'
-import type { ResolveAkkSecurityResult } from './akk-security-resolve.ts'
+import {
+  isAkkResolveDeferred,
+  type ResolveAkkSecurityResult
+} from './akk-security-resolve.ts'
 import {
   COUPON_COLS,
   FAMILIES,
@@ -58,7 +61,21 @@ function nullFillIdentity(prev: SeriesRecord, akk: SeriesRecord): SeriesRecord {
   if (out.iType == null && akk.iType != null) out.iType = akk.iType
   if (out.ref == null && akk.ref != null) out.ref = akk.ref
   if (out.periodMonths == null && akk.periodMonths != null) out.periodMonths = akk.periodMonths
+  if (out.saleWindow == null && akk.saleWindow != null) out.saleWindow = akk.saleWindow
+  if (out.offered == null && akk.offered != null) out.offered = akk.offered
   if (akk.status) out.status = akk.status
+  return out
+}
+
+/** Copy invent-only enrichments onto the canonical row before dropping the old id. */
+function carryInventEnrichments(canonical: SeriesRecord, invent: SeriesRecord): SeriesRecord {
+  const out = { ...canonical }
+  if (out.saleWindow == null && invent.saleWindow != null) out.saleWindow = invent.saleWindow
+  if (out.offered == null && invent.offered != null) out.offered = invent.offered
+  if (out.isin == null && invent.isin != null) out.isin = invent.isin
+  if (out.issue == null && invent.issue != null) out.issue = invent.issue
+  if (out.mat == null && invent.mat != null) out.mat = invent.mat
+  if (out.dayCount == null && invent.dayCount != null) out.dayCount = invent.dayCount
   return out
 }
 
@@ -122,16 +139,34 @@ function unionCouponFiles(
   }
 }
 
-function preferOffering(
+/**
+ * Merge offering files without dropping transcribed fields.
+ * Thin listing stubs under the canonical id must not discard invent-side
+ * `paymentDates` / dayCount / maturity / issue (same preserve pattern as merge-offerings).
+ */
+export function mergeOfferingFiles(
   canonical: OfferingFile | undefined,
   old: OfferingFile | undefined,
   canonicalId: string,
   family: FamilyCode
 ): OfferingFile | undefined {
   if (!canonical && !old) return undefined
-  if (canonical) return { ...canonical, id: canonicalId, family }
-  if (old) return { ...old, id: canonicalId, family }
-  return undefined
+  if (!old) return { ...canonical!, id: canonicalId, family }
+  if (!canonical) return { ...old, id: canonicalId, family }
+  const out: OfferingFile = {
+    ...canonical,
+    id: canonicalId,
+    family,
+    source: canonical.source ?? old.source
+  }
+  if ((!out.paymentDates || out.paymentDates.length === 0) && old.paymentDates?.length) {
+    out.paymentDates = [...old.paymentDates]
+  }
+  if (out.dayCount == null && old.dayCount != null) out.dayCount = old.dayCount
+  if (out.maturity == null && old.maturity != null) out.maturity = old.maturity
+  if (out.issue == null && old.issue != null) out.issue = old.issue
+  if (out.saleWindow == null && old.saleWindow != null) out.saleWindow = old.saleWindow
+  return out
 }
 
 function displayVariants(series: SeriesRecord): string[] {
@@ -171,29 +206,32 @@ export async function promoteWkOriginSeries(
     )
     for (const series of wkSeries) {
       let resolved: ResolveAkkSecurityResult | null = null
+      let anyDeferred = false
       for (const label of displayVariants(series)) {
         const hit = await options.resolve(label, family)
-        if (hit.via === 'soft_fail') {
-          resolved = hit
-          break
-        }
         if (hit.series) {
           resolved = hit
           break
         }
+        if (isAkkResolveDeferred(hit.via)) {
+          anyDeferred = true
+          // Keep trying other display variants (index-only / alternate labels).
+          continue
+        }
         resolved = hit
       }
 
-      if (!resolved || resolved.via === 'soft_fail') {
+      if (resolved?.series) {
+        /* proceed */
+      } else if (anyDeferred) {
         counters.softFail += 1
         continue
-      }
-      if (!resolved.series) {
+      } else {
         counters.resolveMiss += 1
         continue
       }
 
-      const akk = resolved.series
+      const akk = resolved!.series!
       const canonicalId = akk.id
 
       if (canonicalId === series.id) {
@@ -209,15 +247,16 @@ export async function promoteWkOriginSeries(
       if (existingCanonical) {
         fam.series.series = fam.series.series.map((s) =>
           s.id === canonicalId
-            ? {
-                ...nullFillIdentity(s, akk),
-                // Prefer existing non-null over thin akk when already ÁKK-owned
-                identitySource: SERIES_IDENTITY_SOURCE_AKK
-              }
+            ? carryInventEnrichments(nullFillIdentity(s, akk), series)
             : s
         )
       } else {
-        fam.series.series.push({ ...akk, identitySource: SERIES_IDENTITY_SOURCE_AKK })
+        fam.series.series.push(
+          carryInventEnrichments(
+            { ...akk, identitySource: SERIES_IDENTITY_SOURCE_AKK },
+            series
+          )
+        )
       }
 
       // Union quotes — old invent history must not be dropped.
@@ -230,12 +269,9 @@ export async function promoteWkOriginSeries(
       const canCoupons = fam.coupons[canonicalId]
       const mergedCoupons = unionCouponFiles(family, canonicalId, canCoupons, oldCoupons)
       if (mergedCoupons) fam.coupons[canonicalId] = mergedCoupons
-      else if (!canCoupons && !oldCoupons) {
-        /* none */
-      }
       delete fam.coupons[series.id]
 
-      const mergedOffering = preferOffering(
+      const mergedOffering = mergeOfferingFiles(
         fam.offerings[canonicalId],
         fam.offerings[series.id],
         canonicalId,

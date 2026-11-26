@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { promoteWkOriginSeries, unionQuoteFiles } from '../tools/market-data/promote-wk-origin.ts'
+import {
+  mergeOfferingFiles,
+  promoteWkOriginSeries,
+  unionQuoteFiles
+} from '../tools/market-data/promote-wk-origin.ts'
 import { emptyMarketTree } from '../tools/market-data/merge.ts'
 import {
   SCHEMA_VERSION,
@@ -138,6 +142,118 @@ describe('promoteWkOriginSeries (ADR 0048 cutover)', () => {
     expect(row.isin).toBe('HU0000533456')
     expect(row.issue).toBe('2025-10-01')
     expect(row.dayCount).toBe('ACT/365F')
+  })
+
+  it('rename-merge keeps invent paymentDates when canonical has only a listing stub', async () => {
+    const tree = emptyMarketTree()
+    const inventId = '2027_I'
+    const canonical = akkSeries()
+    tree.families.pmap.series = {
+      schemaVersion: SCHEMA_VERSION,
+      family: 'pmap',
+      series: [
+        wkStub({
+          id: inventId,
+          name: '2027/I',
+          saleWindow: { from: '2022-03-01', to: '2022-03-31' }
+        }),
+        { ...canonical, identitySource: SERIES_IDENTITY_SOURCE_AKK }
+      ]
+    }
+    tree.families.pmap.offerings[canonical.id] = {
+      schemaVersion: SCHEMA_VERSION,
+      id: canonical.id,
+      saleWindow: { from: '2022-03-01', to: null },
+      source: {
+        id: 'akk-public-offerings',
+        host: 'www.akk.hu',
+        document: 'listing',
+        disclaimer: 'test'
+      }
+    }
+    tree.families.pmap.offerings[inventId] = {
+      schemaVersion: SCHEMA_VERSION,
+      id: inventId,
+      paymentDates: ['2023-03-24', '2024-03-24', '2025-03-24'],
+      dayCount: 'ACT/365F',
+      maturity: '2027-03-24',
+      issue: '2022-03-24',
+      source: {
+        id: 'akk-public-offerings',
+        host: 'www.akk.hu',
+        document: 'issue-pdf',
+        disclaimer: 'test'
+      }
+    }
+
+    const result = await promoteWkOriginSeries(tree, {
+      resolve: async () => ({ series: canonical, via: 'index', row: {} })
+    })
+    expect(result.counters.renamedMerged).toBe(1)
+    const offering = result.tree.families.pmap.offerings[canonical.id]
+    expect(offering?.paymentDates).toEqual(['2023-03-24', '2024-03-24', '2025-03-24'])
+    expect(offering?.dayCount).toBe('ACT/365F')
+    expect(offering?.maturity).toBe('2027-03-24')
+    expect(result.tree.families.pmap.offerings[inventId]).toBeUndefined()
+    const seriesRow = result.tree.families.pmap.series.series.find((s) => s.id === canonical.id)
+    expect(seriesRow?.saleWindow).toEqual({ from: '2022-03-01', to: '2022-03-31' })
+  })
+
+  it('mergeOfferingFiles prefers transcribed fields from either side', () => {
+    const merged = mergeOfferingFiles(
+      {
+        schemaVersion: SCHEMA_VERSION,
+        id: 'A270324I22',
+        saleWindow: { from: '2022-01-01', to: null },
+        source: {
+          id: 'akk-public-offerings',
+          host: 'www.akk.hu',
+          document: 'listing',
+          disclaimer: 't'
+        }
+      },
+      {
+        schemaVersion: SCHEMA_VERSION,
+        id: '2027_I',
+        paymentDates: ['2024-03-24'],
+        dayCount: 'ACT/365F',
+        source: {
+          id: 'akk-public-offerings',
+          host: 'www.akk.hu',
+          document: 'pdf',
+          disclaimer: 't'
+        }
+      },
+      'A270324I22',
+      'pmap'
+    )
+    expect(merged?.paymentDates).toEqual(['2024-03-24'])
+    expect(merged?.dayCount).toBe('ACT/365F')
+    expect(merged?.saleWindow).toEqual({ from: '2022-01-01', to: null })
+  })
+
+  it('continues display variants after soft_fail on the first label', async () => {
+    const tree = emptyMarketTree()
+    const inventId = '2027_I'
+    tree.families.pmap.series = {
+      schemaVersion: SCHEMA_VERSION,
+      family: 'pmap',
+      series: [wkStub({ id: inventId, name: '2027/I' })]
+    }
+    const canonical = akkSeries()
+    const tried: string[] = []
+    const result = await promoteWkOriginSeries(tree, {
+      resolve: async (label) => {
+        tried.push(label)
+        if (label === '2027/I') return { series: null, via: 'soft_fail', row: null }
+        if (label === inventId) return { series: canonical, via: 'longName', row: {} }
+        return { series: null, via: 'miss', row: null }
+      }
+    })
+    expect(tried[0]).toBe('2027/I')
+    expect(tried).toContain(inventId)
+    expect(result.counters.renamedMerged).toBe(1)
+    expect(result.counters.softFail).toBe(0)
   })
 
   it('unionQuoteFiles keeps both histories and lets WK win conflicts', () => {

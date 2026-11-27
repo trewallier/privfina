@@ -123,18 +123,23 @@ function niceNumber(range, round) {
 }
 
 /**
- * Build nice Y tick values that always include 0 when the range crosses or touches zero.
+ * Build nice Y tick values.
+ * By default expands to include 0 (cash-flow charts). Pass `{ includeZero: false }`
+ * for tight ranges such as price percentages near 100.
  * @param {number} minValue
  * @param {number} maxValue
  * @param {number} [tickCount=5]
+ * @param {{ includeZero?: boolean }} [options]
  * @returns {number[]}
  */
-function computeNiceYTicks(minValue, maxValue, tickCount = 5) {
-  let lo = Math.min(0, minValue)
-  let hi = Math.max(0, maxValue)
+function computeNiceYTicks(minValue, maxValue, tickCount = 5, options = {}) {
+  const includeZero = options.includeZero !== false
+  let lo = includeZero ? Math.min(0, minValue) : minValue
+  let hi = includeZero ? Math.max(0, maxValue) : maxValue
   if (lo === hi) {
-    lo -= 1
-    hi += 1
+    const pad = Math.max(1, Math.abs(lo) * 0.01)
+    lo -= pad
+    hi += pad
   }
 
   const range = niceNumber(hi - lo, false)
@@ -147,7 +152,7 @@ function computeNiceYTicks(minValue, maxValue, tickCount = 5) {
     const rounded = Math.abs(value) < step * 1e-9 ? 0 : value
     ticks.push(rounded)
   }
-  if (!ticks.includes(0) && lo <= 0 && hi >= 0) {
+  if (includeZero && !ticks.includes(0) && lo <= 0 && hi >= 0) {
     ticks.push(0)
     ticks.sort((a, b) => a - b)
   }
@@ -269,7 +274,18 @@ function filterSeriesToViewport(series, viewport) {
   return visible
 }
 
-function yExtentForSeries(series, fitY, viewport) {
+/**
+ * Y extent across one or more numeric keys on series points.
+ * @param {object[]} series
+ * @param {boolean} fitY
+ * @param {{ xMin: number, xMax: number }|null|undefined} viewport
+ * @param {{ valueKey?: string, valueKeys?: string[], includeZero?: boolean }} [options]
+ */
+function yExtentForSeries(series, fitY, viewport, options = {}) {
+  const valueKeys = Array.isArray(options.valueKeys)
+    ? options.valueKeys
+    : [options.valueKey || 'cumulativeTotal']
+  const includeZero = options.includeZero !== false
   const source = fitY ? filterSeriesToViewport(series, viewport) : series
   if (!source.length) {
     return { minTotal: -1, maxTotal: 1 }
@@ -277,15 +293,27 @@ function yExtentForSeries(series, fitY, viewport) {
   let minTotal = Infinity
   let maxTotal = -Infinity
   for (const point of source) {
-    const value = point.cumulativeTotal
-    if (value < minTotal) minTotal = value
-    if (value > maxTotal) maxTotal = value
+    for (const key of valueKeys) {
+      const raw = point[key]
+      if (raw == null || !Number.isFinite(Number(raw))) {
+        continue
+      }
+      const value = Number(raw)
+      if (value < minTotal) minTotal = value
+      if (value > maxTotal) maxTotal = value
+    }
   }
-  minTotal = Math.min(0, minTotal)
-  maxTotal = Math.max(0, maxTotal)
+  if (!Number.isFinite(minTotal) || !Number.isFinite(maxTotal)) {
+    return { minTotal: -1, maxTotal: 1 }
+  }
+  if (includeZero) {
+    minTotal = Math.min(0, minTotal)
+    maxTotal = Math.max(0, maxTotal)
+  }
   if (minTotal === maxTotal) {
-    minTotal -= 1
-    maxTotal += 1
+    const pad = Math.max(1, Math.abs(minTotal) * 0.01)
+    minTotal -= pad
+    maxTotal += pad
   }
   return { minTotal, maxTotal }
 }

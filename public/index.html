@@ -100,6 +100,7 @@
         --chart-axis: #b0bdce;
         --chart-muted: #5a6a7d;
         --chart-series: #2563eb;
+        --chart-series-alt: #c2410c;
         --chart-series-fill: rgba(37, 99, 235, 0.12);
         --chart-crosshair: #94a3b8;
         --chart-zero: #a8b4c4;
@@ -175,6 +176,7 @@
         --chart-axis: #4b5b70;
         --chart-muted: #9aa8ba;
         --chart-series: #60a5fa;
+        --chart-series-alt: #fb923c;
         --chart-series-fill: rgba(96, 165, 250, 0.16);
         --chart-crosshair: #64748b;
         --chart-zero: #64748b;
@@ -1056,15 +1058,22 @@
         margin-left: auto;
       }
 
-      #chart {
+      .chart-surface {
         position: relative;
         width: 100%;
-        min-height: 240px;
         border: 1px solid var(--border);
         border-radius: 10px;
         background: var(--surface);
         overflow: hidden;
+      }
+
+      #chart.chart-surface {
+        min-height: 240px;
         outline: none;
+      }
+
+      #discount-quote-chart.chart-surface {
+        min-height: 200px;
       }
 
       #chart:focus-visible {
@@ -1084,21 +1093,21 @@
         touch-action: none;
       }
 
-      #chart .chart-svg {
+      .chart-surface .chart-svg {
         display: block;
         width: 100%;
         height: auto;
         max-width: 100%;
       }
 
-      #chart .y-tick-label,
-      #chart .x-tick-label,
-      #chart .chart-title,
-      #chart .chart-sampling-note {
+      .chart-surface .y-tick-label,
+      .chart-surface .x-tick-label,
+      .chart-surface .chart-title,
+      .chart-surface .chart-sampling-note {
         font-family: inherit;
       }
 
-      #chart .chart-tooltip {
+      .chart-surface .chart-tooltip {
         position: absolute;
         transform: translate(-50%, -100%);
         pointer-events: none;
@@ -1113,8 +1122,47 @@
         box-shadow: var(--tooltip-shadow);
       }
 
-      #chart .chart-tooltip[hidden] {
+      .chart-surface .chart-tooltip[hidden] {
         display: none;
+      }
+
+      #discount-quote-chart-wrap {
+        margin-top: 12px;
+      }
+
+      #discount-quote-chart-wrap .discount-quote-chart-heading {
+        margin: 0 0 6px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      #discount-quote-chart-wrap .discount-quote-chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        margin: 0 0 8px;
+        padding: 0;
+        list-style: none;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      #discount-quote-chart-wrap .discount-quote-chart-legend li {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      #discount-quote-chart-wrap .discount-quote-chart-swatch {
+        width: 14px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--chart-series);
+      }
+
+      #discount-quote-chart-wrap .discount-quote-chart-swatch[data-series='sell'] {
+        background: var(--chart-series-alt);
       }
 
       .empty {
@@ -2627,6 +2675,19 @@
                         <input id="dkj-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
+                    <div id="discount-quote-chart-wrap" hidden>
+                      <p class="discount-quote-chart-heading">Market price history</p>
+                      <ul class="discount-quote-chart-legend" aria-label="Price series legend">
+                        <li><span class="discount-quote-chart-swatch" data-series="buy" aria-hidden="true"></span>Buy % (ask / eladási)</li>
+                        <li><span class="discount-quote-chart-swatch" data-series="sell" aria-hidden="true"></span>Sell % (bid / vételi)</li>
+                      </ul>
+                      <div
+                        id="discount-quote-chart"
+                        class="chart-surface"
+                        role="img"
+                        aria-label="Buy and sell price percent history"
+                      ></div>
+                    </div>
                   </div>
 
                   <div id="investment-pmap-wrap" hidden>
@@ -3099,7 +3160,7 @@
             <button type="button" data-chart-action="fit-y" aria-pressed="true" title="Auto-scale vertical axis to visible points">Fit Y</button>
             <span id="chart-view-status" class="chart-view-status" aria-live="polite"></span>
           </div>
-          <div id="chart"></div>
+          <div id="chart" class="chart-surface"></div>
         </section>
       </div>
 

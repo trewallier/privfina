@@ -54,6 +54,7 @@ import {
   setActiveCouponScheduleEditor,
   syncCouponScheduleEditorAfterMarket
 } from './commercial-investment-coupon-schedule-editor.js'
+import { createDiscountQuoteChartController } from './discount-quote-chart.js'
 
 const COMMERCIAL_INVESTMENT_FAMILY_TITLE = 'Commercial Investment'
 const COMMERCIAL_INVESTMENT_PRODUCT_OPTIONS = buildCommercialInvestmentProductOptions()
@@ -103,6 +104,7 @@ function createCommercialInvestmentComposerHost({
     'commercial-investment-cancel-edit'
   )
   const marketDataLoader = createMarketDataLoader()
+  const discountQuoteChart = createDiscountQuoteChartController()
   let commercialMarketFamilyState = {
     family: null,
     series: [],
@@ -115,6 +117,19 @@ function createCommercialInvestmentComposerHost({
     priceCalendar: null,
     bubor: null,
     settlementCalendar: null
+  }
+
+  function syncDiscountQuoteChart(quotesFile = null) {
+    const productCode =
+      commercialInvestmentProductInput?.value || DEFAULT_COMMERCIAL_INVESTMENT_PRODUCT
+    const entry = getCommercialInvestmentFamily(productCode)
+    const seriesId = commercialInvestmentSeriesInput?.value || ''
+    // Discount commercial hosts (DKJ) show bid/ask % history; coupon-bearing skip.
+    if (entry?.composerProfile !== 'discount' || !seriesId || !quotesFile) {
+      discountQuoteChart.clear()
+      return
+    }
+    discountQuoteChart.setQuotes(quotesFile)
   }
 
   function formatCommercialMarketUpdatedHint(generatedAt) {
@@ -539,6 +554,7 @@ function createCommercialInvestmentComposerHost({
     if (commercialInvestmentSeriesInput) {
       commercialInvestmentSeriesInput.value = ''
     }
+    syncDiscountQuoteChart(null)
   }
 
   function resetCommercialMarketControls() {
@@ -627,6 +643,7 @@ function createCommercialInvestmentComposerHost({
     setCommercialMarketHint(idleHint, true)
     setCommercialMarketAttribution({ calendar: commercialMarketFamilyState.priceCalendar })
     clearCommercialMarketSourcedFields(code)
+    syncDiscountQuoteChart(null)
   }
 
   async function resolveCommercialMarketQuoteLookup(seriesId, requestedDate) {
@@ -655,6 +672,7 @@ function createCommercialInvestmentComposerHost({
     }
     if (!seriesId) {
       clearCommercialMarketSourcedFields(family)
+      syncDiscountQuoteChart(null)
       const updated = formatCommercialMarketUpdatedHint(commercialMarketFamilyState.generatedAt)
       const idleHint =
         updated ||
@@ -726,6 +744,7 @@ function createCommercialInvestmentComposerHost({
         commercialInvestmentSeriesInput.value = ''
       }
       clearCommercialMarketSourcedFields(family)
+      syncDiscountQuoteChart(null)
       setCommercialMarketHint(
         'No published quote history for the selected series — switched to Manual entry.',
         true
@@ -806,6 +825,9 @@ function createCommercialInvestmentComposerHost({
       calendar: commercialMarketFamilyState.priceCalendar,
       offering
     })
+    syncDiscountQuoteChart(
+      familyEntry?.composerProfile === 'discount' ? quotesFile : null
+    )
     syncCommercialInvestmentPreview()
   }
 

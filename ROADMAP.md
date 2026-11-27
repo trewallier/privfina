@@ -392,6 +392,10 @@ Out of scope for §6i
 - Historical backfill UX (§6m).
 - Inflation as commercial composer inputs; `refs/dkj-base.json`.
 
+##### §6i follow-on — discount quote history chart (UI-only)
+Late add-on after §6i close; does not reopen the §6i ingest/calendar slices.
+- [x] Discount (DKJ) buy/sell % history chart under the commercial discount host: two linear lines (Buy % = `ask` / eladási, Sell % = `bid` / vételi) from the selected series’ published quote file; reuses viz-pane `renderChart` primitives (multi-line / `%` / linear path + hover tooltip); Manual entry / no history / non-discount product hides the chart; no pan/zoom toolbar on the embedded host.
+
 #### 6j) Additional government securities on commercial composer (subsequent)
 Goal: add catalog product specs and commercial investment hosts for families already (or newly) published on the market-data branch, reusing ADR 0038 v2 series/coupon shapes.
 

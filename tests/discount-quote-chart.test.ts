@@ -98,7 +98,7 @@ describe('dual-line percent chart render', () => {
       showArea: false,
       showZeroAxis: false,
       includeZero: false,
-      title: 'Buy / sell price % of face',
+      showTitle: false,
       formatY: formatAxisPercent,
       lines: [
         { key: 'buyPct', label: 'Buy %', color: '#2563eb' },
@@ -106,7 +106,7 @@ describe('dual-line percent chart render', () => {
       ]
     })
 
-    expect(container.innerHTML).toContain('Buy / sell price % of face')
+    expect(container.innerHTML).not.toContain('class="chart-title"')
     expect(container.innerHTML).toContain('data-series-key="buyPct"')
     expect(container.innerHTML).toContain('data-series-key="sellPct"')
     expect(container.innerHTML).toMatch(/\d+\.\d{2}%/)

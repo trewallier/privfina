@@ -115,7 +115,7 @@ export function createDiscountQuoteChartController({
       showZeroAxis: false,
       includeZero: false,
       showSamplingNote: false,
-      title: 'Buy / sell price % of face',
+      showTitle: false,
       ariaLabel: 'Buy and sell price percent history',
       emptyMessage: 'No published quote history for this series.',
       formatY: formatAxisPercent,

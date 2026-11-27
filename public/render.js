@@ -835,6 +835,7 @@ function renderChart(series, container, options = {}) {
   const includeZero = options.includeZero !== false
   const formatY = typeof options.formatY === 'function' ? options.formatY : formatAxisAmount
   const title = options.title || 'Cumulative total amount'
+  const showTitle = options.showTitle !== false
   const ariaLabelPrefix = options.ariaLabel || 'Cumulative cash-flow chart'
 
   if (!series.length) {
@@ -977,7 +978,11 @@ function renderChart(series, container, options = {}) {
           <rect x="${leftPad}" y="${topPad}" width="${plotWidth}" height="${plotHeight}" />
         </clipPath>
       </defs>
-      <text class="chart-title" x="${leftPad}" y="18" fill="${theme.muted}" font-size="12">${escapeHtml(title)}</text>
+      ${
+        showTitle
+          ? `<text class="chart-title" x="${leftPad}" y="18" fill="${theme.muted}" font-size="12">${escapeHtml(title)}</text>`
+          : ''
+      }
       ${samplingNote}
       ${yTickMarkup}
       <line x1="${leftPad}" y1="${topPad}" x2="${leftPad}" y2="${plotBottom}" stroke="${theme.axis}" stroke-width="1" />

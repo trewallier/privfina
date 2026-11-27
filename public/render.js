@@ -736,9 +736,10 @@ function updateChartCrosshair(container, crosshair, layout) {
   point.setAttribute('cy', String(cy))
   point.setAttribute('visibility', 'visible')
 
+  // dayDelta stays on money formatting — it is a cash-flow day change, not a Y-axis unit.
   const delta =
     crosshair.dayDelta !== null && crosshair.dayDelta !== undefined
-      ? ` · day ${formatY(crosshair.dayDelta)}`
+      ? ` · day ${formatAxisAmount(crosshair.dayDelta)}`
       : ''
   const tooltipText =
     typeof crosshair.tooltipText === 'string' && crosshair.tooltipText
@@ -748,6 +749,18 @@ function updateChartCrosshair(container, crosshair, layout) {
   tooltip.style.left = `${Math.min(layout.width - 12, Math.max(12, cx))}px`
   tooltip.style.top = `${Math.max(8, cy - 36)}px`
   tooltip.textContent = tooltipText
+}
+
+function sanitizeCssColor(value, fallback = '#2563eb') {
+  const raw = String(value ?? '').trim()
+  if (
+    /^#[0-9a-fA-F]{3,8}$/.test(raw) ||
+    /^rgba?\(\s*[\d.%\s,]+\s*\)$/.test(raw) ||
+    /^var\(--[a-zA-Z0-9_-]+\)$/.test(raw)
+  ) {
+    return raw
+  }
+  return fallback
 }
 
 function readChartThemeColors(root = globalThis.document?.documentElement) {
@@ -911,7 +924,8 @@ function renderChart(series, container, options = {}) {
   const lineMarkup = lines
     .map((line) => {
       const path = buildSeriesPath(plotSeries, xScale, yScale, line.key, pathStyle)
-      return `<path class="series-line" data-series-key="${escapeHtml(line.key)}" d="${path}" fill="none" stroke="${line.color}" stroke-width="2.5" stroke-linejoin="round" />`
+      const stroke = sanitizeCssColor(line.color, theme.series)
+      return `<path class="series-line" data-series-key="${escapeHtml(line.key)}" d="${path}" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />`
     })
     .join('')
 
@@ -920,7 +934,7 @@ function renderChart(series, container, options = {}) {
       const y = yScale(value)
       return `
       <line class="grid-line" x1="${leftPad}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="${theme.grid}" stroke-width="1" />
-      <text class="y-tick-label" x="${leftPad - 10}" y="${y + 4}" text-anchor="end" fill="${theme.muted}" font-size="11">${formatY(value)}</text>
+      <text class="y-tick-label" x="${leftPad - 10}" y="${y + 4}" text-anchor="end" fill="${theme.muted}" font-size="11">${escapeHtml(formatY(value))}</text>
     `
     })
     .join('')

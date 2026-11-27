@@ -1,12 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { mapQuotesToBuySellSeries } from '../public/controller/dkj-quote-chart.js'
+import {
+  createDiscountQuoteChartController,
+  mapQuotesToBuySellSeries
+} from '../public/controller/discount-quote-chart.js'
 import {
   buildLinearPath,
   formatAxisPercent,
-  renderChart
+  renderChart,
+  updateChartCrosshair
 } from '../public/render.js'
 import { yExtentForSeries } from '../public/controller/chart-viewport.js'
 
@@ -126,20 +130,93 @@ describe('dual-line percent chart render', () => {
     expect(container.innerHTML).toContain(' H ')
     expect(container.innerHTML).toContain(' V ')
   })
+
+  it('formats dayDelta with money even when layout.formatY is percent', () => {
+    const tooltip = { hidden: true, textContent: '', style: { left: '', top: '' } }
+    const container = {
+      querySelector(selector: string) {
+        if (selector === '.chart-crosshair-x') return { setAttribute: vi.fn() }
+        if (selector === '.chart-crosshair-y') return { setAttribute: vi.fn() }
+        if (selector === '.chart-crosshair-point') return { setAttribute: vi.fn() }
+        if (selector === '.chart-tooltip') return tooltip
+        return null
+      }
+    }
+    updateChartCrosshair(
+      container,
+      { date: '2024-06-01', cumulativeTotal: 1000, dayDelta: 1000 },
+      {
+        leftPad: 80,
+        plotRight: 620,
+        topPad: 28,
+        plotBottom: 260,
+        plotWidth: 540,
+        plotHeight: 232,
+        width: 640,
+        height: 300,
+        minTime: Date.parse('2024-01-01T00:00:00Z'),
+        maxTime: Date.parse('2024-12-01T00:00:00Z'),
+        yMin: 0,
+        yMax: 2000,
+        formatY: formatAxisPercent
+      }
+    )
+    expect(tooltip.textContent).toContain('day 1 000.00')
+    expect(tooltip.textContent).not.toMatch(/day\s+1000\.00%/)
+  })
+})
+
+describe('discount quote chart controller visibility', () => {
+  it('shows on setQuotes with history and hides on clear / empty', () => {
+    const wrap = { hidden: true }
+    let hostHtml = ''
+    const host = {
+      getBoundingClientRect: () => ({ width: 480, height: 220, left: 0, top: 0 }),
+      querySelector: () => null,
+      setAttribute: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      get innerHTML() {
+        return hostHtml
+      },
+      set innerHTML(value) {
+        hostHtml = value
+      }
+    }
+    const chart = createDiscountQuoteChartController({ wrap: wrap as HTMLElement, host: host as unknown as HTMLElement })
+
+    chart.setQuotes(fixtureQuotes)
+    expect(wrap.hidden).toBe(false)
+    expect(hostHtml).toContain('data-series-key="buyPct"')
+    expect(hostHtml).toContain('data-series-key="sellPct"')
+    expect(chart._getSeries().length).toBe(2)
+
+    chart.clear()
+    expect(wrap.hidden).toBe(true)
+    expect(hostHtml).toBe('')
+    expect(chart._getSeries()).toEqual([])
+
+    chart.setQuotes({ cols: ['d', 'bid', 'ask'], rows: [] })
+    expect(wrap.hidden).toBe(true)
+    expect(chart._getSeries()).toEqual([])
+
+    chart.destroy()
+  })
 })
 
 describe('commercial host wiring', () => {
-  it('wires the DKJ quote chart controller without productCode branches', () => {
+  it('wires the discount quote chart controller without productCode branches', () => {
     const commercialHost = readFileSync(
       join(here, '../public/controller/commercial-investment-composer-host.js'),
       'utf8'
     )
     const indexHtml = readFileSync(join(here, '../public/index.html'), 'utf8')
-    expect(commercialHost).toContain('createDkjQuoteChartController')
-    expect(commercialHost).toContain('syncDkjQuoteChart')
+    expect(commercialHost).toContain('createDiscountQuoteChartController')
+    expect(commercialHost).toContain('syncDiscountQuoteChart')
     expect(commercialHost).toContain("composerProfile === 'discount'")
     expect(commercialHost).not.toMatch(/productCode\s*===\s*['"]dkj['"]/)
-    expect(indexHtml).toContain('id="dkj-quote-chart"')
-    expect(indexHtml).toContain('id="dkj-quote-chart-wrap"')
+    expect(indexHtml).toContain('id="discount-quote-chart"')
+    expect(indexHtml).toContain('id="discount-quote-chart-wrap"')
+    expect(indexHtml).toContain('class="chart-surface"')
   })
 })

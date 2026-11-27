@@ -1058,15 +1058,22 @@
         margin-left: auto;
       }
 
-      #chart {
+      .chart-surface {
         position: relative;
         width: 100%;
-        min-height: 240px;
         border: 1px solid var(--border);
         border-radius: 10px;
         background: var(--surface);
         overflow: hidden;
+      }
+
+      #chart.chart-surface {
+        min-height: 240px;
         outline: none;
+      }
+
+      #discount-quote-chart.chart-surface {
+        min-height: 200px;
       }
 
       #chart:focus-visible {
@@ -1086,21 +1093,21 @@
         touch-action: none;
       }
 
-      #chart .chart-svg {
+      .chart-surface .chart-svg {
         display: block;
         width: 100%;
         height: auto;
         max-width: 100%;
       }
 
-      #chart .y-tick-label,
-      #chart .x-tick-label,
-      #chart .chart-title,
-      #chart .chart-sampling-note {
+      .chart-surface .y-tick-label,
+      .chart-surface .x-tick-label,
+      .chart-surface .chart-title,
+      .chart-surface .chart-sampling-note {
         font-family: inherit;
       }
 
-      #chart .chart-tooltip {
+      .chart-surface .chart-tooltip {
         position: absolute;
         transform: translate(-50%, -100%);
         pointer-events: none;
@@ -1115,22 +1122,22 @@
         box-shadow: var(--tooltip-shadow);
       }
 
-      #chart .chart-tooltip[hidden] {
+      .chart-surface .chart-tooltip[hidden] {
         display: none;
       }
 
-      #dkj-quote-chart-wrap {
+      #discount-quote-chart-wrap {
         margin-top: 12px;
       }
 
-      #dkj-quote-chart-wrap .dkj-quote-chart-heading {
+      #discount-quote-chart-wrap .discount-quote-chart-heading {
         margin: 0 0 6px;
         font-size: 0.92rem;
         font-weight: 600;
         color: var(--text);
       }
 
-      #dkj-quote-chart-wrap .dkj-quote-chart-legend {
+      #discount-quote-chart-wrap .discount-quote-chart-legend {
         display: flex;
         flex-wrap: wrap;
         gap: 12px 16px;
@@ -1141,64 +1148,21 @@
         color: var(--muted);
       }
 
-      #dkj-quote-chart-wrap .dkj-quote-chart-legend li {
+      #discount-quote-chart-wrap .discount-quote-chart-legend li {
         display: inline-flex;
         align-items: center;
         gap: 6px;
       }
 
-      #dkj-quote-chart-wrap .dkj-quote-chart-swatch {
+      #discount-quote-chart-wrap .discount-quote-chart-swatch {
         width: 14px;
         height: 3px;
         border-radius: 2px;
         background: var(--chart-series);
       }
 
-      #dkj-quote-chart-wrap .dkj-quote-chart-swatch[data-series='sell'] {
+      #discount-quote-chart-wrap .discount-quote-chart-swatch[data-series='sell'] {
         background: var(--chart-series-alt);
-      }
-
-      #dkj-quote-chart {
-        position: relative;
-        width: 100%;
-        min-height: 200px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: var(--surface);
-        overflow: hidden;
-      }
-
-      #dkj-quote-chart .chart-svg {
-        display: block;
-        width: 100%;
-        height: auto;
-        max-width: 100%;
-      }
-
-      #dkj-quote-chart .y-tick-label,
-      #dkj-quote-chart .x-tick-label,
-      #dkj-quote-chart .chart-title,
-      #dkj-quote-chart .chart-sampling-note {
-        font-family: inherit;
-      }
-
-      #dkj-quote-chart .chart-tooltip {
-        position: absolute;
-        transform: translate(-50%, -100%);
-        pointer-events: none;
-        z-index: 2;
-        padding: 6px 8px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: var(--tooltip-bg);
-        color: var(--text);
-        font-size: 0.8rem;
-        white-space: nowrap;
-        box-shadow: var(--tooltip-shadow);
-      }
-
-      #dkj-quote-chart .chart-tooltip[hidden] {
-        display: none;
       }
 
       .empty {
@@ -2711,13 +2675,18 @@
                         <input id="dkj-maturity-date" name="maturityDate" type="date" required />
                       </label>
                     </div>
-                    <div id="dkj-quote-chart-wrap" hidden>
-                      <p class="dkj-quote-chart-heading">Market price history</p>
-                      <ul class="dkj-quote-chart-legend" aria-label="Price series legend">
-                        <li><span class="dkj-quote-chart-swatch" data-series="buy" aria-hidden="true"></span>Buy % (ask / eladási)</li>
-                        <li><span class="dkj-quote-chart-swatch" data-series="sell" aria-hidden="true"></span>Sell % (bid / vételi)</li>
+                    <div id="discount-quote-chart-wrap" hidden>
+                      <p class="discount-quote-chart-heading">Market price history</p>
+                      <ul class="discount-quote-chart-legend" aria-label="Price series legend">
+                        <li><span class="discount-quote-chart-swatch" data-series="buy" aria-hidden="true"></span>Buy % (ask / eladási)</li>
+                        <li><span class="discount-quote-chart-swatch" data-series="sell" aria-hidden="true"></span>Sell % (bid / vételi)</li>
                       </ul>
-                      <div id="dkj-quote-chart" role="img" aria-label="DKJ buy and sell price percent history"></div>
+                      <div
+                        id="discount-quote-chart"
+                        class="chart-surface"
+                        role="img"
+                        aria-label="Buy and sell price percent history"
+                      ></div>
                     </div>
                   </div>
 
@@ -3191,7 +3160,7 @@
             <button type="button" data-chart-action="fit-y" aria-pressed="true" title="Auto-scale vertical axis to visible points">Fit Y</button>
             <span id="chart-view-status" class="chart-view-status" aria-live="polite"></span>
           </div>
-          <div id="chart"></div>
+          <div id="chart" class="chart-surface"></div>
         </section>
       </div>
 
